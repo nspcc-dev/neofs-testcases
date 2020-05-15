@@ -8,8 +8,10 @@ from robot.api import logger
 
 ROBOT_AUTO_KEYWORDS = False
 
-NEOFS_ENDPOINT = '85.143.219.93:8080'
-NEOFS_KEY = 'KxDgvEKzgSBPPfuVfw67oPQBSjidEiqTHURKSDL1R7yGaGYAeYnr'
+NEOFS_ENDPOINT = '10.78.30.13:8080'
+#NEOFS_ENDPOINT = '85.143.219.93:8080'
+NEOFS_KEY = 'L3UcodxBNukNuXnMKzH7rUn3pvgLGrNkGqeUnvnPySxBFHVR8xmL'
+#NEOFS_KEY = 'KxDgvEKzgSBPPfuVfw67oPQBSjidEiqTHURKSDL1R7yGaGYAeYnr'
 
 @keyword('Create container')
 def create_container():
