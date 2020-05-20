@@ -5,8 +5,8 @@ Library     ${RESOURCES}/kws_module.py
 Library     ${RESOURCES}/assertions.py
 
 *** Variables ***
-${OBJECT}       ${TESTSUITES}/test_file
-${READ_OBJECT}  ${TESTSUITES}/read_file
+${OBJECT}       ${ABSOLUTE_FILE_PATH}/test_file
+${READ_OBJECT}  ${ABSOLUTE_FILE_PATH}/read_file
 
 *** Test cases ***
 Read and Write to NeoFS

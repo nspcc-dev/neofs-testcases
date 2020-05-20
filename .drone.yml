@@ -1,0 +1,35 @@
+---
+
+kind: pipeline
+type: docker
+name: robot-image
+
+steps:
+- name: cleanup and build
+  image: docker:19.03.5
+  environment:
+      PASSWORD:
+          from_secret: docker_passwd
+      IMG_NAME: 'registry.nspcc.ru/docker-local/robot'
+  volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+  commands:
+      - ./images_cleanup.sh
+      - docker build --no-cache -t $IMG_NAME:latest ./
+      - docker login registry.nspcc.ru -u admin -p "$PASSWORD"
+      - docker push $IMG_NAME:latest
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+
+# host volume mount requires a repository to be `trusted`
+# in drone; this option enables in repository settings
+# by admin user
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
