@@ -1,7 +1,7 @@
 FROM python:3.6
 
 ENV WD /
-ENV NEOFSCLI_VERSION '0.8.0'
+ENV NEOFSCLI_VERSION '0.8.2'
 
 RUN apt-get update \
     && pip3 install robotframework==3.2.1
