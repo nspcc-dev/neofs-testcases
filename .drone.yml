@@ -5,18 +5,21 @@ name: robot-image
 
 steps:
 - name: cleanup and build
-  image: docker:19.03.5
+  image: docker:19.03.11-dind
   environment:
-      PASSWORD:
-          from_secret: docker_passwd
       IMG_NAME: 'registry.nspcc.ru/docker-local/robot'
+      REG_USR: 'admin'
+      REG_PWD:  
+          from_secret: docker_passwd
+      JF_TOKEN:
+          from_secret: api_key 
   volumes:
       - name: docker_sock
         path: /var/run/docker.sock
   commands:
       - ./images_cleanup.sh
       - docker build --no-cache -t $IMG_NAME:latest ./
-      - docker login registry.nspcc.ru -u admin -p "$PASSWORD"
+      - docker login registry.nspcc.ru -u admin -p "$REG_PWD"
       - docker push $IMG_NAME:latest
 
 trigger:
@@ -24,6 +27,7 @@ trigger:
   - master
   event:
   - push
+  - pull_request
 
 # host volume mount requires a repository to be `trusted`
 # in drone; this option enables in repository settings

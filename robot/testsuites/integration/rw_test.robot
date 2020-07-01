@@ -1,7 +1,7 @@
 *** Settings ***
 Variables   ../../variables/common.py
 
-Library     ${RESOURCES}/kws_module.py
+Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/assertions.py
 
 *** Variables ***
