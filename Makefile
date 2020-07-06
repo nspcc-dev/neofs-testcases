@@ -27,21 +27,6 @@ run_docker:
 	@mkdir artifacts_$(NAME)
 	@docker run --privileged=true  \
 				--name $(NAME) \
-				--volume artifacts_$(NAME):/artifacts \
-				--add-host bastion.localtest.nspcc.ru:192.168.123.10 \
-				--add-host bastion.localtest.nspcc.ru:192.168.123.10 \
-				--add-host cdn.fs.localtest.nspcc.ru:192.168.123.40 \
-				--add-host main_chain.fs.localtest.nspcc.ru:192.168.123.50 \
-				--add-host fs.localtest.nspcc.ru:192.168.123.20 \
-				--add-host m01.fs.localtest.nspcc.ru:192.168.123.61 \
-				--add-host m02.fs.localtest.nspcc.ru:192.168.123.62 \
-				--add-host m03.fs.localtest.nspcc.ru:192.168.123.63 \
-				--add-host m04.fs.localtest.nspcc.ru:192.168.123.64 \
-				--add-host send.fs.localtest.nspcc.ru:192.168.123.30 \
-				--add-host s01.fs.localtest.nspcc.ru:192.168.123.71 \
-				--add-host s02.fs.localtest.nspcc.ru:192.168.123.72 \
-				--add-host s03.fs.localtest.nspcc.ru:192.168.123.73 \
-				--add-host s04.fs.localtest.nspcc.ru:192.168.123.74 \
 				robot:$(VERSION)$(PREFIX) ./dockerd.sh &
 	@sleep 10;
 	@docker wait $(NAME);
