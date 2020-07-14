@@ -27,7 +27,7 @@ run_docker:
 	@mkdir artifacts_$(NAME)
 	@docker run --privileged=true  \
 				--name $(NAME) \
-				robot:$(VERSION)$(PREFIX) ./dockerd.sh &
+				 robot:$(VERSION)$(PREFIX) ./dockerd.sh &
 	@sleep 10;
 	@docker wait $(NAME);
 	@echo "${B}${G}⇒ Testsuite has been completed. ${R}";
@@ -37,7 +37,7 @@ run_docker:
 
 run:
 	@echo "${B}${G}⇒ Test Run ${R}"
-	@robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/object_suite.robot 
+	@robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/*.robot 
 
 help:
 	@echo "${B}${G}⇒ build        Build image ${R}" 
