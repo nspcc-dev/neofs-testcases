@@ -21,10 +21,10 @@ NeoFS Simple Object Operations
     ${PRIV_KEY} =       Generate Neo private key
     ${PUB_KEY} =        Get Neo public key                  ${PRIV_KEY}
     ${ADDR} =           Get Neo address                     ${PRIV_KEY}
-    ${TX} =             Request NeoFS Deposit               ${PUB_KEY}       
-                        Wait Until Keyword Succeeds         1 min          15 sec        
-                        ...  Transaction accepted in block  ${TX}
-                        Get Transaction                     ${TX}
+#    ${TX} =             Request NeoFS Deposit               ${PUB_KEY}       
+#                        Wait Until Keyword Succeeds         1 min          15 sec        
+#                        ...  Transaction accepted in block  ${TX}
+#                        Get Transaction                     ${TX}
 # Due to develop branch with zero-payment for container and different blockchains for payment.
 # Temporarily removed.
 #    ${BALANCE} =        Wait Until Keyword Succeeds         10 min         1 min        
