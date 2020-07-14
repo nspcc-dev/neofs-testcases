@@ -15,23 +15,77 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_ENDPOINT = "192.168.123.71:8080"
 CLI_PREFIX = "docker exec neofs-cli "
 
+@keyword('Form Privkey from String')
+def form_privkey_from_string(private_key: str):
+    return bytes.fromhex(private_key) 
+
+
+@keyword('Get nodes with object')
+def get_nodes_with_object(private_key: bytes, cid, oid):
+    storage_nodes = _get_storage_nodes(private_key)
+    copies = 0
+
+    nodes_list = []
+
+    for node in storage_nodes:
+        if re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
+            nodes_list.append(node)
+
+    logger.info("Nodes with object: %s" % nodes_list)
+
+
+@keyword('Get nodes without object')
+def get_nodes_without_object(private_key: bytes, cid, oid):
+    storage_nodes = _get_storage_nodes(private_key)
+    copies = 0
+
+    nodes_list = []
+
+    for node in storage_nodes:
+        if not re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
+            nodes_list.append(node)
+
+    logger.info("Nodes with object: %s" % nodes_list)
+
 
 @keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(private_key: bytes, expected_copies, cid, oid):
+def validate_storage_policy_for_object(private_key: bytes, expected_copies: int, cid, oid):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
     for node in storage_nodes:
         if re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
             copies += 1
+
+    logger.info("Copies: %s" % copies)
+    
     if copies < expected_copies:
         raise Exception("Not enough object copies to match storage policyю Found: %s, expexted: %s." % (copies, expected_copies))
 
 
+
+#docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 22b2f3faea9383e27262364c96d8e5ef7e893abf7a6ad7bf31ee1f2c2b3cfc42 
+# object get-range --cid 4H9iChvzYdBg6qntfYUWGWCzsJFBDdo99KegefsD721Q --oid a101d078-b3d4-4325-8fe8-41dce6917097 0:10
+#fead193c1f6f488255f7
+
+@keyword('Get Range')
+def get_range(private_key: bytes, cid: str, oid: str, range_cut: str):
+
+    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {range_cut}'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+    output = complProc.stdout
+    logger.info("Output: %s" % output)
+
+
 @keyword('Create container')
-def create_container(private_key: bytes):
+def create_container(private_key: bytes, basic_acl:str=""):
     rule = "RF 2 SELECT 2 Node"
-    createContainerCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container put --rule "{rule}"'
-    
+    if basic_acl != "":
+        basic_acl = "--acl " + basic_acl
+
+    createContainerCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container put --rule "{rule}" {basic_acl}'
+    logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
     output = complProc.stdout
@@ -432,7 +486,7 @@ def _get_storage_nodes(private_key: bytes):
 
 
 def _search_object(node:str, private_key: bytes, cid:str, oid: str):
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {node} --key {binascii.hexlify(private_key).decode()} object search --root --cid {cid} ID {oid} --ttl 1'
+    Cmd = f'{CLI_PREFIX}neofs-cli --host {node}  --ttl 1 --key {binascii.hexlify(private_key).decode()} object search --root --cid {cid} ID {oid}'
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info(Cmd)
