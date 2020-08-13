@@ -31,10 +31,12 @@ Generate Keys
     ${USER_KEY_GEN} =       Generate Neo private key
     ${OTHER_KEY_GEN} =      Generate Neo private key
     ${SYSTEM_KEY_GEN} =	    Form Privkey from String            c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
+    ${SYSTEM_KEY_GEN_SN} =  Form Privkey from String            0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
 
-    Set Global Variable     ${USER_KEY}        ${USER_KEY_GEN}
-    Set Global Variable     ${OTHER_KEY}       ${OTHER_KEY_GEN}
-    Set Global Variable     ${SYSTEM_KEY}      ${SYSTEM_KEY_GEN}
+                            Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
+                            Set Global Variable     ${OTHER_KEY}                 ${OTHER_KEY_GEN}
+                            Set Global Variable     ${SYSTEM_KEY}                ${SYSTEM_KEY_GEN}
+                            Set Global Variable     ${SYSTEM_KEY_STOR_NODE}      ${SYSTEM_KEY_GEN_SN}
 
     # Basic ACL manual page: https://neospcc.atlassian.net/wiki/spaces/NEOF/pages/362348545/NeoFS+ACL
     # TODO: X - Sticky bit validation on public container!!!
@@ -42,7 +44,7 @@ Generate Keys
 Create Containers
     # Create containers:
                             Log	                                Create Private Container
-    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x1C8C8CCC
+    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x1C8C8CCC 
                             Container Existing                  ${USER_KEY}     ${PRIV_CID_GEN}  
 
                             Log	                                Create Public Container
@@ -50,7 +52,7 @@ Create Containers
                             Container Existing                  ${USER_KEY}     ${PUBLIC_CID_GEN}  
 
                             Log	                                Create Read-Only Container
-    ${READONLY_CID_GEN} =   Create container                    ${USER_KEY}     0x1FFFCCFF
+    ${READONLY_CID_GEN} =   Create container                    ${USER_KEY}     0x1FFF8CFF
                             Container Existing                  ${USER_KEY}     ${READONLY_CID_GEN}   
 
     Set Global Variable     ${PRIV_CID}          ${PRIV_CID_GEN}
@@ -76,6 +78,9 @@ Check Private Container
                         ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${PRIV_CID}
                         Run Keyword And Expect Error        *
                         ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${PRIV_CID}
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${PRIV_CID}
+
+                        
 
 
     # Get
@@ -83,7 +88,8 @@ Check Private Container
                         Run Keyword And Expect Error        *
                         ...  Get object from NeoFS          ${OTHER_KEY}      ${PRIV_CID}     ${S_OID_USER}      s_file_read
                         Run Keyword And Expect Error        *
-                        ...  Get object from NeoFS          ${SYSTEM_KEY}      ${PRIV_CID}    ${S_OID_USER}      s_file_read 
+                        ...  Get object from NeoFS          ${SYSTEM_KEY}      ${PRIV_CID}    ${S_OID_USER}      s_file_read
+                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${PRIV_CID}    ${S_OID_USER}      s_file_read 
 
     # Get Range
                         Get Range                           ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    0:256
@@ -91,6 +97,8 @@ Check Private Container
                         ...  Get Range                      ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}    0:256
                         Run Keyword And Expect Error        *
                         ...  Get Range                      ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                      ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}    0:256
 
     # TODO: GetRangeHash 
     # get-range-hash --cid <cid> --oid <oid> [--bearer <hex>] [--verify --file </path/to/file>] [--salt <hex>] [<offset1>:<length1> [...]]
@@ -100,11 +108,12 @@ Check Private Container
 
 
     # Search
-    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}    
-                        Search object                       ${USER_KEY}    ${PRIV_CID}   ${EMPTY}  @{S_OBJ_PRIV}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}
+                        Search object                       ${USER_KEY}     ${PRIV_CID}   ${EMPTY}  @{S_OBJ_PRIV}
                         Run Keyword And Expect Error        *
                         ...  Search object                  ${OTHER_KEY}    ${PRIV_CID}  ${EMPTY}  @{S_OBJ_PRIV}
                         Search object                       ${SYSTEM_KEY}   ${PRIV_CID}  ${EMPTY}  @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${PRIV_CID}  ${EMPTY}  @{S_OBJ_PRIV}
 
  
     # Head
@@ -112,6 +121,8 @@ Check Private Container
                         Run Keyword And Expect Error        *
                         ...  Head object                    ${OTHER_KEY}    ${PRIV_CID}        ${S_OBJ_PRIV}       ${True}
                         Head object                         ${SYSTEM_KEY}    ${PRIV_CID}        ${S_OBJ_PRIV}       ${True}
+                        Head object                         ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}        ${S_OBJ_PRIV}       ${True}
+
 
 
     # Delete
@@ -120,6 +131,8 @@ Check Private Container
                         ...  Delete object                  ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}  
                         Run Keyword And Expect Error        *
                         ...  Delete object                  ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}   
+                        Run Keyword And Expect Error        *
+                        ...  Delete object                  ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}
 
  
 
@@ -133,6 +146,7 @@ Check Public Container
     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment
                         Run Keyword And Expect Error        *
                         ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${PUBLIC_CID}
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${PUBLIC_CID}
 
     # Get
                         Get object from NeoFS               ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}       s_file_read
@@ -140,6 +154,7 @@ Check Public Container
     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment
                         Run Keyword And Expect Error        *
                         ...  Get object from NeoFS          ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}       s_file_read 
+                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}     ${PUBLIC_CID}     ${S_OID_USER}       s_file_read
 
     # Get Range
                         Get Range                      ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    0:256
@@ -147,6 +162,7 @@ Check Public Container
     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment
                         Run Keyword And Expect Error        *
                         ...  Get Range                 ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}    0:256
+                        Get Range                      ${SYSTEM_KEY_STOR_NODE}     ${PUBLIC_CID}     ${S_OID_USER}    0:256
 
     # TODO: GetRangeHash 
     # get-range-hash --cid <cid> --oid <oid> [--bearer <hex>] [--verify --file </path/to/file>] [--salt <hex>] [<offset1>:<length1> [...]]
@@ -156,26 +172,36 @@ Check Public Container
 
 
     # Search
-    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_OTHER}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_OTHER}   ${S_OID_SYS_SN}
                         Search object                       ${USER_KEY}     ${PUBLIC_CID}  ${EMPTY}  @{S_OBJ_PRIV}
                         Search object                       ${OTHER_KEY}    ${PUBLIC_CID}  ${EMPTY}  @{S_OBJ_PRIV}
                         Search object                       ${SYSTEM_KEY}   ${PUBLIC_CID}  ${EMPTY}  @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}  ${EMPTY}  @{S_OBJ_PRIV}
 
 
     # Head
                         Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_USER}       ${True}
                         Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_USER}       ${True}
                         Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_USER}       ${True}
+                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_USER}       ${True}
 
                         Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_OTHER}      ${True}
                         Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_OTHER}      ${True}
                         Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_OTHER}      ${True}
+                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_OTHER}      ${True}
+
+                        Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_SYS_SN}       ${True}
+                        Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_SYS_SN}       ${True}
+                        Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_SYS_SN}       ${True}
+                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_SYS_SN}       ${True}
+
 
     # Delete
                         Delete object                       ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}     
                         Delete object                       ${OTHER_KEY}     ${PUBLIC_CID}     ${S_OID_USER}
                         Run Keyword And Expect Error        *  
                         ...  Delete object                  ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}   
+                        Delete object                       ${SYSTEM_KEY_STOR_NODE}     ${PUBLIC_CID}     ${S_OID_USER}
 
 
 Check Read-Only Container
@@ -187,6 +213,7 @@ Check Read-Only Container
                         ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${READONLY_CID}
                         Run Keyword And Expect Error        *
                         ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${READONLY_CID}
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${READONLY_CID}
 
     # Get
                         Get object from NeoFS               ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}       s_file_read
@@ -194,6 +221,7 @@ Check Read-Only Container
     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment
                         Run Keyword And Expect Error        *
                         ...  Get object from NeoFS          ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}       s_file_read 
+                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${READONLY_CID}     ${S_OID_USER}       s_file_read
 
     # Get Range
                         Get Range                      ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    0:256
@@ -201,6 +229,7 @@ Check Read-Only Container
     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment
                         Run Keyword And Expect Error        *
                         ...  Get Range                 ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    0:256
+                        Get Range                      ${SYSTEM_KEY_STOR_NODE}      ${READONLY_CID}     ${S_OID_USER}    0:256
 
     # TODO: GetRangeHash 
     # get-range-hash --cid <cid> --oid <oid> [--bearer <hex>] [--verify --file </path/to/file>] [--salt <hex>] [<offset1>:<length1> [...]]
@@ -210,16 +239,18 @@ Check Read-Only Container
 
 
     # Search
-    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}   
+    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}
                         Search object                       ${USER_KEY}     ${READONLY_CID}  ${EMPTY}  @{S_OBJ_RO}
                         Search object                       ${OTHER_KEY}    ${READONLY_CID}  ${EMPTY}  @{S_OBJ_RO}
                         Search object                       ${SYSTEM_KEY}   ${READONLY_CID}  ${EMPTY}  @{S_OBJ_RO}
+                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${READONLY_CID}  ${EMPTY}  @{S_OBJ_RO}
 
  
     # Head
                         Head object                         ${USER_KEY}     ${READONLY_CID}      ${S_OID_USER}       ${True}
                         Head object                         ${OTHER_KEY}    ${READONLY_CID}      ${S_OID_USER}       ${True}
                         Head object                         ${SYSTEM_KEY}   ${READONLY_CID}      ${S_OID_USER}       ${True}
+                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${READONLY_CID}      ${S_OID_USER}       ${True}
 
     # Delete
                         Delete object                       ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}
@@ -227,3 +258,5 @@ Check Read-Only Container
                         ...  Delete object                       ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}
                         Run Keyword And Expect Error        *  
                         ...  Delete object                  ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}  
+                        Run Keyword And Expect Error        *  
+                        ...  Delete object                  ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}  

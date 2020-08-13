@@ -62,10 +62,31 @@ def validate_storage_policy_for_object(private_key: bytes, expected_copies: int,
         raise Exception("Not enough object copies to match storage policyю Found: %s, expexted: %s." % (copies, expected_copies))
 
 
+# docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 1ed43848107fd2d513c38ebfba3bb8c33d5abd2b6a99fafb09d07a30191989af container set-eacl --cid DNG1DCV3PTfxuYCLdbdMpRmrumfvacyWmyqLzNrV1koi --eacl 0a4b080210021a1e080310011a0a686561646572206b6579220c6865616465722076616c7565222508031221031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a
+# Updating ACL rules of container...
 
-#docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 22b2f3faea9383e27262364c96d8e5ef7e893abf7a6ad7bf31ee1f2c2b3cfc42 
-# object get-range --cid 4H9iChvzYdBg6qntfYUWGWCzsJFBDdo99KegefsD721Q --oid a101d078-b3d4-4325-8fe8-41dce6917097 0:10
-#fead193c1f6f488255f7
+@keyword('Get eACL')
+def get_eacl(private_key: bytes, cid: str):
+
+    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container get-eacl --cid {cid}'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+    output = complProc.stdout
+    logger.info("Output: %s" % output)
+
+
+@keyword('Set eACL')
+def set_eacl(private_key: bytes, cid: str, eacl: str):
+
+    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container set-eacl --cid {cid} --eacl {eacl}'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+    output = complProc.stdout
+    logger.info("Output: %s" % output)
+
+
 
 @keyword('Get Range')
 def get_range(private_key: bytes, cid: str, oid: str, range_cut: str):
@@ -300,8 +321,55 @@ def head_object(private_key: bytes, cid: str, oid: str, full_headers:bool=False,
             else:
                 raise Exception("User header %s was not found in the command output: \t%s" % (user_header, complProc.stdout))
    
+        return complProc.stdout
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    
+
+
+@keyword('Parse Object Header')
+def parse_object_header(header: str):
+    result_header = dict()
+
+    #SystemHeader
+    result_header['ID'] = _parse_oid(header)
+    result_header['CID'] = _parse_cid(header)
+
+    logger.info("Result: %s" % result_header)
+  
+    
+  
+    m = re.search(r'ID: ([a-zA-Z0-9-]+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        oid = m.group(1)
+    else:
+        raise Exception("no OID was parsed from command output: \t%s" % output)
+        
+    return oid
+
+    return 
+#	SystemHeader:
+#		- ID=c9fdc3e8-6576-4822-9bc4-2a0addcbf105
+#		- CID=42n81QNr7o513t2pTGuzM2PPFiHLhJ1MeSCJzizQW1wP
+#		- OwnerID=ANwbVH8nyWfTg7G6L9uzZxfXhKUhdjTYDa
+#		- Version=1
+#		- PayloadLength=1024
+#		- CreatedAt={UnixTime=1597330026 Epoch=2427}
+#	ExtendedHeaders:
+#		- Type=UserHeader
+#		  Value={Key=key1 Val=1}
+#		- Type=UserHeader
+#		  Value={Key=key2 Val='abc1'}
+#		- Type=Token
+#		  Value={ID=6143e50f-5dbf-4964-ba16-266517e4fe9a Verb=Put}
+#		- Type=HomoHash
+#		  Value=4c3304688e23b884f29a3e50cb65e067357d074f52e1e634a940a7488f40a3f53ffb0cb94d4b9c619432307fa615eb076d0c3d153acdd77835acac0553992238
+#		- Type=PayloadChecksum
+#		  Value=776bc1c03d2c72885c4976b000e2483df57275964308cc67eb36a829cad9a2c3
+#		- Type=Integrity
+#		  Value={Checksum=45859b067c6525b6f9fa78b9764ceca0a0eeb506cefd71c374aabd4cfd773430 Signature=04e80f81919fa14879b04fcad0fab411ebb0b7c38f00f030c98a4813ae402300b79b666c705317b358a17963d50ee5dceab4f6f3599e54da210b860df2f8b2a63c}
 
 
 @keyword('Delete object')
