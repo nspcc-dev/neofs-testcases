@@ -76,6 +76,30 @@ def get_eacl(private_key: bytes, cid: str):
     logger.info("Output: %s" % output)
 
 
+
+@keyword('Convert Str to Hex Str with Len')
+def conver_str_to_hex(string_convert: str):
+    converted = binascii.hexlify(bytes(string_convert, encoding= 'utf-8')).decode("utf-8")
+    prev_len_2 = '{:04x}'.format(int(len(converted)/2))
+
+    return str(prev_len_2)+str(converted)
+
+
+@keyword('Set custom eACL')
+def set_custom_eacl(private_key: bytes, cid: str, eacl_prefix: str, eacl_slice: str, eacl_postfix: str):
+   
+   logger.info(str(eacl_prefix))
+   logger.info(str(eacl_slice))
+   logger.info(str(eacl_postfix))
+
+   eacl = str(eacl_prefix) + str(eacl_slice) + str(eacl_postfix)
+   logger.info("Custom eACL: %s" % eacl)
+
+   set_eacl(private_key, cid, eacl)
+   return
+
+
+
 @keyword('Set eACL')
 def set_eacl(private_key: bytes, cid: str, eacl: str):
 
@@ -329,27 +353,67 @@ def head_object(private_key: bytes, cid: str, oid: str, full_headers:bool=False,
     
 
 
-@keyword('Parse Object Header')
-def parse_object_header(header: str):
+@keyword('Parse Object System Header')
+def parse_object_system_header(header: str):
     result_header = dict()
 
     #SystemHeader
-    result_header['ID'] = _parse_oid(header)
-    result_header['CID'] = _parse_cid(header)
+    logger.info("Input: %s" % header)
+    # ID
+    m = re.search(r'- ID=([a-zA-Z0-9-]+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['ID'] = m.group(1)
+    else:
+        raise Exception("no ID was parsed from object header: \t%s" % output)
+
+    # CID
+    m = re.search(r'- CID=([a-zA-Z0-9]+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['CID'] = m.group(1)
+    else:
+        raise Exception("no CID was parsed from object header: \t%s" % output)
+
+    # Owner
+    m = re.search(r'- OwnerID=([a-zA-Z0-9]+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['OwnerID'] = m.group(1)
+    else:
+        raise Exception("no OwnerID was parsed from object header: \t%s" % output)
+    
+    # Version
+    m = re.search(r'- Version=(\d+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['Version'] = m.group(1)
+    else:
+        raise Exception("no Version was parsed from object header: \t%s" % output)
+
+
+    # PayloadLength
+    m = re.search(r'- PayloadLength=(\d+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['PayloadLength'] = m.group(1)
+    else:
+        raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
+
+
+ 
+    # CreatedAtUnixTime
+    m = re.search(r'- CreatedAt={UnixTime=(\d+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['CreatedAtUnixTime'] = m.group(1)
+    else:
+        raise Exception("no CreatedAtUnixTime was parsed from object header: \t%s" % output)
+
+    # CreatedAtEpoch
+    m = re.search(r'- CreatedAt={UnixTime=\d+ Epoch=(\d+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['CreatedAtEpoch'] = m.group(1)
+    else:
+        raise Exception("no CreatedAtEpoch was parsed from object header: \t%s" % output)
 
     logger.info("Result: %s" % result_header)
-  
-    
-  
-    m = re.search(r'ID: ([a-zA-Z0-9-]+)', header)
-    if m.start() != m.end(): # e.g., if match found something
-        oid = m.group(1)
-    else:
-        raise Exception("no OID was parsed from command output: \t%s" % output)
-        
-    return oid
+    return result_header
 
-    return 
 #	SystemHeader:
 #		- ID=c9fdc3e8-6576-4822-9bc4-2a0addcbf105
 #		- CID=42n81QNr7o513t2pTGuzM2PPFiHLhJ1MeSCJzizQW1wP
@@ -357,6 +421,26 @@ def parse_object_header(header: str):
 #		- Version=1
 #		- PayloadLength=1024
 #		- CreatedAt={UnixTime=1597330026 Epoch=2427}
+
+
+@keyword('Parse Object Extended Header')
+def parse_object_extended_header(header: str):
+    result_header = dict()
+
+ 
+    pattern = re.compile(r'- Type=(\w+)\n.+Value=(.+)\n')
+    # key in dict.keys()
+
+    for (f_type, f_val) in re.findall(pattern, header):
+        logger.info("found: %s - %s" % (f_type, f_val))
+        if f_type not in result_header.keys():
+            result_header[f_type] = []
+        
+        # if {} -> dict -> if re.search(r'(%s)' % cid, output):
+        result_header[f_type].append(f_val)
+
+    logger.info("Result: %s" % result_header)
+    return result_header
 #	ExtendedHeaders:
 #		- Type=UserHeader
 #		  Value={Key=key1 Val=1}

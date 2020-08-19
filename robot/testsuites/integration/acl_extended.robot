@@ -1,13 +1,10 @@
 *** Settings ***
 Variables   ../../variables/common.py
 
- 
+Library     Collections
 Library     ${RESOURCES}/environment.py
 Library     ${RESOURCES}/neo.py
 Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment.py
-Library     ${RESOURCES}/assertions.py
-Library     ${RESOURCES}/neo.py
 
 
 *** Variables ***
@@ -16,20 +13,18 @@ Library     ${RESOURCES}/neo.py
 &{FILE_OTH_HEADER} =        key1=oth  key2=oth
 
 *** Test cases ***
-Basic ACL Operations
+Extended ACL Operations
     [Documentation]     Testcase to validate NeoFS operations with extended ACL.
     [Tags]              ACL  NeoFS  NeoCLI
     [Timeout]           20 min
 
     Generate Keys
     Generate file
-    Prepare eACL rules
- 
-#    Check Filters
+    Prepare eACL Role rules
     Check Actions
+    Check Filters
     
- 
-
+    
  
 *** Keywords ***
 
@@ -37,102 +32,184 @@ Check Actions
     Check eACL Deny and Allow All Other
     Check eACL Deny and Allow All User
     Check eACL Deny and Allow All System
-
     Check eACL Deny All Other and Allow All Pubkey
 
     
-
-
 Check Filters
-    Check eACL MatchType String
+    Check eACL MatchType String Equal
+    Check eACL MatchType String Not Equal
 
-    
 
-Check eACL MatchType String
+Check eACL MatchType String Equal
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}      ${FILE_S}     ${CID}            &{FILE_USR_HEADER} 
-    ${HEADER} =             Head object                         ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}     ${True}
-                            Get nodes with object               ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}
-                            Parse Object Header                 ${HEADER} 
+
+    ${HEADER} =             Head object                         ${USER_KEY}      ${CID}        ${S_OID_USER}     ${True}
+    &{SYS_HEADER_PARSED} =  Parse Object System Header          ${HEADER} 
                             
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
-#### Format
-#
-#{
-#  "Records": [
-#    {
-#      "Operation": OPERATION,
-#      "Action": ACTION,
-#      "Filters": [
-#        {
-#          "HeaderType": HEADER_TYPE,
-#          "MatchType": MATCH_TYPE,
-#          "Name": {HeaderType = ObjectSystem ? SYSTEM_HEADER : ANY_STRING},
-#          "Value": ANY_STRING,
-#        }
-#      ],
-#      "Targets": [
-#        {
-#          "Role": ROLE,
-#          "Keys": BASE64_STRING[...]
-#        }
-#      ]
-#    }
-#  ]
-#}
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object ID
+    ${ID_value} =	        Get From Dictionary	                ${SYS_HEADER_PARSED}	ID   
+    ${ID_value_hex} =       Convert Str to Hex Str with Len     ${ID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         000100000002000000010001000000020000000100024944  ${ID_value_hex}  0001000000030000    
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
-# * ANY_STRING - any JSON string value
-# * BASE64_STRING - any Base64 string (RFC 4648)
-# * ACTION - string, one of
-#   * Deny
-#   * Allow
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CID
+    ${CID_value} =	        Get From Dictionary	                ${SYS_HEADER_PARSED}	CID   
+    ${CID_value_hex} =      Convert Str to Hex Str with Len     ${CID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         00010000000200000001000100000002000000010003434944  ${CID_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
-# * ROLE - string, one of
-#   * User
-#   * System
-#   * Others
-#   * Pubkey
-# * OPERATION - string, one of
-#   * GET
-#   * HEAD
-#   * PUT
-#   * DELETE
-#   * SEARCH
-#   * GETRANGE
-#   * GETRANGEHASH
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object OwnerID
+    ${OwnerID_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	OwnerID   
+    ${OwnerID_value_hex} =  Convert Str to Hex Str with Len     ${OwnerID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         000100000002000000010001000000020000000100084f574e45525f4944  ${OwnerID_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object Version
+    ${Version_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	Version   
+    ${Version_value_hex} =  Convert Str to Hex Str with Len     ${Version_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000001000756455253494f4e   ${Version_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object PayloadLength
+    ${Payload_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	PayloadLength   
+    ${Payload_value_hex} =  Convert Str to Hex Str with Len     ${Payload_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000001000e5041594c4f41445f4c454e475448   ${Payload_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CreatedAtUnixTime
+    ${AtUnixTime_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	CreatedAtUnixTime   
+    ${AtUnixTime_value_hex} =   Convert Str to Hex Str with Len     ${AtUnixTime_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000001000c435245415445445f554e4958  ${AtUnixTime_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CreatedAtEpoch
+    ${AtEpoch_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	CreatedAtEpoch   
+    ${AtEpoch_value_hex} =  Convert Str to Hex Str with Len     ${AtEpoch_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000001000d435245415445445f45504f4348  ${AtEpoch_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object Extended User Header     
+    ${S_OID_USER_OTH} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}     ${CID}            &{FILE_OTH_HEADER} 
+                            Set eACL                            ${USER_KEY}      ${CID}        000100000002000000010001000000030000000100046b65793200062761626331270001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER_OTH}        local_file_eacl
+
+
+Check eACL MatchType String Not Equal
+    ${CID} =                Create Container Public
+    ${FILE_S_2} =           Generate file of bytes              2048
+    ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}      ${FILE_S}     ${CID}            &{FILE_USR_HEADER} 
+    # Sleep for 1 epoch
+                            Sleep                               30sec
+    ${S_OID_OTHER} =        Put object to NeoFS                 ${OTHER_KEY}     ${FILE_S_2}   ${CID}            &{FILE_OTH_HEADER} 
+    ${HEADER} =             Head object                         ${USER_KEY}      ${CID}        ${S_OID_USER}     ${True}
+                            Head object                         ${USER_KEY}      ${CID}        ${S_OID_OTHER}    ${True}
+    &{SYS_HEADER_PARSED} =  Parse Object System Header          ${HEADER} 
+                            
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+    
+                            Log	                                Set eACL for Deny GET operation with StringNotEqual Object ID
+    ${ID_value} =	        Get From Dictionary	                ${SYS_HEADER_PARSED}	ID   
+    ${ID_value_hex} =       Convert Str to Hex Str with Len     ${ID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         000100000002000000010001000000020000000200024944  ${ID_value_hex}  0001000000030000  
+                                                                                      
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
 
-# * HEADER_TYPE - string, one of
-#   * Request
-#   * ObjectSystem
-#   * ObjectUser
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CID
+    ${CID_value} =	        Get From Dictionary	                ${SYS_HEADER_PARSED}	CID   
+    ${CID_value_hex} =      Convert Str to Hex Str with Len     ${CID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         00010000000200000001000100000002000000020003434944  ${CID_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
-# * MATCH_TYPE - string, one of
-#   * StringEqual
-#   * StringNotEqual
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object OwnerID
+    ${OwnerID_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	OwnerID   
+    ${OwnerID_value_hex} =  Convert Str to Hex Str with Len     ${OwnerID_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         000100000002000000010001000000020000000200084f574e45525f4944  ${OwnerID_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
-# * SYSTEM_HEADER - string one of
-#   * ID
-#   * CID
-#   * OWNER_ID
-#   * VERSION
-#   * PAYLOAD_LENGTH
-#   * CREATED_UNIX
-#   * CREATED_EPOCH
-#   * LINK_PREV
-#   * LINK_NEXT
-#   * LINK_CHILD
-#   * LINK_PAR
-#   * LINK_SG
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object Version
+    ${Version_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	Version   
+    ${Version_value_hex} =  Convert Str to Hex Str with Len     ${Version_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000002000756455253494f4e   ${Version_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object PayloadLength
+    ${Payload_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	PayloadLength   
+    ${Payload_value_hex} =  Convert Str to Hex Str with Len     ${Payload_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000002000e5041594c4f41445f4c454e475448   ${Payload_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CreatedAtUnixTime
+    ${AtUnixTime_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	CreatedAtUnixTime   
+    ${AtUnixTime_value_hex} =   Convert Str to Hex Str with Len     ${AtUnixTime_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000002000c435245415445445f554e4958  ${AtUnixTime_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object CreatedAtEpoch
+    ${AtEpoch_value} =	    Get From Dictionary	                ${SYS_HEADER_PARSED}	CreatedAtEpoch   
+    ${AtEpoch_value_hex} =  Convert Str to Hex Str with Len     ${AtEpoch_value}     
+                            Set custom eACL                     ${USER_KEY}      ${CID}         0001000000020000000100010000000200000002000d435245415445445f45504f4348  ${AtEpoch_value_hex}  0001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
+
+
+                            Log	                                Set eACL for Deny GET operation with StringEqual Object Extended User Header     
+    ${S_OID_USER_OTH} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}     ${CID}            &{FILE_OTH_HEADER} 
+                            Set eACL                            ${USER_KEY}      ${CID}        000100000002000000010001000000030000000200046b65793200062761626331270001000000030000 
+                            Sleep                               15sec
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${OTHER_KEY}      ${CID}        ${S_OID_OTHER}           local_file_eacl
+                            Get object from NeoFS               ${OTHER_KEY}      ${CID}        ${S_OID_USER}            local_file_eacl
 
 
 Generate Keys
@@ -154,25 +231,20 @@ Generate Keys
                             Set Global Variable     ${SYSTEM_KEY_SN}      ${SYSTEM_KEY_GEN_SN}
 
 
-
-
 Create Container Public
                             Log	                                Create Public Container
     ${PUBLIC_CID_GEN} =     Create container                    ${USER_KEY}     0x2FFFFFFF
     [Return]                ${PUBLIC_CID_GEN}
                             
-
  
 Generate file
     # Generate small file
     ${FILE_S_GEN} =         Generate file of bytes              1024
-    ${FILE_S_HASH_GEN} =    Get file hash                       ${FILE_S_GEN}
-
                             Set Global Variable     ${FILE_S}          ${FILE_S_GEN}
-                            Set Global Variable     ${FILE_S_HASH}     ${FILE_S_HASH_GEN}
+ 
 
-Prepare eACL rules
-                            Log	                    Set eACL for different cases
+Prepare eACL Role rules
+                            Log	                    Set eACL for different Role cases
                             Set Global Variable     ${EACL_DENY_ALL_OTHER}        0007000000020000000100000001000000030000000000020000000300000001000000030000000000020000000200000001000000030000000000020000000500000001000000030000000000020000000400000001000000030000000000020000000600000001000000030000000000020000000700000001000000030000
                             Set Global Variable     ${EACL_ALLOW_ALL_OTHER}       0007000000010000000100000001000000030000000000010000000300000001000000030000000000010000000200000001000000030000000000010000000500000001000000030000000000010000000400000001000000030000000000010000000600000001000000030000000000010000000700000001000000030000
                             
@@ -196,8 +268,6 @@ Check eACL Deny and Allow All Other
 
 
 Check eACL Deny and Allow All System
-    
-    
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}            ${CID}            &{FILE_USR_HEADER} 
     ${D_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}            ${CID}            &{FILE_USR_HEADER_DEL} 
@@ -231,9 +301,8 @@ Check eACL Deny and Allow All System
 
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}
-                            Sleep                               30sec
+                            Sleep                               15sec
  
-
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}            ${CID}            &{FILE_OTH_HEADER} 
@@ -268,7 +337,7 @@ Check eACL Deny and Allow All System
 
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
-                            Sleep                               30sec
+                            Sleep                               15sec
 
 
                             Run Keyword And Expect Error        *
@@ -298,8 +367,6 @@ Check eACL Deny and Allow All System
 
 
 
-
-
 Check eACL Deny All Other and Allow All Pubkey
 
     ${CID} =                Create Container Public
@@ -315,12 +382,10 @@ Check eACL Deny All Other and Allow All Pubkey
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_Pubkey}
-                            Sleep                               30sec
- 
-
+                            Sleep                               15sec
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS                 ${OTHER_KEY}    ${FILE_S}            ${CID}            &{FILE_USR_HEADER} 
+                            ...  Put object to NeoFS                 ${OTHER_KEY}    ${FILE_S}     ${CID}                   &{FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS               ${OTHER_KEY}    ${CID}        ${S_OID_USER}            local_file_eacl
                             Run Keyword And Expect Error        *
@@ -332,14 +397,12 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}
 
-                            Put object to NeoFS                 ${EACL_KEY}    ${FILE_S}     ${CID}            &{FILE_OTH_HEADER} 
+                            Put object to NeoFS                 ${EACL_KEY}    ${FILE_S}     ${CID}                   &{FILE_OTH_HEADER} 
                             Get object from NeoFS               ${EACL_KEY}    ${CID}        ${S_OID_USER}            local_file_eacl
                             Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 @{S_OBJ_H}            &{FILE_USR_HEADER}
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${True}
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}
-
-
 
 
 Check eACL Deny and Allow All
@@ -358,7 +421,7 @@ Check eACL Deny and Allow All
                             Delete object                       ${KEY}    ${CID}        ${D_OID_USER}
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}
-                            Sleep                               30sec
+                            Sleep                               15sec
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS                 ${KEY}    ${FILE_S}            ${CID}            &{FILE_USR_HEADER} 
@@ -375,7 +438,7 @@ Check eACL Deny and Allow All
 
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${ALLOW_EACL}
-                            Sleep                               30sec
+                            Sleep                               15sec
 
 
                             Put object to NeoFS                 ${KEY}    ${FILE_S}            ${CID}            &{FILE_OTH_HEADER} 
@@ -385,49 +448,3 @@ Check eACL Deny and Allow All
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            0:256
                             Delete object                       ${KEY}    ${CID}        ${D_OID_USER}
 
-
-
-
-
-
-
- 
-
-
- 
-
-
-
-#  docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 13a75c3bc71865ef9474f314dedb7aa9e2b22048a86bd431578abc30971f319a container set-eacl --cid 8PD2SdxUB1P6122mHP14XcRkQtWg2XPHaeDysWKz3ARy --eacl 0a4b080210021a1e080310011a0a686561646572206b6579220c6865616465722076616c7565222508031221031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a
-#  docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 13a75c3bc71865ef9474f314dedb7aa9e2b22048a86bd431578abc30971f319a container set-eacl --cid 8PD2SdxUB1P6122mHP14XcRkQtWg2XPHaeDysWKz3ARy --eacl 0a4a080210021a1e080310011a0a686561646572206b6579220c6865616465722076616c75652224080312200eef0860d2f81ed724ee45e7275a6a917791503582202c47459804192e1ba04a
-
-#  docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 13a75c3bc71865ef9474f314dedb7aa9e2b22048a86bd431578abc30971f319a container get-eacl --cid 8PD2SdxUB1P6122mHP14XcRkQtWg2XPHaeDysWKz3ARy 
-
-
-
-
-
-########################################
-########################################
-
-Create Containers DELETE 
-    # Create containers:
-
-                            Log	                                Create Private Container
-    ${INCOR_CID_GEN} =      Create container                    ${USER_KEY}     0x3FFFFFFF
-                            Container Existing                  ${USER_KEY}     ${INCOR_CID_GEN}  
-
- 
-
-                            Log	                                Create Private Container
-    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x0C8C8CCC
-                            Container Existing                  ${USER_KEY}     ${PRIV_CID_GEN}  
-
-                            Log	                                Create None Container
-    ${NONE_CID_GEN} =       Create container                    ${USER_KEY}     0x2000000
-                            Container Existing                  ${USER_KEY}     ${NONE_CID_GEN}    
-
-    Set Global Variable     ${INCOR_CID}         ${INCOR_CID_GEN}
-    Set Global Variable     ${PUBLIC_CID}        ${PUBLIC_CID_GEN}
-    Set Global Variable     ${PRIV_CID}          ${PRIV_CID_GEN}
-    Set Global Variable     ${NONE_CID}          ${NONE_CID_GEN}
