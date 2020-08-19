@@ -13,6 +13,16 @@
 
 3. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
 
+### Запуск произвольного тесткейса
+Для запуска произвольного тесткейса нужно выполнить команду: 
+`robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
+
+Для запуска доступны следущие сценарии:
+ * acl_basic.robot - базовый ACL
+ * acl_extended.robot - extended ACL
+ * object_complex.robot - операции над простым объектом
+ * object_simple.robot - операции над большим объектом
+
 
 ### Запуск тесткейсов в докере
 1. Задать переменные окружения для работы с dev-env:
