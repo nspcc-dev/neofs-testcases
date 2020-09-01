@@ -28,8 +28,10 @@ def get_nodes_with_object(private_key: bytes, cid, oid):
     nodes_list = []
 
     for node in storage_nodes:
-        if re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
-            nodes_list.append(node)
+        search_res = _search_object(node, private_key, cid, oid)
+        if search_res:
+            if re.search(r'(%s: %s)' % (cid, oid), search_res):
+                nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
 
@@ -42,28 +44,45 @@ def get_nodes_without_object(private_key: bytes, cid, oid):
     nodes_list = []
 
     for node in storage_nodes:
-        if not re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
+        search_res = _search_object(node, private_key, cid, oid)
+        if search_res:
+            if not re.search(r'(%s: %s)' % (cid, oid), search_res):
+                nodes_list.append(node)
+        else:
             nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
 
 
 @keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(private_key: bytes, expected_copies: int, cid, oid):
+def validate_storage_policy_for_object(private_key: bytes, expected_copies: int, cid, oid, *expected_node_list):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
+    found_nodes = []
+
     for node in storage_nodes:
-        if re.search(r'(%s: %s)' % (cid, oid), _search_object(node, private_key, cid, oid)):
-            copies += 1
+        search_res = _search_object(node, private_key, cid, oid)
+        if search_res:
+            if re.search(r'(%s: %s)' % (cid, oid), search_res):
+                copies += 1
+                found_nodes.append(node)
 
-    logger.info("Copies: %s" % copies)
-    
-    if copies < expected_copies:
-        raise Exception("Not enough object copies to match storage policyю Found: %s, expexted: %s." % (copies, expected_copies))
+    if copies != expected_copies:
+        raise Exception("Object copies is not match storage policy. Found: %s, expexted: %s." % (copies, expected_copies))
+    else:
+        logger.info("Found copies: %s, expected: %s" % (copies, expected_copies))
+
+    logger.info("Found nodes: %s" % found_nodes)
+
+    if expected_node_list:
+        if sorted(found_nodes) == sorted(expected_node_list):
+            logger.info("Found node list '{}' is equal for expected list '{}'".format(found_nodes, expected_node_list))
+        else:
+            raise Exception("Found node list '{}' is not equal to expected list '{}'".format(found_nodes, expected_node_list))
 
 
-# docker exec neofs-cli neofs-cli --host 192.168.123.71:8080 --key 1ed43848107fd2d513c38ebfba3bb8c33d5abd2b6a99fafb09d07a30191989af container set-eacl --cid DNG1DCV3PTfxuYCLdbdMpRmrumfvacyWmyqLzNrV1koi --eacl 0a4b080210021a1e080310011a0a686561646572206b6579220c6865616465722076616c7565222508031221031a6c6fbbdf02ca351745fa86b9ba5a9452d785ac4f7fc2b7548ca2a46c4fcf4a
-# Updating ACL rules of container...
+
+
 
 @keyword('Get eACL')
 def get_eacl(private_key: bytes, cid: str):
@@ -113,9 +132,13 @@ def set_eacl(private_key: bytes, cid: str, eacl: str):
 
 
 @keyword('Get Range')
-def get_range(private_key: bytes, cid: str, oid: str, range_cut: str):
+def get_range(private_key: bytes, cid: str, oid: str, bearer: str, range_cut: str):
 
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {range_cut}'
+    bearer_token = ""
+    if bearer: 
+        bearer_token = f"--bearer {bearer}"
+ 
+    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {bearer_token} {range_cut} '
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
@@ -124,11 +147,11 @@ def get_range(private_key: bytes, cid: str, oid: str, range_cut: str):
 
 
 @keyword('Create container')
-def create_container(private_key: bytes, basic_acl:str=""):
-    rule = "RF 2 SELECT 2 Node"
+def create_container(private_key: bytes, basic_acl:str="", rule:str="RF 2 SELECT 2 Node"):
+    
     if basic_acl != "":
         basic_acl = "--acl " + basic_acl
-
+    
     createContainerCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container put --rule "{rule}" {basic_acl}'
     logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
@@ -172,17 +195,18 @@ def generate_file_of_bytes(size):
 
 
 @keyword('Search object')
-def search_object(private_key: bytes, cid: str, keys: str, *expected_objects_list, **kwargs ):
+def search_object(private_key: bytes, cid: str, keys: str, bearer: str, *expected_objects_list, **kwargs ):
 
-    logger.info(expected_objects_list)
-    logger.info(kwargs)
+    bearer_token = ""
+    if bearer: 
+        bearer_token = f"--bearer {bearer}"
+
     option = ""
-
     if kwargs:
         for key, value in dict(kwargs).items():
             option = f'{option} {key} {value}'
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object search {keys} --cid {cid} {option}'
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object search {keys} --cid {cid} {bearer_token} {option}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -190,7 +214,7 @@ def search_object(private_key: bytes, cid: str, keys: str, *expected_objects_lis
 
         logger.info("Output: %s" % complProc.stdout)
 
-        if expected_objects_list is not None:
+        if expected_objects_list:
             found_objects = re.findall(r'%s: ([\-\w]+)' % cid, complProc.stdout)
 
             if sorted(found_objects) == sorted(expected_objects_list):
@@ -326,12 +350,16 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
 
 
 @keyword('Head object')
-def head_object(private_key: bytes, cid: str, oid: str, full_headers:bool=False, **user_headers_dict):
+def head_object(private_key: bytes, cid: str, oid: str, bearer: str, full_headers:bool=False, **user_headers_dict):
     options = ""
     if full_headers:
         options = "--full-headers"
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} {options}'
+    bearer_token = ""
+    if bearer:
+        bearer_token = f"--bearer {bearer}"
+
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -414,14 +442,7 @@ def parse_object_system_header(header: str):
     logger.info("Result: %s" % result_header)
     return result_header
 
-#	SystemHeader:
-#		- ID=c9fdc3e8-6576-4822-9bc4-2a0addcbf105
-#		- CID=42n81QNr7o513t2pTGuzM2PPFiHLhJ1MeSCJzizQW1wP
-#		- OwnerID=ANwbVH8nyWfTg7G6L9uzZxfXhKUhdjTYDa
-#		- Version=1
-#		- PayloadLength=1024
-#		- CreatedAt={UnixTime=1597330026 Epoch=2427}
-
+ 
 
 @keyword('Parse Object Extended Header')
 def parse_object_extended_header(header: str):
@@ -429,36 +450,27 @@ def parse_object_extended_header(header: str):
 
  
     pattern = re.compile(r'- Type=(\w+)\n.+Value=(.+)\n')
-    # key in dict.keys()
+ 
 
     for (f_type, f_val) in re.findall(pattern, header):
         logger.info("found: %s - %s" % (f_type, f_val))
         if f_type not in result_header.keys():
             result_header[f_type] = []
-        
-        # if {} -> dict -> if re.search(r'(%s)' % cid, output):
+ 
         result_header[f_type].append(f_val)
 
     logger.info("Result: %s" % result_header)
     return result_header
-#	ExtendedHeaders:
-#		- Type=UserHeader
-#		  Value={Key=key1 Val=1}
-#		- Type=UserHeader
-#		  Value={Key=key2 Val='abc1'}
-#		- Type=Token
-#		  Value={ID=6143e50f-5dbf-4964-ba16-266517e4fe9a Verb=Put}
-#		- Type=HomoHash
-#		  Value=4c3304688e23b884f29a3e50cb65e067357d074f52e1e634a940a7488f40a3f53ffb0cb94d4b9c619432307fa615eb076d0c3d153acdd77835acac0553992238
-#		- Type=PayloadChecksum
-#		  Value=776bc1c03d2c72885c4976b000e2483df57275964308cc67eb36a829cad9a2c3
-#		- Type=Integrity
-#		  Value={Checksum=45859b067c6525b6f9fa78b9764ceca0a0eeb506cefd71c374aabd4cfd773430 Signature=04e80f81919fa14879b04fcad0fab411ebb0b7c38f00f030c98a4813ae402300b79b666c705317b358a17963d50ee5dceab4f6f3599e54da210b860df2f8b2a63c}
-
+ 
 
 @keyword('Delete object')
-def delete_object(private_key: bytes, cid: str, oid: str):
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object delete --cid {cid} --oid {oid}'
+def delete_object(private_key: bytes, cid: str, oid: str, bearer: str):
+
+    bearer_token = ""
+    if bearer:
+        bearer_token = f"--bearer {bearer}"
+
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object delete --cid {cid} --oid {oid} {bearer_token}'
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
@@ -524,14 +536,19 @@ def cleanup_file(filename: str):
 
 
 @keyword('Put object to NeoFS')
-def put_object(private_key: bytes, path: str, cid: str, **kwargs):
+def put_object(private_key: bytes, path: str, cid: str, bearer: str, **kwargs):
     logger.info("Going to put the object")
+
     user_headers = ""
     user_headers_dict = kwargs
     if kwargs:
         logger.info(kwargs)
         for key, value in dict(kwargs).items():
             user_headers = f'{user_headers} --user "{key}"="{value}"'
+
+    bearer_token = ""
+    if bearer:
+        bearer_token = f"--bearer {bearer}"
 
 
     # Put object to cli container
@@ -541,7 +558,7 @@ def put_object(private_key: bytes, path: str, cid: str, **kwargs):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
 
 
-    putObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object put --verify --file {path}  --cid {cid} {user_headers}'
+    putObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object put --verify --file {path}  --cid {cid} {bearer_token} {user_headers}'
     logger.info("Cmd: %s" % putObjectCmd)
     complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
@@ -551,8 +568,16 @@ def put_object(private_key: bytes, path: str, cid: str, **kwargs):
 
 
 @keyword('Get object from NeoFS')
-def get_object(private_key: bytes, cid: str, oid: str, read_object: str):
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get --cid {cid} --oid {oid} --file {read_object}'
+def get_object(private_key: bytes, cid: str, oid: str, bearer: str, read_object: str):
+
+    bearer_token = ""
+    if bearer:
+        bearer_token = f"--bearer {bearer}"
+
+
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get --cid {cid} --oid {oid} --file {read_object} {bearer_token}'
+
+
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:
@@ -639,10 +664,19 @@ def _get_storage_nodes(private_key: bytes):
 
 def _search_object(node:str, private_key: bytes, cid:str, oid: str):
     Cmd = f'{CLI_PREFIX}neofs-cli --host {node}  --ttl 1 --key {binascii.hexlify(private_key).decode()} object search --root --cid {cid} ID {oid}'
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info(Cmd)
-    logger.info("Output:")
-    logger.info(complProc.stdout)
 
-    return complProc.stdout
+    try:
+        logger.info(Cmd)
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+        return complProc.stdout
+
+    except subprocess.CalledProcessError as e:
+        if "FailedPrecondition: server is not presented in container" in e.output:
+            logger.info("FailedPrecondition: server is not presented in container.")
+        else:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+    

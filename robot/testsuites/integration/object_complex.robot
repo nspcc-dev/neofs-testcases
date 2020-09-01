@@ -40,14 +40,14 @@ NeoFS Complex Object Operations
     ${SIZE} =           Set Variable	                    20e+6
     ${FILE} =           Generate file of bytes              ${SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
-    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}         
-    ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}         &{FILE_USR_HEADER} 
+    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         
+    ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         &{FILE_USR_HEADER} 
 
     @{Link_obj_S} =     Verify linked objects                 ${PRIV_KEY}    ${CID}        ${S_OID}       ${SIZE}
     @{Link_obj_H} =     Verify linked objects                 ${PRIV_KEY}    ${CID}        ${H_OID}       ${SIZE}
 
     @{Full_obj_list} =	Create List                         @{Link_obj_S}  @{Link_obj_H}  ${S_OID}      ${H_OID}
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}       @{Full_obj_list}  
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}             ${EMPTY}      @{Full_obj_list}  
 
 # Next keyword has been removed due to https://neospcc.atlassian.net/browse/NSPCC-1103     
 #                       Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${S_OID}    
@@ -57,51 +57,51 @@ NeoFS Complex Object Operations
     @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}      ${SGID}
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
 
-                        Search object                       ${PRIV_KEY}    ${CID}        --sg           @{S_OBJ_SG}               
+                        Search object                       ${PRIV_KEY}    ${CID}        --sg             ${EMPTY}           @{S_OBJ_SG}               
                         Get storage group                   ${PRIV_KEY}    ${CID}        ${SGID}
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}       s_file_read
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}       h_file_read
-                        Search object                       ${PRIV_KEY}    ${CID}        --root         @{S_OBJ_ALL}   
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       s_file_read
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       h_file_read
+                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}         @{S_OBJ_ALL}   
                         # Check sub-objects
 
-                        Search object                       ${PRIV_KEY}    ${CID}        --root         @{S_OBJ_H}       &{FILE_USR_HEADER} 
-                        Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}       ${True}     
-                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}       ${True}          &{FILE_USR_HEADER}
+                        Search object                       ${PRIV_KEY}    ${CID}        --root             ${EMPTY}        @{S_OBJ_H}       &{FILE_USR_HEADER} 
+                        Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       ${True}     
+                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       ${True}          &{FILE_USR_HEADER}
                         
                         Run Keyword And Expect Error        REGEXP:User header (\\w+=\\w+\\s?)+ was not found              
-                        ...  Head object                    ${PRIV_KEY}    ${CID}        ${H_OID}       ${False}         &{FILE_USR_HEADER}                    
+                        ...  Head object                    ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       ${False}         &{FILE_USR_HEADER}                    
                         
                         Verify file hash                    s_file_read    ${FILE_HASH}   
                         Verify file hash                    h_file_read    ${FILE_HASH}  
     &{ID_OBJ_S} =	    Create Dictionary	                ID=${S_OID}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
                         Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${S_OID}
 # Removed due to tombstones zombies.
 #                        Wait Until Keyword Succeeds         2 min          30 sec        
-#                        ...  Search object                  ${PRIV_KEY}    ${CID}        --root         @{EMPTY}        &{ID_OBJ_S}
+#                        ...  Search object                  ${PRIV_KEY}    ${CID}        --root            ${EMPTY}         @{EMPTY}        &{ID_OBJ_S}
 #                        Run Keyword And Expect Error        *       
-#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${S_OID}       s_file_read_2
+#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       s_file_read_2
 
     &{ID_OBJ_H} =	    Create Dictionary	                ID=${H_OID}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
                         Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${H_OID}	
 # Removed due to tombstones zombies.
-#                        Search object                       ${PRIV_KEY}    ${CID}        --root         @{EMPTY}        &{FILE_USR_HEADER}                        
+#                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}         @{EMPTY}        &{FILE_USR_HEADER}                        
 #                        Wait Until Keyword Succeeds         2 min          30 sec 
-#                        ...  Search object                  ${PRIV_KEY}    ${CID}        --root         @{EMPTY}        &{ID_OBJ_H}
+#                        ...  Search object                  ${PRIV_KEY}    ${CID}        --root            ${EMPTY}         @{EMPTY}        &{ID_OBJ_H}
 #                        Run Keyword And Expect Error        *                 
-#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${H_OID}       s_file_read_2
+#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       s_file_read_2
 
 
     &{SGID_OBJ} =	    Create Dictionary	                ID=${SGID}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${SGID}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${SGID}            ${EMPTY}
                         Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${SGID}
 # Removed due to tombstones zombies.                       
-#                        Search object                       ${PRIV_KEY}    ${CID}        --sg           @{EMPTY}
+#                        Search object                       ${PRIV_KEY}    ${CID}        --sg            ${EMPTY}           @{EMPTY}
 #                        Wait Until Keyword Succeeds         2 min          30 sec 
-#                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}       @{EMPTY}        &{SGID_OBJ} 
+#                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       @{EMPTY}        &{SGID_OBJ} 
 #                        Run Keyword And Expect Error        *              
-#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${SGID}       s_file_read_2
+#                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${SGID}            ${EMPTY}       s_file_read_2
 
                         Cleanup File                        ${FILE}   
                         Cleanup File                        s_file_read
