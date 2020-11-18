@@ -12,16 +12,51 @@ from robot.api import logger
 
 ROBOT_AUTO_KEYWORDS = False
 
-NEOFS_ENDPOINT = "192.168.123.71:8080"
-CLI_PREFIX = "docker exec neofs-cli "
+NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
+CLI_PREFIX = ""
 
-@keyword('Form Privkey from String')
-def form_privkey_from_string(private_key: str):
-    return bytes.fromhex(private_key) 
+@keyword('Form WIF from String')
+def form_wif_from_string(private_key: str):
+    wif = ""
+    Cmd = f'neofs-cli util keyer -u {private_key}'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+    output = complProc.stdout
+    logger.info("Output: %s" % output)
+
+    m = re.search(r'WIF\s+(\w+)', output)
+    if m.start() != m.end(): 
+        wif = m.group(1)
+    else:
+        raise Exception("Can not get WIF.")
+
+    return wif
+
+
+@keyword('Get ScripHash')
+def get_scripthash(privkey: str):
+    scripthash = ""
+    Cmd = f'neofs-cli util keyer -u {privkey}'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+    output = complProc.stdout
+    logger.info("Output: %s" % output)
+
+    # ScriptHash3.0   00284fc88f8ac31f8e56c03301bfab0757e3f212
+    m = re.search(r'ScriptHash3.0   (\w+)', output)
+    if m.start() != m.end(): 
+        scripthash = m.group(1)
+    else:
+        raise Exception("Can not get ScriptHash.")
+
+    return scripthash
+
 
 
 @keyword('Get nodes with object')
-def get_nodes_with_object(private_key: bytes, cid, oid):
+def get_nodes_with_object(private_key: str, cid, oid):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -30,14 +65,14 @@ def get_nodes_with_object(private_key: bytes, cid, oid):
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(r'(%s: %s)' % (cid, oid), search_res):
+            if re.search(r'(%s)' % (oid), search_res):
                 nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
 
 
 @keyword('Get nodes without object')
-def get_nodes_without_object(private_key: bytes, cid, oid):
+def get_nodes_without_object(private_key: str, cid, oid):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -46,7 +81,7 @@ def get_nodes_without_object(private_key: bytes, cid, oid):
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if not re.search(r'(%s: %s)' % (cid, oid), search_res):
+            if not re.search(r'(%s)' % (oid), search_res):
                 nodes_list.append(node)
         else:
             nodes_list.append(node)
@@ -55,7 +90,7 @@ def get_nodes_without_object(private_key: bytes, cid, oid):
 
 
 @keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(private_key: bytes, expected_copies: int, cid, oid, *expected_node_list):
+def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid, *expected_node_list):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
     found_nodes = []
@@ -63,7 +98,7 @@ def validate_storage_policy_for_object(private_key: bytes, expected_copies: int,
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(r'(%s: %s)' % (cid, oid), search_res):
+            if re.search(r'(%s)' % (oid), search_res):
                 copies += 1
                 found_nodes.append(node)
 
@@ -132,13 +167,13 @@ def set_eacl(private_key: bytes, cid: str, eacl: str):
 
 
 @keyword('Get Range')
-def get_range(private_key: bytes, cid: str, oid: str, bearer: str, range_cut: str):
+def get_range(private_key: str, cid: str, oid: str, bearer: str, range_cut: str):
 
     bearer_token = ""
     if bearer: 
         bearer_token = f"--bearer {bearer}"
  
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {bearer_token} {range_cut} '
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {bearer_token} {range_cut} '
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
@@ -147,12 +182,12 @@ def get_range(private_key: bytes, cid: str, oid: str, bearer: str, range_cut: st
 
 
 @keyword('Create container')
-def create_container(private_key: bytes, basic_acl:str="", rule:str="RF 2 SELECT 2 Node"):
+def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CBF 1 SELECT 2 FROM * AS X"):
     
     if basic_acl != "":
-        basic_acl = "--acl " + basic_acl
+        basic_acl = "--basic-acl " + basic_acl
     
-    createContainerCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container put --rule "{rule}" {basic_acl}'
+    createContainerCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container create --policy "{rule}" {basic_acl} --await'
     logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
@@ -161,13 +196,17 @@ def create_container(private_key: bytes, basic_acl:str="", rule:str="RF 2 SELECT
     cid = _parse_cid(output)
     logger.info("Created container %s with rule '%s'" % (cid, rule))
 
+#$ ./bin/neofs-cli -c config.yml container create --policy rule.ql --await
+#container ID: GePis2sDpYqYPh4F8vfGUqoujtNcqdXhipbLx2pKbUwX
+
+# REP 1 IN X CBF 1 SELECT 2 IN SAME Location FROM * AS X
     return cid
 
 
 @keyword('Container Existing')
-def container_existing(private_key: bytes, cid: str):
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container list'
-    logger.info("CMD: %s" % Cmd)
+def container_existing(private_key: str, cid: str):
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container list'
+    logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info("Output: %s" % complProc.stdout)
@@ -195,18 +234,17 @@ def generate_file_of_bytes(size):
 
 
 @keyword('Search object')
-def search_object(private_key: bytes, cid: str, keys: str, bearer: str, *expected_objects_list, **kwargs ):
+def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, *expected_objects_list ):
 
     bearer_token = ""
     if bearer: 
         bearer_token = f"--bearer {bearer}"
 
-    option = ""
-    if kwargs:
-        for key, value in dict(kwargs).items():
-            option = f'{option} {key} {value}'
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object search {keys} --cid {cid} {bearer_token} {option}'
+    if filters:
+        filters = f"--filters {filters}"
+
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object search {keys} --cid {cid} {bearer_token} {filters}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -215,8 +253,9 @@ def search_object(private_key: bytes, cid: str, keys: str, bearer: str, *expecte
         logger.info("Output: %s" % complProc.stdout)
 
         if expected_objects_list:
-            found_objects = re.findall(r'%s: ([\-\w]+)' % cid, complProc.stdout)
+            found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
 
+             
             if sorted(found_objects) == sorted(expected_objects_list):
                 logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
             else:
@@ -229,7 +268,7 @@ def search_object(private_key: bytes, cid: str, keys: str, bearer: str, *expecte
 
 
 @keyword('Verify Head Tombstone')
-def verify_head_tombstone(private_key: bytes, cid: str, oid: str):
+def verify_head_tombstone(private_key: str, cid: str, oid: str):
 
     ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} --full-headers'
     logger.info("Cmd: %s" % ObjectCmd)
@@ -350,28 +389,26 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
 
 
 @keyword('Head object')
-def head_object(private_key: bytes, cid: str, oid: str, bearer: str, full_headers:bool=False, **user_headers_dict):
+def head_object(private_key: str, cid: str, oid: str, bearer: str, user_headers:str=""):
     options = ""
-    if full_headers:
-        options = "--full-headers"
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} {bearer_token} {options}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
-        for key in user_headers_dict:
-            user_header = f'Key={key} Val={user_headers_dict[key]}'
-            if re.search(r'(%s)' % user_header, complProc.stdout):
-                logger.info("User header %s was parsed from command output" % user_header)
+        for key in user_headers.split(","):
+        #    user_header = f'Key={key} Val={user_headers_dict[key]}'
+            if re.search(r'(%s)' % key, complProc.stdout):
+                logger.info("User header %s was parsed from command output" % key)
             else:
-                raise Exception("User header %s was not found in the command output: \t%s" % (user_header, complProc.stdout))
+                raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
    
         return complProc.stdout
 
@@ -464,13 +501,13 @@ def parse_object_extended_header(header: str):
  
 
 @keyword('Delete object')
-def delete_object(private_key: bytes, cid: str, oid: str, bearer: str):
+def delete_object(private_key: str, cid: str, oid: str, bearer: str):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object delete --cid {cid} --oid {oid} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token}'
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
@@ -536,29 +573,16 @@ def cleanup_file(filename: str):
 
 
 @keyword('Put object to NeoFS')
-def put_object(private_key: bytes, path: str, cid: str, bearer: str, **kwargs):
+def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str):
     logger.info("Going to put the object")
 
-    user_headers = ""
-    user_headers_dict = kwargs
-    if kwargs:
-        logger.info(kwargs)
-        for key, value in dict(kwargs).items():
-            user_headers = f'{user_headers} --user "{key}"="{value}"'
+    if user_headers:
+        user_headers = f"--attributes {user_headers}"
 
-    bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {bearer}"
+        bearer = f"--bearer {bearer}"
 
-
-    # Put object to cli container
-    putObjectCont = f'docker cp {path} neofs-cli:/ '
-    logger.info("Cmd: %s" % putObjectCont)
-    complProc = subprocess.run(putObjectCont, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-
-
-    putObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object put --verify --file {path}  --cid {cid} {bearer_token} {user_headers}'
+    putObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers}'
     logger.info("Cmd: %s" % putObjectCmd)
     complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
@@ -567,17 +591,13 @@ def put_object(private_key: bytes, path: str, cid: str, bearer: str, **kwargs):
     return oid
 
 
-@keyword('Get object from NeoFS')
-def get_object(private_key: bytes, cid: str, oid: str, bearer: str, read_object: str):
-
-    bearer_token = ""
-    if bearer:
+@keyword('Get Range Hash')
+def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str):
+ 
+    if bearer_token: 
         bearer_token = f"--bearer {bearer}"
-
-
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get --cid {cid} --oid {oid} --file {read_object} {bearer_token}'
-
-
+ 
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token}'
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:
@@ -587,11 +607,22 @@ def get_object(private_key: bytes, cid: str, oid: str, bearer: str, read_object:
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-    # Get object from cli container
-    getObjectCont = f'docker cp neofs-cli:/{read_object} . '
-    logger.info("Cmd: %s" % getObjectCont)
-    complProc = subprocess.run(getObjectCont, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+
+@keyword('Get object from NeoFS')
+def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_object: str):
+
+    if bearer_token:
+        bearer_token = f"--bearer {bearer_token}"
+
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object get --cid {cid} --oid {oid} --file {read_object} {bearer_token}'
+
+    logger.info("Cmd: %s" % ObjectCmd)
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 def _get_file_hash(filename):
@@ -637,44 +668,52 @@ def _parse_cid(output: str):
     Parameters:
     - output: a string with command run output
     """
-    m = re.search(r'Success! Container <(([a-zA-Z0-9])+)> created', output)
-    if m.start() != m.end(): # e.g., if match found something
-        cid = m.group(1)
-    else:
+    m = re.search(r'container ID: (\w+)', output)
+    if not m.start() != m.end(): # e.g., if match found something
         raise Exception("no CID was parsed from command output: \t%s" % (output))
-
+    cid = m.group(1)
+        
     return cid
 
 def _get_storage_nodes(private_key: bytes):
-    storage_nodes = []
-    NetmapCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} status netmap'
-    complProc = subprocess.run(NetmapCmd, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    output = complProc.stdout
-    logger.info("Netmap: %s" % output)
-    for m in re.finditer(r'"address":"/ip4/(\d+\.\d+\.\d+\.\d+)/tcp/(\d+)"', output):
-        storage_nodes.append(m.group(1)+":"+m.group(2))
+    storage_nodes = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
+    #NetmapCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} status netmap'
+    #complProc = subprocess.run(NetmapCmd, check=True, universal_newlines=True,
+    #        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+    #output = complProc.stdout
+    #logger.info("Netmap: %s" % output)
+    #for m in re.finditer(r'"address":"/ip4/(\d+\.\d+\.\d+\.\d+)/tcp/(\d+)"', output):
+    #    storage_nodes.append(m.group(1)+":"+m.group(2))
     
-    if not storage_nodes:
-        raise Exception("Storage nodes was not found.")
+    #if not storage_nodes:
+    #    raise Exception("Storage nodes was not found.")
 
+
+    # Will be fixed when netmap will be added to cli
+
+    #storage_nodes.append()
     logger.info("Storage nodes: %s" % storage_nodes)
     return storage_nodes
 
 
-def _search_object(node:str, private_key: bytes, cid:str, oid: str):
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {node}  --ttl 1 --key {binascii.hexlify(private_key).decode()} object search --root --cid {cid} ID {oid}'
+def _search_object(node:str, private_key: str, cid:str, oid: str):
+    # --filters objectID={oid}
+    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} '
 
     try:
         logger.info(Cmd)
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
-        return complProc.stdout
+
+        if re.search(r'%s' % oid, complProc.stdout):
+            return oid
+        else:
+            logger.info("Object is not found.")
 
     except subprocess.CalledProcessError as e:
-        if "FailedPrecondition: server is not presented in container" in e.output:
-            logger.info("FailedPrecondition: server is not presented in container.")
+        if re.search(r'local node is outside of object placement', e.output):
+            logger.info("Server is not presented in container.")
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
