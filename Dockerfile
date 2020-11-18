@@ -71,11 +71,7 @@ RUN apk add --no-cache git \
 RUN mkdir -p /robot/vendor
 
 RUN cd /robot/vendor \
-    && git clone git@bitbucket.org:nspcc-dev/neofs-dev-env.git \
-    && cd neofs-dev-env \
-    && cp ca/* /usr/local/share/ca-certificates/ \
-    && update-ca-certificates
-
+    && git clone https://github.com/nspcc-dev/neofs-dev-env.git
 
 WORKDIR ${WD}
 COPY ./ ${WD}
