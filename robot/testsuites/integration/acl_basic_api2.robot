@@ -56,7 +56,7 @@ Generate Keys
                             Payment Operations      ${WALLET_OTH}   ${ADDR_OTH}  ${OTHER_KEY}
                             
     # Basic ACL manual page: https://neospcc.atlassian.net/wiki/spaces/NEOF/pages/362348545/NeoFS+ACL
-    # TODO: X - Sticky bit validation on public container!!!
+    # TODO: X - Sticky bit validation on public container
 
 
 Payment Operations
@@ -84,7 +84,7 @@ Create Containers
     
 
                             Log	                                Create Private Container    
-    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x1C8C8CCC          ${RULE_FOR_ALL}
+    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x18888888          ${RULE_FOR_ALL}
                             Container Existing                  ${USER_KEY}     ${PRIV_CID_GEN}  
 
                             Log	                                Create Public Container
@@ -92,7 +92,7 @@ Create Containers
                             Container Existing                  ${USER_KEY}     ${PUBLIC_CID_GEN}  
 
                             Log	                                Create Read-Only Container          
-    ${READONLY_CID_GEN} =   Create container                    ${USER_KEY}     0x1FFF8CFF          ${RULE_FOR_ALL}
+    ${READONLY_CID_GEN} =   Create container                    ${USER_KEY}     0x1FFF88FF          ${RULE_FOR_ALL}
                             Container Existing                  ${USER_KEY}     ${READONLY_CID_GEN}   
 
     Set Global Variable     ${PRIV_CID}          ${PRIV_CID_GEN}
@@ -115,9 +115,9 @@ Check Private Container
     # Put
     ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
                         Run Keyword And Expect Error        *
-                        ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
-    # https://github.com/nspcc-dev/neofs-node/issues/178         
-    ${S_OID_SYS_IR} =   Put object to NeoFS                 ${SYSTEM_KEY}    ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
+                        ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY}         
+                        Run Keyword And Expect Error        *
+                        ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
     ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${PRIV_CID}    ${EMPTY}  ${EMPTY} 
 
                         
@@ -127,8 +127,18 @@ Check Private Container
                         Get object from NeoFS               ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
                         Run Keyword And Expect Error        *
                         ...  Get object from NeoFS          ${OTHER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get object from NeoFS               ${SYSTEM_KEY}      ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Run Keyword And Expect Error        *
+                        ...  Get object from NeoFS           ${SYSTEM_KEY}      ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                         Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
+
+    # Get Range
+                        Get Range                           ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                      ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                      ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                      ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
     # Get Range Hash
                         Get Range Hash                      ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}    0:256
@@ -140,7 +150,7 @@ Check Private Container
     # TODO: GetRange https://github.com/nspcc-dev/neofs-node/issues/179
 
     # Search
-    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}     ${S_OID_SYS_IR}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}    
                         Search object                       ${USER_KEY}     ${PRIV_CID}   ${EMPTY}      ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
                         Run Keyword And Expect Error        *
                         ...  Search object                  ${OTHER_KEY}    ${PRIV_CID}  ${EMPTY}    ${EMPTY}   ${EMPTY}        @{S_OBJ_PRIV}
@@ -183,6 +193,13 @@ Check Public Container
                         Get object from NeoFS               ${OTHER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}      s_file_read
                         Get object from NeoFS               ${SYSTEM_KEY}      ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                         Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
+
+    # Get Range
+                        Get Range                           ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${OTHER_KEY}     ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_STOR_NODE}    ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+
 
     # Get Range Hash
                         Get Range Hash                      ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}    0:256
@@ -229,7 +246,8 @@ Check Read-Only Container
     ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
                         Run Keyword And Expect Error        *
                         ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
-    ${S_OID_SYS_IR} =   Put object to NeoFS                 ${SYSTEM_KEY}    ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
     ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${READONLY_CID}     ${EMPTY}    ${EMPTY}
 
     # Get
@@ -238,6 +256,13 @@ Check Read-Only Container
                         Get object from NeoFS               ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read 
                         Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
 
+    # Get Range
+                        Get Range                           ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+
+
     # Get Range Hash
                         Get Range Hash                      ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
                         Get Range Hash                      ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
@@ -245,7 +270,7 @@ Check Read-Only Container
                         Get Range Hash                      ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}     ${S_OID_SYS_IR}
+    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}     
                         Search object                       ${USER_KEY}     ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
                         Search object                       ${OTHER_KEY}    ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
                         Search object                       ${SYSTEM_KEY}   ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}

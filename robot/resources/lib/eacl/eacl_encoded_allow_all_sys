@@ -1,0 +1,68 @@
+{
+  "records": [
+    {
+      "operation": "GET",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "HEAD",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "PUT",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "DELETE",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "SEARCH",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGE",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGEHASH",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "role": "SYSTEM"
+        }
+      ]
+    }
+  ]
+}
+

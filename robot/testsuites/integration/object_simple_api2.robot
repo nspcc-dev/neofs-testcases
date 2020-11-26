@@ -2,15 +2,14 @@
 Variables   ../../variables/common.py
 
 Library     ${RESOURCES}/environment.py
-Library     ${RESOURCES}/neo.py
 Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
 Library     ${RESOURCES}/assertions.py
 Library     ${RESOURCES}/neo.py
 
 *** Variables ***
-${FILE_USR_HEADER} =    key1=1,key2=abc
-
+${FILE_USR_HEADER} =        key1=1,key2=abc
+${FILE_USR_HEADER_OTH} =    key1=2
 
 *** Test cases ***
 NeoFS Simple Object Operations
@@ -50,27 +49,37 @@ NeoFS Simple Object Operations
 
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  
     ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER} 
+    ${H_OID_OTH} =      Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
 
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${S_OID}    
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID}    
+                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID_OTH}    
 
-    @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}      
+    @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}      ${H_OID_OTH}
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
+    @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
 
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       h_file_read
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
                                     
                         Verify file hash                    s_file_read    ${FILE_HASH} 
                         Verify file hash                    h_file_read    ${FILE_HASH} 
 
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER}      @{S_OBJ_H}        
-                        
+                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       0:10
+                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       0:10
+
+                        Get Range                           ${PRIV_KEY}    ${CID}        ${S_OID}            s_get_range    ${EMPTY}       0:10
+                        Get Range                           ${PRIV_KEY}    ${CID}        ${H_OID}            h_get_range    ${EMPTY}       0:10
+                       
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                  @{S_OBJ_ALL}   
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER}        @{S_OBJ_H}        
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER_OTH}    @{S_OBJ_H_OTH}    
+
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}        ${FILE_USR_HEADER}
                           
                         Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
                         #Verify Head tombstone              ${PRIV_KEY}    ${CID}        ${S_OID}
 
                         Sleep                               2min
@@ -84,6 +93,8 @@ NeoFS Simple Object Operations
                         Cleanup File                        ${FILE}   
                         Cleanup File                        s_file_read
                         Cleanup File                        h_file_read
+                        Cleanup File                        s_get_range
+                        Cleanup File                        h_get_range
 
 # 4.86192020
  

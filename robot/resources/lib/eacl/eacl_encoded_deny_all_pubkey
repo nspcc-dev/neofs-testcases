@@ -1,0 +1,68 @@
+{
+  "records": [
+    {
+      "operation": "GET",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "HEAD",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "PUT",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "DELETE",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "SEARCH",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGE",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGEHASH",
+      "action": "DENY",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    }
+  ]
+}
+
