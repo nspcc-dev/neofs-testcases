@@ -277,7 +277,7 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
 @keyword('Form BearerToken file filter for all ops')
 def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str, matchType: str, key: str, value: str):  
 
-    # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH.
+    # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH? Need to clarify.
 
     eacl = get_eacl(private_key, cid)
     input_records = ""
@@ -314,6 +314,14 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
         {
           "operation": "PUT",
           "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
           "targets": [
             {
               "role": \"""" +  target_role + """"
