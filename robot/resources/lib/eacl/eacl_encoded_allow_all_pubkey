@@ -1,0 +1,132 @@
+{
+  "records": [
+    {
+      "operation": "GET",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "HEAD",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "PUT",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "DELETE",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "SEARCH",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGE",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGEHASH",
+      "action": "ALLOW",
+      "targets": [
+        {
+          "keys": [ "NSNKmYXGM6TUH4AjAbtC2afxbJMV87XdDT" ]
+        }
+      ]
+    },
+    {
+      "operation": "GET",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "HEAD",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "PUT",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "DELETE",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "SEARCH",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGE",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    },
+    {
+      "operation": "GETRANGEHASH",
+      "action": "DENY",
+      "targets": [
+        {
+          "role": "OTHERS"
+        }
+      ]
+    }
+
+  ]
+}
+
