@@ -16,8 +16,6 @@ import json
 from robot.libraries.BuiltIn import BuiltIn
 from neocore.KeyPair import KeyPair
 
-from Crypto import Random
-
 ROBOT_AUTO_KEYWORDS = False
 
 
@@ -54,7 +52,6 @@ def generate_wallet(wallet: str):
 
 @keyword('Dump Address')
 def dump_address(wallet: str):
-    #"address": "Ngde6LSaBZ58p72trTNkgqEZmX8dTWBgHo",
     address = ""
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet dump -w {wallet}" )
 
@@ -82,8 +79,6 @@ def dump_privkey(wallet: str, address: str):
 
 
 @keyword('Transfer Mainnet Gas') 
-# docker cp wallets/wallet.json main_chain:/wallets/
-
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r http://main_chain.neofs.devenv:30333 --from {address} "
             f"--to {address_to} --token gas --amount {amount}" )
@@ -98,8 +93,6 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
     return out
 
 @keyword('Withdraw Mainnet Gas') 
-# docker cp wallets/wallet.json main_chain:/wallets/
-
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
     cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r http://main_chain.neofs.devenv:30333 "
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
@@ -113,8 +106,6 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
     return out
 
-# neo-go contract invokefunction -w wallets/deploy_wallet.json -a NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx -r http://main_chain.neofs.devenv:30333 
-# 5f490fbd8010fd716754073ee960067d28549b7d withdraw 12b97a2206ae4b10c7e0194b7b655c32cc912057 int:10  -- 12b97a2206ae4b10c7e0194b7b655c32cc912057
 
 
 @keyword('Mainnet Balance')
@@ -145,10 +136,6 @@ def expected_mainnet_balance(address: str, expected: int):
         raise Exception(f"Expected amount ({expected}) of GAS has not been found. Found {amount}.")
 
     return True
-# balance":[{"assethash":"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"50"
-#curl -d '{ "jsonrpc": "2.0", "id": 1, "method": "getnep5balances", "params": ["NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx"] }' main_chain.neofs.devenv:30333
-#{"id":1,"jsonrpc":"2.0","result":{"balance":[{"assethash":"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"9237.47595500","lastupdatedblock":158}],"address":"NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx"}}
-
 
 
 
@@ -168,35 +155,8 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int):
 
     tx = m.group(1)
 
-    # Sent invocation transaction
-
     return tx
 
-    #docker exec -it main_chain \
-	#	neo-go contract invokefunction \
-	#		-w wallets/wallet.json \
-	#		-a NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx \
-	#		-r http://main_chain.${LOCAL_DOMAIN}:30333 \
-	#		${NEOFS_CONTRACT_MAINCHAIN} \
-	#		deposit \
-	#		12b97a2206ae4b10c7e0194b7b655c32cc912057 \
-	#		int:500 \
-	#		bytes: \
-	#		-- 12b97a2206ae4b10c7e0194b7b655c32cc912057
-
-#neo-go contract invokefunction -w wallets/wallet.json -a NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx 
-#-r <http://main_chain.neofs.devenv:30333> af5dc5f7e6a6efc64d679098f328027591a2e518 
-#deposit 12b97a2206ae4b10c7e0194b7b655c32cc912057 int:60 bytes: -- 
-#12b97a2206ae4b10c7e0194b7b655c32cc912057
-
- 
-
-
-
-# wallet nep5 transfer -w wallets/wallet.json -r http://main_chain.neofs.devenv:30333 --from NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx 
-# --to NULwe3UAHckN2fzNdcVg31tDiaYtMDwANt --token gas --amount 50
-
- 
 
 @keyword('Transaction accepted in block')
 def transaction_accepted_in_block(tx_id):
@@ -209,9 +169,6 @@ def transaction_accepted_in_block(tx_id):
 
     logger.info("Transaction id: %s" % tx_id)
     
-
-
-# curl -d '{ "jsonrpc": "2.0", "id": 1, "method": "getnep5transfers", "params": ["NULwe3UAHckN2fzNdcVg31tDiaYtMDwANt"] }' main_chain.neofs.devenv:30333
     TX_request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "gettransactionheight", "params": [\"'+ tx_id +'\"] }\''
     
     logger.info(f"Executing command: {TX_request}")

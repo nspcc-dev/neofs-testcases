@@ -1,13 +1,9 @@
 *** Settings ***
 Variables   ../../variables/common.py
-
- 
-Library     ${RESOURCES}/environment.py
-Library     ${RESOURCES}/neo.py
+  
 Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
-Library     ${RESOURCES}/assertions.py
-Library     ${RESOURCES}/neo.py
+
 
 *** Variables ***
 ${RULE_FOR_ALL} =       REP 2 IN X CBF 1 SELECT 4 FROM * AS X
@@ -49,8 +45,8 @@ Generate Keys
 
                             Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
                             Set Global Variable     ${OTHER_KEY}                 ${OTHER_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY}                ${SYSTEM_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY_STOR_NODE}      ${SYSTEM_KEY_GEN_SN}
+                            Set Global Variable     ${SYSTEM_KEY_IR}             ${SYSTEM_KEY_GEN}
+                            Set Global Variable     ${SYSTEM_KEY_SN}             ${SYSTEM_KEY_GEN_SN}
 
                             Payment Operations      ${WALLET}       ${ADDR}      ${USER_KEY}  
                             Payment Operations      ${WALLET_OTH}   ${ADDR_OTH}  ${OTHER_KEY}
@@ -83,211 +79,206 @@ Create Containers
 
     
 
-                            Log	                                Create Private Container    
-    ${PRIV_CID_GEN} =       Create container                    ${USER_KEY}     0x18888888          ${RULE_FOR_ALL}
-                            Container Existing                  ${USER_KEY}     ${PRIV_CID_GEN}  
+                            Log	                   Create Private Container    
+    ${PRIV_CID_GEN} =       Create container       ${USER_KEY}        0x18888888              ${RULE_FOR_ALL}
+                            Container Existing     ${USER_KEY}        ${PRIV_CID_GEN}    
 
-                            Log	                                Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container                    ${USER_KEY}     0x1FFFFFFF          ${RULE_FOR_ALL}
-                            Container Existing                  ${USER_KEY}     ${PUBLIC_CID_GEN}  
+                            Log	                   Create Public Container
+    ${PUBLIC_CID_GEN} =     Create container       ${USER_KEY}        0x1FFFFFFF              ${RULE_FOR_ALL}
+                            Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}      
 
-                            Log	                                Create Read-Only Container          
-    ${READONLY_CID_GEN} =   Create container                    ${USER_KEY}     0x1FFF88FF          ${RULE_FOR_ALL}
-                            Container Existing                  ${USER_KEY}     ${READONLY_CID_GEN}   
+                            Log	                   Create Read-Only Container          
+    ${READONLY_CID_GEN} =   Create container       ${USER_KEY}        0x1FFF88FF              ${RULE_FOR_ALL}
+                            Container Existing     ${USER_KEY}        ${READONLY_CID_GEN}       
 
-    Set Global Variable     ${PRIV_CID}          ${PRIV_CID_GEN}
-    Set Global Variable     ${PUBLIC_CID}        ${PUBLIC_CID_GEN}
-    Set Global Variable     ${READONLY_CID}      ${READONLY_CID_GEN}
+                            Set Global Variable    ${PRIV_CID}        ${PRIV_CID_GEN}
+                            Set Global Variable    ${PUBLIC_CID}      ${PUBLIC_CID_GEN}
+                            Set Global Variable    ${READONLY_CID}    ${READONLY_CID_GEN}
 
 
 Generate file
     # Generate small file
-    ${FILE_S_GEN} =         Generate file of bytes              1024
-    ${FILE_S_HASH_GEN} =    Get file hash                       ${FILE_S_GEN}
+    ${FILE_S_GEN} =         Generate file of bytes    1024
+    ${FILE_S_HASH_GEN} =    Get file hash             ${FILE_S_GEN}
 
-    Set Global Variable     ${FILE_S}          ${FILE_S_GEN}
-    Set Global Variable     ${FILE_S_HASH}     ${FILE_S_HASH_GEN}
+                            Set Global Variable       ${FILE_S}         ${FILE_S_GEN}
+                            Set Global Variable       ${FILE_S_HASH}    ${FILE_S_HASH_GEN}
 
 Check Private Container
     # Check Private:
     # Expected: User - pass, Other - fail, System(IR) - pass (+ System(Container node) - pass, Non-container node - fail). 
 
     # Put
-    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
                         Run Keyword And Expect Error        *
-                        ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY}         
+                        ...  Put object to NeoFS            ${OTHER_KEY}        ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}         
                         Run Keyword And Expect Error        *
-                        ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${PRIV_CID}    ${EMPTY}  ${EMPTY} 
+                        ...  Put object to NeoFS            ${SYSTEM_KEY_IR}    ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
 
                         
 
 
     # Get
-                        Get object from NeoFS               ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
+                        Get object from NeoFS               ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                         Run Keyword And Expect Error        *
-                        ...  Get object from NeoFS          ${OTHER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}      s_file_read
+                        ...  Get object from NeoFS          ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                         Run Keyword And Expect Error        *
-                        ...  Get object from NeoFS           ${SYSTEM_KEY}      ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
+                        ...  Get object from NeoFS          ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Get object from NeoFS               ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
 
     # Get Range
-                        Get Range                           ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range                      ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range                      ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range                      ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range                      ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range                      ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range                      ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
     # Get Range Hash
-                        Get Range Hash                      ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range Hash                 ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-
-    # TODO: GetRange https://github.com/nspcc-dev/neofs-node/issues/179
+                        ...  Get Range Hash                 ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}    
-                        Search object                       ${USER_KEY}     ${PRIV_CID}   ${EMPTY}      ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}    
+                        Search object                       ${USER_KEY}         ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
                         Run Keyword And Expect Error        *
-                        ...  Search object                  ${OTHER_KEY}    ${PRIV_CID}  ${EMPTY}    ${EMPTY}   ${EMPTY}        @{S_OBJ_PRIV}
-                        Search object                       ${SYSTEM_KEY}   ${PRIV_CID}  ${EMPTY}    ${EMPTY}   ${EMPTY}        @{S_OBJ_PRIV}
-                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${PRIV_CID}    ${EMPTY}   ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        ...  Search object                  ${OTHER_KEY}        ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
 
  
     # Head
-                        Head object                         ${USER_KEY}    ${PRIV_CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}
+                        Head object                         ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
                         Run Keyword And Expect Error        *
-                        ...  Head object                    ${OTHER_KEY}    ${PRIV_CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY}    ${PRIV_CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}
+                        ...  Head object                    ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
                         
 
     # Delete  
                         Run Keyword And Expect Error        *
-                        ...  Delete object                  ${OTHER_KEY}     ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}  
+                        ...  Delete object                  ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}  
                         Run Keyword And Expect Error        *
-                        ...  Delete object                  ${SYSTEM_KEY}    ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}   
+                        ...  Delete object                  ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}   
                         Run Keyword And Expect Error        *
-                        ...  Delete object                  ${SYSTEM_KEY_STOR_NODE}    ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}
-                        Delete object                       ${USER_KEY}      ${PRIV_CID}     ${S_OID_USER}    ${EMPTY}   
+                        ...  Delete object                  ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}
+                        Delete object                       ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}   
  
 
 Check Public Container
-    # Check Public:
-    # Expected: User - pass, Other - fail, System(IR) - pass (+ System(Container node) - pass, Non-container node - fail). 
 
     # Put
-     # By discussion, IR can not make any operations instead of HEAD, SEARCH and GET RANGE HASH at the current moment ???
-    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}       ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_OTHER} =    Put object to NeoFS                 ${OTHER_KEY}     ${FILE_S}       ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_OTHER} =    Put object to NeoFS                 ${OTHER_KEY}        ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
     # https://github.com/nspcc-dev/neofs-node/issues/178
-    ${S_OID_SYS_IR} =   Put object to NeoFS                 ${SYSTEM_KEY}    ${FILE_S}       ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${PUBLIC_CID}    ${EMPTY}  ${EMPTY} 
+    ${S_OID_SYS_IR} =   Put object to NeoFS                 ${SYSTEM_KEY_IR}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
 
     # Get
-                        Get object from NeoFS               ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
-                        Get object from NeoFS               ${OTHER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get object from NeoFS               ${SYSTEM_KEY}      ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
+                        Get object from NeoFS               ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object from NeoFS               ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object from NeoFS               ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object from NeoFS               ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read 
 
     # Get Range
-                        Get Range                           ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${OTHER_KEY}     ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${SYSTEM_KEY_STOR_NODE}    ${PUBLIC_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
     # Get Range Hash
-                        Get Range Hash                      ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${OTHER_KEY}     ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY_STOR_NODE}    ${PUBLIC_CID}     ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}   ${S_OID_OTHER}   ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
-                        Search object                       ${USER_KEY}     ${PUBLIC_CID}   ${EMPTY}      ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                        Search object                       ${OTHER_KEY}    ${PUBLIC_CID}  ${EMPTY}    ${EMPTY}   ${EMPTY}        @{S_OBJ_PRIV}
-                        Search object                       ${SYSTEM_KEY}   ${PUBLIC_CID}  ${EMPTY}    ${EMPTY}   ${EMPTY}        @{S_OBJ_PRIV}
-                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}    ${EMPTY}   ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}       ${S_OID_OTHER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
+                        Search object                       ${USER_KEY}         ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        Search object                       ${OTHER_KEY}        ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                        Search object                       ${SYSTEM_KEY_SN}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
 
     # Head
-                        Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
+                        Head object                         ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
 
-                        Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_OTHER}    ${EMPTY}      ${EMPTY}
-                        Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_OTHER}    ${EMPTY}      ${EMPTY}
-                        Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_OTHER}    ${EMPTY}      ${EMPTY}
-                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_OTHER}    ${EMPTY}      ${EMPTY}
+                        Head object                         ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_OTHER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_OTHER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_OTHER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}    ${EMPTY}    ${EMPTY}
 
-                        Head object                         ${USER_KEY}     ${PUBLIC_CID}      ${S_OID_SYS_SN}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${OTHER_KEY}    ${PUBLIC_CID}      ${S_OID_SYS_SN}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY}   ${PUBLIC_CID}      ${S_OID_SYS_SN}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${PUBLIC_CID}      ${S_OID_SYS_SN}    ${EMPTY}       ${EMPTY}
+                        Head object                         ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}    ${EMPTY}
 
 
     # Delete
                         # https://github.com/nspcc-dev/neofs-node/issues/178
-                        Delete object                       ${SYSTEM_KEY}    ${PUBLIC_CID}     ${S_OID_USER}     ${EMPTY}  
-                        Delete object                       ${SYSTEM_KEY_STOR_NODE}     ${PUBLIC_CID}     ${S_OID_OTHER}    ${EMPTY}
-                        Delete object                       ${USER_KEY}      ${PUBLIC_CID}     ${S_OID_SYS_IR}    ${EMPTY}     
-                        Delete object                       ${OTHER_KEY}     ${PUBLIC_CID}     ${S_OID_SYS_SN}    ${EMPTY}
+                        Delete object                       ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_IR}    ${EMPTY}     
+                        Delete object                       ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
+                        Delete object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}  
+                        Delete object                       ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}     ${EMPTY}
 
 
 Check Read-Only Container
     # Check Read Only container:
 
     # Put
-    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}      ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_USER} =     Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
                         Run Keyword And Expect Error        *
-                        ...  Put object to NeoFS            ${OTHER_KEY}     ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+                        ...  Put object to NeoFS            ${OTHER_KEY}        ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
                         Run Keyword And Expect Error        *
-                        ...  Put object to NeoFS            ${SYSTEM_KEY}    ${FILE_S}       ${READONLY_CID}    ${EMPTY}    ${EMPTY}
-    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_STOR_NODE}    ${FILE_S}       ${READONLY_CID}     ${EMPTY}    ${EMPTY}
+                        ...  Put object to NeoFS            ${SYSTEM_KEY_IR}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_SYS_SN} =   Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
 
     # Get
-                        Get object from NeoFS               ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
-                        Get object from NeoFS               ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
-                        Get object from NeoFS               ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read 
-                        Get object from NeoFS               ${SYSTEM_KEY_STOR_NODE}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}       s_file_read
+                        Get object from NeoFS               ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object from NeoFS               ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object from NeoFS               ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read 
+                        Get object from NeoFS               ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
-                        Get Range                           ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range                           ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range                           ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
     # Get Range Hash
-                        Get Range Hash                      ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash                      ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash                      ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}   ${S_OID_SYS_SN}     
-                        Search object                       ${USER_KEY}     ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
-                        Search object                       ${OTHER_KEY}    ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
-                        Search object                       ${SYSTEM_KEY}   ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
-                        Search object                       ${SYSTEM_KEY_STOR_NODE}   ${READONLY_CID}  ${EMPTY}    ${EMPTY}  ${EMPTY}  @{S_OBJ_RO}
+    @{S_OBJ_RO} =	    Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}     
+                        Search object                       ${USER_KEY}         ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
+                        Search object                       ${OTHER_KEY}        ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
+                        Search object                       ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
+                        Search object                       ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
 
  
     # Head
-                        Head object                         ${USER_KEY}     ${READONLY_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${OTHER_KEY}    ${READONLY_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY}   ${READONLY_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
-                        Head object                         ${SYSTEM_KEY_STOR_NODE}   ${READONLY_CID}      ${S_OID_USER}    ${EMPTY}       ${EMPTY}
+                        Head object                         ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head object                         ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
 
     # Delete
                         Run Keyword And Expect Error        *       
-                        ...  Delete object                       ${OTHER_KEY}     ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}
+                        ...  Delete object                  ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
                         Run Keyword And Expect Error        *  
-                        ...  Delete object                  ${SYSTEM_KEY}    ${READONLY_CID}     ${S_OID_USER}      ${EMPTY}
+                        ...  Delete object                  ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
                         Run Keyword And Expect Error        *  
-                        ...  Delete object                  ${SYSTEM_KEY_STOR_NODE}    ${READONLY_CID}     ${S_OID_USER}      ${EMPTY}
-                        Delete object                       ${USER_KEY}      ${READONLY_CID}     ${S_OID_USER}    ${EMPTY}
+                        ...  Delete object                  ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
+                        Delete object                       ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}

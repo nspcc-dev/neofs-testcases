@@ -1,11 +1,8 @@
 *** Settings ***
 Variables   ../../variables/common.py
 
-Library     ${RESOURCES}/environment.py
 Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
-Library     ${RESOURCES}/assertions.py
-Library     ${RESOURCES}/neo.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
@@ -76,7 +73,7 @@ NeoFS Simple Object Operations
                         Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER_OTH}    @{S_OBJ_H_OTH}    
 
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}             
-                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}        ${FILE_USR_HEADER}
+                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       ${FILE_USR_HEADER}
                           
                         Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
                         Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
@@ -95,9 +92,6 @@ NeoFS Simple Object Operations
                         Cleanup File                        h_file_read
                         Cleanup File                        s_get_range
                         Cleanup File                        h_get_range
-
-# 4.86192020
  
-
 
 

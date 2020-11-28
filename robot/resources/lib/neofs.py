@@ -8,7 +8,7 @@ import uuid
 import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
-import json
+
 
 ROBOT_AUTO_KEYWORDS = False
 
