@@ -14,7 +14,6 @@ import requests
 import json
 
 from robot.libraries.BuiltIn import BuiltIn
-from neocore.KeyPair import KeyPair
 
 ROBOT_AUTO_KEYWORDS = False
 
