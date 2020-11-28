@@ -31,7 +31,7 @@ def init_wallet():
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet init -w {filename}" )
 
     logger.info(f"Executing shell command: {cmd}")
-    out = run_sh(cmd) 
+    out = _run_sh(cmd) 
     logger.info(f"Command completed with output: {out}")
     return filename
 
@@ -56,7 +56,7 @@ def dump_address(wallet: str):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet dump -w {wallet}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh(cmd) 
+    out = _run_sh(cmd) 
     logger.info(f"Command completed with output: {out}")
 
     m = re.search(r'"address": "(\w+)"', out)
@@ -72,7 +72,7 @@ def dump_privkey(wallet: str, address: str):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet export -w {wallet} --decrypt {address}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     return out
@@ -84,7 +84,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
             f"--to {address_to} --token gas --amount {amount}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     if not re.match(r'^(\w{64})$', out):
@@ -98,14 +98,13 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     #if not re.match(r'^(\w{64})$', out):
     #    raise Exception("Can not get Tx.")
 
     return out
-
 
 
 @keyword('Mainnet Balance')
@@ -127,6 +126,7 @@ def mainnet_balance(address: str):
         
     return amount
 
+
 @keyword('Expexted Mainnet Balance')
 def expected_mainnet_balance(address: str, expected: int):
     
@@ -138,7 +138,6 @@ def expected_mainnet_balance(address: str, expected: int):
     return True
 
 
-
 @keyword('NeoFS Deposit') 
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int):
     cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
@@ -146,7 +145,7 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int):
             f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     m = re.match(r'^Sent invocation transaction (\w{64})$', out)
@@ -199,71 +198,6 @@ def get_transaction(tx_id: str):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info(complProc.stdout)
     
-
-
-
-
-
-
-
-
-
-def run_sh(args):
-    complProc = subprocess.run(args, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=150, shell=True)
-    output, errors = complProc.stdout, complProc.stderr
-    if errors:
-        return errors
-    return output
-
-
-def run_sh_with_passwd(passwd, cmd):
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline(passwd)
-    p.wait()
-    # throw a string with password prompt
-    # take a string with tx hash
-    tx_hash = p.read().splitlines()[-1]
-    return tx_hash.decode()
-
-
-
-#@keyword('Transfer Mainnet Gas')
-#def transfer_mainnet_gas(wallet_to: str, amount: int):
-
-#
-#    Cmd = f'docker exec -it main_chain neo-go wallet nep5 transfer -w wallets/wallet.json -r http://main_chain.neofs.devenv:30333 --from NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx --to {wallet_to} --token gas --amount {amount}'
-#    command = ['docker', 'exec', '-it', 'main_chain', 'neo-go', 'wallet', 'nep5', 'transfer', '-w', 'wallets/wallet.json', '-r', 'http://main_chain.neofs.devenv:30333', '--from NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx', '--to', 'NULwe3UAHckN2fzNdcVg31tDiaYtMDwANt', '--token gas', '--amount', '5']
-
-
-
-#    logger.info("Cmd: %s" % Cmd)
-
-#import subprocess
-#command = ['myapp', '--arg1', 'value_for_arg1']
-#p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#output = p.communicate(input='some data'.encode())[0]
-
-#a=subprocess.Popen("docker run -t -i fedora bash", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-#4. >>> a.stdin.write("exit\n")
-#5. >>> print a.poll()
-
-    complProc = subprocess.Popen(Cmd.split(), stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-    complProc.stdin.write("\n".encode())
-
-    output = complProc.stdout.read() #.communicate(input=''.encode())[0]
-
-    logger.info("Output: %s" % output)
-
-
-#from subprocess import Popen, PIPE
-#p = Popen(['python test_enter.py'], stdin=PIPE, shell=True)
-#p.communicate(input='\n')
-
-
 
 @keyword('Request NeoFS Deposit')
 def request_neofs_deposit(public_key: str):
@@ -333,11 +267,23 @@ def _get_balance_request(privkey: str):
 
     return balance
 
- 
+
+def _run_sh(args):
+    complProc = subprocess.run(args, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                timeout=150, shell=True)
+    output, errors = complProc.stdout, complProc.stderr
+    if errors:
+        return errors
+    return output
 
 
- # {"id":5,"jsonrpc":"2.0","result":{"txid":"0x02c178803258a9dbbcce80acfece2f6abb4f51c122e7ce2ddcad332d6a810e5f","trigger":"Application",
- # !!!!!!!!!!!
- #"vmstate":"FAULT"
- # !!!!!!!!!!!
- #,"gasconsumed":"11328110","stack":[],"notifications":[]}}
+def _run_sh_with_passwd(passwd, cmd):
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline(passwd)
+    p.wait()
+    # throw a string with password prompt
+    # take a string with tx hash
+    tx_hash = p.read().splitlines()[-1]
+    return tx_hash.decode()
