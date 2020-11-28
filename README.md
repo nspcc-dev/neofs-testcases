@@ -49,6 +49,19 @@
 export BUILD_NEOFS_NODE=<commit or branch>
 ```
 
+### Генерация документации
+
+Для генерации документации по шагам:
+```
+python3 -m robot.libdoc robot/resources/lib/neofs.py docs/NeoFS_Library.html
+python3 -m robot.libdoc robot/resources/lib/payment_neogo.py docs/Payment_Library.html
+```
+
+Для генерации документации по тесткейсам:
+```
+python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
+```
+
 ## Создание тесткейсов
 
 ### Source code overview
