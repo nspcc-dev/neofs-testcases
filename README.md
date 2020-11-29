@@ -29,6 +29,7 @@
  * object_simple.robot - операции над большим объектом
  * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
  * netmap_simple.robot - проверка Placement policy 
+ * replication.robot - базовый тесткейс проверки репликации объектов
 
 ### Запуск тесткейсов в докере
 
