@@ -100,10 +100,13 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
-    #if not re.match(r'^(\w{64})$', out):
-    #    raise Exception("Can not get Tx.")
+    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
+    if m is None:
+        raise Exception("Can not get Tx.") 
+    
+    tx = m.group(1)
 
-    return out
+    return tx
 
 
 @keyword('Mainnet Balance')
@@ -127,7 +130,7 @@ def mainnet_balance(address: str):
 
 
 @keyword('Expexted Mainnet Balance')
-def expected_mainnet_balance(address: str, expected: int):
+def expected_mainnet_balance(address: str, expected: float):
     
     amount = mainnet_balance(address)
 
@@ -198,21 +201,6 @@ def get_transaction(tx_id: str):
     logger.info(complProc.stdout)
     
 
-@keyword('Request NeoFS Deposit')
-def request_neofs_deposit(public_key: str):
-    """
-    This function requests Deposit to the selected public key.
-    :param public_key:      neo public key
-    """
-
-    response = requests.get('https://fs.localtest.nspcc.ru/api/deposit/'+str(public_key), verify='ca/nspcc-ca.pem')  
-    
-    if response.status_code != 200:
-        BuiltIn().fatal_error('Can not run Deposit to {} with error: {}'.format(public_key, response.text))
-    else:
-        logger.info("Deposit has been completed for '%s'; tx: '%s'" % (public_key, response.text) )
-
-    return response.text
 
 @keyword('Get Balance')
 def get_balance(privkey: str):

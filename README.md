@@ -80,7 +80,7 @@ python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 
 `robot/testsuites/fi/` - Fault Injection test suites and test cases
 
-## Code style
+### Code style
 
 Robot Framework keyword should use space as a separator between particular words
 
@@ -99,10 +99,10 @@ Name of other variables should not be ended with underscore symbol
 
 On keywords definition, one should specify variable type, e.g. path: str
 
-## Robot style
+### Robot style
 
 Следует всегда заполнять секции [Tags] и [Documentation] для Testcase'ов и Documentation для Test Suite'ов.
 
-## Robot-framework User Guide
+### Robot-framework User Guide
 
 http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html
