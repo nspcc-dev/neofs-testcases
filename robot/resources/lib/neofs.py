@@ -1035,7 +1035,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
     except subprocess.CalledProcessError as e:
 
         if re.search(r'local node is outside of object placement', e.output):
-            logger.error("Server is not presented in container.")
+            logger.warn("Server is not presented in container.")
 
         elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
             logger.warn("Node is unavailable")
