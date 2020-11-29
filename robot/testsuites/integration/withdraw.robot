@@ -5,7 +5,7 @@ Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
 
 *** Test cases ***
-NeoFS Simple Object Operations
+NeoFS Deposit and Withdraw
     [Documentation]         Testcase to validate NeoFS Withdraw operation.
     [Tags]                  Withdraw  NeoFS  NeoCLI
     [Timeout]               10 min

@@ -5,9 +5,9 @@ Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
 
 *** Test cases ***
-NeoFS Simple Object Operations
-    [Documentation]         Testcase to validate NeoFS Withdraw operation.
-    [Tags]                  Withdraw  NeoFS  NeoCLI
+NeoFS Object Replication
+    [Documentation]         Testcase to validate NeoFS object replication.
+    [Tags]                  Migration  Replication  NeoFS  NeoCLI
     [Timeout]               10 min
 
     ${WALLET} =             Init wallet
