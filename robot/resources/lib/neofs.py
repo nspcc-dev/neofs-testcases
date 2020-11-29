@@ -8,7 +8,8 @@ import uuid
 import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
-import json
+import random 
+
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -44,7 +45,6 @@ def get_scripthash(privkey: str):
     output = complProc.stdout
     logger.info("Output: %s" % output)
 
-    # ScriptHash3.0   00284fc88f8ac31f8e56c03301bfab0757e3f212
     m = re.search(r'ScriptHash3.0   (\w+)', output)
     if m.start() != m.end(): 
         scripthash = m.group(1)
@@ -54,9 +54,53 @@ def get_scripthash(privkey: str):
     return scripthash
 
 
+@keyword('Stop nodes')
+def stop_nodes(down_num: int, *nodes_list):
+
+    # select nodes to stop from list
+    stop_nodes = random.sample(nodes_list, down_num)
+
+    for node in stop_nodes:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker stop {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return stop_nodes
+
+
+@keyword('Start nodes')
+def start_nodes(*nodes_list):
+
+    for node in nodes_list:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker start {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
 
 @keyword('Get nodes with object')
-def get_nodes_with_object(private_key: str, cid, oid):
+def get_nodes_with_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -69,10 +113,11 @@ def get_nodes_with_object(private_key: str, cid, oid):
                 nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Get nodes without object')
-def get_nodes_without_object(private_key: str, cid, oid):
+def get_nodes_without_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -86,7 +131,8 @@ def get_nodes_without_object(private_key: str, cid, oid):
         else:
             nodes_list.append(node)
 
-    logger.info("Nodes with object: %s" % nodes_list)
+    logger.info("Nodes without object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Validate storage policy for object')
@@ -139,17 +185,6 @@ def get_eacl(private_key: bytes, cid: str):
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
  
-
-
-@keyword('Convert Str to Hex Str with Len')
-def conver_str_to_hex(string_convert: str):
-    converted = binascii.hexlify(bytes(string_convert, encoding= 'utf-8')).decode("utf-8")
-    prev_len_2 = '{:04x}'.format(int(len(converted)/2))
-
-    return str(prev_len_2)+str(converted)
-
-
-
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
@@ -504,10 +539,6 @@ def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CB
     cid = _parse_cid(output)
     logger.info("Created container %s with rule '%s'" % (cid, rule))
 
-#$ ./bin/neofs-cli -c config.yml container create --policy rule.ql --await
-#container ID: GePis2sDpYqYPh4F8vfGUqoujtNcqdXhipbLx2pKbUwX
-
-# REP 1 IN X CBF 1 SELECT 2 IN SAME Location FROM * AS X
     return cid
 
 
@@ -574,11 +605,11 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-
+'''
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid: str):
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} --full-headers'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} --full-headers'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -592,26 +623,10 @@ def verify_head_tombstone(private_key: str, cid: str, oid: str):
    
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+'''
 
 
-
-
-def _exec_cli_cmd(private_key: bytes, postfix: str):
-
-    # Get linked objects from first
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --raw --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} {postfix}'
-    logger.info("Cmd: %s" % ObjectCmd)
-    try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    
-    return complProc.stdout
-
-
+'''
 @keyword('Verify linked objects')
 def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: float):
     
@@ -655,6 +670,7 @@ def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: 
 
     return child_obj_list_headers.keys()
 
+
 def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int, payload:int, parent_id:str):
 
     output = child_obj_list_headers[obj]
@@ -694,6 +710,8 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
 
         else:
             raise Exception("Can not get Next object ID for the object %s." % obj)
+
+'''
 
 
 @keyword('Head object')
@@ -760,8 +778,6 @@ def parse_object_system_header(header: str):
     else:
         raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
 
-
- 
     # CreatedAtUnixTime 
     m = re.search(r'Timestamp=(\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
@@ -779,26 +795,6 @@ def parse_object_system_header(header: str):
     logger.info("Result: %s" % result_header)
     return result_header
 
- 
-
-@keyword('Parse Object Extended Header')
-def parse_object_extended_header(header: str):
-    result_header = dict()
-
- 
-    pattern = re.compile(r'- Type=(\w+)\n.+Value=(.+)\n')
- 
-
-    for (f_type, f_val) in re.findall(pattern, header):
-        logger.info("found: %s - %s" % (f_type, f_val))
-        if f_type not in result_header.keys():
-            result_header[f_type] = []
- 
-        result_header[f_type].append(f_val)
-
-    logger.info("Result: %s" % result_header)
-    return result_header
- 
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str):
@@ -830,7 +826,7 @@ def verify_file_hash(filename, expected_hash):
     else:
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
 
-
+'''
 @keyword('Create storage group')
 def create_storage_group(private_key: bytes, cid: str, *objects_list):
     objects = ""
@@ -856,7 +852,8 @@ def get_storage_group(private_key: bytes, cid: str, sgid: str):
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        
+'''
+
 
 @keyword('Cleanup File')
 # remove temp files
@@ -928,6 +925,23 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_obj
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+
+def _exec_cli_cmd(private_key: bytes, postfix: str):
+
+    # Get linked objects from first
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --raw --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} {postfix}'
+    logger.info("Cmd: %s" % ObjectCmd)
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    
+    return complProc.stdout
 
 
 def _get_file_hash(filename):
@@ -1003,12 +1017,14 @@ def _get_storage_nodes(private_key: bytes):
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
     # --filters objectID={oid}
-    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} '
+    if oid:
+        oid_cmd = "--oid %s" % oid
+    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} {oid_cmd}'
 
     try:
         logger.info(Cmd)
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
         if re.search(r'%s' % oid, complProc.stdout):
@@ -1017,8 +1033,13 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
             logger.info("Object is not found.")
 
     except subprocess.CalledProcessError as e:
+
         if re.search(r'local node is outside of object placement', e.output):
-            logger.info("Server is not presented in container.")
+            logger.error("Server is not presented in container.")
+
+        if ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
+            logger.warn("Node is unavailable")
+            
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 

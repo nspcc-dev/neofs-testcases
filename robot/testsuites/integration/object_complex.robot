@@ -1,12 +1,8 @@
 *** Settings ***
 Variables   ../../variables/common.py
 
-Library     ${RESOURCES}/environment.py
-Library     ${RESOURCES}/neo.py
 Library     ${RESOURCES}/neofs.py
 Library     ${RESOURCES}/payment_neogo.py
-Library     ${RESOURCES}/assertions.py
-Library     ${RESOURCES}/neo.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
@@ -31,7 +27,7 @@ NeoFS Simple Object Operations
 
     ${SCRIPT_HASH} =    Get ScripHash           ${PRIV_KEY}  
 
-    ${TX_DEPOSIT} =     NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      50
+    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WALLET}      ${ADDR}       ${SCRIPT_HASH}      50
                         Wait Until Keyword Succeeds         1 min          15 sec        
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
                         Get Transaction                     ${TX_DEPOSIT}
@@ -59,10 +55,10 @@ NeoFS Simple Object Operations
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID_OTH}  
 
 
-#    @{Link_obj_S} =     Verify linked objects                 ${PRIV_KEY}    ${CID}        ${S_OID}       ${SIZE}
-#    @{Link_obj_H} =     Verify linked objects                 ${PRIV_KEY}    ${CID}        ${H_OID}       ${SIZE}
-#    @{Full_obj_list} =	 Create List                           @{Link_obj_S}  @{Link_obj_H}  ${S_OID}      ${H_OID}
-#                        Search object                         ${PRIV_KEY}    ${CID}        ${EMPTY}             ${EMPTY}      @{Full_obj_list} 
+#   @{Link_obj_S} =     Verify linked objects               ${PRIV_KEY}    ${CID}         ${S_OID}       ${SIZE}
+#   @{Link_obj_H} =     Verify linked objects               ${PRIV_KEY}    ${CID}         ${H_OID}       ${SIZE}
+#   @{Full_obj_list} =	Create List                         @{Link_obj_S}  @{Link_obj_H}  ${S_OID}       ${H_OID}
+#                       Search object                       ${PRIV_KEY}    ${CID}         ${EMPTY}       ${EMPTY}      @{Full_obj_list} 
 
                         Run Keyword And Expect Error        *       
                         ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
