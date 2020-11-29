@@ -8,6 +8,7 @@ import uuid
 import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
+import random 
 
 
 ROBOT_AUTO_KEYWORDS = False
@@ -44,7 +45,6 @@ def get_scripthash(privkey: str):
     output = complProc.stdout
     logger.info("Output: %s" % output)
 
-    # ScriptHash3.0   00284fc88f8ac31f8e56c03301bfab0757e3f212
     m = re.search(r'ScriptHash3.0   (\w+)', output)
     if m.start() != m.end(): 
         scripthash = m.group(1)
@@ -54,8 +54,53 @@ def get_scripthash(privkey: str):
     return scripthash
 
 
+@keyword('Stop nodes')
+def stop_nodes(down_num: int, *nodes_list):
+
+    # select nodes to stop from list
+    stop_nodes = random.sample(nodes_list, down_num)
+
+    for node in stop_nodes:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker stop {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return stop_nodes
+
+
+@keyword('Start nodes')
+def start_nodes(*nodes_list):
+
+    for node in nodes_list:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker start {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
 @keyword('Get nodes with object')
-def get_nodes_with_object(private_key: str, cid, oid):
+def get_nodes_with_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -68,10 +113,11 @@ def get_nodes_with_object(private_key: str, cid, oid):
                 nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Get nodes without object')
-def get_nodes_without_object(private_key: str, cid, oid):
+def get_nodes_without_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -85,7 +131,8 @@ def get_nodes_without_object(private_key: str, cid, oid):
         else:
             nodes_list.append(node)
 
-    logger.info("Nodes with object: %s" % nodes_list)
+    logger.info("Nodes without object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Validate storage policy for object')
@@ -970,12 +1017,14 @@ def _get_storage_nodes(private_key: bytes):
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
     # --filters objectID={oid}
-    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} '
+    if oid:
+        oid_cmd = "--oid %s" % oid
+    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} {oid_cmd}'
 
     try:
         logger.info(Cmd)
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
         if re.search(r'%s' % oid, complProc.stdout):
@@ -984,8 +1033,13 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
             logger.info("Object is not found.")
 
     except subprocess.CalledProcessError as e:
+
         if re.search(r'local node is outside of object placement', e.output):
-            logger.info("Server is not presented in container.")
+            logger.error("Server is not presented in container.")
+
+        if ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
+            logger.warn("Node is unavailable")
+            
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 

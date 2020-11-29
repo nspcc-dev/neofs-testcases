@@ -38,7 +38,7 @@ RUN addgroup nobody root && \
 
 RUN pip3 install wheel
 RUN pip3 install robotframework
-RUN pip3 install neocore
+RUN pip3 install pexpect
 RUN pip3 install requests
 
 
