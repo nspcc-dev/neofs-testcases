@@ -21,10 +21,13 @@
 `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
 
 Для запуска доступны следущие сценарии:
+
  * acl_basic.robot - базовый ACL
- * acl_extended.robot - extended ACL
+ * acl_extended.robot - extended 
+ * acl_baearer.robot - Bearer Token ACL
  * object_complex.robot - операции над простым объектом
  * object_simple.robot - операции над большим объектом
+ * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
 
 ### Запуск тесткейсов в докере
 
