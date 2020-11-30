@@ -28,7 +28,7 @@
  * object_complex.robot - операции над простым объектом
  * object_simple.robot - операции над большим объектом
  * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
- * netmap_simple.robot - проверка Placement policy 
+ * netmap_simple.robot - проверка Placement policy
  * replication.robot - базовый тесткейс проверки репликации объектов
 
 ### Запуск тесткейсов в докере
@@ -53,6 +53,21 @@
 ```
 export BUILD_NEOFS_NODE=<commit or branch>
 ```
+
+### Запуск smoke-тестов
+
+Есть сьют со smoke-тестами для CDN-гейтов `robot/testsuites/smoke/selectelcdn_smoke.robot`.
+Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
+девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
+окружения
+```
+export ROBOT_PROFILE=selectel_smoke
+```
+По умолчанию кейворды используют переменные из файла `robot/resources/lib/neofs_int_vars.py`.
+```
+robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot
+```
+
 
 ### Генерация документации
 
