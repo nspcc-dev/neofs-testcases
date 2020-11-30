@@ -8,6 +8,7 @@ import uuid
 import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
+import random
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -49,7 +50,6 @@ def get_scripthash(privkey: str):
     output = complProc.stdout
     logger.info("Output: %s" % output)
 
-    # ScriptHash3.0   00284fc88f8ac31f8e56c03301bfab0757e3f212
     m = re.search(r'ScriptHash3.0   (\w+)', output)
     if m.start() != m.end():
         scripthash = m.group(1)
@@ -59,9 +59,53 @@ def get_scripthash(privkey: str):
     return scripthash
 
 
+@keyword('Stop nodes')
+def stop_nodes(down_num: int, *nodes_list):
+
+    # select nodes to stop from list
+    stop_nodes = random.sample(nodes_list, down_num)
+
+    for node in stop_nodes:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker stop {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return stop_nodes
+
+
+@keyword('Start nodes')
+def start_nodes(*nodes_list):
+
+    for node in nodes_list:
+        m = re.search(r'(s\d+).', node)
+        node = m.group(1)
+
+        Cmd = f'docker start {node}'
+        logger.info("Cmd: %s" % Cmd)
+
+        try:
+            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+            output = complProc.stdout
+            logger.info("Output: %s" % output)
+
+        except subprocess.CalledProcessError as e:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
 
 @keyword('Get nodes with object')
-def get_nodes_with_object(private_key: str, cid, oid):
+def get_nodes_with_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -74,10 +118,11 @@ def get_nodes_with_object(private_key: str, cid, oid):
                 nodes_list.append(node)
 
     logger.info("Nodes with object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Get nodes without object')
-def get_nodes_without_object(private_key: str, cid, oid):
+def get_nodes_without_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)
     copies = 0
 
@@ -91,7 +136,8 @@ def get_nodes_without_object(private_key: str, cid, oid):
         else:
             nodes_list.append(node)
 
-    logger.info("Nodes with object: %s" % nodes_list)
+    logger.info("Nodes without object: %s" % nodes_list)
+    return nodes_list
 
 
 @keyword('Validate storage policy for object')
@@ -127,42 +173,28 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
 @keyword('Get eACL')
 def get_eacl(private_key: bytes, cid: str):
 
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container get-eacl --cid {cid}'
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container get-eacl --cid {cid}'
     logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % output)
 
+        return output
 
-
-@keyword('Convert Str to Hex Str with Len')
-def conver_str_to_hex(string_convert: str):
-    converted = binascii.hexlify(bytes(string_convert, encoding= 'utf-8')).decode("utf-8")
-    prev_len_2 = '{:04x}'.format(int(len(converted)/2))
-
-    return str(prev_len_2)+str(converted)
-
-
-@keyword('Set custom eACL')
-def set_custom_eacl(private_key: bytes, cid: str, eacl_prefix: str, eacl_slice: str, eacl_postfix: str):
-
-   logger.info(str(eacl_prefix))
-   logger.info(str(eacl_slice))
-   logger.info(str(eacl_postfix))
-
-   eacl = str(eacl_prefix) + str(eacl_slice) + str(eacl_postfix)
-   logger.info("Custom eACL: %s" % eacl)
-
-   set_eacl(private_key, cid, eacl)
-   return
+    except subprocess.CalledProcessError as e:
+        if re.search(r'extended ACL table is not set for this container', e.output):
+            logger.info("Server is not presented in container.")
+        else:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 
 @keyword('Set eACL')
-def set_eacl(private_key: bytes, cid: str, eacl: str):
+def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
 
-    Cmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} container set-eacl --cid {cid} --eacl {eacl}'
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key}  container set-eacl --cid {cid} --table {eacl} {add_keys}'
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
@@ -171,19 +203,330 @@ def set_eacl(private_key: bytes, cid: str, eacl: str):
 
 
 
+@keyword('Form BearerToken file for all ops')
+def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str ):
+
+    eacl = get_eacl(private_key, cid)
+    input_records = ""
+    if eacl:
+        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
+        records = re.split(r'"records": \[', res_json[0])
+        input_records = ",\n" + records[1]
+
+    myjson = """
+{
+  "body": {
+    "eaclTable": {
+      "containerID": {
+        "value": \"""" +  cid + """"
+      },
+      "records": [
+        {
+          "operation": "GET",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "PUT",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "HEAD",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "DELETE",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "SEARCH",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "GETRANGE",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "GETRANGEHASH",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        }""" + input_records + """
+      ]
+    },
+    "lifetime": {
+      "exp": \"""" + lifetime_exp + """",
+      "nbf": "1",
+      "iat": "0"
+    }
+  }
+}
+"""
+    with open(file_name,'w') as out:
+        out.write(myjson)
+    logger.info("Output: %s" % myjson)
+
+    # Sign bearer token
+    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
+    logger.info("Cmd: %s" % Cmd)
+
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % str(output))
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return file_name
+
+
+
+@keyword('Form BearerToken file filter for all ops')
+def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str, matchType: str, key: str, value: str):
+
+    # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH? Need to clarify.
+
+    eacl = get_eacl(private_key, cid)
+    input_records = ""
+    if eacl:
+        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
+        records = re.split(r'"records": \[', res_json[0])
+        input_records = ",\n" + records[1]
+
+    myjson = """
+{
+  "body": {
+    "eaclTable": {
+      "containerID": {
+        "value": \"""" +  cid + """"
+      },
+      "records": [
+        {
+          "operation": "GET",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "PUT",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "HEAD",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "DELETE",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "SEARCH",
+          "action": \"""" +  action + """",
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "GETRANGE",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        },
+        {
+          "operation": "GETRANGEHASH",
+          "action": \"""" +  action + """",
+          "filters": [
+            {
+              "headerType": "OBJECT",
+              "matchType": \"""" +  matchType + """",
+              "key": \"""" +  key + """",
+              "value": \"""" +  value + """"
+            }
+          ],
+          "targets": [
+            {
+              "role": \"""" +  target_role + """"
+            }
+          ]
+        }""" + input_records + """
+      ]
+    },
+    "lifetime": {
+      "exp": \"""" +  lifetime_exp + """",
+      "nbf": "1",
+      "iat": "0"
+    }
+  }
+}
+"""
+    with open(file_name,'w') as out:
+        out.write(myjson)
+    logger.info("Output: %s" % myjson)
+
+    # Sign bearer token
+    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
+    logger.info("Cmd: %s" % Cmd)
+
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % str(output))
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return file_name
+
+
+
+@keyword('Form eACL json file')
+def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: str, key: str, value: str, target_role: str):
+
+    myjson = """
+{
+  "records": [
+    {
+      "operation": \"""" +  operation + """",
+      "action": \"""" +  action + """",
+      "filters": [
+         {
+           "headerType": "OBJECT",
+           "matchType": \"""" +  matchType + """",
+           "key": \"""" +  key + """",
+           "value": \"""" +  value + """"
+         }
+       ],
+      "targets": [
+        {
+          "role": \"""" +  target_role + """"
+        }
+      ]
+    }
+  ]
+}
+"""
+    with open(file_name,'w') as out:
+        out.write(myjson)
+    logger.info("Output: %s" % myjson)
+
+    return file_name
+
+
+
+
 @keyword('Get Range')
-def get_range(private_key: str, cid: str, oid: str, bearer: str, range_cut: str):
+def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str, range_cut: str):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {bearer_token} {range_cut} '
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} --file {range_file} '
     logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
+
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % str(output))
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 @keyword('Create container')
@@ -201,10 +544,6 @@ def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CB
     cid = _parse_cid(output)
     logger.info("Created container %s with rule '%s'" % (cid, rule))
 
-#$ ./bin/neofs-cli -c config.yml container create --policy rule.ql --await
-#container ID: GePis2sDpYqYPh4F8vfGUqoujtNcqdXhipbLx2pKbUwX
-
-# REP 1 IN X CBF 1 SELECT 2 IN SAME Location FROM * AS X
     return cid
 
 
@@ -271,11 +610,11 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-
+'''
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid: str):
 
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object head --cid {cid} --oid {oid} --full-headers'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} --full-headers'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -289,25 +628,6 @@ def verify_head_tombstone(private_key: str, cid: str, oid: str):
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-
-
-
-def _exec_cli_cmd(private_key: bytes, postfix: str):
-
-    # Get linked objects from first
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --raw --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} {postfix}'
-    logger.info("Cmd: %s" % ObjectCmd)
-    try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    return complProc.stdout
-
 
 @keyword('Verify linked objects')
 def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: float):
@@ -352,6 +672,7 @@ def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: 
 
     return child_obj_list_headers.keys()
 
+
 def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int, payload:int, parent_id:str):
 
     output = child_obj_list_headers[obj]
@@ -392,6 +713,8 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
         else:
             raise Exception("Can not get Next object ID for the object %s." % obj)
 
+'''
+
 
 @keyword('Head object')
 def head_object(private_key: str, cid: str, oid: str, bearer: str, user_headers:str=""):
@@ -430,52 +753,41 @@ def parse_object_system_header(header: str):
     #SystemHeader
     logger.info("Input: %s" % header)
     # ID
-    m = re.search(r'- ID=([a-zA-Z0-9-]+)', header)
+    m = re.search(r'ID: (\w+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['ID'] = m.group(1)
     else:
         raise Exception("no ID was parsed from object header: \t%s" % output)
 
     # CID
-    m = re.search(r'- CID=([a-zA-Z0-9]+)', header)
+    m = re.search(r'CID: (\w+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['CID'] = m.group(1)
     else:
         raise Exception("no CID was parsed from object header: \t%s" % output)
 
     # Owner
-    m = re.search(r'- OwnerID=([a-zA-Z0-9]+)', header)
+    m = re.search(r'Owner: ([a-zA-Z0-9]+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['OwnerID'] = m.group(1)
     else:
         raise Exception("no OwnerID was parsed from object header: \t%s" % output)
-
-    # Version
-    m = re.search(r'- Version=(\d+)', header)
-    if m.start() != m.end(): # e.g., if match found something
-        result_header['Version'] = m.group(1)
-    else:
-        raise Exception("no Version was parsed from object header: \t%s" % output)
-
-
     # PayloadLength
-    m = re.search(r'- PayloadLength=(\d+)', header)
+    m = re.search(r'Size: (\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['PayloadLength'] = m.group(1)
     else:
         raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
 
-
-
     # CreatedAtUnixTime
-    m = re.search(r'- CreatedAt={UnixTime=(\d+)', header)
+    m = re.search(r'Timestamp=(\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['CreatedAtUnixTime'] = m.group(1)
     else:
         raise Exception("no CreatedAtUnixTime was parsed from object header: \t%s" % output)
 
     # CreatedAtEpoch
-    m = re.search(r'- CreatedAt={UnixTime=\d+ Epoch=(\d+)', header)
+    m = re.search(r'CreatedAt: (\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['CreatedAtEpoch'] = m.group(1)
     else:
@@ -483,27 +795,6 @@ def parse_object_system_header(header: str):
 
     logger.info("Result: %s" % result_header)
     return result_header
-
-
-
-@keyword('Parse Object Extended Header')
-def parse_object_extended_header(header: str):
-    result_header = dict()
-
-
-    pattern = re.compile(r'- Type=(\w+)\n.+Value=(.+)\n')
-
-
-    for (f_type, f_val) in re.findall(pattern, header):
-        logger.info("found: %s - %s" % (f_type, f_val))
-        if f_type not in result_header.keys():
-            result_header[f_type] = []
-
-        result_header[f_type].append(f_val)
-
-    logger.info("Result: %s" % result_header)
-    return result_header
-
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str):
@@ -535,34 +826,6 @@ def verify_file_hash(filename, expected_hash):
     else:
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
 
-
-@keyword('Create storage group')
-def create_storage_group(private_key: bytes, cid: str, *objects_list):
-    objects = ""
-
-    for oid in objects_list:
-        objects = f'{objects} --oid {oid}'
-
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} sg put --cid {cid} {objects}'
-    complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info("Output: %s" % complProc.stdout)
-    sgid = _parse_oid(complProc.stdout)
-    return sgid
-
-
-@keyword('Get storage group')
-def get_storage_group(private_key: bytes, cid: str, sgid: str):
-    ObjectCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} sg get --cid {cid} --sgid {sgid}'
-    logger.info("Cmd: %s" % ObjectCmd)
-    try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-
 @keyword('Cleanup File')
 # remove temp files
 def cleanup_file(filename: str):
@@ -589,11 +852,16 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
     putObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers}'
     logger.info("Cmd: %s" % putObjectCmd)
-    complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-    logger.info("Output: %s" % complProc.stdout)
-    oid = _parse_oid(complProc.stdout)
-    return oid
+
+    try:
+        complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+        oid = _parse_oid(complProc.stdout)
+        return oid
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
 
 
 @keyword('Get Range Hash')
@@ -627,6 +895,23 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_obj
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+
+def _exec_cli_cmd(private_key: bytes, postfix: str):
+
+    # Get linked objects from first
+    ObjectCmd = f'{CLI_PREFIX}neofs-cli --raw --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} {postfix}'
+    logger.info("Cmd: %s" % ObjectCmd)
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return complProc.stdout
 
 
 def _get_file_hash(filename):
@@ -702,12 +987,14 @@ def _get_storage_nodes(private_key: bytes):
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
     # --filters objectID={oid}
-    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} '
+    if oid:
+        oid_cmd = "--oid %s" % oid
+    Cmd = f'{CLI_PREFIX}neofs-cli --rpc-endpoint {node} --key {private_key}  --ttl 1 object search --root --cid {cid} {oid_cmd}'
 
     try:
         logger.info(Cmd)
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
         if re.search(r'%s' % oid, complProc.stdout):
@@ -716,8 +1003,13 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
             logger.info("Object is not found.")
 
     except subprocess.CalledProcessError as e:
+
         if re.search(r'local node is outside of object placement', e.output):
-            logger.info("Server is not presented in container.")
+            logger.warn("Server is not presented in container.")
+
+        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
+            logger.warn("Node is unavailable")
+
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 

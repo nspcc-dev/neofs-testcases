@@ -13,9 +13,6 @@ from robot.api.deco import keyword
 from robot.api import logger
 import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
-from neocore.KeyPair import KeyPair
-
-from Crypto import Random
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -36,7 +33,7 @@ def init_wallet():
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet init -w {filename}" )
 
     logger.info(f"Executing shell command: {cmd}")
-    out = run_sh(cmd)
+    out = _run_sh(cmd)
     logger.info(f"Command completed with output: {out}")
     return filename
 
@@ -57,12 +54,11 @@ def generate_wallet(wallet: str):
 
 @keyword('Dump Address')
 def dump_address(wallet: str):
-    #"address": "Ngde6LSaBZ58p72trTNkgqEZmX8dTWBgHo",
     address = ""
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet dump -w {wallet}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh(cmd)
+    out = _run_sh(cmd)
     logger.info(f"Command completed with output: {out}")
 
     m = re.search(r'"address": "(\w+)"', out)
@@ -78,7 +74,7 @@ def dump_privkey(wallet: str, address: str):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet export -w {wallet} --decrypt {address}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     return out
@@ -89,7 +85,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
             f"--to {address_to} --token gas --amount {amount}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
     if not re.match(r'^(\w{64})$', out):
@@ -103,13 +99,16 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
 
-    #if not re.match(r'^(\w{64})$', out):
-    #    raise Exception("Can not get Tx.")
+    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
+    if m is None:
+        raise Exception("Can not get Tx.")
 
-    return out
+    tx = m.group(1)
+
+    return tx
 
 @keyword('Mainnet Balance')
 def mainnet_balance(address: str):
@@ -130,9 +129,9 @@ def mainnet_balance(address: str):
 
     return amount
 
-@keyword('Expexted Mainnet Balance')
-def expected_mainnet_balance(address: str, expected: int):
 
+@keyword('Expexted Mainnet Balance')
+def expected_mainnet_balance(address: str, expected: float):
     amount = mainnet_balance(address)
 
     if float(amount) != float(expected):
@@ -147,7 +146,7 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, walle
             f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
     logger.info(f"Executing command: {cmd}")
-    out = run_sh_with_passwd(wallet_pass, cmd)
+    out = _run_sh_with_passwd(wallet_pass, cmd)
     logger.info(f"Command completed with output: {out}")
 
     m = re.match(r'^Sent invocation transaction (\w{64})$', out)
@@ -155,8 +154,6 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, walle
         raise Exception("Can not get Tx.")
 
     tx = m.group(1)
-
-    # Sent invocation transaction
 
     return tx
 
@@ -198,72 +195,6 @@ def get_transaction(tx_id: str):
     complProc = subprocess.run(TX_request, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info(complProc.stdout)
-
-def run_sh(args):
-    complProc = subprocess.run(args, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=150, shell=True)
-    output, errors = complProc.stdout, complProc.stderr
-    if errors:
-        return errors
-    return output
-
-
-def run_sh_with_passwd(passwd, cmd):
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline(passwd)
-    p.wait()
-    # throw a string with password prompt
-    # take a string with tx hash
-    tx_hash = p.read().splitlines()[-1]
-    return tx_hash.decode()
-
-
-
-#@keyword('Transfer Mainnet Gas')
-#def transfer_mainnet_gas(wallet_to: str, amount: int):
-
-#
-#    Cmd = f'docker exec -it main_chain neo-go wallet nep5 transfer -w wallets/wallet.json -r http://main_chain.neofs.devenv:30333 --from NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx --to {wallet_to} --token gas --amount {amount}'
-#    command = ['docker', 'exec', '-it', 'main_chain', 'neo-go', 'wallet', 'nep5', 'transfer', '-w', 'wallets/wallet.json', '-r', 'http://main_chain.neofs.devenv:30333', '--from NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx', '--to', 'NULwe3UAHckN2fzNdcVg31tDiaYtMDwANt', '--token gas', '--amount', '5']
-
-
-
-#    logger.info("Cmd: %s" % Cmd)
-
-#import subprocess
-#command = ['myapp', '--arg1', 'value_for_arg1']
-#p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#output = p.communicate(input='some data'.encode())[0]
-
-#a=subprocess.Popen("docker run -t -i fedora bash", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-#4. >>> a.stdin.write("exit\n")
-#5. >>> print a.poll()
-
-    complProc = subprocess.Popen(Cmd.split(), stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-    complProc.stdin.write("\n".encode())
-
-    output = complProc.stdout.read() #.communicate(input=''.encode())[0]
-
-    logger.info("Output: %s" % output)
-
-@keyword('Request NeoFS Deposit')
-def request_neofs_deposit(public_key: str):
-    """
-    This function requests Deposit to the selected public key.
-    :param public_key:      neo public key
-    """
-
-    response = requests.get('https://fs.localtest.nspcc.ru/api/deposit/'+str(public_key), verify='ca/nspcc-ca.pem')
-
-    if response.status_code != 200:
-        BuiltIn().fatal_error('Can not run Deposit to {} with error: {}'.format(public_key, response.text))
-    else:
-        logger.info("Deposit has been completed for '%s'; tx: '%s'" % (public_key, response.text) )
-
-    return response.text
 
 @keyword('Get Balance')
 def get_balance(privkey: str):
@@ -315,3 +246,22 @@ def _get_balance_request(privkey: str):
     logger.info("Balance for '%s' is '%s'" % (privkey, balance) )
 
     return balance
+
+def _run_sh(args):
+    complProc = subprocess.run(args, check=True, universal_newlines=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                timeout=150, shell=True)
+    output, errors = complProc.stdout, complProc.stderr
+    if errors:
+        return errors
+    return output
+
+def _run_sh_with_passwd(passwd, cmd):
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline(passwd)
+    p.wait()
+    # throw a string with password prompt
+    # take a string with tx hash
+    tx_hash = p.read().splitlines()[-1]
+    return tx_hash.decode()
