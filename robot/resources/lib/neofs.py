@@ -9,10 +9,15 @@ import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
 
+if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
+    from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+else:
+    from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
 
 ROBOT_AUTO_KEYWORDS = False
 
-NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
 CLI_PREFIX = ""
 
 @keyword('Form WIF from String')
@@ -26,7 +31,7 @@ def form_wif_from_string(private_key: str):
     logger.info("Output: %s" % output)
 
     m = re.search(r'WIF\s+(\w+)', output)
-    if m.start() != m.end(): 
+    if m.start() != m.end():
         wif = m.group(1)
     else:
         raise Exception("Can not get WIF.")
@@ -46,7 +51,7 @@ def get_scripthash(privkey: str):
 
     # ScriptHash3.0   00284fc88f8ac31f8e56c03301bfab0757e3f212
     m = re.search(r'ScriptHash3.0   (\w+)', output)
-    if m.start() != m.end(): 
+    if m.start() != m.end():
         scripthash = m.group(1)
     else:
         raise Exception("Can not get ScriptHash.")
@@ -141,7 +146,7 @@ def conver_str_to_hex(string_convert: str):
 
 @keyword('Set custom eACL')
 def set_custom_eacl(private_key: bytes, cid: str, eacl_prefix: str, eacl_slice: str, eacl_postfix: str):
-   
+
    logger.info(str(eacl_prefix))
    logger.info(str(eacl_slice))
    logger.info(str(eacl_postfix))
@@ -170,9 +175,9 @@ def set_eacl(private_key: bytes, cid: str, eacl: str):
 def get_range(private_key: str, cid: str, oid: str, bearer: str, range_cut: str):
 
     bearer_token = ""
-    if bearer: 
+    if bearer:
         bearer_token = f"--bearer {bearer}"
- 
+
     Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} object get-range --cid {cid} --oid {oid} {bearer_token} {range_cut} '
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
@@ -183,10 +188,10 @@ def get_range(private_key: str, cid: str, oid: str, bearer: str, range_cut: str)
 
 @keyword('Create container')
 def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CBF 1 SELECT 2 FROM * AS X"):
-    
+
     if basic_acl != "":
         basic_acl = "--basic-acl " + basic_acl
-    
+
     createContainerCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container create --policy "{rule}" {basic_acl} --await'
     logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
@@ -210,7 +215,7 @@ def container_existing(private_key: str, cid: str):
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info("Output: %s" % complProc.stdout)
-    
+
     _find_cid(complProc.stdout, cid)
     return
 
@@ -230,14 +235,14 @@ def generate_file_of_bytes(size):
         fout.write(os.urandom(size))
 
     logger.info("Random binary file with size %s bytes has been generated." % str(size))
-    return filename
+    return os.path.abspath(os.getcwd()) + '/' + filename
 
 
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, *expected_objects_list ):
 
     bearer_token = ""
-    if bearer: 
+    if bearer:
         bearer_token = f"--bearer {bearer}"
 
 
@@ -255,7 +260,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
         if expected_objects_list:
             found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
 
-             
+
             if sorted(found_objects) == sorted(expected_objects_list):
                 logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
             else:
@@ -264,7 +269,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
 
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 @keyword('Verify Head Tombstone')
@@ -281,7 +286,7 @@ def verify_head_tombstone(private_key: str, cid: str, oid: str):
             logger.info("Tombstone header 'Type=Tombstone Value=MARKED' was parsed from command output")
         else:
             raise Exception("Tombstone header 'Type=Tombstone Value=MARKED' was not found in the command output: \t%s" % (complProc.stdout))
-   
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -300,20 +305,20 @@ def _exec_cli_cmd(private_key: bytes, postfix: str):
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    
+
     return complProc.stdout
 
 
 @keyword('Verify linked objects')
 def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: float):
-    
+
     payload_size = int(float(payload_size))
 
     # Get linked objects from first
     postfix = f'object head --cid {cid} --oid {oid} --full-headers'
     output = _exec_cli_cmd(private_key, postfix)
     child_obj_list = []
-    
+
     for m in re.finditer(r'Type=Child ID=([\w-]+)', output):
         child_obj_list.append(m.group(1))
 
@@ -324,7 +329,7 @@ def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: 
         raise Exception("Child objects was not found.")
     else:
         logger.info("Child objects: %s" % child_obj_list)
- 
+
     # HEAD and validate each child object:
     payload = 0
     parent_id = "00000000-0000-0000-0000-000000000000"
@@ -342,7 +347,7 @@ def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: 
     if not first_obj:
         raise Exception("Can not find first object with zero Parent ID.")
     else:
-        
+
         _check_linked_object(first_obj, child_obj_list_headers, payload_size, payload, parent_id)
 
     return child_obj_list_headers.keys()
@@ -358,11 +363,11 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
         logger.info("Previous ID is equal for expected: %s" % parent_id)
 
     m = re.search(r'PayloadLength=(\d+)', output)
-    if m.start() != m.end(): 
+    if m.start() != m.end():
         payload += int(m.group(1))
     else:
         raise Exception("Can not get payload for the object %s." % obj)
- 
+
     if payload > payload_size:
         raise Exception("Payload exceeds expected total payload %s." % payload_size)
 
@@ -371,10 +376,10 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
             raise Exception("Incorrect previos ID in the last child object %s." % obj)
         else:
             logger.info("Next ID is correct for the final child object: %s" % obj)
-    
+
     else:
         m = re.search(r'Type=Next ID=([\w-]+)', output)
-        if m: 
+        if m:
             # next object should be in the expected list
             logger.info(m.group(1))
             if m.group(1) not in child_obj_list_headers.keys():
@@ -409,13 +414,13 @@ def head_object(private_key: str, cid: str, oid: str, bearer: str, user_headers:
                 logger.info("User header %s was parsed from command output" % key)
             else:
                 raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
-   
+
         return complProc.stdout
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-    
+
 
 
 @keyword('Parse Object System Header')
@@ -444,7 +449,7 @@ def parse_object_system_header(header: str):
         result_header['OwnerID'] = m.group(1)
     else:
         raise Exception("no OwnerID was parsed from object header: \t%s" % output)
-    
+
     # Version
     m = re.search(r'- Version=(\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
@@ -461,7 +466,7 @@ def parse_object_system_header(header: str):
         raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
 
 
- 
+
     # CreatedAtUnixTime
     m = re.search(r'- CreatedAt={UnixTime=(\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
@@ -479,26 +484,26 @@ def parse_object_system_header(header: str):
     logger.info("Result: %s" % result_header)
     return result_header
 
- 
+
 
 @keyword('Parse Object Extended Header')
 def parse_object_extended_header(header: str):
     result_header = dict()
 
- 
+
     pattern = re.compile(r'- Type=(\w+)\n.+Value=(.+)\n')
- 
+
 
     for (f_type, f_val) in re.findall(pattern, header):
         logger.info("found: %s - %s" % (f_type, f_val))
         if f_type not in result_header.keys():
             result_header[f_type] = []
- 
+
         result_header[f_type].append(f_val)
 
     logger.info("Result: %s" % result_header)
     return result_header
- 
+
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str):
@@ -513,7 +518,7 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output)) 
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 @keyword('Get file hash')
@@ -556,7 +561,7 @@ def get_storage_group(private_key: bytes, cid: str, sgid: str):
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        
+
 
 @keyword('Cleanup File')
 # remove temp files
@@ -564,11 +569,11 @@ def cleanup_file(filename: str):
     if os.path.isfile(filename):
         try:
             os.remove(filename)
-        except OSError as e:  
+        except OSError as e:
             raise Exception("Error: '%s' - %s." % (e.filename, e.strerror))
-    else:    
+    else:
         raise Exception("Error: '%s' file not found" % filename)
-   
+
     logger.info("File '%s' has been deleted." % filename)
 
 
@@ -593,10 +598,10 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
 @keyword('Get Range Hash')
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str):
- 
-    if bearer_token: 
+
+    if bearer_token:
         bearer_token = f"--bearer {bearer}"
- 
+
     ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token}'
 
     logger.info("Cmd: %s" % ObjectCmd)
@@ -606,7 +611,6 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, rang
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
 
 @keyword('Get object from NeoFS')
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_object: str):
@@ -659,7 +663,7 @@ def _parse_oid(output: str):
         oid = m.group(1)
     else:
         raise Exception("no OID was parsed from command output: \t%s" % output)
-        
+
     return oid
 
 def _parse_cid(output: str):
@@ -672,7 +676,7 @@ def _parse_cid(output: str):
     if not m.start() != m.end(): # e.g., if match found something
         raise Exception("no CID was parsed from command output: \t%s" % (output))
     cid = m.group(1)
-        
+
     return cid
 
 def _get_storage_nodes(private_key: bytes):
@@ -684,7 +688,7 @@ def _get_storage_nodes(private_key: bytes):
     #logger.info("Netmap: %s" % output)
     #for m in re.finditer(r'"address":"/ip4/(\d+\.\d+\.\d+\.\d+)/tcp/(\d+)"', output):
     #    storage_nodes.append(m.group(1)+":"+m.group(2))
-    
+
     #if not storage_nodes:
     #    raise Exception("Storage nodes was not found.")
 
@@ -718,4 +722,4 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
-    
+
