@@ -4,24 +4,27 @@ import subprocess
 import pexpect
 import re
 import uuid
+import logging
+import requests
+import json
+import os
 
 from robot.api.deco import keyword
 from robot.api import logger
-
-import logging
 import robot.errors
-import requests
-import json
-
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
 
+if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
+    from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+else:
+    from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
 
 
 NEOFS_CONTRACT = "5f490fbd8010fd716754073ee960067d28549b7d"
-NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"
-NEO_MAINNET_ENDPOINT = "main_chain.neofs.devenv:30333"
 
 @keyword('Init wallet')
 def init_wallet():
@@ -30,7 +33,7 @@ def init_wallet():
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet init -w {filename}" )
 
     logger.info(f"Executing shell command: {cmd}")
-    out = _run_sh(cmd) 
+    out = _run_sh(cmd)
     logger.info(f"Command completed with output: {out}")
     return filename
 
@@ -55,11 +58,11 @@ def dump_address(wallet: str):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet dump -w {wallet}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = _run_sh(cmd) 
+    out = _run_sh(cmd)
     logger.info(f"Command completed with output: {out}")
 
     m = re.search(r'"address": "(\w+)"', out)
-    if m.start() != m.end(): 
+    if m.start() != m.end():
         address = m.group(1)
     else:
         raise Exception("Can not get address.")
@@ -76,8 +79,7 @@ def dump_privkey(wallet: str, address: str):
 
     return out
 
-
-@keyword('Transfer Mainnet Gas') 
+@keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r http://main_chain.neofs.devenv:30333 --from {address} "
             f"--to {address_to} --token gas --amount {amount}" )
@@ -91,60 +93,10 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 
     return out
 
-@keyword('Withdraw Mainnet Gas') 
+@keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
     cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r http://main_chain.neofs.devenv:30333 "
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
-
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('', cmd)
-    logger.info(f"Command completed with output: {out}")
-
-    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
-    if m is None:
-        raise Exception("Can not get Tx.") 
-    
-    tx = m.group(1)
-
-    return tx
-
-
-@keyword('Mainnet Balance')
-def mainnet_balance(address: str):
-    request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getnep5balances", "params": [\"'+address+'\"] }\''
-    logger.info(f"Executing request: {request}")
-
-    complProc = subprocess.run(request, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-
-    out = complProc.stdout
-    logger.info(out)
-
-    m = re.search(r'"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"([\d\.]+)"', out)
-    if not m.start() != m.end(): 
-        raise Exception("Can not get mainnet gas balance.")
-
-    amount = m.group(1)
-        
-    return amount
-
-
-@keyword('Expexted Mainnet Balance')
-def expected_mainnet_balance(address: str, expected: float):
-    
-    amount = mainnet_balance(address)
-
-    if float(amount) != float(expected):
-        raise Exception(f"Expected amount ({expected}) of GAS has not been found. Found {amount}.")
-
-    return True
-
-
-@keyword('NeoFS Deposit') 
-def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
-            f"-r http://main_chain.neofs.devenv:30333 {NEOFS_CONTRACT} " 
-            f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd('', cmd)
@@ -158,6 +110,52 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int):
 
     return tx
 
+@keyword('Mainnet Balance')
+def mainnet_balance(address: str):
+    request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getnep5balances", "params": [\"'+address+'\"] }\''
+    logger.info(f"Executing request: {request}")
+
+    complProc = subprocess.run(request, check=True, universal_newlines=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+
+    out = complProc.stdout
+    logger.info(out)
+
+    m = re.search(r'"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"([\d\.]+)"', out)
+    if not m.start() != m.end():
+        raise Exception("Can not get mainnet gas balance.")
+
+    amount = m.group(1)
+
+    return amount
+
+
+@keyword('Expexted Mainnet Balance')
+def expected_mainnet_balance(address: str, expected: float):
+    amount = mainnet_balance(address)
+
+    if float(amount) != float(expected):
+        raise Exception(f"Expected amount ({expected}) of GAS has not been found. Found {amount}.")
+
+    return True
+
+@keyword('NeoFS Deposit')
+def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
+    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
+            f"-r {NEOFS_NEO_API_ENDPOINT} {NEOFS_CONTRACT} "
+            f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
+
+    logger.info(f"Executing command: {cmd}")
+    out = _run_sh_with_passwd(wallet_pass, cmd)
+    logger.info(f"Command completed with output: {out}")
+
+    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
+    if m is None:
+        raise Exception("Can not get Tx.")
+
+    tx = m.group(1)
+
+    return tx
 
 @keyword('Transaction accepted in block')
 def transaction_accepted_in_block(tx_id):
@@ -169,11 +167,10 @@ def transaction_accepted_in_block(tx_id):
     """
 
     logger.info("Transaction id: %s" % tx_id)
-    
+
     TX_request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "gettransactionheight", "params": [\"'+ tx_id +'\"] }\''
-    
+
     logger.info(f"Executing command: {TX_request}")
-    
 
     complProc = subprocess.run(TX_request, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
@@ -185,7 +182,6 @@ def transaction_accepted_in_block(tx_id):
 
     logger.info("Transaction has been found in the block %s." % response['result'] )
     return response['result']
-    
 
 @keyword('Get Transaction')
 def get_transaction(tx_id: str):
@@ -199,8 +195,6 @@ def get_transaction(tx_id: str):
     complProc = subprocess.run(TX_request, check=True, universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info(complProc.stdout)
-    
-
 
 @keyword('Get Balance')
 def get_balance(privkey: str):
@@ -232,19 +226,18 @@ def expected_balance(privkey: str, init_amount: float, deposit_size: float):
 
     return deposit_change
 
-
 def _get_balance_request(privkey: str):
     '''
     Internal method.
     '''
-    Cmd = f'neofs-cli --key {privkey} --rpc-endpoint s01.neofs.devenv:8080 accounting balance'
+    Cmd = f'neofs-cli --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT} accounting balance'
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
     output = complProc.stdout
     logger.info("Output: %s" % output)
-    
-    
+
+
     m = re.match(r'(-?[\d.\.?\d*]+)', output )
     if m is None:
         BuiltIn().fatal_error('Can not parse balance: "%s"' % output)
@@ -254,7 +247,6 @@ def _get_balance_request(privkey: str):
 
     return balance
 
-
 def _run_sh(args):
     complProc = subprocess.run(args, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -263,7 +255,6 @@ def _run_sh(args):
     if errors:
         return errors
     return output
-
 
 def _run_sh_with_passwd(passwd, cmd):
     p = pexpect.spawn(cmd)
