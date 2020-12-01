@@ -33,9 +33,8 @@ Check Actions
     Check eACL Deny and Allow All Other
     Check eACL Deny and Allow All User
     Check eACL Deny and Allow All System
-
-    #https://github.com/nspcc-dev/neofs-node/issues/212
-    #Check eACL Deny All Other and Allow All Pubkey
+    # Issue https://github.com/nspcc-dev/neofs-node/issues/224
+    # Check eACL Deny All Other and Allow All Pubkey
 
     
 Check Filters
@@ -288,8 +287,8 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_Pubkey}
-                            Sleep                               ${MORPH_BLOCK_TIMEOUT}
+                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}    --await
+                            Get eACL                            ${USER_KEY}    ${CID}
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS                 ${OTHER_KEY}    ${FILE_S}     ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 

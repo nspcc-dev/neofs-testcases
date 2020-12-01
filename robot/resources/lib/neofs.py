@@ -24,7 +24,7 @@ CLI_PREFIX = ""
 @keyword('Form WIF from String')
 def form_wif_from_string(private_key: str):
     wif = ""
-    Cmd = f'neofs-cli util keyer -u {private_key}'
+    Cmd = f'neofs-cli util keyer {private_key}'
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
@@ -171,7 +171,7 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
 
 
 @keyword('Get eACL')
-def get_eacl(private_key: bytes, cid: str):
+def get_eacl(private_key: str, cid: str):
 
     Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container get-eacl --cid {cid}'
     logger.info("Cmd: %s" % Cmd)
@@ -1005,7 +1005,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
     except subprocess.CalledProcessError as e:
 
         if re.search(r'local node is outside of object placement', e.output):
-            logger.warn("Server is not presented in container.")
+            logger.info("Server is not presented in container.")
 
         elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
             logger.warn("Node is unavailable")
