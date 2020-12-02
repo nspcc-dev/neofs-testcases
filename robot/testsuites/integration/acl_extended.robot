@@ -33,8 +33,7 @@ Check Actions
     Check eACL Deny and Allow All Other
     Check eACL Deny and Allow All User
     Check eACL Deny and Allow All System
-    # Issue https://github.com/nspcc-dev/neofs-node/issues/224
-    # Check eACL Deny All Other and Allow All Pubkey
+    Check eACL Deny All Other and Allow All Pubkey
 
     
 Check Filters
@@ -308,7 +307,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${FILE_USR_HEADER}     @{S_OBJ_H}
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
-                            Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}           ${EMPTY}
+                            Delete object                       ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}
 
 
 Check eACL Deny and Allow All
