@@ -86,12 +86,20 @@ NeoFS Simple Object Operations
 
                         Run Keyword And Expect Error        *       
                         ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+    
+    [Teardown]          Cleanup                             ${FILE}
 
-                        Cleanup File                        ${FILE}   
-                        Cleanup File                        s_file_read
-                        Cleanup File                        h_file_read
-                        Cleanup File                        s_get_range
-                        Cleanup File                        h_get_range
+
+
+*** Keywords ***
+
+Cleanup
+    [Arguments]         ${FILE}
+
+    @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
+                        Cleanup Files                       @{CLEANUP_FILES}
  
+
+
 
 

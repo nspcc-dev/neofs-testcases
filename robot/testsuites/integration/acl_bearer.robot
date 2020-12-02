@@ -14,30 +14,27 @@ ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 
 *** Test cases ***
 BearerToken Operations
-    [Documentation]     Testcase to validate NeoFS operations with BearerToken.
-    [Tags]              ACL  NeoFS  NeoCLI BearerToken
-    [Timeout]           20 min
+    [Documentation]         Testcase to validate NeoFS operations with BearerToken.
+    [Tags]                  ACL  NeoFS  NeoCLI BearerToken
+    [Timeout]               20 min
 
-    Generate Keys
-    Generate file
-    Prepare eACL Role rules
-    Check Bearer
+                            Generate Keys
+                            Generate file
+                            Prepare eACL Role rules
+    
+                            Check Container Inaccessible and Allow All Bearer
+                            Check eACL Deny and Allow All Bearer
+    
+                            Check eACL Deny and Allow All Bearer Filter OID Equal
+                            Check eACL Deny and Allow All Bearer Filter OID NotEqual
+
+                            Check eACL Deny and Allow All Bearer Filter UserHeader Equal
+
+    [Teardown]              Cleanup   
     
     
  
 *** Keywords ***
-
-
-Check Bearer
-    Check Container Inaccessible and Allow All Bearer
-    Check eACL Deny and Allow All Bearer
-    
-    Check eACL Deny and Allow All Bearer Filter OID Equal
-    Check eACL Deny and Allow All Bearer Filter OID NotEqual
- 
-
-
-
 
 Generate Keys
     ${WALLET} =             Init wallet
@@ -68,18 +65,18 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     55
-                        Wait Until Keyword Succeeds         1 min       15 sec        
-                        ...  Transaction accepted in block  ${TX}
-                        Get Transaction                     ${TX}
-                        Expexted Mainnet Balance            ${ADDR}     55
+    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     55
+                            Wait Until Keyword Succeeds         1 min       15 sec        
+                            ...  Transaction accepted in block  ${TX}
+                            Get Transaction                     ${TX}
+                            Expexted Mainnet Balance            ${ADDR}     55
 
-    ${SCRIPT_HASH} =    Get ScripHash           ${KEY}
+    ${SCRIPT_HASH} =        Get ScripHash           ${KEY}
 
-    ${TX_DEPOSIT} =     NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      50
-                        Wait Until Keyword Succeeds         1 min          15 sec        
-                        ...  Transaction accepted in block  ${TX_DEPOSIT}
-                        Get Transaction                     ${TX_DEPOSIT}
+    ${TX_DEPOSIT} =         NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      50
+                            Wait Until Keyword Succeeds         1 min          15 sec        
+                            ...  Transaction accepted in block  ${TX_DEPOSIT}
+                            Get Transaction                     ${TX_DEPOSIT}
 
 
 
@@ -285,8 +282,60 @@ Check eACL Deny and Allow All Bearer Filter OID NotEqual
 
 
 
+Check eACL Deny and Allow All Bearer Filter UserHeader Equal
+    ${CID} =                Create Container Public
+    ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
+    ${S_OID_USER_2} =       Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
+    ${D_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
+    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
-#Check eACL Deny and Allow All Bearer Filter UserHeader Equal
-#Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
-#Check eACL Deny and Allow All Bearer for big object
-#Check eACL Deny and Allow All Bearer Filter UserHeader Equal for big object
+ 
+                            Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER} 
+                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         @{S_OBJ_H}            
+                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
+                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
+                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+
+                            Set eACL                            ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_USER}   --await
+
+                            Form BearerToken file filter for all ops        bearer_allow_all_user    ${USER_KEY}    ${CID}    ALLOW     USER  100500   STRING_EQUAL   key2    abc
+
+                            Run Keyword And Expect Error        *
+                            ...  Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_USR_HEADER} 
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            Run Keyword And Expect Error        *
+                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}          @{S_OBJ_H}
+                            Run Keyword And Expect Error        *
+                            ...  Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
+                            Run Keyword And Expect Error        *
+                            ...  Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
+                            Run Keyword And Expect Error        *
+                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
+
+                            # Search is allowed without filter condition.
+                            Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             @{S_OBJ_H}
+
+                            Run Keyword And Expect Error        *
+                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER} 
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
+
+                            # Preiodical issue: https://github.com/nspcc-dev/neofs-node/issues/225
+                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                                                                        
+                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
+                            
+                            # https://github.com/nspcc-dev/neofs-node/issues/215
+                            # Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
+                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+
+# Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
+# Check eACL Deny and Allow All Bearer for big object
+# Check eACL Deny and Allow All Bearer Filter UserHeader Equal for big object
+
+
+
+Cleanup
+    @{CLEANUP_FILES} =      Create List	     ${FILE_S}    local_file_eacl    s_get_range    bearer_allow_all_user
+                            Cleanup Files    @{CLEANUP_FILES}
