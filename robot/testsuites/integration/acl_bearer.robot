@@ -31,9 +31,9 @@ BearerToken Operations
 Check Bearer
     Check Container Inaccessible and Allow All Bearer
     Check eACL Deny and Allow All Bearer
+    
     Check eACL Deny and Allow All Bearer Filter OID Equal
-    # 
-    # Check eACL Deny and Allow All Bearer Filter OID NotEqual
+    Check eACL Deny and Allow All Bearer Filter OID NotEqual
  
 
 
@@ -210,26 +210,21 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
 
-
-
-                            # https://github.com/nspcc-dev/neofs-node/issues/215
-
+                            # Search is allowed without filter condition.
                             Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             @{S_OBJ_H}
-
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER} 
-                            
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
+
+                            # Preiodical issue: https://github.com/nspcc-dev/neofs-node/issues/225
+                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                                                                        
+                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
                             
-                            # TODO: Issue - observe and validate - Do not work and with allowed search operation!
-                            # Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                
-                            # Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
-
-
-                            #Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
-                            #Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            # https://github.com/nspcc-dev/neofs-node/issues/215
+                            # Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
+                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
 
 
 
@@ -266,18 +261,31 @@ Check eACL Deny and Allow All Bearer Filter OID NotEqual
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
 
-                            # Search is allowed.
-                            Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER} 
-                            Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}            bearer_allow_all_user               local_file_eacl
-                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                
-                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            bearer_allow_all_user               0:256     
+                            # Search is allowed without filter condition.
                             Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             @{S_OBJ_H}
-                            #Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
-                            #Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
 
- 
-# https://github.com/nspcc-dev/neofs-node/issues/215
+                            Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER} 
+                            
+                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                
+                            Run Keyword And Expect Error        *
+                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
+                            
+                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            bearer_allow_all_user               0:256     
+                            Run Keyword And Expect Error        *
+                            ...  Get Range                      ${USER_KEY}    ${CID}        ${S_OID_USER_2}          s_get_range            bearer_allow_all_user               0:256     
+                            
+                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
+                            Run Keyword And Expect Error        *
+                            ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               
+
+                            # https://github.com/nspcc-dev/neofs-node/issues/215
+                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            # Run Keyword And Expect Error        *
+                            # ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER_2}          bearer_allow_all_user
+
+
+
+
 #Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 #Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 #Check eACL Deny and Allow All Bearer for big object

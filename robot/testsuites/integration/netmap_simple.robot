@@ -15,60 +15,53 @@ NeoFS Simple Netmap
     Generate file
 
 
-    # https://github.com/nspcc-dev/neofs-api-go/issues/212
-    # Validate Policy     REP 2 IN X CBF 2 SELECT 2 FROM * AS X         2       @{EMPTY}
+    Validate Policy    REP 2 IN X CBF 2 SELECT 2 FROM * AS X    2    @{EMPTY}
 
-    Validate Policy     REP 2 IN X CBF 1 SELECT 2 FROM * AS X           2       @{EMPTY}
+    Validate Policy    REP 2 IN X CBF 1 SELECT 2 FROM * AS X    2    @{EMPTY}
 
-    Validate Policy     REP 3 IN X CBF 1 SELECT 3 FROM * AS X           3       @{EMPTY}
+    Validate Policy    REP 3 IN X CBF 1 SELECT 3 FROM * AS X    3    @{EMPTY}
 
-    Validate Policy     REP 1 IN X CBF 1 SELECT 1 FROM * AS X           1       @{EMPTY}
+    Validate Policy    REP 1 IN X CBF 1 SELECT 1 FROM * AS X    1    @{EMPTY}
 
-    # https://github.com/nspcc-dev/neofs-api-go/issues/212
-    # Validate Policy     REP 1 IN X CBF 2 SELECT 1 FROM * AS X         1       @{EMPTY}
+    Validate Policy    REP 1 IN X CBF 2 SELECT 1 FROM * AS X    1    @{EMPTY}
 
-    Validate Policy     REP 4 IN X CBF 1 SELECT 4 FROM * AS X           4       @{EMPTY}
+    Validate Policy    REP 4 IN X CBF 1 SELECT 4 FROM * AS X    4    @{EMPTY}
 
-    Validate Policy     REP 2 IN X CBF 1 SELECT 4 FROM * AS X           2       @{EMPTY}
+    Validate Policy    REP 2 IN X CBF 1 SELECT 4 FROM * AS X    2    @{EMPTY}
 
-    @{EXPECTED} =	    Create List     s01.neofs.devenv:8080  s02.neofs.devenv:8080  s03.neofs.devenv:8080  s04.neofs.devenv:8080
-    Validate Policy     REP 4 IN X CBF 1 SELECT 4 FROM * AS X           4       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080    s03.neofs.devenv:8080    s04.neofs.devenv:8080
+    Validate Policy    REP 4 IN X CBF 1 SELECT 4 FROM * AS X    4    @{EXPECTED}   
 
-    @{EXPECTED} =	    Create List     s03.neofs.devenv:8080
-    Validate Policy     REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW           1       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s03.neofs.devenv:8080
+    Validate Policy    REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW    1    @{EXPECTED}   
 
-    @{EXPECTED} =	    Create List     s02.neofs.devenv:8080
-    Validate Policy     REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER City EQ 'Saint-Petersburg' AS LOC_SPB           1       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s02.neofs.devenv:8080
+    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER City EQ 'Saint-Petersburg' AS LOC_SPB    1    @{EXPECTED}   
 
+    @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080
+    Validate Policy    REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE FILTER City EQ 'Saint-Petersburg' AS LOC_SPB FILTER City EQ 'Moscow' AS LOC_MSK          2       @{EXPECTED}   
 
-    # https://github.com/nspcc-dev/neofs-api-go/issues/215
-    # @{EXPECTED} =	    Create List     s01.neofs.devenv:8080  s02.neofs.devenv:8080
-    # Validate Policy     REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE FILTER City EQ 'Saint-Petersburg' AS LOC_SPB FILTER City EQ 'Moscow' AS LOC_MSK          2       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080    s03.neofs.devenv:8080    s04.neofs.devenv:8080
+    Validate Policy    REP 4 CBF 1 SELECT 4 FROM LOC_EU FILTER Location EQ Europe AS LOC_EU    4    @{EXPECTED}   
 
-    # https://github.com/nspcc-dev/neofs-api-go/issues/213
-    # @{EXPECTED} =	    Create List     s01.neofs.devenv:8080  s02.neofs.devenv:8080  s03.neofs.devenv:8080  s04.neofs.devenv:8080
-    # Validate Policy     REP 4 CBF 1 SELECT 4 FROM LOC_EU FILTER Location EQ Europe AS LOC_EU           4       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s02.neofs.devenv:8080
+    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER City NE 'Moscow' AND City NE 'Stockholm' AND City NE 'Helsinki' AS LOC_SPB           1       @{EXPECTED}   
 
-    @{EXPECTED} =	    Create List     s02.neofs.devenv:8080
-    Validate Policy     REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER City NE 'Moscow' AND City NE 'Stockholm' AND City NE 'Helsinki' AS LOC_SPB           1       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080
+    Validate Policy    REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER City NE 'Stockholm' AND City NE 'Helsinki' AS LOC_RU    2    @{EXPECTED}   
 
-    # https://github.com/nspcc-dev/neofs-api-go/issues/213
-    # @{EXPECTED} =	    Create List     s01.neofs.devenv:8080  s02.neofs.devenv:8080
-    # Validate Policy     REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER City NE 'Stockholm' AND City NE 'Helsinki' AS LOC_RU           2       @{EXPECTED}   
+    @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080
+    Validate Policy    REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER Country EQ 'Russia' AS LOC_RU    2    @{EXPECTED}   
 
-
-    # https://github.com/nspcc-dev/neofs-api-go/issues/214
-    # @{EXPECTED} =	    Create List     s01.neofs.devenv:8080    s02.neofs.devenv:8080
-    # Validate Policy     REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER Country EQ 'Russia' AS LOC_RU           2       @{EXPECTED}   
-
-    # https://github.com/nspcc-dev/neofs-api-go/issues/214
-    # @{EXPECTED} =	    Create List     s03.neofs.devenv:8080    s04.neofs.devenv:8080
-    # Validate Policy     REP 2 CBF 1 SELECT 2 FROM LOC_EU FILTER Country NE 'Russia' AS LOC_EU           2       @{EXPECTED} 
-    # Log	                                Operation should be failed with container rule "RF 1 SELECT 6 Node"
-    # ${CID} =            Create container                    ${PRIV_KEY}    ${EMPTY}      RF 1 SELECT 6 Node
+    @{EXPECTED} =      Create List    s03.neofs.devenv:8080    s04.neofs.devenv:8080
+    Validate Policy    REP 2 CBF 1 SELECT 2 FROM LOC_EU FILTER Country NE 'Russia' AS LOC_EU    2    @{EXPECTED} 
+    
+    Log	               Put operation should be failed with error "not enough nodes to SELECT from: 'X'"
+                       Run Keyword And Expect Error    *
+                       ...  Validate Policy    REP 2 IN X CBF 2 SELECT 6 FROM * AS X    2    @{EMPTY} 
  
-*** Keywords ***
 
+*** Keywords ***
 
 
 Generate file
@@ -111,5 +104,5 @@ Validate Policy
                         Container Existing                  ${PRIV_KEY}    ${CID}   
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}          
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
-                        # Can be on each of nodes
+                        
 

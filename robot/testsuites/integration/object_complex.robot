@@ -10,7 +10,7 @@ ${FILE_USR_HEADER_OTH} =    key1=2
 
 
 *** Test cases ***
-NeoFS Simple Object Operations
+NeoFS Complex Object Operations
     [Documentation]     Testcase to validate NeoFS operations with simple object.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
@@ -60,15 +60,13 @@ NeoFS Simple Object Operations
 #   @{Full_obj_list} =	Create List                         @{Link_obj_S}  @{Link_obj_H}  ${S_OID}       ${H_OID}
 #                       Search object                       ${PRIV_KEY}    ${CID}         ${EMPTY}       ${EMPTY}      @{Full_obj_list} 
 
-                        Run Keyword And Expect Error        *       
-                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
-
-
-
 
     @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}     ${H_OID_OTH}   
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
     @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
+
+                        Run Keyword And Expect Error        *       
+                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
 
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
@@ -106,8 +104,7 @@ NeoFS Simple Object Operations
                         Cleanup File                        s_get_range
                         Cleanup File                        h_get_range
 
-# 4.86192020
- 
+
 
 
 
