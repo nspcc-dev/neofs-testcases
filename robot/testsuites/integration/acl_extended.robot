@@ -1,10 +1,8 @@
 *** Settings ***
-Variables   ../../variables/common.py
-
-Library     Collections
-
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
+Variables                   ../../variables/common.py
+Library                     Collections
+Library                     ${RESOURCES}/neofs.py
+Library                     ${RESOURCES}/payment_neogo.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
@@ -14,31 +12,32 @@ ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 
 *** Test cases ***
 Extended ACL Operations
-    [Documentation]     Testcase to validate NeoFS operations with extended ACL.
-    [Tags]              ACL  eACL  NeoFS  NeoCLI
-    [Timeout]           20 min
+    [Documentation]         Testcase to validate NeoFS operations with extended ACL.
+    [Tags]                  ACL  eACL  NeoFS  NeoCLI
+    [Timeout]               20 min
 
-    Generate Keys
-    Generate file
-    Prepare eACL Role rules
+                            Generate Keys
+                            Generate file
+                            Prepare eACL Role rules
     
-    Check Actions
-    Check Filters
+                            Check Actions
+                            Check Filters
+
+    [Teardown]              Cleanup  
+
     
-    
- 
 *** Keywords ***
 
 Check Actions
-    Check eACL Deny and Allow All Other
-    Check eACL Deny and Allow All User
-    Check eACL Deny and Allow All System
-    Check eACL Deny All Other and Allow All Pubkey
+                            Check eACL Deny and Allow All Other
+                            Check eACL Deny and Allow All User
+                            Check eACL Deny and Allow All System
+                            Check eACL Deny All Other and Allow All Pubkey
 
     
 Check Filters
-    Check eACL MatchType String Equal
-    Check eACL MatchType String Not Equal
+                            Check eACL MatchType String Equal
+                            Check eACL MatchType String Not Equal
 
 
 Check eACL MatchType String Equal
@@ -55,7 +54,7 @@ Check eACL MatchType String Equal
     ${EACL_CUSTOM} =        Form eACL json file             eacl_custom       GET       DENY              STRING_EQUAL    $Object:objectID    ${ID_value}    OTHERS
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     
@@ -70,7 +69,6 @@ Check eACL MatchType String Equal
 
 Check eACL MatchType String Not Equal
     ${CID} =                Create Container Public
-    ${FILE_S_2} =           Generate file of bytes          2048
     
     ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}      ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
     ${S_OID_OTHER} =        Put object to NeoFS             ${OTHER_KEY}    ${FILE_S_2}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
@@ -154,12 +152,15 @@ Create Container Public
                             
  
 Generate file
-    ${FILE_S_GEN} =         Generate file of bytes    1024
-                            Set Global Variable       ${FILE_S}    ${FILE_S_GEN}
+    ${FILE_S_GEN_1} =       Generate file of bytes    1024
+    ${FILE_S_GEN_2} =       Generate file of bytes    2048
+                            Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}
+                            Set Global Variable       ${FILE_S_2}    ${FILE_S_GEN_2}
  
 
 Prepare eACL Role rules
                             Log	                   Set eACL for different Role cases
+
                             Set Global Variable    ${EACL_DENY_ALL_OTHER}      robot/resources/lib/eacl/eacl_encoded_deny_all
                             Set Global Variable    ${EACL_ALLOW_ALL_OTHER}     robot/resources/lib/eacl/eacl_encoded_allow_all
                                                                                   
@@ -356,3 +357,6 @@ Check eACL Deny and Allow All
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}       s_get_range          ${EMPTY}            0:256
                             Delete object                       ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}
 
+Cleanup
+    @{CLEANUP_FILES} =      Create List	     ${FILE_S}    ${FILE_S_2}    local_file_eacl    eacl_custom    s_get_range
+                            Cleanup Files    @{CLEANUP_FILES}

@@ -74,21 +74,22 @@ NeoFS Complex Object Operations
                         Verify file hash                    s_file_read    ${FILE_HASH} 
                         Verify file hash                    h_file_read    ${FILE_HASH} 
 
-                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       0:10
-                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       0:10
+                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}       0:10
+                        Get Range Hash                      ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       0:10
 
-                        Get Range                           ${PRIV_KEY}    ${CID}        ${S_OID}          s_get_range   ${EMPTY}       0:10
-                        Get Range                           ${PRIV_KEY}    ${CID}        ${H_OID}          h_get_range   ${EMPTY}       0:10
+                        Get Range                           ${PRIV_KEY}    ${CID}        ${S_OID}          s_get_range    ${EMPTY}       0:10
+                        Get Range                           ${PRIV_KEY}    ${CID}        ${H_OID}          h_get_range    ${EMPTY}       0:10
 
                         Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
                         Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER}      @{S_OBJ_H}    
                         Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER_OTH}  @{S_OBJ_H_OTH} 
                         
-                        Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}             
-                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}        ${FILE_USR_HEADER}
+                        Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}             
+                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       ${FILE_USR_HEADER}
                           
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}
+                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}
+
                         #Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${S_OID}
                         
                         Sleep                               2min
@@ -97,13 +98,17 @@ NeoFS Complex Object Operations
                         ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
                         Run Keyword And Expect Error        *       
                         ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+   
+    [Teardown]          Cleanup                             ${FILE}
 
-                        Cleanup File                        ${FILE}   
-                        Cleanup File                        s_file_read
-                        Cleanup File                        h_file_read
-                        Cleanup File                        s_get_range
-                        Cleanup File                        h_get_range
 
+*** Keywords ***
+Cleanup
+    [Arguments]         ${FILE}
+    
+    @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
+                        Cleanup Files                       @{CLEANUP_FILES}
+ 
 
 
 

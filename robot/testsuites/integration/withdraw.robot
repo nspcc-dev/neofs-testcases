@@ -23,7 +23,7 @@ NeoFS Deposit and Withdraw
 
     ${SCRIPT_HASH} =        Get ScripHash                         ${PRIV_KEY}
 
-    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}                ${SCRIPT_HASH}    50
+    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    50
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
@@ -33,13 +33,13 @@ NeoFS Deposit and Withdraw
                             Expexted Mainnet Balance              ${ADDR}                4.86192020
     ${NEOFS_BALANCE} =      Get Balance                           ${PRIV_KEY}            
 
-    ${TX} =                 Withdraw Mainnet Gas                  ${WALLET}              ${ADDR}                ${SCRIPT_HASH}    50
+    ${TX} =                 Withdraw Mainnet Gas                  ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    50
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
 
                             Sleep                                 1 min
                             Get Balance                           ${PRIV_KEY}   
-                            Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}       -50
+                            Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}    -50
                             Expexted Mainnet Balance              ${ADDR}                54.82554860
-                            
+     
                                      

@@ -12,8 +12,8 @@ NeoFS Simple Netmap
     [Timeout]           20 min
 
     Generate Key and Pre-payment
-    Generate file
 
+    Generate file
 
     Validate Policy    REP 2 IN X CBF 2 SELECT 2 FROM * AS X    2    @{EMPTY}
 
@@ -59,7 +59,8 @@ NeoFS Simple Netmap
     Log	               Put operation should be failed with error "not enough nodes to SELECT from: 'X'"
                        Run Keyword And Expect Error    *
                        ...  Validate Policy    REP 2 IN X CBF 2 SELECT 6 FROM * AS X    2    @{EMPTY} 
- 
+
+    [Teardown]         Cleanup Files      ${FILE}
 
 *** Keywords ***
 

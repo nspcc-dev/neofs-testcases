@@ -30,8 +30,10 @@ NeoFS Object Replication
                             
                             Sleep                                 1 min
     
-    ${CID} =                Create container                      ${PRIV_KEY}            ${EMPTY}              REP 2 IN X CBF 1 SELECT 4 FROM * AS X
-                            Container Existing                    ${PRIV_KEY}            ${CID}
+
+    ${CID} =                Create container                      ${PRIV_KEY}    ${EMPTY}    REP 2 IN X CBF 1 SELECT 4 FROM * AS X
+                            Container Existing                    ${PRIV_KEY}    ${CID}
+
 
     ${FILE} =               Generate file of bytes                1024
     ${FILE_HASH} =          Get file hash                         ${FILE}
@@ -43,3 +45,7 @@ NeoFS Object Replication
                             Sleep                                 1 min
                             Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}
                             Start nodes                           @{NODES_OBJ_STOPPED}
+  
+    [Teardown]              Cleanup Files                         ${FILE}
+
+
