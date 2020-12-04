@@ -52,4 +52,3 @@ NeoFS HTTP Gateway
                         Verify file hash                    ${FILEPATH}    ${FILE_HASH} 
                         
     [Teardown]          Cleanup Files    ${FILEPATH}    ${FILE}    s_file_read
-                           
