@@ -3,6 +3,7 @@
 import logging
 import os
 import requests
+import shutil
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -27,15 +28,26 @@ def get_via_http_gate(cid: str, oid: str):
     :param cid:      CID to get object from
     :param oid:      object OID
     """
-    resp = requests.get(f'{HTTP_GATE}/get/{cid}/{oid}')
+    request = f'{HTTP_GATE}/get/{cid}/{oid}'
+    resp = requests.get(request, stream=True)
+
     if not resp.ok:
-        logger.info(f"""Failed to get object via HTTP gate:
+        raise Exception(f"""Failed to get object via HTTP gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}""")
         return
 
+    logger.info(f'Request: {request}')
     filename = os.path.curdir + f"/{cid}_{oid}"
-    with open(filename, "w+") as f:
-        f.write(resp.text)
+    with open(filename, "wb") as f:
+        shutil.copyfileobj(resp.raw, f)
+    del resp
     return filename
+
+
+#url = 'http://example.com/img.png'
+#response = requests.get(url, stream=True)
+#with open('img.png', 'wb') as out_file:
+#    shutil.copyfileobj(response.raw, out_file)
+#del response

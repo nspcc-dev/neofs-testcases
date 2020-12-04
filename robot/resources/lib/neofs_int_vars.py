@@ -6,4 +6,4 @@ NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"
 NEO_MAINNET_ENDPOINT = "main_chain.neofs.devenv:30333"
 
 NEOFS_NEO_API_ENDPOINT = 'http://main_chain.neofs.devenv:30333'
-HTTP_GATE = ''
+HTTP_GATE = 'http://http.neofs.devenv'
