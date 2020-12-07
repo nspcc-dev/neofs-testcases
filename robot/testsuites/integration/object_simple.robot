@@ -48,9 +48,9 @@ NeoFS Simple Object Operations
     ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER} 
     ${H_OID_OTH} =      Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
 
-                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${S_OID}    
-                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID}    
-                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID_OTH}    
+                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${S_OID}    
+                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${H_OID}    
+                        Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${H_OID_OTH}    
 
     @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}      ${H_OID_OTH}
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
