@@ -544,6 +544,17 @@ def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CB
     return cid
 
 
+@keyword('Container List')
+def container_list(private_key: str):
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container list'
+    logger.info("Cmd: %s" % Cmd)
+    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+    logger.info("Output: %s" % complProc.stdout)
+
+    return complProc.stdout
+
+
 @keyword('Container Existing')
 def container_existing(private_key: str, cid: str):
     Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container list'
@@ -808,6 +819,11 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str):
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+
+@keyword('Get file name')
+def get_file_name(filepath):
+    filename = os.path.basename(filepath)
+    return filename
 
 @keyword('Get file hash')
 def get_file_hash(filename):

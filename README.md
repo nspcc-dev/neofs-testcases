@@ -1,19 +1,35 @@
 ## Запуск тесткейсов
 
-### Локальный запуск тесткейсов
+### Первичная подготовка
 
-1. Устаносить зависимости (только для первого запуска):
-    - pip3 install robotframework
-    - pip3 install pexpect
-    - pip3 install requests
+1. Установить neofs-cli 
+    - `git clone git@github.com:nspcc-dev/neofs-node.git`
+    - `cd neofs-node` 
+    - `make`
+    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add path to bin/neofs-cli
+
+2. Установить cdn-authmate
+    - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
+    - `cd cdn-authmate`
+    - `make build`
+    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add path to bin/cdn-authmate
+
+3. Устаносить зависимости для Testcases
+    - `pip3 install robotframework`
+    - `pip3 install pexpect`
+    - `pip3 install requests`
+    - `pip3 install boto3`
 
 (pip3 заменить на соответсвующий менеджер пакетов python в системе).
 
 При этом должен быть запущен dev-env с тестируемым окружением.
 
-2. Выпольнить `make run`
+### Запуск тесткейсов
 
-3. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
+1. Выпольнить `make run`
+
+2. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
+
 
 ### Запуск произвольного тесткейса
 
@@ -31,28 +47,6 @@
  * netmap_simple.robot - проверка Placement policy
  * replication.robot - базовый тесткейс проверки репликации объектов
 
-### Запуск тесткейсов в докере
-
-1. Задать переменные окружения для работы с dev-env:
-```
-    export REG_USR=<registry_user>
-    export REG_PWD=<registry_pass>
-    export JF_TOKEN=<JF_token>
-```
-
-2. Выполнить `make build`
-
-3. Выполнить `make run_docker`
-
-4. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
-
-### Запуск тесткейсов в докере с произвольными коммитами
-
-На данный момент доступны произовльные коммиты для NeoFS Node и NeoFS CLI.
-Для этого достаточно задать переменные окружения перед запуском `make build`.
-```
-export BUILD_NEOFS_NODE=<commit or branch>
-```
 
 ### Запуск smoke-тестов
 
