@@ -15,9 +15,9 @@ NeoFS S3 Gateway
     ${PRIV_KEY} =	            Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
     ${WALLET} =                 Init wallet
        
-                                Generate wallet from WIF    ${WALLET}    ${PRIV_KEY}
+                                Generate wallet from WIF    ${WALLET}      ${PRIV_KEY}
     ${ADDR} =                   Dump Address                ${WALLET}  
-                                Dump PrivKey                ${WALLET}    ${ADDR}
+                                Dump PrivKey                ${WALLET}      ${ADDR}
     ${SCRIPT_HASH} =            Get ScripHash               ${PRIV_KEY}  
 
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    50      
@@ -25,13 +25,13 @@ NeoFS S3 Gateway
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
                                 Get Transaction                       ${TX_DEPOSIT}
 
-    ${FILE_S3} =                   Generate file of bytes    256
-    ${FILE_S3_HASH} =              Get file hash             ${FILE_S3}
-    ${FILE_S3_NAME} =              Get file name             ${FILE_S3} 
+    ${FILE_S3} =                Generate file of bytes    256
+    ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
+    ${FILE_S3_NAME} =           Get file name             ${FILE_S3} 
 
-    ${FILE_FS} =                   Generate file of bytes    256
-    ${FILE_FS_HASH} =              Get file hash             ${FILE_FS}
-    ${FILE_FS_NAME} =              Get file name             ${FILE_FS}  
+    ${FILE_FS} =                Generate file of bytes    256
+    ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
+    ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 
     ${CID}
     ...  ${BUCKET}
