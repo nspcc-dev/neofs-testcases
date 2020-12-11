@@ -53,23 +53,11 @@ def init_s3_credentials(private_key: str):
         owner_private_key = m.group(1)
         logger.info("owner_private_key: %s" % owner_private_key)
 
-        
-        '''
-        s3.neofs.devenv
-
-        "access_key_id": "7vfXNMQQvA4YsLYpnrY7FSRsw4Dof9Q4FQGBa5URFKjp/GYssVA6cNtu5XimidxxXrS6co6oKuKcWP97kqYkMstaD",
-        "secret_access_key": "11f2d6dfce835bf68314cdc9b33390e8003dbfae192f65d9f0bb3eb37dc0e85b",
-        "owner_private_key": "5e8be9d85f3b0c66c563af52cc73c5763b47fa72a70f437600dff13ca52427a0"
-        '''
-
         return cid, bucket, access_key_id, secret_access_key, owner_private_key
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-
-
-########## Remove
 
 @keyword('Config S3 resource')
 def config_s3_resource(access_key_id, secret_access_key):
@@ -85,7 +73,6 @@ def config_s3_resource(access_key_id, secret_access_key):
     return s3_resource
 
 
-
 @keyword('Config S3 client')
 def config_s3_client(access_key_id, secret_access_key):
     session = boto3.session.Session()
@@ -99,7 +86,6 @@ def config_s3_client(access_key_id, secret_access_key):
 
     return s3_client
 
-# add CopyObject
 
 @keyword('List objects S3 v2')
 def list_objects_s3_v2(s3_client, bucket):
@@ -111,6 +97,7 @@ def list_objects_s3_v2(s3_client, bucket):
     logger.info("Found s3 objects: %s" % obj_list)
     return obj_list
 
+
 @keyword('List objects S3')
 def list_objects_s3(s3_client, bucket):
     response = s3_client.list_objects(Bucket=bucket)
@@ -121,14 +108,18 @@ def list_objects_s3(s3_client, bucket):
     logger.info("Found s3 objects: %s" % obj_list)
     return obj_list
 
+
 @keyword('List buckets S3')
 def list_buckets_s3(s3_client):
+    found_buckets = []
     response = s3_client.list_buckets()
     logger.info("S3 List buckets result: %s" % response)
-    return response
 
-# Search?
+    for bucket in response['Buckets']:
+        found_buckets.append(bucket['Name'])
 
+    return found_buckets
+ 
 
 @keyword('Put object S3')
 def put_object_s3(s3_client, bucket, filepath):
@@ -157,52 +148,26 @@ def delete_object_s3(s3_client, bucket, object_key):
     return response
 
 
+@keyword('Copy object S3')
+def copy_object_s3(s3_client, bucket, object_key, new_object):
+
+    # client.copy_object(Bucket="BucketName", CopySource="BucketName/OriginalName", Key="NewName")
+    response = s3_client.copy_object(Bucket=bucket, CopySource=bucket+"/"+object_key, Key=new_object)
+    logger.info("S3 Copy object result: %s" % response)
+    return response
+
 
 @keyword('Get object S3')
-def get_object_s3(s3_client, bucket, object_key, access_key_id, secret_access_key):
-    
-    #s3 = boto3.resource(
-    #    service_name='s3',
-    #    aws_access_key_id=access_key_id,
-    #    aws_secret_access_key=secret_access_key,
-    #    endpoint_url='https://s3.neofs.devenv:8080', verify=False
-    #)
-    
-    #response = s3.Object(bucket_name=bucket, key=object_key).get()
-    #body = response['Body'].read()  
-
-    #s3 = boto3.resource("s3")
-
-    #srcFileName=object_key
-    #destFileName="s3_abc.txt"
-    #bucketName=bucket
-    #k = s3.Key(bucket,srcFileName)
-    #k.get_contents_to_filename(destFileName)
-
-    #s3.Bucket(bucket).download_file(object_key, 'my_local_image.jpg')
-
-
+def get_object_s3(s3_client, bucket, object_key, target_file):
     response = s3_client.get_object(Bucket=bucket, Key=object_key)
-    
-    #s3_client.download_file(Bucket=bucket, Key=object_key, 'FILE_NAME')
-    #logger.info("S3 Head object result: %s" % response)
 
-    #bytes_buffer = io.BytesIO()
-    #byte_value = bytes_buffer.getvalue(response['Body'])
+    with open(f"{target_file}", 'wb') as f:
+        chunk = response['Body'].read(1024)
+        while chunk:
+            f.write(chunk)
+            chunk = response['Body'].read(1024)
 
-    body = response['Body'].read()
-#    with open(f"{object_key}", 'wb') as f:
-#        #.write(response['Body'])
-#        f.write(response['Body'].read())
-
-#    bytes_buffer = io.BytesIO()
-#    s3_client.download_fileobj(Bucket=bucket, Key=object_key, Fileobj=bytes_buffer)
-#    byte_value = bytes_buffer.getvalue()
-#    str_value = byte_value.decode() #python3, default decoding is utf-8
-
-    return # object_key
-
-
+    return target_file
 
 
 @keyword('Get via HTTP Gate')

@@ -552,7 +552,11 @@ def container_list(private_key: str):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
     logger.info("Output: %s" % complProc.stdout)
 
-    return complProc.stdout
+    container_list = re.findall(r'(\w{43,44})', complProc.stdout)
+    
+    logger.info("Containers list: %s" % container_list)
+
+    return container_list
 
 
 @keyword('Container Existing')
@@ -592,7 +596,6 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-
     if filters:
         filters = f"--filters {filters}"
 
@@ -604,19 +607,20 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
         logger.info("Output: %s" % complProc.stdout)
 
-        if expected_objects_list:
-            found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
+        found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
 
-
+        if expected_objects_list:    
             if sorted(found_objects) == sorted(expected_objects_list):
                 logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
             else:
                 raise Exception("Found object list '{}' is not equal to expected list '{}'".format(found_objects, expected_objects_list))
-
-
+            
+        return found_objects
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    
 
 '''
 @keyword('Verify Head Tombstone')
