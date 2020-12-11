@@ -20,24 +20,16 @@ ROBOT_AUTO_KEYWORDS = False
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_GATE)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_GATE)
 
 
 @keyword('Init S3 Credentials')
-def init_s3_credentials(private_key: str):
-    # Get keys from S3-gate container
-    try:
-        complProc = subprocess.run('docker cp s3_gate:hcs.pub.key hcs.pub.key', check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    
+def init_s3_credentials(private_key: str, s3_key):
     bucket = str(uuid.uuid4())
-    Cmd = f'cdn-authmate --debug --with-log issue-secret --neofs-key {private_key} --gate-public-key=./hcs.pub.key --peer {NEOFS_ENDPOINT} --container-friendly-name {bucket}'
+    Cmd = f'cdn-authmate --debug --with-log issue-secret --neofs-key {private_key} --gate-public-key={s3_key} --peer {NEOFS_ENDPOINT} --container-friendly-name {bucket}'
     logger.info("Cmd: %s" % Cmd)
     try:
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
@@ -67,20 +59,6 @@ def init_s3_credentials(private_key: str):
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
-@keyword('Config S3 resource')
-def config_s3_resource(access_key_id, secret_access_key):
-    session = boto3.session.Session()
-
-    resource = boto3.resource(
-        service_name='s3',
-        aws_access_key_id=access_key_id,
-        aws_secret_access_key=secret_access_key,
-        endpoint_url='https://s3.neofs.devenv:8080', verify=False
-    )
-
-    return s3_resource
-
-
 @keyword('Config S3 client')
 def config_s3_client(access_key_id, secret_access_key):
     session = boto3.session.Session()
@@ -89,7 +67,7 @@ def config_s3_client(access_key_id, secret_access_key):
         service_name='s3',
         aws_access_key_id=access_key_id,
         aws_secret_access_key=secret_access_key,
-        endpoint_url='https://s3.neofs.devenv:8080', verify=False
+        endpoint_url=S3_GATE, verify=False
     )
 
     return s3_client
@@ -159,7 +137,6 @@ def delete_object_s3(s3_client, bucket, object_key):
 @keyword('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, new_object):
 
-    # client.copy_object(Bucket="BucketName", CopySource="BucketName/OriginalName", Key="NewName")
     response = s3_client.copy_object(Bucket=bucket, CopySource=bucket+"/"+object_key, Key=new_object)
     logger.info("S3 Copy object result: %s" % response)
     return response

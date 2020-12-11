@@ -6,13 +6,13 @@
     - `git clone git@github.com:nspcc-dev/neofs-node.git`
     - `cd neofs-node` 
     - `make`
-    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add path to bin/neofs-cli
+    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add alias path to bin/neofs-cli
 
 2. Установить cdn-authmate
     - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
     - `cd cdn-authmate`
     - `make build`
-    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add path to bin/cdn-authmate
+    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add alias path to bin/cdn-authmate
 
 3. Устаносить зависимости для Testcases
     - `pip3 install robotframework`
@@ -50,22 +50,34 @@
  * s3_gate.robot - проверка S3-gate и интеграции с NeoFS
 
 
-### Запуск smoke-тестов
+## Запуск smoke-тестов
 
 Есть сьют со smoke-тестами для CDN-гейтов `robot/testsuites/smoke/selectelcdn_smoke.robot`.
-Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
-девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
-окружения
-```
-export ROBOT_PROFILE=selectel_smoke
-```
+
 По умолчанию кейворды используют переменные из файла `robot/resources/lib/neofs_int_vars.py`.
 ```
 robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot
 ```
 
+### Первичная подготовка
 
-### Генерация документации
+1. Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
+девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
+окружения
+```
+export ROBOT_PROFILE=selectel_smoke
+```
+
+Dev-env не нужен. Но нужно установить neo-go.
+
+2. Установить neo-go
+    - `git clone git@github.com:nspcc-dev/neo-go.git`
+    - `cd neo-go` 
+    - `make`
+    - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
+
+
+## Генерация документации
 
 Для генерации документации по шагам:
 ```

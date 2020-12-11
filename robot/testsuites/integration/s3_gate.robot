@@ -37,7 +37,7 @@ NeoFS S3 Gateway
     ...  ${BUCKET}
     ...  ${ACCESS_KEY_ID} 
     ...  ${SEC_ACCESS_KEY} 
-    ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${PRIV_KEY}   
+    ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${PRIV_KEY}    keys/s3_docker_hcs.pub.key
 
     ${CONTEINERS_LIST} =        Container List               ${PRIV_KEY}      
                                 List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
