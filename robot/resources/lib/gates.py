@@ -23,13 +23,21 @@ if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_PUBLIC_KEY)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE)
 
 
 @keyword('Init S3 Credentials')
 def init_s3_credentials(private_key: str):
+    # Get keys from S3-gate container
+    try:
+        complProc = subprocess.run('docker cp s3_gate:hcs.pub.key hcs.pub.key', check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    
     bucket = str(uuid.uuid4())
-    Cmd = f'cdn-authmate --debug --with-log issue-secret --neofs-key ./user.key --gate-public-key=./hcs.pub.key --peer {NEOFS_ENDPOINT} --container-friendly-name {bucket}'
+    Cmd = f'cdn-authmate --debug --with-log issue-secret --neofs-key {private_key} --gate-public-key=./hcs.pub.key --peer {NEOFS_ENDPOINT} --container-friendly-name {bucket}'
     logger.info("Cmd: %s" % Cmd)
     try:
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,

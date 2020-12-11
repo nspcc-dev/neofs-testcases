@@ -6,10 +6,6 @@ Library                         ${RESOURCES}/payment_neogo.py
 Library                         ${RESOURCES}/gates.py
 
 
-*** Variables ***
-${FILE_USR_HEADER} =            FileName=cat1.jpg,Timestamp=1607645559 \\(2020-12-11 03:12:39 +0300 MSK\\)
-
-
 *** Test cases ***
 NeoFS S3 Gateway 
     [Documentation]             Execute operations via S3 Gate
@@ -89,5 +85,6 @@ NeoFS S3 Gateway
                                 ${LIST_S3_OBJECTS} =             List objects S3       ${S3_CLIENT}    ${BUCKET}
                                 List Should Not Contain Value    ${LIST_S3_OBJECTS}    FILE_S3_NAME
 
-    [Teardown]                  Cleanup Files    s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    ${FILE_S3}    ${FILE_FS}
+    [Teardown]                  Cleanup Files       s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
+                                 ...  ${FILE_S3}    ${FILE_FS}       hcs.pub.key
 

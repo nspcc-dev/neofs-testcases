@@ -46,6 +46,8 @@
  * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
  * netmap_simple.robot - проверка Placement policy
  * replication.robot - базовый тесткейс проверки репликации объектов
+ * http_gate.robot - проверка HTTP-gate и интеграции с NeoFS
+ * s3_gate.robot - проверка S3-gate и интеграции с NeoFS
 
 
 ### Запуск smoke-тестов
