@@ -1,96 +1,95 @@
-## Запуск тесткейсов
+## Testcases execution
 
-### Первичная подготовка
+### Initial preparation
 
-1. Установить neofs-cli 
+1. Install neofs-cli 
     - `git clone git@github.com:nspcc-dev/neofs-node.git`
     - `cd neofs-node` 
     - `make`
     - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add alias path to bin/neofs-cli
 
-2. Установить cdn-authmate
+2. Install cdn-authmate
     - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
     - `cd cdn-authmate`
     - `make build`
     - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add alias path to bin/cdn-authmate
 
-3. Устаносить зависимости для Testcases
+3. Install Testcases dependencies
     - `pip3 install robotframework`
     - `pip3 install pexpect`
     - `pip3 install requests`
     - `pip3 install boto3`
 
-(pip3 заменить на соответсвующий менеджер пакетов python в системе).
+(replace pip3 with the appropriate python package manager on the system).
 
-При этом должен быть запущен dev-env с тестируемым окружением.
+In this case, dev-env should be running with the tested environment.
 
-### Запуск тесткейсов
+### Run
 
-1. Выполнить `make run`
+1. Execute the command `make run`
 
-2. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
+2. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
 
 
-### Запуск произвольного тесткейса
+### Running an arbitrary test case
 
-Для запуска произвольного тесткейса нужно выполнить команду:
+To run an arbitrary test case, you need to run the command:
 `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
 
-Для запуска доступны следущие сценарии:
+The following scripts are available for execution:
 
- * acl_basic.robot - базовый ACL
- * acl_extended.robot - extended ACL
- * acl_baearer.robot - Bearer Token ACL
- * object_complex.robot - операции над простым объектом
- * object_simple.robot - операции над большим объектом
- * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
- * netmap_simple.robot - проверка Placement policy
- * replication.robot - базовый тесткейс проверки репликации объектов
- * http_gate.robot - проверка HTTP-gate и интеграции с NeoFS
- * s3_gate.robot - проверка S3-gate и интеграции с NeoFS
+ * acl_basic.robot  
+ * acl_extended.robot 
+ * acl_baearer.robot 
+ * object_complex.robot  
+ * object_simple.robot  
+ * withdraw.robot  
+ * netmap_simple.robot 
+ * replication.robot  
+ * http_gate.robot  
+ * s3_gate.robot 
 
 
-## Запуск smoke-тестов
+## Smoke-test execution
 
-Есть сьют со smoke-тестами для CDN-гейтов `robot/testsuites/smoke/selectelcdn_smoke.robot`.
+There is a suite with smoke tests for CDN gates `robot/testsuites/smoke/selectelcdn_smoke.robot`.
 
-По умолчанию кейворды используют переменные из файла `robot/resources/lib/neofs_int_vars.py`.
+By default, keywords use variables from a file `robot/resources/lib/neofs_int_vars.py`.
 ```
 robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot
 ```
 
-### Первичная подготовка
+### Initial preparation
 
-1. Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
-девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
-окружения
+1. It requires separate variables, unlike the NeoFS suites, which run on
+dev-env. In order for the keyword libraries to use them, you need to set the environment variable
 ```
 export ROBOT_PROFILE=selectel_smoke
 ```
 
-Dev-env не нужен. Но нужно установить neo-go.
+Dev-env is not needed. But you need to install neo-go.
 
-2. Установить neo-go
+2. Install neo-go
     - `git clone git@github.com:nspcc-dev/neo-go.git`
     - `cd neo-go` 
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
 
 
-## Генерация документации
+## Generation of documentation
 
-Для генерации документации по шагам:
+To generate Keywords documentation:
 ```
 python3 -m robot.libdoc robot/resources/lib/neofs.py docs/NeoFS_Library.html
 python3 -m robot.libdoc robot/resources/lib/payment_neogo.py docs/Payment_Library.html
 ```
 
-Для генерации документации по тесткейсам:
+To generate testcases documentation:
 ```
 python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 ```
 
-## Создание тесткейсов
+## Testcases implementation
 
 ### Source code overview
 
@@ -129,7 +128,7 @@ On keywords definition, one should specify variable type, e.g. path: str
 
 ### Robot style
 
-Следует всегда заполнять секции [Tags] и [Documentation] для Testcase'ов и Documentation для Test Suite'ов.
+You should always complete the [Tags] and [Documentation] sections for Testcases and Documentation for Test Suites.
 
 ### Robot-framework User Guide
 
