@@ -37,6 +37,24 @@ def init_wallet():
     logger.info(f"Command completed with output: {out}")
     return filename
 
+
+
+@keyword('Generate wallet from WIF')
+def generate_wallet_from_wif(wallet: str, wif: str):
+    cmd = ( f"{NEOGO_CLI_PREFIX} wallet import --wallet {wallet} --wif {wif}" )
+
+    logger.info(f"Executing command: {cmd}")
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline('\n')
+    p.sendline('\n')
+    p.sendline('\n')
+    p.wait()
+    out = p.read()
+
+    logger.info(f"Command completed with output: {out}")
+
+
 @keyword('Generate wallet')
 def generate_wallet(wallet: str):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet create -w {wallet}" )

@@ -1,19 +1,35 @@
 ## Запуск тесткейсов
 
-### Локальный запуск тесткейсов
+### Первичная подготовка
 
-1. Устаносить зависимости (только для первого запуска):
-    - pip3 install robotframework
-    - pip3 install pexpect
-    - pip3 install requests
+1. Установить neofs-cli 
+    - `git clone git@github.com:nspcc-dev/neofs-node.git`
+    - `cd neofs-node` 
+    - `make`
+    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add alias path to bin/neofs-cli
+
+2. Установить cdn-authmate
+    - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
+    - `cd cdn-authmate`
+    - `make build`
+    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add alias path to bin/cdn-authmate
+
+3. Устаносить зависимости для Testcases
+    - `pip3 install robotframework`
+    - `pip3 install pexpect`
+    - `pip3 install requests`
+    - `pip3 install boto3`
 
 (pip3 заменить на соответсвующий менеджер пакетов python в системе).
 
 При этом должен быть запущен dev-env с тестируемым окружением.
 
-2. Выпольнить `make run`
+### Запуск тесткейсов
 
-3. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
+1. Выполнить `make run`
+
+2. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
+
 
 ### Запуск произвольного тесткейса
 
@@ -30,46 +46,38 @@
  * withdraw.robot - оперция Deposit и Withdraw с счета NeoFS
  * netmap_simple.robot - проверка Placement policy
  * replication.robot - базовый тесткейс проверки репликации объектов
+ * http_gate.robot - проверка HTTP-gate и интеграции с NeoFS
+ * s3_gate.robot - проверка S3-gate и интеграции с NeoFS
 
-### Запуск тесткейсов в докере
 
-1. Задать переменные окружения для работы с dev-env:
-```
-    export REG_USR=<registry_user>
-    export REG_PWD=<registry_pass>
-    export JF_TOKEN=<JF_token>
-```
-
-2. Выполнить `make build`
-
-3. Выполнить `make run_docker`
-
-4. Логи будут доступны в папке artifacts/ после завершения тестов с любым из статусов.
-
-### Запуск тесткейсов в докере с произвольными коммитами
-
-На данный момент доступны произовльные коммиты для NeoFS Node и NeoFS CLI.
-Для этого достаточно задать переменные окружения перед запуском `make build`.
-```
-export BUILD_NEOFS_NODE=<commit or branch>
-```
-
-### Запуск smoke-тестов
+## Запуск smoke-тестов
 
 Есть сьют со smoke-тестами для CDN-гейтов `robot/testsuites/smoke/selectelcdn_smoke.robot`.
-Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
-девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
-окружения
-```
-export ROBOT_PROFILE=selectel_smoke
-```
+
 По умолчанию кейворды используют переменные из файла `robot/resources/lib/neofs_int_vars.py`.
 ```
 robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot
 ```
 
+### Первичная подготовка
 
-### Генерация документации
+1. Ему требуются отдельные переменные, в отличие от сьютов NeoFS, которые запускаются на
+девэнве. Чтобы библиотеки кейвордов их использовали, нужно установить переменную
+окружения
+```
+export ROBOT_PROFILE=selectel_smoke
+```
+
+Dev-env не нужен. Но нужно установить neo-go.
+
+2. Установить neo-go
+    - `git clone git@github.com:nspcc-dev/neo-go.git`
+    - `cd neo-go` 
+    - `make`
+    - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
+
+
+## Генерация документации
 
 Для генерации документации по шагам:
 ```

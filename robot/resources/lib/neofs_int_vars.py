@@ -7,3 +7,4 @@ NEO_MAINNET_ENDPOINT = "main_chain.neofs.devenv:30333"
 
 NEOFS_NEO_API_ENDPOINT = 'http://main_chain.neofs.devenv:30333'
 HTTP_GATE = 'http://http.neofs.devenv'
+S3_GATE = 'https://s3.neofs.devenv:8080'
