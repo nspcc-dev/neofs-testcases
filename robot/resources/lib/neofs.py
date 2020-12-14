@@ -9,6 +9,8 @@ import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
 import random
+import base64
+import base58
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -206,6 +208,9 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
     eacl = get_eacl(private_key, cid)
     input_records = ""
     
+    cid_base58_b = base58.b58decode(cid)
+    cid_base64 = base64.b64encode(cid_base58_b)
+
     if eacl:
         res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
         records = re.split(r'"records": \[', res_json[0])
@@ -216,7 +221,7 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
   "body": {
     "eaclTable": {
       "containerID": {
-        "value": \"""" +  cid + """"
+        "value": \"""" +  cid_base58_b + """"
       },
       "records": [
         {
@@ -319,10 +324,8 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
 
     eacl = get_eacl(private_key, cid)
 
-    # FIX IT TO WORK FINE!!!!!!!!!! TODO: !
-    # " "78BndTDMT1zO+rPovbskD4W7VF5Xeuhffpa+q5F3Fsc="
-    m = re.search(r'value\":\s+\"(.+)\"', eacl)
-    cid_base58 = m.group(1)
+    cid_base58_b = base58.b58decode(cid)
+    cid_base64 = base64.b64encode(cid_base58_b)
 
     input_records = ""
     if eacl:
@@ -335,7 +338,7 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
   "body": {
     "eaclTable": {
       "containerID": {
-        "value": \"""" +  cid_base58 + """"
+        "value": \"""" +  cid_base64 + """"
       },
       "records": [
         {
