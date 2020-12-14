@@ -17,9 +17,17 @@ Extended ACL Operations
     [Timeout]               20 min
 
                             Generate Keys
-                            Generate file
                             Prepare eACL Role rules
-    
+
+                            Log    Check extended ACL with simple object
+                            Generate files    1024
+                            Check Actions
+                            Check Filters
+                            
+                            Cleanup Files    ${FILE_S}    ${FILE_S_2}
+                            
+                            Log    Check extended ACL with complex object
+                            Generate files    20e+6
                             Check Actions
                             Check Filters
 
@@ -151,9 +159,10 @@ Create Container Public
     [Return]                ${PUBLIC_CID_GEN}
                             
  
-Generate file
-    ${FILE_S_GEN_1} =       Generate file of bytes    1024
-    ${FILE_S_GEN_2} =       Generate file of bytes    2048
+Generate files
+    [Arguments]             ${SIZE}
+    ${FILE_S_GEN_1} =       Generate file of bytes    ${SIZE}
+    ${FILE_S_GEN_2} =       Generate file of bytes    ${SIZE}
                             Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}
                             Set Global Variable       ${FILE_S_2}    ${FILE_S_GEN_2}
  
@@ -205,6 +214,9 @@ Check eACL Deny and Allow All System
                             Get Range                ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Get Range                ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
+                            Get Range Hash           ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash           ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                             
                             Delete object            ${SYSTEM_KEY}       ${CID}    ${D_OID_USER_S}     ${EMPTY}
                             Delete object            ${SYSTEM_KEY_SN}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
 
@@ -231,15 +243,22 @@ Check eACL Deny and Allow All System
 
                             
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}             
+                            ...  Head object                         ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}             
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}             
+                            ...  Head object                         ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}             
                             
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}           s_get_range      ${EMPTY}            0:256
+                            ...  Get Range                           ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}        s_get_range    ${EMPTY}            0:256
+                            ...  Get Range                           ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             
+
+                            Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            
+
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
                             Run Keyword And Expect Error        *
@@ -268,8 +287,11 @@ Check eACL Deny and Allow All System
                             Get Range                           ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            s_get_range      ${EMPTY}            0:256
                             Get Range                           ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            s_get_range      ${EMPTY}            0:256
 
+                            Get Range Hash                      ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+                            Get Range Hash                      ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+
                             Delete object                       ${SYSTEM_KEY}       ${CID}        ${D_OID_USER_S}            ${EMPTY}
-                            Delete object                       ${SYSTEM_KEY_SN}    ${CID}        ${D_OID_USER_SN}            ${EMPTY}
+                            Delete object                       ${SYSTEM_KEY_SN}    ${CID}        ${D_OID_USER_SN}           ${EMPTY}
 
 
 
@@ -285,6 +307,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}        @{S_OBJ_H}            
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}             
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
+                            Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}    --await
@@ -301,6 +324,8 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Get Range                           ${OTHER_KEY}    ${CID}        ${S_OID_USER}     s_get_range     ${EMPTY}            0:256
                             Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}        0:256
+                            Run Keyword And Expect Error        *
                             ...  Delete object                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}
 
                             Put object to NeoFS                 ${EACL_KEY}    ${FILE_S}     ${CID}                  ${EMPTY}            ${FILE_OTH_HEADER} 
@@ -308,6 +333,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${FILE_USR_HEADER}     @{S_OBJ_H}
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
+                            Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}
 
 
@@ -325,8 +351,8 @@ Check eACL Deny and Allow All
                             Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}    @{S_OBJ_H}            
                             Head object                         ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
                             
-                            
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
+                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
                             Delete object                       ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}
@@ -343,18 +369,19 @@ Check eACL Deny and Allow All
                             Run Keyword And Expect Error        *
                             ...  Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
                             Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+                            Run Keyword And Expect Error        *
                             ...  Delete object                       ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
-
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${ALLOW_EACL}
                             Sleep                               ${MORPH_BLOCK_TIMEOUT}
-
 
                             Put object to NeoFS                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
                             Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     @{S_OBJ_H}            
                             Head object                         ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}       s_get_range          ${EMPTY}            0:256
+                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             0:256
                             Delete object                       ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}
 
 Cleanup

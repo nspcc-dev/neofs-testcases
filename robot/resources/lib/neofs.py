@@ -12,10 +12,10 @@ import random
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP)
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -205,6 +205,7 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
 
     eacl = get_eacl(private_key, cid)
     input_records = ""
+    
     if eacl:
         res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
         records = re.split(r'"records": \[', res_json[0])
@@ -317,6 +318,12 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
     # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH? Need to clarify.
 
     eacl = get_eacl(private_key, cid)
+
+    # FIX IT TO WORK FINE!!!!!!!!!! TODO: !
+    # " "78BndTDMT1zO+rPovbskD4W7VF5Xeuhffpa+q5F3Fsc="
+    m = re.search(r'value\":\s+\"(.+)\"', eacl)
+    cid_base58 = m.group(1)
+
     input_records = ""
     if eacl:
         res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
@@ -328,7 +335,7 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
   "body": {
     "eaclTable": {
       "containerID": {
-        "value": \"""" +  cid + """"
+        "value": \"""" +  cid_base58 + """"
       },
       "records": [
         {
@@ -535,7 +542,7 @@ def create_container(private_key: str, basic_acl:str="", rule:str="REP 2 IN X CB
     createContainerCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} container create --policy "{rule}" {basic_acl} --await'
     logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
     output = complProc.stdout
     logger.info("Output: %s" % output)
     cid = _parse_cid(output)
@@ -816,9 +823,10 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str):
         bearer_token = f"--bearer {bearer}"
 
     ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token}'
+    logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
@@ -995,7 +1003,7 @@ def _parse_cid(output: str):
     return cid
 
 def _get_storage_nodes(private_key: bytes):
-    storage_nodes = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
+    #storage_nodes = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
     #NetmapCmd = f'{CLI_PREFIX}neofs-cli --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} status netmap'
     #complProc = subprocess.run(NetmapCmd, check=True, universal_newlines=True,
     #        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
@@ -1011,8 +1019,8 @@ def _get_storage_nodes(private_key: bytes):
     # Will be fixed when netmap will be added to cli
 
     #storage_nodes.append()
-    logger.info("Storage nodes: %s" % storage_nodes)
-    return storage_nodes
+    logger.info("Storage nodes: %s" % NEOFS_NETMAP)
+    return NEOFS_NETMAP
 
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):

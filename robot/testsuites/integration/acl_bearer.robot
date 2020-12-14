@@ -19,15 +19,25 @@ BearerToken Operations
     [Timeout]               20 min
 
                             Generate Keys
-                            Generate file
                             Prepare eACL Role rules
     
+
+                            Log    Check Bearer token with simple object
+                            Generate file    1024
                             Check Container Inaccessible and Allow All Bearer
                             Check eACL Deny and Allow All Bearer
-    
                             Check eACL Deny and Allow All Bearer Filter OID Equal
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual
+                            Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
+                            
+                            Log    Check Bearer token with complex object
+                            Cleanup Files    ${FILE_S}
+                            Generate file    20e+6
+                            Check Container Inaccessible and Allow All Bearer
+                            Check eACL Deny and Allow All Bearer
+                            Check eACL Deny and Allow All Bearer Filter OID Equal
+                            Check eACL Deny and Allow All Bearer Filter OID NotEqual
                             Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
     [Teardown]              Cleanup   
@@ -95,9 +105,10 @@ Create Container Inaccessible
 
 
 Generate file
-    # Generate small file
-    ${FILE_S_GEN} =         Generate file of bytes              1024
-                            Set Global Variable     ${FILE_S}          ${FILE_S_GEN}
+    [Arguments]             ${SIZE}
+            
+    ${FILE_S_GEN} =         Generate file of bytes    ${SIZE}
+                            Set Global Variable       ${FILE_S}    ${FILE_S_GEN}
  
 
 Prepare eACL Role rules
@@ -215,13 +226,11 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
 
-                            # Preiodical issue: https://github.com/nspcc-dev/neofs-node/issues/225
                             Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                                                                        
                             Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
                             
-                            # https://github.com/nspcc-dev/neofs-node/issues/215
-                            # Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
-                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
+                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
 
 
 
@@ -275,10 +284,10 @@ Check eACL Deny and Allow All Bearer Filter OID NotEqual
                             Run Keyword And Expect Error        *
                             ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               
 
-                            # https://github.com/nspcc-dev/neofs-node/issues/215
-                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
-                            # Run Keyword And Expect Error        *
-                            # ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER_2}          bearer_allow_all_user
+                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            
+                            Run Keyword And Expect Error        *
+                            ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER_2}          bearer_allow_all_user
 
 
 
@@ -322,18 +331,15 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
 
-                            # Preiodical issue: https://github.com/nspcc-dev/neofs-node/issues/225
                             Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl                                                                        
-                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
+                                
+                            Run Keyword And Expect Error        *
+                            ...  Get Range                       ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256     
                             
-                            # https://github.com/nspcc-dev/neofs-node/issues/215
-                            # Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
-                            # Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               
+                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
 
 # Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
-# Check eACL Deny and Allow All Bearer for big object
-# Check eACL Deny and Allow All Bearer Filter UserHeader Equal for big object
-
 
 
 Cleanup
