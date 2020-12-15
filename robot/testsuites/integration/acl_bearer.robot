@@ -92,14 +92,14 @@ Payment Operations
 
 
 Create Container Public
-                            Log	                                Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container                    ${USER_KEY}     0x0FFFFFFF
-    [Return]                ${PUBLIC_CID_GEN}
+                            Log	                  Create Public Container
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF
+    [Return]                ${PUBLIC_CID_GEN} 
 
 
 Create Container Inaccessible
-                            Log	                                Create Inaccessible Container
-    ${PUBLIC_CID_GEN} =     Create container                    ${USER_KEY}     0x40000000
+                            Log	                  Create Inaccessible Container
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}     0x40000000
     [Return]                ${PUBLIC_CID_GEN}
 
 
