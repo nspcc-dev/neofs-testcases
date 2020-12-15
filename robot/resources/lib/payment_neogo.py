@@ -96,12 +96,12 @@ def dump_privkey(wallet: str, address: str):
     return out
 
 @keyword('Transfer Mainnet Gas')
-def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int):
+def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
     cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r http://main_chain.neofs.devenv:30333 --from {address} "
             f"--to {address_to} --token gas --amount {amount}" )
 
     logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd(wallet_pass, cmd)
     logger.info(f"Command completed with output: {out}")
 
     if not re.match(r'^(\w{64})$', out):
