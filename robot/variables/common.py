@@ -9,9 +9,5 @@ CERT="%s/../../ca" % ROOT
 # in case when test is run from root in docker
 ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
 
-JF_TOKEN = os.getenv('JF_TOKEN')
-REG_USR = os.getenv('REG_USR')
-REG_PWD = os.getenv('REG_PWD')
-
 MORPH_BLOCK_TIMEOUT = "10sec"
 NEOFS_EPOCH_TIMEOUT = "30sec"

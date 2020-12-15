@@ -46,6 +46,14 @@ NeoFS Object Replication
                             Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}
                             Start nodes                           @{NODES_OBJ_STOPPED}
   
-    [Teardown]              Cleanup Files                         ${FILE}
+    [Teardown]              Cleanup                               ${FILE}    @{NODES_OBJ_STOPPED}
+    
+    
+*** Keywords ***
+    
+Cleanup
+    [Arguments]             ${FILE}    @{NODES_OBJ_STOPPED}
+                            Start nodes                           @{NODES_OBJ_STOPPED}
+                            Cleanup Files                         ${FILE}
 
 

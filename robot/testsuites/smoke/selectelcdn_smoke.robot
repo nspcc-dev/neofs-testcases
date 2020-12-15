@@ -10,16 +10,26 @@ Library                        ${RESOURCES}/payment_neogo.py
 Library                        ${RESOURCES}/gates.py
 
 
+## wallet that has assets in selectel mainnet
+# WALLET = 'wallets/selectel_mainnet_wallet.json'
+
+## address from this wallet and its representations
+# ADDR = 'NbTiM6h8r99kpRtb428XcsUk1TzKed2gTc'
+
+# SCRIPT_HASH = 'eb88a496178256213f674eb302e44f9d85cf8aaa'
+# PRIV_KEY = 'KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY'
+
 *** Test cases ***
 
 NeoFS Storage Smoke
     [Documentation]             Creates container and does PUT, GET and LIST on it via CLI and via HTTP Gate
     [Timeout]                   5 min
 
-    ${TX_DEPOSIT} =             NeoFS Deposit                       ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    50    one
+    ${TX_DEPOSIT} =             NeoFS Deposit                       ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5    one
                                 Wait Until Keyword Succeeds         1 min            15 sec
                                 ...  Transaction accepted in block  ${TX_DEPOSIT}
                                 Get Transaction                     ${TX_DEPOSIT}
+                                Get Balance                         ${PRIV_KEY}    
 
     ${CID}
     ...  ${BUCKET}

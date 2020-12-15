@@ -209,7 +209,7 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
     input_records = ""
     
     cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b)
+    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
 
     if eacl:
         res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
@@ -221,7 +221,7 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
   "body": {
     "eaclTable": {
       "containerID": {
-        "value": \"""" +  cid_base58_b + """"
+        "value": \"""" +  str(cid_base64) + """"
       },
       "records": [
         {
@@ -325,7 +325,7 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
     eacl = get_eacl(private_key, cid)
 
     cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b)
+    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
 
     input_records = ""
     if eacl:
@@ -338,7 +338,7 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
   "body": {
     "eaclTable": {
       "containerID": {
-        "value": \"""" +  cid_base64 + """"
+        "value": \"""" +  str(cid_base64) + """"
       },
       "records": [
         {
