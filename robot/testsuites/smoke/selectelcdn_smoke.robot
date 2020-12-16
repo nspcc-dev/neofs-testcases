@@ -33,14 +33,14 @@ NeoFS Storage Smoke
 
 
 
-    ${TX} =                     Transfer Mainnet Gas    ${WALLET_ROOT}     NbTiM6h8r99kpRtb428XcsUk1TzKed2gTc      ${ADDR}     5    one 
+    ${TX} =                     Transfer Mainnet Gas    ${WALLET_ROOT}     NbTiM6h8r99kpRtb428XcsUk1TzKed2gTc      ${ADDR}     2    one 
                                 Wait Until Keyword Succeeds         2 min       15 sec        
                                 ...  Transaction accepted in block  ${TX}
                         
                                 Get Transaction                     ${TX}
 
 
-    ${TX_DEPOSIT} =             NeoFS Deposit                       ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5    
+    ${TX_DEPOSIT} =             NeoFS Deposit                       ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    1    
                                 Wait Until Keyword Succeeds         1 min            15 sec
                                 ...  Transaction accepted in block  ${TX_DEPOSIT}
                                 Get Transaction                     ${TX_DEPOSIT}
