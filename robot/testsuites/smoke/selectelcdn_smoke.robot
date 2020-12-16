@@ -2,13 +2,17 @@
 
 *** Settings ***
 Variables                      ../../variables/common.py
-Variables                      ../../variables/selectelcdn_smoke.py
+
 
 Library                        Collections
 Library                        ${RESOURCES}/neofs.py
 Library                        ${RESOURCES}/payment_neogo.py
 Library                        ${RESOURCES}/gates.py
 
+
+*** Variables ***
+# wallet that has assets in selectel mainnet
+${WALLET_ROOT} =               wallets/selectel_mainnet_wallet.json
 
 
 *** Test cases ***
@@ -66,8 +70,6 @@ NeoFS Storage Smoke
     ${FILE_FS} =                Generate file of bytes    1024
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
-
-    # PUT NeoFS, S3 -> GET NeoFS, S3, HTTP-gate each object (x2) -> check uploaded hashes
 
     ${OID_FS} =                 Put object to NeoFS    ${PRIV_KEY}     ${FILE_FS}    ${CID}        ${EMPTY}    ${EMPTY}
                                 Put object S3          ${S3_CLIENT}    ${BUCKET}     ${FILE_S3}
