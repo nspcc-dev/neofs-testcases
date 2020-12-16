@@ -11,6 +11,7 @@ from robot.api import logger
 import random
 import base64
 import base58
+import docker
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -66,22 +67,13 @@ def stop_nodes(down_num: int, *nodes_list):
 
     # select nodes to stop from list
     stop_nodes = random.sample(nodes_list, down_num)
-
+    
     for node in stop_nodes:
         m = re.search(r'(s\d+).', node)
         node = m.group(1)
 
-        Cmd = f'docker stop {node}'
-        logger.info("Cmd: %s" % Cmd)
-
-        try:
-            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-            output = complProc.stdout
-            logger.info("Output: %s" % output)
-
-        except subprocess.CalledProcessError as e:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        client = docker.APIClient()
+        client.stop(node)
 
     return stop_nodes
 
@@ -92,20 +84,9 @@ def start_nodes(*nodes_list):
     for node in nodes_list:
         m = re.search(r'(s\d+).', node)
         node = m.group(1)
-
-        Cmd = f'docker start {node}'
-        logger.info("Cmd: %s" % Cmd)
-
-        try:
-            complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-            output = complProc.stdout
-            logger.info("Output: %s" % output)
-
-        except subprocess.CalledProcessError as e:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-
+        client = docker.APIClient()
+        client.start(node)
+        
 @keyword('Get nodes with object')
 def get_nodes_with_object(private_key: str, cid: str, oid: str):
     storage_nodes = _get_storage_nodes(private_key)

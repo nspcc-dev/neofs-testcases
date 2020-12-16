@@ -19,6 +19,7 @@
     - `pip3 install pexpect`
     - `pip3 install requests`
     - `pip3 install boto3`
+    - `pip3 install docker`
 
 (replace pip3 with the appropriate python package manager on the system).
 
@@ -50,7 +51,7 @@ The following scripts are available for execution:
  * s3_gate.robot 
 
 
-## Smoke-test execution
+## Smoke test execution
 
 There is a suite with smoke tests for CDN gates `robot/testsuites/smoke/selectelcdn_smoke.robot`.
 
@@ -75,7 +76,7 @@ Dev-env is not needed. But you need to install neo-go.
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
 
-3. To run an arbitrary testcase: `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
+3. To run smoke test: `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
 
 
 ## Generation of documentation

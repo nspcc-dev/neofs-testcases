@@ -54,7 +54,7 @@ NeoFS Storage Smoke
 
     ${S3_CLIENT} =              Config S3 client       ${ACCESS_KEY_ID}    ${SEC_ACCESS_KEY} 
 
-                               # List buckets S3        ${S3_CLIENT}
+                                
 
     ${CONTEINERS_LIST} =        Container List               ${PRIV_KEY}      
                                 List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
