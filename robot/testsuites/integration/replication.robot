@@ -27,9 +27,6 @@ NeoFS Object Replication
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
-                            
-                            Sleep                                 1 min
-    
 
     ${CID} =                Create container                      ${PRIV_KEY}    ${EMPTY}    REP 2 IN X CBF 1 SELECT 4 FROM * AS X
                             Container Existing                    ${PRIV_KEY}    ${CID}
@@ -40,9 +37,12 @@ NeoFS Object Replication
 
     ${S_OID} =              Put object to NeoFS                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 
                             Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}   
+    
     @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}  
     @{NODES_OBJ_STOPPED} =  Stop nodes                            1              @{NODES_OBJ}
+    
                             Sleep                                 1 min
+    
                             Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}
                             Start nodes                           @{NODES_OBJ_STOPPED}
   
