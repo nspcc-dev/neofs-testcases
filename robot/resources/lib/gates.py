@@ -33,7 +33,7 @@ def init_s3_credentials(private_key: str, s3_key):
     logger.info("Cmd: %s" % Cmd)
     try:
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=360, shell=True)
         output = complProc.stdout
         logger.info("Output: %s" % output)
 

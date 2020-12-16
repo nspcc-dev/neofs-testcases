@@ -15,6 +15,7 @@ import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
+NEOFS_CONTRACT = "5f490fbd8010fd716754073ee960067d28549b7d"
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -23,8 +24,6 @@ else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
 
-
-NEOFS_CONTRACT = "5f490fbd8010fd716754073ee960067d28549b7d"
 
 @keyword('Init wallet')
 def init_wallet():
@@ -98,12 +97,12 @@ def dump_privkey(wallet: str, address: str):
     return out
 
 @keyword('Transfer Mainnet Gas')
-def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r http://main_chain.neofs.devenv:30333 --from {address} "
-            f"--to {address_to} --token gas --amount {amount}" )
+def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
+    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r {NEOFS_NEO_API_ENDPOINT} --from {address} "
+            f"--to {address_to} --token gas --amount {amount}" )  
 
     logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd(wallet_pass, cmd)
     logger.info(f"Command completed with output: {out}")
 
     if not re.match(r'^(\w{64})$', out):
@@ -113,7 +112,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r http://main_chain.neofs.devenv:30333 "
+    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r {NEOFS_NEO_API_ENDPOINT} "
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
 
     logger.info(f"Executing command: {cmd}")
