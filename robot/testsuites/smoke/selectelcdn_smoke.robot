@@ -33,11 +33,7 @@ NeoFS Storage Smoke
 
 
 
-    ${TX} =                     Transfer Mainnet Gas    ${WALLET_ROOT}     NbTiM6h8r99kpRtb428XcsUk1TzKed2gTc      ${ADDR}     5    one
-                                Sleep  30sec
-                                Mainnet Balance                     ${ADDR}
-                                Get Balance                         ${PRIV_KEY}    
-
+    ${TX} =                     Transfer Mainnet Gas    ${WALLET_ROOT}     NbTiM6h8r99kpRtb428XcsUk1TzKed2gTc      ${ADDR}     5    one 
                                 Wait Until Keyword Succeeds         2 min       15 sec        
                                 ...  Transaction accepted in block  ${TX}
                         
