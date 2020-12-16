@@ -97,8 +97,8 @@ def dump_privkey(wallet: str, address: str):
 
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r http://main_chain.neofs.devenv:30333 --from {address} "
-            f"--to {address_to} --token gas --amount {amount}" )
+    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r {NEOFS_NEO_API_ENDPOINT} --from {address} "
+            f"--to {address_to} --token gas --amount {amount}" )  
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd(wallet_pass, cmd)
@@ -111,7 +111,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r http://main_chain.neofs.devenv:30333 "
+    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r {NEOFS_NEO_API_ENDPOINT} "
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
 
     logger.info(f"Executing command: {cmd}")

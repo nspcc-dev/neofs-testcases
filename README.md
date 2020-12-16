@@ -33,7 +33,7 @@ In this case, dev-env should be running with the tested environment.
 
 ### Running an arbitrary test case
 
-To run an arbitrary test case, you need to run the command:
+To run an arbitrary testcase, you need to run the command:
 `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
 
 The following scripts are available for execution:
@@ -75,6 +75,8 @@ Dev-env is not needed. But you need to install neo-go.
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
 
+3. To run an arbitrary testcase: `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
+
 
 ## Generation of documentation
 
@@ -101,11 +103,11 @@ python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 
 `robot/variables/` - All variables for tests. It is possible to add the auto-loading logic of parameters from the smart-contract in the future. Contain python files.
 
-`robot/testsuites/` - Robot Test Suites and Test Cases.
+`robot/testsuites/` - Robot TestSuites and TestCases.
 
-`robot/testsuites/integration/` - Integration test suites and test cases
+`robot/testsuites/integration/` - Integration test suites and testcases
 
-`robot/testsuites/fi/` - Fault Injection test suites and test cases
+`robot/testsuites/fi/` - Fault Injection testsuites and testcases
 
 ### Code style
 

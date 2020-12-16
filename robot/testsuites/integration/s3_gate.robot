@@ -86,5 +86,5 @@ NeoFS S3 Gateway
                                 List Should Not Contain Value    ${LIST_S3_OBJECTS}    FILE_S3_NAME
 
     [Teardown]                  Cleanup Files       s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
-                                 ...  ${FILE_S3}    ${FILE_FS}       
+                                ...  ${FILE_S3}    ${FILE_FS}       
 
