@@ -15,7 +15,7 @@ import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
-NEOFS_CONTRACT = "5f490fbd8010fd716754073ee960067d28549b7d"
+NEOFS_CONTRACT = "ce96811ca25577c058484dab10dd8db2defc5eed"
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -98,8 +98,8 @@ def dump_privkey(wallet: str, address: str):
 
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r {NEOFS_NEO_API_ENDPOINT} --from {address} "
-            f"--to {address_to} --token gas --amount {amount}" )  
+    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep17 transfer -w {wallet} -r {NEOFS_NEO_API_ENDPOINT} --from {address} "
+            f"--to {address_to} --token GAS --amount {amount}" )  
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd(wallet_pass, cmd)
@@ -129,7 +129,7 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 @keyword('Mainnet Balance')
 def mainnet_balance(address: str):
-    request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getnep5balances", "params": [\"'+address+'\"] }\''
+    request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [\"'+address+'\"] }\''
     logger.info(f"Executing request: {request}")
 
     complProc = subprocess.run(request, check=True, universal_newlines=True,
@@ -138,7 +138,7 @@ def mainnet_balance(address: str):
     out = complProc.stdout
     logger.info(out)
 
-    m = re.search(r'"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"([\d\.]+)"', out)
+    m = re.search(r'"0xb5df804bbadefea726afb5d3f4e8a6f6d32d2a20","amount":"([\d\.]+)"', out)
     if not m.start() != m.end():
         raise Exception("Can not get mainnet gas balance.")
 
@@ -150,9 +150,9 @@ def mainnet_balance(address: str):
 @keyword('Expexted Mainnet Balance')
 def expected_mainnet_balance(address: str, expected: float):
     amount = mainnet_balance(address)
-
-    if float(amount) != float(expected):
-        raise Exception(f"Expected amount ({expected}) of GAS has not been found. Found {amount}.")
+    gas_expected = int(expected * 10**8)
+    if int(amount) != int(gas_expected):
+        raise Exception(f"Expected amount ({gas_expected}) of GAS has not been found. Found {amount}.")
 
     return True
 

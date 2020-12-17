@@ -12,6 +12,7 @@ import random
 import base64
 import base58
 import docker
+import json
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -613,25 +614,63 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
     
 
-'''
-@keyword('Verify Head Tombstone')
-def verify_head_tombstone(private_key: str, cid: str, oid: str):
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} --full-headers'
+@keyword('Verify Head Tombstone')
+def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
+
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid_ts} --json'
     logger.info("Cmd: %s" % ObjectCmd)
+   
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        
 
-        if re.search(r'Type=Tombstone\s+Value=MARKED', complProc.stdout):
-            logger.info("Tombstone header 'Type=Tombstone Value=MARKED' was parsed from command output")
+        full_headers = json.loads(complProc.stdout)
+        logger.info("Output: %s" % full_headers)
+
+        # Header verification
+        # TODO: add try or exist pre-check
+        header_cid = full_headers["header"]["containerID"]["value"]
+        if (base58.b58encode(base64.b64decode(header_cid)).decode("utf-8") == cid):
+            logger.info("Header CID is expected: %s (%s in the output)" % (cid, header_cid))
         else:
-            raise Exception("Tombstone header 'Type=Tombstone Value=MARKED' was not found in the command output: \t%s" % (complProc.stdout))
+            raise Exception("Header CID is not expected.")
+
+        header_owner = full_headers["header"]["ownerID"]["value"]
+        if (base58.b58encode(base64.b64decode(header_owner)).decode("utf-8") == addr):
+            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_owner))
+        else:
+            raise Exception("Header ownerID is not expected.")
+
+        header_type = full_headers["header"]["objectType"]
+        if (header_type == "TOMBSTONE"):
+            logger.info("Header Type is expected: %s" % header_type)
+        else:
+            raise Exception("Header Type is not expected.")
+
+        header_session_type = full_headers["header"]["sessionToken"]["body"]["object"]["verb"]
+        if (header_session_type == "DELETE"):
+            logger.info("Header Session Type is expected: %s" % header_session_type)
+        else:
+            raise Exception("Header Session Type is not expected.")
+
+        header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
+        if (base58.b58encode(base64.b64decode(header_session_cid)).decode("utf-8") == cid):
+            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_session_cid))
+        else:
+            raise Exception("Header Session CID is not expected.")
+
+        header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
+        if (base58.b58encode(base64.b64decode(header_session_oid)).decode("utf-8") == oid):
+            logger.info("Header Session OID (deleted object) is expected: %s (%s in the output)" % (oid, header_session_oid))
+        else:
+            raise Exception("Header Session OID (deleted object) is not expected.")
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+'''
 @keyword('Verify linked objects')
 def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: float):
 
@@ -720,14 +759,16 @@ def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int,
 
 
 @keyword('Head object')
-def head_object(private_key: str, cid: str, oid: str, bearer: str, user_headers:str=""):
+def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", json:str=""):
     options = ""
 
-    bearer_token = ""
-    if bearer:
-        bearer_token = f"--bearer {bearer}"
+    if bearer_token:
+        bearer_token = f"--bearer {bearer_token}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {options}'
+    if json:
+        json = f"--json"
+
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {json}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -812,6 +853,10 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str):
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
+
+        tombstone = _parse_oid(complProc.stdout)
+        return tombstone
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -1029,7 +1074,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         if re.search(r'local node is outside of object placement', e.output):
             logger.info("Server is not presented in container.")
 
-        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
+        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) or re.search(r'i/o timeout', e.output)):
             logger.warn("Node is unavailable")
 
         else:

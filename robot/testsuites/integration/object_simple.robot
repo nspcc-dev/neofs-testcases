@@ -38,7 +38,7 @@ NeoFS Simple Object Operations
                         Container Existing                  ${PRIV_KEY}    ${CID}
                         
                         Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    50            -0.0007
+                        ...  Expected Balance               ${PRIV_KEY}    50            -7e-08
 
     ${FILE} =           Generate file of bytes              1024
     ${FILE_HASH} =      Get file hash                       ${FILE}
@@ -75,9 +75,13 @@ NeoFS Simple Object Operations
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       ${FILE_USR_HEADER}
                           
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
-                        #Verify Head tombstone              ${PRIV_KEY}    ${CID}        ${S_OID}
+    ${TOMBSTONE_S} =    Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}
+    ${TOMBSTONE_H} =    Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}
+                        Head object                         ${PRIV_KEY}    ${CID}        ${TOMBSTONE_S}            ${EMPTY}   
+                        Head object                         ${PRIV_KEY}    ${CID}        ${TOMBSTONE_S}            ${EMPTY}    ${EMPTY}   ${TRUE}
+                        
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
 
                         Sleep                               2min
                         

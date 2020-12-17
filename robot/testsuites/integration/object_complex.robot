@@ -39,7 +39,7 @@ NeoFS Complex Object Operations
                         Container Existing                  ${PRIV_KEY}    ${CID}
                         
                         Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    50            -0.0007
+                        ...  Expected Balance               ${PRIV_KEY}    50            -7e-08
 
     ${SIZE} =           Set Variable	                    20e+6
     ${FILE} =           Generate file of bytes              ${SIZE}
