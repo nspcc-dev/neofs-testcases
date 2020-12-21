@@ -776,7 +776,6 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user
         logger.info("Output: %s" % complProc.stdout)
 
         for key in user_headers.split(","):
-        #    user_header = f'Key={key} Val={user_headers_dict[key]}'
             if re.search(r'(%s)' % key, complProc.stdout):
                 logger.info("User header %s was parsed from command output" % key)
             else:

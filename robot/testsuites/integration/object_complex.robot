@@ -86,11 +86,15 @@ NeoFS Complex Object Operations
                         
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       ${FILE_USR_HEADER}
-                          
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}
 
-                        #Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${S_OID}
+                        Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       ${EMPTY}    ${TRUE}
+                          
+    ${TOMBSTONE_S} =    Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}
+    ${TOMBSTONE_H} =    Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}
+
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
+
                         
                         Sleep                               2min
                         
