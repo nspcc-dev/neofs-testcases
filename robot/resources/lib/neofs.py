@@ -749,15 +749,14 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
         logger.info("Output: %s" % full_headers)
 
         # Header verification
-        # TODO: add try or exist pre-check
         header_cid = full_headers["header"]["containerID"]["value"]
-        if (base58.b58encode(base64.b64decode(header_cid)).decode("utf-8") == cid):
+        if (_json_cli_decode(header_cid) == cid):
             logger.info("Header CID is expected: %s (%s in the output)" % (cid, header_cid))
         else:
             raise Exception("Header CID is not expected.")
 
         header_owner = full_headers["header"]["ownerID"]["value"]
-        if (base58.b58encode(base64.b64decode(header_owner)).decode("utf-8") == addr):
+        if (_json_cli_decode(header_owner) == addr):
             logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_owner))
         else:
             raise Exception("Header ownerID is not expected.")
@@ -775,13 +774,13 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
             raise Exception("Header Session Type is not expected.")
 
         header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
-        if (base58.b58encode(base64.b64decode(header_session_cid)).decode("utf-8") == cid):
+        if (_json_cli_decode(header_session_cid) == cid):
             logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_session_cid))
         else:
             raise Exception("Header Session CID is not expected.")
 
         header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
-        if (base58.b58encode(base64.b64decode(header_session_oid)).decode("utf-8") == oid):
+        if (_json_cli_decode(header_session_oid) == oid):
             logger.info("Header Session OID (deleted object) is expected: %s (%s in the output)" % (oid, header_session_oid))
         else:
             raise Exception("Header Session OID (deleted object) is not expected.")
@@ -789,6 +788,9 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+
+def _json_cli_decode(data: str):
+    return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
 @keyword('Head object')
 def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", keys:str="", endpoint: str="", ignore_failure: bool = False):
