@@ -15,14 +15,14 @@ import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
-NEOFS_CONTRACT = "5f490fbd8010fd716754073ee960067d28549b7d"
+NEOFS_CONTRACT = "ce96811ca25577c058484dab10dd8db2defc5eed"
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH)
 
 
 @keyword('Init wallet')
@@ -98,8 +98,8 @@ def dump_privkey(wallet: str, address: str):
 
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep5 transfer -w {wallet} -r {NEOFS_NEO_API_ENDPOINT} --from {address} "
-            f"--to {address_to} --token gas --amount {amount}" )  
+    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep17 transfer -w {wallet} -r {NEO_MAINNET_ENDPOINT} --from {address} "
+            f"--to {address_to} --token GAS --amount {amount}" )  
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd(wallet_pass, cmd)
@@ -112,7 +112,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r {NEOFS_NEO_API_ENDPOINT} "
+    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r {NEO_MAINNET_ENDPOINT} "
             f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
 
     logger.info(f"Executing command: {cmd}")
@@ -129,16 +129,18 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 @keyword('Mainnet Balance')
 def mainnet_balance(address: str):
-    request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getnep5balances", "params": [\"'+address+'\"] }\''
-    logger.info(f"Executing request: {request}")
 
-    complProc = subprocess.run(request, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+    headers = {'Content-type': 'application/json'}
+    data = { "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [ address ] }
+    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
 
-    out = complProc.stdout
-    logger.info(out)
+    if not response.ok:
+        raise Exception(f"""Failed:
+                request: {data},
+                response: {response.text},
+                status code: {response.status_code} {response.reason}""")
 
-    m = re.search(r'"668e0c1f9d7b70a99dd9e06eadd4c784d641afbc","amount":"([\d\.]+)"', out)
+    m = re.search(rf'"{GAS_HASH}","amount":"([\d\.]+)"', response.text)
     if not m.start() != m.end():
         raise Exception("Can not get mainnet gas balance.")
 
@@ -150,16 +152,16 @@ def mainnet_balance(address: str):
 @keyword('Expexted Mainnet Balance')
 def expected_mainnet_balance(address: str, expected: float):
     amount = mainnet_balance(address)
-
-    if float(amount) != float(expected):
-        raise Exception(f"Expected amount ({expected}) of GAS has not been found. Found {amount}.")
+    gas_expected = int(expected * 10**8)
+    if int(amount) != int(gas_expected):
+        raise Exception(f"Expected amount ({gas_expected}) of GAS has not been found. Found {amount}.")
 
     return True
 
 @keyword('NeoFS Deposit')
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
     cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
-            f"-r {NEOFS_NEO_API_ENDPOINT} {NEOFS_CONTRACT} "
+            f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} "
             f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
     logger.info(f"Executing command: {cmd}")
@@ -185,20 +187,21 @@ def transaction_accepted_in_block(tx_id):
 
     logger.info("Transaction id: %s" % tx_id)
 
-    TX_request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "gettransactionheight", "params": [\"'+ tx_id +'\"] }\''
+    headers = {'Content-type': 'application/json'}
+    data = { "jsonrpc": "2.0", "id": 5, "method": "gettransactionheight", "params": [ tx_id ] }
+    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
 
-    logger.info(f"Executing command: {TX_request}")
+    if not response.ok:
+        raise Exception(f"""Failed:
+                request: {data},
+                response: {response.text},
+                status code: {response.status_code} {response.reason}""")
 
-    complProc = subprocess.run(TX_request, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info(complProc.stdout)
-    response = json.loads(complProc.stdout)
-
-    if (response['result'] == 0):
+    if (response.text == 0):
         raise Exception( "Transaction is not found in the blocks." )
 
-    logger.info("Transaction has been found in the block %s." % response['result'] )
-    return response['result']
+    logger.info("Transaction has been found in the block %s." % response.text )
+    return response.text
 
 @keyword('Get Transaction')
 def get_transaction(tx_id: str):
@@ -208,10 +211,18 @@ def get_transaction(tx_id: str):
     :param tx_id:           transaction id
     """
 
-    TX_request = 'curl -X POST '+NEO_MAINNET_ENDPOINT+' --cacert ca/nspcc-ca.pem -H \'Content-Type: application/json\' -d \'{ "jsonrpc": "2.0", "id": 5, "method": "getapplicationlog", "params": [\"'+tx_id+'\"] }\''
-    complProc = subprocess.run(TX_request, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info(complProc.stdout)
+    headers = {'Content-type': 'application/json'}
+    data = { "jsonrpc": "2.0", "id": 5, "method": "getapplicationlog", "params": [ tx_id ] }
+    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
+
+    if not response.ok:
+        raise Exception(f"""Failed:
+                request: {data},
+                response: {response.text},
+                status code: {response.status_code} {response.reason}""")
+    else:
+        logger.info(response.text)
+
 
 @keyword('Get Balance')
 def get_balance(privkey: str):

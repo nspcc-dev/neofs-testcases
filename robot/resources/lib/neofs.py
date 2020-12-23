@@ -12,6 +12,7 @@ import random
 import base64
 import base58
 import docker
+import json
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -612,151 +613,252 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
     
+@keyword('Verify Split Chain')
+def verify_split_chain(private_key: str, cid: str, oid: str):
 
-'''
+    header_virtual_parsed = dict()
+    header_last_parsed = dict()
+
+    marker_last_obj = 0
+    marker_link_obj = 0
+
+    final_verif_data = dict()
+
+    # Get Latest object
+    logger.info("Collect Split objects information and verify chain of the objects.")
+    nodes = _get_storage_nodes(private_key)
+    for node in nodes:
+        header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
+        parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+        
+        if 'Last object' in parsed_header_virtual.keys():
+            header_last = head_object(private_key, cid, parsed_header_virtual['Last object'], '', '', '--raw')
+            header_last_parsed = parse_object_system_header(header_last)
+            marker_last_obj = 1 
+
+            # Recursive chain validation up to the first object
+            final_verif_data = _verify_child_link(private_key, cid, oid, header_last_parsed, final_verif_data)
+            break
+      
+    if marker_last_obj == 0:
+        raise Exception("Latest object has not been found.")
+
+    # Get Linking object
+    logger.info("Compare Split objects result information with Linking object.")
+    for node in nodes:
+
+        header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
+        parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+        if 'Linking object' in parsed_header_virtual.keys():
+
+            header_link = head_object(private_key, cid, parsed_header_virtual['Linking object'], '', '', '--raw')
+            header_link_parsed = parse_object_system_header(header_link)
+            marker_link_obj = 1
+
+            reversed_list = final_verif_data['ID List'][::-1]
+
+            if header_link_parsed['Split ChildID'] == reversed_list:
+                logger.info("Split objects list from Linked Object is equal to expected %s" % ', '.join(header_link_parsed['Split ChildID']))
+            else:
+                raise Exception("Split objects list from Linking Object (%s) is not equal to expected (%s)" % ', '.join(header_link_parsed['Split ChildID']), ', '.join(reversed_list) )
+
+            if int(header_link_parsed['PayloadLength']) == 0:
+                logger.info("Linking object Payload is equal to expected - zero size.")
+            else:
+                raise Exception("Linking object Payload is not equal to expected. Should be zero.")
+
+            if header_link_parsed['Type'] == 'regular':
+                logger.info("Linking Object Type is 'regular' as expected.")
+            else:
+                raise Exception("Object Type is not 'regular'.")
+           
+            if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
+                logger.info("Linking Object Split ID is equal to expected %s." % final_verif_data['Split ID'] )
+            else:
+                raise Exception("Split ID from Linking Object (%s) is not equal to expected (%s)" % header_link_parsed['Split ID'], ffinal_verif_data['Split ID'] )
+
+            break
+
+    if marker_link_obj == 0:
+        raise Exception("Linked object has not been found.")
+
+
+    logger.info("Compare Split objects result information with Virtual object.")
+
+    header_virtual = head_object(private_key, cid, oid, '', '', '')
+    header_virtual_parsed = parse_object_system_header(header_virtual)
+
+    if int(header_virtual_parsed['PayloadLength']) == int(final_verif_data['PayloadLength']):
+        logger.info("Split objects PayloadLength are equal to Virtual Object Payload %s" % header_virtual_parsed['PayloadLength'])
+    else:
+        raise Exception("Split objects PayloadLength from Virtual Object (%s) is not equal to expected (%s)" % header_virtual_parsed['PayloadLength'], final_verif_data['PayloadLength'] )
+
+    if header_link_parsed['Type'] == 'regular':
+        logger.info("Virtual Object Type is 'regular' as expected.")
+    else:
+        raise Exception("Object Type is not 'regular'.")
+
+    return 1
+
+
+def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed: dict, final_verif_data: dict):
+
+    if 'PayloadLength' in final_verif_data.keys():
+        final_verif_data['PayloadLength'] = int(final_verif_data['PayloadLength']) + int(header_last_parsed['PayloadLength'])
+    else: 
+        final_verif_data['PayloadLength'] = int(header_last_parsed['PayloadLength'])
+
+    if header_last_parsed['Type'] != 'regular':
+        raise Exception("Object Type is not 'regular'.")
+
+    if 'Split ID' in final_verif_data.keys():
+        if final_verif_data['Split ID'] != header_last_parsed['Split ID']:
+             raise Exception("Object Split ID (%s) is not expected (%s)." % header_last_parsed['Split ID'], final_verif_data['Split ID'])
+    else:
+        final_verif_data['Split ID'] = header_last_parsed['Split ID']
+    
+    if 'ID List' in final_verif_data.keys():
+        final_verif_data['ID List'].append(header_last_parsed['ID'])
+    else: 
+        final_verif_data['ID List'] = []
+        final_verif_data['ID List'].append(header_last_parsed['ID'])
+
+    if 'Split PreviousID' in header_last_parsed.keys(): 
+        header_virtual = head_object(private_key, cid, header_last_parsed['Split PreviousID'], '', '', '--raw')
+        parsed_header_virtual = parse_object_system_header(header_virtual)
+         
+        final_verif_data = _verify_child_link(private_key, cid, oid, parsed_header_virtual, final_verif_data)
+    else:
+        logger.info("Chain of the objects has been parsed from the last object ot the first.")
+    
+    return final_verif_data
+
+
 @keyword('Verify Head Tombstone')
-def verify_head_tombstone(private_key: str, cid: str, oid: str):
+def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} --full-headers'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid_ts} --json'
     logger.info("Cmd: %s" % ObjectCmd)
+   
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        
 
-        if re.search(r'Type=Tombstone\s+Value=MARKED', complProc.stdout):
-            logger.info("Tombstone header 'Type=Tombstone Value=MARKED' was parsed from command output")
+        full_headers = json.loads(complProc.stdout)
+        logger.info("Output: %s" % full_headers)
+
+        # Header verification
+        header_cid = full_headers["header"]["containerID"]["value"]
+        if (_json_cli_decode(header_cid) == cid):
+            logger.info("Header CID is expected: %s (%s in the output)" % (cid, header_cid))
         else:
-            raise Exception("Tombstone header 'Type=Tombstone Value=MARKED' was not found in the command output: \t%s" % (complProc.stdout))
+            raise Exception("Header CID is not expected.")
+
+        header_owner = full_headers["header"]["ownerID"]["value"]
+        if (_json_cli_decode(header_owner) == addr):
+            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_owner))
+        else:
+            raise Exception("Header ownerID is not expected.")
+
+        header_type = full_headers["header"]["objectType"]
+        if (header_type == "TOMBSTONE"):
+            logger.info("Header Type is expected: %s" % header_type)
+        else:
+            raise Exception("Header Type is not expected.")
+
+        header_session_type = full_headers["header"]["sessionToken"]["body"]["object"]["verb"]
+        if (header_session_type == "DELETE"):
+            logger.info("Header Session Type is expected: %s" % header_session_type)
+        else:
+            raise Exception("Header Session Type is not expected.")
+
+        header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
+        if (_json_cli_decode(header_session_cid) == cid):
+            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_session_cid))
+        else:
+            raise Exception("Header Session CID is not expected.")
+
+        header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
+        if (_json_cli_decode(header_session_oid) == oid):
+            logger.info("Header Session OID (deleted object) is expected: %s (%s in the output)" % (oid, header_session_oid))
+        else:
+            raise Exception("Header Session OID (deleted object) is not expected.")
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-@keyword('Verify linked objects')
-def verify_linked_objects(private_key: bytes, cid: str, oid: str, payload_size: float):
 
-    payload_size = int(float(payload_size))
-
-    # Get linked objects from first
-    postfix = f'object head --cid {cid} --oid {oid} --full-headers'
-    output = _exec_cli_cmd(private_key, postfix)
-    child_obj_list = []
-
-    for m in re.finditer(r'Type=Child ID=([\w-]+)', output):
-        child_obj_list.append(m.group(1))
-
-    if not re.search(r'PayloadLength=0', output):
-        raise Exception("Payload is not equal to zero in the parent object %s." % obj)
-
-    if not child_obj_list:
-        raise Exception("Child objects was not found.")
-    else:
-        logger.info("Child objects: %s" % child_obj_list)
-
-    # HEAD and validate each child object:
-    payload = 0
-    parent_id = "00000000-0000-0000-0000-000000000000"
-    first_obj = None
-    child_obj_list_headers = {}
-
-    for obj in child_obj_list:
-        postfix = f'object head --cid {cid} --oid {obj} --full-headers'
-        output = _exec_cli_cmd(private_key, postfix)
-        child_obj_list_headers[obj] = output
-        if re.search(r'Type=Previous ID=00000000-0000-0000-0000-000000000000', output):
-            first_obj = obj
-            logger.info("First child object %s has been found" % first_obj)
-
-    if not first_obj:
-        raise Exception("Can not find first object with zero Parent ID.")
-    else:
-
-        _check_linked_object(first_obj, child_obj_list_headers, payload_size, payload, parent_id)
-
-    return child_obj_list_headers.keys()
-
-
-def _check_linked_object(obj:str, child_obj_list_headers:dict, payload_size:int, payload:int, parent_id:str):
-
-    output = child_obj_list_headers[obj]
-    logger.info("Verify headers of the child object %s" % obj)
-
-    if not re.search(r'Type=Previous ID=%s' % parent_id, output):
-        raise Exception("Incorrect previos ID %s in the child object %s." % parent_id, obj)
-    else:
-        logger.info("Previous ID is equal for expected: %s" % parent_id)
-
-    m = re.search(r'PayloadLength=(\d+)', output)
-    if m.start() != m.end():
-        payload += int(m.group(1))
-    else:
-        raise Exception("Can not get payload for the object %s." % obj)
-
-    if payload > payload_size:
-        raise Exception("Payload exceeds expected total payload %s." % payload_size)
-
-    elif payload == payload_size:
-        if not re.search(r'Type=Next ID=00000000-0000-0000-0000-000000000000', output):
-            raise Exception("Incorrect previos ID in the last child object %s." % obj)
-        else:
-            logger.info("Next ID is correct for the final child object: %s" % obj)
-
-    else:
-        m = re.search(r'Type=Next ID=([\w-]+)', output)
-        if m:
-            # next object should be in the expected list
-            logger.info(m.group(1))
-            if m.group(1) not in child_obj_list_headers.keys():
-                raise Exception(f'Next object {m.group(1)} is not in the expected list: {child_obj_list_headers.keys()}.')
-            else:
-                logger.info(f'Next object {m.group(1)} is in the expected list: {child_obj_list_headers.keys()}.')
-
-            _check_linked_object(m.group(1), child_obj_list_headers, payload_size, payload, obj)
-
-        else:
-            raise Exception("Can not get Next object ID for the object %s." % obj)
-
-'''
-
+def _json_cli_decode(data: str):
+    return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
 @keyword('Head object')
-def head_object(private_key: str, cid: str, oid: str, bearer: str, user_headers:str=""):
+def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", keys:str="", endpoint: str="", ignore_failure: bool = False):
     options = ""
 
-    bearer_token = ""
-    if bearer:
-        bearer_token = f"--bearer {bearer}"
+    if bearer_token:
+        bearer_token = f"--bearer {bearer_token}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {options}'
+    if endpoint == "":
+        endpoint = NEOFS_ENDPOINT
+
+    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {keys}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
-        for key in user_headers.split(","):
-        #    user_header = f'Key={key} Val={user_headers_dict[key]}'
-            if re.search(r'(%s)' % key, complProc.stdout):
-                logger.info("User header %s was parsed from command output" % key)
-            else:
-                raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
+        if user_headers:
+            for key in user_headers.split(","):
+                if re.search(r'(%s)' % key, complProc.stdout):
+                    logger.info("User header %s was parsed from command output" % key) 
+                else:
+                    raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
 
         return complProc.stdout
 
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        if ignore_failure:
+            logger.info("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            return e.output
+        else:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
+@keyword('Parse Object Virtual Raw Header')
+def parse_object_virtual_raw_header(header: str):
+    # Header - Optional attributes
+    
+    result_header = dict()
+
+    m = re.search(r'Split ID:\s+([\w-]+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Split ID'] = m.group(1)
+
+    m = re.search(r'Linking object:\s+(\w+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Linking object'] = m.group(1)
+
+    m = re.search(r'Last object:\s+(\w+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Last object'] = m.group(1)
+
+    logger.info("Result: %s" % result_header)
+    return result_header
 
 
 @keyword('Parse Object System Header')
 def parse_object_system_header(header: str):
     result_header = dict()
+    
+    # Header - Constant attributes
 
-    #SystemHeader
-    logger.info("Input: %s" % header)
     # ID
-    m = re.search(r'ID: (\w+)', header)
+    m = re.search(r'^ID: (\w+)', header)
     if m.start() != m.end(): # e.g., if match found something
         result_header['ID'] = m.group(1)
     else:
@@ -775,20 +877,7 @@ def parse_object_system_header(header: str):
         result_header['OwnerID'] = m.group(1)
     else:
         raise Exception("no OwnerID was parsed from object header: \t%s" % output)
-    # PayloadLength
-    m = re.search(r'Size: (\d+)', header)
-    if m.start() != m.end(): # e.g., if match found something
-        result_header['PayloadLength'] = m.group(1)
-    else:
-        raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
-
-    # CreatedAtUnixTime
-    m = re.search(r'Timestamp=(\d+)', header)
-    if m.start() != m.end(): # e.g., if match found something
-        result_header['CreatedAtUnixTime'] = m.group(1)
-    else:
-        raise Exception("no CreatedAtUnixTime was parsed from object header: \t%s" % output)
-
+    
     # CreatedAtEpoch
     m = re.search(r'CreatedAt: (\d+)', header)
     if m.start() != m.end(): # e.g., if match found something
@@ -796,8 +885,60 @@ def parse_object_system_header(header: str):
     else:
         raise Exception("no CreatedAtEpoch was parsed from object header: \t%s" % output)
 
+    # PayloadLength
+    m = re.search(r'Size: (\d+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['PayloadLength'] = m.group(1)
+    else:
+        raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
+
+    # HomoHash
+    m = re.search(r'HomoHash:\s+(\w+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['HomoHash'] = m.group(1)
+    else:
+        raise Exception("no HomoHash was parsed from object header: \t%s" % output)
+
+    # Checksum
+    m = re.search(r'Checksum:\s+(\w+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['Checksum'] = m.group(1)
+    else:
+        raise Exception("no Checksum was parsed from object header: \t%s" % output)
+
+    # Type
+    m = re.search(r'Type:\s+(\w+)', header)
+    if m.start() != m.end(): # e.g., if match found something
+        result_header['Type'] = m.group(1)
+    else:
+        raise Exception("no Type was parsed from object header: \t%s" % output)
+
+
+    # Header - Optional attributes
+    m = re.search(r'Split ID:\s+([\w-]+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Split ID'] = m.group(1)
+
+    m = re.search(r'Split PreviousID:\s+(\w+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Split PreviousID'] = m.group(1)
+
+    m = re.search(r'Split ParentID:\s+(\w+)', header)
+    if m != None:
+        if m.start() != m.end(): # e.g., if match found something
+            result_header['Split ParentID'] = m.group(1)
+
+    # Split ChildID list
+    found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
+    if found_objects:
+        result_header['Split ChildID'] = found_objects
+
+
     logger.info("Result: %s" % result_header)
     return result_header
+
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str):
@@ -812,6 +953,10 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str):
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
+
+        tombstone = _parse_oid(complProc.stdout)
+        return tombstone
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -1029,7 +1174,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         if re.search(r'local node is outside of object placement', e.output):
             logger.info("Server is not presented in container.")
 
-        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) ):
+        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) or re.search(r'i/o timeout', e.output)):
             logger.warn("Node is unavailable")
 
         else:

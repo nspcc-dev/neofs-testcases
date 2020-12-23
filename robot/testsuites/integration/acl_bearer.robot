@@ -344,7 +344,9 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
                             Run Keyword And Expect Error        *
                             ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               
 
-                            Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
+                            # Delete can not be filtered by UserHeader.
+                            Run Keyword And Expect Error        *
+                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
                             Run Keyword And Expect Error        *
                             ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user
 

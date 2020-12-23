@@ -30,7 +30,7 @@ NeoFS Deposit and Withdraw
                             
                             Sleep                                 1 min
 
-                            Expexted Mainnet Balance              ${ADDR}                4.86192020
+                            Expexted Mainnet Balance              ${ADDR}                4.84454920 
     ${NEOFS_BALANCE} =      Get Balance                           ${PRIV_KEY}            
 
     ${TX} =                 Withdraw Mainnet Gas                  ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    50
@@ -40,6 +40,5 @@ NeoFS Deposit and Withdraw
                             Sleep                                 1 min
                             Get Balance                           ${PRIV_KEY}   
                             Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}    -50
-                            Expexted Mainnet Balance              ${ADDR}                54.82554860
+                            Expexted Mainnet Balance              ${ADDR}                54.80800160
      
-                                     

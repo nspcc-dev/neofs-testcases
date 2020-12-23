@@ -39,27 +39,21 @@ NeoFS Complex Object Operations
                         Container Existing                  ${PRIV_KEY}    ${CID}
                         
                         Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    50            -0.0007
+                        ...  Expected Balance               ${PRIV_KEY}    50            -7e-08
 
     ${SIZE} =           Set Variable	                    20e+6
     ${FILE} =           Generate file of bytes              ${SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
-
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  
     ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER} 
-    ${H_OID_OTH} =      Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
+    ${H_OID_OTH} =      Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}   
+
+    Should Be True     '${S_OID}'!='${H_OID}' and '${H_OID}'!='${H_OID_OTH}'
 
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${S_OID}    
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID}  
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}         ${H_OID_OTH}  
-
-
-#   @{Link_obj_S} =     Verify linked objects               ${PRIV_KEY}    ${CID}         ${S_OID}       ${SIZE}
-#   @{Link_obj_H} =     Verify linked objects               ${PRIV_KEY}    ${CID}         ${H_OID}       ${SIZE}
-#   @{Full_obj_list} =	Create List                         @{Link_obj_S}  @{Link_obj_H}  ${S_OID}       ${H_OID}
-#                       Search object                       ${PRIV_KEY}    ${CID}         ${EMPTY}       ${EMPTY}      @{Full_obj_list} 
-
 
     @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}     ${H_OID_OTH}   
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
@@ -86,12 +80,16 @@ NeoFS Complex Object Operations
                         
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       ${FILE_USR_HEADER}
-                          
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}
-                        Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}
+       
+                        Verify Split Chain                  ${PRIV_KEY}    ${CID}        ${S_OID}
+                        Verify Split Chain                  ${PRIV_KEY}    ${CID}        ${H_OID}
 
-                        #Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${S_OID}
-                        
+    ${TOMBSTONE_S} =    Delete object                       ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}
+    ${TOMBSTONE_H} =    Delete object                       ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}
+
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
+                        Verify Head tombstone               ${PRIV_KEY}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
+
                         Sleep                               2min
                         
                         Run Keyword And Expect Error        *       
