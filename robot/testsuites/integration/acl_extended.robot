@@ -35,7 +35,7 @@ Extended ACL Operations
                     #        Check Actions
                     #        Check Filters
                              
-   # [Teardown]              Cleanup  
+    [Teardown]              Cleanup  
 
     
 *** Keywords ***
@@ -571,5 +571,11 @@ Check eACL Deny and Allow All
 
 Cleanup
     @{CLEANUP_FILES} =      Create List	       ${FILE_S}    ${FILE_S_2}    local_file_eacl    eacl_custom    s_get_range
+                            ...                gen_eacl_allow_all_OTHERS    gen_eacl_deny_all_USER    gen_eacl_allow_all_USER
+                            ...                gen_eacl_deny_all_SYSTEM    gen_eacl_allow_all_SYSTEM    gen_eacl_allow_pubkey_deny_OTHERS
+                            ...                gen_eacl_deny_all_OTHERS    
+                            ...                gen_eacl_compound_del_SYSTEM    gen_eacl_compound_del_USER    gen_eacl_compound_del_OTHERS
+                            ...                gen_eacl_compound_get_hash_OTHERS    gen_eacl_compound_get_hash_SYSTEM    gen_eacl_compound_get_hash_USER
+                            ...                gen_eacl_compound_get_OTHERS    gen_eacl_compound_get_SYSTEM    gen_eacl_compound_get_USER
                             Cleanup Files      @{CLEANUP_FILES}
                             Get Docker Logs    acl_extended
