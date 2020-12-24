@@ -355,5 +355,6 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	     ${FILE_S}    local_file_eacl    s_get_range    bearer_allow_all_user
-                            Cleanup Files    @{CLEANUP_FILES}
+    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    bearer_allow_all_user
+                            Cleanup Files      @{CLEANUP_FILES}
+                            Get Docker Logs    acl_bearer

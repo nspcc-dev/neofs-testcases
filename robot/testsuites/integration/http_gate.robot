@@ -51,4 +51,13 @@ NeoFS HTTP Gateway
                         Verify file hash                    s_file_read    ${FILE_HASH} 
                         Verify file hash                    ${FILEPATH}    ${FILE_HASH} 
                         
-    [Teardown]          Cleanup Files    ${FILEPATH}    ${FILE}    s_file_read
+    [Teardown]          Cleanup                             ${FILEPATH}    ${FILE}    
+
+
+
+*** Keywords ***
+
+Cleanup
+    [Arguments]             ${FILEPATH}        ${FILE}
+                            Cleanup Files      ${FILEPATH}    ${FILE}    s_file_read
+                            Get Docker Logs    http_gate

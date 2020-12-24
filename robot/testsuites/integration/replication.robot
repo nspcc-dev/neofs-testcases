@@ -55,5 +55,6 @@ Cleanup
     [Arguments]             ${FILE}    @{NODES_OBJ_STOPPED}
                             Start nodes                           @{NODES_OBJ_STOPPED}
                             Cleanup Files                         ${FILE}
+                            Get Docker Logs                       replication
 
 

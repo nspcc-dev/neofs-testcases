@@ -100,6 +100,7 @@ Cleanup
 
     @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
                         Cleanup Files                       @{CLEANUP_FILES}
+                        Get Docker Logs                     object_simple
  
 
 

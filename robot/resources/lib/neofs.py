@@ -13,6 +13,7 @@ import base64
 import base58
 import docker
 import json
+import tarfile
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -463,9 +464,35 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
     return file_name
 
 
+@keyword('Form eACL json common file')
+def form_eacl_json_common_file(file_name, eacl_oper_list ):
+    # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
+    data = { "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [ ] }
+    
+    eacl = {"records":[]}
 
-@keyword('Form eACL json file')
-def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: str, key: str, value: str, target_role: str):
+    logger.info(eacl_oper_list)
+
+    if eacl_oper_list:
+        for record in eacl_oper_list:      
+            op_data = dict()
+            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
+                op_data = {"operation":record['Opration'],"action":record['Access'],"targets":[{"role":record['Role']}]}
+            else:
+                op_data = {"operation":record['Opration'],"action":record['Access'],"targets":[{"keys": [ record['Role'] ]}]}
+            
+            eacl["records"].append(op_data)
+
+        logger.info(eacl)
+
+        with open(file_name, 'w', encoding='utf-8') as f:
+            json.dump(eacl, f, ensure_ascii=False, indent=4)
+
+    return file_name
+
+
+@keyword('Form eACL json filter file')
+def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: str, key: str, value: str, target_role: str, header_type:str="OBJECT"):
 
     myjson = """
 {
@@ -475,7 +502,7 @@ def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: 
       "action": \"""" +  action + """",
       "filters": [
          {
-           "headerType": "OBJECT",
+           "headerType": \"""" +  header_type + """",
            "matchType": \"""" +  matchType + """",
            "key": \"""" +  key + """",
            "value": \"""" +  value + """"
@@ -733,6 +760,26 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
     
     return final_verif_data
 
+@keyword('Get Docker Logs')
+def get_container_logs(testcase_name: str):
+    #client = docker.APIClient()
+    client = docker.from_env()
+
+    tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
+    tar = tarfile.open(tar_name, "w:gz")
+
+    for container in client.containers.list():
+        file_name = "artifacts/docker_log_" + container.name
+        with open(file_name,'wb') as out:
+            out.write(container.logs())
+        logger.info(container.name)
+        
+        tar.add(file_name)
+        os.remove(file_name)
+    
+    tar.close()
+
+    return 1
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):

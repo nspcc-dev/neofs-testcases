@@ -287,5 +287,6 @@ Check Read-Only Container
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	     ${FILE_S}    s_file_read    s_get_range  
-                            Cleanup Files    @{CLEANUP_FILES}
+    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    s_file_read    s_get_range  
+                            Cleanup Files      @{CLEANUP_FILES}
+                            Get Docker Logs    acl_basic

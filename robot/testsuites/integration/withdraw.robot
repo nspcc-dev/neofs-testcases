@@ -41,4 +41,10 @@ NeoFS Deposit and Withdraw
                             Get Balance                           ${PRIV_KEY}   
                             Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}    -50
                             Expexted Mainnet Balance              ${ADDR}                54.80800160
+    
+    [Teardown]              Cleanup 
      
+*** Keywords ***
+    
+Cleanup
+                            Get Docker Logs    withdraw

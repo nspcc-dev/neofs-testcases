@@ -85,6 +85,12 @@ NeoFS S3 Gateway
                                 ${LIST_S3_OBJECTS} =             List objects S3       ${S3_CLIENT}    ${BUCKET}
                                 List Should Not Contain Value    ${LIST_S3_OBJECTS}    FILE_S3_NAME
 
-    [Teardown]                  Cleanup Files       s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
-                                ...  ${FILE_S3}    ${FILE_FS}       
+    [Teardown]                  Cleanup    ${FILE_S3}    ${FILE_FS}       
 
+*** Keywords ***
+    
+Cleanup
+    [Arguments]             ${FILE_S3}         ${FILE_FS} 
+                            Cleanup Files      s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
+                            ...                ${FILE_S3}    ${FILE_FS} 
+                            Get Docker Logs    s3_gate

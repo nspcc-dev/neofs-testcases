@@ -60,7 +60,7 @@ NeoFS Simple Netmap
                        Run Keyword And Expect Error    *
                        ...  Validate Policy    REP 2 IN X CBF 2 SELECT 6 FROM * AS X    2    @{EMPTY} 
 
-    [Teardown]         Cleanup Files      ${FILE}
+    [Teardown]         Cleanup    ${FILE}
 
 *** Keywords ***
 
@@ -107,3 +107,7 @@ Validate Policy
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
                         
 
+Cleanup
+    [Arguments]             ${FILE}
+                            Cleanup Files      ${FILE} 
+                            Get Docker Logs    netmap_simple
