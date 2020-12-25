@@ -464,10 +464,12 @@ def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, c
     return file_name
 
 
+    #    ${filters}=             Create Dictionary               headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=2
+    #    ${rule1}=               Create Dictionary               Operation=GET    Access=DENY    Role=OTHERS    Filters=${filters}
+
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_name, eacl_oper_list ):
     # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-    data = { "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [ ] }
     
     eacl = {"records":[]}
 
@@ -476,11 +478,15 @@ def form_eacl_json_common_file(file_name, eacl_oper_list ):
     if eacl_oper_list:
         for record in eacl_oper_list:      
             op_data = dict()
+
             if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
-                op_data = {"operation":record['Opration'],"action":record['Access'],"targets":[{"role":record['Role']}]}
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
             else:
-                op_data = {"operation":record['Opration'],"action":record['Access'],"targets":[{"keys": [ record['Role'] ]}]}
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
             
+            if 'Filters' in record.keys():
+                op_data["filters"].append(record['Filters'])
+
             eacl["records"].append(op_data)
 
         logger.info(eacl)
@@ -504,8 +510,8 @@ def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: 
          {
            "headerType": \"""" +  header_type + """",
            "matchType": \"""" +  matchType + """",
-           "key": \"""" +  key + """",
-           "value": \"""" +  value + """"
+           "key": \"""" +  key + """", 
+           "value": \"""" +  value + """" 
          }
        ],
       "targets": [
@@ -527,13 +533,13 @@ def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: 
 
 
 @keyword('Get Range')
-def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str, range_cut: str):
+def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str, range_cut: str, options:str=""):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} --file {range_file} '
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} --file {range_file} {options}'
     logger.info("Cmd: %s" % Cmd)
 
     try:
@@ -609,7 +615,7 @@ def generate_file_of_bytes(size):
 
 
 @keyword('Search object')
-def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, *expected_objects_list ):
+def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, expected_objects_list=[], options:str=""):
 
     bearer_token = ""
     if bearer:
@@ -618,7 +624,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     if filters:
         filters = f"--filters {filters}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object search {keys} --cid {cid} {bearer_token} {filters}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object search {keys} --cid {cid} {bearer_token} {filters} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -840,8 +846,7 @@ def _json_cli_decode(data: str):
     return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
 @keyword('Head object')
-def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", keys:str="", endpoint: str="", ignore_failure: bool = False):
-    options = ""
+def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
@@ -849,7 +854,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {keys}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -988,13 +993,13 @@ def parse_object_system_header(header: str):
 
 
 @keyword('Delete object')
-def delete_object(private_key: str, cid: str, oid: str, bearer: str):
+def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -1044,7 +1049,7 @@ def cleanup_file(*filename_list):
 
 
 @keyword('Put object to NeoFS')
-def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str, endpoint: str="" ):
+def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str, endpoint: str="", options: str="" ):
     logger.info("Going to put the object")
 
     if not endpoint:
@@ -1056,7 +1061,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     if bearer:
         bearer = f"--bearer {bearer}"
 
-    putObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers}'
+    putObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     logger.info("Cmd: %s" % putObjectCmd)
 
     try:
@@ -1071,12 +1076,12 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
 
 @keyword('Get Range Hash')
-def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str):
+def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str, options: str=""):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token} {options}'
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:
@@ -1088,8 +1093,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, rang
 
 
 @keyword('Get object from NeoFS') 
-def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_object: str, endpoint: str="" ):
-    # TODO: add object return instead of read_object (uuid)
+def get_object(private_key: str, cid: str, oid: str, bearer_token: str, write_object: str, endpoint: str="", options: str="" ):
 
     logger.info("Going to put the object")
 
@@ -1100,7 +1104,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_obj
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object get --cid {cid} --oid {oid} --file {read_object} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object get --cid {cid} --oid {oid} --file {write_object} {bearer_token} {options}'
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:
