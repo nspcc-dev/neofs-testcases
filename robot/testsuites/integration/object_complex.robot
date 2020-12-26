@@ -60,7 +60,7 @@ NeoFS Complex Object Operations
     @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
 
                         Run Keyword And Expect Error        *       
-                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
+                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}           ${EMPTY}       ${EMPTY}    ${S_OBJ_ALL}   
 
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read

@@ -23,17 +23,17 @@ Extended ACL Operations
 
                             Generate files    1024
                             
-                           # Check Actions
+                            Check Actions
                             Check Filters
-                           # Check Сompound Operations  
+                            Check Сompound Operations  
 
-                           # Cleanup Files    ${FILE_S}    ${FILE_S_2}
+                            Cleanup Files    ${FILE_S}    ${FILE_S_2}
                             
-                           # Log    Check extended ACL with complex object
-                           # Generate files    20e+6
-                           # Check Actions
-                           # Check Filters
-                           # Check Сompound Operations
+                            Log    Check extended ACL with complex object
+                            Generate files    20e+6
+                            Check Actions
+                            Check Filters
+                            Check Сompound Operations
                              
     [Teardown]              Cleanup  
 
@@ -48,8 +48,8 @@ Check Actions
 
     
 Check Filters
-                            #Check eACL MatchType String Equal Object
-                            #Check eACL MatchType String Not Equal Object
+                            Check eACL MatchType String Equal Object
+                            Check eACL MatchType String Not Equal Object
                             Check eACL MatchType String Equal Request
                             
 Check Сompound Operations         
@@ -429,8 +429,8 @@ Check eACL Deny and Allow All System
                             Get object from NeoFS    ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             Get object from NeoFS    ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-                            Search object            ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    @{S_OBJ_H}            
-                            Search object            ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    @{S_OBJ_H}            
+                            Search object            ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}            
+                            Search object            ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}            
 
                             Head object              ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}             
                             Head object              ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}             
@@ -461,9 +461,9 @@ Check eACL Deny and Allow All System
                             ...  Get object from NeoFS      ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             
                             Run Keyword And Expect Error    *
-                            ...  Search object              ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    @{S_OBJ_H}            
+                            ...  Search object              ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}            
                             Run Keyword And Expect Error    *
-                            ...  Search object              ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    @{S_OBJ_H}            
+                            ...  Search object              ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}            
 
                             
                             Run Keyword And Expect Error        *
@@ -502,8 +502,8 @@ Check eACL Deny and Allow All System
                             Get object from NeoFS               ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
                             Get object from NeoFS               ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
 
-                            Search object                       ${SYSTEM_KEY}       ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       @{S_OBJ_H}            
-                            Search object                       ${SYSTEM_KEY_SN}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       @{S_OBJ_H}            
+                            Search object                       ${SYSTEM_KEY}       ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       ${S_OBJ_H}            
+                            Search object                       ${SYSTEM_KEY_SN}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       ${S_OBJ_H}            
                             
                             Head object                         ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}             
                             Head object                         ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}            
@@ -528,7 +528,7 @@ Check eACL Deny All Other and Allow All Pubkey
 
                             Put object to NeoFS                 ${EACL_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}        @{S_OBJ_H}            
+                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}        ${S_OBJ_H}            
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}             
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
@@ -542,7 +542,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS               ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}            local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${OTHER_KEY}    ${CID}        ${EMPTY}          ${EMPTY}            ${FILE_USR_HEADER}      @{S_OBJ_H}            
+                            ...  Search object                       ${OTHER_KEY}    ${CID}        ${EMPTY}          ${EMPTY}            ${FILE_USR_HEADER}      ${S_OBJ_H}            
                             Run Keyword And Expect Error        *
                             ...  Head object                         ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}            
                             Run Keyword And Expect Error        *
@@ -554,7 +554,7 @@ Check eACL Deny All Other and Allow All Pubkey
 
                             Put object to NeoFS                 ${EACL_KEY}    ${FILE_S}     ${CID}                  ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
-                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${FILE_USR_HEADER}     @{S_OBJ_H}
+                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}
                             Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
@@ -572,7 +572,7 @@ Check eACL Deny and Allow All
                             Put object to NeoFS                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_OTH_HEADER} 
                                             
                             Get object from NeoFS               ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}    @{S_OBJ_H}            
+                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}    ${S_OBJ_H}            
                             Head object                         ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
                             
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
@@ -587,7 +587,7 @@ Check eACL Deny and Allow All
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS               ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       @{S_OBJ_H}            
+                            ...  Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}                 ${FILE_USR_HEADER}       ${S_OBJ_H}            
                             Run Keyword And Expect Error        *
                             ...  Head object                         ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}             
                             Run Keyword And Expect Error        *
@@ -602,7 +602,7 @@ Check eACL Deny and Allow All
 
                             Put object to NeoFS                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
-                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     @{S_OBJ_H}            
+                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}            
                             Head object                         ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             
                             Get Range                           ${KEY}    ${CID}        ${S_OID_USER}       s_get_range          ${EMPTY}            0:256
                             Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             0:256
