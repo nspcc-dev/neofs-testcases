@@ -181,7 +181,12 @@ Check eACL MatchType String Equal Object
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object ID
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
-    ${EACL_CUSTOM} =        Form eACL json filter file             eacl_custom       GET       DENY              STRING_EQUAL    $Object:objectID    ${ID_value}    OTHERS
+
+    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
+    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
+    ${eACL_gen} =           Create List    ${rule1}
+    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+                                        
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
                             ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
@@ -189,7 +194,13 @@ Check eACL MatchType String Equal Object
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     
     ${S_OID_USER_OTH} =     Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}               ${EMPTY}        ${FILE_OTH_HEADER} 
-    ${EACL_CUSTOM} =        Form eACL json filter file             eacl_custom     GET          DENY                 STRING_EQUAL    key1                  1    OTHERS
+
+    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key1    value=1
+    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
+    ${eACL_gen} =           Create List    ${rule1}
+    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    
+    
                             Set eACL                        ${USER_KEY}     ${CID}       ${EACL_CUSTOM}       --await                         
                             Run Keyword And Expect Error    *
                             ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}        local_file_eacl
@@ -213,7 +224,12 @@ Check eACL MatchType String Not Equal Object
     
                             Log	                            Set eACL for Deny GET operation with StringNotEqual Object ID
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
-    ${EACL_CUSTOM} =        Form eACL json filter file             eacl_custom       GET       DENY              STRING_NOT_EQUAL    $Object:objectID    ${ID_value}    OTHERS
+
+    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=$Object:objectID    value=${ID_value}
+    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS             Filters=${filters}
+    ${eACL_gen} =           Create List    ${rule1}
+    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
                             ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}    ${S_OID_OTHER}    ${EMPTY}            local_file_eacl
@@ -222,7 +238,12 @@ Check eACL MatchType String Not Equal Object
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     
     ${S_OID_USER_OTH} =     Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}               ${EMPTY}            ${FILE_OTH_HEADER} 
-    ${EACL_CUSTOM} =        Form eACL json filter file             eacl_custom    GET          DENY                 STRING_NOT_EQUAL    key1                  1    OTHERS
+
+    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=key1       value=1
+    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS    Filters=${filters}
+    ${eACL_gen} =           Create List    ${rule1}
+    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}                        
+                            
                             Set eACL                        ${USER_KEY}    ${CID}       ${EACL_CUSTOM}       --await                         
                             Run Keyword And Expect Error    *
                             ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            local_file_eacl
@@ -444,11 +465,7 @@ Check eACL Deny and Allow All System
                             Delete object            ${SYSTEM_KEY}       ${CID}    ${D_OID_USER_S}     ${EMPTY}
                             Delete object            ${SYSTEM_KEY_SN}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
 
-
-                            Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}
-                            Sleep                    ${MORPH_BLOCK_TIMEOUT}
- 
-
+                            Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}    --await
 
                             Run Keyword And Expect Error    *
                             ...  Put object to NeoFS        ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
@@ -489,8 +506,8 @@ Check eACL Deny and Allow All System
                             ...  Delete object                       ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}
 
 
-                            Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
-                            Sleep                               ${MORPH_BLOCK_TIMEOUT}
+                            Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}    --await
+
 
     ${D_OID_USER_S} =       Put object to NeoFS                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
     ${D_OID_USER_SN} =      Put object to NeoFS                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
@@ -579,8 +596,7 @@ Check eACL Deny and Allow All
                             Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
                             Delete object                       ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}
-                            Sleep                               ${MORPH_BLOCK_TIMEOUT}
+                            Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
@@ -597,8 +613,8 @@ Check eACL Deny and Allow All
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}     ${CID}        ${ALLOW_EACL}
-                            Sleep                               ${MORPH_BLOCK_TIMEOUT}
+                            Set eACL                            ${USER_KEY}     ${CID}        ${ALLOW_EACL}    --await
+
 
                             Put object to NeoFS                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl

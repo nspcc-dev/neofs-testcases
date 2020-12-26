@@ -107,8 +107,6 @@ Generate file
 
 Check Private Container
     # Check Private:
-    # Expected: User - pass, Other - fail, System(IR) - pass (+ System(Container node) - pass, Non-container node - fail). 
-
     # Put
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
                             Run Keyword And Expect Error        *
@@ -173,7 +171,6 @@ Check Public Container
     # Put
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
     ${S_OID_OTHER} =        Put object to NeoFS                 ${OTHER_KEY}        ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    # https://github.com/nspcc-dev/neofs-node/issues/178
     ${S_OID_SYS_IR} =       Put object to NeoFS                 ${SYSTEM_KEY_IR}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
     ${S_OID_SYS_SN} =       Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
 
@@ -221,7 +218,6 @@ Check Public Container
 
 
     # Delete
-                            # https://github.com/nspcc-dev/neofs-node/issues/178
                             Delete object                       ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_IR}    ${EMPTY}     
                             Delete object                       ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
                             Delete object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}  

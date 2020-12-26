@@ -167,7 +167,7 @@ def get_eacl(private_key: str, cid: str):
 
     except subprocess.CalledProcessError as e:
         if re.search(r'extended ACL table is not set for this container', e.output):
-            logger.info("Server is not presented in container.")
+            logger.info("Extended ACL table is not set for this container.")
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -185,104 +185,44 @@ def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
 
 
 
-@keyword('Form BearerToken file for all ops')
-def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str ):
-
-    eacl = get_eacl(private_key, cid)
-    input_records = ""
-    
+@keyword('Form BearerToken file')
+def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list, lifetime_exp: str ):
+   
     cid_base58_b = base58.b58decode(cid)
     cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
+    eacl = get_eacl(private_key, cid)
+    json_eacl = {}
 
     if eacl:
-        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
-        records = re.split(r'"records": \[', res_json[0])
-        input_records = ",\n" + records[1]
+        res_json = re.split(r'[\s\n]+Signature:', eacl)
+        input_eacl = res_json[0].replace('eACL: ', '')
+        json_eacl = json.loads(input_eacl)
 
-    myjson = """
-{
-  "body": {
-    "eaclTable": {
-      "containerID": {
-        "value": \"""" +  str(cid_base64) + """"
-      },
-      "records": [
-        {
-          "operation": "GET",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "PUT",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "HEAD",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "DELETE",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "SEARCH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGE",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGEHASH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        }""" + input_records + """
-      ]
-    },
-    "lifetime": {
-      "exp": \"""" + lifetime_exp + """",
-      "nbf": "1",
-      "iat": "0"
-    }
-  }
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
+    eacl_result = {"body":{ "eaclTable": { "containerID": { "value": cid_base64 }, "records": [] }, "lifetime": {"exp": lifetime_exp, "nbf": "1", "iat": "0"} } }
+
+    if eacl_oper_list:
+        for record in eacl_oper_list:      
+            op_data = dict()
+
+            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
+            else:
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
+            
+            if 'Filters' in record.keys():
+                op_data["filters"].append(record['Filters'])
+
+            eacl_result["body"]["eaclTable"]["records"].append(op_data)
+
+        # Add records from current eACL
+        if "records" in json_eacl.keys():
+            for record in json_eacl["records"]:
+                eacl_result["body"]["eaclTable"]["records"].append(record)
+
+        with open(file_name, 'w', encoding='utf-8') as f:
+            json.dump(eacl_result, f, ensure_ascii=False, indent=4)
+
+        logger.info(eacl_result)
 
     # Sign bearer token
     Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
@@ -299,173 +239,6 @@ def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str
     return file_name
 
 
-
-@keyword('Form BearerToken file filter for all ops')
-def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str, matchType: str, key: str, value: str):
-
-    # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH? Need to clarify.
-
-    eacl = get_eacl(private_key, cid)
-
-    cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
-
-    input_records = ""
-    if eacl:
-        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
-        records = re.split(r'"records": \[', res_json[0])
-        input_records = ",\n" + records[1]
-
-    myjson = """
-{
-  "body": {
-    "eaclTable": {
-      "containerID": {
-        "value": \"""" +  str(cid_base64) + """"
-      },
-      "records": [
-        {
-          "operation": "GET",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "PUT",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "HEAD",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "DELETE",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "SEARCH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGE",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGEHASH",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        }""" + input_records + """
-      ]
-    },
-    "lifetime": {
-      "exp": \"""" +  lifetime_exp + """",
-      "nbf": "1",
-      "iat": "0"
-    }
-  }
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
-
-    # Sign bearer token
-    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
-    logger.info("Cmd: %s" % Cmd)
-
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % str(output))
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    return file_name
-
-
-    #    ${filters}=             Create Dictionary               headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=2
-    #    ${rule1}=               Create Dictionary               Operation=GET    Access=DENY    Role=OTHERS    Filters=${filters}
 
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_name, eacl_oper_list ):
@@ -495,41 +268,6 @@ def form_eacl_json_common_file(file_name, eacl_oper_list ):
             json.dump(eacl, f, ensure_ascii=False, indent=4)
 
     return file_name
-
-
-@keyword('Form eACL json filter file')
-def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: str, key: str, value: str, target_role: str, header_type:str="OBJECT"):
-
-    myjson = """
-{
-  "records": [
-    {
-      "operation": \"""" +  operation + """",
-      "action": \"""" +  action + """",
-      "filters": [
-         {
-           "headerType": \"""" +  header_type + """",
-           "matchType": \"""" +  matchType + """",
-           "key": \"""" +  key + """", 
-           "value": \"""" +  value + """" 
-         }
-       ],
-      "targets": [
-        {
-          "role": \"""" +  target_role + """"
-        }
-      ]
-    }
-  ]
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
-
-    return file_name
-
-
 
 
 @keyword('Get Range')
