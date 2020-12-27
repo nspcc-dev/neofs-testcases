@@ -21,7 +21,6 @@ BearerToken Operations
                             Generate Keys
                             Prepare eACL Role rules
     
-
                             Log    Check Bearer token with simple object
                             Generate file    1024
                             Check Container Inaccessible and Allow All Bearer
@@ -30,7 +29,6 @@ BearerToken Operations
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual
                             Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
-                            
                             Log    Check Bearer token with complex object
                             Cleanup Files    ${FILE_S}
                             Generate file    20e+6
@@ -58,9 +56,9 @@ Generate Keys
     ${OTHER_KEY_GEN} =      Dump PrivKey            ${WALLET_OTH}       ${ADDR_OTH}      
     
 
-    ${EACL_KEY_GEN} =	    Form WIF from String            782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-    ${SYSTEM_KEY_GEN} =	    Form WIF from String            c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
-    ${SYSTEM_KEY_GEN_SN} =  Form WIF from String            0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
+    ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
+    ${SYSTEM_KEY_GEN} =	    Form WIF from String    c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
+    ${SYSTEM_KEY_GEN_SN} =  Form WIF from String    0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
 
                             Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
                             Set Global Variable     ${OTHER_KEY}                 ${OTHER_KEY_GEN}
@@ -101,7 +99,6 @@ Create Container Inaccessible
     [Return]                ${PUBLIC_CID_GEN}
 
 
-
 Generate file
     [Arguments]             ${SIZE}
             
@@ -113,96 +110,46 @@ Prepare eACL Role rules
                             Log	                    Set eACL for different Role cases
 
     # eACL rules for all operations and similar permissions
-    @{Roles} =	        Create List    OTHERS    USER    SYSTEM
-    FOR	${role}	IN	@{Roles}
-        ${rule1}=               Create Dictionary    Operation=GET             Access=DENY    Role=${role} 
-        ${rule2}=               Create Dictionary    Operation=HEAD            Access=DENY    Role=${role} 
-        ${rule3}=               Create Dictionary    Operation=PUT             Access=DENY    Role=${role}  
-        ${rule4}=               Create Dictionary    Operation=DELETE          Access=DENY    Role=${role} 
-        ${rule5}=               Create Dictionary    Operation=SEARCH          Access=DENY    Role=${role}
-        ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=DENY    Role=${role}
-        ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=DENY    Role=${role}
+    ${rule1} =              Create Dictionary    Operation=GET             Access=DENY    Role=USER
+    ${rule2} =              Create Dictionary    Operation=HEAD            Access=DENY    Role=USER
+    ${rule3} =              Create Dictionary    Operation=PUT             Access=DENY    Role=USER
+    ${rule4} =              Create Dictionary    Operation=DELETE          Access=DENY    Role=USER 
+    ${rule5} =              Create Dictionary    Operation=SEARCH          Access=DENY    Role=USER
+    ${rule6} =              Create Dictionary    Operation=GETRANGE        Access=DENY    Role=USER
+    ${rule7} =              Create Dictionary    Operation=GETRANGEHASH    Access=DENY    Role=USER
 
-        ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-                                Form eACL json common file    gen_eacl_deny_all_${role}    ${eACL_gen}
-    END
-
-
-    FOR	${role}	IN	@{Roles}
-        ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=${role} 
-        ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=${role} 
-        ${rule3}=               Create Dictionary    Operation=PUT             Access=ALLOW    Role=${role}  
-        ${rule4}=               Create Dictionary    Operation=DELETE          Access=ALLOW    Role=${role} 
-        ${rule5}=               Create Dictionary    Operation=SEARCH          Access=ALLOW    Role=${role}
-        ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=${role}
-        ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=${role}
-
-        ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-                                Form eACL json common file    gen_eacl_allow_all_${role}    ${eACL_gen}
-    END
-
-
-    ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule3}=               Create Dictionary    Operation=PUT             Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule4}=               Create Dictionary    Operation=DELETE          Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule5}=               Create Dictionary    Operation=SEARCH          Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=A9tDy6Ye+UimXCCzJrlAmRE0FDZHjf3XRyya9rELtgAA 
-    ${rule8}=               Create Dictionary    Operation=GET             Access=DENY     Role=OTHERS
-    ${rule9}=               Create Dictionary    Operation=HEAD            Access=DENY     Role=OTHERS
-    ${rule10}=              Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS 
-    ${rule11}=              Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS 
-    ${rule12}=              Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS
-    ${rule13}=              Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS
-    ${rule14}=              Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS
-
-
-    ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}     ${rule4}     ${rule5}     ${rule6}     ${rule7}
-                            ...            ${rule8}    ${rule9}    ${rule10}    ${rule11}    ${rule12}    ${rule13}    ${rule14}
-                            Form eACL json common file    gen_eacl_allow_pubkey_deny_OTHERS    ${eACL_gen}
-
-                            Set Global Variable    ${EACL_DENY_ALL_OTHER}      gen_eacl_deny_all_OTHERS
-                            Set Global Variable    ${EACL_ALLOW_ALL_OTHER}     gen_eacl_allow_all_OTHERS
-                                                                                  
+    ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
+                            Form eACL json common file    gen_eacl_deny_all_USER    ${eACL_gen}                                               
                             Set Global Variable    ${EACL_DENY_ALL_USER}       gen_eacl_deny_all_USER
-                            Set Global Variable    ${EACL_ALLOW_ALL_USER}      gen_eacl_allow_all_USER
-
-                            Set Global Variable    ${EACL_DENY_ALL_SYSTEM}     gen_eacl_deny_all_SYSTEM
-                            Set Global Variable    ${EACL_ALLOW_ALL_SYSTEM}    gen_eacl_allow_all_SYSTEM
-                            
-                            Set Global Variable    ${EACL_ALLOW_ALL_Pubkey}    gen_eacl_allow_pubkey_deny_OTHERS
-
- 
-
+                          
 
 Check Container Inaccessible and Allow All Bearer
     ${CID} =                Create Container Inaccessible
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
+                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    
+                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}               
+                            ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}               
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
+                            ...  Get Range                      ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
                             Run Keyword And Expect Error        *
-                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                            ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
  
     ${rule1}=               Create Dictionary    Operation=PUT             Access=ALLOW    Role=USER   
     ${rule2}=               Create Dictionary    Operation=SEARCH          Access=ALLOW    Role=USER  
 
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}
 
-                            Form BearerToken file                    ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
+                            Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user       ${FILE_USR_HEADER} 
+                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user       ${FILE_USR_HEADER}    
+                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user       ${FILE_USR_HEADER}    
             
 
 Check eACL Deny and Allow All Bearer
@@ -235,17 +182,17 @@ Check eACL Deny and Allow All Bearer
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
+                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}
+                            ...  Search object                  ${USER_KEY}    ${CID}       ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}               
+                            ...  Head object                    ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}               
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
+                            ...  Get Range                      ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
                             Run Keyword And Expect Error        *
-                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                            ...  Delete object                  ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
 
                             Put object to NeoFS                 ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER} 
                             Get object from NeoFS               ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl
@@ -414,19 +361,19 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500 
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_USR_HEADER} 
+                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}          ${S_OBJ_H}
+                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}          ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
+                            ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
+                            ...  Get Range                      ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
                             Run Keyword And Expect Error        *
-                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
+                            ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             ${S_OBJ_H}
+                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             ${S_OBJ_H}
 
                             Run Keyword And Expect Error        *
                             ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER} 
@@ -447,7 +394,7 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
                             # Delete can not be filtered by UserHeader.
                             Run Keyword And Expect Error        *
-                            ...  Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
+                            ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
                             Run Keyword And Expect Error        *
                             ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user
 
@@ -456,12 +403,6 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    bearer_allow_all_user
-                            ...                gen_eacl_allow_all_OTHERS    gen_eacl_deny_all_USER    gen_eacl_allow_all_USER
-                            ...                gen_eacl_deny_all_SYSTEM    gen_eacl_allow_all_SYSTEM    gen_eacl_allow_pubkey_deny_OTHERS
-                            ...                gen_eacl_deny_all_OTHERS    
-                            ...                gen_eacl_compound_del_SYSTEM    gen_eacl_compound_del_USER    gen_eacl_compound_del_OTHERS
-                            ...                gen_eacl_compound_get_hash_OTHERS    gen_eacl_compound_get_hash_SYSTEM    gen_eacl_compound_get_hash_USER
-                            ...                gen_eacl_compound_get_OTHERS    gen_eacl_compound_get_SYSTEM    gen_eacl_compound_get_USER
+    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    bearer_allow_all_user   gen_eacl_deny_all_USER            
                             Cleanup Files      @{CLEANUP_FILES}
                             Get Docker Logs    acl_bearer
