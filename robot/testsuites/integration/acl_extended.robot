@@ -387,7 +387,7 @@ Prepare eACL Role rules
                                 Set Global Variable    ${EACL_COMPOUND_GET_${role}}    gen_eacl_compound_get_${role}
     END
 
-    # eACL rules for Compound operations: Delete
+    # eACL rules for Compound operations: DELETE
     @{Roles} =	        Create List    OTHERS    USER    SYSTEM
     FOR	${role}	IN	@{Roles}
         ${rule1}=               Create Dictionary    Operation=DELETE          Access=ALLOW    Role=${role}  
@@ -398,7 +398,7 @@ Prepare eACL Role rules
                                 Set Global Variable    ${EACL_COMPOUND_DELETE_${role}}    gen_eacl_compound_del_${role}
     END
 
-    # eACL rules for Compound operations: Delete
+    # eACL rules for Compound operations: GETRANGEHASH
     @{Roles} =	        Create List    OTHERS    USER    SYSTEM
     FOR	${role}	IN	@{Roles}
         ${rule1}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=${role}  

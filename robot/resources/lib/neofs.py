@@ -817,7 +817,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str, options: str=""):
 
     if bearer_token:
-        bearer_token = f"--bearer {bearer}"
+        bearer_token = f"--bearer {bearer_token}"
 
     ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token} {options}'
 
