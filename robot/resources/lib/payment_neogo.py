@@ -15,14 +15,14 @@ import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
-NEOFS_CONTRACT = "ce96811ca25577c058484dab10dd8db2defc5eed"
+
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
 
 
 @keyword('Init wallet')
@@ -141,8 +141,10 @@ def mainnet_balance(address: str):
                 status code: {response.status_code} {response.reason}""")
 
     m = re.search(rf'"{GAS_HASH}","amount":"([\d\.]+)"', response.text)
-    if not m.start() != m.end():
-        raise Exception("Can not get mainnet gas balance.")
+    if not m:
+        raise Exception("Can not get mainnet gas balance. Output: %s" % response.text )
+    else:
+        logger.info("Output: %s" % response.text)
 
     amount = m.group(1)
 

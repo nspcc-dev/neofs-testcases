@@ -41,7 +41,7 @@ NeoFS Object Replication
     @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}  
     @{NODES_OBJ_STOPPED} =  Stop nodes                            1              @{NODES_OBJ}
     
-                            Wait Until Keyword Succeeds           5 min                  1 min        
+                            Wait Until Keyword Succeeds           10 min                  1 min        
                             ...  Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}
                             Start nodes                           @{NODES_OBJ_STOPPED}
   
