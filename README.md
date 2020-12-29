@@ -35,7 +35,7 @@ In this case, dev-env should be running with the tested environment.
 ### Running an arbitrary test case
 
 To run an arbitrary testcase, you need to run the command:
-`robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
+`robot --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
 
 The following scripts are available for execution:
 
@@ -76,7 +76,7 @@ Dev-env is not needed. But you need to install neo-go.
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
 
-3. To run smoke test: `robot --timestampoutputs --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
+3. To run smoke test: `robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
 
 
 ## Generation of documentation

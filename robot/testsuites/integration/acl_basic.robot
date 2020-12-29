@@ -107,8 +107,6 @@ Generate file
 
 Check Private Container
     # Check Private:
-    # Expected: User - pass, Other - fail, System(IR) - pass (+ System(Container node) - pass, Non-container node - fail). 
-
     # Put
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
                             Run Keyword And Expect Error        *
@@ -118,14 +116,11 @@ Check Private Container
     ${S_OID_SYS_SN} =       Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY} 
 
                         
-
-
     # Get
                             Get object from NeoFS               ${USER_KEY}         ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                             Run Keyword And Expect Error        *
                             ...  Get object from NeoFS          ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                            Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS          ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                            Get object from NeoFS               ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
                             Get object from NeoFS               ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read 
 
     # Get Range
@@ -146,11 +141,11 @@ Check Private Container
 
     # Search
     @{S_OBJ_PRIV} =	        Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}    
-                            Search object                       ${USER_KEY}         ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                            Search object                       ${USER_KEY}         ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
                             Run Keyword And Expect Error        *
-                            ...  Search object                  ${OTHER_KEY}        ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                            Search object                       ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                            Search object                       ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                            ...  Search object                  ${OTHER_KEY}        ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
+                            Search object                       ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
+                            Search object                       ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
 
  
     # Head
@@ -176,7 +171,6 @@ Check Public Container
     # Put
     ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
     ${S_OID_OTHER} =        Put object to NeoFS                 ${OTHER_KEY}        ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    # https://github.com/nspcc-dev/neofs-node/issues/178
     ${S_OID_SYS_IR} =       Put object to NeoFS                 ${SYSTEM_KEY_IR}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
     ${S_OID_SYS_SN} =       Put object to NeoFS                 ${SYSTEM_KEY_SN}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
 
@@ -201,10 +195,10 @@ Check Public Container
 
     # Search
     @{S_OBJ_PRIV} =	        Create List	                        ${S_OID_USER}       ${S_OID_OTHER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
-                            Search object                       ${USER_KEY}         ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                            Search object                       ${OTHER_KEY}        ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                            Search object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
-                            Search object                       ${SYSTEM_KEY_SN}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_PRIV}
+                            Search object                       ${USER_KEY}         ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
+                            Search object                       ${OTHER_KEY}        ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
+                            Search object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
+                            Search object                       ${SYSTEM_KEY_SN}    ${PUBLIC_CID}     ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
 
     # Head
                             Head object                         ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
@@ -224,7 +218,6 @@ Check Public Container
 
 
     # Delete
-                            # https://github.com/nspcc-dev/neofs-node/issues/178
                             Delete object                       ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_IR}    ${EMPTY}     
                             Delete object                       ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
                             Delete object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}  
@@ -263,10 +256,10 @@ Check Read-Only Container
 
     # Search
     @{S_OBJ_RO} =	        Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}     
-                            Search object                       ${USER_KEY}         ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
-                            Search object                       ${OTHER_KEY}        ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
-                            Search object                       ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
-                            Search object                       ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    @{S_OBJ_RO}
+                            Search object                       ${USER_KEY}         ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                            Search object                       ${OTHER_KEY}        ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                            Search object                       ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                            Search object                       ${SYSTEM_KEY_SN}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
 
  
     # Head
@@ -287,5 +280,6 @@ Check Read-Only Container
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	     ${FILE_S}    s_file_read    s_get_range  
-                            Cleanup Files    @{CLEANUP_FILES}
+    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    s_file_read    s_get_range  
+                            Cleanup Files      @{CLEANUP_FILES}
+                            Get Docker Logs    acl_basic

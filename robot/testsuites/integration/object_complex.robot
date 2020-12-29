@@ -41,8 +41,7 @@ NeoFS Complex Object Operations
                         Wait Until Keyword Succeeds         2 min          30 sec
                         ...  Expected Balance               ${PRIV_KEY}    50            -7e-08
 
-    ${SIZE} =           Set Variable	                    20e+6
-    ${FILE} =           Generate file of bytes              ${SIZE}
+    ${FILE} =           Generate file of bytes              10e+6
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  
@@ -60,7 +59,7 @@ NeoFS Complex Object Operations
     @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
 
                         Run Keyword And Expect Error        *       
-                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
+                        ...  Search object                  ${PRIV_KEY}    ${CID}        ${EMPTY}           ${EMPTY}       ${EMPTY}    ${S_OBJ_ALL}   
 
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
                         Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
@@ -74,9 +73,9 @@ NeoFS Complex Object Operations
                         Get Range                           ${PRIV_KEY}    ${CID}        ${S_OID}          s_get_range    ${EMPTY}       0:10
                         Get Range                           ${PRIV_KEY}    ${CID}        ${H_OID}          h_get_range    ${EMPTY}       0:10
 
-                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${EMPTY}                @{S_OBJ_ALL}   
-                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER}      @{S_OBJ_H}    
-                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER_OTH}  @{S_OBJ_H_OTH} 
+                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${EMPTY}                ${S_OBJ_ALL}   
+                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER}      ${S_OBJ_H}    
+                        Search object                       ${PRIV_KEY}    ${CID}        --root            ${EMPTY}       ${FILE_USR_HEADER_OTH}  ${S_OBJ_H_OTH} 
                         
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       ${FILE_USR_HEADER}
@@ -105,9 +104,9 @@ NeoFS Complex Object Operations
 
 Cleanup
     [Arguments]         ${FILE}
-
     @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
                         Cleanup Files                       @{CLEANUP_FILES}
+                        Get Docker Logs                     object_complex
  
 
 

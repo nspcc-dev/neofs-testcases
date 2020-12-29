@@ -68,9 +68,9 @@ NeoFS Simple Object Operations
                         Get Range                           ${PRIV_KEY}    ${CID}        ${S_OID}            s_get_range    ${EMPTY}       0:10
                         Get Range                           ${PRIV_KEY}    ${CID}        ${H_OID}            h_get_range    ${EMPTY}       0:10
                        
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                  @{S_OBJ_ALL}   
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER}        @{S_OBJ_H}        
-                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER_OTH}    @{S_OBJ_H_OTH}    
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${EMPTY}                  ${S_OBJ_ALL}   
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER}        ${S_OBJ_H}        
+                        Search object                       ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       ${FILE_USR_HEADER_OTH}    ${S_OBJ_H_OTH}    
 
                         Head object                         ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}             
                         Head object                         ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       ${FILE_USR_HEADER}
@@ -100,6 +100,7 @@ Cleanup
 
     @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
                         Cleanup Files                       @{CLEANUP_FILES}
+                        Get Docker Logs                     object_simple
  
 
 

@@ -13,6 +13,7 @@ import base64
 import base58
 import docker
 import json
+import tarfile
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
@@ -166,7 +167,7 @@ def get_eacl(private_key: str, cid: str):
 
     except subprocess.CalledProcessError as e:
         if re.search(r'extended ACL table is not set for this container', e.output):
-            logger.info("Server is not presented in container.")
+            logger.info("Extended ACL table is not set for this container.")
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -184,329 +185,99 @@ def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
 
 
 
-@keyword('Form BearerToken file for all ops')
-def form_bearertoken_file_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str ):
-
+@keyword('Form BearerToken file')
+def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list, lifetime_exp: str ):
+   
+    cid_base58_b = base58.b58decode(cid)
+    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
     eacl = get_eacl(private_key, cid)
-    input_records = ""
+    json_eacl = {}
+
+    if eacl:
+        res_json = re.split(r'[\s\n]+Signature:', eacl)
+        input_eacl = res_json[0].replace('eACL: ', '')
+        json_eacl = json.loads(input_eacl)
+
+    eacl_result = {"body":{ "eaclTable": { "containerID": { "value": cid_base64 }, "records": [] }, "lifetime": {"exp": lifetime_exp, "nbf": "1", "iat": "0"} } }
+
+    if eacl_oper_list:
+        for record in eacl_oper_list:      
+            op_data = dict()
+
+            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
+            else:
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
+            
+            if 'Filters' in record.keys():
+                op_data["filters"].append(record['Filters'])
+
+            eacl_result["body"]["eaclTable"]["records"].append(op_data)
+
+        # Add records from current eACL
+        if "records" in json_eacl.keys():
+            for record in json_eacl["records"]:
+                eacl_result["body"]["eaclTable"]["records"].append(record)
+
+        with open(file_name, 'w', encoding='utf-8') as f:
+            json.dump(eacl_result, f, ensure_ascii=False, indent=4)
+
+        logger.info(eacl_result)
+
+    # Sign bearer token
+    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
+    logger.info("Cmd: %s" % Cmd)
+
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % str(output))
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return file_name
+
+
+
+@keyword('Form eACL json common file')
+def form_eacl_json_common_file(file_name, eacl_oper_list ):
+    # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
     
-    cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
+    eacl = {"records":[]}
 
-    if eacl:
-        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
-        records = re.split(r'"records": \[', res_json[0])
-        input_records = ",\n" + records[1]
+    logger.info(eacl_oper_list)
 
-    myjson = """
-{
-  "body": {
-    "eaclTable": {
-      "containerID": {
-        "value": \"""" +  str(cid_base64) + """"
-      },
-      "records": [
-        {
-          "operation": "GET",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "PUT",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "HEAD",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "DELETE",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "SEARCH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGE",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGEHASH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        }""" + input_records + """
-      ]
-    },
-    "lifetime": {
-      "exp": \"""" + lifetime_exp + """",
-      "nbf": "1",
-      "iat": "0"
-    }
-  }
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
+    if eacl_oper_list:
+        for record in eacl_oper_list:      
+            op_data = dict()
 
-    # Sign bearer token
-    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
-    logger.info("Cmd: %s" % Cmd)
+            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
+            else:
+                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
+            
+            if 'Filters' in record.keys():
+                op_data["filters"].append(record['Filters'])
 
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % str(output))
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            eacl["records"].append(op_data)
+
+        logger.info(eacl)
+
+        with open(file_name, 'w', encoding='utf-8') as f:
+            json.dump(eacl, f, ensure_ascii=False, indent=4)
 
     return file_name
-
-
-
-@keyword('Form BearerToken file filter for all ops')
-def form_bearertoken_file_filter_for_all_ops(file_name: str, private_key: str, cid: str, action: str, target_role: str, lifetime_exp: str, matchType: str, key: str, value: str):
-
-    # SEARCH should be allowed without filters to use GET, HEAD, DELETE, and SEARCH? Need to clarify.
-
-    eacl = get_eacl(private_key, cid)
-
-    cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8") 
-
-    input_records = ""
-    if eacl:
-        res_json = re.split(r'[\s\n]+\][\s\n]+\}[\s\n]+Signature:', eacl)
-        records = re.split(r'"records": \[', res_json[0])
-        input_records = ",\n" + records[1]
-
-    myjson = """
-{
-  "body": {
-    "eaclTable": {
-      "containerID": {
-        "value": \"""" +  str(cid_base64) + """"
-      },
-      "records": [
-        {
-          "operation": "GET",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "PUT",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "HEAD",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "DELETE",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "SEARCH",
-          "action": \"""" +  action + """",
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGE",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        },
-        {
-          "operation": "GETRANGEHASH",
-          "action": \"""" +  action + """",
-          "filters": [
-            {
-              "headerType": "OBJECT",
-              "matchType": \"""" +  matchType + """",
-              "key": \"""" +  key + """",
-              "value": \"""" +  value + """"
-            }
-          ],
-          "targets": [
-            {
-              "role": \"""" +  target_role + """"
-            }
-          ]
-        }""" + input_records + """
-      ]
-    },
-    "lifetime": {
-      "exp": \"""" +  lifetime_exp + """",
-      "nbf": "1",
-      "iat": "0"
-    }
-  }
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
-
-    # Sign bearer token
-    Cmd = f'neofs-cli util sign bearer-token --from {file_name} --to {file_name} --key {private_key} --json'
-    logger.info("Cmd: %s" % Cmd)
-
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % str(output))
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    return file_name
-
-
-
-@keyword('Form eACL json file')
-def form_eacl_json_file(file_name: str, operation: str, action: str, matchType: str, key: str, value: str, target_role: str):
-
-    myjson = """
-{
-  "records": [
-    {
-      "operation": \"""" +  operation + """",
-      "action": \"""" +  action + """",
-      "filters": [
-         {
-           "headerType": "OBJECT",
-           "matchType": \"""" +  matchType + """",
-           "key": \"""" +  key + """",
-           "value": \"""" +  value + """"
-         }
-       ],
-      "targets": [
-        {
-          "role": \"""" +  target_role + """"
-        }
-      ]
-    }
-  ]
-}
-"""
-    with open(file_name,'w') as out:
-        out.write(myjson)
-    logger.info("Output: %s" % myjson)
-
-    return file_name
-
-
 
 
 @keyword('Get Range')
-def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str, range_cut: str):
+def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str, range_cut: str, options:str=""):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} --file {range_file} '
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} --file {range_file} {options}'
     logger.info("Cmd: %s" % Cmd)
 
     try:
@@ -582,7 +353,7 @@ def generate_file_of_bytes(size):
 
 
 @keyword('Search object')
-def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, *expected_objects_list ):
+def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str, expected_objects_list=[], options:str=""):
 
     bearer_token = ""
     if bearer:
@@ -591,7 +362,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     if filters:
         filters = f"--filters {filters}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object search {keys} --cid {cid} {bearer_token} {filters}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object search {keys} --cid {cid} {bearer_token} {filters} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -733,6 +504,26 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
     
     return final_verif_data
 
+@keyword('Get Docker Logs')
+def get_container_logs(testcase_name: str):
+    #client = docker.APIClient()
+    client = docker.from_env()
+
+    tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
+    tar = tarfile.open(tar_name, "w:gz")
+
+    for container in client.containers.list():
+        file_name = "artifacts/docker_log_" + container.name
+        with open(file_name,'wb') as out:
+            out.write(container.logs())
+        logger.info(container.name)
+        
+        tar.add(file_name)
+        os.remove(file_name)
+    
+    tar.close()
+
+    return 1
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
@@ -793,8 +584,7 @@ def _json_cli_decode(data: str):
     return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
 @keyword('Head object')
-def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", keys:str="", endpoint: str="", ignore_failure: bool = False):
-    options = ""
+def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
@@ -802,7 +592,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="", user
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {keys}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object head --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -941,13 +731,13 @@ def parse_object_system_header(header: str):
 
 
 @keyword('Delete object')
-def delete_object(private_key: str, cid: str, oid: str, bearer: str):
+def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
 
     bearer_token = ""
     if bearer:
         bearer_token = f"--bearer {bearer}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     logger.info("Cmd: %s" % ObjectCmd)
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -997,7 +787,7 @@ def cleanup_file(*filename_list):
 
 
 @keyword('Put object to NeoFS')
-def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str, endpoint: str="" ):
+def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str, endpoint: str="", options: str="" ):
     logger.info("Going to put the object")
 
     if not endpoint:
@@ -1009,7 +799,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     if bearer:
         bearer = f"--bearer {bearer}"
 
-    putObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers}'
+    putObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     logger.info("Cmd: %s" % putObjectCmd)
 
     try:
@@ -1024,12 +814,12 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
 
 @keyword('Get Range Hash')
-def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str):
+def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, range_cut: str, options: str=""):
 
     if bearer_token:
-        bearer_token = f"--bearer {bearer}"
+        bearer_token = f"--bearer {bearer_token}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} object hash --cid {cid} --oid {oid} --range {range_cut} {bearer_token} {options}'
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:
@@ -1041,8 +831,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str, rang
 
 
 @keyword('Get object from NeoFS') 
-def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_object: str, endpoint: str="" ):
-    # TODO: add object return instead of read_object (uuid)
+def get_object(private_key: str, cid: str, oid: str, bearer_token: str, write_object: str, endpoint: str="", options: str="" ):
 
     logger.info("Going to put the object")
 
@@ -1053,7 +842,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str, read_obj
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
-    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object get --cid {cid} --oid {oid} --file {read_object} {bearer_token}'
+    ObjectCmd = f'neofs-cli --rpc-endpoint {endpoint} --key {private_key} object get --cid {cid} --oid {oid} --file {write_object} {bearer_token} {options}'
 
     logger.info("Cmd: %s" % ObjectCmd)
     try:

@@ -25,11 +25,11 @@ NeoFS S3 Gateway
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
                                 Get Transaction                       ${TX_DEPOSIT}
 
-    ${FILE_S3} =                Generate file of bytes    20e+6
+    ${FILE_S3} =                Generate file of bytes    10e+6
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
     ${FILE_S3_NAME} =           Get file name             ${FILE_S3} 
 
-    ${FILE_FS} =                Generate file of bytes    20e+6
+    ${FILE_FS} =                Generate file of bytes    10e+6
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 
@@ -85,6 +85,12 @@ NeoFS S3 Gateway
                                 ${LIST_S3_OBJECTS} =             List objects S3       ${S3_CLIENT}    ${BUCKET}
                                 List Should Not Contain Value    ${LIST_S3_OBJECTS}    FILE_S3_NAME
 
-    [Teardown]                  Cleanup Files       s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
-                                ...  ${FILE_S3}    ${FILE_FS}       
+    [Teardown]                  Cleanup    ${FILE_S3}    ${FILE_FS}       
 
+*** Keywords ***
+    
+Cleanup
+    [Arguments]             ${FILE_S3}         ${FILE_FS} 
+                            Cleanup Files      s3_obj_get_fs    fs_obj_get_fs    s3_obj_get_s3    fs_obj_get_s3    
+                            ...                ${FILE_S3}    ${FILE_FS} 
+                            Get Docker Logs    s3_gate
