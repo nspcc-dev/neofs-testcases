@@ -30,12 +30,12 @@ Extended ACL Operations
                             Cleanup Files    ${FILE_S}    ${FILE_S_2}
                             
                             Log    Check extended ACL with complex object
-                            Generate files    20e+6
+                            Generate files    10e+6
                             Check Actions
                             Check Filters
                             Check Сompound Operations
                              
-    [Teardown]              Cleanup  
+    #[Teardown]              Cleanup  
 
     
 *** Keywords ***
@@ -50,7 +50,8 @@ Check Actions
 Check Filters
                             Check eACL MatchType String Equal Object
                             Check eACL MatchType String Not Equal Object
-                            Check eACL MatchType String Equal Request
+                            Check eACL MatchType String Equal Request Deny
+                            Check eACL MatchType String Equal Request Allow
                             
 Check Сompound Operations         
                             Check eACL Сompound Get    ${OTHER_KEY}     ${EACL_COMPOUND_GET_OTHERS}     
@@ -124,7 +125,7 @@ Check eACL Сompound Get Range Hash
                                                        
   
 
-Check eACL MatchType String Equal Request
+Check eACL MatchType String Equal Request Deny
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
 
@@ -132,7 +133,7 @@ Check eACL MatchType String Equal Request
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
                             Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-                            Log	                            Set eACL for Deny GET operation with StringEqual Object ID
+                            
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
 
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
@@ -166,6 +167,44 @@ Check eACL MatchType String Equal Request
 
 
 
+Check eACL MatchType String Equal Request Allow
+    ${CID} =                Create Container Public
+    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+
+    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}     
+    &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
+                            Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+
+                           
+    ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
+
+                            Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}    --await
+                            Get eACL                        ${USER_KEY}    ${CID}
+                                                        
+                            Run Keyword And Expect Error    *
+                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    
+                            Run Keyword And Expect Error    *
+                            ...  Put object to NeoFS        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}       
+                            Run Keyword And Expect Error    *
+                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      
+                            Run Keyword And Expect Error    *
+                            ...   Search object             ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}         
+                            Run Keyword And Expect Error    *
+                            ...  Head object                ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}                    
+                            Run Keyword And Expect Error    *
+                            ...  Get Range                  ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256         
+                            Run Keyword And Expect Error    *
+                            ...  Get Range Hash             ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256                  
+                            Run Keyword And Expect Error    *
+                            ...  Delete object              ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}        
+
+                            Put object to NeoFS             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=2
+                            Get object from NeoFS           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=2
+                            Search object                   ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}        --xhdr a=2
+                            Head object                     ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}              --xhdr a=2
+                            Get Range                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a=2
+                            Get Range Hash                  ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256                 --xhdr a=2
+                            Delete object                   ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       --xhdr a=2
 
 
 
@@ -424,6 +463,32 @@ Prepare eACL Role rules
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
                             Form eACL json common file    gen_eacl_xheader_deny_all    ${eACL_gen}
                             Set Global Variable           ${EACL_XHEADER_DENY_ALL}     gen_eacl_xheader_deny_all
+
+
+
+    # eACL for X-Header Other ALLOW and DENY for all
+    ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=2
+
+    ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule3}=               Create Dictionary    Operation=PUT             Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule4}=               Create Dictionary    Operation=DELETE          Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule5}=               Create Dictionary    Operation=SEARCH          Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW     Role=OTHERS    Filters=${filters}
+    ${rule8}=               Create Dictionary    Operation=GET             Access=DENY     Role=OTHERS   
+    ${rule9}=               Create Dictionary    Operation=HEAD            Access=DENY     Role=OTHERS   
+    ${rule10}=               Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS    
+    ${rule11}=               Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS    
+    ${rule12}=               Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS    
+    ${rule13}=               Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS    
+    ${rule14}=               Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS    
+    ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}     ${rule4}     ${rule5}     ${rule6}     ${rule7}
+                            ...            ${rule8}    ${rule9}    ${rule10}    ${rule11}    ${rule12}    ${rule13}    ${rule14}
+                            Form eACL json common file    gen_eacl_xheader_allow_all    ${eACL_gen}
+                            Set Global Variable           ${EACL_XHEADER_ALLOW_ALL}     gen_eacl_xheader_allow_all
+
+
 
 
 

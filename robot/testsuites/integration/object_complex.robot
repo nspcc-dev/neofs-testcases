@@ -41,8 +41,7 @@ NeoFS Complex Object Operations
                         Wait Until Keyword Succeeds         2 min          30 sec
                         ...  Expected Balance               ${PRIV_KEY}    50            -7e-08
 
-    ${SIZE} =           Set Variable	                    20e+6
-    ${FILE} =           Generate file of bytes              ${SIZE}
+    ${FILE} =           Generate file of bytes              10e+6
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  

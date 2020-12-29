@@ -36,9 +36,12 @@ NeoFS HTTP Gateway
                         ...  Container Existing             ${PRIV_KEY}    ${CID}
 
     ${FILE} =           Generate file of bytes              1024
+    ${FILE_L} =         Generate file of bytes              10e+6
     ${FILE_HASH} =      Get file hash                       ${FILE}
+    ${FILE_L_HASH} =    Get file hash                       ${FILE_L}
 
-    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}    ${CID}    ${EMPTY}    ${EMPTY}       
+    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}      ${CID}    ${EMPTY}    ${EMPTY}       
+    ${L_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE_L}    ${CID}    ${EMPTY}    ${EMPTY}     
   
     # By request from Service team - try to GET object from the node without object
 
@@ -50,7 +53,16 @@ NeoFS HTTP Gateway
 
                         Verify file hash                    s_file_read    ${FILE_HASH} 
                         Verify file hash                    ${FILEPATH}    ${FILE_HASH} 
-                        
+
+    @{GET_NODE_LIST} =  Get nodes without object            ${PRIV_KEY}    ${CID}    ${L_OID}
+    ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
+
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
+    ${FILEPATH} =       Get via HTTP Gate                   ${CID}         ${L_OID}
+
+                        Verify file hash                    l_file_read    ${FILE_L_HASH} 
+                        Verify file hash                    ${FILEPATH}    ${FILE_L_HASH} 
+
     [Teardown]          Cleanup                             ${FILEPATH}    ${FILE}    
 
 
@@ -59,5 +71,5 @@ NeoFS HTTP Gateway
 
 Cleanup
     [Arguments]             ${FILEPATH}        ${FILE}
-                            Cleanup Files      ${FILEPATH}    ${FILE}    s_file_read
+                            Cleanup Files      ${FILEPATH}    ${FILE}    s_file_read    l_file_read
                             Get Docker Logs    http_gate
