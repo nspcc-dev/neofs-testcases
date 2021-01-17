@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import os
 
 NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
 NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"

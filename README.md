@@ -2,24 +2,22 @@
 
 ### Initial preparation
 
-1. Install neofs-cli 
+1. Install neofs-cli
     - `git clone git@github.com:nspcc-dev/neofs-node.git`
-    - `cd neofs-node` 
+    - `cd neofs-node`
     - `make`
-    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli` or add alias path to bin/neofs-cli
+    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`, add alias path to
+    bin/neofs-cli or run `export NEOFS_CLI_EXEC=<path_to_binary>`
 
 2. Install cdn-authmate
     - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
     - `cd cdn-authmate`
     - `make build`
-    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate` or add alias path to bin/cdn-authmate
+    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate`, add alias path to
+    bin/cdn-authmate or run `export CDNAUTH_EXEC=<path_to_binary>`
 
 3. Install Testcases dependencies
-    - `pip3 install robotframework`
-    - `pip3 install pexpect`
-    - `pip3 install requests`
-    - `pip3 install boto3`
-    - `pip3 install docker`
+    - `pip3 install -r requirements.txt`
 
 (replace pip3 with the appropriate python package manager on the system).
 
@@ -39,16 +37,16 @@ To run an arbitrary testcase, you need to run the command:
 
 The following scripts are available for execution:
 
- * acl_basic.robot  
- * acl_extended.robot 
- * acl_baearer.robot 
- * object_complex.robot  
- * object_simple.robot  
- * withdraw.robot  
- * netmap_simple.robot 
- * replication.robot  
- * http_gate.robot  
- * s3_gate.robot 
+ * acl_basic.robot
+ * acl_extended.robot
+ * acl_baearer.robot
+ * object_complex.robot
+ * object_simple.robot
+ * withdraw.robot
+ * netmap_simple.robot
+ * replication.robot
+ * http_gate.robot
+ * s3_gate.robot
 
 
 ## Smoke test execution
@@ -72,7 +70,7 @@ Dev-env is not needed. But you need to install neo-go.
 
 2. Install neo-go
     - `git clone git@github.com:nspcc-dev/neo-go.git`
-    - `cd neo-go` 
+    - `cd neo-go`
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
 
