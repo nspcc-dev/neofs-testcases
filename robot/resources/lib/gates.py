@@ -25,11 +25,16 @@ else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_GATE)
 
+CDNAUTH_EXEC = os.getenv('CDNAUTH_EXEC', 'cdn-authmate')
 
 @keyword('Init S3 Credentials')
 def init_s3_credentials(private_key: str, s3_key):
     bucket = str(uuid.uuid4())
-    Cmd = f'cdn-authmate --debug --with-log issue-secret --neofs-key {private_key} --gate-public-key={s3_key} --peer {NEOFS_ENDPOINT} --container-friendly-name {bucket}'
+    Cmd = (
+        f'{CDNAUTH_EXEC} --debug --with-log issue-secret --neofs-key {private_key} '
+        f'--gate-public-key={s3_key} --peer {NEOFS_ENDPOINT} '
+        f'--container-friendly-name {bucket}'
+    )
     logger.info("Cmd: %s" % Cmd)
     try:
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
@@ -105,7 +110,7 @@ def list_buckets_s3(s3_client):
         found_buckets.append(bucket['Name'])
 
     return found_buckets
- 
+
 
 @keyword('Put object S3')
 def put_object_s3(s3_client, bucket, filepath):

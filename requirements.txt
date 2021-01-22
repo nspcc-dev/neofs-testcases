@@ -1,0 +1,5 @@
+robotframework==3.2.1
+requests==2.20.0
+pexpect==4.2.1
+boto3==1.16.56
+docker==4.4.0

@@ -24,6 +24,8 @@ else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
 
+# path to neofs-cli executable
+NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 @keyword('Init wallet')
 def init_wallet():
@@ -98,8 +100,11 @@ def dump_privkey(wallet: str, address: str):
 
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet nep17 transfer -w {wallet} -r {NEO_MAINNET_ENDPOINT} --from {address} "
-            f"--to {address_to} --token GAS --amount {amount}" )  
+    cmd = (
+        f"{NEOGO_CLI_PREFIX} wallet nep17 transfer -w {wallet} "
+        f"-r {NEO_MAINNET_ENDPOINT} --from {address} --to {address_to} "
+        f"--token GAS --amount {amount}"
+    )
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd(wallet_pass, cmd)
@@ -112,24 +117,23 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} -r {NEO_MAINNET_ENDPOINT} "
-            f"{NEOFS_CONTRACT} withdraw {scripthash} int:{amount}  -- {scripthash}" )
+    cmd = (
+        f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
+        f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
+        f"int:{amount}  -- {scripthash}"
+    )
 
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
-
     m = re.match(r'^Sent invocation transaction (\w{64})$', out)
     if m is None:
         raise Exception("Can not get Tx.")
-
     tx = m.group(1)
-
     return tx
 
 @keyword('Mainnet Balance')
 def mainnet_balance(address: str):
-
     headers = {'Content-type': 'application/json'}
     data = { "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [ address ] }
     response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
@@ -145,11 +149,8 @@ def mainnet_balance(address: str):
         raise Exception("Can not get mainnet gas balance. Output: %s" % response.text )
     else:
         logger.info("Output: %s" % response.text)
-
     amount = m.group(1)
-
     return amount
-
 
 @keyword('Expexted Mainnet Balance')
 def expected_mainnet_balance(address: str, expected: float):
@@ -175,7 +176,6 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, walle
         raise Exception("Can not get Tx.")
 
     tx = m.group(1)
-
     return tx
 
 @keyword('Transaction accepted in block')
@@ -260,7 +260,10 @@ def _get_balance_request(privkey: str):
     '''
     Internal method.
     '''
-    Cmd = f'neofs-cli --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT} accounting balance'
+    Cmd = (
+        f'{NEOFS_CLI_EXEC} --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
+        f' accounting balance'
+    )
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
