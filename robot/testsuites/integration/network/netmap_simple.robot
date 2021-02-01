@@ -1,8 +1,8 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   ../../../variables/common.py
 
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
  
 
 *** Test cases ***
@@ -105,9 +105,10 @@ Validate Policy
                         Container Existing                  ${PRIV_KEY}    ${CID}   
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}          
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    
                         
 
 Cleanup
     [Arguments]             ${FILE}
-                            Cleanup Files      ${FILE} 
+                            Cleanup Files      ${FILE}    s_file_read 
                             Get Docker Logs    netmap_simple
