@@ -1,8 +1,8 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   ../../../variables/common.py
 
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
 
 *** Test cases ***
 NeoFS Deposit and Withdraw

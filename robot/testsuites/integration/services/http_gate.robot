@@ -1,10 +1,10 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   ../../../variables/common.py
 
 
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
-Library     ${RESOURCES}/gates.py
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/gates.py
 
 
 *** Test cases ***
