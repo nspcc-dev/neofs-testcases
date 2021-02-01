@@ -16,7 +16,14 @@
     - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate`, add alias path to
     bin/cdn-authmate or run `export CDNAUTH_EXEC=<path_to_binary>`
 
-3. Install Testcases dependencies
+3. Install neo-go
+    - `git clone git@github.com:nspcc-dev/neo-go.git`
+    - `cd neo-go`
+    - `make`
+    - `sudo cp bin/neo-go /usr/local/bin/neo-go`, add alias path to bin/neo-go
+        or run `export NEOGO_CLI_EXEC=<path_to_binary>`
+
+4. Install Testcases dependencies
     - `pip3 install -r requirements.txt`
 
 (replace pip3 with the appropriate python package manager on the system).
@@ -68,13 +75,7 @@ export ROBOT_PROFILE=selectel_smoke
 
 Dev-env is not needed. But you need to install neo-go.
 
-2. Install neo-go
-    - `git clone git@github.com:nspcc-dev/neo-go.git`
-    - `cd neo-go`
-    - `make`
-    - `sudo cp bin/neo-go /usr/local/bin/neo-go` or add alias path to bin/neo-go
-
-3. To run smoke test: `robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
+2. To run smoke test: `robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
 
 
 ## Generation of documentation

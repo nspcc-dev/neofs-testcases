@@ -8,6 +8,7 @@ import logging
 import requests
 import json
 import os
+import tarfile
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -18,32 +19,28 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
-    from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    from selectelcdn_smoke_vars import (NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
 else:
-    from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    from neofs_int_vars import (NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
+NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
 @keyword('Init wallet')
 def init_wallet():
-
-    filename = "wallets/" + str(uuid.uuid4()) + ".json"
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet init -w {filename}" )
-
-    logger.info(f"Executing shell command: {cmd}")
-    out = _run_sh(cmd)
-    logger.info(f"Command completed with output: {out}")
+    filename = os.getcwd() + '/' + str(uuid.uuid4()) + ".json"
+    cmd = f"{NEOGO_CLI_EXEC} wallet init -w {filename}"
+    logger.info(f"Executing command: {cmd}")
+    stdout  = _run_sh(cmd)
+    logger.info(f"wallet init succeeded with output: {stdout}")
     return filename
-
-
 
 @keyword('Generate wallet from WIF')
 def generate_wallet_from_wif(wallet: str, wif: str):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet import --wallet {wallet} --wif {wif}" )
-
+    cmd = f"{NEOGO_CLI_EXEC} wallet import --wallet {wallet} --wif {wif}"
     logger.info(f"Executing command: {cmd}")
     p = pexpect.spawn(cmd)
     p.expect(".*")
@@ -55,11 +52,9 @@ def generate_wallet_from_wif(wallet: str, wif: str):
 
     logger.info(f"Command completed with output: {out}")
 
-
 @keyword('Generate wallet')
 def generate_wallet(wallet: str):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet create -w {wallet}" )
-
+    cmd = f"{NEOGO_CLI_EXEC} wallet create -w {wallet}"
     logger.info(f"Executing command: {cmd}")
     p = pexpect.spawn(cmd)
     p.expect(".*")
@@ -73,35 +68,25 @@ def generate_wallet(wallet: str):
 
 @keyword('Dump Address')
 def dump_address(wallet: str):
-    address = ""
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet dump -w {wallet}" )
-
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh(cmd)
-    logger.info(f"Command completed with output: {out}")
-
-    m = re.search(r'"address": "(\w+)"', out)
-    if m.start() != m.end():
-        address = m.group(1)
-    else:
-        raise Exception("Can not get address.")
-
-    return address
+    with open(wallet) as json_file:
+        data = json.load(json_file)
+        if len(data['accounts']) != 0:
+            return data['accounts'][0]['address']
+        else:
+            raise Exception("Can not get address.")
 
 @keyword('Dump PrivKey')
 def dump_privkey(wallet: str, address: str):
-    cmd = ( f"{NEOGO_CLI_PREFIX} wallet export -w {wallet} --decrypt {address}" )
-
+    cmd = f"{NEOGO_CLI_EXEC} wallet export -w {wallet} --decrypt {address}"
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd('', cmd)
     logger.info(f"Command completed with output: {out}")
-
     return out
 
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
     cmd = (
-        f"{NEOGO_CLI_PREFIX} wallet nep17 transfer -w {wallet} "
+        f"{NEOGO_CLI_EXEC} wallet nep17 transfer -w {wallet} "
         f"-r {NEO_MAINNET_ENDPOINT} --from {address} --to {address_to} "
         f"--token GAS --amount {amount}"
     )
@@ -118,7 +103,7 @@ def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
     cmd = (
-        f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
+        f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
         f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
         f"int:{amount}  -- {scripthash}"
     )
@@ -163,7 +148,7 @@ def expected_mainnet_balance(address: str, expected: float):
 
 @keyword('NeoFS Deposit')
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_PREFIX} contract invokefunction -w {wallet} -a {address} "
+    cmd = ( f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
             f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} "
             f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
