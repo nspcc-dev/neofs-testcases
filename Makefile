@@ -2,7 +2,7 @@
 
 run:
 	@echo "⇒ Test Run"
-	@robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/*.robot 
+	@robot --timestampoutputs --outputdir artifacts/ robot/testsuites/integration/ 
 
 help:
 	@echo "⇒ run          Run testcases ${R}" 

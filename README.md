@@ -40,22 +40,40 @@ In this case, dev-env should be running with the tested environment.
 
 ### Running an arbitrary test case
 
-To run an arbitrary testcase, you need to run the command:
-`robot --outputdir artifacts/ robot/testsuites/integration/<testsuite name>.robot `
+To run an arbitrary UserScenario or testcase, you need to run the command:
+`robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`
 
-The following scripts are available for execution:
+The following UserScenarios and testcases are available for execution:
 
- * acl_basic.robot
- * acl_extended.robot
- * acl_baearer.robot
- * object_complex.robot
- * object_simple.robot
- * withdraw.robot
- * netmap_simple.robot
- * replication.robot
- * http_gate.robot
- * s3_gate.robot
-
+ * acl
+     * acl_basic_private_container.robot
+     * acl_basic_public_container.robot
+     * acl_basic_readonly_container.robot
+     * acl_bearer compound.robot
+     * acl_bearer_allow.robot
+     * acl_bearer_filter_oid_equal.robot
+     * acl_bearer_filter_oid_not_equal.robot
+     * acl_bearer_filter_userheader_equal.robot
+     * acl_bearer_filter_userheader_not_equal.robot
+     * acl_bearer_inaccessible.robot
+     * acl_bearer_request_filter_xheader_deny.robot
+     * acl_bearer_request_filter_xheader_equal.robot
+     * acl_bearer_request_filter_xheader_not_equal.robot
+     * acl_extended_actions.robot
+     * acl_extended_compound.robot
+     * acl_extended_filters.robot
+ * network
+     * netmap_simple.robot
+     * replication.robot
+ * object
+     * object_complex.robot
+     * object_simple.robot
+ * payment
+     * withdraw.robot
+ * services
+     * http_gate.robot
+     * s3_gate.robot
+ 
 
 ## Smoke test execution
 
