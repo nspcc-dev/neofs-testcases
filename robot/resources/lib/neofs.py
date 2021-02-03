@@ -802,12 +802,8 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     logger.info("Going to put the object")
 
     if not endpoint:
-<<<<<<< HEAD
-      endpoint = random.sample(_get_storage_nodes(private_key), 1)[0]
-=======
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
->>>>>>> update
     if user_headers:
         user_headers = f"--attributes {user_headers}"
     if bearer:
@@ -827,8 +823,6 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-<<<<<<< HEAD
-=======
 
 @keyword('Get Nodes Log Latest Timestamp')
 def get_logs_latest_timestamp():
@@ -973,7 +967,6 @@ def get_netmap_epoch(private_key: str):
     return 1
 
 
->>>>>>> update
 @keyword('Get Range Hash')
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         range_cut: str, options: str=""):
@@ -999,13 +992,9 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
     logger.info("Going to put the object")
     if not endpoint:
-<<<<<<< HEAD
-      endpoint = random.sample(_get_storage_nodes(private_key), 1)[0]
-=======
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
     
->>>>>>> update
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
