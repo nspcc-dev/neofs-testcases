@@ -15,15 +15,15 @@ NeoFS Object Replication
     ${ADDR} =               Dump Address                          ${WALLET}
     ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}              ${ADDR}
 
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     55
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     11
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
-                            Expexted Mainnet Balance              ${ADDR}                55
+                            Expexted Mainnet Balance              ${ADDR}                11
 
     ${SCRIPT_HASH} =        Get ScripHash                         ${PRIV_KEY}
 
-    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}                ${SCRIPT_HASH}    50
+    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}                ${SCRIPT_HASH}    10
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
@@ -40,7 +40,7 @@ NeoFS Object Replication
     
     @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}  
 
-    Get Nodes Log Latest Timestamp
+    ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
 
     @{NODES_OBJ_STOPPED} =  Stop nodes                            1              @{NODES_OBJ}
     

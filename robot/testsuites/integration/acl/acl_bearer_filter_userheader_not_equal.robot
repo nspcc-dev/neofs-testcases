@@ -22,7 +22,7 @@ BearerToken Operations Filter UserHeader NotEqual
 
                             Log    Check Bearer token with complex object
                             Cleanup Files    ${FILE_S}
-                            Generate file    10e+6
+                            Generate file    70e+6
                             Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 
     [Teardown]              Cleanup   

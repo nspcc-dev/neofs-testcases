@@ -23,7 +23,7 @@ Extended ACL Operations
                             Cleanup Files    ${FILE_S}    ${FILE_S_2}
                             
                             Log    Check extended ACL with complex object
-                            Generate files    10e+6
+                            Generate files    70e+6
                             Check Сompound Operations
                              
     [Teardown]              Cleanup  
@@ -106,7 +106,7 @@ Check eACL Сompound Get Range Hash
   
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    ${FILE_S_2}    local_file_eacl    eacl_custom    s_get_range
+    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    ${FILE_S_2}    local_file_eacl    s_get_range
                             ...                gen_eacl_allow_all_OTHERS    gen_eacl_deny_all_USER    gen_eacl_allow_all_USER
                             ...                gen_eacl_deny_all_SYSTEM    gen_eacl_allow_all_SYSTEM    gen_eacl_allow_pubkey_deny_OTHERS
                             ...                gen_eacl_deny_all_OTHERS    

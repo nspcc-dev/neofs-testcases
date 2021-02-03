@@ -20,16 +20,16 @@ NeoFS S3 Gateway
                                 Dump PrivKey                ${WALLET}      ${ADDR}
     ${SCRIPT_HASH} =            Get ScripHash               ${PRIV_KEY}  
 
-    ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    50      
+    ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5      
                                 Wait Until Keyword Succeeds           1 min            15 sec
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
                                 Get Transaction                       ${TX_DEPOSIT}
 
-    ${FILE_S3} =                Generate file of bytes    10e+6
+    ${FILE_S3} =                Generate file of bytes    70e+6
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
     ${FILE_S3_NAME} =           Get file name             ${FILE_S3} 
 
-    ${FILE_FS} =                Generate file of bytes    10e+6
+    ${FILE_FS} =                Generate file of bytes    70e+6
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 

@@ -22,7 +22,7 @@ BearerToken Operations for Inaccessible Container
 
                             Log    Check Bearer token with complex object
                             Cleanup Files    ${FILE_S}
-                            Generate file    10e+6
+                            Generate file    70e+6
                             Check Container Inaccessible and Allow All Bearer
 
     [Teardown]              Cleanup   
