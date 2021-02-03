@@ -14,12 +14,13 @@ Basic ACL Operations for Private Container
     [Timeout]               20 min
 
                             Generate Keys
+
                             Create Containers
-    
                             Generate file    1024
                             Check Private Container
 
-                            Generate file    10e+6
+                            Create Containers
+                            Generate file    70e+6
                             Check Private Container
 
     [Teardown]              Cleanup  

@@ -18,14 +18,12 @@ Extended ACL Operations
                             Log    Check extended ACL with simple object
 
                             Generate files    1024
-                            
                             Check Actions
                             
-
                             Cleanup Files    ${FILE_S}    ${FILE_S_2}
                             
                             Log    Check extended ACL with complex object
-                            Generate files    10e+6
+                            Generate files    70e+6
                             Check Actions
                              
                              

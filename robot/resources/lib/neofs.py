@@ -888,7 +888,89 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 
     return 1
 
- 
+
+@keyword('Reset Node With New Location')
+def reset_node_with_new_location(node_private_key: str, container: str, location: str):
+    # Get dev-env location
+    client = docker.from_env()
+    client_api = docker.APIClient()
+    path = client_api.inspect_container(container)['Config']['Labels']['com.docker.compose.project.working_dir']
+    pre_loc = client_api.inspect_container(container)['Config']['Env']
+    logger.info("Local neofs-dev-env path: %s" % path)
+    logger.info("Location before changes: %s" % pre_loc)
+
+    # Make node offline
+    Cmd = f'neofs-cli --rpc-endpoint s01.neofs.devenv:8080 --key {node_private_key} control set-status --status offline'
+    logger.info("Cmd: %s" % Cmd)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    # Export New location attribute for the selected node
+    os.environ['S01_NEOFS_NODE_ATTRIBUTE_0'] = location
+    
+    # Reset container with new options
+    Cmd = f'docker-compose --env-file {path}/.env -f {path}/docker-compose.yml up -d storage01'
+    logger.info("Cmd: %s" % Cmd)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    # Get new location fron container Env
+    curr_loc = client_api.inspect_container(container)['Config']['Env']
+    logger.info("Location after changes: %s" % curr_loc)
+
+    # Make node online
+    Cmd = f'neofs-cli --rpc-endpoint s01.neofs.devenv:8080 --key {node_private_key} control set-status --status online'
+    logger.info("Cmd: %s" % Cmd)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    #Reset Node With New Location    s01    NewLocation 
+
+    # docker inspect s02
+    # com.docker.compose.project.working_dir
+
+    # export S02_NEOFS_NODE_ATTRIBUTE_0=/Location:Europe/Country:Russia/City:Saint-Petersburg256
+    # /Location:Europe/Country:Russia/City:Moscow
+    # docker-compose -f services/storage/docker-compose.yml up -d storage02
+
+@keyword('Get Netmap Snapshot')
+def get_netmap_snapshot(private_key: str):
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} netmap snapshot'
+
+    logger.info("Cmd: %s" % Cmd)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return 1
+
+@keyword('Get Netmap Epoch')
+def get_netmap_epoch(private_key: str):
+    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} netmap epoch'
+
+    logger.info("Cmd: %s" % Cmd)
+    try:
+        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    return 1
 
 
 >>>>>>> update

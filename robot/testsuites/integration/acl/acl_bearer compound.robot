@@ -21,7 +21,7 @@ BearerToken Operations for Сompound Operations
 
                             Log    Check Bearer token with complex object
                             Cleanup Files    ${FILE_S}
-                            Generate file    10e+6
+                            Generate file    70e+6
                             Check Сompound Operations
 
     [Teardown]              Cleanup   
