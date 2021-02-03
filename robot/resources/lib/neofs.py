@@ -540,7 +540,7 @@ def get_container_logs(testcase_name: str):
 
         tar.add(file_name)
         os.remove(file_name)
-
+    
     tar.close()
     
     return 1
@@ -965,7 +965,6 @@ def get_netmap_epoch(private_key: str):
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
     return 1
-
 
 @keyword('Get Range Hash')
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
