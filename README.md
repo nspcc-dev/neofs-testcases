@@ -19,6 +19,7 @@
 3. Install neo-go
     - `git clone git@github.com:nspcc-dev/neo-go.git`
     - `cd neo-go`
+    - `git checkout v0.92.0` (or the current version in the neofs-dev-env)
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go`, add alias path to bin/neo-go
         or run `export NEOGO_CLI_EXEC=<path_to_binary>`
