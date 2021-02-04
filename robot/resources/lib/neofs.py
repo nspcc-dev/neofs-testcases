@@ -826,7 +826,10 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
 @keyword('Get Nodes Log Latest Timestamp')
 def get_logs_latest_timestamp():
-    # Returns structure (dict) of nodes container name (key) and latest logs timestamp (value)
+    """
+    Keyword return:
+    nodes_logs_time -- structure (dict) of nodes container name (key) and latest logs timestamp (value)
+    """
     nodes = _get_storage_nodes()
     client_api = docker.APIClient()
 
@@ -852,12 +855,11 @@ def get_logs_latest_timestamp():
 @keyword('Find in Nodes Log')   
 def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 
-    client = docker.from_env()
     client_api = docker.APIClient()
     container_names = list()
 
-    for docker_container in client.containers.list():
-        container_names.append(docker_container.name)
+    for docker_container in client_api.containers():
+        container_names.append(docker_container['Names'][0][1:])
 
     global_count = 0
 
@@ -883,88 +885,6 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
     return 1
 
 
-@keyword('Reset Node With New Location')
-def reset_node_with_new_location(node_private_key: str, container: str, location: str):
-    # Get dev-env location
-    client = docker.from_env()
-    client_api = docker.APIClient()
-    path = client_api.inspect_container(container)['Config']['Labels']['com.docker.compose.project.working_dir']
-    pre_loc = client_api.inspect_container(container)['Config']['Env']
-    logger.info("Local neofs-dev-env path: %s" % path)
-    logger.info("Location before changes: %s" % pre_loc)
-
-    # Make node offline
-    Cmd = f'neofs-cli --rpc-endpoint s01.neofs.devenv:8080 --key {node_private_key} control set-status --status offline'
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    # Export New location attribute for the selected node
-    os.environ['S01_NEOFS_NODE_ATTRIBUTE_0'] = location
-    
-    # Reset container with new options
-    Cmd = f'docker-compose --env-file {path}/.env -f {path}/docker-compose.yml up -d storage01'
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    # Get new location fron container Env
-    curr_loc = client_api.inspect_container(container)['Config']['Env']
-    logger.info("Location after changes: %s" % curr_loc)
-
-    # Make node online
-    Cmd = f'neofs-cli --rpc-endpoint s01.neofs.devenv:8080 --key {node_private_key} control set-status --status online'
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    #Reset Node With New Location    s01    NewLocation 
-
-    # docker inspect s02
-    # com.docker.compose.project.working_dir
-
-    # export S02_NEOFS_NODE_ATTRIBUTE_0=/Location:Europe/Country:Russia/City:Saint-Petersburg256
-    # /Location:Europe/Country:Russia/City:Moscow
-    # docker-compose -f services/storage/docker-compose.yml up -d storage02
-
-@keyword('Get Netmap Snapshot')
-def get_netmap_snapshot(private_key: str):
-    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} netmap snapshot'
-
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    return 1
-
-@keyword('Get Netmap Epoch')
-def get_netmap_epoch(private_key: str):
-    Cmd = f'neofs-cli --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} netmap epoch'
-
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-    return 1
 
 @keyword('Get Range Hash')
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
@@ -1072,27 +992,11 @@ def _parse_cid(output: str):
     return cid
 
 def _get_storage_nodes():
-    #storage_nodes = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
-    #NetmapCmd = f'{NEOFS_CLI_EXEC} --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} status netmap'
-    #complProc = subprocess.run(NetmapCmd, check=True, universal_newlines=True,
-    #        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    #output = complProc.stdout
-    #logger.info("Netmap: %s" % output)
-    #for m in re.finditer(r'"address":"/ip4/(\d+\.\d+\.\d+\.\d+)/tcp/(\d+)"', output):
-    #    storage_nodes.append(m.group(1)+":"+m.group(2))
-
-    #if not storage_nodes:
-    #    raise Exception("Storage nodes was not found.")
-
-
-    # Will be fixed when netmap will be added to cli
-
-    #storage_nodes.append()
+    # TODO: fix to get netmap from neofs-cli
     logger.info("Storage nodes: %s" % NEOFS_NETMAP)
     return NEOFS_NETMAP
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
-    # --filters objectID={oid}
     if oid:
         oid_cmd = "--oid %s" % oid
     Cmd = (
