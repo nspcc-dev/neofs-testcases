@@ -29,7 +29,7 @@
 
 (replace pip3 with the appropriate python package manager on the system).
 
-In this case, dev-env should be running with the tested environment.
+Test cases are designed to run on Python 3.7+
 
 ### Run
 
