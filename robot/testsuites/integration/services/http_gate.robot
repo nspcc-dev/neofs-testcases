@@ -1,10 +1,10 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   ../../../variables/common.py
 
 
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
-Library     ${RESOURCES}/gates.py
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/gates.py
 
 
 *** Test cases ***
@@ -17,16 +17,16 @@ NeoFS HTTP Gateway
                         Generate wallet         ${WALLET}
     ${ADDR} =           Dump Address            ${WALLET}
     ${PRIV_KEY} =       Dump PrivKey            ${WALLET}              ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx    ${ADDR}    55
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx    ${ADDR}    6
 
                         Wait Until Keyword Succeeds         1 min      15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
-                        Expexted Mainnet Balance            ${ADDR}    55
+                        Expexted Mainnet Balance            ${ADDR}    6
 
     ${SCRIPT_HASH} =    Get ScripHash                       ${PRIV_KEY}  
 
-    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WALLET}    ${ADDR}    ${SCRIPT_HASH}    50      
+    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WALLET}    ${ADDR}    ${SCRIPT_HASH}    5     
                         Wait Until Keyword Succeeds         1 min        15 sec
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
                         Get Transaction                     ${TX_DEPOSIT}
@@ -36,7 +36,7 @@ NeoFS HTTP Gateway
                         ...  Container Existing             ${PRIV_KEY}    ${CID}
 
     ${FILE} =           Generate file of bytes              1024
-    ${FILE_L} =         Generate file of bytes              10e+6
+    ${FILE_L} =         Generate file of bytes              70e+6
     ${FILE_HASH} =      Get file hash                       ${FILE}
     ${FILE_L_HASH} =    Get file hash                       ${FILE_L}
 

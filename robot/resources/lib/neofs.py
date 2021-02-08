@@ -15,6 +15,10 @@ import docker
 import json
 import tarfile
 
+import time
+from datetime import datetime
+
+
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP)
@@ -93,7 +97,7 @@ def start_nodes(*nodes_list):
 
 @keyword('Get nodes with object')
 def get_nodes_with_object(private_key: str, cid: str, oid: str):
-    storage_nodes = _get_storage_nodes(private_key)
+    storage_nodes = _get_storage_nodes()
     copies = 0
 
     nodes_list = []
@@ -110,7 +114,7 @@ def get_nodes_with_object(private_key: str, cid: str, oid: str):
 
 @keyword('Get nodes without object')
 def get_nodes_without_object(private_key: str, cid: str, oid: str):
-    storage_nodes = _get_storage_nodes(private_key)
+    storage_nodes = _get_storage_nodes()
     copies = 0
 
     nodes_list = []
@@ -129,7 +133,7 @@ def get_nodes_without_object(private_key: str, cid: str, oid: str):
 
 @keyword('Validate storage policy for object')
 def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid, *expected_node_list):
-    storage_nodes = _get_storage_nodes(private_key)
+    storage_nodes = _get_storage_nodes()
     copies = 0
     found_nodes = []
 
@@ -412,7 +416,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
 
     # Get Latest object
     logger.info("Collect Split objects information and verify chain of the objects.")
-    nodes = _get_storage_nodes(private_key)
+    nodes = _get_storage_nodes()
     for node in nodes:
         header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
         parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
@@ -522,6 +526,7 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str):
     #client = docker.APIClient()
+    
     client = docker.from_env()
 
     tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
@@ -535,9 +540,9 @@ def get_container_logs(testcase_name: str):
 
         tar.add(file_name)
         os.remove(file_name)
-
+    
     tar.close()
-
+    
     return 1
 
 @keyword('Verify Head Tombstone')
@@ -797,7 +802,8 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     logger.info("Going to put the object")
 
     if not endpoint:
-      endpoint = random.sample(_get_storage_nodes(private_key), 1)[0]
+      endpoint = random.sample(_get_storage_nodes(), 1)[0]
+
     if user_headers:
         user_headers = f"--attributes {user_headers}"
     if bearer:
@@ -816,6 +822,69 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         return oid
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+@keyword('Get Nodes Log Latest Timestamp')
+def get_logs_latest_timestamp():
+    """
+    Keyword return:
+    nodes_logs_time -- structure (dict) of nodes container name (key) and latest logs timestamp (value)
+    """
+    nodes = _get_storage_nodes()
+    client_api = docker.APIClient()
+
+    nodes_logs_time = dict()
+
+    for node in nodes:
+        container = node.split('.')[0]
+        log_line = client_api.logs(container, tail=1)
+
+        m = re.search(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)', str(log_line))
+        if m != None:
+            timestamp = m.group(1)
+
+        timestamp_date = datetime.fromisoformat(timestamp[:-1])
+
+        nodes_logs_time[container] = timestamp_date
+    
+    logger.info("Latest logs timestamp list: %s" % nodes_logs_time)
+
+    return nodes_logs_time
+
+
+@keyword('Find in Nodes Log')   
+def find_in_nodes_Log(line: str, nodes_logs_time: dict):
+
+    client_api = docker.APIClient()
+    container_names = list()
+
+    for docker_container in client_api.containers():
+        container_names.append(docker_container['Names'][0][1:])
+
+    global_count = 0
+
+    for container in nodes_logs_time.keys():
+        # check if container exists
+        if container in container_names:
+            # Get log since timestamp
+            timestamp_date = nodes_logs_time[container]
+            log_lines = client_api.logs(container, since=timestamp_date)
+            logger.info("Timestamp since: %s " % timestamp_date)
+            found_count = len(re.findall(line, log_lines.decode("utf-8") ))
+            logger.info("Node %s log - found counter: %s" % (container, found_count))
+            global_count += found_count
+            
+        else:
+            logger.info("Container %s has not been found." % container)
+
+    if global_count > 0:
+        logger.info("Expected line '%s' has been found in the logs." % line)
+    else:
+        raise Exception("Expected line '%s' has not been found in the logs." % line)
+
+    return 1
+
+
 
 @keyword('Get Range Hash')
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
@@ -842,7 +911,9 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
     logger.info("Going to put the object")
     if not endpoint:
-      endpoint = random.sample(_get_storage_nodes(private_key), 1)[0]
+      endpoint = random.sample(_get_storage_nodes(), 1)[0]
+
+    
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
@@ -920,28 +991,12 @@ def _parse_cid(output: str):
     cid = m.group(1)
     return cid
 
-def _get_storage_nodes(private_key: bytes):
-    #storage_nodes = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
-    #NetmapCmd = f'{NEOFS_CLI_EXEC} --host {NEOFS_ENDPOINT} --key {binascii.hexlify(private_key).decode()} status netmap'
-    #complProc = subprocess.run(NetmapCmd, check=True, universal_newlines=True,
-    #        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    #output = complProc.stdout
-    #logger.info("Netmap: %s" % output)
-    #for m in re.finditer(r'"address":"/ip4/(\d+\.\d+\.\d+\.\d+)/tcp/(\d+)"', output):
-    #    storage_nodes.append(m.group(1)+":"+m.group(2))
-
-    #if not storage_nodes:
-    #    raise Exception("Storage nodes was not found.")
-
-
-    # Will be fixed when netmap will be added to cli
-
-    #storage_nodes.append()
+def _get_storage_nodes():
+    # TODO: fix to get netmap from neofs-cli
     logger.info("Storage nodes: %s" % NEOFS_NETMAP)
     return NEOFS_NETMAP
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
-    # --filters objectID={oid}
     if oid:
         oid_cmd = "--oid %s" % oid
     Cmd = (

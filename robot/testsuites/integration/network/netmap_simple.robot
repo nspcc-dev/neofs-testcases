@@ -1,8 +1,8 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   ../../../variables/common.py
 
-Library     ${RESOURCES}/neofs.py
-Library     ${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
  
 
 *** Test cases ***
@@ -83,15 +83,15 @@ Generate Key and Pre-payment
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     55
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     11
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
-                        Expexted Mainnet Balance            ${ADDR}     55
+                        Expexted Mainnet Balance            ${ADDR}     11
 
     ${SCRIPT_HASH} =    Get ScripHash           ${KEY}
 
-    ${TX_DEPOSIT} =     NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      50
+    ${TX_DEPOSIT} =     NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      10
                         Wait Until Keyword Succeeds         1 min          15 sec        
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
                         Get Transaction                     ${TX_DEPOSIT}
@@ -105,9 +105,10 @@ Validate Policy
                         Container Existing                  ${PRIV_KEY}    ${CID}   
     ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}          
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
+                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    
                         
 
 Cleanup
     [Arguments]             ${FILE}
-                            Cleanup Files      ${FILE} 
+                            Cleanup Files      ${FILE}    s_file_read 
                             Get Docker Logs    netmap_simple
