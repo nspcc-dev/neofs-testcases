@@ -67,13 +67,13 @@ NeoFS Storage Smoke
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 
-    ${OID_FS} =                 Put object to NeoFS    ${PRIV_KEY}     ${FILE_FS}    ${CID}        ${EMPTY}    ${EMPTY}
+    ${OID_FS} =                 Put object    ${PRIV_KEY}     ${FILE_FS}    ${CID}        ${EMPTY}    ${EMPTY}
                                 Put object S3          ${S3_CLIENT}    ${BUCKET}     ${FILE_S3}
 
     ${OID_LIST_S3} =            Search object    ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       FileName=${FILE_S3_NAME} 
     ${OID_S3} =                 Get From List    ${OID_LIST_S3}    0
 
-                                Get object from NeoFS    ${PRIV_KEY}     ${CID}       ${OID_FS}           ${EMPTY}         s_file_read
+                                Get object    ${PRIV_KEY}     ${CID}       ${OID_FS}           ${EMPTY}         s_file_read
                                 Get object S3            ${S3_CLIENT}    ${BUCKET}    ${FILE_FS_NAME}     fs_obj_get_s3
     ${FILEPATH_FS} =            Get via HTTP Gate        ${CID}          ${OID_FS}
 
@@ -81,7 +81,7 @@ NeoFS Storage Smoke
                                 Verify file hash    s_file_read       ${FILE_FS_HASH} 
                                 Verify file hash    ${FILEPATH_FS}    ${FILE_FS_HASH} 
 
-                                Get object from NeoFS    ${PRIV_KEY}     ${CID}       ${OID_S3}           ${EMPTY}         s_file_read
+                                Get object    ${PRIV_KEY}     ${CID}       ${OID_S3}           ${EMPTY}         s_file_read
                                 Get object S3            ${S3_CLIENT}    ${BUCKET}    ${FILE_S3_NAME}     s3_obj_get_s3
     ${FILEPATH_S3} =            Get via HTTP Gate        ${CID}          ${OID_S3}
 

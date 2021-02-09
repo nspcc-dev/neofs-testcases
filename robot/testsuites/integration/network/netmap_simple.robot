@@ -103,9 +103,9 @@ Validate Policy
 
     ${CID} =            Create container                    ${PRIV_KEY}    ${EMPTY}      ${POLICY} 
                         Container Existing                  ${PRIV_KEY}    ${CID}   
-    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}          
+    ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}          
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    
+                        Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    
                         
 
 Cleanup

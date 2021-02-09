@@ -51,7 +51,7 @@ NeoFS S3 Gateway
                                 Put object S3    ${S3_CLIENT}    ${BUCKET}    ${FILE_S3}
                                 Head object S3   ${S3_CLIENT}    ${BUCKET}    ${FILE_S3_NAME}
 
-    ${OID_FS} =                 Put object to NeoFS    ${PRIV_KEY}    ${FILE_FS}    ${CID}       ${EMPTY}       ${EMPTY}  
+    ${OID_FS} =                 Put object    ${PRIV_KEY}    ${FILE_FS}    ${CID}       ${EMPTY}       ${EMPTY}  
                                 Head object            ${PRIV_KEY}    ${CID}        ${OID_FS}    ${EMPTY}   
 
     ${LIST_S3_OBJECTS} =        List objects S3              ${S3_CLIENT}             ${BUCKET}
@@ -71,8 +71,8 @@ NeoFS S3 Gateway
                                 Verify file hash    s3_obj_get_s3    ${FILE_S3_HASH} 
                                 Verify file hash    fs_obj_get_s3    ${FILE_FS_HASH} 
 
-                                Get object from NeoFS    ${PRIV_KEY}    ${CID}    ${OID_S3}    ${EMPTY}    s3_obj_get_fs
-                                Get object from NeoFS    ${PRIV_KEY}    ${CID}    ${OID_FS}    ${EMPTY}    fs_obj_get_fs
+                                Get object    ${PRIV_KEY}    ${CID}    ${OID_S3}    ${EMPTY}    s3_obj_get_fs
+                                Get object    ${PRIV_KEY}    ${CID}    ${OID_FS}    ${EMPTY}    fs_obj_get_fs
                               
                                 Verify file hash    s3_obj_get_fs    ${FILE_S3_HASH} 
                                 Verify file hash    fs_obj_get_fs    ${FILE_FS_HASH} 

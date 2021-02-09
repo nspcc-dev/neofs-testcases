@@ -40,15 +40,15 @@ NeoFS HTTP Gateway
     ${FILE_HASH} =      Get file hash                       ${FILE}
     ${FILE_L_HASH} =    Get file hash                       ${FILE_L}
 
-    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}      ${CID}    ${EMPTY}    ${EMPTY}       
-    ${L_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE_L}    ${CID}    ${EMPTY}    ${EMPTY}     
+    ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}      ${CID}    ${EMPTY}    ${EMPTY}       
+    ${L_OID} =          Put object                 ${PRIV_KEY}    ${FILE_L}    ${CID}    ${EMPTY}    ${EMPTY}     
   
     # By request from Service team - try to GET object from the node without object
 
     @{GET_NODE_LIST} =  Get nodes without object            ${PRIV_KEY}    ${CID}    ${S_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
 
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    ${NODE}
+                        Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}         ${S_OID}
 
                         Verify file hash                    s_file_read    ${FILE_HASH} 
@@ -57,7 +57,7 @@ NeoFS HTTP Gateway
     @{GET_NODE_LIST} =  Get nodes without object            ${PRIV_KEY}    ${CID}    ${L_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
 
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
+                        Get object               ${PRIV_KEY}    ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}         ${L_OID}
 
                         Verify file hash                    l_file_read    ${FILE_L_HASH} 

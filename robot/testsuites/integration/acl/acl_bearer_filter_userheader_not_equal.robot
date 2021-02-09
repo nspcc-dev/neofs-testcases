@@ -33,14 +33,14 @@ BearerToken Operations Filter UserHeader NotEqual
 
 Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_OTH_HEADER}
-    ${S_OID_USER_2} =       Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
-    ${D_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_OTH_HEADER}
+    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
     @{S_OBJ_H} =	        Create List	                        ${S_OID_USER_2}
 
  
-                            Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER} 
-                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER} 
+                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
                             Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}            
                             Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
                             Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
@@ -64,9 +64,9 @@ Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500 
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}             ${EMPTY}    ${FILE_USR_HEADER} 
+                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}             ${EMPTY}    ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
+                            ...  Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}           ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
                             Run Keyword And Expect Error        *
@@ -81,13 +81,13 @@ Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
                             ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}           bearer_allow_all_user    ${FILE_USR_HEADER}    ${S_OBJ_H}
                             
                             # Different behaviour for big and small objects!
-                            # Put object to NeoFS                 ${USER_KEY}    ${FILE_S}     ${CID}             bearer_allow_all_user    ${FILE_OTH_HEADER}
+                            # Put object                 ${USER_KEY}    ${FILE_S}     ${CID}             bearer_allow_all_user    ${FILE_OTH_HEADER}
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}             bearer_allow_all_user    ${EMPTY}  
+                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}             bearer_allow_all_user    ${EMPTY}  
                             
-                            Get object from NeoFS               ${USER_KEY}    ${CID}        ${S_OID_USER}      bearer_allow_all_user    local_file_eacl                                                                         
+                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}      bearer_allow_all_user    local_file_eacl                                                                         
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER_2}    bearer_allow_all_user    local_file_eacl
+                            ...  Get object          ${USER_KEY}    ${CID}        ${S_OID_USER_2}    bearer_allow_all_user    local_file_eacl
 
                             Run Keyword And Expect Error        *
                             ...  Get Range                      ${USER_KEY}    ${CID}        ${S_OID_USER}      s_get_range    bearer_allow_all_user    0:256     

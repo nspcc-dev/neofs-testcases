@@ -35,9 +35,9 @@ Check Container Inaccessible and Allow All Bearer
     ${CID} =                Create Container Inaccessible
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
+                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object from NeoFS          ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    
                             Run Keyword And Expect Error        *
@@ -55,7 +55,7 @@ Check Container Inaccessible and Allow All Bearer
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error        *
-                            ...  Put object to NeoFS            ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user       ${FILE_USR_HEADER} 
+                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user       ${FILE_USR_HEADER}    
             
