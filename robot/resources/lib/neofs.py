@@ -941,11 +941,11 @@ def put_storagegroup(private_key: str, cid: str, *oid_list):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
         f'put --cid {cid} --members {cmd_oid_line}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        logger.info(f"Output: {complProc.stdout}" )
 
         oid = _parse_oid(complProc.stdout)
         return oid
@@ -958,11 +958,11 @@ def list_storagegroup(private_key: str, cid: str, *expected_list):
 
     ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid}'
 
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        logger.info(f"Output: {complProc.stdout}")
 
         found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
 
@@ -982,11 +982,11 @@ def list_storagegroup(private_key: str, cid: str, *expected_list):
 def get_storagegroup(private_key: str, cid: str, oid: str, expected_size, *expected_objects_list):
 
     ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid}'
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        logger.info(f"Output: {complProc.stdout}")
       
         if expected_size:
             if re.search(r'Group size: %s' % expected_size, complProc.stdout):
@@ -1014,11 +1014,11 @@ def delete_storagegroup(private_key: str, cid: str, oid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
         f'delete --cid {cid} --id {oid}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+        logger.info(f"Output: {complProc.stdout}")
 
         m = re.search(r'Tombstone: ([a-zA-Z0-9-]+)', complProc.stdout)
         if m.start() != m.end(): # e.g., if match found something

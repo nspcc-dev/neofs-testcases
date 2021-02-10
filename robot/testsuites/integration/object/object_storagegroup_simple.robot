@@ -7,8 +7,8 @@ Resource    common_steps_object.robot
 
 
 *** Test cases ***
-NeoFS Simple Object Operations
-    [Documentation]     Testcase to validate NeoFS operations with simple object.
+NeoFS Simple Storagegroup
+    [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
 
@@ -67,10 +67,11 @@ NeoFS Simple Object Operations
                         List Storagegroup    ${PRIV_KEY}    ${CID}    @{EMPTY}
 
                         Log    Incorrect input
+    
                         Run Keyword And Expect Error    *       
-                        ...  Put Storagegroup    ${PRIV_KEY}    ${CID}   256wtZZ2FaKWBrPn1fusVgyBGtxyCJgFAAAAAAAAAAAA
+                        ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
                         Run Keyword And Expect Error    *       
-                        ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    256wtZZ2FaKWBrPn1fusVgyBGtxyCJgFAAAAAAAAAAAA
+                        ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
 
     [Teardown]          Cleanup                             ${FILE_S}
 
