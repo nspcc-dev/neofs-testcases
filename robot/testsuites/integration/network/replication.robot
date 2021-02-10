@@ -35,7 +35,7 @@ NeoFS Object Replication
     ${FILE} =               Generate file of bytes                1024
     ${FILE_HASH} =          Get file hash                         ${FILE}
 
-    ${S_OID} =              Put object to NeoFS                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 
+    ${S_OID} =              Put object                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 
                             Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}   
     
     @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}  

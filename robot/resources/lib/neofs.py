@@ -796,7 +796,7 @@ def cleanup_file(*filename_list):
             logger.warn("Error: '%s' file not found" % filename)
         logger.info("File '%s' has been deleted." % filename)
 
-@keyword('Put object to NeoFS')
+@keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
     endpoint: str="", options: str="" ):
     logger.info("Going to put the object")
@@ -816,7 +816,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     logger.info("Cmd: %s" % putObjectCmd)
     try:
         complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
         logger.info("Output: %s" % complProc.stdout)
         oid = _parse_oid(complProc.stdout)
         return oid
@@ -905,7 +905,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-@keyword('Get object from NeoFS')
+@keyword('Get object')
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     write_object: str, endpoint: str="", options: str="" ):
 
@@ -929,6 +929,108 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+
+@keyword('Put Storagegroup')
+def put_storagegroup(private_key: str, cid: str, *oid_list):
+
+    cmd_oid_line = ",".join(oid_list) 
+
+    ObjectCmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
+        f'put --cid {cid} --members {cmd_oid_line}'
+    )
+    logger.info(f"Cmd: {ObjectCmd}")
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info(f"Output: {complProc.stdout}" )
+
+        oid = _parse_oid(complProc.stdout)
+        return oid
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+@keyword('List Storagegroup')
+def list_storagegroup(private_key: str, cid: str, *expected_list):
+
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid}'
+
+    logger.info(f"Cmd: {ObjectCmd}")
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info(f"Output: {complProc.stdout}")
+
+        found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
+
+        if expected_list:
+            if sorted(found_objects) == sorted(expected_list):
+                logger.info("Found storage group list '{}' is equal for expected list '{}'".format(found_objects, expected_list))
+            else:
+                raise Exception("Found storage group '{}' is not equal to expected list '{}'".format(found_objects, expected_list))
+
+        return found_objects
+        
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+@keyword('Get Storagegroup')
+def get_storagegroup(private_key: str, cid: str, oid: str, expected_size, *expected_objects_list):
+
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid}'
+    logger.info(f"Cmd: {ObjectCmd}")
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info(f"Output: {complProc.stdout}")
+      
+        if expected_size:
+            if re.search(r'Group size: %s' % expected_size, complProc.stdout):
+                logger.info("Group size %s has been found in the output" % (expected_size))
+            else:
+                raise Exception("Group size %s has not been found in the output" % (expected_size))
+
+        found_objects = re.findall(r'\s(\w{43,44})\s', complProc.stdout)
+
+        if expected_objects_list:
+            if sorted(found_objects) == sorted(expected_objects_list):
+                logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
+            else:
+                raise Exception("Found object list '{}' is not equal to expected list '{}'".format(found_objects, expected_objects_list))
+
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
+@keyword('Delete Storagegroup')
+def delete_storagegroup(private_key: str, cid: str, oid: str):
+
+    ObjectCmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
+        f'delete --cid {cid} --id {oid}'
+    )
+    logger.info(f"Cmd: {ObjectCmd}")
+    try:
+        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info(f"Output: {complProc.stdout}")
+
+        m = re.search(r'Tombstone: ([a-zA-Z0-9-]+)', complProc.stdout)
+        if m.start() != m.end(): # e.g., if match found something
+            oid = m.group(1)
+        else:
+            raise Exception("no Tombstone ID was parsed from command output: \t%s" % complProc.stdout)
+        return oid
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+
 
 def _exec_cli_cmd(private_key: bytes, postfix: str):
     # Get linked objects from first

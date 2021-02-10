@@ -47,12 +47,12 @@ Check Bearer Сompound Get
     [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}
 
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
     @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
-                            Put object to NeoFS             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
-                            Get object from NeoFS           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+                            Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+                            Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=${DENY_GROUP}  
@@ -64,7 +64,7 @@ Check Bearer Сompound Get
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow  
 
-                            Get object from NeoFS           ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow       local_file_eacl
+                            Get object           ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow       local_file_eacl
                             Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range        bearer_allow       0:256
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow       0:256
 
@@ -74,9 +74,9 @@ Check Bearer Сompound Delete
 
     ${CID} =                Create Container Public
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
-    ${D_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
-                            Put object to NeoFS             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+    ${D_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
+                            Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
                             Delete object                   ${KEY}         ${CID}       ${D_OID_USER}    ${EMPTY}
                             
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
@@ -90,7 +90,7 @@ Check Bearer Сompound Delete
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}       ${S_OID_USER}    bearer_allow     
                             Run Keyword And Expect Error    *
-                            ...  Put object to NeoFS        ${KEY}    ${FILE_S}    ${CID}           bearer_allow    ${FILE_OTH_HEADER}   
+                            ...  Put object        ${KEY}    ${FILE_S}    ${CID}           bearer_allow    ${FILE_OTH_HEADER}   
 
                             Delete object                   ${KEY}    ${CID}       ${S_OID_USER}    bearer_allow
 
@@ -101,8 +101,8 @@ Check Bearer Сompound Get Range Hash
 
     ${CID} =                Create Container Public
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
-                            Put object to NeoFS             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+                            Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
                             Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
                             Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
@@ -116,7 +116,7 @@ Check Bearer Сompound Get Range Hash
                             Run Keyword And Expect Error    *
                             ...  Get Range                  ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    bearer_allow    0:256
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow    local_file_eacl
+                            ...  Get object      ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow    local_file_eacl
                             
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow    0:256
                      

@@ -40,11 +40,11 @@ Check Filters
 
 Check eACL MatchType String Equal Request Deny
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}     
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
                             
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
@@ -52,13 +52,13 @@ Check eACL MatchType String Equal Request Deny
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
                                                         
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=2
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=256
+                            ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=2
+                            Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=256
 
                             Run Keyword And Expect Error    *
-                            ...  Put object to NeoFS        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}      --xhdr a=2
+                            ...  Put object        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}      --xhdr a=2
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      --xhdr a=2
+                            ...  Get object      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      --xhdr a=2
                             Run Keyword And Expect Error    *
                             ...   Search object             ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}      --xhdr a=2     
                             Run Keyword And Expect Error    *
@@ -70,8 +70,8 @@ Check eACL MatchType String Equal Request Deny
                             Run Keyword And Expect Error    *
                             ...  Delete object              ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       --xhdr a=2
 
-                            Put object to NeoFS             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=256
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=*
+                            Put object             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=256
+                            Get object           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=*
                             Search object                   ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}        --xhdr a=
                             Head object                     ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}              --xhdr a=.*
                             Get Range                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a="2 2"
@@ -82,11 +82,11 @@ Check eACL MatchType String Equal Request Deny
 
 Check eACL MatchType String Equal Request Allow
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}     
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
                            
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
@@ -95,11 +95,11 @@ Check eACL MatchType String Equal Request Allow
                             Get eACL                        ${USER_KEY}    ${CID}
                                                         
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    
+                            ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    
                             Run Keyword And Expect Error    *
-                            ...  Put object to NeoFS        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}       
+                            ...  Put object        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}       
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      
+                            ...  Get object      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      
                             Run Keyword And Expect Error    *
                             ...   Search object             ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}         
                             Run Keyword And Expect Error    *
@@ -111,8 +111,8 @@ Check eACL MatchType String Equal Request Allow
                             Run Keyword And Expect Error    *
                             ...  Delete object              ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}        
 
-                            Put object to NeoFS             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=2
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=2
+                            Put object             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=2
+                            Get object           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=2
                             Search object                   ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}        --xhdr a=2
                             Head object                     ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}              --xhdr a=2
                             Get Range                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a=2
@@ -122,11 +122,11 @@ Check eACL MatchType String Equal Request Allow
 
 Check eACL MatchType String Equal Object
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}     
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object ID
@@ -139,11 +139,11 @@ Check eACL MatchType String Equal Object
                                         
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
+                            ...  Get object      ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     
-    ${S_OID_USER_OTH} =     Put object to NeoFS             ${USER_KEY}     ${FILE_S}    ${CID}               ${EMPTY}        ${FILE_OTH_HEADER} 
+    ${S_OID_USER_OTH} =     Put object             ${USER_KEY}     ${FILE_S}    ${CID}               ${EMPTY}        ${FILE_OTH_HEADER} 
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key1    value=1
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
@@ -153,24 +153,24 @@ Check eACL MatchType String Equal Object
     
                             Set eACL                        ${USER_KEY}     ${CID}       ${EACL_CUSTOM}       --await                         
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}        local_file_eacl
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}       ${S_OID_USER_OTH}    ${EMPTY}        local_file_eacl
+                            ...  Get object      ${OTHER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}        local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER_OTH}    ${EMPTY}        local_file_eacl
                             
 
 
 Check eACL MatchType String Not Equal Object
     ${CID} =                Create Container Public
     
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}     ${FILE_S}      ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
-    ${S_OID_OTHER} =        Put object to NeoFS             ${OTHER_KEY}    ${FILE_S_2}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}      ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
+    ${S_OID_OTHER} =        Put object             ${OTHER_KEY}    ${FILE_S_2}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
     
     ${HEADER} =             Head object                     ${USER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}     
                             Head object                     ${USER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY} 
 
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER} 
                             
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}    local_file_eacl
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}    local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    local_file_eacl
     
                             Log	                            Set eACL for Deny GET operation with StringNotEqual Object ID
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
@@ -182,12 +182,12 @@ Check eACL MatchType String Not Equal Object
     
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}      ${CID}    ${S_OID_OTHER}    ${EMPTY}            local_file_eacl
-                            Get object from NeoFS           ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}            local_file_eacl
+                            ...  Get object      ${OTHER_KEY}      ${CID}    ${S_OID_OTHER}    ${EMPTY}            local_file_eacl
+                            Get object           ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}            local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     
-    ${S_OID_USER_OTH} =     Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}               ${EMPTY}            ${FILE_OTH_HEADER} 
+    ${S_OID_USER_OTH} =     Put object             ${USER_KEY}    ${FILE_S}    ${CID}               ${EMPTY}            ${FILE_OTH_HEADER} 
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=key1       value=1
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS    Filters=${filters}
@@ -196,8 +196,8 @@ Check eACL MatchType String Not Equal Object
                             
                             Set eACL                        ${USER_KEY}    ${CID}       ${EACL_CUSTOM}       --await                         
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            local_file_eacl
-                            Get object from NeoFS           ${OTHER_KEY}    ${CID}      ${S_OID_USER}        ${EMPTY}            local_file_eacl
+                            ...  Get object      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            local_file_eacl
+                            Get object           ${OTHER_KEY}    ${CID}      ${S_OID_USER}        ${EMPTY}            local_file_eacl
 
 
 

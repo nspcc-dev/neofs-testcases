@@ -51,15 +51,15 @@ Check eACL Сompound Get
 
     ${CID} =                Create Container Public
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
-                            Put object to NeoFS             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
-                            Get object from NeoFS           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+                            Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+                            Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}             
                             
-                            Get object from NeoFS           ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            Get object           ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
 
@@ -69,9 +69,9 @@ Check eACL Сompound Delete
 
     ${CID} =                Create Container Public
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
-    ${D_OID_USER} =         Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
-                            Put object to NeoFS             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+    ${D_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
+                            Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
                             Delete object                   ${KEY}         ${CID}       ${D_OID_USER}    ${EMPTY}
                             
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
@@ -79,7 +79,7 @@ Check eACL Сompound Delete
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}     
                             Run Keyword And Expect Error    *
-                            ...  Put object to NeoFS        ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}   
+                            ...  Put object        ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}   
 
                             Delete object                   ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
 
@@ -90,8 +90,8 @@ Check eACL Сompound Get Range Hash
 
     ${CID} =                Create Container Public
 
-    ${S_OID_USER} =         Put object to NeoFS             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
-                            Put object to NeoFS             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
+    ${S_OID_USER} =         Put object             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+                            Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER} 
                             Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
                             Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
@@ -99,7 +99,7 @@ Check eACL Сompound Get Range Hash
                             Run Keyword And Expect Error    *
                             ...  Get Range                  ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS      ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object      ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
                                                        

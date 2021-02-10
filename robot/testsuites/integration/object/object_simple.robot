@@ -3,10 +3,8 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-
-*** Variables ***
-${FILE_USR_HEADER} =        key1=1,key2=abc
-${FILE_USR_HEADER_OTH} =    key1=2
+Resource    common_steps_object.robot
+ 
 
 *** Test cases ***
 NeoFS Simple Object Operations
@@ -44,9 +42,9 @@ NeoFS Simple Object Operations
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
 
-    ${S_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  
-    ${H_OID} =          Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER} 
-    ${H_OID_OTH} =      Put object to NeoFS                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
+    ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  
+    ${H_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER} 
+    ${H_OID_OTH} =      Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
 
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${S_OID}    
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${H_OID}    
@@ -56,8 +54,8 @@ NeoFS Simple Object Operations
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
     @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
 
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
-                        Get object from NeoFS               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+                        Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+                        Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
                                     
                         Verify file hash                    s_file_read    ${FILE_HASH} 
                         Verify file hash                    h_file_read    ${FILE_HASH} 
@@ -84,10 +82,10 @@ NeoFS Simple Object Operations
                         Sleep                               2min
                         
                         Run Keyword And Expect Error        *       
-                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
 
                         Run Keyword And Expect Error        *       
-                        ...  Get object from NeoFS          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
     
     [Teardown]          Cleanup                             ${FILE}
 

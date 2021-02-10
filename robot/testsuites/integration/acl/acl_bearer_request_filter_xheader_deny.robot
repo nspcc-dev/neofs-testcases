@@ -36,9 +36,9 @@ BearerToken Operations
 
 Check eACL Allow All Bearer Filter Requst Equal Deny
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
-    ${S_OID_USER_2} =       Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object to NeoFS                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
+    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
     @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
 
@@ -53,8 +53,8 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500 
 
-                            Put object to NeoFS      ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER}       ${EMPTY}      --xhdr a=2
-                            Get object from NeoFS    ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}      --xhdr a=2
+                            Put object      ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER}       ${EMPTY}      --xhdr a=2
+                            Get object    ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}      --xhdr a=2
                             Search object            ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${S_OBJ_H}    --xhdr a=2     
                             Head object              ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    ${EMPTY}                 --xhdr a=2
                             Get Range                ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range              bearer_allow_all_user    0:256         --xhdr a=2
@@ -62,9 +62,9 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
                             Delete object            ${USER_KEY}    ${CID}        ${D_OID_USER}    bearer_allow_all_user    --xhdr a=2
         
                             Run Keyword And Expect Error    *
-                            ...  Put object to NeoFS             ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=256
+                            ...  Put object             ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=256
                             Run Keyword And Expect Error    *
-                            ...  Get object from NeoFS           ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}       --xhdr a=256
+                            ...  Get object           ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}       --xhdr a=256
                             Run Keyword And Expect Error    *
                             ...  Search object                   ${USER_KEY}    ${CID}       ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=256
                             Run Keyword And Expect Error    *
