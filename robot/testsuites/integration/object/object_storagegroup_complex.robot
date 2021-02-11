@@ -1,13 +1,13 @@
 *** Settings ***
 Variables   ../../../variables/common.py
-
+Library     Collections
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Resource    common_steps_object.robot
 
 
 *** Test cases ***
-NeoFS Simple Storagegroup
+NeoFS Complex Object Operations
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
@@ -35,7 +35,7 @@ NeoFS Simple Storagegroup
     ${CID} =            Create container                    ${PRIV_KEY}
                         Container Existing                  ${PRIV_KEY}    ${CID}
 
-    ${FILE_S} =           Generate file of bytes            1024
+    ${FILE_S} =           Generate file of bytes            70e+6
     ${FILE_HASH_S} =      Get file hash                     ${FILE_S}
 
 
@@ -48,26 +48,29 @@ NeoFS Simple Storagegroup
                         Log    Storage group with 1 object
     ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${S_OID_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    1024    ${S_OID_1}
+    @{SPLIT_OBJ_1} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_1}
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    70000000    @{SPLIT_OBJ_1}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_1}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    1024    ${S_OID_1}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    70000000    @{SPLIT_OBJ_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    @{EMPTY}
 
 
                         Log    Storage group with 2 objects
     ${SG_OID_2} =       Put Storagegroup    ${PRIV_KEY}    ${CID}    @{S_OBJ_ALL}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    2048    @{S_OBJ_ALL}
+    @{SPLIT_OBJ_2} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_2}
+    @{SPLIT_OBJ_ALL} =  Combine Lists    ${SPLIT_OBJ_1}    ${SPLIT_OBJ_2}
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    140000000    @{SPLIT_OBJ_ALL}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_2}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    2048    @{S_OBJ_ALL}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    140000000    @{SPLIT_OBJ_ALL}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    @{EMPTY}
 
                         Log    Incorrect input
-    
+
                         Run Keyword And Expect Error    *       
                         ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
                         Run Keyword And Expect Error    *       
@@ -82,8 +85,7 @@ Cleanup
 
     @{CLEANUP_FILES} =  Create List	                        ${FILE}    
                         Cleanup Files                       @{CLEANUP_FILES}
-                        Get Docker Logs                     object_storage_group_simple
- 
+                        Get Docker Logs                     object_storage_group_complex
 
 
 
