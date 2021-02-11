@@ -76,16 +76,16 @@ NeoFS Complex Object Operations
                         Run Keyword And Expect Error    *       
                         ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
 
-
+    [Teardown]          Cleanup                             ${FILE_S}
+    
 *** Keywords ***
 
 Cleanup
     [Arguments]         ${FILE}
 
-    @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
+    @{CLEANUP_FILES} =  Create List	                        ${FILE}    
                         Cleanup Files                       @{CLEANUP_FILES}
-                        Get Docker Logs                     object_simple
- 
+                        Get Docker Logs                     object_storage_group
 
 
 
