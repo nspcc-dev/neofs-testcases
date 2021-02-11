@@ -82,7 +82,7 @@ Cleanup
 
     @{CLEANUP_FILES} =  Create List	                        ${FILE}    
                         Cleanup Files                       @{CLEANUP_FILES}
-                        Get Docker Logs                     object_storage_group
+                        Get Docker Logs                     object_storage_group_simple
  
 
 
