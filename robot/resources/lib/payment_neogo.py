@@ -44,9 +44,11 @@ def generate_wallet_from_wif(wallet: str, wif: str):
     logger.info(f"Executing command: {cmd}")
     p = pexpect.spawn(cmd)
     p.expect(".*")
-    p.sendline('\n')
-    p.sendline('\n')
-    p.sendline('\n')
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
     p.wait()
     out = p.read()
 
@@ -58,9 +60,11 @@ def generate_wallet(wallet: str):
     logger.info(f"Executing command: {cmd}")
     p = pexpect.spawn(cmd)
     p.expect(".*")
-    p.sendline('\n')
-    p.sendline('\n')
-    p.sendline('\n')
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
     p.wait()
     out = p.read()
 
@@ -79,7 +83,7 @@ def dump_address(wallet: str):
 def dump_privkey(wallet: str, address: str):
     cmd = f"{NEOGO_CLI_EXEC} wallet export -w {wallet} --decrypt {address}"
     logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('', cmd)
+    out = _run_sh_with_passwd('\r', cmd)
     logger.info(f"Command completed with output: {out}")
     return out
 
@@ -277,7 +281,7 @@ def _run_sh(args):
 def _run_sh_with_passwd(passwd, cmd):
     p = pexpect.spawn(cmd)
     p.expect(".*")
-    p.sendline(passwd)
+    p.sendline(passwd + '\r')
     p.wait()
     # throw a string with password prompt
     # take a string with tx hash

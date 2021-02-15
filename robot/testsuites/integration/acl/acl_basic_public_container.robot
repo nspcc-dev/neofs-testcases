@@ -17,11 +17,11 @@ Basic ACL Operations for Public Container
     
                             Create Containers
                             Generate file    1024
-                            Check Public Container
+                            Check Public Container    Simple
 
                             Create Containers
                             Generate file    70e+6
-                            Check Public Container
+                            Check Public Container    Complex
 
     [Teardown]              Cleanup  
     
@@ -29,6 +29,7 @@ Basic ACL Operations for Public Container
 *** Keywords ***
 
 Check Public Container
+    [Arguments]     ${RUN_TYPE}
 
     # Put
     ${S_OID_USER} =         Put object                 ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
@@ -84,6 +85,21 @@ Check Public Container
                             Delete object                       ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
                             Delete object                       ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}  
                             Delete object                       ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}     ${EMPTY}
+
+
+    # Storage group Operations (Put, List, Get, Delete)
+                            Log    Storage group Operations for each Role keys
+    ${S_OID} =              Put object                 ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
+    @{Roles_keys} =	        Create List    ${USER_KEY}    ${OTHER_KEY}    ${SYSTEM_KEY_IR}    ${SYSTEM_KEY_SN}
+    FOR	${role_key}	IN	@{Roles_keys}
+        ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}  
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID} 		
+                            Get Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}
+
+    END
 
 
 Cleanup
