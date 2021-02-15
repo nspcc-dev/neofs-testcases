@@ -7,7 +7,7 @@ Resource    common_steps_object.robot
 
 
 *** Test cases ***
-NeoFS Complex Object Operations
+NeoFS Complex Storagegroup
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
