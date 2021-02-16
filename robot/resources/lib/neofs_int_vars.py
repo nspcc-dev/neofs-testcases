@@ -9,5 +9,5 @@ HTTP_GATE = 'http://http.neofs.devenv'
 S3_GATE = 'https://s3.neofs.devenv:8080'
 NEOFS_NETMAP = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
 
-GAS_HASH = '0xa6a6c15dcdc9b997dac448b6926522d22efeedfb'
-NEOFS_CONTRACT = "e11db12b0df3b3c05e6ed5f85e5cf53236e9dbeb"
+GAS_HASH = '0x70e2301955bf1e74cbb31d18c2f96972abadb328'
+NEOFS_CONTRACT = "005a4906ec233a3b677dad9fd7033ad8653f579d"

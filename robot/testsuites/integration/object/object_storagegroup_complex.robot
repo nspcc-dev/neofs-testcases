@@ -7,7 +7,7 @@ Resource    common_steps_object.robot
 
 
 *** Test cases ***
-NeoFS Complex Object Operations
+NeoFS Complex Storagegroup
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
@@ -46,7 +46,7 @@ NeoFS Complex Object Operations
     @{S_OBJ_ALL} =	    Create List    ${S_OID_1}    ${S_OID_2} 
     
                         Log    Storage group with 1 object
-    ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${S_OID_1}
+    ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${S_OID_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}
     @{SPLIT_OBJ_1} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_1}
                         Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    70000000    @{SPLIT_OBJ_1}
@@ -58,7 +58,7 @@ NeoFS Complex Object Operations
 
 
                         Log    Storage group with 2 objects
-    ${SG_OID_2} =       Put Storagegroup    ${PRIV_KEY}    ${CID}    @{S_OBJ_ALL}
+    ${SG_OID_2} =       Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    @{S_OBJ_ALL}
                         List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}
     @{SPLIT_OBJ_2} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_2}
     @{SPLIT_OBJ_ALL} =  Combine Lists    ${SPLIT_OBJ_1}    ${SPLIT_OBJ_2}
@@ -72,7 +72,7 @@ NeoFS Complex Object Operations
                         Log    Incorrect input
 
                         Run Keyword And Expect Error    *       
-                        ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
+                        ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    ${UNEXIST_OID}
                         Run Keyword And Expect Error    *       
                         ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
 

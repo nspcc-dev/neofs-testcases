@@ -18,12 +18,13 @@ BearerToken Operations
     
                             Log    Check Bearer token with simple object
                             Generate file    1024
-                            Check eACL Deny and Allow All Bearer
+                            Check eACL Deny and Allow All Bearer    Simple
                             
                             Log    Check Bearer token with complex object
                             Cleanup Files    ${FILE_S}
                             Generate file    70e+6
-                            Check eACL Deny and Allow All Bearer
+                            Check eACL Deny and Allow All Bearer    Complex
+
 
     [Teardown]              Cleanup   
     
@@ -32,21 +33,30 @@ BearerToken Operations
 *** Keywords ***
  
 Check eACL Deny and Allow All Bearer
+    [Arguments]     ${RUN_TYPE}
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object                 ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
     ${D_OID_USER} =         Put object                 ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL} 
     @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
  
-                            Put object                 ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER} 
-                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            Put object                          ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER} 
+                            Get object                          ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Search object                       ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}            
                             Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}               
                             Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
                             Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}    ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+    # Storage group Operations (Put, List, Get, Delete)
+    ${SG_OID_INV} =         Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
+    ${SG_OID_1} =           Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
+                            List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}
+    @{EXPECTED_OIDS} =      Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
+                            Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}
 
+                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER 
     ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=USER 
@@ -61,9 +71,9 @@ Check eACL Deny and Allow All Bearer
                             Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error        *
-                            ...  Put object            ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
+                            ...  Put object                     ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
-                            ...  Get object          ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object                     ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${USER_KEY}    ${CID}       ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}
                             Run Keyword And Expect Error        *
@@ -73,8 +83,20 @@ Check eACL Deny and Allow All Bearer
                             Run Keyword And Expect Error        *
                             ...  Delete object                  ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
 
-                            Put object                 ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER} 
-                            Get object               ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl
+                            Run Keyword And Expect Error        *
+                            ...  Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
+                            Run Keyword And Expect Error        *
+                            ...  List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}
+    @{EXPECTED_OIDS} =      Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
+                            Run Keyword And Expect Error        *
+                            ...  Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Run Keyword And Expect Error        *
+                            ...  Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}
+
+
+                            Put object                          ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER} 
+                            Get object                          ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl
                             Search object                       ${USER_KEY}    ${CID}       ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${S_OBJ_H}
                             Head object                         ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user               
                             Get Range                           ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range              bearer_allow_all_user    0:256     

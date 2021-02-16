@@ -374,14 +374,18 @@ def generate_file_of_bytes(size):
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
         expected_objects_list=[], options:str=""):
     bearer_token = ""
+    filters_result = ""
+
     if bearer:
         bearer_token = f"--bearer {bearer}"
     if filters:
-        filters = f"--filters {filters}"
+        for filter_item in filters.split(','):
+            filter_item = re.sub(r'=', ' EQ ', filter_item)
+            filters_result += f"--filters '{filter_item}' "
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
-        f'object search {keys} --cid {cid} {bearer_token} {filters} {options}'
+        f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
     )
     logger.info("Cmd: %s" % ObjectCmd)
     try:
@@ -402,6 +406,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):
@@ -952,13 +957,13 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
 
 @keyword('Put Storagegroup')
-def put_storagegroup(private_key: str, cid: str, *oid_list):
+def put_storagegroup(private_key: str, cid: str, options: str="", *oid_list):
 
     cmd_oid_line = ",".join(oid_list) 
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
-        f'put --cid {cid} --members {cmd_oid_line}'
+        f'put --cid {cid} --members {cmd_oid_line} {options}'
     )
     logger.info(f"Cmd: {ObjectCmd}")
     try:
