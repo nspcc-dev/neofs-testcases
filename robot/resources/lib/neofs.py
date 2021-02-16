@@ -406,12 +406,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-@keyword('Convert Str To List')
-def convert_str_to_list(value: str):
-   result = list()
-   result.append(value)
-   return result
+        
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):

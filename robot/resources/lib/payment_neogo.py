@@ -41,33 +41,13 @@ def init_wallet():
 @keyword('Generate wallet from WIF')
 def generate_wallet_from_wif(wallet: str, wif: str):
     cmd = f"{NEOGO_CLI_EXEC} wallet import --wallet {wallet} --wif {wif}"
-    logger.info(f"Executing command: {cmd}")
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.wait()
-    out = p.read()
-
+    out = _run_sh_wallet_gen(cmd)
     logger.info(f"Command completed with output: {out}")
 
 @keyword('Generate wallet')
 def generate_wallet(wallet: str):
     cmd = f"{NEOGO_CLI_EXEC} wallet create -w {wallet}"
-    logger.info(f"Executing command: {cmd}")
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.wait()
-    out = p.read()
-
+    out = _run_sh_wallet_gen(cmd)
     logger.info(f"Command completed with output: {out}")
 
 @keyword('Dump Address')
@@ -287,3 +267,20 @@ def _run_sh_with_passwd(passwd, cmd):
     # take a string with tx hash
     tx_hash = p.read().splitlines()[-1]
     return tx_hash.decode()
+
+def _run_sh_wallet_gen(cmd):
+    '''
+    Internal method.
+    '''
+    logger.info(f"Executing command: {cmd}")
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
+    p.expect(".*")
+    p.sendline('\r')
+    p.wait()
+    out = p.read()
+    
+    return out

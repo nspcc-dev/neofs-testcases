@@ -52,7 +52,7 @@ Check eACL Deny and Allow All Bearer
     ${SG_OID_1} =           Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
                             List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =      Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID_USER} 		
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
                             Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
                             Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}
 
@@ -88,7 +88,7 @@ Check eACL Deny and Allow All Bearer
                             Run Keyword And Expect Error        *
                             ...  List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =      Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID_USER} 		
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
                             Run Keyword And Expect Error        *
                             ...  Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
                             Run Keyword And Expect Error        *

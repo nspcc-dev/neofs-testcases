@@ -46,7 +46,7 @@ Check Private Container
     ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${USER_KEY}    ${PRIV_CID}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID_USER} 		
+                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
                         Get Storagegroup    ${USER_KEY}    ${PRIV_CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
                         Delete Storagegroup    ${USER_KEY}    ${PRIV_CID}    ${SG_OID_1}
 
@@ -54,7 +54,7 @@ Check Private Container
     ${SG_OID_1} =       Put Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${SG_OID_1}  ${SG_OID_INV}                        
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${SYSTEM_KEY_SN}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF    "${RUN_TYPE}" == "Simple"    Convert Str To List    ${S_OID_USER}
+                        ...    ELSE IF    "${RUN_TYPE}" == "Simple"    Create List    ${S_OID_USER}
                         Get Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${SG_OID_1}
@@ -74,7 +74,7 @@ Check Private Container
                         ...  List Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${SG_OID_INV}
                         
                         @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID_USER} 
+                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 
                         Get Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${SG_OID_INV}    ${EMPTY}    @{EXPECTED_OIDS}
 
                         Run Keyword And Expect Error        *

@@ -95,7 +95,7 @@ Check Public Container
         ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
                             List Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}  
         @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PUBLIC_CID}   ${S_OID}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Convert Str To List   ${S_OID} 		
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID} 		
                             Get Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
                             Delete Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}
 
