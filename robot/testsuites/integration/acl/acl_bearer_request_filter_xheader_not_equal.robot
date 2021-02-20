@@ -35,16 +35,16 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
-    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
                             Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER} 
-                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
-                            Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}            
-                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
-                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
-                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+                            Get object                 ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            Search object              ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}            
+                            Head object                ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
+                            Get Range                  ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
+                            Delete object              ${USER_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+                            Set eACL                   ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
     ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_NOT_EQUAL    key=a    value=256 
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER    Filters=${filters}

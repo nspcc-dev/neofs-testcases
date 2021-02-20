@@ -22,7 +22,7 @@ NeoFS HTTP Gateway
                         Wait Until Keyword Succeeds         1 min      15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
-                        Expexted Mainnet Balance            ${ADDR}    6
+                        Expected Mainnet Balance            ${ADDR}    6
 
     ${SCRIPT_HASH} =    Get ScripHash                       ${PRIV_KEY}  
 

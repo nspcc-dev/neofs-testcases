@@ -121,14 +121,29 @@ def mainnet_balance(address: str):
     amount = m.group(1)
     return amount
 
-@keyword('Expexted Mainnet Balance')
+@keyword('Expected Mainnet Balance')
 def expected_mainnet_balance(address: str, expected: float):
     amount = mainnet_balance(address)
     gas_expected = int(expected * 10**8)
     if int(amount) != int(gas_expected):
         raise Exception(f"Expected amount ({gas_expected}) of GAS has not been found. Found {amount}.")
+    return amount
 
-    return True
+@keyword('Expected Mainnet Balance Diff')
+def expected_mainnet_balance_diff(address: str, old_value: float, expected_diff: float):
+    amount = mainnet_balance(address)
+    gas_expected = old_value + _convert_int_to_gas(expected_diff)
+    if int(amount) != int(gas_expected):
+        raise Exception(f"Balance amount ({int(amount)})) of GAS has not been changed for expected value:",
+                        f"{_convert_int_to_gas(expected_diff)} from initial {old_value}.",
+                        f"Expected: {old_value + _convert_int_to_gas(expected_diff)}")
+    return amount
+
+def _convert_int_to_gas(input_value: float):
+    return int(input_value * 10**8)
+
+def _convert_gas_to_int(input_value: float):
+    return int(input_value / 10**8)
 
 @keyword('NeoFS Deposit')
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
