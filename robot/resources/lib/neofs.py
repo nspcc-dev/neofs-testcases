@@ -412,19 +412,40 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 def get_component_objects(private_key: str, cid: str, oid: str):
 
     logger.info("Collect Split objects list from Linked object.")
+    split_id = ""
     nodes = _get_storage_nodes()
     for node in nodes:
         header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
-        parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+        if header_virtual:
+            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
 
-        if 'Linking object' in parsed_header_virtual.keys():
+            if 'Linking object' in parsed_header_virtual.keys():
+                return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
 
-            header_link = head_object(private_key, cid, parsed_header_virtual['Linking object'], '', '', '--raw')
-            header_link_parsed = parse_object_system_header(header_link)
-            
-            return header_link_parsed['Split ChildID']
+            elif 'Split ID' in parsed_header_virtual.keys():
+                logger.info(f"parsed_header_virtual: !@ {parsed_header_virtual}" )
+                split_id = parsed_header_virtual['Split ID']
 
-    raise Exception("Linking object has not been found.")
+    logger.warn("Linking object has not been found.")
+
+    # Get all existing objects
+    full_obj_list = search_object(private_key, cid, None, None, None, None, '--phy')
+  
+    # Search expected Linking object
+    for targer_oid in full_obj_list:
+        header = head_object(private_key, cid, targer_oid, '', '', '--raw')
+        header_parsed = parse_object_system_header(header)
+        if header_parsed['Split ID'] == split_id and 'Split ChildID' in header_parsed.keys():
+            logger.info("Linking object has been found in additional check (head of all objects).")
+            return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
+
+    raise Exception("Linking object is not found at all - all existed objects have been headed.")
+
+def _collect_split_objects_from_header(private_key, cid, parsed_header):
+    header_link = head_object(private_key, cid, parsed_header['Linking object'], '', '', '--raw')
+    header_link_parsed = parse_object_system_header(header_link)
+    return header_link_parsed['Split ChildID']
+
 
 
 @keyword('Verify Split Chain')
@@ -689,76 +710,73 @@ def parse_object_system_header(header: str):
 
     # ID
     m = re.search(r'^ID: (\w+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['ID'] = m.group(1)
     else:
-        raise Exception("no ID was parsed from object header: \t%s" % output)
+        raise Exception("no ID was parsed from object header: \t%s" % header)
 
     # CID
     m = re.search(r'CID: (\w+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['CID'] = m.group(1)
     else:
-        raise Exception("no CID was parsed from object header: \t%s" % output)
+        raise Exception("no CID was parsed from object header: \t%s" % header)
 
     # Owner
     m = re.search(r'Owner: ([a-zA-Z0-9]+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['OwnerID'] = m.group(1)
     else:
-        raise Exception("no OwnerID was parsed from object header: \t%s" % output)
+        raise Exception("no OwnerID was parsed from object header: \t%s" % header)
 
     # CreatedAtEpoch
     m = re.search(r'CreatedAt: (\d+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['CreatedAtEpoch'] = m.group(1)
     else:
-        raise Exception("no CreatedAtEpoch was parsed from object header: \t%s" % output)
+        raise Exception("no CreatedAtEpoch was parsed from object header: \t%s" % header)
 
     # PayloadLength
     m = re.search(r'Size: (\d+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['PayloadLength'] = m.group(1)
     else:
-        raise Exception("no PayloadLength was parsed from object header: \t%s" % output)
+        raise Exception("no PayloadLength was parsed from object header: \t%s" % header)
 
     # HomoHash
     m = re.search(r'HomoHash:\s+(\w+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['HomoHash'] = m.group(1)
     else:
-        raise Exception("no HomoHash was parsed from object header: \t%s" % output)
+        raise Exception("no HomoHash was parsed from object header: \t%s" % header)
 
     # Checksum
     m = re.search(r'Checksum:\s+(\w+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['Checksum'] = m.group(1)
     else:
-        raise Exception("no Checksum was parsed from object header: \t%s" % output)
+        raise Exception("no Checksum was parsed from object header: \t%s" % header)
 
     # Type
     m = re.search(r'Type:\s+(\w+)', header)
-    if m.start() != m.end(): # e.g., if match found something
+    if m is not None:
         result_header['Type'] = m.group(1)
     else:
-        raise Exception("no Type was parsed from object header: \t%s" % output)
+        raise Exception("no Type was parsed from object header: \t%s" % header)
 
 
     # Header - Optional attributes
     m = re.search(r'Split ID:\s+([\w-]+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Split ID'] = m.group(1)
+    if m is not None:
+        result_header['Split ID'] = m.group(1)
 
     m = re.search(r'Split PreviousID:\s+(\w+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Split PreviousID'] = m.group(1)
+    if m is not None:
+        result_header['Split PreviousID'] = m.group(1)
 
     m = re.search(r'Split ParentID:\s+(\w+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Split ParentID'] = m.group(1)
+    if m is not None:
+        result_header['Split ParentID'] = m.group(1)
 
     # Split ChildID list
     found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)

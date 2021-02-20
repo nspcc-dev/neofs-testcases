@@ -40,7 +40,7 @@ Payment Operations
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
-                            Expexted Mainnet Balance              ${ADDR}                3
+                            Expected Mainnet Balance              ${ADDR}                3
 
     ${SCRIPT_HASH} =        Get ScripHash                         ${KEY}
 
