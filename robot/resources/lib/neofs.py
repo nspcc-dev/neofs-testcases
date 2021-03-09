@@ -51,7 +51,7 @@ def form_wif_from_string(private_key: str):
     return wif
 
 
-@keyword('Get ScripHash')
+@keyword('Get ScriptHash')
 def get_scripthash(privkey: str):
     scripthash = ""
     Cmd = f'{NEOFS_CLI_EXEC} util keyer -u {privkey}'

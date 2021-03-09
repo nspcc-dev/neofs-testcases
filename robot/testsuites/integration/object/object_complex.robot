@@ -22,7 +22,7 @@ NeoFS Complex Object Operations
                         Get Transaction                     ${TX}
                         Expected Mainnet Balance            ${ADDR}     15
 
-    ${SCRIPT_HASH} =    Get ScripHash           ${PRIV_KEY}  
+    ${SCRIPT_HASH} =    Get ScriptHash           ${PRIV_KEY}  
 
     ${TX_DEPOSIT} =     NeoFS Deposit                       ${WALLET}      ${ADDR}       ${SCRIPT_HASH}      10
                         Wait Until Keyword Succeeds         1 min          15 sec        

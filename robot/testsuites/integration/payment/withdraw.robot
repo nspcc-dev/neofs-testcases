@@ -25,7 +25,7 @@ NeoFS Deposit and Withdraw
                             Get Transaction                       ${TX}
     ${MAINNET_BALANCE} =    Expected Mainnet Balance              ${ADDR}                 15
 
-    ${SCRIPT_HASH} =        Get ScripHash                         ${PRIV_KEY}
+    ${SCRIPT_HASH} =        Get ScriptHash                         ${PRIV_KEY}
 
     
     ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}

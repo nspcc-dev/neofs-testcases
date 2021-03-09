@@ -42,7 +42,7 @@ Payment Operations
                             Get Transaction                       ${TX}
                             Expected Mainnet Balance              ${ADDR}                3
 
-    ${SCRIPT_HASH} =        Get ScripHash                         ${KEY}
+    ${SCRIPT_HASH} =        Get ScriptHash                         ${KEY}
 
     ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    2
                             Wait Until Keyword Succeeds           1 min                  15 sec        
