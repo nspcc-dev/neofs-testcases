@@ -18,7 +18,7 @@ NeoFS S3 Gateway
                                 Generate wallet from WIF    ${WALLET}      ${PRIV_KEY}
     ${ADDR} =                   Dump Address                ${WALLET}  
                                 Dump PrivKey                ${WALLET}      ${ADDR}
-    ${SCRIPT_HASH} =            Get ScripHash               ${PRIV_KEY}  
+    ${SCRIPT_HASH} =            Get ScriptHash               ${PRIV_KEY}  
 
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5      
                                 Wait Until Keyword Succeeds           1 min            15 sec

@@ -29,7 +29,7 @@ NeoFS Storage Smoke
                                 Generate wallet from WIF    ${WALLET}      ${PRIV_KEY}
     ${ADDR} =                   Dump Address                ${WALLET}  
                                 Dump PrivKey                ${WALLET}      ${ADDR}
-    ${SCRIPT_HASH} =            Get ScripHash               ${PRIV_KEY}  
+    ${SCRIPT_HASH} =            Get ScriptHash               ${PRIV_KEY}  
 
 
 
