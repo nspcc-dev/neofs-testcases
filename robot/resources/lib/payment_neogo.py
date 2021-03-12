@@ -20,10 +20,10 @@ ROBOT_AUTO_KEYWORDS = False
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
 else:
     from neofs_int_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
@@ -31,7 +31,7 @@ NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
 @keyword('Init wallet')
 def init_wallet():
-    filename = os.getcwd() + '/' + str(uuid.uuid4()) + ".json"
+    filename = os.getcwd() + '/' + TEMP_DIR + str(uuid.uuid4()) + ".json"
     cmd = f"{NEOGO_CLI_EXEC} wallet init -w {filename}"
     logger.info(f"Executing command: {cmd}")
     stdout  = _run_sh(cmd)
@@ -255,7 +255,7 @@ def _get_balance_request(privkey: str):
     logger.info("Output: %s" % output)
 
 
-    m = re.match(r'(-?[\d.\.?\d*]+)', output )
+    m = re.match(r'([\d.\.?\d*]+)', output )
     if m is None:
         BuiltIn().fatal_error('Can not parse balance: "%s"' % output)
     balance = m.group(1)

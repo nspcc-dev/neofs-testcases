@@ -21,10 +21,10 @@ from datetime import datetime
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP, TEMP_DIR)
 else:
     from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP, TEMP_DIR)
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -362,7 +362,7 @@ def generate_file_of_bytes(size):
 
     size = int(float(size))
 
-    filename = str(uuid.uuid4())
+    filename = TEMP_DIR + str(uuid.uuid4())
     with open('%s'%filename, 'wb') as fout:
         fout.write(os.urandom(size))
 
@@ -815,7 +815,8 @@ def get_file_name(filepath):
 
 @keyword('Get file hash')
 def get_file_hash(filename):
-    file_hash = _get_file_hash(filename)
+    full_path = f"{TEMP_DIR}{filename}"
+    file_hash = _get_file_hash(full_path)
     return file_hash
 
 @keyword('Verify file hash')
@@ -961,7 +962,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} '
-        f'object get --cid {cid} --oid {oid} --file {write_object} {bearer_token} '
+        f'object get --cid {cid} --oid {oid} --file {TEMP_DIR}{write_object} {bearer_token} '
         f'{options}'
     )
     logger.info("Cmd: %s" % ObjectCmd)

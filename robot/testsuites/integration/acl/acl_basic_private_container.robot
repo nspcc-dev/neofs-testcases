@@ -1,6 +1,6 @@
 *** Settings ***
 Variables                   ../../../variables/common.py
-Library     Collections
+
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
 
