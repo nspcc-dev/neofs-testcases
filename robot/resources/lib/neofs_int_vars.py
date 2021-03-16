@@ -11,4 +11,4 @@ NEOFS_NETMAP = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.deve
 
 GAS_HASH = '0x70e2301955bf1e74cbb31d18c2f96972abadb328'
 NEOFS_CONTRACT = "005a4906ec233a3b677dad9fd7033ad8653f579d"
-TEMP_DIR = "Temporary Dir/"
+TEMP_DIR = "TemporaryDir/"

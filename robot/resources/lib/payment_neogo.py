@@ -31,6 +31,8 @@ NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
 @keyword('Init wallet')
 def init_wallet():
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
     filename = os.getcwd() + '/' + TEMP_DIR + str(uuid.uuid4()) + ".json"
     cmd = f"{NEOGO_CLI_EXEC} wallet init -w {filename}"
     logger.info(f"Executing command: {cmd}")

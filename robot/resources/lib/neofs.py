@@ -201,6 +201,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
     cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8")
     eacl = get_eacl(private_key, cid)
     json_eacl = {}
+    file_path = TEMP_DIR + file_name
 
     if eacl:
         res_json = re.split(r'[\s\n]+Signature:', eacl)
@@ -228,15 +229,15 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
             for record in json_eacl["records"]:
                 eacl_result["body"]["eaclTable"]["records"].append(record)
 
-        with open(file_name, 'w', encoding='utf-8') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(eacl_result, f, ensure_ascii=False, indent=4)
 
         logger.info(eacl_result)
 
     # Sign bearer token
     Cmd = (
-        f'{NEOFS_CLI_EXEC} util sign bearer-token --from {file_name} '
-        f'--to {file_name} --key {private_key} --json'
+        f'{NEOFS_CLI_EXEC} util sign bearer-token --from {file_path} '
+        f'--to {file_path} --key {private_key} --json'
     )
     logger.info("Cmd: %s" % Cmd)
 
@@ -248,7 +249,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-    return file_name
+    return file_path
 
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_name, eacl_oper_list ):
@@ -285,12 +286,12 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         range_cut: str, options:str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {bearer}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
 
     Cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
-        f'--file {range_file} {options}'
+        f'--file {TEMP_DIR}{range_file} {options}'
     )
     logger.info("Cmd: %s" % Cmd)
 
@@ -377,7 +378,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     filters_result = ""
 
     if bearer:
-        bearer_token = f"--bearer {bearer}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
     if filters:
         for filter_item in filters.split(','):
             filter_item = re.sub(r'=', ' EQ ', filter_item)
@@ -652,7 +653,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
     user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False):
 
     if bearer_token:
-        bearer_token = f"--bearer {bearer_token}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
@@ -792,7 +793,7 @@ def parse_object_system_header(header: str):
 def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {bearer}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -815,7 +816,7 @@ def get_file_name(filepath):
 
 @keyword('Get file hash')
 def get_file_hash(filename):
-    full_path = f"{TEMP_DIR}{filename}"
+    full_path = f"{filename}"
     file_hash = _get_file_hash(full_path)
     return file_hash
 
@@ -831,7 +832,7 @@ def verify_file_hash(filename, expected_hash):
 def cleanup_file(*filename_list):
     for filename in filename_list:
         if os.path.isfile(filename):
-            try:
+            try:                                
                 os.remove(filename)
             except OSError as e:
                 raise Exception("Error: '%s' - %s." % (e.filename, e.strerror))
@@ -850,7 +851,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     if user_headers:
         user_headers = f"--attributes {user_headers}"
     if bearer:
-        bearer = f"--bearer {bearer}"
+        bearer = f"--bearer {TEMP_DIR}{bearer}"
 
     putObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
@@ -933,7 +934,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         range_cut: str, options: str=""):
     if bearer_token:
-        bearer_token = f"--bearer {bearer_token}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -952,17 +953,19 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     write_object: str, endpoint: str="", options: str="" ):
 
+    file_path = TEMP_DIR + write_object
+
     logger.info("Going to put the object")
     if not endpoint:
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
     
     if bearer_token:
-        bearer_token = f"--bearer {bearer_token}"
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} '
-        f'object get --cid {cid} --oid {oid} --file {TEMP_DIR}{write_object} {bearer_token} '
+        f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
         f'{options}'
     )
     logger.info("Cmd: %s" % ObjectCmd)
@@ -972,6 +975,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return file_path
 
 
 

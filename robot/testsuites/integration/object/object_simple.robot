@@ -54,11 +54,11 @@ NeoFS Simple Object Operations
     @{S_OBJ_H} =	    Create List	                        ${H_OID}
     @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
 
-                        Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
-                        Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+    ${GET_OBJ_S} =      Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+    ${GET_OBJ_H} =      Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
                                     
-                        Verify file hash                    s_file_read    ${FILE_HASH} 
-                        Verify file hash                    h_file_read    ${FILE_HASH} 
+                        Verify file hash                    ${GET_OBJ_S}   ${FILE_HASH} 
+                        Verify file hash                    ${GET_OBJ_H}   ${FILE_HASH} 
 
                         Get Range Hash                      ${PRIV_KEY}    ${CID}        ${S_OID}            ${EMPTY}       0:10
                         Get Range Hash                      ${PRIV_KEY}    ${CID}        ${H_OID}            ${EMPTY}       0:10
@@ -82,10 +82,10 @@ NeoFS Simple Object Operations
                         Sleep                               2min
                         
                         Run Keyword And Expect Error        *       
-                        ...  Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       ${GET_OBJ_S}
 
                         Run Keyword And Expect Error        *       
-                        ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       ${GET_OBJ_H}
     
     [Teardown]          Cleanup                             ${FILE}
 
@@ -96,7 +96,7 @@ NeoFS Simple Object Operations
 Cleanup
     [Arguments]         ${FILE}
 
-    @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
+    @{CLEANUP_FILES} =  Create List	                        ${FILE}    ${GET_OBJ_S}    ${GET_OBJ_H}    s_get_range    h_get_range
                         Cleanup Files                       @{CLEANUP_FILES}
                         Get Docker Logs                     object_simple
  
