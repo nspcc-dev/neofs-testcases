@@ -35,7 +35,7 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}    ${ADDR}    ${KEY}
     
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx    ${ADDR}    3
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb    ${ADDR}    3
                             
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}

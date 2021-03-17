@@ -83,7 +83,7 @@ Generate Key and Pre-payment
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     11
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     11
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}

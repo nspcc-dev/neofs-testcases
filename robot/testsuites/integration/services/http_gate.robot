@@ -17,7 +17,7 @@ NeoFS HTTP Gateway
                         Generate wallet         ${WALLET}
     ${ADDR} =           Dump Address            ${WALLET}
     ${PRIV_KEY} =       Dump PrivKey            ${WALLET}              ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx    ${ADDR}    6
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb    ${ADDR}    6
 
                         Wait Until Keyword Succeeds         1 min      15 sec        
                         ...  Transaction accepted in block  ${TX}
