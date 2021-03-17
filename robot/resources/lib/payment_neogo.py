@@ -275,7 +275,7 @@ def _run_sh(args):
 def _run_sh_with_passwd(passwd, cmd):
     p = pexpect.spawn(cmd)
     p.expect(".*")
-    p.sendline(passwd + '\r')
+    p.sendline(passwd + '\r\n')
     p.wait()
     # throw a string with password prompt
     # take a string with tx hash
@@ -289,11 +289,11 @@ def _run_sh_wallet_gen(cmd):
     logger.info(f"Executing command: {cmd}")
     p = pexpect.spawn(cmd)
     p.expect(".*")
-    p.sendline('\r')
+    p.sendline('\r\n')
     p.expect(".*")
-    p.sendline('\r')
+    p.sendline('\r\n')
     p.expect(".*")
-    p.sendline('\r')
+    p.sendline('\r\n')
     p.wait()
     out = p.read()
     

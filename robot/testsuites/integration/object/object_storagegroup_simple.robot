@@ -47,31 +47,31 @@ NeoFS Simple Storagegroup
     
                         Log    Storage group with 1 object
     ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${S_OID_1}
-                        List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    1024    ${S_OID_1}
-    ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}
+                        List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    1024    ${S_OID_1}
+    ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_1}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    1024    ${S_OID_1}
-                        List Storagegroup    ${PRIV_KEY}    ${CID}    @{EMPTY}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    1024    ${S_OID_1}
+                        List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
 
                         Log    Storage group with 2 objects
     ${SG_OID_2} =       Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    @{S_OBJ_ALL}
-                        List Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    2048    @{S_OBJ_ALL}
-    ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}
+                        List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${SG_OID_2}
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    2048    @{S_OBJ_ALL}
+    ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_2}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    2048    @{S_OBJ_ALL}
-                        List Storagegroup    ${PRIV_KEY}    ${CID}    @{EMPTY}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    2048    @{S_OBJ_ALL}
+                        List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
                         Log    Incorrect input
     
                         Run Keyword And Expect Error    *       
                         ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    ${UNEXIST_OID}
                         Run Keyword And Expect Error    *       
-                        ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
+                        ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}    ${EMPTY}
 
     [Teardown]          Cleanup                             
 

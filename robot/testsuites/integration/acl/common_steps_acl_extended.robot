@@ -193,12 +193,61 @@ Prepare eACL Role rules
     ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW     Role=OTHERS    Filters=${filters}
     ${rule8}=               Create Dictionary    Operation=GET             Access=DENY     Role=OTHERS   
     ${rule9}=               Create Dictionary    Operation=HEAD            Access=DENY     Role=OTHERS   
-    ${rule10}=               Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS    
-    ${rule11}=               Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS    
-    ${rule12}=               Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS    
-    ${rule13}=               Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS    
-    ${rule14}=               Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS    
+    ${rule10}=              Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS    
+    ${rule11}=              Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS    
+    ${rule12}=              Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS    
+    ${rule13}=              Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS    
+    ${rule14}=              Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS    
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}     ${rule4}     ${rule5}     ${rule6}     ${rule7}
                             ...            ${rule8}    ${rule9}    ${rule10}    ${rule11}    ${rule12}    ${rule13}    ${rule14}
                             Form eACL json common file    gen_eacl_xheader_allow_all    ${eACL_gen}
                             Set Global Variable           ${EACL_XHEADER_ALLOW_ALL}     gen_eacl_xheader_allow_all
+
+
+
+Check eACL Deny and Allow All
+    [Arguments]     ${KEY}       ${DENY_EACL}    ${ALLOW_EACL}
+
+    ${CID} =                Create Container Public
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
+    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
+
+                            Put object                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_OTH_HEADER} 
+                                            
+                            Get object               ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            Search object                       ${KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}    ${S_OBJ_H}            
+                            Head object                         ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
+                            
+                            Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
+                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
+                            Delete object                       ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+
+                            Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
+
+                            Run Keyword And Expect Error        *
+                            ...  Put object                          ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}            ${FILE_USR_HEADER} 
+                            Run Keyword And Expect Error        *
+                            ...  Get object                          ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}            local_file_eacl
+                            Run Keyword And Expect Error        *
+                            ...  Search object                       ${KEY}    ${CID}       ${EMPTY}         ${EMPTY}            ${FILE_USR_HEADER}       ${S_OBJ_H}            
+                            Run Keyword And Expect Error        *
+                            ...  Head object                         ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}             
+                            Run Keyword And Expect Error        *
+                            ...  Get Range                           ${KEY}    ${CID}       ${S_OID_USER}    s_get_range         ${EMPTY}            0:256
+                            Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}            0:256
+                            Run Keyword And Expect Error        *
+                            ...  Delete object                       ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+
+                            Set eACL                            ${USER_KEY}    ${CID}       ${ALLOW_EACL}    --await
+
+
+                            Put object                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
+                            Get object               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
+                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}            
+                            Head object                         ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             
+                            Get Range                           ${KEY}    ${CID}        ${S_OID_USER}       s_get_range          ${EMPTY}            0:256
+                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             0:256
+                            Delete object                       ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}
+

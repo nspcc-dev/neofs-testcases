@@ -18,11 +18,11 @@ BearerToken Operations
     
                             Log    Check Bearer token with simple object
                             Generate file    1024
-                            Check eACL Deny and Allow All Bearer    Simple
+                            Check eACL Deny and Allow All Bearer   
                             
                             Log    Check Bearer token with complex object
                             Generate file    70e+6
-                            Check eACL Deny and Allow All Bearer    Complex
+                            Check eACL Deny and Allow All Bearer  
 
 
     [Teardown]              Cleanup   
@@ -32,7 +32,7 @@ BearerToken Operations
 *** Keywords ***
  
 Check eACL Deny and Allow All Bearer
-    [Arguments]     ${RUN_TYPE}
+
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object                 ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
     ${D_OID_USER} =         Put object                 ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL} 
@@ -44,15 +44,6 @@ Check eACL Deny and Allow All Bearer
                             Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}               
                             Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
                             Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}    ${EMPTY}
-
-    # Storage group Operations (Put, List, Get, Delete)
-    ${SG_OID_INV} =         Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
-    ${SG_OID_1} =           Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
-                            List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =      Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
-                            Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
@@ -81,17 +72,7 @@ Check eACL Deny and Allow All Bearer
                             Run Keyword And Expect Error        *
                             ...  Delete object                  ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
 
-                            Run Keyword And Expect Error        *
-                            ...  Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
-                            Run Keyword And Expect Error        *
-                            ...  List Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}  ${SG_OID_INV}	
-                            Run Keyword And Expect Error        *
-                            ...  Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Run Keyword And Expect Error        *
-                            ...  Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}
-
-                            # Storagegroup will be added after https://github.com/nspcc-dev/neofs-node/issues/388
-
+                            # All operations on object should be passed with bearer token
                             Put object                          ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER} 
                             Get object                          ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl
                             Search object                       ${USER_KEY}    ${CID}       ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${S_OBJ_H}

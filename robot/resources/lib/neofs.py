@@ -1000,9 +1000,9 @@ def put_storagegroup(private_key: str, cid: str, options: str="", *oid_list):
 
 
 @keyword('List Storagegroup')
-def list_storagegroup(private_key: str, cid: str, *expected_list):
+def list_storagegroup(private_key: str, cid: str, options: str="", *expected_list):
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid}'
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid} {options}'
 
     logger.info(f"Cmd: {ObjectCmd}")
     try:
@@ -1025,9 +1025,9 @@ def list_storagegroup(private_key: str, cid: str, *expected_list):
 
 
 @keyword('Get Storagegroup')
-def get_storagegroup(private_key: str, cid: str, oid: str, expected_size, *expected_objects_list):
+def get_storagegroup(private_key: str, cid: str, oid: str, options: str, expected_size,  *expected_objects_list):
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid}'
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid}  {options}'
     logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -1054,11 +1054,11 @@ def get_storagegroup(private_key: str, cid: str, oid: str, expected_size, *expec
 
 
 @keyword('Delete Storagegroup')
-def delete_storagegroup(private_key: str, cid: str, oid: str):
+def delete_storagegroup(private_key: str, cid: str, oid: str, options: str=""):
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
-        f'delete --cid {cid} --id {oid}'
+        f'delete --cid {cid} --id {oid} {options}'
     )
     logger.info(f"Cmd: {ObjectCmd}")
     try:

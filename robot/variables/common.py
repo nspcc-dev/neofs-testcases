@@ -9,7 +9,11 @@ CERT="%s/../../ca" % ROOT
 # in case when test is run from root in docker
 ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
 
+<<<<<<< HEAD
 # Price of the contract Deposit execution: 0.1493182 GAS
 NEOFS_CONTRACT_DEPOSIT_GAS_FEE = 0.1493182
 NEOFS_CONTRACT_WITHDRAW_GAS_FEE = 0.0331791
 TEMP_DIR = "TemporaryDir/"
+=======
+NEOFS_EPOCH_TIMEOUT = "5min"
+>>>>>>> update
