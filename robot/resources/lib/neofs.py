@@ -14,6 +14,7 @@ import base58
 import docker
 import json
 import tarfile
+import shutil
 
 import time
 from datetime import datetime
@@ -829,16 +830,15 @@ def verify_file_hash(filename, expected_hash):
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
 
 @keyword('Cleanup Files')
-def cleanup_file(*filename_list):
-    for filename in filename_list:
-        if os.path.isfile(filename):
-            try:                                
-                os.remove(filename)
-            except OSError as e:
-                raise Exception("Error: '%s' - %s." % (e.filename, e.strerror))
-        else:
-            logger.warn("Error: '%s' file not found" % filename)
-        logger.info("File '%s' has been deleted." % filename)
+def cleanup_file():
+    if os.path.isdir(TEMP_DIR):
+        try:                                
+            shutil.rmtree(TEMP_DIR)
+        except OSError as e:
+            raise Exception("Error: '%s' - %s." % (e.TEMP_DIR, e.strerror))
+    else:
+        logger.warn("Error: '%s' file not found" % TEMP_DIR)
+    logger.info("File '%s' has been deleted." % TEMP_DIR)
 
 @keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,

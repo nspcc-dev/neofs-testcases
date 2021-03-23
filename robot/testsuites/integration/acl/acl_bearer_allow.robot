@@ -21,7 +21,6 @@ BearerToken Operations
                             Check eACL Deny and Allow All Bearer    Simple
                             
                             Log    Check Bearer token with complex object
-                            Cleanup Files    ${FILE_S}
                             Generate file    70e+6
                             Check eACL Deny and Allow All Bearer    Complex
 
@@ -101,7 +100,4 @@ Check eACL Deny and Allow All Bearer
                             Delete object                       ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    
-                            ...                bearer_allow_all_user   gen_eacl_deny_all_USER            
-                            Cleanup Files      @{CLEANUP_FILES}
-                            Get Docker Logs    acl_bearer
+                            Cleanup Files

@@ -87,17 +87,14 @@ NeoFS Simple Object Operations
                         Run Keyword And Expect Error        *       
                         ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       ${GET_OBJ_H}
     
-    [Teardown]          Cleanup                             ${FILE}
+    [Teardown]          Cleanup                             
 
 
 
 *** Keywords ***
 
 Cleanup
-    [Arguments]         ${FILE}
-
-    @{CLEANUP_FILES} =  Create List	                        ${FILE}    ${GET_OBJ_S}    ${GET_OBJ_H}    s_get_range    h_get_range
-                        Cleanup Files                       @{CLEANUP_FILES}
+                        Cleanup Files                       
                         Get Docker Logs                     object_simple
  
 

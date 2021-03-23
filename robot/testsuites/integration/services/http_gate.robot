@@ -48,28 +48,27 @@ NeoFS HTTP Gateway
     @{GET_NODE_LIST} =  Get nodes without object            ${PRIV_KEY}    ${CID}    ${S_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
 
-                        Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    ${NODE}
+    ${GET_OBJ_S} =      Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}         ${S_OID}
 
-                        Verify file hash                    s_file_read    ${FILE_HASH} 
+                        Verify file hash                    ${GET_OBJ_S}    ${FILE_HASH} 
                         Verify file hash                    ${FILEPATH}    ${FILE_HASH} 
 
     @{GET_NODE_LIST} =  Get nodes without object            ${PRIV_KEY}    ${CID}    ${L_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
 
-                        Get object               ${PRIV_KEY}    ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
+    ${GET_OBJ_L} =      Get object               ${PRIV_KEY}    ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}         ${L_OID}
 
-                        Verify file hash                    l_file_read    ${FILE_L_HASH} 
+                        Verify file hash                    ${GET_OBJ_L}    ${FILE_L_HASH} 
                         Verify file hash                    ${FILEPATH}    ${FILE_L_HASH} 
 
-    [Teardown]          Cleanup                             ${FILEPATH}    ${FILE}    
+    [Teardown]          Cleanup                               
 
 
 
 *** Keywords ***
 
 Cleanup
-    [Arguments]             ${FILEPATH}        ${FILE}
-                            Cleanup Files      ${FILEPATH}    ${FILE}    s_file_read    l_file_read
+                            Cleanup Files    
                             Get Docker Logs    http_gate
