@@ -816,9 +816,8 @@ def get_file_name(filepath):
     return filename
 
 @keyword('Get file hash')
-def get_file_hash(filename):
-    full_path = f"{filename}"
-    file_hash = _get_file_hash(full_path)
+def get_file_hash(filename : str):
+    file_hash = _get_file_hash(filename)
     return file_hash
 
 @keyword('Verify file hash')
