@@ -257,7 +257,9 @@ def _get_balance_request(privkey: str):
     logger.info("Output: %s" % output)
 
 
-    m = re.match(r'([\d.\.?\d*]+)', output )
+    m_dict = json.loads(output)
+    for m in m_dict.keys():
+        return m
     if m is None:
         BuiltIn().fatal_error('Can not parse balance: "%s"' % output)
     balance = m.group(1)
