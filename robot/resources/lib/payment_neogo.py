@@ -258,11 +258,10 @@ def _get_balance_request(privkey: str):
 
     if output is None:
         BuiltIn().fatal_error(f'Can not parse balance: "{output}"')
-    balance = output
 
     logger.info(f"Balance for '{privkey}' is '{balance}'" )
 
-    return balance
+    return output
 
 def _run_sh(args):
     complProc = subprocess.run(args, check=True, universal_newlines=True,
