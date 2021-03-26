@@ -5,8 +5,8 @@ Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 
 *** Variables ***
-${DEPOSIT_AMOUNT} =    10
-${WITHDRAW_AMOUNT} =   10
+${DEPOSIT_AMOUNT} =     10
+${WITHDRAW_AMOUNT} =    10
 
 *** Test cases ***
 NeoFS Deposit and Withdraw
