@@ -19,7 +19,7 @@ Generate Keys
     
 
     ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-    ${SYSTEM_KEY_GEN} =	    Form WIF from String    c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
+    ${SYSTEM_KEY_GEN} =	    Form WIF from String    347bc2bd9eb7b9f41a217a26dc5a3d2a3c25ece1c8bff1d5a146aaf4156e3436    
     ${SYSTEM_KEY_GEN_SN} =  Form WIF from String    0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
 
                             Set Global Variable     ${USER_KEY}         ${USER_KEY_GEN}
