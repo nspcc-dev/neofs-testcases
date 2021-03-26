@@ -250,21 +250,17 @@ def _get_balance_request(privkey: str):
         f'{NEOFS_CLI_EXEC} --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
         f' accounting balance'
     )
-    logger.info("Cmd: %s" % Cmd)
+    logger.info(f"Cmd: {Cmd}")
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
     output = complProc.stdout
-    logger.info("Output: %s" % output)
+    logger.info(f"Output: {output}")
 
+    if output is None:
+        BuiltIn().fatal_error(f'Can not parse balance: "{output}"')
+    balance = output
 
-    m_dict = json.loads(output)
-    for m in m_dict.keys():
-        return m
-    if m is None:
-        BuiltIn().fatal_error('Can not parse balance: "%s"' % output)
-    balance = m.group(1)
-
-    logger.info("Balance for '%s' is '%s'" % (privkey, balance) )
+    logger.info(f"Balance for '{privkey}' is '{balance}'" )
 
     return balance
 

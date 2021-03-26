@@ -834,10 +834,10 @@ def cleanup_file():
         try:                                
             shutil.rmtree(TEMP_DIR)
         except OSError as e:
-            raise Exception("Error: '%s' - %s." % (e.TEMP_DIR, e.strerror))
+            raise Exception(f"Error: '{e.TEMP_DIR}' - {e.strerror}.")
     else:
-        logger.warn("Error: '%s' file not found" % TEMP_DIR)
-    logger.info("File '%s' has been deleted." % TEMP_DIR)
+        logger.warn(f"Error: '{TEMP_DIR}' file not found")
+    logger.info(f"File '{TEMP_DIR}' has been deleted.")
 
 @keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
