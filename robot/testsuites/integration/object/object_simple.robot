@@ -36,7 +36,7 @@ NeoFS Simple Object Operations
                         Container Existing                  ${PRIV_KEY}    ${CID}
                         
                         Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    10            -7e-08
+                        ...  Expected Balance               ${PRIV_KEY}    10            -1e-08
 
     ${FILE} =           Generate file of bytes              1024
     ${FILE_HASH} =      Get file hash                       ${FILE}
