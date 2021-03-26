@@ -259,7 +259,7 @@ def _get_balance_request(privkey: str):
     if output is None:
         BuiltIn().fatal_error(f'Can not parse balance: "{output}"')
 
-    logger.info(f"Balance for '{privkey}' is '{balance}'" )
+    logger.info(f"Balance for '{privkey}' is '{output}'" )
 
     return output
 
