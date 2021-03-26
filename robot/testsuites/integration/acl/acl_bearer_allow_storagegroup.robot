@@ -26,7 +26,7 @@ BearerToken Operations
                             Check eACL Deny and Allow All Bearer    Complex
 
 
-    #[Teardown]              Cleanup   
+    [Teardown]              Cleanup   
     
     
  

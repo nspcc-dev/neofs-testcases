@@ -19,9 +19,9 @@ Basic ACL Operations for Read-Only Container
                             Generate file    1024
                             Check Read-Only Container    Simple
                             
-                            #Create Containers
-                            #Generate file    70e+6
-                            #Check Read-Only Container    Complex
+                            Create Containers
+                            Generate file    70e+6
+                            Check Read-Only Container    Complex
 
     [Teardown]              Cleanup  
     

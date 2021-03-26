@@ -211,19 +211,22 @@ Check eACL Deny and Allow All
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
-    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
                             Put object                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_OTH_HEADER} 
                                             
-                            Get object               ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object                       ${KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}    ${S_OBJ_H}            
-                            Head object                         ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
+                            Get object                 ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            Search object              ${KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}    ${S_OBJ_H}            
+                            Head object                ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
                             
-                            Get Range                           ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
-                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
-                            Delete object                       ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+                            Get Range                  ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
+                            Get Range Hash             ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
+                            Delete object              ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
+                            Set eACL                   ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
 
                             Run Keyword And Expect Error        *
                             ...  Put object                          ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}            ${FILE_USR_HEADER} 
@@ -242,7 +245,9 @@ Check eACL Deny and Allow All
 
                             Set eACL                            ${USER_KEY}    ${CID}       ${ALLOW_EACL}    --await
 
-
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+                            
                             Put object                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
                             Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}            
