@@ -20,7 +20,7 @@ Basic ACL Operations for Public Container
 
                             Create Containers
                             Generate file    70e+6
-                            Check Public container
+                            Check Public Container
 
     [Teardown]              Cleanup  
     

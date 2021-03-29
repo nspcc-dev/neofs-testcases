@@ -79,6 +79,9 @@ Check eACL Deny and Allow All System
 
                             Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}    --await
 
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Run Keyword And Expect Error    *
                             ...  Put object        ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
                             Run Keyword And Expect Error    *
@@ -119,6 +122,9 @@ Check eACL Deny and Allow All System
 
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
 
 
     ${D_OID_USER_S} =       Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
@@ -164,6 +170,10 @@ Check eACL Deny All Other and Allow All Pubkey
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Get eACL                            ${USER_KEY}    ${CID}
 
                             Run Keyword And Expect Error        *
@@ -210,6 +220,9 @@ Check eACL Deny and Allow All
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
 
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Run Keyword And Expect Error        *
                             ...  Put object                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
                             Run Keyword And Expect Error        *
@@ -227,6 +240,8 @@ Check eACL Deny and Allow All
 
                             Set eACL                            ${USER_KEY}     ${CID}        ${ALLOW_EACL}    --await
 
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
 
                             Put object                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
                             Get object               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
