@@ -1,6 +1,5 @@
 *** Settings ***
 Variables                   ../../../variables/common.py
-Library     Collections
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
 
@@ -132,6 +131,4 @@ Check Private Container
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    s_file_read    s_get_range  
-                            Cleanup Files      @{CLEANUP_FILES}
-                            Get Docker Logs    acl_basic
+                            Cleanup Files

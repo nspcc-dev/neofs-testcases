@@ -21,7 +21,7 @@ BearerToken Operations with Filter OID NotEqual
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual
                             
                             Log    Check Bearer token with complex object
-                            Cleanup Files    ${FILE_S}
+                            
                             Generate file    70e+6
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual
 
@@ -118,7 +118,5 @@ Check eACL Deny and Allow All Bearer Filter OID NotEqual
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    
-                            ...                bearer_allow_all_user   gen_eacl_deny_all_USER           
-                            Cleanup Files      @{CLEANUP_FILES}
+                            Cleanup Files
                             Get Docker Logs    acl_bearer

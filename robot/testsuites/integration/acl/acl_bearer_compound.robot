@@ -20,7 +20,7 @@ BearerToken Operations for Сompound Operations
                             Check Сompound Operations
 
                             Log    Check Bearer token with complex object
-                            Cleanup Files    ${FILE_S}
+                            
                             Generate file    70e+6
                             Check Сompound Operations
 
@@ -122,7 +122,4 @@ Check Bearer Сompound Get Range Hash
                      
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    local_file_eacl    s_get_range    
-                            ...                gen_eacl_deny_all_USER    bearer_allow          
-                            Cleanup Files      @{CLEANUP_FILES}
-                            Get Docker Logs    acl_bearer
+                            Cleanup Files

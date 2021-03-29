@@ -73,15 +73,12 @@ NeoFS Simple Storagegroup
                         Run Keyword And Expect Error    *       
                         ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}
 
-    [Teardown]          Cleanup                             ${FILE_S}
+    [Teardown]          Cleanup                             
 
 *** Keywords ***
 
 Cleanup
-    [Arguments]         ${FILE}
-
-    @{CLEANUP_FILES} =  Create List	                        ${FILE}    
-                        Cleanup Files                       @{CLEANUP_FILES}
+                        Create List	                       
                         Get Docker Logs                     object_storage_group_simple
  
 

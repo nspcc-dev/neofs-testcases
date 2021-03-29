@@ -57,11 +57,11 @@ NeoFS Complex Object Operations
 
                         Search object                       ${PRIV_KEY}    ${CID}        --root           ${EMPTY}       ${EMPTY}    ${S_OBJ_ALL}   
 
-                        Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
-                        Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+    ${GET_OBJ_S} =      Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+    ${GET_OBJ_H} =      Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
                                     
-                        Verify file hash                    s_file_read    ${FILE_HASH} 
-                        Verify file hash                    h_file_read    ${FILE_HASH} 
+                        Verify file hash                    ${GET_OBJ_S}   ${FILE_HASH} 
+                        Verify file hash                    ${GET_OBJ_H}   ${FILE_HASH} 
 
                         Get Range Hash                      ${PRIV_KEY}    ${CID}        ${S_OID}          ${EMPTY}       0:10
                         Get Range Hash                      ${PRIV_KEY}    ${CID}        ${H_OID}          ${EMPTY}       0:10
@@ -88,20 +88,17 @@ NeoFS Complex Object Operations
                         Sleep                               2min
                         
                         Run Keyword And Expect Error        *       
-                        ...  Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       ${GET_OBJ_S}
                         Run Keyword And Expect Error        *       
-                        ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+                        ...  Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       ${GET_OBJ_H}
    
-    [Teardown]          Cleanup                             ${FILE}
-
+    [Teardown]          Cleanup                             
 
 
 *** Keywords ***
 
 Cleanup
-    [Arguments]         ${FILE}
-    @{CLEANUP_FILES} =  Create List	                        ${FILE}    s_file_read    h_file_read    s_get_range    h_get_range
-                        Cleanup Files                       @{CLEANUP_FILES}
+                        Cleanup Files
                         Get Docker Logs                     object_complex
  
 

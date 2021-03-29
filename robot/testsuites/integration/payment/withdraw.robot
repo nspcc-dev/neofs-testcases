@@ -58,4 +58,5 @@ NeoFS Deposit and Withdraw
 *** Keywords ***
     
 Cleanup
+                            Cleanup Files
                             Get Docker Logs    withdraw

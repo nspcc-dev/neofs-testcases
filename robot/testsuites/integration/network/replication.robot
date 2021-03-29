@@ -53,16 +53,13 @@ NeoFS Object Replication
                             Find in Nodes Log                     object successfully replicated    ${NODES_LOG_TIME}
 
                             Start nodes                           @{NODES_OBJ_STOPPED}
-  
-    [Teardown]              Cleanup                               ${FILE}    @{NODES_OBJ_STOPPED}
+                            Cleanup
     
     
 *** Keywords ***
     
 Cleanup
-    [Arguments]             ${FILE}    @{NODES_OBJ_STOPPED}
-                            Start nodes                           @{NODES_OBJ_STOPPED}
-                            Cleanup Files                         ${FILE}
+                            Cleanup Files                         
                             Get Docker Logs                       replication
 
 

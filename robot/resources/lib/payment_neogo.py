@@ -20,10 +20,10 @@ ROBOT_AUTO_KEYWORDS = False
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
 else:
     from neofs_int_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT)
+    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
@@ -31,7 +31,9 @@ NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
 @keyword('Init wallet')
 def init_wallet():
-    filename = os.getcwd() + '/' + str(uuid.uuid4()) + ".json"
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
+    filename = os.getcwd() + '/' + TEMP_DIR + str(uuid.uuid4()) + ".json"
     cmd = f"{NEOGO_CLI_EXEC} wallet init -w {filename}"
     logger.info(f"Executing command: {cmd}")
     stdout  = _run_sh(cmd)
@@ -248,21 +250,18 @@ def _get_balance_request(privkey: str):
         f'{NEOFS_CLI_EXEC} --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
         f' accounting balance'
     )
-    logger.info("Cmd: %s" % Cmd)
+    logger.info(f"Cmd: {Cmd}")
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
     output = complProc.stdout
-    logger.info("Output: %s" % output)
+    logger.info(f"Output: {output}")
 
+    if output is None:
+        BuiltIn().fatal_error(f'Can not parse balance: "{output}"')
 
-    m = re.match(r'(-?[\d.\.?\d*]+)', output )
-    if m is None:
-        BuiltIn().fatal_error('Can not parse balance: "%s"' % output)
-    balance = m.group(1)
+    logger.info(f"Balance for '{privkey}' is '{output}'" )
 
-    logger.info("Balance for '%s' is '%s'" % (privkey, balance) )
-
-    return balance
+    return output
 
 def _run_sh(args):
     complProc = subprocess.run(args, check=True, universal_newlines=True,

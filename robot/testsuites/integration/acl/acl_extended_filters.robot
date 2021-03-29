@@ -19,7 +19,6 @@ Extended ACL Operations
                             Generate files    1024
                             Check Filters
 
-                            Cleanup Files    ${FILE_S}    ${FILE_S_2}
                             
                             Log    Check extended ACL with complex object
                             Generate files    70e+6
@@ -202,12 +201,5 @@ Check eACL MatchType String Not Equal Object
 
 
 Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    ${FILE_S_2}    local_file_eacl    eacl_custom    s_get_range
-                            ...                gen_eacl_allow_all_OTHERS    gen_eacl_deny_all_USER    gen_eacl_allow_all_USER
-                            ...                gen_eacl_deny_all_SYSTEM    gen_eacl_allow_all_SYSTEM    gen_eacl_allow_pubkey_deny_OTHERS
-                            ...                gen_eacl_deny_all_OTHERS    
-                            ...                gen_eacl_compound_del_SYSTEM    gen_eacl_compound_del_USER    gen_eacl_compound_del_OTHERS
-                            ...                gen_eacl_compound_get_hash_OTHERS    gen_eacl_compound_get_hash_SYSTEM    gen_eacl_compound_get_hash_USER
-                            ...                gen_eacl_compound_get_OTHERS    gen_eacl_compound_get_SYSTEM    gen_eacl_compound_get_USER
-                            Cleanup Files      @{CLEANUP_FILES}
+                            Cleanup Files
                             Get Docker Logs    acl_extended
