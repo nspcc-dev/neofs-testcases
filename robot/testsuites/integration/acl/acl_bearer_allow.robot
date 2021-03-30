@@ -47,6 +47,9 @@ Check eACL Deny and Allow All Bearer
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER 
     ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=USER 
     ${rule3}=               Create Dictionary    Operation=PUT             Access=ALLOW    Role=USER  

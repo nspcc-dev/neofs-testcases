@@ -185,9 +185,11 @@ def get_eacl(private_key: str, cid: str):
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
+    file_path = TEMP_DIR + eacl
+
     Cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
-        f'container set-eacl --cid {cid} --table {eacl} {add_keys}'
+        f'container set-eacl --cid {cid} --table {file_path} {add_keys}'
     )
     logger.info("Cmd: %s" % Cmd)
     complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
@@ -255,7 +257,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_name, eacl_oper_list ):
     # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-
+    file_path = TEMP_DIR + file_name
     eacl = {"records":[]}
 
     logger.info(eacl_oper_list)
@@ -276,7 +278,7 @@ def form_eacl_json_common_file(file_name, eacl_oper_list ):
 
         logger.info(eacl)
 
-        with open(file_name, 'w', encoding='utf-8') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(eacl, f, ensure_ascii=False, indent=4)
 
     return file_name

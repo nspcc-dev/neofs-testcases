@@ -82,7 +82,6 @@ Check Private Container
 
 
 
-Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    
-                            Cleanup Files      @{CLEANUP_FILES}
+Cleanup  
+                            Cleanup Files     
                             Get Docker Logs    acl_basic

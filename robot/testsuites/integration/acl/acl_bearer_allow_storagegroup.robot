@@ -48,6 +48,9 @@ Check eACL Deny and Allow All Bearer
                             Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+    
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
 
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER 
     ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=USER 
@@ -78,8 +81,6 @@ Check eACL Deny and Allow All Bearer
                             Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    --bearer bearer_allow_all_user
 
 
-Cleanup
-    @{CLEANUP_FILES} =      Create List	       ${FILE_S}    
-                            ...                bearer_allow_all_user   gen_eacl_deny_all_USER            
-                            Cleanup Files      @{CLEANUP_FILES}
+Cleanup          
+                            Cleanup Files      
                             Get Docker Logs    acl_bearer

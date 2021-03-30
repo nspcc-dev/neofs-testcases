@@ -25,7 +25,7 @@ NeoFS Deposit and Withdraw
                             Get Transaction                       ${TX}
     ${MAINNET_BALANCE} =    Expected Mainnet Balance              ${ADDR}                 15
 
-    ${SCRIPT_HASH} =        Get ScriptHash                         ${PRIV_KEY}
+    ${SCRIPT_HASH} =        Get ScriptHash                        ${PRIV_KEY}
 
     
     ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}
@@ -33,7 +33,7 @@ NeoFS Deposit and Withdraw
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
                             
-                            Sleep                                 1 min
+                            
 
     # Expected amount diff will be formed from deposit amount and contract fee
     ${EXPECTED_DIFF} =      Evaluate                              -${DEPOSIT_AMOUNT}-${NEOFS_CONTRACT_DEPOSIT_GAS_FEE}
@@ -45,8 +45,11 @@ NeoFS Deposit and Withdraw
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
 
-                            Sleep                                 1 min
+                            Sleep  30s
+
                             Get Balance                           ${PRIV_KEY}   
+                            Mainnet Balance                       ${ADDR}
+
                             Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}    -${WITHDRAW_AMOUNT}
 
      # Expected amount diff will be formed from withdrawal amount and contract fee

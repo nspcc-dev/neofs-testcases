@@ -56,6 +56,9 @@ Check eACL Сompound Get
                             Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}             
                             
@@ -76,6 +79,9 @@ Check eACL Сompound Delete
                             
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Run Keyword And Expect Error    *
                             ...  Head object                ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}     
                             Run Keyword And Expect Error    *
@@ -95,6 +101,9 @@ Check eACL Сompound Get Range Hash
                             Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
                             Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
+                            
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
                             
                             Run Keyword And Expect Error    *
                             ...  Get Range                  ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256

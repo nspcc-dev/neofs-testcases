@@ -49,7 +49,10 @@ Check eACL MatchType String Equal Request Deny
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
 
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
-                                                        
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=2
                             Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=256
@@ -91,6 +94,10 @@ Check eACL MatchType String Equal Request Allow
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
 
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+                            
                             Get eACL                        ${USER_KEY}    ${CID}
                                                         
                             Run Keyword And Expect Error    *

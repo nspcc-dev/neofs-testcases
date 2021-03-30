@@ -69,7 +69,9 @@ Check eACL Deny and Allow All Bearer Filter UserHeader Equal
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
-
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep       30s
+                            
     ${filters}=             Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key2    value=abc 
 
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER    Filters=${filters}
