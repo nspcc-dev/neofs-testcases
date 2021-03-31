@@ -981,13 +981,16 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
 
 @keyword('Put Storagegroup')
-def put_storagegroup(private_key: str, cid: str, options: str="", *oid_list):
+def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list):
 
     cmd_oid_line = ",".join(oid_list) 
 
+    if bearer_token:
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
-        f'put --cid {cid} --members {cmd_oid_line} {options}'
+        f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
     logger.info(f"Cmd: {ObjectCmd}")
     try:
@@ -1002,9 +1005,12 @@ def put_storagegroup(private_key: str, cid: str, options: str="", *oid_list):
 
 
 @keyword('List Storagegroup')
-def list_storagegroup(private_key: str, cid: str, options: str="", *expected_list):
+def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expected_list):
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid} {options}'
+    if bearer_token:
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid} {bearer_token}'
 
     logger.info(f"Cmd: {ObjectCmd}")
     try:
@@ -1027,9 +1033,12 @@ def list_storagegroup(private_key: str, cid: str, options: str="", *expected_lis
 
 
 @keyword('Get Storagegroup')
-def get_storagegroup(private_key: str, cid: str, oid: str, options: str, expected_size,  *expected_objects_list):
+def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, expected_size,  *expected_objects_list):
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid}  {options}'
+    if bearer_token:
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+
+    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {ObjectCmd}")
     try:
         complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
@@ -1056,11 +1065,14 @@ def get_storagegroup(private_key: str, cid: str, oid: str, options: str, expecte
 
 
 @keyword('Delete Storagegroup')
-def delete_storagegroup(private_key: str, cid: str, oid: str, options: str=""):
+def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=""):
+
+    if bearer_token:
+        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
     ObjectCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
-        f'delete --cid {cid} --id {oid} {options}'
+        f'delete --cid {cid} --id {oid} {bearer_token}'
     )
     logger.info(f"Cmd: {ObjectCmd}")
     try:

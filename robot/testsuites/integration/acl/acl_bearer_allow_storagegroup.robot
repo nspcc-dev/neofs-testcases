@@ -74,10 +74,10 @@ Check eACL Deny and Allow All Bearer
                             ...  Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
                             # Storagegroup should passed with User group key and bearer token
-                            Put Storagegroup    ${USER_KEY}    ${CID}    --bearer bearer_allow_all_user    ${S_OID_USER}
-                            List Storagegroup    ${USER_KEY}    ${CID}    --bearer bearer_allow_all_user    ${SG_OID_1}  ${SG_OID_INV}	
-                            Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}   --bearer bearer_allow_all_user    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    --bearer bearer_allow_all_user
+    ${SG_OID_NEW} =         Put Storagegroup    ${USER_KEY}    ${CID}    bearer_allow_all_user    ${S_OID_USER}
+                            List Storagegroup    ${USER_KEY}    ${CID}    bearer_allow_all_user    ${SG_OID_NEW}  ${SG_OID_INV}	
+                            Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_INV}   bearer_allow_all_user    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_INV}    bearer_allow_all_user
 
 
 Cleanup          
