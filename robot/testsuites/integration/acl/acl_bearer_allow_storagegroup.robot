@@ -21,7 +21,6 @@ BearerToken Operations
                             Check eACL Deny and Allow All Bearer    Simple
                             
                             Log    Check Bearer token with complex object
-                            Cleanup Files    ${FILE_S}
                             Generate file    70e+6
                             Check eACL Deny and Allow All Bearer    Complex
 
