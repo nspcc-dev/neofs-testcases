@@ -89,5 +89,4 @@ NeoFS Storage Smoke
                                 Verify file hash    s_file_read       ${FILE_S3_HASH}
                                 Verify file hash    ${FILEPATH_S3}    ${FILE_S3_HASH}  
 
-    [Teardown]                  Cleanup Files    ${FILE_S3}       ${FILE_FS}        s_file_read       s3_obj_get_s3    
-                                ...              fs_obj_get_s3    ${FILEPATH_S3}    ${FILEPATH_FS}
+    [Teardown]                  Cleanup Files
