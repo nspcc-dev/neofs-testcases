@@ -40,12 +40,12 @@ Check Public Container
     @{Roles_keys} =	        Create List    ${USER_KEY}    ${OTHER_KEY}    ${SYSTEM_KEY_IR}    ${SYSTEM_KEY_SN}
     
     FOR	${role_key}	IN	@{Roles_keys}
-        ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${USER_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_1}  
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PUBLIC_CID}   ${S_OID}
+        ${SG_OID_1} =       Put Storagegroup    ${role_key}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${role_key}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_1}  
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${role_key}    ${PUBLIC_CID}   ${S_OID}
                             ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID} 		
-                            Get Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_1}    ${EMPTY}
+                            Get Storagegroup    ${role_key}    ${PUBLIC_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${role_key}    ${PUBLIC_CID}    ${SG_OID_1}    ${EMPTY}
     END
 
 
