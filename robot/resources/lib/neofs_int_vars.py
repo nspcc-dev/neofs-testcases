@@ -9,6 +9,7 @@ HTTP_GATE = 'http://http.neofs.devenv'
 S3_GATE = 'https://s3.neofs.devenv:8080'
 NEOFS_NETMAP = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
 
-GAS_HASH = '0x70e2301955bf1e74cbb31d18c2f96972abadb328'
-NEOFS_CONTRACT = "005a4906ec233a3b677dad9fd7033ad8653f579d"
+GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
+NEOFS_CONTRACT = "1e6d8b8e1a7c976649dc630062d8b281cb9c2615"
+DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
 TEMP_DIR = "TemporaryDir/"

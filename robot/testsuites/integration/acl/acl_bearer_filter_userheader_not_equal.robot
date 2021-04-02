@@ -17,12 +17,12 @@ BearerToken Operations Filter UserHeader NotEqual
                             Prepare eACL Role rules
     
                             Log    Check Bearer token with simple object
-                            Generate file    1024
+                            Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 
                             Log    Check Bearer token with complex object
                             
-                            Generate file    70e+6
+                            Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 
     [Teardown]              Cleanup   
@@ -48,6 +48,8 @@ Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
     ${filters}=             Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=key2    value=abc 
 

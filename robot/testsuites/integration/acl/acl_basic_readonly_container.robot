@@ -15,11 +15,11 @@ Basic ACL Operations for Read-Only Container
                             Generate Keys
 
                             Create Containers
-                            Generate file    1024
+                            Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Read-Only Container    Simple
                             
                             Create Containers
-                            Generate file    70e+6
+                            Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Read-Only Container    Complex
 
     [Teardown]              Cleanup  
@@ -43,29 +43,29 @@ Check Read-Only Container
     # Storage group Operations (Put, List, Get, Delete)
     ${SG_OID_INV} =     Put Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
     ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}  ${SG_OID_INV}
+                        List Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
-                        Get Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Delete Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}
+                        Get Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Delete Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}
 
                         Run Keyword And Expect Error        *
                         ...  Put Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}
+                        List Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
-                        Get Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}
+                        ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
 
                         Run Keyword And Expect Error        *
                         ...  Put Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}
+                        List Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
-                        Get Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}
+                        ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
 
     # Get
                             Get object               ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read

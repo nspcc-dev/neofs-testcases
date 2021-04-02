@@ -25,11 +25,11 @@ NeoFS S3 Gateway
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
                                 Get Transaction                       ${TX_DEPOSIT}
 
-    ${FILE_S3} =                Generate file of bytes    70e+6
+    ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
     ${FILE_S3_NAME} =           Get file name             ${FILE_S3} 
 
-    ${FILE_FS} =                Generate file of bytes    70e+6
+    ${FILE_FS} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 

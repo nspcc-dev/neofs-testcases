@@ -14,9 +14,9 @@ Generate Keys
                             Generate wallet         ${WALLET_OTH}
     ${ADDR_OTH} =           Dump Address            ${WALLET_OTH}
     ${OTHER_KEY_GEN} =      Dump PrivKey            ${WALLET_OTH}       ${ADDR_OTH}      
-
-    ${SYSTEM_KEY_GEN} =	    Form WIF from String            c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
-    ${SYSTEM_KEY_GEN_SN} =  Form WIF from String            0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
+  
+    ${SYSTEM_KEY_GEN} =     Set Variable            ${NEOFS_IR_WIF}
+    ${SYSTEM_KEY_GEN_SN} =  Set Variable            ${NEOFS_SN_WIF}
 
                             Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
                             Set Global Variable     ${OTHER_KEY}                 ${OTHER_KEY_GEN}
@@ -33,7 +33,7 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     3
+    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     3
                             Wait Until Keyword Succeeds         1 min       15 sec        
                             ...  Transaction accepted in block  ${TX}
                             Get Transaction                     ${TX}

@@ -19,8 +19,8 @@ Generate Keys
     
 
     ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-    ${SYSTEM_KEY_GEN} =	    Form WIF from String    c428b4a06f166fde9f8afcf918194acdde35aa2612ecf42fe0c94273425ded21    
-    ${SYSTEM_KEY_GEN_SN} =  Form WIF from String    0fa21a94be2227916284e4b3495180d9c93d04f095fe9d5a86f22044f5c411d2
+    ${SYSTEM_KEY_GEN} =     Set Variable            ${NEOFS_IR_WIF}
+    ${SYSTEM_KEY_GEN_SN} =  Set Variable            ${NEOFS_SN_WIF}
 
                             Set Global Variable     ${USER_KEY}         ${USER_KEY_GEN}
                             Set Global Variable     ${OTHER_KEY}        ${OTHER_KEY_GEN}
@@ -35,7 +35,7 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}    ${ADDR}    ${KEY}
     
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx    ${ADDR}    3
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}    3
                             
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
@@ -193,12 +193,66 @@ Prepare eACL Role rules
     ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW     Role=OTHERS    Filters=${filters}
     ${rule8}=               Create Dictionary    Operation=GET             Access=DENY     Role=OTHERS   
     ${rule9}=               Create Dictionary    Operation=HEAD            Access=DENY     Role=OTHERS   
-    ${rule10}=               Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS    
-    ${rule11}=               Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS    
-    ${rule12}=               Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS    
-    ${rule13}=               Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS    
-    ${rule14}=               Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS    
+    ${rule10}=              Create Dictionary    Operation=PUT             Access=DENY     Role=OTHERS    
+    ${rule11}=              Create Dictionary    Operation=DELETE          Access=DENY     Role=OTHERS    
+    ${rule12}=              Create Dictionary    Operation=SEARCH          Access=DENY     Role=OTHERS    
+    ${rule13}=              Create Dictionary    Operation=GETRANGE        Access=DENY     Role=OTHERS    
+    ${rule14}=              Create Dictionary    Operation=GETRANGEHASH    Access=DENY     Role=OTHERS    
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}     ${rule4}     ${rule5}     ${rule6}     ${rule7}
                             ...            ${rule8}    ${rule9}    ${rule10}    ${rule11}    ${rule12}    ${rule13}    ${rule14}
                             Form eACL json common file    gen_eacl_xheader_allow_all    ${eACL_gen}
                             Set Global Variable           ${EACL_XHEADER_ALLOW_ALL}     gen_eacl_xheader_allow_all
+
+
+
+Check eACL Deny and Allow All
+    [Arguments]     ${KEY}       ${DENY_EACL}    ${ALLOW_EACL}
+
+    ${CID} =                Create Container Public
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
+
+                            Put object                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_OTH_HEADER} 
+                                            
+                            Get object                 ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            Search object              ${KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}    ${S_OBJ_H}            
+                            Head object                ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}           
+                            
+                            Get Range                  ${KEY}    ${CID}        ${S_OID_USER}            s_get_range       ${EMPTY}            0:256
+                            Get Range Hash             ${KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}          0:256
+                            Delete object              ${KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+
+                            Set eACL                   ${USER_KEY}     ${CID}        ${DENY_EACL}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+
+                            Run Keyword And Expect Error        *
+                            ...  Put object                          ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}            ${FILE_USR_HEADER} 
+                            Run Keyword And Expect Error        *
+                            ...  Get object                          ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}            local_file_eacl
+                            Run Keyword And Expect Error        *
+                            ...  Search object                       ${KEY}    ${CID}       ${EMPTY}         ${EMPTY}            ${FILE_USR_HEADER}       ${S_OBJ_H}            
+                            Run Keyword And Expect Error        *
+                            ...  Head object                         ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}             
+                            Run Keyword And Expect Error        *
+                            ...  Get Range                           ${KEY}    ${CID}       ${S_OID_USER}    s_get_range         ${EMPTY}            0:256
+                            Run Keyword And Expect Error        *
+                            ...  Get Range Hash                      ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}            0:256
+                            Run Keyword And Expect Error        *
+                            ...  Delete object                       ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+
+                            Set eACL                            ${USER_KEY}    ${CID}       ${ALLOW_EACL}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+                            
+                            Put object                 ${KEY}    ${FILE_S}     ${CID}              ${EMPTY}            ${FILE_OTH_HEADER} 
+                            Get object               ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}            local_file_eacl
+                            Search object                       ${KEY}    ${CID}        ${EMPTY}            ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}            
+                            Head object                         ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             
+                            Get Range                           ${KEY}    ${CID}        ${S_OID_USER}       s_get_range          ${EMPTY}            0:256
+                            Get Range Hash                      ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}             0:256
+                            Delete object                       ${KEY}    ${CID}        ${S_OID_USER}       ${EMPTY}
+

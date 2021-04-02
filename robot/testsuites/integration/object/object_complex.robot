@@ -16,7 +16,7 @@ NeoFS Complex Object Operations
                         Generate wallet         ${WALLET}
     ${ADDR} =           Dump Address            ${WALLET}
     ${PRIV_KEY} =       Dump PrivKey            ${WALLET}               ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     15
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     15
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
@@ -36,9 +36,9 @@ NeoFS Complex Object Operations
                         Container Existing                  ${PRIV_KEY}    ${CID}
                         
                         Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    10            -7e-08
+                        ...  Expected Balance               ${PRIV_KEY}    10            -1e-08
 
-    ${FILE} =           Generate file of bytes              70e+6
+    ${FILE} =           Generate file of bytes              ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
     ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}  

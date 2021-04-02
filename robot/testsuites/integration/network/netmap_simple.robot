@@ -66,7 +66,7 @@ NeoFS Simple Netmap
 
 
 Generate file
-    ${FILE} =           Generate file of bytes    1024
+    ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
                         Set Global Variable       ${FILE}    ${FILE}
  
 Generate Key and Pre-payment
@@ -83,7 +83,7 @@ Generate Key and Pre-payment
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     11
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     11
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}

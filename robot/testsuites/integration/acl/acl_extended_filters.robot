@@ -16,12 +16,12 @@ Extended ACL Operations
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
-                            Generate files    1024
+                            Generate files    ${SIMPLE_OBJ_SIZE}
                             Check Filters
 
                             
                             Log    Check extended ACL with complex object
-                            Generate files    70e+6
+                            Generate files    ${COMPLEX_OBJ_SIZE}
                             Check Filters
                              
     [Teardown]              Cleanup  
@@ -49,7 +49,10 @@ Check eACL MatchType String Equal Request Deny
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
 
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
-                                                        
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=2
                             Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=256
@@ -69,8 +72,8 @@ Check eACL MatchType String Equal Request Deny
                             Run Keyword And Expect Error    *
                             ...  Delete object              ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       --xhdr a=2
 
-                            Put object             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=256
-                            Get object           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=*
+                            Put object                      ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=256
+                            Get object                      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=*
                             Search object                   ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}        --xhdr a=
                             Head object                     ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}              --xhdr a=.*
                             Get Range                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a="2 2"
@@ -91,14 +94,18 @@ Check eACL MatchType String Equal Request Allow
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID   
 
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}    --await
+
+                            # The current ACL cache lifetime is 30 sec
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+                            
                             Get eACL                        ${USER_KEY}    ${CID}
                                                         
                             Run Keyword And Expect Error    *
-                            ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    
+                            ...  Get object                 ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    
                             Run Keyword And Expect Error    *
-                            ...  Put object        ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}       
+                            ...  Put object                 ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}       
                             Run Keyword And Expect Error    *
-                            ...  Get object      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      
+                            ...  Get object                 ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}      
                             Run Keyword And Expect Error    *
                             ...   Search object             ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}         
                             Run Keyword And Expect Error    *
@@ -110,8 +117,8 @@ Check eACL MatchType String Equal Request Allow
                             Run Keyword And Expect Error    *
                             ...  Delete object              ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}        
 
-                            Put object             ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=2
-                            Get object           ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=2
+                            Put object                      ${OTHER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}    ${EMPTY}        --xhdr a=2
+                            Get object                      ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl       ${EMPTY}        --xhdr a=2
                             Search object                   ${OTHER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${EMPTY}        --xhdr a=2
                             Head object                     ${OTHER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${EMPTY}              --xhdr a=2
                             Get Range                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a=2
@@ -121,11 +128,11 @@ Check eACL MatchType String Equal Request Allow
 
 Check eACL MatchType String Equal Object
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object                      ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER} 
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}     
     &{HEADER_DICT} =        Parse Object System Header      ${HEADER}                             
-                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Get object                      ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object ID
@@ -133,12 +140,12 @@ Check eACL MatchType String Equal Object
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
-    ${eACL_gen} =           Create List    ${rule1}
+    ${eACL_gen} =           Create List          ${rule1}
     ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
                                         
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
                             Run Keyword And Expect Error    *
-                            ...  Get object      ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
+                            ...  Get object                 ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object Extended User Header     

@@ -59,11 +59,11 @@ NeoFS Storage Smoke
     ${CONTEINERS_LIST} =        Container List               ${PRIV_KEY}      
                                 List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
 
-    ${FILE_S3} =                Generate file of bytes    1024
+    ${FILE_S3} =                Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
     ${FILE_S3_NAME} =           Get file name             ${FILE_S3} 
 
-    ${FILE_FS} =                Generate file of bytes    1024
+    ${FILE_FS} =                Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_FS_HASH} =           Get file hash             ${FILE_FS}
     ${FILE_FS_NAME} =           Get file name             ${FILE_FS}  
 
@@ -89,5 +89,4 @@ NeoFS Storage Smoke
                                 Verify file hash    s_file_read       ${FILE_S3_HASH}
                                 Verify file hash    ${FILEPATH_S3}    ${FILE_S3_HASH}  
 
-    [Teardown]                  Cleanup Files    ${FILE_S3}       ${FILE_FS}        s_file_read       s3_obj_get_s3    
-                                ...              fs_obj_get_s3    ${FILEPATH_S3}    ${FILEPATH_FS}
+    [Teardown]                  Cleanup Files

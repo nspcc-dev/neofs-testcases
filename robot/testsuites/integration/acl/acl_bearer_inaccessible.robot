@@ -17,12 +17,12 @@ BearerToken Operations for Inaccessible Container
                             Prepare eACL Role rules
     
                             Log    Check Bearer token with simple object
-                            Generate file    1024
+                            Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Container Inaccessible and Allow All Bearer
 
                             Log    Check Bearer token with complex object
                             
-                            Generate file    70e+6
+                            Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Container Inaccessible and Allow All Bearer
 
     [Teardown]              Cleanup   

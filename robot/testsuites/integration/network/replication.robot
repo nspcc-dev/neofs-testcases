@@ -8,14 +8,14 @@ Library     ../${RESOURCES}/payment_neogo.py
 NeoFS Object Replication
     [Documentation]         Testcase to validate NeoFS object replication.
     [Tags]                  Migration  Replication  NeoFS  NeoCLI
-    [Timeout]               15 min
+    [Timeout]               25 min
 
     ${WALLET} =             Init wallet
                             Generate wallet                       ${WALLET}
     ${ADDR} =               Dump Address                          ${WALLET}
     ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}              ${ADDR}
 
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NTrezR3C4X8aMLVg7vozt5wguyNfFhwuFx      ${ADDR}     11
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
@@ -32,7 +32,7 @@ NeoFS Object Replication
                             Container Existing                    ${PRIV_KEY}    ${CID}
 
 
-    ${FILE} =               Generate file of bytes                1024
+    ${FILE} =               Generate file of bytes                ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash                         ${FILE}
 
     ${S_OID} =              Put object                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 
@@ -53,7 +53,14 @@ NeoFS Object Replication
                             Find in Nodes Log                     object successfully replicated    ${NODES_LOG_TIME}
 
                             Start nodes                           @{NODES_OBJ_STOPPED}
-                            Cleanup
+
+                            # We have 2 or 3 copies. Expected behaviour: after one epoch potential 3rd copy should be removed.
+
+                            Sleep                                 ${NEOFS_EPOCH_TIMEOUT}
+
+                            Validate storage policy for object    ${PRIV_KEY}    2       ${CID}      ${S_OID}
+  
+    [Teardown]              Cleanup
     
     
 *** Keywords ***

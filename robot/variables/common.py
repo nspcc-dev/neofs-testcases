@@ -8,8 +8,13 @@ CERT="%s/../../ca" % ROOT
 # path from repo root is required for object put and get
 # in case when test is run from root in docker
 ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
-
-# Price of the contract Deposit execution: 0.1493182 GAS
-NEOFS_CONTRACT_DEPOSIT_GAS_FEE = 0.1493182
-NEOFS_CONTRACT_WITHDRAW_GAS_FEE = 0.0331791
-TEMP_DIR = "TemporaryDir/"
+# Price of the contract Deposit/Withdraw execution:
+NEOFS_CONTRACT_DEPOSIT_GAS_FEE = 0.1679897
+NEOFS_CONTRACT_WITHDRAW_GAS_FEE = 0.0382514
+NEOFS_EPOCH_TIMEOUT = "5min"
+NEOFS_CONTRACT_CACHE_TIMEOUT = "30s"
+NEOFS_IR_WIF = "KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY"
+NEOFS_SN_WIF = "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s"
+DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
+SIMPLE_OBJ_SIZE = 1024
+COMPLEX_OBJ_SIZE = 70000000
