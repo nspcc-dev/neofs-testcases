@@ -15,11 +15,11 @@ Basic ACL Operations for Public Container
                             Generate Keys
     
                             Create Containers
-                            Generate file    1024
+                            Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Public Container
 
                             Create Containers
-                            Generate file    70e+6
+                            Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container
 
     [Teardown]              Cleanup  

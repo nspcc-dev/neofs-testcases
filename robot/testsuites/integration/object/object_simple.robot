@@ -16,7 +16,7 @@ NeoFS Simple Object Operations
                         Generate wallet         ${WALLET}
     ${ADDR} =           Dump Address            ${WALLET}
     ${PRIV_KEY} =       Dump PrivKey            ${WALLET}               ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     15
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     15
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
@@ -38,7 +38,7 @@ NeoFS Simple Object Operations
                         Wait Until Keyword Succeeds         2 min          30 sec
                         ...  Expected Balance               ${PRIV_KEY}    10            -1e-08
 
-    ${FILE} =           Generate file of bytes              1024
+    ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
 

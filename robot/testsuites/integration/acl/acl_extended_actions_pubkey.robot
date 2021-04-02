@@ -16,11 +16,11 @@ Extended ACL Operations
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
-                            Generate files    1024
+                            Generate files    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny All Other and Allow All Pubkey
 
                             Log    Check extended ACL with complex object
-                            Generate files    70e+6
+                            Generate files    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny All Other and Allow All Pubkey
                              
                              
@@ -47,7 +47,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}    --await
 
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Get eACL                            ${USER_KEY}    ${CID}
 

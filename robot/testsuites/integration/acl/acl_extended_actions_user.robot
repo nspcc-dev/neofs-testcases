@@ -16,11 +16,11 @@ Extended ACL Operations
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
-                            Generate files    1024
+                            Generate files    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All User
                             
                             Log    Check extended ACL with complex object
-                            Generate files    70e+6
+                            Generate files    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All User
                              
     [Teardown]              Cleanup  

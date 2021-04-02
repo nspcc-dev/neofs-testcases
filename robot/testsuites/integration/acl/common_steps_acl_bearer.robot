@@ -22,8 +22,8 @@ Generate Keys
     
     # Get pre-defined keys
     ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-    ${SYSTEM_KEY_GEN} =     Set Variable            KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY
-    ${SYSTEM_KEY_GEN_SN} =  Set Variable            Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s
+    ${SYSTEM_KEY_GEN} =     Set Variable            ${NEOFS_IR_WIF}
+    ${SYSTEM_KEY_GEN_SN} =  Set Variable            ${NEOFS_SN_WIF}
 
     # Set global variables for keys for each role
                             Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
@@ -39,7 +39,7 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
     
-    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     3
+    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     3
                             Wait Until Keyword Succeeds         1 min       15 sec        
                             ...  Transaction accepted in block  ${TX}
                             Get Transaction                     ${TX}

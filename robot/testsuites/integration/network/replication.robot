@@ -15,7 +15,7 @@ NeoFS Object Replication
     ${ADDR} =               Dump Address                          ${WALLET}
     ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}              ${ADDR}
 
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     11
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
@@ -32,7 +32,7 @@ NeoFS Object Replication
                             Container Existing                    ${PRIV_KEY}    ${CID}
 
 
-    ${FILE} =               Generate file of bytes                1024
+    ${FILE} =               Generate file of bytes                ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash                         ${FILE}
 
     ${S_OID} =              Put object                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 

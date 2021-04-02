@@ -16,7 +16,7 @@ NeoFS Complex Storagegroup
                         Generate wallet         ${WALLET}
     ${ADDR} =           Dump Address            ${WALLET}
     ${PRIV_KEY} =       Dump PrivKey            ${WALLET}               ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     15
+    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     15
                         Wait Until Keyword Succeeds         1 min       15 sec        
                         ...  Transaction accepted in block  ${TX}
                         Get Transaction                     ${TX}
@@ -35,7 +35,7 @@ NeoFS Complex Storagegroup
     ${CID} =            Create container                    ${PRIV_KEY}
                         Container Existing                  ${PRIV_KEY}    ${CID}
 
-    ${FILE_S} =           Generate file of bytes            70e+6
+    ${FILE_S} =           Generate file of bytes            ${COMPLEX_OBJ_SIZE} 
     ${FILE_HASH_S} =      Get file hash                     ${FILE_S}
 
 
@@ -49,11 +49,11 @@ NeoFS Complex Storagegroup
     ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${S_OID_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}
     @{SPLIT_OBJ_1} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_1}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    70000000    @{SPLIT_OBJ_1}
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${COMPLEX_OBJ_SIZE}    @{SPLIT_OBJ_1}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_1}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    70000000    @{SPLIT_OBJ_1}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${COMPLEX_OBJ_SIZE}    @{SPLIT_OBJ_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
 
@@ -62,11 +62,12 @@ NeoFS Complex Storagegroup
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${SG_OID_2}
     @{SPLIT_OBJ_2} =    Get Split objects    ${PRIV_KEY}    ${CID}   ${S_OID_2}
     @{SPLIT_OBJ_ALL} =  Combine Lists    ${SPLIT_OBJ_1}    ${SPLIT_OBJ_2}
-                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    140000000    @{SPLIT_OBJ_ALL}
+    ${EXPECTED_SIZE} =  Evaluate    2*${COMPLEX_OBJ_SIZE}                               
+                        Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    ${EXPECTED_SIZE}    @{SPLIT_OBJ_ALL}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_2}    ${ADDR}
                         Run Keyword And Expect Error    *       
-                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    140000000    @{SPLIT_OBJ_ALL}
+                        ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    ${EXPECTED_SIZE}    @{SPLIT_OBJ_ALL}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
                         Log    Incorrect input

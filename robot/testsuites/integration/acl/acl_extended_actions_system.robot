@@ -16,11 +16,11 @@ Extended ACL Operations
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
-                            Generate files    1024
+                            Generate files    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All System
 
                             Log    Check extended ACL with complex object
-                            Generate files    70e+6
+                            Generate files    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All System
                              
     [Teardown]              Cleanup  
@@ -61,7 +61,7 @@ Check eACL Deny and Allow All System
                             Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}    --await
 
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
                             ...  Put object        ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER} 
@@ -105,7 +105,7 @@ Check eACL Deny and Allow All System
                             Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}    --await
 
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
     ${D_OID_USER_S} =       Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
     ${D_OID_USER_SN} =      Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 

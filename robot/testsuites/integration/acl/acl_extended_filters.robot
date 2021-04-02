@@ -16,12 +16,12 @@ Extended ACL Operations
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
-                            Generate files    1024
+                            Generate files    ${SIMPLE_OBJ_SIZE}
                             Check Filters
 
                             
                             Log    Check extended ACL with complex object
-                            Generate files    70e+6
+                            Generate files    ${COMPLEX_OBJ_SIZE}
                             Check Filters
                              
     [Teardown]              Cleanup  
@@ -51,7 +51,7 @@ Check eACL MatchType String Equal Request Deny
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
 
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl    ${EMPTY}    --xhdr a=2
@@ -96,7 +96,7 @@ Check eACL MatchType String Equal Request Allow
                             Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}    --await
 
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
                             
                             Get eACL                        ${USER_KEY}    ${CID}
                                                         

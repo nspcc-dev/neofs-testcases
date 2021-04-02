@@ -387,13 +387,13 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
             filter_item = re.sub(r'=', ' EQ ', filter_item)
             filters_result += f"--filters '{filter_item}' "
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
 
         logger.info("Output: %s" % complProc.stdout)
@@ -596,14 +596,14 @@ def get_container_logs(testcase_name: str):
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object head --cid {cid} --oid {oid_ts} --json'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
 
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         full_headers = json.loads(complProc.stdout)
         logger.info("Output: %s" % full_headers)
@@ -660,13 +660,13 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
         f'head --cid {cid} --oid {oid} {bearer_token} {options}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
 
@@ -798,13 +798,13 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
     if bearer:
         bearer_token = f"--bearer {TEMP_DIR}{bearer}"
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
         logger.info("Output: %s" % complProc.stdout)
         tombstone = _parse_oid(complProc.stdout)
@@ -854,13 +854,13 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     if bearer:
         bearer = f"--bearer {TEMP_DIR}{bearer}"
 
-    putObjectCmd = (
+    putobject_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
         f'put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     )
-    logger.info("Cmd: %s" % putObjectCmd)
+    logger.info("Cmd: %s" % putobject_cmd)
     try:
-        complProc = subprocess.run(putObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(putobject_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
         logger.info("Output: %s" % complProc.stdout)
         oid = _parse_oid(complProc.stdout)
@@ -937,14 +937,14 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object hash --cid {cid} --oid {oid} --range {range_cut} '
         f'{bearer_token} {options}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
@@ -964,14 +964,14 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} '
         f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
         f'{options}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
@@ -988,13 +988,13 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
         f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
-    logger.info(f"Cmd: {ObjectCmd}")
+    logger.info(f"Cmd: {object_cmd}")
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info(f"Output: {complProc.stdout}" )
 
@@ -1010,11 +1010,14 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup list --cid {cid} {bearer_token}'
+    object_cmd = ( 
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'storagegroup list --cid {cid} {bearer_token}'
+    )
 
-    logger.info(f"Cmd: {ObjectCmd}")
+    logger.info(f"Cmd: {object_cmd}")
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info(f"Output: {complProc.stdout}")
 
@@ -1038,10 +1041,10 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
-    logger.info(f"Cmd: {ObjectCmd}")
+    object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
+    logger.info(f"Cmd: {object_cmd}")
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info(f"Output: {complProc.stdout}")
       
@@ -1070,13 +1073,13 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
         f'delete --cid {cid} --id {oid} {bearer_token}'
     )
-    logger.info(f"Cmd: {ObjectCmd}")
+    logger.info(f"Cmd: {object_cmd}")
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info(f"Output: {complProc.stdout}")
 
@@ -1094,13 +1097,13 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
 
 def _exec_cli_cmd(private_key: bytes, postfix: str):
     # Get linked objects from first
-    ObjectCmd = (
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --raw --host {NEOFS_ENDPOINT} '
         f'--key {binascii.hexlify(private_key).decode()} {postfix}'
     )
-    logger.info("Cmd: %s" % ObjectCmd)
+    logger.info("Cmd: %s" % object_cmd)
     try:
-        complProc = subprocess.run(ObjectCmd, check=True, universal_newlines=True,
+        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:

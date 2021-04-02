@@ -19,7 +19,7 @@ NeoFS Deposit and Withdraw
     ${ADDR} =               Dump Address                          ${WALLET}
     ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}               ${ADDR}
 
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json     NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb      ${ADDR}     15
+    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     15
                             Wait Until Keyword Succeeds           1 min                   15 sec        
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
@@ -45,7 +45,7 @@ NeoFS Deposit and Withdraw
                             Wait Until Keyword Succeeds           1 min                  15 sec        
                             ...  Transaction accepted in block    ${TX}
 
-                            Sleep  30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Get Balance                           ${PRIV_KEY}   
                             Mainnet Balance                       ${ADDR}

@@ -16,12 +16,12 @@ BearerToken Operations for Сompound Operations
                             Prepare eACL Role rules
     
                             Log    Check Bearer token with simple object
-                            Generate file    1024
+                            Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Сompound Operations
 
                             Log    Check Bearer token with complex object
                             
-                            Generate file    70e+6
+                            Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Сompound Operations
 
     [Teardown]              Cleanup   
@@ -56,7 +56,7 @@ Check Bearer Сompound Get
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=${DENY_GROUP}  
     ${rule2}=               Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=${DENY_GROUP}  
@@ -85,7 +85,7 @@ Check Bearer Сompound Delete
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
                             
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
     ${rule1} =              Create Dictionary    Operation=DELETE          Access=ALLOW    Role=${DENY_GROUP}  
     ${rule2} =              Create Dictionary    Operation=PUT             Access=DENY     Role=${DENY_GROUP}   
@@ -114,7 +114,7 @@ Check Bearer Сompound Get Range Hash
                             Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
                             
                             # The current ACL cache lifetime is 30 sec
-                            Sleep       30s
+                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
         ${rule1} =          Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=${DENY_GROUP} 
         ${rule2} =          Create Dictionary    Operation=GETRANGE        Access=DENY     Role=${DENY_GROUP}  
