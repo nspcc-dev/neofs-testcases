@@ -12,31 +12,8 @@ NeoFS Complex Object Operations
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
 
-    ${WALLET} =         Init wallet
-                        Generate wallet         ${WALLET}
-    ${ADDR} =           Dump Address            ${WALLET}
-    ${PRIV_KEY} =       Dump PrivKey            ${WALLET}               ${ADDR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     15
-                        Wait Until Keyword Succeeds         1 min       15 sec        
-                        ...  Transaction accepted in block  ${TX}
-                        Get Transaction                     ${TX}
-                        Expected Mainnet Balance            ${ADDR}     15
-
-    ${SCRIPT_HASH} =    Get ScriptHash           ${PRIV_KEY}  
-
-    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WALLET}      ${ADDR}       ${SCRIPT_HASH}      10
-                        Wait Until Keyword Succeeds         1 min          15 sec        
-                        ...  Transaction accepted in block  ${TX_DEPOSIT}
-                        Get Transaction                     ${TX_DEPOSIT}
-
-    ${BALANCE} =        Wait Until Keyword Succeeds         5 min         1 min        
-                        ...  Expected Balance               ${PRIV_KEY}    0             10
-
-    ${CID} =            Create container                    ${PRIV_KEY}
-                        Container Existing                  ${PRIV_KEY}    ${CID}
-                        
-                        Wait Until Keyword Succeeds         2 min          30 sec
-                        ...  Expected Balance               ${PRIV_KEY}    10            -1e-08
+                        Payment operations
+                        Create container
 
     ${FILE} =           Generate file of bytes              ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}

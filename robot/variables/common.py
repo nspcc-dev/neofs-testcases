@@ -9,9 +9,13 @@ CERT="%s/../../ca" % ROOT
 # in case when test is run from root in docker
 ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
 # Price of the contract Deposit/Withdraw execution:
+MAINNET_WALLET_PATH = "wallets/wallet.json"
 NEOFS_CONTRACT_DEPOSIT_GAS_FEE = 0.1679897
 NEOFS_CONTRACT_WITHDRAW_GAS_FEE = 0.0382514
 NEOFS_EPOCH_TIMEOUT = "5min"
+BASENET_BLOCK_TIME = "15s"
+BASENET_WAIT_TIME = "1min"
+MORPH_BLOCK_TIME = "1s"
 NEOFS_CONTRACT_CACHE_TIMEOUT = "30s"
 NEOFS_IR_WIF = "KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY"
 NEOFS_SN_WIF = "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s"
