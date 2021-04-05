@@ -9,6 +9,8 @@
     - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`, add alias path to
     bin/neofs-cli or run `export NEOFS_CLI_EXEC=<path_to_binary>`
 
+    or download binary from releases: https://github.com/nspcc-dev/neofs-node/releases
+
 2. Install cdn-authmate
     - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
     - `cd cdn-authmate`
@@ -23,6 +25,8 @@
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go`, add alias path to bin/neo-go
         or run `export NEOGO_CLI_EXEC=<path_to_binary>`
+
+    or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
 
 4. Install Testcases dependencies
     - `pip3 install -r requirements.txt`
@@ -46,11 +50,15 @@ To run an arbitrary UserScenario or testcase, you need to run the command:
 The following UserScenarios and testcases are available for execution:
 
  * acl
+     * acl_basic_private_container_storagegroup.robot
      * acl_basic_private_container.robot
+     * acl_basic_public_container_storagegroup.robot
      * acl_basic_public_container.robot
+     * acl_basic_readonly_container_storagegroup.robot
      * acl_basic_readonly_container.robot
-     * acl_bearer compound.robot
+     * acl_bearer_allow_storagegroup.robot
      * acl_bearer_allow.robot
+     * acl_bearer_compound.robot
      * acl_bearer_filter_oid_equal.robot
      * acl_bearer_filter_oid_not_equal.robot
      * acl_bearer_filter_userheader_equal.robot
@@ -59,7 +67,10 @@ The following UserScenarios and testcases are available for execution:
      * acl_bearer_request_filter_xheader_deny.robot
      * acl_bearer_request_filter_xheader_equal.robot
      * acl_bearer_request_filter_xheader_not_equal.robot
-     * acl_extended_actions.robot
+     * acl_extended_actions_other.robot
+     * acl_extended_actions_pubkey.robot
+     * acl_extended_actions_system.robot
+     * acl_extended_actions_user.robot
      * acl_extended_compound.robot
      * acl_extended_filters.robot
  * network
@@ -127,8 +138,6 @@ python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 `robot/testsuites/` - Robot TestSuites and TestCases.
 
 `robot/testsuites/integration/` - Integration test suites and testcases
-
-`robot/testsuites/fi/` - Fault Injection testsuites and testcases
 
 ### Code style
 
