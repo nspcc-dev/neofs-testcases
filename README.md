@@ -139,8 +139,6 @@ python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 
 `robot/testsuites/integration/` - Integration test suites and testcases
 
-`robot/testsuites/fi/` - Fault Injection testsuites and testcases
-
 ### Code style
 
 Robot Framework keyword should use space as a separator between particular words
