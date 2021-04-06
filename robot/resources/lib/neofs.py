@@ -196,7 +196,7 @@ def get_epoch(private_key: str):
         logger.info(f"Output: {output}")
         return int(output)
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
@@ -212,7 +212,7 @@ def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
         output = complProc.stdout
         logger.info(f"Output: {output}")
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Form BearerToken file')
 def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list,
