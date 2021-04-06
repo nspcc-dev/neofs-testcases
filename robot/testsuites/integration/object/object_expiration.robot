@@ -13,7 +13,7 @@ NeoFS Simple Object Operations
     [Timeout]           20 min
 
                         Payment operations
-                        Create container
+                        Prepare container
 
     ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash    ${FILE}
@@ -48,6 +48,7 @@ NeoFS Simple Object Operations
                         Get object    ${PRIV_KEY}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
                         Get object    ${PRIV_KEY}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
+                        # Wait one more epoch to check that expired object (OID_NXT) will be removed
                         Sleep   ${NEOFS_EPOCH_TIMEOUT}
 
                         Run Keyword And Expect Error        *

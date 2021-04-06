@@ -30,9 +30,10 @@ Payment operations
                         ...  Expected Balance                 ${PRIV_KEY}    0    ${DEPOSIT_AMOUNT}
 
                         Set Global Variable                   ${PRIV_KEY}    ${PRIV_KEY}
+                        Set Global Variable                   ${ADDR}    ${ADDR}
 
 
-Create container
+Prepare container
     ${CID} =            Create container                      ${PRIV_KEY}
                         Container Existing                    ${PRIV_KEY}    ${CID}
                         
@@ -40,3 +41,4 @@ Create container
                         ...  Expected Balance                 ${PRIV_KEY}    ${DEPOSIT_AMOUNT}    ${NEOFS_CREATE_CONTAINER_GAS_FEE}
 
                         Set Global Variable                   ${CID}    ${CID}
+                        

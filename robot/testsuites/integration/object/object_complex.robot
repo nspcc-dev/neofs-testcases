@@ -13,7 +13,7 @@ NeoFS Complex Object Operations
     [Timeout]           20 min
 
                         Payment operations
-                        Create container
+                        Prepare container
 
     ${FILE} =           Generate file of bytes              ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}

@@ -10,10 +10,10 @@ Resource    common_steps_object.robot
 NeoFS Simple Object Operations
     [Documentation]     Testcase to validate NeoFS operations with simple object.
     [Tags]              Object  NeoFS  NeoCLI
-    [Timeout]           20 min
+    [Timeout]           6 min
 
                         Payment operations
-                        Create container
+                        Prepare container
 
     ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
