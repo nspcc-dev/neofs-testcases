@@ -184,32 +184,35 @@ def get_eacl(private_key: str, cid: str):
 
 @keyword('Get Epoch')
 def get_epoch(private_key: str):
-    Cmd = (
+    cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'netmap epoch'
     )
-
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
-
-    return int(output)
+    logger.info(f"Cmd: {cmd}")
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+        return int(output)
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
     file_path = TEMP_DIR + eacl
-
-    Cmd = (
+    cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'container set-eacl --cid {cid} --table {file_path} {add_keys}'
     )
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
+    logger.info(f"Cmd: {cmd}")
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Form BearerToken file')
 def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list,
