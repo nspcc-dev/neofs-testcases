@@ -182,20 +182,37 @@ def get_eacl(private_key: str, cid: str):
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
+@keyword('Get Epoch')
+def get_epoch(private_key: str):
+    cmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'netmap epoch'
+    )
+    logger.info(f"Cmd: {cmd}")
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+        return int(output)
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
     file_path = TEMP_DIR + eacl
-
-    Cmd = (
+    cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'container set-eacl --cid {cid} --table {file_path} {add_keys}'
     )
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
+    logger.info(f"Cmd: {cmd}")
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Form BearerToken file')
 def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list,
@@ -851,6 +868,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
     if user_headers:
         user_headers = f"--attributes {user_headers}"
+
     if bearer:
         bearer = f"--bearer {TEMP_DIR}{bearer}"
 

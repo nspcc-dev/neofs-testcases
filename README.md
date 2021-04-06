@@ -81,6 +81,7 @@ The following UserScenarios and testcases are available for execution:
      * object_simple.robot
      * object_storagegroup_simple.robot
      * object_storagegroup_complex.robot
+     * object_expiration.robot
  * payment
      * withdraw.robot
  * services
