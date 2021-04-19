@@ -17,7 +17,7 @@ NEOFS_CONTRACT_WITHDRAW_GAS_FEE = 0.0382514
 NEOFS_CREATE_CONTAINER_GAS_FEE = -1e-08
 # NEOFS_EPOCH_TIMEOUT can be declared from neofs-dev-env env variables as NEOFS_IR_TIMERS_EPOCH 
 # (high priority is accepted for env as NEOFS_EPOCH_TIMEOUT)
-NEOFS_EPOCH_TIMEOUT = (os.getenv("NEOFS_EPOCH_TIMEOUT") if "NEOFS_EPOCH_TIMEOUT" in os.environ 
+NEOFS_EPOCH_TIMEOUT = (os.getenv("NEOFS_EPOCH_TIMEOUT") if os.getenv("NEOFS_EPOCH_TIMEOUT") 
                        else os.getenv("NEOFS_IR_TIMERS_EPOCH", "300s"))
 BASENET_BLOCK_TIME = os.getenv('BASENET_BLOCK_TIME', "15s")
 BASENET_WAIT_TIME = "1min"
@@ -34,12 +34,12 @@ NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
 NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"
 # NEO_MAINNET_ENDPOINT can be declared from neofs-dev-env env variables as NEOFS_IR_MAINNET_ENDPOINT_CLIENT 
 # (high priority is accepted for env as NEO_MAINNET_ENDPOINT)
-NEO_MAINNET_ENDPOINT = (os.getenv("NEO_MAINNET_ENDPOINT") if "NEO_MAINNET_ENDPOINT" in os.environ 
+NEO_MAINNET_ENDPOINT = (os.getenv("NEO_MAINNET_ENDPOINT") if os.getenv("NEO_MAINNET_ENDPOINT")
                         else os.getenv("NEOFS_IR_MAINNET_ENDPOINT_CLIENT", 'http://main_chain.neofs.devenv:30333'))
 
 # NEOFS_NEO_API_ENDPOINT can be declared from neofs-dev-env env variables as NEOFS_IR_MORPH_ENDPOINT_CLIENT 
 # (high priority is accepted for env as NEOFS_NEO_API_ENDPOINT)
-NEOFS_NEO_API_ENDPOINT = (os.getenv("NEOFS_NEO_API_ENDPOINT") if "NEOFS_NEO_API_ENDPOINT" in os.environ 
+NEOFS_NEO_API_ENDPOINT = (os.getenv("NEOFS_NEO_API_ENDPOINT") if os.getenv("NEOFS_NEO_API_ENDPOINT")
                           else os.getenv("NEOFS_IR_MORPH_ENDPOINT_CLIENT", 'http://morph_chain.neofs.devenv:30333'))
 HTTP_GATE = 'http://http.neofs.devenv'
 S3_GATE = 'https://s3.neofs.devenv:8080'
@@ -49,7 +49,7 @@ GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
 # NEOFS_CONTRACT can be declared from neofs-dev-env env variables as NEOFS_IR_CONTRACTS_NEOFS 
 # (high priority is accepted for env as NEOFS_CONTRACT)
-NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if "NEOFS_CONTRACT" in os.environ 
+NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT") 
                   else os.getenv("NEOFS_IR_CONTRACTS_NEOFS", '1e6d8b8e1a7c976649dc630062d8b281cb9c2615'))
 DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
 TEMP_DIR = "TemporaryDir/"
