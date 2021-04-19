@@ -27,7 +27,6 @@ DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
 SIMPLE_OBJ_SIZE = 1024
 COMPLEX_OBJ_SIZE = 70000000
 
-#!/usr/bin/python3
 NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
 NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"
 # NEO_MAINNET_ENDPOINT can be declared from neofs-dev-env env variables as NEOFS_IR_MAINNET_ENDPOINT_CLIENT 
