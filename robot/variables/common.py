@@ -23,3 +23,19 @@ NEOFS_SN_WIF = "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s"
 DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
 SIMPLE_OBJ_SIZE = 1024
 COMPLEX_OBJ_SIZE = 70000000
+
+#from neofs_int_vars.py
+#!/usr/bin/python3
+NEOFS_ENDPOINT = "s01.neofs.devenv:8080"
+NEOGO_CLI_PREFIX = "docker exec -it main_chain neo-go"
+NEO_MAINNET_ENDPOINT = os.getenv("NEOFS_IR_MAINNET_ENDPOINT_CLIENT", 'http://main_chain.neofs.devenv:30333')
+
+NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_IR_MORPH_ENDPOINT_CLIENT", 'http://morph_chain.neofs.devenv:30333')
+HTTP_GATE = 'http://http.neofs.devenv'
+S3_GATE = 'https://s3.neofs.devenv:8080'
+NEOFS_NETMAP = ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080']
+
+GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
+NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS", '1e6d8b8e1a7c976649dc630062d8b281cb9c2615')
+DEF_WALLET_ADDR = "NVUzCUvrbuWadAm6xBoyZ2U7nCmS9QBZtb"
+TEMP_DIR = "TemporaryDir/"

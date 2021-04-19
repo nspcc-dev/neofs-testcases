@@ -19,12 +19,14 @@ import shutil
 import time
 from datetime import datetime
 
+from common import *
+
 
 if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
     from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP, TEMP_DIR)
 else:
-    from neofs_int_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
+    from common import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
     NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, NEOFS_NETMAP, TEMP_DIR)
 
 ROBOT_AUTO_KEYWORDS = False
