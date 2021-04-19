@@ -20,13 +20,6 @@ from common import *
 
 ROBOT_AUTO_KEYWORDS = False
 
-if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
-    from selectelcdn_smoke_vars import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_GATE)
-else:
-    from common import (NEOGO_CLI_PREFIX, NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, HTTP_GATE, S3_GATE)
-
 CDNAUTH_EXEC = os.getenv('CDNAUTH_EXEC', 'cdn-authmate')
 
 @keyword('Init S3 Credentials')
