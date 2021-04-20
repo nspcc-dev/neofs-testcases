@@ -15,15 +15,9 @@ from robot.api import logger
 import robot.errors
 from robot.libraries.BuiltIn import BuiltIn
 
+from common import *
+
 ROBOT_AUTO_KEYWORDS = False
-
-
-if os.getenv('ROBOT_PROFILE') == 'selectel_smoke':
-    from selectelcdn_smoke_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
-else:
-    from neofs_int_vars import (NEO_MAINNET_ENDPOINT,
-    NEOFS_NEO_API_ENDPOINT, NEOFS_ENDPOINT, GAS_HASH, NEOFS_CONTRACT, TEMP_DIR)
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')

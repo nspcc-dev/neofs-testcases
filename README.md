@@ -89,28 +89,6 @@ The following UserScenarios and testcases are available for execution:
      * s3_gate.robot
  
 
-## Smoke test execution
-
-There is a suite with smoke tests for CDN gates `robot/testsuites/smoke/selectelcdn_smoke.robot`.
-
-By default, keywords use variables from a file `robot/resources/lib/neofs_int_vars.py`.
-```
-robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot
-```
-
-### Initial preparation
-
-1. It requires separate variables, unlike the NeoFS suites, which run on
-dev-env. In order for the keyword libraries to use them, you need to set the environment variable
-```
-export ROBOT_PROFILE=selectel_smoke
-```
-
-Dev-env is not needed. But you need to install neo-go.
-
-2. To run smoke test: `robot --outputdir artifacts/ robot/testsuites/smoke/selectelcdn_smoke.robot`
-
-
 ## Generation of documentation
 
 To generate Keywords documentation:
