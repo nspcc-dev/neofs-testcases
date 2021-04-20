@@ -48,4 +48,4 @@ GAS_HASH = os.getenv("GAS_HASH", '0xd2a4cff31913016155e38e474a2c06d08be276cf')
 # (high priority is accepted for env as NEOFS_CONTRACT)
 NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT") 
                   else os.getenv("NEOFS_IR_CONTRACTS_NEOFS", '1e6d8b8e1a7c976649dc630062d8b281cb9c2615'))
-TEMP_DIR = "TemporaryDir/"
+TEMP_DIR = os.getenv("TEMP_DIR", "TemporaryDir/")
