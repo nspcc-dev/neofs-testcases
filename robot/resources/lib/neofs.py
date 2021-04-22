@@ -585,21 +585,22 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
 
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str):
-    #client = docker.APIClient()
-    
+
     client = docker.from_env()
+    low_level_client = docker.APIClient(base_url='unix://var/run/docker.sock')
 
     tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
     tar = tarfile.open(tar_name, "w:gz")
 
     for container in client.containers.list():
-        file_name = "artifacts/docker_log_" + container.name
-        with open(file_name,'wb') as out:
-            out.write(container.logs())
-        logger.info(container.name)
+        if low_level_client.inspect_container(container.name)['Config']['Domainname'] == "neofs.devenv":
+            file_name = "artifacts/docker_log_" + container.name
+            with open(file_name,'wb') as out:
+                out.write(container.logs())
+            logger.info(container.name)
 
-        tar.add(file_name)
-        os.remove(file_name)
+            tar.add(file_name)
+            os.remove(file_name)
     
     tar.close()
     
