@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ${KEYWORDS}/wallet.py
 
 *** Test cases ***
 NeoFS Object Replication
@@ -10,13 +11,10 @@ NeoFS Object Replication
     [Tags]                  Migration  Replication  NeoFS  NeoCLI
     [Timeout]               25 min
 
-    ${WALLET} =             Init wallet
-                            Generate wallet                       ${WALLET}
-    ${ADDR} =               Dump Address                          ${WALLET}
-    ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}              ${ADDR}
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
 
     ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
-                            Wait Until Keyword Succeeds           1 min                  15 sec        
+                            Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
                             Expected Mainnet Balance              ${ADDR}                11
@@ -24,7 +22,7 @@ NeoFS Object Replication
     ${SCRIPT_HASH} =        Get ScriptHash                         ${PRIV_KEY}
 
     ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}                ${SCRIPT_HASH}    10
-                            Wait Until Keyword Succeeds           1 min                  15 sec        
+                            Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
 
@@ -35,19 +33,19 @@ NeoFS Object Replication
     ${FILE} =               Generate file of bytes                ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash                         ${FILE}
 
-    ${S_OID} =              Put object                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY} 
-                            Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}   
-    
-    @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}  
+    ${S_OID} =              Put object                   ${PRIV_KEY}    ${FILE}         ${CID}      ${EMPTY}    ${EMPTY}
+                            Validate storage policy for object    ${PRIV_KEY}    2               ${CID}      ${S_OID}
+
+    @{NODES_OBJ} =          Get nodes with object                 ${PRIV_KEY}    ${CID}          ${S_OID}
 
     ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
 
     @{NODES_OBJ_STOPPED} =  Stop nodes                            1              @{NODES_OBJ}
-    
+
     ${state}  ${output}=    Run Keyword And Ignore Error
-                            ...  Wait Until Keyword Succeeds           10 min                 2 min        
+                            ...  Wait Until Keyword Succeeds           10 min                 2 min
                             ...  Validate storage policy for object    ${PRIV_KEY}    2       ${CID}      ${S_OID}
-                            
+
                             Run Keyword If  '${state}'!='PASS'  Log  Warning: Keyword failed: Validate storage policy for object ${S_OID} {\n}${output}  WARN
 
                             Find in Nodes Log                     object successfully replicated    ${NODES_LOG_TIME}
@@ -59,14 +57,14 @@ NeoFS Object Replication
                             Sleep                                 ${NEOFS_EPOCH_TIMEOUT}
 
                             Validate storage policy for object    ${PRIV_KEY}    2       ${CID}      ${S_OID}
-  
+
     [Teardown]              Cleanup
-    
-    
+
+
 *** Keywords ***
-    
+
 Cleanup
-                            Cleanup Files                         
+                            Cleanup Files
                             Get Docker Logs                       replication
 
 

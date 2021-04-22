@@ -23,46 +23,6 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
-@keyword('Init wallet')
-def init_wallet():
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
-    filename = os.getcwd() + '/' + TEMP_DIR + str(uuid.uuid4()) + ".json"
-    cmd = f"{NEOGO_CLI_EXEC} wallet init -w {filename}"
-    logger.info(f"Executing command: {cmd}")
-    stdout  = _run_sh(cmd)
-    logger.info(f"wallet init succeeded with output: {stdout}")
-    return filename
-
-@keyword('Generate wallet from WIF')
-def generate_wallet_from_wif(wallet: str, wif: str):
-    cmd = f"{NEOGO_CLI_EXEC} wallet import --wallet {wallet} --wif {wif}"
-    out = _run_sh_wallet_gen(cmd)
-    logger.info(f"Command completed with output: {out}")
-
-@keyword('Generate wallet')
-def generate_wallet(wallet: str):
-    cmd = f"{NEOGO_CLI_EXEC} wallet create -w {wallet}"
-    out = _run_sh_wallet_gen(cmd)
-    logger.info(f"Command completed with output: {out}")
-
-@keyword('Dump Address')
-def dump_address(wallet: str):
-    with open(wallet) as json_file:
-        data = json.load(json_file)
-        if len(data['accounts']) != 0:
-            return data['accounts'][0]['address']
-        else:
-            raise Exception("Can not get address.")
-
-@keyword('Dump PrivKey')
-def dump_privkey(wallet: str, address: str):
-    cmd = f"{NEOGO_CLI_EXEC} wallet export -w {wallet} --decrypt {address}"
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('\r', cmd)
-    logger.info(f"Command completed with output: {out}")
-    return out
-
 @keyword('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
     cmd = (
@@ -257,15 +217,6 @@ def _get_balance_request(privkey: str):
 
     return output
 
-def _run_sh(args):
-    complProc = subprocess.run(args, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=150, shell=True)
-    output, errors = complProc.stdout, complProc.stderr
-    if errors:
-        return errors
-    return output
-
 def _run_sh_with_passwd(passwd, cmd):
     p = pexpect.spawn(cmd)
     p.expect(".*")
@@ -275,20 +226,3 @@ def _run_sh_with_passwd(passwd, cmd):
     # take a string with tx hash
     tx_hash = p.read().splitlines()[-1]
     return tx_hash.decode()
-
-def _run_sh_wallet_gen(cmd):
-    '''
-    Internal method.
-    '''
-    logger.info(f"Executing command: {cmd}")
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.expect(".*")
-    p.sendline('\r')
-    p.wait()
-    out = p.read()
-    
-    return out
