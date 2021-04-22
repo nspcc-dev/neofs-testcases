@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ${KEYWORDS}/wallet.py
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     10
@@ -14,40 +15,37 @@ NeoFS Deposit and Withdraw
     [Tags]                  Withdraw  NeoFS  NeoCLI
     [Timeout]               10 min
 
-    ${WALLET} =             Init wallet
-                            Generate wallet                       ${WALLET}
-    ${ADDR} =               Dump Address                          ${WALLET}
-    ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}               ${ADDR}
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
 
     ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     15
-                            Wait Until Keyword Succeeds           1 min                   15 sec        
+                            Wait Until Keyword Succeeds           1 min                   15 sec
                             ...  Transaction accepted in block    ${TX}
                             Get Transaction                       ${TX}
     ${MAINNET_BALANCE} =    Expected Mainnet Balance              ${ADDR}                 15
 
     ${SCRIPT_HASH} =        Get ScriptHash                        ${PRIV_KEY}
 
-    
+
     ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}
-                            Wait Until Keyword Succeeds           1 min                  15 sec        
+                            Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
-                            
-                            
+
+
 
     # Expected amount diff will be formed from deposit amount and contract fee
     ${EXPECTED_DIFF} =      Evaluate                              -${DEPOSIT_AMOUNT}-${NEOFS_CONTRACT_DEPOSIT_GAS_FEE}
     ${DEPOSIT_BALANCE} =    Expected Mainnet Balance Diff         ${ADDR}                ${MAINNET_BALANCE}    ${EXPECTED_DIFF}
 
-    ${NEOFS_BALANCE} =      Get Balance                           ${PRIV_KEY}            
+    ${NEOFS_BALANCE} =      Get Balance                           ${PRIV_KEY}
 
     ${TX} =                 Withdraw Mainnet Gas                  ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${WITHDRAW_AMOUNT}
-                            Wait Until Keyword Succeeds           1 min                  15 sec        
+                            Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX}
 
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-                            Get Balance                           ${PRIV_KEY}   
+                            Get Balance                           ${PRIV_KEY}
                             Mainnet Balance                       ${ADDR}
 
                             Expected Balance                      ${PRIV_KEY}            ${NEOFS_BALANCE}    -${WITHDRAW_AMOUNT}
@@ -55,11 +53,11 @@ NeoFS Deposit and Withdraw
      # Expected amount diff will be formed from withdrawal amount and contract fee
      ${EXPECTED_DIFF_W} =   Evaluate                              ${WITHDRAW_AMOUNT}-${NEOFS_CONTRACT_WITHDRAW_GAS_FEE}
                             Expected Mainnet Balance Diff         ${ADDR}                ${DEPOSIT_BALANCE}    ${EXPECTED_DIFF_W}
-    
-    [Teardown]              Cleanup 
-     
+
+    [Teardown]              Cleanup
+
 *** Keywords ***
-    
+
 Cleanup
                             Cleanup Files
                             Get Docker Logs    withdraw
