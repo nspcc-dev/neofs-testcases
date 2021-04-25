@@ -376,7 +376,8 @@ def generate_file_of_bytes(size):
     """
 
     size = int(float(size))
-
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
     filename = TEMP_DIR + str(uuid.uuid4())
     with open('%s'%filename, 'wb') as fout:
         fout.write(os.urandom(size))
@@ -421,7 +422,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        
+
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):
@@ -445,7 +446,7 @@ def get_component_objects(private_key: str, cid: str, oid: str):
 
     # Get all existing objects
     full_obj_list = search_object(private_key, cid, None, None, None, None, '--phy')
-  
+
     # Search expected Linking object
     for targer_oid in full_obj_list:
         header = head_object(private_key, cid, targer_oid, '', '', '--raw')
@@ -601,9 +602,9 @@ def get_container_logs(testcase_name: str):
 
             tar.add(file_name)
             os.remove(file_name)
-    
+
     tar.close()
-    
+
     return 1
 
 @keyword('Verify Head Tombstone')
@@ -845,7 +846,7 @@ def verify_file_hash(filename, expected_hash):
 @keyword('Cleanup Files')
 def cleanup_file():
     if os.path.isdir(TEMP_DIR):
-        try:                                
+        try:
             shutil.rmtree(TEMP_DIR)
         except OSError as e:
             raise Exception(f"Error: '{e.TEMP_DIR}' - {e.strerror}.")
@@ -904,13 +905,13 @@ def get_logs_latest_timestamp():
         timestamp_date = datetime.fromisoformat(timestamp[:-1])
 
         nodes_logs_time[container] = timestamp_date
-    
+
     logger.info("Latest logs timestamp list: %s" % nodes_logs_time)
 
     return nodes_logs_time
 
 
-@keyword('Find in Nodes Log')   
+@keyword('Find in Nodes Log')
 def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 
     client_api = docker.APIClient()
@@ -931,7 +932,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
             found_count = len(re.findall(line, log_lines.decode("utf-8") ))
             logger.info("Node %s log - found counter: %s" % (container, found_count))
             global_count += found_count
-            
+
         else:
             logger.info("Container %s has not been found." % container)
 
@@ -973,7 +974,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     if not endpoint:
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
-    
+
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
@@ -996,7 +997,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 @keyword('Put Storagegroup')
 def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list):
 
-    cmd_oid_line = ",".join(oid_list) 
+    cmd_oid_line = ",".join(oid_list)
 
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
@@ -1023,7 +1024,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    object_cmd = ( 
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'storagegroup list --cid {cid} {bearer_token}'
     )
@@ -1043,7 +1044,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
                 raise Exception("Found storage group '{}' is not equal to expected list '{}'".format(found_objects, expected_list))
 
         return found_objects
-        
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -1060,7 +1061,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
         complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info(f"Output: {complProc.stdout}")
-      
+
         if expected_size:
             if re.search(r'Group size: %s' % expected_size, complProc.stdout):
                 logger.info("Group size %s has been found in the output" % (expected_size))
