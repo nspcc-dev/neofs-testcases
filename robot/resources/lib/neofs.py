@@ -376,14 +376,14 @@ def generate_file_of_bytes(size):
     """
 
     size = int(float(size))
-
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
     filename = TEMP_DIR + str(uuid.uuid4())
     with open('%s'%filename, 'wb') as fout:
         fout.write(os.urandom(size))
 
     logger.info("Random binary file with size %s bytes has been generated." % str(size))
     return os.path.abspath(os.getcwd()) + '/' + filename
-
 
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
