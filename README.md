@@ -30,12 +30,15 @@
 
 4. Install Testcases dependencies
     - `pip3 install -r requirements.txt`
+    - `make deps`
 
 (replace pip3 with the appropriate python package manager on the system).
 
 Test cases are designed to run on Python 3.7+
 
 ### Run
+
+0. Add keywords repo to PYTHONPATH `export PYTHONPATH=${PYTHONPATH}:~/neofs-keywords`
 
 1. Execute the command `make run`
 
@@ -87,7 +90,7 @@ The following UserScenarios and testcases are available for execution:
  * services
      * http_gate.robot
      * s3_gate.robot
- 
+
 
 ## Generation of documentation
 
