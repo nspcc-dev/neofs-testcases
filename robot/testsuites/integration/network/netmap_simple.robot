@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
 
 
@@ -73,15 +74,9 @@ Generate file
                         Set Global Variable       ${FILE}    ${FILE}
 
 Generate Key and Pre-payment
-    ${WALLET} =         Init wallet
-                        Generate wallet         ${WALLET}
-    ${ADDR} =           Dump Address            ${WALLET}
-    ${USER_KEY_GEN} =   Dump PrivKey            ${WALLET}       ${ADDR}
-
+    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
                         Set Global Variable     ${PRIV_KEY}     ${USER_KEY_GEN}
-
                         Payment Operations      ${WALLET}       ${ADDR}      ${PRIV_KEY}
-
 
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}

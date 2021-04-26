@@ -1,8 +1,11 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+<<<<<<< HEAD
+
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/gates.py
+Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
 
 
@@ -13,11 +16,7 @@ NeoFS HTTP Gateway
     [Timeout]           5 min
 
     [Setup]             Create Temporary Directory
-
-    ${WALLET} =         Init wallet
-                        Generate wallet         ${WALLET}
-    ${ADDR} =           Dump Address            ${WALLET}
-    ${PRIV_KEY} =       Dump PrivKey            ${WALLET}              ${ADDR}
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}    6
 
                         Wait Until Keyword Succeeds         1 min      15 sec

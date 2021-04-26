@@ -4,6 +4,7 @@ Library                         Collections
 Library                         ../${RESOURCES}/neofs.py
 Library                         ../${RESOURCES}/payment_neogo.py
 Library                         ../${RESOURCES}/gates.py
+Library                         ${KEYWORDS}/wallet.py
 Library                         ../${RESOURCES}/utility_keywords.py
 
 
@@ -15,13 +16,8 @@ NeoFS S3 Gateway
     [Setup]                     Create Temporary Directory
 
     ${PRIV_KEY} =	        Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
-    ${WALLET} =                 Init wallet
-
-                                Generate wallet from WIF    ${WALLET}      ${PRIV_KEY}
-    ${ADDR} =                   Dump Address                ${WALLET}
-                                Dump PrivKey                ${WALLET}      ${ADDR}
-    ${SCRIPT_HASH} =            Get ScriptHash               ${PRIV_KEY}
-
+    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${TEMP_DIR}     ${PRIV_KEY}
+    ${SCRIPT_HASH} =            Get ScriptHash          ${PRIV_KEY}
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5
                                 Wait Until Keyword Succeeds           1 min            15 sec
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}

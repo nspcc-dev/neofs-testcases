@@ -367,7 +367,6 @@ def container_existing(private_key: str, cid: str):
     _find_cid(complProc.stdout, cid)
     return
 
-
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
         expected_objects_list=[], options:str=""):

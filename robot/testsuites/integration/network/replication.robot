@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
 
 *** Test cases ***
@@ -13,11 +14,7 @@ NeoFS Object Replication
 
     [Setup]                 Create Temporary Directory
 
-    ${WALLET} =             Init wallet
-                            Generate wallet                       ${WALLET}
-    ${ADDR} =               Dump Address                          ${WALLET}
-    ${PRIV_KEY} =           Dump PrivKey                          ${WALLET}              ${ADDR}
-
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
                             Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX}
