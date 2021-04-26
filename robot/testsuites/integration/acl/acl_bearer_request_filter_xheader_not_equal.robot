@@ -2,6 +2,7 @@
 Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
 Resource    common_steps_acl_bearer.robot
@@ -13,34 +14,36 @@ BearerToken Operations with Filter Requst NotEqual
     [Tags]                  ACL  NeoFS  NeoCLI BearerToken
     [Timeout]               20 min
 
+    [Setup]                 Create Temporary Directory
+
                             Generate Keys
                             Prepare eACL Role rules
-    
+
                             Log    Check Bearer token with simple object
                             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter Requst NotEqual
 
                             Log    Check Bearer token with complex object
-                            
+
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter Requst NotEqual
 
-    [Teardown]              Cleanup   
-    
- 
+    [Teardown]              Cleanup
+
+
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER} 
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL} 
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
     @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
-                            Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER} 
+                            Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER}
                             Get object                 ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
-                            Search object              ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}            
-                            Head object                ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}               
+                            Search object              ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}
+                            Head object                ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
                             Get Range                  ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
                             Delete object              ${USER_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
@@ -49,7 +52,7 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_NOT_EQUAL    key=a    value=256 
+    ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_NOT_EQUAL    key=a    value=256
     ${rule1}=               Create Dictionary    Operation=GET             Access=ALLOW    Role=USER    Filters=${filters}
     ${rule2}=               Create Dictionary    Operation=HEAD            Access=ALLOW    Role=USER    Filters=${filters}
     ${rule3}=               Create Dictionary    Operation=PUT             Access=ALLOW    Role=USER    Filters=${filters}
@@ -58,21 +61,21 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=USER    Filters=${filters}
     ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=USER    Filters=${filters}
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-                            Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500 
+                            Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error    *
-                            ...  Put object        ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER} 
+                            ...  Put object        ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
                             #Run Keyword And Expect Error    *
                             #...  Search object              ${USER_KEY}    ${CID}       ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}
                             Run Keyword And Expect Error    *
-                            ...  Head object                ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}               
+                            ...  Head object                ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
                             Run Keyword And Expect Error    *
                             ...  Get Range                  ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error    *
                             ...  Delete object              ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
-                            
+
                             Put object             ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_USR_HEADER}      ${EMPTY}       --xhdr a=2
                             Get object           ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}       --xhdr a=2
                             Search object                   ${USER_KEY}    ${CID}       ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=2

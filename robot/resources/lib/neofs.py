@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.7
 
 import subprocess
 import os
@@ -367,25 +367,6 @@ def container_existing(private_key: str, cid: str):
     _find_cid(complProc.stdout, cid)
     return
 
-@keyword('Generate file of bytes')
-def generate_file_of_bytes(size):
-    """
-    generate big binary file with the specified size in bytes
-    :param size:        the size in bytes, can be declared as 6e+6 for example
-    :return:string      filename
-    """
-
-    size = int(float(size))
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
-    filename = TEMP_DIR + str(uuid.uuid4())
-    with open('%s'%filename, 'wb') as fout:
-        fout.write(os.urandom(size))
-
-    logger.info("Random binary file with size %s bytes has been generated." % str(size))
-    return os.path.abspath(os.getcwd()) + '/' + filename
-
-
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
         expected_objects_list=[], options:str=""):
@@ -583,29 +564,6 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
         logger.info("Chain of the objects has been parsed from the last object ot the first.")
 
     return final_verif_data
-
-@keyword('Get Docker Logs')
-def get_container_logs(testcase_name: str):
-    low_level_client = docker.APIClient(base_url='unix://var/run/docker.sock')
-
-    tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
-    tar = tarfile.open(tar_name, "w:gz")
-
-    for container in low_level_client.containers():
-        container_name = container['Names'][0][1:]
-        if low_level_client.inspect_container(container_name)['Config']['Domainname'] == "neofs.devenv":
-            file_name = "artifacts/docker_log_" + container_name
-            with open(file_name,'wb') as out:
-                logger.info("logs_get")
-                out.write(low_level_client.logs(container_name))
-            logger.info(container_name)
-
-            tar.add(file_name)
-            os.remove(file_name)
-
-    tar.close()
-
-    return 1
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
@@ -842,17 +800,6 @@ def verify_file_hash(filename, expected_hash):
         logger.info("Hash is equal to expected: %s" % file_hash)
     else:
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
-
-@keyword('Cleanup Files')
-def cleanup_file():
-    if os.path.isdir(TEMP_DIR):
-        try:
-            shutil.rmtree(TEMP_DIR)
-        except OSError as e:
-            raise Exception(f"Error: '{e.TEMP_DIR}' - {e.strerror}.")
-    else:
-        logger.warn(f"Error: '{TEMP_DIR}' file not found")
-    logger.info(f"File '{TEMP_DIR}' has been deleted.")
 
 @keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
@@ -1106,23 +1053,6 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-
-
-def _exec_cli_cmd(private_key: bytes, postfix: str):
-    # Get linked objects from first
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --raw --host {NEOFS_ENDPOINT} '
-        f'--key {binascii.hexlify(private_key).decode()} {postfix}'
-    )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    return complProc.stdout
 
 def _get_file_hash(filename):
     blocksize = 65536

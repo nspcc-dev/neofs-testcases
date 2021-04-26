@@ -3,14 +3,17 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/utility_keywords.py
 Resource    common_steps_object.robot
- 
+
 
 *** Test cases ***
 NeoFS Simple Object Operations
     [Documentation]     Testcase to validate NeoFS object expiration option.
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
+
+    [Setup]             Create Temporary Directory
 
                         Payment operations
                         Prepare container
@@ -43,7 +46,7 @@ NeoFS Simple Object Operations
 
                         Run Keyword And Expect Error        *
                         ...  Get object    ${PRIV_KEY}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read
-                        
+
                         # Check that correct object with expiration in the future is existed
                         Get object    ${PRIV_KEY}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
                         Get object    ${PRIV_KEY}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
@@ -57,16 +60,16 @@ NeoFS Simple Object Operations
                         # Check that correct object with expiration in the distant future is existed
                         Get object    ${PRIV_KEY}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
-    [Teardown]          Cleanup                             
+    [Teardown]          Cleanup
 
 
 
 *** Keywords ***
 
 Cleanup
-                        Cleanup Files                       
+                        Cleanup Files
                         Get Docker Logs    object_expiration
- 
+
 
 
 

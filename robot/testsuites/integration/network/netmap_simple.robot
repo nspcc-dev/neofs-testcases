@@ -4,6 +4,7 @@ Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ${KEYWORDS}/wallet.py
+Library     ../${RESOURCES}/utility_keywords.py
 
 
 *** Test cases ***
@@ -11,6 +12,8 @@ NeoFS Simple Netmap
     [Documentation]     Testcase to validate NeoFS Netmap.
     [Tags]              Netmap  NeoFS  NeoCLI
     [Timeout]           20 min
+
+    [Setup]             Create Temporary Directory
 
     Generate Key and Pre-payment
 
@@ -72,11 +75,8 @@ Generate file
 
 Generate Key and Pre-payment
     ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
-
                         Set Global Variable     ${PRIV_KEY}     ${USER_KEY_GEN}
-
                         Payment Operations      ${WALLET}       ${ADDR}      ${PRIV_KEY}
-
 
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}

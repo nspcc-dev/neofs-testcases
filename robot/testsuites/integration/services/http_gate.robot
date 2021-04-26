@@ -1,10 +1,12 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+<<<<<<< HEAD
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/gates.py
 Library     ${KEYWORDS}/wallet.py
+Library     ../${RESOURCES}/utility_keywords.py
 
 
 *** Test cases ***
@@ -12,6 +14,8 @@ Library     ${KEYWORDS}/wallet.py
 NeoFS HTTP Gateway
     [Documentation]     Creates container and does PUT, GET via HTTP Gate
     [Timeout]           5 min
+
+    [Setup]             Create Temporary Directory
     ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}    6
 

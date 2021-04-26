@@ -4,6 +4,7 @@ Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ${KEYWORDS}/wallet.py
+Library     ../${RESOURCES}/utility_keywords.py
 
 *** Test cases ***
 NeoFS Object Replication
@@ -11,8 +12,9 @@ NeoFS Object Replication
     [Tags]                  Migration  Replication  NeoFS  NeoCLI
     [Timeout]               25 min
 
-    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
+    [Setup]                 Create Temporary Directory
 
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
                             Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX}

@@ -2,6 +2,7 @@
 Variables                   ../../../variables/common.py
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
+Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_basic.robot
 
@@ -12,8 +13,10 @@ Basic ACL Operations for Public Container
     [Tags]                  ACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
+    [Setup]                 Create Temporary Directory
+
                             Generate Keys
-    
+
                             Create Containers
                             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Public Container
@@ -22,24 +25,24 @@ Basic ACL Operations for Public Container
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container
 
-    [Teardown]              Cleanup  
-    
- 
+    [Teardown]              Cleanup
+
+
 *** Keywords ***
 
 Check Public Container
 
     # Put
-    ${S_OID_USER} =         Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_OTHER} =        Put object        ${OTHER_KEY}        ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_SYS_IR} =       Put object        ${SYSTEM_KEY_IR}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
-    ${S_OID_SYS_SN} =       Put object        ${SYSTEM_KEY_SN}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY} 
+    ${S_OID_USER} =         Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_OTHER} =        Put object        ${OTHER_KEY}        ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_SYS_IR} =       Put object        ${SYSTEM_KEY_IR}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_SYS_SN} =       Put object        ${SYSTEM_KEY_SN}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
 
     # Get
                             Get object        ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
                             Get object        ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
                             Get object        ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get object        ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read 
+                            Get object        ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
                             Get Range         ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
@@ -79,9 +82,9 @@ Check Public Container
 
 
     # Delete
-                            Delete object     ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_IR}    ${EMPTY}     
+                            Delete object     ${USER_KEY}         ${PUBLIC_CID}    ${S_OID_SYS_IR}    ${EMPTY}
                             Delete object     ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
-                            Delete object     ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}  
+                            Delete object     ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}
                             Delete object     ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}     ${EMPTY}
 
 

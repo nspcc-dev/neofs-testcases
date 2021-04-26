@@ -4,6 +4,7 @@ Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ${KEYWORDS}/wallet.py
+Library     ../${RESOURCES}/utility_keywords.py
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     10
@@ -15,8 +16,9 @@ NeoFS Deposit and Withdraw
     [Tags]                  Withdraw  NeoFS  NeoCLI
     [Timeout]               10 min
 
-    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
+    [Setup]                 Create Temporary Directory
 
+    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json     ${DEF_WALLET_ADDR}      ${ADDR}     15
                             Wait Until Keyword Succeeds           1 min                   15 sec
                             ...  Transaction accepted in block    ${TX}

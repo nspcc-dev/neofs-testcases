@@ -1,8 +1,9 @@
 *** Settings ***
 Variables                   ../../../variables/common.py
-  
+
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
+Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_basic.robot
 
@@ -13,18 +14,20 @@ Basic ACL Operations for Read-Only Container
     [Tags]                  ACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
+    [Setup]                 Create Temporary Directory
+
                             Generate Keys
 
                             Create Containers
                             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Read-Only Container    Simple
-                            
+
                             Create Containers
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Read-Only Container    Complex
 
-    [Teardown]              Cleanup  
-    
+    [Teardown]              Cleanup
+
 
 *** Keywords ***
 
@@ -41,7 +44,7 @@ Check Read-Only Container
     ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
+                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
                         Get Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Delete Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}
 
@@ -50,7 +53,7 @@ Check Read-Only Container
                         ...  Put Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
+                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
                         Get Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
@@ -60,7 +63,7 @@ Check Read-Only Container
                         ...  Put Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER} 		
+                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
                         Get Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
@@ -69,5 +72,5 @@ Check Read-Only Container
 
 
 Cleanup
-                            Cleanup Files  
+                            Cleanup Files
                             Get Docker Logs    acl_basic
