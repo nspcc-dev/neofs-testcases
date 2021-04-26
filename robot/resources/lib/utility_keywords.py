@@ -15,12 +15,11 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Generate file of bytes')
-def generate_file_of_bytes(size) -> str:
+def generate_file_of_bytes(size: str) -> str:
     """
     Function generates big binary file with the specified size in bytes.
     :param size:        the size in bytes, can be declared as 6e+6 for example
     """
-
     size = int(float(size))
     filename = TEMP_DIR + str(uuid.uuid4())
     with open(filename, 'wb') as fout:
