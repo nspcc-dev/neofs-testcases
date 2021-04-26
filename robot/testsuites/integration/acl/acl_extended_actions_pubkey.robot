@@ -3,14 +3,17 @@ Variables                   ../../../variables/common.py
 Library                     Collections
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
+Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_extended.robot
-     
+
 *** Test cases ***
 Extended ACL Operations
     [Documentation]         Testcase to validate NeoFS operations with extended ACL.
     [Tags]                  ACL  eACL  NeoFS  NeoCLI
     [Timeout]               20 min
+
+    [Setup]                 Create Temporary Directory
 
                             Generate Keys
                             Prepare eACL Role rules
@@ -22,24 +25,24 @@ Extended ACL Operations
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny All Other and Allow All Pubkey
-                             
-                             
-    [Teardown]              Cleanup  
 
-    
+
+    [Teardown]              Cleanup
+
+
 *** Keywords ***
 
 Check eACL Deny All Other and Allow All Pubkey
 
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL} 
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER}
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
     @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
-                            Put object                          ${EACL_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}            ${FILE_OTH_HEADER} 
+                            Put object                          ${EACL_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}            ${FILE_OTH_HEADER}
                             Get object                          ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}        ${S_OBJ_H}            
-                            Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}             
+                            Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${FILE_USR_HEADER}        ${S_OBJ_H}
+                            Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
@@ -52,13 +55,13 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get eACL                            ${USER_KEY}    ${CID}
 
                             Run Keyword And Expect Error        *
-                            ...  Put object                          ${OTHER_KEY}    ${FILE_S}     ${CID}            ${EMPTY}            ${FILE_USR_HEADER} 
+                            ...  Put object                          ${OTHER_KEY}    ${FILE_S}     ${CID}            ${EMPTY}            ${FILE_USR_HEADER}
                             Run Keyword And Expect Error        *
                             ...  Get object                          ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}            local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${OTHER_KEY}    ${CID}        ${EMPTY}          ${EMPTY}            ${FILE_USR_HEADER}      ${S_OBJ_H}            
+                            ...  Search object                       ${OTHER_KEY}    ${CID}        ${EMPTY}          ${EMPTY}            ${FILE_USR_HEADER}      ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}            
+                            ...  Head object                         ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}
                             Run Keyword And Expect Error        *
                             ...  Get Range                           ${OTHER_KEY}    ${CID}        ${S_OID_USER}     s_get_range     ${EMPTY}            0:256
                             Run Keyword And Expect Error        *
@@ -66,15 +69,15 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}
 
-                            Put object                          ${EACL_KEY}    ${FILE_S}     ${CID}                  ${EMPTY}            ${FILE_OTH_HEADER} 
+                            Put object                          ${EACL_KEY}    ${FILE_S}     ${CID}                  ${EMPTY}            ${FILE_OTH_HEADER}
                             Get object                          ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
                             Search object                       ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${FILE_USR_HEADER}     ${S_OBJ_H}
-                            Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            
+                            Head object                         ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}
 
 
 Cleanup
-                            Cleanup Files     
+                            Cleanup Files
                             Get Docker Logs    acl_extended

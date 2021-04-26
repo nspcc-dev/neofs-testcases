@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ../${RESOURCES}/utility_keywords.py
 Resource    common_steps_object.robot
 
 
@@ -12,6 +13,8 @@ NeoFS Simple Storagegroup
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
 
+    [Setup]             Create Temporary Directory
+
                         Payment operations
                         Create container
 
@@ -20,18 +23,18 @@ NeoFS Simple Storagegroup
 
 
     # Put two Simple Object
-    ${S_OID_1} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${EMPTY}  
-    ${S_OID_2} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER} 
-    
-    @{S_OBJ_ALL} =	    Create List    ${S_OID_1}    ${S_OID_2} 
-    
+    ${S_OID_1} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_2} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
+
+    @{S_OBJ_ALL} =	    Create List    ${S_OID_1}    ${S_OID_2}
+
                         Log    Storage group with 1 object
     ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${S_OID_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}
                         Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${SIMPLE_OBJ_SIZE}    ${S_OID_1}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_1}    ${ADDR}
-                        Run Keyword And Expect Error    *       
+                        Run Keyword And Expect Error    *
                         ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${SIMPLE_OBJ_SIZE}    ${S_OID_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
@@ -43,26 +46,20 @@ NeoFS Simple Storagegroup
                         Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    ${EXPECTED_SIZE}    @{S_OBJ_ALL}
     ${Tombstone} =      Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}    ${EMPTY}
                         Verify Head tombstone    ${PRIV_KEY}    ${CID}    ${Tombstone}    ${SG_OID_2}    ${ADDR}
-                        Run Keyword And Expect Error    *       
+                        Run Keyword And Expect Error    *
                         ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_2}   ${EMPTY}    ${EXPECTED_SIZE}    @{S_OBJ_ALL}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
 
                         Log    Incorrect input
-    
-                        Run Keyword And Expect Error    *       
+
+                        Run Keyword And Expect Error    *
                         ...  Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    ${UNEXIST_OID}
-                        Run Keyword And Expect Error    *       
+                        Run Keyword And Expect Error    *
                         ...  Delete Storagegroup    ${PRIV_KEY}    ${CID}    ${UNEXIST_OID}    ${EMPTY}
 
-    [Teardown]          Cleanup                             
+    [Teardown]          Cleanup
 
 *** Keywords ***
 
 Cleanup
-                        Create List	                       
                         Get Docker Logs                     object_storage_group_simple
- 
-
-
-
-

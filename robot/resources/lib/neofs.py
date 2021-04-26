@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.7
 
 import subprocess
 import os
@@ -367,23 +367,6 @@ def container_existing(private_key: str, cid: str):
     _find_cid(complProc.stdout, cid)
     return
 
-@keyword('Generate file of bytes')
-def generate_file_of_bytes(size):
-    """
-    generate big binary file with the specified size in bytes
-    :param size:        the size in bytes, can be declared as 6e+6 for example
-    :return:string      filename
-    """
-
-    size = int(float(size))
-
-    filename = TEMP_DIR + str(uuid.uuid4())
-    with open('%s'%filename, 'wb') as fout:
-        fout.write(os.urandom(size))
-
-    logger.info("Random binary file with size %s bytes has been generated." % str(size))
-    return os.path.abspath(os.getcwd()) + '/' + filename
-
 
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
@@ -421,7 +404,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        
+
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):
@@ -445,7 +428,7 @@ def get_component_objects(private_key: str, cid: str, oid: str):
 
     # Get all existing objects
     full_obj_list = search_object(private_key, cid, None, None, None, None, '--phy')
-  
+
     # Search expected Linking object
     for targer_oid in full_obj_list:
         header = head_object(private_key, cid, targer_oid, '', '', '--raw')
@@ -582,29 +565,6 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
         logger.info("Chain of the objects has been parsed from the last object ot the first.")
 
     return final_verif_data
-
-@keyword('Get Docker Logs')
-def get_container_logs(testcase_name: str):
-    low_level_client = docker.APIClient(base_url='unix://var/run/docker.sock')
-
-    tar_name = "artifacts/dockerlogs("+testcase_name+").tar.gz"
-    tar = tarfile.open(tar_name, "w:gz")
-
-    for container in low_level_client.containers():
-        container_name = container['Names'][0][1:]
-        if low_level_client.inspect_container(container_name)['Config']['Domainname'] == "neofs.devenv":
-            file_name = "artifacts/docker_log_" + container_name
-            with open(file_name,'wb') as out:
-                logger.info("logs_get")
-                out.write(low_level_client.logs(container_name))
-            logger.info(container_name)
-
-            tar.add(file_name)
-            os.remove(file_name)
-    
-    tar.close()
-    
-    return 1
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
@@ -842,17 +802,6 @@ def verify_file_hash(filename, expected_hash):
     else:
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
 
-@keyword('Cleanup Files')
-def cleanup_file():
-    if os.path.isdir(TEMP_DIR):
-        try:                                
-            shutil.rmtree(TEMP_DIR)
-        except OSError as e:
-            raise Exception(f"Error: '{e.TEMP_DIR}' - {e.strerror}.")
-    else:
-        logger.warn(f"Error: '{TEMP_DIR}' file not found")
-    logger.info(f"File '{TEMP_DIR}' has been deleted.")
-
 @keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
     endpoint: str="", options: str="" ):
@@ -904,13 +853,13 @@ def get_logs_latest_timestamp():
         timestamp_date = datetime.fromisoformat(timestamp[:-1])
 
         nodes_logs_time[container] = timestamp_date
-    
+
     logger.info("Latest logs timestamp list: %s" % nodes_logs_time)
 
     return nodes_logs_time
 
 
-@keyword('Find in Nodes Log')   
+@keyword('Find in Nodes Log')
 def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 
     client_api = docker.APIClient()
@@ -931,7 +880,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
             found_count = len(re.findall(line, log_lines.decode("utf-8") ))
             logger.info("Node %s log - found counter: %s" % (container, found_count))
             global_count += found_count
-            
+
         else:
             logger.info("Container %s has not been found." % container)
 
@@ -973,7 +922,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     if not endpoint:
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
-    
+
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
@@ -996,7 +945,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 @keyword('Put Storagegroup')
 def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list):
 
-    cmd_oid_line = ",".join(oid_list) 
+    cmd_oid_line = ",".join(oid_list)
 
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
@@ -1023,7 +972,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
     if bearer_token:
         bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
 
-    object_cmd = ( 
+    object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'storagegroup list --cid {cid} {bearer_token}'
     )
@@ -1043,7 +992,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
                 raise Exception("Found storage group '{}' is not equal to expected list '{}'".format(found_objects, expected_list))
 
         return found_objects
-        
+
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
@@ -1060,7 +1009,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
         complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
         logger.info(f"Output: {complProc.stdout}")
-      
+
         if expected_size:
             if re.search(r'Group size: %s' % expected_size, complProc.stdout):
                 logger.info("Group size %s has been found in the output" % (expected_size))
@@ -1105,23 +1054,6 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
 
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-
-
-def _exec_cli_cmd(private_key: bytes, postfix: str):
-    # Get linked objects from first
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --raw --host {NEOFS_ENDPOINT} '
-        f'--key {binascii.hexlify(private_key).decode()} {postfix}'
-    )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-    return complProc.stdout
 
 def _get_file_hash(filename):
     blocksize = 65536
