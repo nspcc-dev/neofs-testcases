@@ -1,6 +1,5 @@
 *** Settings ***
 Variables   ../../../variables/common.py
-<<<<<<< HEAD
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
@@ -8,6 +7,8 @@ Library     ../${RESOURCES}/gates.py
 Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
 
+*** Variables ***
+${PLACEMENT_RULE} = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
 
 *** Test cases ***
 
@@ -31,7 +32,7 @@ NeoFS HTTP Gateway
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
                         Get Transaction                     ${TX_DEPOSIT}
 
-    ${CID} =            Create container                    ${PRIV_KEY}    public    REP 1 IN X CBF 1 SELECT 1 FROM * AS X
+    ${CID} =            Create container                    ${PRIV_KEY}    public   ${PLACEMENT_RULE}
                         Wait Until Keyword Succeeds         2 min          30 sec
                         ...  Container Existing             ${PRIV_KEY}    ${CID}
 

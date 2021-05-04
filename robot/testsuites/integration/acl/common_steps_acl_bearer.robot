@@ -14,8 +14,8 @@ ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 
 Generate Keys
     # Generate new wallets
-    ${WALLET}       ${ADDR}         ${USER_KEY_GEN}  =   Init Wallet with Address    ${TEMP_DIR}
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}       ${ADDR}         ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =  Init Wallet with Address    ${TEMP_DIR}
 
     # Get pre-defined keys
     ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
@@ -52,13 +52,13 @@ Payment Operations
 
 Create Container Public
                             Log	                  Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF     ${COMMON_PLACEMENT_RULE}
     [Return]                ${PUBLIC_CID_GEN}
 
 
 Create Container Inaccessible
                             Log	                  Create Inaccessible Container
-    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}     0x40000000
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}     0x40000000     ${COMMON_PLACEMENT_RULE}
     [Return]                ${PUBLIC_CID_GEN}
 
 

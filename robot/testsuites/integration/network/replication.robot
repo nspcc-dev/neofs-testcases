@@ -6,6 +6,9 @@ Library     ../${RESOURCES}/payment_neogo.py
 Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
 
+*** Variables ***
+${PLACEMENT_RULE} = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+
 *** Test cases ***
 NeoFS Object Replication
     [Documentation]         Testcase to validate NeoFS object replication.
@@ -28,7 +31,7 @@ NeoFS Object Replication
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
 
-    ${CID} =                Create container                      ${PRIV_KEY}    ${EMPTY}    REP 2 IN X CBF 1 SELECT 4 FROM * AS X
+    ${CID} =                Create container                      ${PRIV_KEY}    ${EMPTY}   ${PLACEMENT_RULE}
                             Container Existing                    ${PRIV_KEY}    ${CID}
 
 

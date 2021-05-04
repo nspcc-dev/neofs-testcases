@@ -58,7 +58,7 @@ Check Public Container
                             Get Range Hash    ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_PRIV} =	        Create List	      ${S_OID_USER}       ${S_OID_OTHER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
+    @{S_OBJ_PRIV} =	    Create List	      ${S_OID_USER}       ${S_OID_OTHER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
                             Search object     ${USER_KEY}         ${PUBLIC_CID}     --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
                             Search object     ${OTHER_KEY}        ${PUBLIC_CID}     --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
                             Search object     ${SYSTEM_KEY_IR}    ${PUBLIC_CID}     --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}

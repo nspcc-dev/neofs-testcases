@@ -6,7 +6,6 @@ Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/utility_keywords.py
 Resource    common_steps_object.robot
 
-
 *** Test cases ***
 NeoFS Complex Storagegroup
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
@@ -16,17 +15,16 @@ NeoFS Complex Storagegroup
     [Setup]             Create Temporary Directory
 
                         Payment operations
-                        Create container
+                        Prepare container
 
     ${FILE_S} =         Generate file of bytes            ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH_S} =    Get file hash                     ${FILE_S}
-
 
     # Put two Simple Object
     ${S_OID_1} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${EMPTY}
     ${S_OID_2} =        Put object    ${PRIV_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
 
-    @{S_OBJ_ALL} =	    Create List    ${S_OID_1}    ${S_OID_2}
+    @{S_OBJ_ALL} =	Create List    ${S_OID_1}    ${S_OID_2}
 
                         Log    Storage group with 1 object
     ${SG_OID_1} =       Put Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    ${S_OID_1}
@@ -38,7 +36,6 @@ NeoFS Complex Storagegroup
                         Run Keyword And Expect Error    *
                         ...  Get Storagegroup    ${PRIV_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${COMPLEX_OBJ_SIZE}    @{SPLIT_OBJ_1}
                         List Storagegroup    ${PRIV_KEY}    ${CID}   ${EMPTY}    @{EMPTY}
-
 
                         Log    Storage group with 2 objects
     ${SG_OID_2} =       Put Storagegroup    ${PRIV_KEY}    ${CID}    ${EMPTY}    @{S_OBJ_ALL}
