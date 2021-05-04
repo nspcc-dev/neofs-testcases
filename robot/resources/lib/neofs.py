@@ -23,7 +23,6 @@ from common import *
 
 ROBOT_AUTO_KEYWORDS = False
 
-CLI_PREFIX = ""
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
@@ -318,10 +317,11 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str="",
-        rule:str="REP 2 IN X CBF 1 SELECT 2 FROM * AS X"):
+def create_container(private_key: str, basic_acl:str, rule:str):
+    if rule == "":
+        logger.error("Cannot create container with empty placement rule")
     if basic_acl != "":
-        basic_acl = "--basic-acl " + basic_acl
+        basic_acl = f"--basic-acl {basic_acl}"
 
     createContainerCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -334,7 +334,6 @@ def create_container(private_key: str, basic_acl:str="",
     logger.info("Output: %s" % output)
     cid = _parse_cid(output)
     logger.info("Created container %s with rule '%s'" % (cid, rule))
-
     return cid
 
 
@@ -407,7 +406,6 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):
-
     logger.info("Collect Split objects list from Linked object.")
     split_id = ""
     nodes = _get_storage_nodes()
@@ -442,7 +440,6 @@ def _collect_split_objects_from_header(private_key, cid, parsed_header):
     header_link = head_object(private_key, cid, parsed_header['Linking object'], '', '', '--raw')
     header_link_parsed = parse_object_system_header(header_link)
     return header_link_parsed['Split ChildID']
-
 
 
 @keyword('Verify Split Chain')
@@ -739,7 +736,6 @@ def parse_object_system_header(header: str):
     else:
         raise Exception("no Type was parsed from object header: \t%s" % header)
 
-
     # Header - Optional attributes
     m = re.search(r'Split ID:\s+([\w-]+)', header)
     if m is not None:
@@ -757,8 +753,6 @@ def parse_object_system_header(header: str):
     found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
     if found_objects:
         result_header['Split ChildID'] = found_objects
-
-
     logger.info("Result: %s" % result_header)
     return result_header
 
@@ -800,6 +794,7 @@ def verify_file_hash(filename, expected_hash):
         logger.info("Hash is equal to expected: %s" % file_hash)
     else:
         raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
+
 
 @keyword('Put object')
 def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
@@ -1075,30 +1070,49 @@ def _find_cid(output: str, cid: str):
         raise Exception("no CID %s was parsed from command output: \t%s" % (cid, output))
     return cid
 
-def _parse_oid(output: str):
+def _parse_oid(input_str: str):
     """
-    This function parses OID from given CLI output.
-    Parameters:
-    - output: a string with command run output
-    """
-    m = re.search(r'ID: ([a-zA-Z0-9-]+)', output)
-    if m.start() != m.end(): # e.g., if match found something
-        oid = m.group(1)
-    else:
-        raise Exception("no OID was parsed from command output: \t%s" % output)
-    return oid
+    This function parses OID from given CLI output. The input string we
+    expect:
+        Object successfully stored
+          ID: 4MhrLA7RXTBXCsaNnbahYVAPuoQdiUPuyNEWnywvoSEs
+          CID: HeZu2DXBuPve6HXbuHZx64knS7KcGtfSj2L59Li72kkg
+    We want to take 'ID' value from the string.
 
-def _parse_cid(output: str):
-    """
-    This function parses CID from given CLI output.
     Parameters:
-    - output: a string with command run output
+    - input_str: a string with command run output
     """
-    m = re.search(r'container ID: (\w+)', output)
-    if not m.start() != m.end(): # e.g., if match found something
-        raise Exception("no CID was parsed from command output: \t%s" % (output))
-    cid = m.group(1)
-    return cid
+    try:
+        # taking second string from command output
+        snd_str = input_str.split('\n')[1]
+    except:
+        logger.error(f"Got empty input: {input_str}")
+    splitted = snd_str.split(": ")
+    if len(splitted) != 2:
+        raise Exception(f"no OID was parsed from command output: \t{snd_str}")
+    return splitted[1]
+
+def _parse_cid(input_str: str):
+    """
+    This function parses CID from given CLI output. The input string we
+    expect:
+            container ID: 2tz86kVTDpJxWHrhw3h6PbKMwkLtBEwoqhHQCKTre1FN
+            awaiting...
+            container has been persisted on sidechain
+    We want to take 'container ID' value from the string.
+
+    Parameters:
+    - input_str: a string with command run output
+    """
+    try:
+        # taking first string from command output
+        fst_str = input_str.split('\n')[0]
+    except:
+        logger.error(f"Got empty output: {input_str}")
+    splitted = fst_str.split(": ")
+    if len(splitted) != 2:
+        raise Exception(f"no CID was parsed from command output: \t{fst_str}")
+    return splitted[1]
 
 def _get_storage_nodes():
     # TODO: fix to get netmap from neofs-cli

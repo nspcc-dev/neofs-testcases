@@ -16,7 +16,7 @@ NeoFS Simple Storagegroup
     [Setup]             Create Temporary Directory
 
                         Payment operations
-                        Create container
+                        Prepare container
 
     ${FILE_S} =         Generate file of bytes            ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH_S} =    Get file hash                     ${FILE_S}

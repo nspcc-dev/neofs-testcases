@@ -6,9 +6,10 @@ Library     ${KEYWORDS}/wallet.py
 *** Variables ***
 ${FILE_USR_HEADER} =    key1=1,key2=abc
 ${FILE_USR_HEADER_OTH} =    key1=2
-${UNEXIST_OID} =    B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
+${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
 ${TRANSFER_AMOUNT} =    15
-${DEPOSIT_AMOUNT} =    10
+${DEPOSIT_AMOUNT} =     10
+${EMPTY_ACL} =          ""
 
 *** Keywords ***
 
@@ -34,13 +35,11 @@ Payment operations
                         Set Global Variable                   ${PRIV_KEY}    ${PRIV_KEY}
                         Set Global Variable                   ${ADDR}    ${ADDR}
 
-
 Prepare container
-    ${CID} =            Create container                      ${PRIV_KEY}
-                        Container Existing                    ${PRIV_KEY}    ${CID}
+    ${CID} =            Create container                      ${PRIV_KEY}   ${EMPTY_ACL}     ${COMMON_PLACEMENT_RULE}
+                        Container Existing                    ${PRIV_KEY}   ${CID}
 
                         Wait Until Keyword Succeeds           ${NEOFS_EPOCH_TIMEOUT}    ${MORPH_BLOCK_TIME}
                         ...  Expected Balance                 ${PRIV_KEY}    ${DEPOSIT_AMOUNT}    ${NEOFS_CREATE_CONTAINER_GAS_FEE}
 
                         Set Global Variable                   ${CID}    ${CID}
-

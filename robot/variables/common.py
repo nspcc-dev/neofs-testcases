@@ -53,4 +53,6 @@ GAS_HASH = os.getenv("GAS_HASH", '0xd2a4cff31913016155e38e474a2c06d08be276cf')
 NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT")
              else os.getenv("NEOFS_IR_CONTRACTS_NEOFS", 'cfe89912c457754b7eb1f89781dc74bb3e0070bf'))
 
+COMMON_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
+
 TEMP_DIR = os.getenv("TEMP_DIR", "TemporaryDir/")
