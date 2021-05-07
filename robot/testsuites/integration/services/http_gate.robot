@@ -4,11 +4,13 @@ Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/gates.py
-Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
+Library     ${KEYWORDS}/wallet_keywords.py
+Library     ${KEYWORDS}/rpc_call_keywords.py
 
 *** Variables ***
 ${PLACEMENT_RULE} = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+${TRANSFER_AMOUNT} =    ${3}
 
 *** Test cases ***
 
@@ -18,12 +20,13 @@ NeoFS HTTP Gateway
 
     [Setup]             Create Temporary Directory
     ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}    6
+    ${TX} =             Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}    6
 
                         Wait Until Keyword Succeeds         1 min      15 sec
                         ...  Transaction accepted in block  ${TX}
-                        Get Transaction                     ${TX}
-                        Expected Mainnet Balance            ${ADDR}    6
+
+    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
+    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
 
     ${SCRIPT_HASH} =    Get ScriptHash                       ${PRIV_KEY}
 

@@ -12,7 +12,8 @@ from robot.api import logger
 from common import *
 
 ROBOT_AUTO_KEYWORDS = False
-
+# TODO: get this variable from env
+LOGS_DIR = 'artifacts/'
 
 @keyword('Generate file of bytes')
 def generate_file_of_bytes(size: str) -> str:
@@ -30,12 +31,12 @@ def generate_file_of_bytes(size: str) -> str:
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:
     client = docker.APIClient(base_url='unix://var/run/docker.sock')
-    tar_name = f"artifacts/dockerlogs({testcase_name}).tar.gz"
+    tar_name = f"{LOGS_DIR}/dockerlogs({testcase_name}).tar.gz"
     tar = tarfile.open(tar_name, "w:gz")
     for container in client.containers():
         container_name = container['Names'][0][1:]
         if client.inspect_container(container_name)['Config']['Domainname'] == "neofs.devenv":
-            file_name = f"artifacts/docker_log_{container_name}"
+            file_name = f"{LOGS_DIR}/docker_log_{container_name}"
             with open(file_name,'wb') as out:
                 out.write(client.logs(container_name))
             logger.info(f"Collected logs from container {container_name}")

@@ -3,11 +3,13 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
+Library     ${KEYWORDS}/wallet_keywords.py
+Library     ${KEYWORDS}/rpc_call_keywords.py
 
 *** Variables ***
-${PLACEMENT_RULE} = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+${PLACEMENT_RULE} =     "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+${TRANSFER_AMOUNT} =    ${11}
 
 *** Test cases ***
 NeoFS Object Replication
@@ -18,11 +20,13 @@ NeoFS Object Replication
     [Setup]                 Create Temporary Directory
 
     ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
-    ${TX} =                 Transfer Mainnet Gas                  wallets/wallet.json    ${DEF_WALLET_ADDR}    ${ADDR}     11
+    ${TX} =                 Transfer Mainnet Gas                  ${MAINNET_WALLET_WIF}    ${ADDR}     ${TRANSFER_AMOUNT}
                             Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX}
-                            Get Transaction                       ${TX}
-                            Expected Mainnet Balance              ${ADDR}                11
+
+    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
+    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
+
 
     ${SCRIPT_HASH} =        Get ScriptHash                         ${PRIV_KEY}
 
@@ -71,5 +75,3 @@ NeoFS Object Replication
 Cleanup
                             Cleanup Files
                             Get Docker Logs                       replication
-
-

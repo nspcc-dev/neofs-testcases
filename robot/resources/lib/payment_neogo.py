@@ -23,22 +23,6 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
-@keyword('Transfer Mainnet Gas')
-def transfer_mainnet_gas(wallet: str, address: str, address_to: str, amount: int, wallet_pass:str=''):
-    cmd = (
-        f"{NEOGO_CLI_EXEC} wallet nep17 transfer -w {wallet} "
-        f"-r {NEO_MAINNET_ENDPOINT} --from {address} --to {address_to} "
-        f"--token GAS --amount {amount}"
-    )
-
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd(wallet_pass, cmd)
-    logger.info(f"Command completed with output: {out}")
-
-    if not re.match(r'^(\w{64})$', out):
-        raise Exception("Can not get Tx.")
-
-    return out
 
 @keyword('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int):
@@ -57,49 +41,6 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     tx = m.group(1)
     return tx
 
-@keyword('Mainnet Balance')
-def mainnet_balance(address: str):
-    headers = {'Content-type': 'application/json'}
-    data = { "jsonrpc": "2.0", "id": 5, "method": "getnep17balances", "params": [ address ] }
-    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
-
-    if not response.ok:
-        raise Exception(f"""Failed:
-                request: {data},
-                response: {response.text},
-                status code: {response.status_code} {response.reason}""")
-
-    m = re.search(rf'"{GAS_HASH}","amount":"([\d\.]+)"', response.text)
-    if not m:
-        raise Exception("Can not get mainnet gas balance. Output: %s" % response.text )
-    else:
-        logger.info("Output: %s" % response.text)
-    amount = m.group(1)
-    return amount
-
-@keyword('Expected Mainnet Balance')
-def expected_mainnet_balance(address: str, expected: float):
-    amount = mainnet_balance(address)
-    gas_expected = int(expected * 10**8)
-    if int(amount) != int(gas_expected):
-        raise Exception(f"Expected amount ({gas_expected}) of GAS has not been found. Found {amount}.")
-    return amount
-
-@keyword('Expected Mainnet Balance Diff')
-def expected_mainnet_balance_diff(address: str, old_value: float, expected_diff: float):
-    amount = mainnet_balance(address)
-    gas_expected = old_value + _convert_int_to_gas(expected_diff)
-    if int(amount) != int(gas_expected):
-        raise Exception(f"Balance amount ({int(amount)})) of GAS has not been changed for expected value:",
-                        f"{_convert_int_to_gas(expected_diff)} from initial {old_value}.",
-                        f"Expected: {old_value + _convert_int_to_gas(expected_diff)}")
-    return amount
-
-def _convert_int_to_gas(input_value: float):
-    return int(input_value * 10**8)
-
-def _convert_gas_to_int(input_value: float):
-    return int(input_value / 10**8)
 
 @keyword('NeoFS Deposit')
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
@@ -166,7 +107,7 @@ def get_transaction(tx_id: str):
         logger.info(response.text)
 
 
-@keyword('Get Balance')
+@keyword('Get NeoFS Balance')
 def get_balance(privkey: str):
     """
     This function returns NeoFS balance for selected public key.
@@ -177,24 +118,6 @@ def get_balance(privkey: str):
 
     return balance
 
-@keyword('Expected Balance')
-def expected_balance(privkey: str, init_amount: float, deposit_size: float):
-    """
-    This function returns NeoFS balance for selected public key.
-    :param public_key:      neo public key
-    :param init_amount:     initial number of tokens in the account
-    :param deposit_size:    expected amount of the balance increasing
-    """
-
-    balance = _get_balance_request(privkey)
-
-    deposit_change = round((float(balance) - init_amount),8)
-    if deposit_change != deposit_size:
-        raise Exception('Expected deposit increase: {}. This does not correspond to the actual change in account: {}'.format(deposit_size, deposit_change))
-
-    logger.info('Expected deposit increase: {}. This correspond to the actual change in account: {}'.format(deposit_size, deposit_change))
-
-    return deposit_change
 
 def _get_balance_request(privkey: str):
     '''
