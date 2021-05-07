@@ -3,8 +3,12 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ${KEYWORDS}/wallet.py
 Library     ../${RESOURCES}/utility_keywords.py
+Library     ${KEYWORDS}/wallet_keywords.py
+Library     ${KEYWORDS}/rpc_call_keywords.py
+
+*** Variables ***
+${TRANSFER_AMOUNT} =    ${11}
 
 
 *** Test cases ***
@@ -81,11 +85,12 @@ Generate Key and Pre-payment
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
 
-    ${TX} =             Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     11
+    ${TX} =             Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}     ${TRANSFER_AMOUNT}
                         Wait Until Keyword Succeeds         1 min       15 sec
                         ...  Transaction accepted in block  ${TX}
-                        Get Transaction                     ${TX}
-                        Expected Mainnet Balance            ${ADDR}     11
+
+    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
+    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
 
     ${SCRIPT_HASH} =    Get ScriptHash           ${KEY}
 

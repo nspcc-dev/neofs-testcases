@@ -1,10 +1,12 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ${KEYWORDS}/wallet.py
+Library     ${KEYWORDS}/wallet_keywords.py
+Library     ${KEYWORDS}/rpc_call_keywords.py
 
 *** Variables ***
 ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
+${TRANSFER_AMOUNT} =    ${3}
 
 
 *** Keywords ***
@@ -31,11 +33,12 @@ Generate Keys
 Payment Operations
     [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
 
-    ${TX} =                 Transfer Mainnet Gas    wallets/wallet.json     ${DEF_WALLET_ADDR}    ${ADDR}     3
+    ${TX} =                 Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}     3
                             Wait Until Keyword Succeeds         1 min       15 sec
                             ...  Transaction accepted in block  ${TX}
-                            Get Transaction                     ${TX}
-                            Expected Mainnet Balance            ${ADDR}     3
+
+    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
+    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
 
     ${SCRIPT_HASH} =        Get ScriptHash           ${KEY}
 

@@ -1,7 +1,8 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ${KEYWORDS}/wallet.py
+Library     ${KEYWORDS}/wallet_keywords.py
+Library     ${KEYWORDS}/rpc_call_keywords.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =    key1=1,key2=abc
@@ -15,22 +16,22 @@ ${EMPTY_ACL} =          ""
 
 Payment operations
     ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
-    ${TX} =             Transfer Mainnet Gas    ${MAINNET_WALLET_PATH}    ${DEF_WALLET_ADDR}    ${ADDR}     ${TRANSFER_AMOUNT}
+    ${TX} =             Transfer Mainnet Gas                  ${MAINNET_WALLET_WIF}    ${ADDR}     ${TRANSFER_AMOUNT}
 
-                        Wait Until Keyword Succeeds           ${BASENET_WAIT_TIME}    ${BASENET_BLOCK_TIME}
+                        Wait Until Keyword Succeeds           ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block    ${TX}
-                        Get Transaction                       ${TX}
-                        Expected Mainnet Balance              ${ADDR}    ${TRANSFER_AMOUNT}
+
+    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
+    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
 
     ${SCRIPT_HASH} =    Get ScriptHash                        ${PRIV_KEY}
 
     ${TX_DEPOSIT} =     NeoFS Deposit                         ${WALLET}    ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}
-                        Wait Until Keyword Succeeds           ${BASENET_WAIT_TIME}    ${BASENET_BLOCK_TIME}
+                        Wait Until Keyword Succeeds           ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block    ${TX_DEPOSIT}
-                        Get Transaction                       ${TX_DEPOSIT}
 
-    ${BALANCE} =        Wait Until Keyword Succeeds           ${NEOFS_EPOCH_TIMEOUT}    ${MORPH_BLOCK_TIME}
-                        ...  Expected Balance                 ${PRIV_KEY}    0    ${DEPOSIT_AMOUNT}
+    ${NEOFS_BALANCE} =  Get NeoFS Balance       ${PRIV_KEY}
+    Should Be Equal As Numbers                  ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}
 
                         Set Global Variable                   ${PRIV_KEY}    ${PRIV_KEY}
                         Set Global Variable                   ${ADDR}    ${ADDR}
@@ -40,6 +41,10 @@ Prepare container
                         Container Existing                    ${PRIV_KEY}   ${CID}
 
                         Wait Until Keyword Succeeds           ${NEOFS_EPOCH_TIMEOUT}    ${MORPH_BLOCK_TIME}
-                        ...  Expected Balance                 ${PRIV_KEY}    ${DEPOSIT_AMOUNT}    ${NEOFS_CREATE_CONTAINER_GAS_FEE}
+
+    ${NEOFS_BALANCE} =  Get NeoFS Balance     ${PRIV_KEY}
+    Should Be True      ${NEOFS_BALANCE} < ${DEPOSIT_AMOUNT}
+    ${CONTAINER_FEE} =  Evaluate      ${DEPOSIT_AMOUNT} - ${NEOFS_BALANCE}
+    Log                 Container fee is ${CONTAINER_FEE}
 
                         Set Global Variable                   ${CID}    ${CID}
