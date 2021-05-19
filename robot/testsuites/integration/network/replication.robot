@@ -8,7 +8,7 @@ Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
 
 *** Variables ***
-${PLACEMENT_RULE} =     "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 ${TRANSFER_AMOUNT} =    ${11}
 
 *** Test cases ***
@@ -34,7 +34,7 @@ NeoFS Object Replication
                             Wait Until Keyword Succeeds           1 min                  15 sec
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
                             Get Transaction                       ${TX_DEPOSIT}
-
+                            
     ${CID} =                Create container                      ${PRIV_KEY}    ${EMPTY}   ${PLACEMENT_RULE}
                             Container Existing                    ${PRIV_KEY}    ${CID}
 

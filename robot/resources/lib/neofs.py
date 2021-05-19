@@ -321,7 +321,7 @@ def create_container(private_key: str, basic_acl:str, rule:str):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
-    if not basic_acl:
+    if basic_acl:
         basic_acl = f"--basic-acl {basic_acl}"
 
     createContainerCmd = (
