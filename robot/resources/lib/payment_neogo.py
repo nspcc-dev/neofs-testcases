@@ -44,15 +44,33 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 @keyword('NeoFS Deposit')
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
-            f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} "
-            f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
 
+    # 1) Get NeoFS contract address.
+    cmd = ( f"{NEOGO_CLI_EXEC} util convert {NEOFS_CONTRACT} | "
+            f"grep 'LE ScriptHash to Address' | awk '{{print $5}}' | grep -oP [A-z0-9]+")
+    logger.info(f"Executing command: {cmd}")
+
+    deposit_addr = ""
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+        deposit_addr = output.strip()
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
+
+    # 2) Transfer GAS to the NeoFS contract address.
+    # Transfer GAS keyword from neofs-keywords repo can be used in the next code update.
+    cmd = ( f"{NEOGO_CLI_EXEC} wallet nep17 transfer -w {wallet} "
+            f"-r {NEO_MAINNET_ENDPOINT} --from {address} --to {deposit_addr} "
+            f"--token GAS --amount {amount} hash160:{address}" )
+    
     logger.info(f"Executing command: {cmd}")
     out = _run_sh_with_passwd(wallet_pass, cmd)
     logger.info(f"Command completed with output: {out}")
 
-    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
+    m = re.match(r'^(\w{64})$', out)
     if m is None:
         raise Exception("Can not get Tx.")
 
@@ -116,7 +134,7 @@ def get_balance(privkey: str):
 
     balance = _get_balance_request(privkey)
 
-    return balance
+    return float(balance)
 
 
 def _get_balance_request(privkey: str):

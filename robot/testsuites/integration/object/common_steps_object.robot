@@ -40,8 +40,6 @@ Prepare container
     ${CID} =            Create container                      ${PRIV_KEY}   ${EMPTY_ACL}     ${COMMON_PLACEMENT_RULE}
                         Container Existing                    ${PRIV_KEY}   ${CID}
 
-                        Wait Until Keyword Succeeds           ${NEOFS_EPOCH_TIMEOUT}    ${MORPH_BLOCK_TIME}
-
     ${NEOFS_BALANCE} =  Get NeoFS Balance     ${PRIV_KEY}
     Should Be True      ${NEOFS_BALANCE} < ${DEPOSIT_AMOUNT}
     ${CONTAINER_FEE} =  Evaluate      ${DEPOSIT_AMOUNT} - ${NEOFS_BALANCE}

@@ -320,7 +320,8 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
 def create_container(private_key: str, basic_acl:str, rule:str):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
-    if basic_acl != "":
+
+    if not basic_acl:
         basic_acl = f"--basic-acl {basic_acl}"
 
     createContainerCmd = (
