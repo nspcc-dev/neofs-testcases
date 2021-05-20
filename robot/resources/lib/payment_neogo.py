@@ -29,7 +29,7 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     cmd = (
         f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
         f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
-        f"int:{amount}  -- {scripthash}"
+        f"int:{amount}  -- {scripthash}:Global"
     )
 
     logger.info(f"Executing command: {cmd}")
