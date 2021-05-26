@@ -10,7 +10,6 @@ ${FILE_USR_HEADER_OTH} =    key1=2
 ${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
 ${TRANSFER_AMOUNT} =    15
 ${DEPOSIT_AMOUNT} =     10
-${EMPTY_ACL} =          ""
 
 *** Keywords ***
 
@@ -37,10 +36,8 @@ Payment operations
                         Set Global Variable                   ${ADDR}    ${ADDR}
 
 Prepare container
-    ${CID} =            Create container                      ${PRIV_KEY}   ${EMPTY_ACL}     ${COMMON_PLACEMENT_RULE}
+    ${CID} =            Create container                      ${PRIV_KEY}   ${EMPTY}     ${COMMON_PLACEMENT_RULE}
                         Container Existing                    ${PRIV_KEY}   ${CID}
-
-                        Wait Until Keyword Succeeds           ${NEOFS_EPOCH_TIMEOUT}    ${MORPH_BLOCK_TIME}
 
     ${NEOFS_BALANCE} =  Get NeoFS Balance     ${PRIV_KEY}
     Should Be True      ${NEOFS_BALANCE} < ${DEPOSIT_AMOUNT}

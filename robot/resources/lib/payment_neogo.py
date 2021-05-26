@@ -9,6 +9,11 @@ import requests
 import json
 import os
 import tarfile
+import sys
+
+sys.path.insert(0,'../neofs-keywords')
+import converters
+import wallet
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -29,7 +34,7 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     cmd = (
         f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
         f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
-        f"int:{amount}  -- {scripthash}"
+        f"int:{amount}  -- {scripthash}:Global"
     )
 
     logger.info(f"Executing command: {cmd}")
@@ -43,21 +48,19 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 
 @keyword('NeoFS Deposit')
-def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
-    cmd = ( f"{NEOGO_CLI_EXEC} contract invokefunction -w {wallet} -a {address} "
-            f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} "
-            f"deposit {scripthash} int:{amount} bytes: -- {scripthash}")
+def neofs_deposit(wallet_file: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
 
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd(wallet_pass, cmd)
-    logger.info(f"Command completed with output: {out}")
+    # 1) Get NeoFS contract address.
+    deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
+    logger.info(f"deposit_addr: {deposit_addr}")
 
-    m = re.match(r'^Sent invocation transaction (\w{64})$', out)
-    if m is None:
+    # 2) Transfer GAS to the NeoFS contract address.
+    out = wallet.new_nep17_transfer(address, deposit_addr, amount, 'GAS', wallet_file, '', NEO_MAINNET_ENDPOINT)
+
+    if len(out) != 64:
         raise Exception("Can not get Tx.")
 
-    tx = m.group(1)
-    return tx
+    return out
 
 @keyword('Transaction accepted in block')
 def transaction_accepted_in_block(tx_id):
@@ -116,7 +119,7 @@ def get_balance(privkey: str):
 
     balance = _get_balance_request(privkey)
 
-    return balance
+    return float(balance)
 
 
 def _get_balance_request(privkey: str):
