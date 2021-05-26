@@ -46,6 +46,7 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
 
     # 1) Get NeoFS contract address.
+    # TODO: use contract_hash_to_address from neofs-keywords repo
     cmd = ( f"{NEOGO_CLI_EXEC} util convert {NEOFS_CONTRACT} | "
             f"grep 'LE ScriptHash to Address' | awk '{{print $5}}' | grep -oP [A-z0-9]+")
     logger.info(f"Executing command: {cmd}")
@@ -70,12 +71,10 @@ def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, walle
     out = _run_sh_with_passwd(wallet_pass, cmd)
     logger.info(f"Command completed with output: {out}")
 
-    m = re.match(r'^(\w{64})$', out)
-    if m is None:
+    if len(out) != 64:
         raise Exception("Can not get Tx.")
 
-    tx = m.group(1)
-    return tx
+    return out
 
 @keyword('Transaction accepted in block')
 def transaction_accepted_in_block(tx_id):
