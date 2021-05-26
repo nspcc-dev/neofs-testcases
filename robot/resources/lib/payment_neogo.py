@@ -9,6 +9,11 @@ import requests
 import json
 import os
 import tarfile
+import sys
+
+sys.path.insert(0,'../neofs-keywords')
+import converters
+import wallet
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -43,33 +48,14 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 
 @keyword('NeoFS Deposit')
-def neofs_deposit(wallet: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
+def neofs_deposit(wallet_file: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
 
     # 1) Get NeoFS contract address.
-    # TODO: use contract_hash_to_address from neofs-keywords repo
-    cmd = ( f"{NEOGO_CLI_EXEC} util convert {NEOFS_CONTRACT} | "
-            f"grep 'LE ScriptHash to Address' | awk '{{print $5}}' | grep -oP [A-z0-9]+")
-    logger.info(f"Executing command: {cmd}")
-
-    deposit_addr = ""
-    try:
-        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-        logger.info(f"Output: {output}")
-        deposit_addr = output.strip()
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
+    deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
+    logger.info(f"deposit_addr: {deposit_addr}")
 
     # 2) Transfer GAS to the NeoFS contract address.
-    # Transfer GAS keyword from neofs-keywords repo can be used in the next code update.
-    cmd = ( f"{NEOGO_CLI_EXEC} wallet nep17 transfer -w {wallet} "
-            f"-r {NEO_MAINNET_ENDPOINT} --from {address} --to {deposit_addr} "
-            f"--token GAS --amount {amount} hash160:{address}" )
-    
-    logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd(wallet_pass, cmd)
-    logger.info(f"Command completed with output: {out}")
+    out = wallet.new_nep17_transfer(address, deposit_addr, amount, 'GAS', wallet_file, '', NEO_MAINNET_ENDPOINT)
 
     if len(out) != 64:
         raise Exception("Can not get Tx.")
