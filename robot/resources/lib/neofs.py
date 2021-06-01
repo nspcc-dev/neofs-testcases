@@ -193,7 +193,7 @@ def get_epoch(private_key: str):
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
-    file_path = TEMP_DIR + eacl
+    file_path = f"{ASSETS_DIR}/{eacl}"
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'container set-eacl --cid {cid} --table {file_path} {add_keys}'
@@ -214,7 +214,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
     cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8")
     eacl = get_eacl(private_key, cid)
     json_eacl = {}
-    file_path = TEMP_DIR + file_name
+    file_path = f"{ASSETS_DIR}/{file_name}"
 
     if eacl:
         res_json = re.split(r'[\s\n]+Signature:', eacl)
@@ -267,7 +267,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_name, eacl_oper_list ):
     # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-    file_path = TEMP_DIR + file_name
+    file_path = f"{ASSETS_DIR}/{file_name}"
     eacl = {"records":[]}
 
     logger.info(eacl_oper_list)
@@ -299,12 +299,12 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         range_cut: str, options:str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
 
     Cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
         f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
-        f'--file {TEMP_DIR}{range_file} {options}'
+        f'--file {ASSETS_DIR}/{range_file} {options}'
     )
     logger.info("Cmd: %s" % Cmd)
 
@@ -374,7 +374,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     filters_result = ""
 
     if bearer:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
     if filters:
         for filter_item in filters.split(','):
             filter_item = re.sub(r'=', ' EQ ', filter_item)
@@ -625,7 +625,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
     user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False):
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
@@ -762,7 +762,7 @@ def parse_object_system_header(header: str):
 def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -809,7 +809,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         user_headers = f"--attributes {user_headers}"
 
     if bearer:
-        bearer = f"--bearer {TEMP_DIR}{bearer}"
+        bearer = f"--bearer {ASSETS_DIR}/{bearer}"
 
     putobject_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
@@ -892,7 +892,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         range_cut: str, options: str=""):
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -911,7 +911,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
     write_object: str, endpoint: str="", options: str="" ):
 
-    file_path = TEMP_DIR + write_object
+    file_path = f"{ASSETS_DIR}/{write_object}"
 
     logger.info("Going to put the object")
     if not endpoint:
@@ -919,7 +919,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} '
@@ -943,7 +943,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
     cmd_oid_line = ",".join(oid_list)
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
@@ -965,7 +965,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
 def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expected_list):
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
@@ -996,7 +996,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
 def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, expected_size,  *expected_objects_list):
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {object_cmd}")
@@ -1028,7 +1028,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
 def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=""):
 
     if bearer_token:
-        bearer_token = f"--bearer {TEMP_DIR}{bearer_token}"
+        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '

@@ -12,8 +12,8 @@ ${DEPOSIT_AMOUNT} =     ${25}
 *** Keywords ***
 
 Generate Keys
-    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${ASSETS_DIR}
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =   Init Wallet with Address    ${ASSETS_DIR}
 
     Set Global Variable     ${USER_KEY}          ${USER_KEY_GEN}
     Set Global Variable     ${OTHER_KEY}         ${OTHER_KEY_GEN}
@@ -37,3 +37,9 @@ Payment Operations
     ${TX_DEPOSIT} =         NeoFS Deposit           ${WIF}      ${DEPOSIT_AMOUNT}
                             Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}  ${MAINNET_BLOCK_TIME}
                             ...  Transaction accepted in block  ${TX_DEPOSIT}
+    # Now we have TX in main chain, but deposit might not propagate into the side chain yet.
+    # For certainty, sleeping during one morph block.
+    Sleep                   ${MORPH_BLOCK_TIME}
+
+    ${NEOFS_BALANCE} =  Get NeoFS Balance       ${WIF}
+    Should Be Equal As Numbers                  ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}

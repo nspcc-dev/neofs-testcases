@@ -2,11 +2,12 @@
 Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
+
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Test cases ***
 BearerToken Operations for Сompound Operations
@@ -14,7 +15,7 @@ BearerToken Operations for Сompound Operations
     [Tags]                  ACL  NeoFS  NeoCLI BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -29,7 +30,7 @@ BearerToken Operations for Сompound Operations
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Сompound Operations
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_bearer_compound
 
 
 *** Keywords ***
@@ -133,7 +134,3 @@ Check Bearer Сompound Get Range Hash
                             ...  Get object      ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow    local_file_eacl
 
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    bearer_allow    0:256
-
-
-Cleanup
-                            Cleanup Files

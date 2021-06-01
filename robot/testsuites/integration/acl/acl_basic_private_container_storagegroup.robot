@@ -1,12 +1,13 @@
 *** Settings ***
 Variables       ../../../variables/common.py
-Library     Collections
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
+
+Library     Collections
 
 Resource    common_steps_acl_basic.robot
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -15,7 +16,7 @@ Basic ACL Operations for Private Container
     [Tags]                  ACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
 
@@ -27,7 +28,7 @@ Basic ACL Operations for Private Container
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Private Container    Complex
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_basic_private_container_storagegroup
 
 
 *** Keywords ***
@@ -83,9 +84,3 @@ Check Private Container
 
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${SG_OID_INV}    ${EMPTY}
-
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_basic

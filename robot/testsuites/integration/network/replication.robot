@@ -3,11 +3,11 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
 
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
@@ -18,9 +18,9 @@ NeoFS Object Replication
     [Tags]                  Migration  Replication  NeoFS  NeoCLI
     [Timeout]               25 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =    Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}   ${ADDR}     ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}     ${WIF}
 
     ${CID} =                Create container                      ${WIF}    ${EMPTY}   ${PLACEMENT_RULE}
@@ -50,11 +50,4 @@ NeoFS Object Replication
     Sleep                                 ${NEOFS_EPOCH_TIMEOUT}
     Validate storage policy for object    ${WIF}    2       ${CID}      ${S_OID}
 
-    [Teardown]              Cleanup
-
-
-*** Keywords ***
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs                       replication
+    [Teardown]      Teardown    replaication

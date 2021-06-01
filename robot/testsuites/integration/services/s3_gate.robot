@@ -5,7 +5,8 @@ Library                         ../${RESOURCES}/neofs.py
 Library                         ../${RESOURCES}/payment_neogo.py
 Library                         ../${RESOURCES}/gates.py
 Library                         ${KEYWORDS}/wallet_keywords.py
-Library                         ../${RESOURCES}/utility_keywords.py
+
+Resource                        ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${5}
@@ -15,10 +16,10 @@ NeoFS S3 Gateway
     [Documentation]             Execute operations via S3 Gate
     [Timeout]                   5 min
 
-    [Setup]                     Create Temporary Directory
+    [Setup]                     Setup
 
     ${WIF} =	                Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
-    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${TEMP_DIR}     ${WIF}
+    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${ASSETS_DIR}     ${WIF}
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
                                 Wait Until Keyword Succeeds           1 min            15 sec
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
@@ -82,10 +83,4 @@ NeoFS S3 Gateway
                                 ${LIST_S3_OBJECTS} =             List objects S3       ${S3_CLIENT}    ${BUCKET}
                                 List Should Not Contain Value    ${LIST_S3_OBJECTS}    FILE_S3_NAME
 
-    [Teardown]                  Cleanup
-
-*** Keywords ***
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    s3_gate
+    [Teardown]                  Teardown    s3_gate

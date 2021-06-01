@@ -3,11 +3,11 @@
 Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Test cases ***
 BearerToken Operations for Inaccessible Container
@@ -15,7 +15,7 @@ BearerToken Operations for Inaccessible Container
     [Tags]                  ACL  NeoFS  NeoCLI BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -30,7 +30,7 @@ BearerToken Operations for Inaccessible Container
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Container Inaccessible and Allow All Bearer
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_bearer_inaccessible
 
 *** Keywords ***
 
@@ -61,8 +61,3 @@ Check Container Inaccessible and Allow All Bearer
                             ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user       ${FILE_USR_HEADER}
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user       ${FILE_USR_HEADER}
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_bearer

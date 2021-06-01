@@ -3,10 +3,10 @@ Variables    ../../../variables/common.py
 
 Library      ../${RESOURCES}/neofs.py
 Library      ../${RESOURCES}/payment_neogo.py
-Library      ../${RESOURCES}/utility_keywords.py
 
 Resource     common_steps_acl_basic.robot
 Resource     ../${RESOURCES}/payment_operations.robot
+Resource     ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -15,7 +15,7 @@ Basic ACL Operations for Read-Only Container
     [Tags]                  ACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
 
@@ -27,7 +27,7 @@ Basic ACL Operations for Read-Only Container
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Read-Only Container    Complex
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_basic_readonly_container_storagegroup
 
 
 *** Keywords ***
@@ -68,10 +68,3 @@ Check Read-Only Container
                         Get Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
-
-
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_basic

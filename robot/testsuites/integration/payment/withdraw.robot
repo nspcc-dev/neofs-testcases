@@ -3,9 +3,10 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
+
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${10}
@@ -18,9 +19,9 @@ NeoFS Deposit and Withdraw
     [Tags]                  Withdraw  NeoFS  NeoCLI
     [Timeout]               10 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
     ${SCRIPT_HASH} =        Get ScriptHash                        ${WIF}
 
     ##########################################################
@@ -69,11 +70,4 @@ NeoFS Deposit and Withdraw
     ${WITHDRAW_FEE} =       Evaluate      ${WITHDRAW_AMOUNT} - ${MAINNET_BALANCE_DIFF}
     Log                     Withdraw fee is ${WITHDRAW_FEE}
 
-    [Teardown]              Cleanup
-
-
-*** Keywords ***
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    withdraw
+    [Teardown]              Teardown    withdraw
