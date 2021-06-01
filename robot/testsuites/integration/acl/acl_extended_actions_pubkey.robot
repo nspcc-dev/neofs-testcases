@@ -6,6 +6,7 @@ Library                     ../${RESOURCES}/payment_neogo.py
 Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_extended.robot
+Resource                    ../${RESOURCES}/payment_operations.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -16,6 +17,7 @@ Extended ACL Operations
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object

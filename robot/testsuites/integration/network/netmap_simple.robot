@@ -7,8 +7,7 @@ Library     ../${RESOURCES}/utility_keywords.py
 Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
 
-*** Variables ***
-${TRANSFER_AMOUNT} =    ${11}
+Resource    ../${RESOURCES}/payment_operations.robot
 
 
 *** Test cases ***
@@ -80,24 +79,8 @@ Generate file
 Generate Key and Pre-payment
     ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
                         Set Global Variable     ${PRIV_KEY}     ${USER_KEY_GEN}
-                        Payment Operations      ${WALLET}       ${ADDR}      ${PRIV_KEY}
+                        Payment Operations      ${ADDR}      ${PRIV_KEY}
 
-Payment Operations
-    [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
-
-    ${TX} =             Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}     ${TRANSFER_AMOUNT}
-                        Wait Until Keyword Succeeds         1 min       15 sec
-                        ...  Transaction accepted in block  ${TX}
-
-    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
-    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
-
-    ${SCRIPT_HASH} =    Get ScriptHash           ${KEY}
-
-    ${TX_DEPOSIT} =     NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      10
-                        Wait Until Keyword Succeeds         1 min          15 sec
-                        ...  Transaction accepted in block  ${TX_DEPOSIT}
-                        Get Transaction                     ${TX_DEPOSIT}
 
 Validate Policy
     [Arguments]    ${POLICY}    ${EXPECTED_VAL}     @{EXPECTED_LIST}

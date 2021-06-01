@@ -14,25 +14,22 @@ ${DEPOSIT_AMOUNT} =     10
 *** Keywords ***
 
 Payment operations
-    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${TEMP_DIR}
     ${TX} =             Transfer Mainnet Gas                  ${MAINNET_WALLET_WIF}    ${ADDR}     ${TRANSFER_AMOUNT}
-
                         Wait Until Keyword Succeeds           ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block    ${TX}
 
-    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
-    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
+    ${MAINNET_BALANCE} =    Get Mainnet Balance               ${ADDR}
+    Should Be Equal As Numbers                                ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
 
-    ${SCRIPT_HASH} =    Get ScriptHash                        ${PRIV_KEY}
-
-    ${TX_DEPOSIT} =     NeoFS Deposit                         ${WALLET}    ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}
+    ${TX_DEPOSIT} =     NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
                         Wait Until Keyword Succeeds           ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block    ${TX_DEPOSIT}
 
-    ${NEOFS_BALANCE} =  Get NeoFS Balance       ${PRIV_KEY}
+    ${NEOFS_BALANCE} =  Get NeoFS Balance       ${WIF}
     Should Be Equal As Numbers                  ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}
 
-                        Set Global Variable                   ${PRIV_KEY}    ${PRIV_KEY}
+                        Set Global Variable                   ${PRIV_KEY}    ${WIF}
                         Set Global Variable                   ${ADDR}    ${ADDR}
 
 Prepare container

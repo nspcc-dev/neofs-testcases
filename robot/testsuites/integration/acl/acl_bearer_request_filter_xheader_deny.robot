@@ -6,6 +6,7 @@ Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/utility_keywords.py
 
 Resource    common_steps_acl_bearer.robot
+Resource    ../${RESOURCES}/payment_operations.robot
 
 *** Test cases ***
 BearerToken Operations
@@ -16,6 +17,7 @@ BearerToken Operations
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
@@ -38,7 +40,7 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
+    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
 
     ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=256

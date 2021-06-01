@@ -6,6 +6,7 @@ Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
 Resource    common_steps_acl_bearer.robot
+Resource    ../${RESOURCES}/payment_operations.robot
 
 
 *** Test cases ***
@@ -17,6 +18,7 @@ BearerToken Operations with Filter Requst NotEqual
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
@@ -38,7 +40,7 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
                             Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER}
                             Get object                 ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
