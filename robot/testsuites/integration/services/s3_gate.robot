@@ -4,9 +4,11 @@ Library                         Collections
 Library                         ../${RESOURCES}/neofs.py
 Library                         ../${RESOURCES}/payment_neogo.py
 Library                         ../${RESOURCES}/gates.py
-Library                         ${KEYWORDS}/wallet.py
+Library                         ${KEYWORDS}/wallet_keywords.py
 Library                         ../${RESOURCES}/utility_keywords.py
 
+*** Variables ***
+${DEPOSIT_AMOUNT} =     ${5}
 
 *** Test cases ***
 NeoFS S3 Gateway
@@ -15,13 +17,11 @@ NeoFS S3 Gateway
 
     [Setup]                     Create Temporary Directory
 
-    ${PRIV_KEY} =	        Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
-    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${TEMP_DIR}     ${PRIV_KEY}
-    ${SCRIPT_HASH} =            Get ScriptHash          ${PRIV_KEY}
-    ${TX_DEPOSIT} =             NeoFS Deposit                         ${WALLET}        ${ADDR}    ${SCRIPT_HASH}    5
+    ${WIF} =	                Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
+    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${TEMP_DIR}     ${WIF}
+    ${TX_DEPOSIT} =             NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
                                 Wait Until Keyword Succeeds           1 min            15 sec
                                 ...  Transaction accepted in block    ${TX_DEPOSIT}
-                                Get Transaction                       ${TX_DEPOSIT}
 
     ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
@@ -35,9 +35,9 @@ NeoFS S3 Gateway
     ...  ${BUCKET}
     ...  ${ACCESS_KEY_ID}
     ...  ${SEC_ACCESS_KEY}
-    ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${PRIV_KEY}    keys/s3_docker_hcs.pub.key
+    ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${WIF}    keys/s3_docker_hcs.pub.key
 
-    ${CONTEINERS_LIST} =        Container List               ${PRIV_KEY}
+    ${CONTEINERS_LIST} =        Container List               ${WIF}
                                 List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
 
     ${S3_CLIENT} =              Config S3 client    ${ACCESS_KEY_ID}    ${SEC_ACCESS_KEY}
@@ -48,8 +48,8 @@ NeoFS S3 Gateway
                                 Put object S3    ${S3_CLIENT}    ${BUCKET}    ${FILE_S3}
                                 Head object S3   ${S3_CLIENT}    ${BUCKET}    ${FILE_S3_NAME}
 
-    ${OID_FS} =                 Put object    ${PRIV_KEY}    ${FILE_FS}    ${CID}       ${EMPTY}       ${EMPTY}
-                                Head object            ${PRIV_KEY}    ${CID}        ${OID_FS}    ${EMPTY}
+    ${OID_FS} =                 Put object    ${WIF}    ${FILE_FS}    ${CID}       ${EMPTY}       ${EMPTY}
+                                Head object            ${WIF}    ${CID}        ${OID_FS}    ${EMPTY}
 
     ${LIST_S3_OBJECTS} =        List objects S3              ${S3_CLIENT}             ${BUCKET}
                                 List Should Contain Value    ${LIST_S3_OBJECTS}       ${FILE_S3_NAME}
@@ -59,7 +59,7 @@ NeoFS S3 Gateway
                                 List Should Contain Value    ${LIST_V2_S3_OBJECTS}    ${FILE_S3_NAME}
                                 List Should Contain Value    ${LIST_V2_S3_OBJECTS}    ${FILE_S3_NAME}
 
-    ${OID_LIST_S3} =            Search object    ${PRIV_KEY}    ${CID}        ${EMPTY}            ${EMPTY}       FileName=${FILE_S3_NAME}
+    ${OID_LIST_S3} =            Search object    ${WIF}    ${CID}        ${EMPTY}            ${EMPTY}       FileName=${FILE_S3_NAME}
     ${OID_S3} =                 Get From List    ${OID_LIST_S3}    0
 
                                 Get object S3    ${S3_CLIENT}    ${BUCKET}    ${FILE_S3_NAME}     s3_obj_get_s3
@@ -68,8 +68,8 @@ NeoFS S3 Gateway
                                 Verify file hash    s3_obj_get_s3    ${FILE_S3_HASH}
                                 Verify file hash    fs_obj_get_s3    ${FILE_FS_HASH}
 
-                                Get object    ${PRIV_KEY}    ${CID}    ${OID_S3}    ${EMPTY}    s3_obj_get_fs
-                                Get object    ${PRIV_KEY}    ${CID}    ${OID_FS}    ${EMPTY}    fs_obj_get_fs
+                                Get object    ${WIF}    ${CID}    ${OID_S3}    ${EMPTY}    s3_obj_get_fs
+                                Get object    ${WIF}    ${CID}    ${OID_FS}    ${EMPTY}    fs_obj_get_fs
 
                                 Verify file hash    s3_obj_get_fs    ${FILE_S3_HASH}
                                 Verify file hash    fs_obj_get_fs    ${FILE_FS_HASH}

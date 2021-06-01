@@ -6,6 +6,7 @@ Library                     ../${RESOURCES}/payment_neogo.py
 Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_extended.robot
+Resource                    ../${RESOURCES}/payment_operations.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -16,6 +17,7 @@ Extended ACL Operations
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
@@ -135,7 +137,7 @@ Check eACL MatchType String Equal Object
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object ID
-    ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID
+    ${ID_value} =	    Get From Dictionary	            ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
@@ -178,7 +180,7 @@ Check eACL MatchType String Not Equal Object
                             Get object           ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    local_file_eacl
 
                             Log	                            Set eACL for Deny GET operation with StringNotEqual Object ID
-    ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID
+    ${ID_value} =	    Get From Dictionary	            ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS             Filters=${filters}

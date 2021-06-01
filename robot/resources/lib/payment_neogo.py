@@ -47,21 +47,6 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     return tx
 
 
-@keyword('NeoFS Deposit')
-def neofs_deposit(wallet_file: str, address: str, scripthash: str, amount: int, wallet_pass:str=''):
-
-    # 1) Get NeoFS contract address.
-    deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
-    logger.info(f"deposit_addr: {deposit_addr}")
-
-    # 2) Transfer GAS to the NeoFS contract address.
-    out = wallet.new_nep17_transfer(address, deposit_addr, amount, 'GAS', wallet_file, '', NEO_MAINNET_ENDPOINT)
-
-    if len(out) != 64:
-        raise Exception("Can not get Tx.")
-
-    return out
-
 @keyword('Transaction accepted in block')
 def transaction_accepted_in_block(tx_id):
     """

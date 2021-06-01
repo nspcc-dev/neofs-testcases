@@ -22,20 +22,20 @@ NeoFS Simple Object Operations
     ${FILE_HASH} =      Get file hash                       ${FILE}
 
 
-    ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}
-    ${H_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER}
-    ${H_OID_OTH} =      Put object                 ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
+    ${S_OID} =          Put object          ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${EMPTY}
+    ${H_OID} =          Put object          ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER}
+    ${H_OID_OTH} =      Put object          ${PRIV_KEY}    ${FILE}       ${CID}            ${EMPTY}         ${FILE_USR_HEADER_OTH}
 
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${S_OID}
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${H_OID}
                         Validate storage policy for object  ${PRIV_KEY}    2             ${CID}            ${H_OID_OTH}
 
-    @{S_OBJ_ALL} =	    Create List	                        ${S_OID}       ${H_OID}      ${H_OID_OTH}
-    @{S_OBJ_H} =	    Create List	                        ${H_OID}
-    @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
+    @{S_OBJ_ALL} =	Create List         ${S_OID}       ${H_OID}      ${H_OID_OTH}
+    @{S_OBJ_H} =	Create List         ${H_OID}
+    @{S_OBJ_H_OTH} =    Create List         ${H_OID_OTH}
 
-    ${GET_OBJ_S} =      Get object               ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
-    ${GET_OBJ_H} =      Get object               ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
+    ${GET_OBJ_S} =      Get object          ${PRIV_KEY}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
+    ${GET_OBJ_H} =      Get object          ${PRIV_KEY}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read
 
                         Verify file hash                    ${GET_OBJ_S}   ${FILE_HASH}
                         Verify file hash                    ${GET_OBJ_H}   ${FILE_HASH}
@@ -76,8 +76,3 @@ NeoFS Simple Object Operations
 Cleanup
                         Cleanup Files
                         Get Docker Logs                     object_simple
-
-
-
-
-

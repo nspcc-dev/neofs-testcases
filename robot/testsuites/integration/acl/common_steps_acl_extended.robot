@@ -1,55 +1,19 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ${KEYWORDS}/wallet_keywords.py
-Library     ${KEYWORDS}/rpc_call_keywords.py
-
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
 ${FILE_OTH_HEADER} =        key1=oth,key2=oth
 ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
-${TRANSFER_AMOUNT} =        ${3}
 
 
 *** Keywords ***
-Generate Keys
-    ${WALLET}       ${ADDR}         ${USER_KEY_GEN} =      Init Wallet with Address    ${TEMP_DIR}
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =     Init Wallet with Address    ${TEMP_DIR}
 
-
+Generate eACL Keys
     ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-    ${SYSTEM_KEY_GEN} =     Set Variable            ${NEOFS_IR_WIF}
-    ${SYSTEM_KEY_GEN_SN} =   Set Variable            ${NEOFS_SN_WIF}
-
-                            Set Global Variable     ${USER_KEY}         ${USER_KEY_GEN}
-                            Set Global Variable     ${OTHER_KEY}        ${OTHER_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY}       ${SYSTEM_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY_SN}    ${SYSTEM_KEY_GEN_SN}
                             Set Global Variable     ${EACL_KEY}         ${EACL_KEY_GEN}
-
-                            Payment Operations      ${WALLET}           ${ADDR}        ${USER_KEY}
-                            Payment Operations      ${WALLET_OTH}       ${ADDR_OTH}    ${OTHER_KEY}
-
-
-Payment Operations
-    [Arguments]    ${WALLET}    ${ADDR}    ${KEY}
-
-    ${TX} =                 Transfer Mainnet Gas                  ${MAINNET_WALLET_WIF}    ${ADDR}    3
-
-                            Wait Until Keyword Succeeds           1 min                  15 sec
-                            ...  Transaction accepted in block    ${TX}
-
-    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
-    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
-
-    ${SCRIPT_HASH} =        Get ScriptHash                         ${KEY}
-
-    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    2
-                            Wait Until Keyword Succeeds           1 min                  15 sec
-                            ...  Transaction accepted in block    ${TX_DEPOSIT}
-                            Get Transaction                       ${TX_DEPOSIT}
-
+                            Set Global Variable     ${SYSTEM_KEY}       ${NEOFS_IR_WIF}
 
 Create Container Public
                             Log	                Create Public Container

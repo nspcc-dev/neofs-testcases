@@ -20,8 +20,8 @@ NeoFS Deposit and Withdraw
 
     [Setup]                 Create Temporary Directory
 
-    ${WALLET}   ${ADDR}     ${PRIV_KEY} =   Init Wallet with Address    ${TEMP_DIR}
-    ${SCRIPT_HASH} =        Get ScriptHash                        ${PRIV_KEY}
+    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${TEMP_DIR}
+    ${SCRIPT_HASH} =        Get ScriptHash                        ${WIF}
 
     ##########################################################
     # Transferring GAS from initial wallet to our test wallet
@@ -35,7 +35,7 @@ NeoFS Deposit and Withdraw
     ############################
     # Making deposit into NeoFS
     ############################
-    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${DEPOSIT_AMOUNT}
+    ${TX_DEPOSIT} =         NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
                             Wait Until Keyword Succeeds           ${MAINNET_TIMEOUT}     ${MAINNET_BLOCK_TIME}
                             ...  Transaction accepted in block    ${TX_DEPOSIT}
 
@@ -45,7 +45,7 @@ NeoFS Deposit and Withdraw
     ${DEPOSIT_FEE} =        Evaluate       ${EXPECTED_BALANCE} - ${MAINNET_BALANCE}
     Log                     Deposit fee is ${DEPOSIT_FEE}
 
-    ${NEOFS_BALANCE} =      Get NeoFS Balance                     ${PRIV_KEY}
+    ${NEOFS_BALANCE} =      Get NeoFS Balance                     ${WIF}
     Should Be Equal As Numbers                ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}
 
     # TODO: try to withdraw more than was deposited
@@ -59,7 +59,7 @@ NeoFS Deposit and Withdraw
 
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    ${NEOFS_BALANCE} =      Get NeoFS Balance                     ${PRIV_KEY}
+    ${NEOFS_BALANCE} =      Get NeoFS Balance                     ${WIF}
     ${EXPECTED_BALANCE} =   Evaluate                              ${DEPOSIT_AMOUNT} - ${WITHDRAW_AMOUNT}
     Should Be Equal As Numbers                ${NEOFS_BALANCE}    ${EXPECTED_BALANCE}
 

@@ -1,51 +1,11 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ${KEYWORDS}/wallet_keywords.py
-Library     ${KEYWORDS}/rpc_call_keywords.py
-
 *** Variables ***
-${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
-${TRANSFER_AMOUNT} =    ${3}
+${RULE_FOR_ALL} =       REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 
 
 *** Keywords ***
-
-Generate Keys
-    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
-
-    ${SYSTEM_KEY_GEN} =     Set Variable            ${NEOFS_IR_WIF}
-    ${SYSTEM_KEY_GEN_SN} =  Set Variable            ${NEOFS_SN_WIF}
-
-                            Set Global Variable     ${USER_KEY}                  ${USER_KEY_GEN}
-                            Set Global Variable     ${OTHER_KEY}                 ${OTHER_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY_IR}             ${SYSTEM_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY_SN}             ${SYSTEM_KEY_GEN_SN}
-
-                            Payment Operations      ${WALLET}       ${ADDR}      ${USER_KEY}
-                            Payment Operations      ${WALLET_OTH}   ${ADDR_OTH}  ${OTHER_KEY}
-
-    # Basic ACL manual page: https://neospcc.atlassian.net/wiki/spaces/NEOF/pages/362348545/NeoFS+ACL
-    # TODO: X - Sticky bit validation on public container
-
-
-Payment Operations
-    [Arguments]    ${WALLET}   ${ADDR}   ${KEY}
-
-    ${TX} =                 Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}     3
-                            Wait Until Keyword Succeeds         1 min       15 sec
-                            ...  Transaction accepted in block  ${TX}
-
-    ${MAINNET_BALANCE} =    Get Mainnet Balance                   ${ADDR}
-    Should Be Equal As Numbers                                    ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
-
-    ${SCRIPT_HASH} =        Get ScriptHash           ${KEY}
-
-    ${TX_DEPOSIT} =         NeoFS Deposit           ${WALLET}               ${ADDR}     ${SCRIPT_HASH}      2
-                            Wait Until Keyword Succeeds         1 min          15 sec
-                            ...  Transaction accepted in block  ${TX_DEPOSIT}
-                            Get Transaction                     ${TX_DEPOSIT}
 
 Create Containers
                             Log	                   Create Private Container

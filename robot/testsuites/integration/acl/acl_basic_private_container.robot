@@ -1,10 +1,11 @@
 *** Settings ***
-Variables                   ../../../variables/common.py
-Library                     ../${RESOURCES}/neofs.py
-Library                     ../${RESOURCES}/payment_neogo.py
-Library                     ../${RESOURCES}/utility_keywords.py
+Variables       ../../../variables/common.py
+Library         ../${RESOURCES}/neofs.py
+Library         ../${RESOURCES}/payment_neogo.py
+Library         ../${RESOURCES}/utility_keywords.py
 
-Resource                    common_steps_acl_basic.robot
+Resource        common_steps_acl_basic.robot
+Resource        ../${RESOURCES}/payment_operations.robot
 
 
 *** Test cases ***
@@ -66,7 +67,7 @@ Check Private Container
                             Get Range Hash                      ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_PRIV} =	        Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}
+    @{S_OBJ_PRIV} =	    Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}
                             Search object                       ${USER_KEY}         ${PRIV_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}
                             Run Keyword And Expect Error        *
                             ...  Search object                  ${OTHER_KEY}        ${PRIV_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_PRIV}

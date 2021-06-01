@@ -6,6 +6,7 @@ Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
 Resource    common_steps_acl_bearer.robot
+Resource    ../${RESOURCES}/payment_operations.robot
 
 
 *** Test cases ***
@@ -17,6 +18,7 @@ BearerToken Operations with Filter OID Equal
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
@@ -36,19 +38,19 @@ BearerToken Operations with Filter OID Equal
 
 Check eACL Deny and Allow All Bearer Filter OID Equal
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
-    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
+    ${S_OID_USER} =         Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
+    ${S_OID_USER_2} =       Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
+    ${D_OID_USER} =         Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
+    @{S_OBJ_H} =	    Create List	       ${S_OID_USER}
 
-                            Put object                 ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_OTH_HEADER}
-                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
-                            Search object                       ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}         ${S_OBJ_H}
-                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
-                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
-                            Delete object                       ${USER_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
+                            Put object         ${USER_KEY}    ${FILE_S}     ${CID}               ${EMPTY}      ${FILE_OTH_HEADER}
+                            Get object         ${USER_KEY}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
+                            Search object      ${USER_KEY}    ${CID}        ${EMPTY}             ${EMPTY}      ${FILE_USR_HEADER}    ${S_OBJ_H}
+                            Head object        ${USER_KEY}    ${CID}        ${S_OID_USER}        ${EMPTY}
+                            Get Range          ${USER_KEY}    ${CID}        ${S_OID_USER}        s_get_range       ${EMPTY}          0:256
+                            Delete object      ${USER_KEY}    ${CID}        ${D_OID_USER}        ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+                            Set eACL           ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -65,34 +67,34 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
 
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
 
-                            Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
+                            Form BearerToken file           ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
                             Run Keyword And Expect Error        *
-                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}                   ${EMPTY}              ${FILE_USR_HEADER}
+                            ...  Put object    ${USER_KEY}    ${FILE_S}     ${CID}       ${EMPTY}      ${FILE_USR_HEADER}
                             Run Keyword And Expect Error        *
-                            ...  Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}              local_file_eacl
+                            ...  Get object    ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}      local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}              ${FILE_USR_HEADER}          ${S_OBJ_H}
+                            ...  Search object    ${USER_KEY}    ${CID}    ${EMPTY}     ${EMPTY}      ${FILE_USR_HEADER}      ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Head object                    ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
+                            ...  Head object      ${USER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}
                             Run Keyword And Expect Error        *
-                            ...  Get Range                      ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range            ${EMPTY}              0:256
+                            ...  Get Range        ${USER_KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
                             Run Keyword And Expect Error        *
-                            ...  Delete object                  ${USER_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
+                            ...  Delete object      ${USER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}
                             Run Keyword And Expect Error        *
-                            ...  Search object                  ${USER_KEY}    ${CID}        ${EMPTY}                 bearer_allow_all_user               ${FILE_USR_HEADER}             ${S_OBJ_H}
+                            ...  Search object      ${USER_KEY}    ${CID}    ${EMPTY}    bearer_allow_all_user    ${FILE_USR_HEADER}    ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Put object            ${USER_KEY}    ${FILE_S}     ${CID}                   bearer_allow_all_user               ${FILE_OTH_HEADER}
+                            ...  Put object    ${USER_KEY}    ${FILE_S}     ${CID}     bearer_allow_all_user     ${FILE_OTH_HEADER}
                             Run Keyword And Expect Error        *
-                            ...  Get object          ${USER_KEY}    ${CID}        ${S_OID_USER_2}          bearer_allow_all_user               local_file_eacl
+                            ...  Get object      ${USER_KEY}    ${CID}      ${S_OID_USER_2}    bearer_allow_all_user       local_file_eacl
 
-                            Get object               ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user               local_file_eacl
-                            Get Range                           ${USER_KEY}    ${CID}        ${S_OID_USER}            s_get_range                         bearer_allow_all_user               0:256
+                            Get object       ${USER_KEY}    ${CID}      ${S_OID_USER}      bearer_allow_all_user       local_file_eacl
+                            Get Range        ${USER_KEY}    ${CID}      ${S_OID_USER}      s_get_range     bearer_allow_all_user   0:256
 
-                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
-                            Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}            bearer_allow_all_user
+                            Head object                         ${USER_KEY}    ${CID}        ${S_OID_USER}        bearer_allow_all_user
+                            Delete object                       ${USER_KEY}    ${CID}        ${S_OID_USER}        bearer_allow_all_user
                             Run Keyword And Expect Error        *
-                            ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER}            bearer_allow_all_user
+                            ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER}        bearer_allow_all_user
 
 
 Cleanup

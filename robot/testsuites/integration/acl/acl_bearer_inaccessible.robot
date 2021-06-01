@@ -7,6 +7,7 @@ Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
 Resource    common_steps_acl_bearer.robot
+Resource    ../${RESOURCES}/payment_operations.robot
 
 *** Test cases ***
 BearerToken Operations for Inaccessible Container
@@ -17,6 +18,7 @@ BearerToken Operations for Inaccessible Container
     [Setup]                 Create Temporary Directory
 
                             Generate Keys
+                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
