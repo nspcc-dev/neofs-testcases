@@ -1,12 +1,13 @@
 *** Settings ***
 Variables                   ../../../variables/common.py
-Library                     Collections
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
-Library                     ../${RESOURCES}/utility_keywords.py
+
+Library                     Collections
 
 Resource                    common_steps_acl_extended.robot
 Resource                    ../${RESOURCES}/payment_operations.robot
+Resource                    ../${RESOURCES}/setup_teardown.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -14,7 +15,7 @@ Extended ACL Operations
     [Tags]                  ACL  eACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -29,7 +30,7 @@ Extended ACL Operations
                             Check eACL Deny All Other and Allow All Pubkey
 
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_extended_actions_pubkey
 
 
 *** Keywords ***
@@ -78,8 +79,3 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get Range                           ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_extended

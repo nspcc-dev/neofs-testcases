@@ -2,11 +2,12 @@
 Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 
 Library     Collections
+
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -15,7 +16,7 @@ BearerToken Operations with Filter OID NotEqual
     [Tags]                  ACL  NeoFS  NeoCLI BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -30,7 +31,7 @@ BearerToken Operations with Filter OID NotEqual
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_bearer_filter_oid_not_equal
 
 
 
@@ -123,8 +124,3 @@ Check eACL Deny and Allow All Bearer Filter OID NotEqual
 
                             Run Keyword And Expect Error        *
                             ...  Delete object                  ${USER_KEY}    ${CID}        ${D_OID_USER_2}          bearer_allow_all_user
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_bearer

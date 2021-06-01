@@ -3,10 +3,10 @@ Variables                   ../../../variables/common.py
 Library                     Collections
 Library                     ../${RESOURCES}/neofs.py
 Library                     ../${RESOURCES}/payment_neogo.py
-Library                     ../${RESOURCES}/utility_keywords.py
 
 Resource                    common_steps_acl_extended.robot
 Resource                    ../${RESOURCES}/payment_operations.robot
+Resource                    ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -15,7 +15,7 @@ Extended ACL Operations
     [Tags]                  ACL  eACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -31,7 +31,7 @@ Extended ACL Operations
                             Generate files    ${COMPLEX_OBJ_SIZE}
                             Check Сompound Operations
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_extended_compound
 
 
 *** Keywords ***
@@ -116,9 +116,3 @@ Check eACL Сompound Get Range Hash
                             ...  Get object      ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
 
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
-
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_extended

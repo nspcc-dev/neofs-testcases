@@ -2,11 +2,11 @@
 Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 Library     Collections
 
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -15,7 +15,7 @@ BearerToken Operations
     [Tags]                  ACL  NeoFS  NeoCLI BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -30,7 +30,7 @@ BearerToken Operations
                             Check eACL Deny and Allow All Bearer
 
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_bearer_allow
 
 
 
@@ -87,6 +87,3 @@ Check eACL Deny and Allow All Bearer
                             Head object         ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user
                             Get Range           ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range              bearer_allow_all_user    0:256
                             Delete object       ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user
-
-Cleanup
-                            Cleanup Files

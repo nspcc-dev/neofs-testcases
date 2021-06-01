@@ -2,10 +2,10 @@
 Variables    ../../../variables/common.py
 Library      ../${RESOURCES}/neofs.py
 Library      ../${RESOURCES}/payment_neogo.py
-Library      ../${RESOURCES}/utility_keywords.py
 
 Resource     common_steps_acl_basic.robot
 Resource     ../${RESOURCES}/payment_operations.robot
+Resource     ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -14,7 +14,7 @@ Basic ACL Operations for Public Container
     [Tags]                  ACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
 
@@ -26,7 +26,7 @@ Basic ACL Operations for Public Container
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_basic_public_container
 
 
 *** Keywords ***
@@ -87,8 +87,3 @@ Check Public Container
                             Delete object     ${OTHER_KEY}        ${PUBLIC_CID}    ${S_OID_SYS_SN}    ${EMPTY}
                             Delete object     ${SYSTEM_KEY_IR}    ${PUBLIC_CID}    ${S_OID_USER}      ${EMPTY}
                             Delete object     ${SYSTEM_KEY_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}     ${EMPTY}
-
-
-
-Cleanup
-                            Cleanup Files

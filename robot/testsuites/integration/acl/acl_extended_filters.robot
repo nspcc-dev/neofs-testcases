@@ -1,12 +1,13 @@
 *** Settings ***
-Variables                   ../../../variables/common.py
-Library                     Collections
-Library                     ../${RESOURCES}/neofs.py
-Library                     ../${RESOURCES}/payment_neogo.py
-Library                     ../${RESOURCES}/utility_keywords.py
+Variables       ../../../variables/common.py
+Library         ../${RESOURCES}/neofs.py
+Library         ../${RESOURCES}/payment_neogo.py
 
-Resource                    common_steps_acl_extended.robot
-Resource                    ../${RESOURCES}/payment_operations.robot
+Library         Collections
+
+Resource        common_steps_acl_extended.robot
+Resource        ../${RESOURCES}/payment_operations.robot
+Resource        ../${RESOURCES}/setup_teardown.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -14,7 +15,7 @@ Extended ACL Operations
     [Tags]                  ACL  eACL  NeoFS  NeoCLI
     [Timeout]               20 min
 
-    [Setup]                 Create Temporary Directory
+    [Setup]                 Setup
 
                             Generate Keys
                             Generate eACL Keys
@@ -28,7 +29,7 @@ Extended ACL Operations
                             Generate files    ${COMPLEX_OBJ_SIZE}
                             Check Filters
 
-    [Teardown]              Cleanup
+    [Teardown]              Teardown    acl_extended_filters
 
 
 *** Keywords ***
@@ -205,9 +206,3 @@ Check eACL MatchType String Not Equal Object
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            local_file_eacl
                             Get object           ${OTHER_KEY}    ${CID}      ${S_OID_USER}        ${EMPTY}            local_file_eacl
-
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    acl_extended

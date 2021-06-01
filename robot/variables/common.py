@@ -43,4 +43,4 @@ NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT")
 
 COMMON_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 
-TEMP_DIR = os.getenv("TEMP_DIR", "TemporaryDir/")
+ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")

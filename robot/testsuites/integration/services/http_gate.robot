@@ -4,9 +4,10 @@ Variables   ../../../variables/common.py
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
 Library     ../${RESOURCES}/gates.py
-Library     ../${RESOURCES}/utility_keywords.py
 Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
+
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
@@ -19,8 +20,8 @@ NeoFS HTTP Gateway
     [Documentation]     Creates container and does PUT, GET via HTTP Gate
     [Timeout]           5 min
 
-    [Setup]             Create Temporary Directory
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${TEMP_DIR}
+    [Setup]             Setup
+    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
     ${TX} =             Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}    ${TRANSFER_AMOUNT}
 
                         Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
@@ -65,12 +66,4 @@ NeoFS HTTP Gateway
                         Verify file hash                    ${GET_OBJ_L}    ${FILE_L_HASH}
                         Verify file hash                    ${FILEPATH}    ${FILE_L_HASH}
 
-    [Teardown]          Cleanup
-
-
-
-*** Keywords ***
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    http_gate
+    [Teardown]          Teardown    http_gate

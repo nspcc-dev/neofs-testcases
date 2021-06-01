@@ -3,11 +3,11 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/utility_keywords.py
 Library     ${KEYWORDS}/wallet_keywords.py
 Library     ${KEYWORDS}/rpc_call_keywords.py
 
 Resource    ../${RESOURCES}/payment_operations.robot
+Resource    ../${RESOURCES}/setup_teardown.robot
 
 
 *** Test cases ***
@@ -16,7 +16,7 @@ NeoFS Simple Netmap
     [Tags]              Netmap  NeoFS  NeoCLI
     [Timeout]           20 min
 
-    [Setup]             Create Temporary Directory
+    [Setup]             Setup
 
     Generate Key and Pre-payment
 
@@ -67,7 +67,7 @@ NeoFS Simple Netmap
                        Run Keyword And Expect Error    *
                        ...  Validate Policy    REP 2 IN X CBF 2 SELECT 6 FROM * AS X    2    @{EMPTY}
 
-    [Teardown]         Cleanup
+    [Teardown]         Teardown     netmap_simple
 
 *** Keywords ***
 
@@ -77,7 +77,7 @@ Generate file
                         Set Global Variable       ${FILE}    ${FILE}
 
 Generate Key and Pre-payment
-    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${TEMP_DIR}
+    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${ASSETS_DIR}
                         Set Global Variable     ${PRIV_KEY}     ${USER_KEY_GEN}
                         Payment Operations      ${ADDR}      ${PRIV_KEY}
 
@@ -92,8 +92,3 @@ Validate Policy
     ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}
                         Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
                         Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read
-
-
-Cleanup
-                            Cleanup Files
-                            Get Docker Logs    netmap_simple
