@@ -59,7 +59,7 @@ Check Bearer Сompound Get
     ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -88,7 +88,7 @@ Check Bearer Сompound Delete
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Delete object                   ${KEY}         ${CID}       ${D_OID_USER}    ${EMPTY}
 
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -117,7 +117,7 @@ Check Bearer Сompound Get Range Hash
                             Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
-                            Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

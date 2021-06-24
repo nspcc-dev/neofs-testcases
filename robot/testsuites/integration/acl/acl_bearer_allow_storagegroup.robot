@@ -51,7 +51,7 @@ Check eACL Deny and Allow All Bearer
                             Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                             Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

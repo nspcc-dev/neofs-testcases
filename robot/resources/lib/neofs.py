@@ -192,11 +192,10 @@ def get_epoch(private_key: str):
         raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Set eACL')
-def set_eacl(private_key: str, cid: str, eacl: str, add_keys: str = ""):
-    file_path = f"{ASSETS_DIR}/{eacl}"
+def set_eacl(private_key: str, cid: str, eacl_table_path: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
-        f'container set-eacl --cid {cid} --table {file_path} {add_keys}'
+        f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
     )
     logger.info(f"Cmd: {cmd}")
     try:
@@ -265,9 +264,8 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
     return file_path
 
 @keyword('Form eACL json common file')
-def form_eacl_json_common_file(file_name, eacl_oper_list ):
+def form_eacl_json_common_file(file_path, eacl_oper_list ):
     # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-    file_path = f"{ASSETS_DIR}/{file_name}"
     eacl = {"records":[]}
 
     logger.info(eacl_oper_list)
@@ -291,7 +289,7 @@ def form_eacl_json_common_file(file_name, eacl_oper_list ):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(eacl, f, ensure_ascii=False, indent=4)
 
-    return file_name
+    return file_path
 
 
 @keyword('Get Range')
