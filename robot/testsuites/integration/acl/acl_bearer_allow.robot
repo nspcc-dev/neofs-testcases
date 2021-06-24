@@ -50,7 +50,7 @@ Check eACL Deny and Allow All Bearer
                             Get Range         ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
                             Delete object     ${USER_KEY}    ${CID}        ${D_OID_USER}    ${EMPTY}
 
-                            Set eACL          ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}    --await
+                            Set eACL          ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

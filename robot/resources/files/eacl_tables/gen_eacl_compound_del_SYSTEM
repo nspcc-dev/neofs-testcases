@@ -1,0 +1,34 @@
+{
+    "records": [
+        {
+            "operation": "DELETE",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "PUT",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "HEAD",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        }
+    ]
+}

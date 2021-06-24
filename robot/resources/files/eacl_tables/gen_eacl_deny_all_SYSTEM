@@ -1,0 +1,74 @@
+{
+    "records": [
+        {
+            "operation": "GET",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "HEAD",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "PUT",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "DELETE",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "SEARCH",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "GETRANGE",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        },
+        {
+            "operation": "GETRANGEHASH",
+            "action": "DENY",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "SYSTEM"
+                }
+            ]
+        }
+    ]
+}

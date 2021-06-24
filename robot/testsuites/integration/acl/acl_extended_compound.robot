@@ -1,12 +1,13 @@
 *** Settings ***
-Variables                   ../../../variables/common.py
-Library                     Collections
-Library                     ../${RESOURCES}/neofs.py
-Library                     ../${RESOURCES}/payment_neogo.py
+Variables    ../../../variables/common.py
+Library      Collections
+Library      ../${RESOURCES}/neofs.py
+Library      ../${RESOURCES}/payment_neogo.py
 
-Resource                    common_steps_acl_extended.robot
-Resource                    ../${RESOURCES}/payment_operations.robot
-Resource                    ../${RESOURCES}/setup_teardown.robot
+Resource     common_steps_acl_extended.robot
+Resource     ../${RESOURCES}/payment_operations.robot
+Resource     ../${RESOURCES}/setup_teardown.robot
+Resource     ../../../variables/eacl_tables.robot
 
 
 *** Test cases ***
@@ -19,13 +20,10 @@ Extended ACL Operations
 
                             Generate Keys
                             Generate eACL Keys
-                            Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
                             Check Сompound Operations
-
-
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
@@ -59,7 +57,7 @@ Check eACL Сompound Get
     ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -82,7 +80,7 @@ Check eACL Сompound Delete
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Delete object                   ${KEY}         ${CID}       ${D_OID_USER}    ${EMPTY}
 
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -105,7 +103,7 @@ Check eACL Сompound Get Range Hash
                             Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
                             Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
-                            Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}     --await
+                            Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

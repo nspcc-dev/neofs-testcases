@@ -1,13 +1,14 @@
 *** Settings ***
 Variables       ../../../variables/common.py
+
 Library         ../${RESOURCES}/neofs.py
 Library         ../${RESOURCES}/payment_neogo.py
-
 Library         Collections
 
 Resource        common_steps_acl_extended.robot
 Resource        ../${RESOURCES}/payment_operations.robot
 Resource        ../${RESOURCES}/setup_teardown.robot
+Resource        ../../../variables/eacl_tables.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -19,7 +20,6 @@ Extended ACL Operations
 
                             Generate Keys
                             Generate eACL Keys
-                            Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
@@ -51,7 +51,7 @@ Check eACL MatchType String Equal Request Deny
 
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID
 
-                            Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}    --await
+                            Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -95,7 +95,7 @@ Check eACL MatchType String Equal Request Allow
 
     ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID
 
-                            Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}    --await
+                            Set eACL                        ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -143,9 +143,9 @@ Check eACL MatchType String Equal Object
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
     ${eACL_gen} =           Create List          ${rule1}
-    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    ${EACL_CUSTOM} =        Form eACL json common file    ${ASSETS_DIR}/eacl_custom    ${eACL_gen}
 
-                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
+                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object                 ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        local_file_eacl
 
@@ -156,10 +156,10 @@ Check eACL MatchType String Equal Object
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key1    value=1
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
     ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    ${EACL_CUSTOM} =        Form eACL json common file    ${ASSETS_DIR}/eacl_custom    ${eACL_gen}
 
 
-                            Set eACL                        ${USER_KEY}     ${CID}       ${EACL_CUSTOM}       --await
+                            Set eACL                        ${USER_KEY}     ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}        local_file_eacl
                             Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER_OTH}    ${EMPTY}        local_file_eacl
@@ -186,9 +186,9 @@ Check eACL MatchType String Not Equal Object
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS             Filters=${filters}
     ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    ${EACL_CUSTOM} =        Form eACL json common file    ${ASSETS_DIR}/eacl_custom    ${eACL_gen}
 
-                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}    --await
+                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}      ${CID}    ${S_OID_OTHER}    ${EMPTY}            local_file_eacl
                             Get object           ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}            local_file_eacl
@@ -200,9 +200,9 @@ Check eACL MatchType String Not Equal Object
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=key1       value=1
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS    Filters=${filters}
     ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL json common file    eacl_custom    ${eACL_gen}
+    ${EACL_CUSTOM} =        Form eACL json common file    ${ASSETS_DIR}/eacl_custom    ${eACL_gen}
 
-                            Set eACL                        ${USER_KEY}    ${CID}       ${EACL_CUSTOM}       --await
+                            Set eACL                        ${USER_KEY}    ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            local_file_eacl
                             Get object           ${OTHER_KEY}    ${CID}      ${S_OID_USER}        ${EMPTY}            local_file_eacl

@@ -1,13 +1,14 @@
 *** Settings ***
-Variables                   ../../../variables/common.py
-Library                     ../${RESOURCES}/neofs.py
-Library                     ../${RESOURCES}/payment_neogo.py
+Variables    ../../../variables/common.py
+Library      ../${RESOURCES}/neofs.py
+Library      ../${RESOURCES}/payment_neogo.py
 
-Library                     Collections
+Library      Collections
 
-Resource                    common_steps_acl_extended.robot
-Resource                    ../${RESOURCES}/payment_operations.robot
-Resource                    ../${RESOURCES}/setup_teardown.robot
+Resource     common_steps_acl_extended.robot
+Resource     ../${RESOURCES}/payment_operations.robot
+Resource     ../${RESOURCES}/setup_teardown.robot
+Resource       ../../../variables/eacl_tables.robot
 
 *** Test cases ***
 Extended ACL Operations
@@ -19,7 +20,6 @@ Extended ACL Operations
 
                             Generate Keys
                             Generate eACL Keys
-                            Prepare eACL Role rules
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
@@ -50,7 +50,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get Range Hash                      ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
                             Delete object                       ${EACL_KEY}    ${CID}        ${D_OID_USER}            ${EMPTY}
 
-                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}    --await
+                            Set eACL                            ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

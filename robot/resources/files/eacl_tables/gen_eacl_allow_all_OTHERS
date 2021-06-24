@@ -1,0 +1,74 @@
+{
+    "records": [
+        {
+            "operation": "GET",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "HEAD",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "PUT",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "DELETE",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "SEARCH",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "GETRANGE",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        },
+        {
+            "operation": "GETRANGEHASH",
+            "action": "ALLOW",
+            "filters": [],
+            "targets": [
+                {
+                    "role": "OTHERS"
+                }
+            ]
+        }
+    ]
+}
