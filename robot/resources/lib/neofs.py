@@ -18,7 +18,6 @@ import shutil
 
 import time
 from datetime import datetime
-
 from common import *
 
 ROBOT_AUTO_KEYWORDS = False
