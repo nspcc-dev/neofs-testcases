@@ -112,7 +112,7 @@ def _get_balance_request(privkey: str):
     Internal method.
     '''
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --key {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
+        f'{NEOFS_CLI_EXEC} --wif {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
         f' accounting balance'
     )
     logger.info(f"Cmd: {Cmd}")

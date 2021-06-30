@@ -17,7 +17,6 @@ BearerToken Operations Filter UserHeader NotEqual
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object

@@ -10,11 +10,6 @@ ${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 
 *** Keywords ***
 
-Generate eACL Keys
-    ${EACL_KEY_GEN} =	    Form WIF from String    782676b81a35c5f07325ec523e8521ee4946b6e5d4c6cd652dd0c3ba51ce03de
-                            Set Global Variable     ${EACL_KEY}         ${EACL_KEY_GEN}
-                            Set Global Variable     ${SYSTEM_KEY}       ${NEOFS_IR_WIF}
-
 Create Container Public
                             Log	                Create Public Container
     ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    0x4FFFFFFF    ${RULE_FOR_ALL}

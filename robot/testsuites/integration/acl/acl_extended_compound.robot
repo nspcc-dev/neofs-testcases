@@ -9,6 +9,9 @@ Resource     ../${RESOURCES}/payment_operations.robot
 Resource     ../${RESOURCES}/setup_teardown.robot
 Resource     ../../../variables/eacl_tables.robot
 
+*** Variables ***
+${SYSTEM_KEY} =     ${NEOFS_IR_WIF}
+
 
 *** Test cases ***
 Extended ACL Operations
@@ -19,7 +22,6 @@ Extended ACL Operations
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
