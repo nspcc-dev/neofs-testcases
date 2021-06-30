@@ -10,6 +10,7 @@ Resource                        ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${5}
+${WIF} =                ${MAINNET_WALLET_WIF}
 
 *** Test cases ***
 NeoFS S3 Gateway
@@ -18,7 +19,6 @@ NeoFS S3 Gateway
 
     [Setup]                     Setup
 
-    ${WIF} =	                Form WIF from String    1dd37fba80fec4e6a6f13fd708d8dcb3b29def768017052f6c930fa1c5d90bbb
     ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${ASSETS_DIR}     ${WIF}
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
                                 Wait Until Keyword Succeeds           1 min            15 sec

@@ -26,24 +26,6 @@ ROBOT_AUTO_KEYWORDS = False
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
-@keyword('Form WIF from String')
-def form_wif_from_string(private_key: str):
-    wif = ""
-    Cmd = f'{NEOFS_CLI_EXEC} util keyer {private_key}'
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
-
-    m = re.search(r'WIF\s+(\w+)', output)
-    if m.start() != m.end():
-        wif = m.group(1)
-    else:
-        raise Exception("Can not get WIF.")
-
-    return wif
-
 
 @keyword('Get ScriptHash')
 def get_scripthash(privkey: str):
@@ -156,7 +138,7 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
 def get_eacl(private_key: str, cid: str):
 
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container get-eacl --cid {cid}'
     )
     logger.info("Cmd: %s" % Cmd)
@@ -178,7 +160,7 @@ def get_eacl(private_key: str, cid: str):
 @keyword('Get Epoch')
 def get_epoch(private_key: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'netmap epoch'
     )
     logger.info(f"Cmd: {cmd}")
@@ -194,7 +176,7 @@ def get_epoch(private_key: str):
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl_table_path: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
     )
     logger.info(f"Cmd: {cmd}")
@@ -249,7 +231,7 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
     # Sign bearer token
     Cmd = (
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {file_path} '
-        f'--to {file_path} --key {private_key} --json'
+        f'--to {file_path} --wif {private_key} --json'
     )
     logger.info("Cmd: %s" % Cmd)
 
@@ -300,7 +282,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
 
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
         f'--file {ASSETS_DIR}/{range_file} {options}'
     )
@@ -323,7 +305,7 @@ def create_container(private_key: str, basic_acl:str, rule:str):
         basic_acl = f"--basic-acl {basic_acl}"
 
     createContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container create --policy "{rule}" {basic_acl} --await'
     )
     logger.info("Cmd: %s" % createContainerCmd)
@@ -339,7 +321,7 @@ def create_container(private_key: str, basic_acl:str, rule:str):
 @keyword('Container List')
 def container_list(private_key: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container list'
     )
     logger.info("Cmd: %s" % Cmd)
@@ -354,7 +336,7 @@ def container_list(private_key: str):
 @keyword('Container Existing')
 def container_existing(private_key: str, cid: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container list'
     )
     logger.info("Cmd: %s" % Cmd)
@@ -379,7 +361,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
             filters_result += f"--filters '{filter_item}' "
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
     )
     logger.info("Cmd: %s" % object_cmd)
@@ -564,7 +546,7 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object head --cid {cid} --oid {oid_ts} --json'
     )
     logger.info("Cmd: %s" % object_cmd)
@@ -628,7 +610,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
         endpoint = NEOFS_ENDPOINT
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
         f'head --cid {cid} --oid {oid} {bearer_token} {options}'
     )
     logger.info("Cmd: %s" % object_cmd)
@@ -763,7 +745,7 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     )
     logger.info("Cmd: %s" % object_cmd)
@@ -810,7 +792,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         bearer = f"--bearer {ASSETS_DIR}/{bearer}"
 
     putobject_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} object '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
         f'put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     )
     logger.info("Cmd: %s" % putobject_cmd)
@@ -893,7 +875,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object hash --cid {cid} --oid {oid} --range {range_cut} '
         f'{bearer_token} {options}'
     )
@@ -920,7 +902,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} '
         f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
         f'{options}'
     )
@@ -944,7 +926,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
         f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -966,7 +948,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'storagegroup list --cid {cid} {bearer_token}'
     )
 
@@ -996,7 +978,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
     if bearer_token:
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
-    object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
+    object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {object_cmd}")
     try:
         complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
@@ -1029,7 +1011,7 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --key {private_key} storagegroup '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
         f'delete --cid {cid} --id {oid} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -1122,7 +1104,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
     if oid:
         oid_cmd = "--oid %s" % oid
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --key {private_key} --ttl 1 '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wif {private_key} --ttl 1 '
         f'object search --root --cid {cid} {oid_cmd}'
     )
     try:

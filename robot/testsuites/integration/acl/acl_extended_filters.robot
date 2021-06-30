@@ -19,7 +19,6 @@ Extended ACL Operations
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}

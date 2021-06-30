@@ -9,6 +9,9 @@ Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
 
+*** Variables ***
+${SYSTEM_KEY} =     ${NEOFS_IR_WIF}
+
 *** Test cases ***
 BearerToken Operations for Сompound Operations
     [Documentation]         Testcase to validate NeoFS operations with BearerToken for Сompound Operations.
@@ -18,7 +21,6 @@ BearerToken Operations for Сompound Operations
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object

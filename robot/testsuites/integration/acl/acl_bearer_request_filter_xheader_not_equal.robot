@@ -19,7 +19,6 @@ BearerToken Operations with Filter Requst NotEqual
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
@@ -27,7 +26,6 @@ BearerToken Operations with Filter Requst NotEqual
                             Check eACL Deny and Allow All Bearer Filter Requst NotEqual
 
                             Log    Check Bearer token with complex object
-
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter Requst NotEqual
 

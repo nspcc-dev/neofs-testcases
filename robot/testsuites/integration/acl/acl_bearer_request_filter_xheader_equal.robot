@@ -19,7 +19,6 @@ BearerToken Operations with Filter Requst Equal
     [Setup]                 Setup
 
                             Generate Keys
-                            Generate eACL Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
