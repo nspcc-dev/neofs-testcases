@@ -4,7 +4,7 @@ ROOT='../..'
 
 RESOURCES="%s/resources/lib" % ROOT
 CERT="%s/../../ca" % ROOT
-KEYWORDS="%s/../../../neofs-keywords/" % ROOT
+KEYWORDS="%s/../../../neofs-keywords/robot/" % ROOT
 
 # path from repo root is required for object put and get
 # in case when test is run from root in docker
@@ -29,7 +29,7 @@ NEOFS_SN_WIF = os.getenv("NEOFS_SN_WIF", "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1
 MAINNET_WALLET_WIF = os.getenv("MAINNET_WALLET_WIF", "KxDgvEKzgSBPPfuVfw67oPQBSjidEiqTHURKSDL1R7yGaGYAeYnr")
 
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
-NEOGO_CLI_EXEC = os.getenv("NEOGO_CLI_EXEC", "neo-go")
+NEOGO_CLI_EXEC = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 
 NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main_chain.neofs.devenv:30333')
 NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph_chain.neofs.devenv:30333')

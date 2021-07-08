@@ -7,7 +7,7 @@
     - `cd neofs-node`
     - `make`
     - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`, add alias path to
-    bin/neofs-cli or run `export NEOFS_CLI_EXEC=<path_to_binary>`
+    bin/neofs-cli or run `export NEOFS_EXECUTABLE=<path_to_binary>`
 
     or download binary from releases: https://github.com/nspcc-dev/neofs-node/releases
 
@@ -24,7 +24,7 @@
     - `git checkout v0.92.0` (or the current version in the neofs-dev-env)
     - `make`
     - `sudo cp bin/neo-go /usr/local/bin/neo-go`, add alias path to bin/neo-go
-        or run `export NEOGO_CLI_EXEC=<path_to_binary>`
+        or run `export NEOGO_EXECUTABLE=<path_to_binary>`
 
     or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
 
@@ -38,7 +38,7 @@ Test cases are designed to run on Python 3.7+
 
 ### Run
 
-0. Add keywords repo to PYTHONPATH `export PYTHONPATH=${PYTHONPATH}:~/neofs-keywords`
+0. Add keywords repo to PYTHONPATH `export PYTHONPATH=${PYTHONPATH}:~/neofs-keywords/lib::~/neofs-keywords/robot`
 
 1. Execute the command `make run`
 

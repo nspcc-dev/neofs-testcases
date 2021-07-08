@@ -4,16 +4,9 @@ import subprocess
 import pexpect
 import re
 import uuid
-import logging
 import requests
 import json
 import os
-import tarfile
-import sys
-
-sys.path.insert(0,'../neofs-keywords')
-import converters
-import wallet
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -26,7 +19,6 @@ ROBOT_AUTO_KEYWORDS = False
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
-NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC', 'neo-go')
 
 
 @keyword('Withdraw Mainnet Gas')
@@ -73,26 +65,6 @@ def transaction_accepted_in_block(tx_id):
 
     logger.info("Transaction has been found in the block %s." % response.text )
     return response.text
-
-@keyword('Get Transaction')
-def get_transaction(tx_id: str):
-    """
-    This function return information about TX.
-    Parameters:
-    :param tx_id:           transaction id
-    """
-
-    headers = {'Content-type': 'application/json'}
-    data = { "jsonrpc": "2.0", "id": 5, "method": "getapplicationlog", "params": [ tx_id ] }
-    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
-
-    if not response.ok:
-        raise Exception(f"""Failed:
-                request: {data},
-                response: {response.text},
-                status code: {response.status_code} {response.reason}""")
-    else:
-        logger.info(response.text)
 
 
 @keyword('Get NeoFS Balance')
