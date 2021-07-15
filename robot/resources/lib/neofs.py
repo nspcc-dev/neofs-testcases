@@ -296,16 +296,18 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str, rule:str):
+def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
     if basic_acl:
         basic_acl = f"--basic-acl {basic_acl}"
+    if user_headers:
+        user_headers = f"--attributes {user_headers}"
 
     createContainerCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'container create --policy "{rule}" {basic_acl} --await'
+        f'container create --policy "{rule}" {basic_acl} {user_headers} --await'
     )
     logger.info("Cmd: %s" % createContainerCmd)
     complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
@@ -601,7 +603,7 @@ def _json_cli_decode(data: str):
 
 @keyword('Head object')
 def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
-    user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False):
+    user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False, json_output: bool = False):
 
     if bearer_token:
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
@@ -610,7 +612,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
-        f'head --cid {cid} --oid {oid} {bearer_token} {options}'
+        f'head --cid {cid} --oid {oid} {bearer_token} {options} {"--json" if json_output else ""}'
     )
     logger.info("Cmd: %s" % object_cmd)
     try:
