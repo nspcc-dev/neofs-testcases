@@ -1,0 +1,74 @@
+*** Settings ***
+Variables   ../../../variables/common.py
+
+Library    Collections
+Library     ../${RESOURCES}/neofs.py
+Library     ../${RESOURCES}/payment_neogo.py
+Library    String
+
+Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    ../${RESOURCES}/payment_operations.robot
+
+*** Variables ***
+${POLICY} =       REP 2 IN X CBF 1 SELECT 2 FROM * AS X
+${ATTR_FILENAME} =    FileName=new
+${ATTR_DUPLICATE} =    FileType=jpg, FileType=png
+${ATTR_NONE} =    NoAttribute=''
+${ATTR_SINGLE} =    AttrNum=one
+
+*** Test Cases ***
+
+Duplicated Object Attributes
+    [Documentation]             Testcase to check duplicated attributes.
+    [Tags]                      Object  NeoFS  NeoCLI
+    [Timeout]                   10 min
+
+    [Setup]                     Setup
+
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
+    Payment Operations      ${ADDR}         ${USER_KEY}
+
+    ${PUBLIC_CID} =             Create container       ${USER_KEY}    0x1FFFFFFF    ${POLICY}    ${EMPTY}    
+    ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
+
+
+    ###################################################
+    # Checking that object attributes cannot duplicate
+    ###################################################
+
+    Run Keyword And Expect Error    *
+    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${ATTR_FILENAME}
+    Run Keyword And Expect Error    *
+    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${ATTR_DUPLICATE}
+
+    ##################################################
+    # Checking that object cannot have empty attibute
+    ##################################################
+
+    Run Keyword And Expect Error    *
+    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${ATTR_NONE}
+
+    #####################################################
+    # Checking a successful step with a single attribute
+    #####################################################
+
+    ${OID} =                    Put object    ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${ATTR_SINGLE}
+    ${HEAD} =                   Head object              ${USER_KEY}         ${PUBLIC_CID}    ${OID}    json_output=True
+    ${ATTR} =                   Parse Header Attributes    ${HEAD}
+    Should Be Equal    ${ATTR}    ${ATTR_SINGLE}
+
+    [Teardown]              Teardown    object_attributes
+
+*** Keywords ***
+
+Parse Header Attributes
+
+    [Arguments]    ${HEADER}
+    &{HEADER_DIC} =             Evaluate    json.loads('''${HEADER}''')    json
+    &{HEADER_ELEMENT} =         Get From Dictionary    ${HEADER_DIC}    header
+    @{ATTR_DIC} =               Get From Dictionary    ${HEADER_ELEMENT}    attributes
+    &{ATTR_NUM_DIC} =           Get From List    ${ATTR_DIC}    0
+    ${ATTR_KEY} =               Get From Dictionary    ${ATTR_NUM_DIC}    key
+    ${ATTR_VALUE} =             Get From Dictionary    ${ATTR_NUM_DIC}    value
+    ${ATTRIBUTE} =             Catenate    SEPARATOR=\=    ${ATTR_KEY}    ${ATTR_VALUE}
+    [Return]    ${ATTRIBUTE}
