@@ -43,16 +43,16 @@ NeoFS Simple Netmap
     Validate Policy    REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW    1    @{EXPECTED}
 
     @{EXPECTED} =	   Create List    s02.neofs.devenv:8080
-    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER Location EQ 'Saint Petersburg (ex Leningrad)' AS LOC_SPB    1    @{EXPECTED}
+    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB    1    @{EXPECTED}
 
     @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080
-    Validate Policy    REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE FILTER Location EQ 'Saint Petersburg (ex Leningrad)' AS LOC_SPB FILTER Location EQ 'Moskva' AS LOC_MSK          2       @{EXPECTED}
+    Validate Policy    REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB FILTER 'UN-LOCODE' EQ 'RU MOW' AS LOC_MSK          2       @{EXPECTED}
 
     @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080    s03.neofs.devenv:8080    s04.neofs.devenv:8080
     Validate Policy    REP 4 CBF 1 SELECT 4 FROM LOC_EU FILTER Continent EQ Europe AS LOC_EU    4    @{EXPECTED}
 
     @{EXPECTED} =	   Create List    s02.neofs.devenv:8080
-    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER Location NE 'Moskva' AND Location NE 'Stockholm' AND Location NE 'Helsinki (Helsingfors)' AS LOC_SPB           1       @{EXPECTED}
+    Validate Policy    REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER 'UN-LOCODE' NE 'RU MOW' AND 'UN-LOCODE' NE 'SE STO' AND 'UN-LOCODE' NE 'FI HEL' AS LOC_SPB           1       @{EXPECTED}
 
     @{EXPECTED} =	   Create List    s01.neofs.devenv:8080    s02.neofs.devenv:8080
     Validate Policy    REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER SubDivCode NE 'AB' AND SubDivCode NE '18' AS LOC_RU    2    @{EXPECTED}
