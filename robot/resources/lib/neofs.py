@@ -296,7 +296,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str):
+def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=None):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
