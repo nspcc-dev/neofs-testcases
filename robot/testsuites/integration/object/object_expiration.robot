@@ -8,6 +8,8 @@ Resource    common_steps_object.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
 Resource    ../${RESOURCES}/payment_operations.robot
 
+*** Variables ***
+${CLEANUP_TIMEOUT} =    10s
 
 *** Test cases ***
 NeoFS Simple Object Operations
@@ -24,7 +26,7 @@ NeoFS Simple Object Operations
     ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash    ${FILE}
 
-    ${EPOCH} =          Get Epoch    ${WIF}
+    ${EPOCH} =          Get Epoch
 
     ${EPOCH_PRE} =      Evaluate    ${EPOCH}-1
     ${EPOCH_NEXT} =     Evaluate    ${EPOCH}+1
@@ -44,9 +46,10 @@ NeoFS Simple Object Operations
                         Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read_nxt
                         Get object    ${WIF}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
-                        # Wait one epoch to check that expired objects (OID_CUR) will be removed
-                        Sleep   ${NEOFS_EPOCH_TIMEOUT}
-
+                        # Increment epoch to check that expired objects (OID_CUR) will be removed
+                        Tick Epoch
+                        # we assume that during this time objects must be deleted
+                        Sleep   ${CLEANUP_TIMEOUT}
                         Run Keyword And Expect Error        *
                         ...  Get object    ${WIF}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read
 
@@ -54,9 +57,10 @@ NeoFS Simple Object Operations
                         Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
                         Get object    ${WIF}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
-                        # Wait one more epoch to check that expired object (OID_NXT) will be removed
-                        Sleep   ${NEOFS_EPOCH_TIMEOUT}
-
+                        # Increment one more epoch to check that expired object (OID_NXT) will be removed
+                        Tick Epoch
+                        # we assume that during this time objects must be deleted
+                        Sleep   ${CLEANUP_TIMEOUT}
                         Run Keyword And Expect Error        *
                         ...  Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
 
