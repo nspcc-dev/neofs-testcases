@@ -1,10 +1,8 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3.8
 
 import subprocess
 import os
 import re
-import binascii
-import uuid
 import hashlib
 from robot.api.deco import keyword
 from robot.api import logger
@@ -14,9 +12,7 @@ import base58
 import docker
 import json
 import tarfile
-import shutil
 
-import time
 from datetime import datetime
 from common import *
 
@@ -107,8 +103,9 @@ def get_nodes_without_object(private_key: str, cid: str, oid: str):
 
 
 @keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid, *expected_node_list):
-    storage_nodes = _get_storage_nodes()
+def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid,
+                expected_node_list=[], storage_nodes=[]):
+    storage_nodes = storage_nodes if len(storage_nodes) != 0 else _get_storage_nodes()
     copies = 0
     found_nodes = []
 
@@ -120,7 +117,8 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
                 found_nodes.append(node)
 
     if copies != expected_copies:
-        raise Exception("Object copies is not match storage policy. Found: %s, expexted: %s." % (copies, expected_copies))
+        raise Exception(f"Object copies is not match storage policy.",
+                        f"Found: {copies}, expected: {expected_copies}.")
     else:
         logger.info("Found copies: %s, expected: %s" % (copies, expected_copies))
 
@@ -155,22 +153,6 @@ def get_eacl(private_key: str, cid: str):
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-
-@keyword('Get Epoch')
-def get_epoch(private_key: str):
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'netmap epoch'
-    )
-    logger.info(f"Cmd: {cmd}")
-    try:
-        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-        logger.info(f"Output: {output}")
-        return int(output)
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
 
 @keyword('Set eACL')
 def set_eacl(private_key: str, cid: str, eacl_table_path: str):
@@ -1128,7 +1110,7 @@ def _parse_cid(input_str: str):
 
 def _get_storage_nodes():
     # TODO: fix to get netmap from neofs-cli
-    logger.info("Storage nodes: %s" % NEOFS_NETMAP)
+    logger.info(f"Storage nodes: {NEOFS_NETMAP}")
     return NEOFS_NETMAP
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):

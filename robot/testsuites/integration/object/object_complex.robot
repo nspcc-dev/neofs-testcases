@@ -8,6 +8,8 @@ Resource    common_steps_object.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
 Resource    ../${RESOURCES}/payment_operations.robot
 
+*** Variables ***
+${CLEANUP_TIMEOUT} =    10s
 
 *** Test cases ***
 NeoFS Complex Object Operations
@@ -68,7 +70,9 @@ NeoFS Complex Object Operations
                         Verify Head tombstone               ${WIF}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
                         Verify Head tombstone               ${WIF}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
 
-                        Sleep                               2min
+                        Tick Epoch
+                        # we assume that during this time objects must be deleted
+                        Sleep   ${CLEANUP_TIMEOUT}
 
                         Run Keyword And Expect Error        *
                         ...  Get object          ${WIF}    ${CID}        ${S_OID}           ${EMPTY}       ${GET_OBJ_S}
