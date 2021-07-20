@@ -635,6 +635,36 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+@keyword('Head container')
+def head_container(private_key: str, cid: str, endpoint: str="", user_headers:str="", ignore_failure: bool = False, json_output: bool = False):
+
+    if endpoint == "":
+        endpoint = NEOFS_ENDPOINT
+
+    container_cmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} --cid {cid} container get {"--json" if json_output else ""}'
+    )
+    logger.info("Cmd: %s" % container_cmd)
+    try:
+        complProc = subprocess.run(container_cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+        logger.info("Output: %s" % complProc.stdout)
+
+        if user_headers:
+            for key in user_headers.split(","):
+                if re.search(r'(%s)' % key, complProc.stdout):
+                    logger.info("User header %s was parsed from command output" % key)
+                else:
+                    raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
+        return complProc.stdout
+
+    except subprocess.CalledProcessError as e:
+        if ignore_failure:
+            logger.info("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            return e.output
+        else:
+            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
 @keyword('Parse Object Virtual Raw Header')
 def parse_object_virtual_raw_header(header: str):
     result_header = dict()
@@ -659,7 +689,7 @@ def parse_object_virtual_raw_header(header: str):
 @keyword('Parse Object System Header')
 def parse_object_system_header(header: str):
     result_header = dict()
-
+    
     # Header - Constant attributes
 
     # ID
