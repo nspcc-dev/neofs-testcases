@@ -12,6 +12,7 @@ import base58
 import docker
 import json
 import tarfile
+import binascii
 
 from datetime import datetime
 from common import *
@@ -398,7 +399,7 @@ def get_component_objects(private_key: str, cid: str, oid: str):
     # Search expected Linking object
     for targer_oid in full_obj_list:
         header = head_object(private_key, cid, targer_oid, '', '', '--raw')
-        header_parsed = parse_object_system_header(header)
+        header_parsed = _get_raw_split_information(header)
         if header_parsed['Split ID'] == split_id and 'Split ChildID' in header_parsed.keys():
             logger.info("Linking object has been found in additional check (head of all objects).")
             return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
@@ -407,7 +408,7 @@ def get_component_objects(private_key: str, cid: str, oid: str):
 
 def _collect_split_objects_from_header(private_key, cid, parsed_header):
     header_link = head_object(private_key, cid, parsed_header['Linking object'], '', '', '--raw')
-    header_link_parsed = parse_object_system_header(header_link)
+    header_link_parsed = _get_raw_split_information(header_link)
     return header_link_parsed['Split ChildID']
 
 
@@ -431,7 +432,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
 
         if 'Last object' in parsed_header_virtual.keys():
             header_last = head_object(private_key, cid, parsed_header_virtual['Last object'], '', '', '--raw')
-            header_last_parsed = parse_object_system_header(header_last)
+            header_last_parsed = _get_raw_split_information(header_last)
             marker_last_obj = 1
 
             # Recursive chain validation up to the first object
@@ -450,7 +451,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
         if 'Linking object' in parsed_header_virtual.keys():
 
             header_link = head_object(private_key, cid, parsed_header_virtual['Linking object'], '', '', '--raw')
-            header_link_parsed = parse_object_system_header(header_link)
+            header_link_parsed = _get_raw_split_information(header_link)
             marker_link_obj = 1
 
             reversed_list = final_verif_data['ID List'][::-1]
@@ -473,7 +474,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
             if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
                 logger.info("Linking Object Split ID is equal to expected %s." % final_verif_data['Split ID'] )
             else:
-                raise Exception("Split ID from Linking Object (%s) is not equal to expected (%s)" % header_link_parsed['Split ID'], ffinal_verif_data['Split ID'] )
+                raise Exception("Split ID from Linking Object (%s) is not equal to expected (%s)" % header_link_parsed['Split ID'], final_verif_data['Split ID'] )
 
             break
 
@@ -484,7 +485,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
     logger.info("Compare Split objects result information with Virtual object.")
 
     header_virtual = head_object(private_key, cid, oid, '', '', '')
-    header_virtual_parsed = parse_object_system_header(header_virtual)
+    header_virtual_parsed = _get_raw_split_information(header_virtual)
 
     if int(header_virtual_parsed['PayloadLength']) == int(final_verif_data['PayloadLength']):
         logger.info("Split objects PayloadLength are equal to Virtual Object Payload %s" % header_virtual_parsed['PayloadLength'])
@@ -523,13 +524,64 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
 
     if 'Split PreviousID' in header_last_parsed.keys():
         header_virtual = head_object(private_key, cid, header_last_parsed['Split PreviousID'], '', '', '--raw')
-        parsed_header_virtual = parse_object_system_header(header_virtual)
+        parsed_header_virtual = _get_raw_split_information(header_virtual)
 
         final_verif_data = _verify_child_link(private_key, cid, oid, parsed_header_virtual, final_verif_data)
     else:
         logger.info("Chain of the objects has been parsed from the last object ot the first.")
 
     return final_verif_data
+
+def _get_raw_split_information(header):
+    result_header = dict()
+
+    # Header - Constant attributes
+
+    # ID
+    m = re.search(r'^ID: (\w+)', header)
+    if m is not None:
+        result_header['ID'] = m.group(1)
+    else:
+        raise Exception("no ID was parsed from object header: \t%s" % header)
+
+    # Type
+    m = re.search(r'Type:\s+(\w+)', header)
+    if m is not None:
+        result_header['Type'] = m.group(1)
+    else:
+        raise Exception("no Type was parsed from object header: \t%s" % header)
+    
+    # PayloadLength
+    m = re.search(r'Size: (\d+)', header)
+    if m is not None:
+        result_header['PayloadLength'] = m.group(1)
+    else:
+        raise Exception("no PayloadLength was parsed from object header: \t%s" % header)
+
+    # Header - Optional attributes
+
+    # SplitID
+    m = re.search(r'Split ID:\s+([\w-]+)', header)
+    if m is not None:
+        result_header['Split ID'] = m.group(1)
+
+    # Split PreviousID
+    m = re.search(r'Split PreviousID:\s+(\w+)', header)
+    if m is not None:
+        result_header['Split PreviousID'] = m.group(1)
+
+    # Split ParentID
+    m = re.search(r'Split ParentID:\s+(\w+)', header)
+    if m is not None:
+        result_header['Split ParentID'] = m.group(1)
+
+    # Split ChildID list
+    found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
+    if found_objects:
+        result_header['Split ChildID'] = found_objects
+    logger.info("Result: %s" % result_header)
+
+    return result_header 
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
@@ -622,8 +674,8 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
         else:
             raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-@keyword('Head container')
-def head_container(private_key: str, cid: str, endpoint: str="", user_headers:str="", ignore_failure: bool = False, json_output: bool = False):
+@keyword('Get container attributes')
+def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_output: bool = False):
 
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
@@ -636,21 +688,10 @@ def head_container(private_key: str, cid: str, endpoint: str="", user_headers:st
         complProc = subprocess.run(container_cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
         logger.info("Output: %s" % complProc.stdout)
-
-        if user_headers:
-            for key in user_headers.split(","):
-                if re.search(r'(%s)' % key, complProc.stdout):
-                    logger.info("User header %s was parsed from command output" % key)
-                else:
-                    raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
         return complProc.stdout
 
     except subprocess.CalledProcessError as e:
-        if ignore_failure:
-            logger.info("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-            return e.output
-        else:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Parse Object Virtual Raw Header')
 def parse_object_virtual_raw_header(header: str):
@@ -673,88 +714,112 @@ def parse_object_virtual_raw_header(header: str):
     logger.info("Result: %s" % result_header)
     return result_header
 
-@keyword('Parse Object System Header')
-def parse_object_system_header(header: str):
+@keyword('Decode Object System Header Json')
+def decode_object_system_header_json(header):
     result_header = dict()
-    
+    json_header = json.loads(header)
+
     # Header - Constant attributes
 
     # ID
-    m = re.search(r'^ID: (\w+)', header)
-    if m is not None:
-        result_header['ID'] = m.group(1)
+    ID = json_header["objectID"]["value"]
+    if ID is not None:
+        result_header["ID"] = _json_cli_decode(ID)
     else:
-        raise Exception("no ID was parsed from object header: \t%s" % header)
+        raise Exception("no ID was parsed from header: \t%s" % header)
 
     # CID
-    m = re.search(r'CID: (\w+)', header)
-    if m is not None:
-        result_header['CID'] = m.group(1)
+    CID = json_header["header"]["containerID"]["value"]
+    if CID is not None:
+        result_header["CID"] = _json_cli_decode(CID)
     else:
-        raise Exception("no CID was parsed from object header: \t%s" % header)
+        raise Exception("no CID was parsed from header: \t%s" % header)
 
-    # Owner
-    m = re.search(r'Owner: ([a-zA-Z0-9]+)', header)
-    if m is not None:
-        result_header['OwnerID'] = m.group(1)
+    # OwnerID
+    OwnerID = json_header["header"]["ownerID"]["value"]
+    if OwnerID is not None:
+        result_header["OwnerID"] = _json_cli_decode(OwnerID)
     else:
-        raise Exception("no OwnerID was parsed from object header: \t%s" % header)
+        raise Exception("no OwnerID was parsed from header: \t%s" % header)
 
     # CreatedAtEpoch
-    m = re.search(r'CreatedAt: (\d+)', header)
-    if m is not None:
-        result_header['CreatedAtEpoch'] = m.group(1)
+    CreatedAtEpoch = json_header["header"]["creationEpoch"]
+    if CreatedAtEpoch is not None:
+        result_header["CreatedAtEpoch"] = CreatedAtEpoch
     else:
-        raise Exception("no CreatedAtEpoch was parsed from object header: \t%s" % header)
+        raise Exception("no CreatedAtEpoch was parsed from header: \t%s" % header)
 
     # PayloadLength
-    m = re.search(r'Size: (\d+)', header)
-    if m is not None:
-        result_header['PayloadLength'] = m.group(1)
+    PayloadLength = json_header["header"]["payloadLength"]
+    if PayloadLength is not None:
+        result_header["PayloadLength"] = PayloadLength
     else:
-        raise Exception("no PayloadLength was parsed from object header: \t%s" % header)
+        raise Exception("no PayloadLength was parsed from header: \t%s" % header)
+    
 
     # HomoHash
-    m = re.search(r'HomoHash:\s+(\w+)', header)
-    if m is not None:
-        result_header['HomoHash'] = m.group(1)
+    HomoHash = json_header["header"]["homomorphicHash"]["sum"]
+    if HomoHash is not None:
+        result_header["HomoHash"] = _json_cli_decode(HomoHash)
     else:
-        raise Exception("no HomoHash was parsed from object header: \t%s" % header)
+        raise Exception("no HomoHash was parsed from header: \t%s" % header)
 
     # Checksum
-    m = re.search(r'Checksum:\s+(\w+)', header)
-    if m is not None:
-        result_header['Checksum'] = m.group(1)
+    Checksum = json_header["header"]["payloadHash"]["sum"]
+    if Checksum is not None:
+        Checksum_64_d = base64.b64decode(Checksum)
+        result_header["Checksum"] = binascii.hexlify(Checksum_64_d)
     else:
-        raise Exception("no Checksum was parsed from object header: \t%s" % header)
+        raise Exception("no Checksum was parsed from header: \t%s" % header)   
 
     # Type
-    m = re.search(r'Type:\s+(\w+)', header)
-    if m is not None:
-        result_header['Type'] = m.group(1)
+    Type = json_header["header"]["objectType"]
+    if Type is not None:
+        result_header["Type"] = Type
     else:
-        raise Exception("no Type was parsed from object header: \t%s" % header)
+        raise Exception("no Type was parsed from header: \t%s" % header)    
 
     # Header - Optional attributes
-    m = re.search(r'Split ID:\s+([\w-]+)', header)
-    if m is not None:
-        result_header['Split ID'] = m.group(1)
 
-    m = re.search(r'Split PreviousID:\s+(\w+)', header)
-    if m is not None:
-        result_header['Split PreviousID'] = m.group(1)
+    # Attributes
+    attributes = []
+    attribute_list = json_header["header"]["attributes"]
+    if attribute_list is not None:
+        for e in attribute_list:
+            values_list = list(e.values())
+            attribute = values_list[0] + '=' + values_list[1]
+            attributes.append(attribute)
+        result_header["Attributes"] = attributes
+    else:
+        raise Exception("no Attributes were parsed from header: \t%s" % header)
 
-    m = re.search(r'Split ParentID:\s+(\w+)', header)
-    if m is not None:
-        result_header['Split ParentID'] = m.group(1)
+    return     result_header
 
-    # Split ChildID list
-    found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
-    if found_objects:
-        result_header['Split ChildID'] = found_objects
-    logger.info("Result: %s" % result_header)
-    return result_header
+@keyword('Decode Container Attributes Json')
+def decode_container_attributes_json(header):
+    result_header = dict()
+    json_header = json.loads(header)
 
+    attributes = []
+    attribute_list = json_header["attributes"]
+    if attribute_list is not None:
+        for e in attribute_list:
+            values_list = list(e.values())
+            attribute = values_list[0] + '=' + values_list[1]
+            attributes.append(attribute)
+        result_header["Attributes"] = attributes
+    else:
+        raise Exception("no Attributes were parsed from header: \t%s" % header)
+
+    return     result_header
+
+@keyword('Verify Head Attribute')
+def verify_head_attribute(header, attribute):
+    attribute_list = header["Attributes"]
+    if (attribute in attribute_list):
+        logger.info("Attribute %s is found" % attribute)
+    else:
+        raise Exception("Attribute %s was not found" % attribute)
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):

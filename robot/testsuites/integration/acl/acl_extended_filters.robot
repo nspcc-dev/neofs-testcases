@@ -43,8 +43,8 @@ Check eACL MatchType String Equal Request Deny
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
-    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}
-    &{HEADER_DICT} =        Parse Object System Header      ${HEADER}
+    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
+    &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
                             Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
 
@@ -87,8 +87,8 @@ Check eACL MatchType String Equal Request Allow
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
-    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}
-    &{HEADER_DICT} =        Parse Object System Header      ${HEADER}
+    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
+    &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
                             Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
 
@@ -131,13 +131,13 @@ Check eACL MatchType String Equal Object
     ${CID} =                Create Container Public
     ${S_OID_USER} =         Put object                      ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
-    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}
-    &{HEADER_DICT} =        Parse Object System Header      ${HEADER}
+    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
+    &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
                             Get object                      ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
 
                             Log	                            Set eACL for Deny GET operation with StringEqual Object ID
-    ${ID_value} =	    Get From Dictionary	            ${HEADER_DICT}    ID
+    ${ID_value} =	        Get From Dictionary	            ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
@@ -171,10 +171,10 @@ Check eACL MatchType String Not Equal Object
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}      ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
     ${S_OID_OTHER} =        Put object             ${OTHER_KEY}    ${FILE_S_2}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
-    ${HEADER} =             Head object                     ${USER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}
-                            Head object                     ${USER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}
+    ${HEADER} =             Head object                     ${USER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}    json_output=True
+                            Head object                     ${USER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    json_output=True
 
-    &{HEADER_DICT} =        Parse Object System Header      ${HEADER}
+    &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
 
                             Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}    local_file_eacl
                             Get object           ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    local_file_eacl

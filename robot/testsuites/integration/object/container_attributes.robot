@@ -18,7 +18,7 @@ ${ATTR_NONE} =    NoAttribute=''
 ${ATTR_SINGLE} =    AttrNum=one
 
 *** Test Cases ***
-Duplicated Object Attributes
+Duplicated Container Attributes
     [Documentation]             Testcase to check duplicated container attributes.
     [Tags]                      Container  NeoFS  NeoCLI
     [Timeout]                   10 min
@@ -37,9 +37,9 @@ Duplicated Object Attributes
     Run Keyword And Expect Error    *
     ...    Create container        ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_DUPLICATE}
 
-    #####################################################
-    # Checking that container cannot have empty attibute
-    #####################################################
+    ######################################################
+    # Checking that container cannot have empty attribute
+    ######################################################
 
     Run Keyword And Expect Error    *
     ...    Create container        ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_NONE}
@@ -49,21 +49,8 @@ Duplicated Object Attributes
     #####################################################
 
     ${CID} =                    Create container    ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
-    ${HEAD} =                   Head container    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
-    ${ATTR} =                   Parse Header Attributes    ${HEAD}
-    Should Be Equal    ${ATTR}    ${ATTR_SINGLE}
+    ${ATTRIBUTES} =             Get container attributes    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
+    ${ATTRIBUTES_DICT} =        Decode Container Attributes Json    ${ATTRIBUTES}
+    Verify Head Attribute    ${ATTRIBUTES_DICT}    ${ATTR_SINGLE}
 
     [Teardown]              Teardown    container_attributes
-
-*** Keywords ***
-
-Parse Header Attributes
-
-    [Arguments]    ${HEADER}
-    &{HEADER_DIC} =             Evaluate    json.loads('''${HEADER}''')    json
-    @{ATTR_DIC} =               Get From Dictionary    ${HEADER_DIC}    attributes
-    &{ATTR_NUM_DIC} =           Get From List    ${ATTR_DIC}    0
-    ${ATTR_KEY} =               Get From Dictionary    ${ATTR_NUM_DIC}    key
-    ${ATTR_VALUE} =             Get From Dictionary    ${ATTR_NUM_DIC}    value
-    ${ATTRIBUTE} =             Catenate    SEPARATOR=\=    ${ATTR_KEY}    ${ATTR_VALUE}
-    [Return]    ${ATTRIBUTE}

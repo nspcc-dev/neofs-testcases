@@ -54,21 +54,7 @@ Duplicated Object Attributes
 
     ${OID} =                    Put object    ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${ATTR_SINGLE}
     ${HEAD} =                   Head object              ${USER_KEY}         ${PUBLIC_CID}    ${OID}    json_output=True
-    ${ATTR} =                   Parse Header Attributes    ${HEAD}
-    Should Be Equal    ${ATTR}    ${ATTR_SINGLE}
+    ${HEADER_58} =              Decode Object System Header Json   ${HEAD}
+    Verify Head Attribute    ${HEADER_58}    ${ATTR_SINGLE}
 
     [Teardown]              Teardown    object_attributes
-
-*** Keywords ***
-
-Parse Header Attributes
-
-    [Arguments]    ${HEADER}
-    &{HEADER_DIC} =             Evaluate    json.loads('''${HEADER}''')    json
-    &{HEADER_ELEMENT} =         Get From Dictionary    ${HEADER_DIC}    header
-    @{ATTR_DIC} =               Get From Dictionary    ${HEADER_ELEMENT}    attributes
-    &{ATTR_NUM_DIC} =           Get From List    ${ATTR_DIC}    0
-    ${ATTR_KEY} =               Get From Dictionary    ${ATTR_NUM_DIC}    key
-    ${ATTR_VALUE} =             Get From Dictionary    ${ATTR_NUM_DIC}    value
-    ${ATTRIBUTE} =             Catenate    SEPARATOR=\=    ${ATTR_KEY}    ${ATTR_VALUE}
-    [Return]    ${ATTRIBUTE}
