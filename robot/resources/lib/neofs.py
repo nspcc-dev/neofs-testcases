@@ -292,13 +292,18 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         f'container create --policy "{rule}" {basic_acl} {user_headers} --await'
     )
     logger.info("Cmd: %s" % createContainerCmd)
-    complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
-    cid = _parse_cid(output)
-    logger.info("Created container %s with rule '%s'" % (cid, rule))
-    return cid
+    try:
+        complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
+        output = complProc.stdout
+        logger.info("Output: %s" % output)
+        cid = _parse_cid(output)
+        logger.info("Created container %s with rule '%s'" % (cid, rule))
+
+        return cid
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 
 @keyword('Container List')
