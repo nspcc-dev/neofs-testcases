@@ -10,7 +10,7 @@ Library     ${KEYWORDS}/rpc_call_keywords.py
 Resource    ../${RESOURCES}/setup_teardown.robot
 
 *** Variables ***
-${PLACEMENT_RULE} =     "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+${PLACEMENT_RULE} =     REP 1 IN X CBF 1 SELECT 1 FROM * AS X
 ${TRANSFER_AMOUNT} =    ${6}
 ${DEPOSIT_AMOUNT} =     ${5}
 
@@ -34,7 +34,7 @@ NeoFS HTTP Gateway
                         Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
 
-    ${CID} =            Create container                    ${WIF}    public   ${PLACEMENT_RULE}
+    ${CID} =            Create container                    ${WIF}    0x0FFFFFFF   ${PLACEMENT_RULE}
                         Wait Until Keyword Succeeds         2 min     30 sec
                         ...  Container Existing             ${WIF}    ${CID}
 
