@@ -294,7 +294,6 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-
 @keyword('Container List')
 def container_list(private_key: str):
     Cmd = (
@@ -1004,7 +1003,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
         logger.info("Output: %s" % complProc.stdout)
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception("Error: \nreturn code: {}. \nOutput: {}".format(e.returncode, e.stderr))
     return file_path
 
 

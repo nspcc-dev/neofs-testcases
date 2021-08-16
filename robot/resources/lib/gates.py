@@ -9,6 +9,7 @@ import subprocess
 import boto3
 import uuid
 import io
+import pexpect
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -20,24 +21,25 @@ from common import *
 
 ROBOT_AUTO_KEYWORDS = False
 
-CDNAUTH_EXEC = os.getenv('CDNAUTH_EXEC', 'cdn-authmate')
+NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
 
 @keyword('Init S3 Credentials')
-def init_s3_credentials(private_key: str, s3_key):
+def init_s3_credentials(wallet):
     bucket = str(uuid.uuid4())
+    records = ' \' {"records":[{"operation":"PUT","action":"ALLOW","filters":[],"targets":[{"role":"OTHERS","keys":[]}]}, {"operation":"SEARCH","action":"ALLOW","filters":[],"targets":[{"role":"OTHERS","keys":[]}]}, {"operation":"GET","action":"ALLOW","filters":[],"targets":[{"role":"OTHERS","keys":[]}]}]} \' '
     Cmd = (
-        f'{CDNAUTH_EXEC} --debug --with-log issue-secret --neofs-key {private_key} '
-        f'--gate-public-key={s3_key} --peer {NEOFS_ENDPOINT} '
-        f'--container-friendly-name {bucket}'
+        f'{NEOFS_EXEC} --debug --with-log issue-secret --wallet {wallet} '
+        f'--gate-public-key={GATE_PUB_KEY} --peer {NEOFS_ENDPOINT} '
+        f'--container-friendly-name {bucket} --create-session-token '
+        f'--bearer-rules {records}'
     )
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=360, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % output)
+    logger.info(f"Executing command: {Cmd}")
 
-        m = re.search(r'"cid":\s+"(\w+)"', output)
+    try:
+        output = _run_with_passwd(Cmd)
+        logger.info(f"Command completed with output: {output}")
+
+        m = re.search(r'"container_id":\s+"(\w+)"', output)
         cid = m.group(1)
         logger.info("cid: %s" % cid)
 
@@ -56,8 +58,15 @@ def init_s3_credentials(private_key: str, s3_key):
         return cid, bucket, access_key_id, secret_access_key, owner_private_key
 
     except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception(f"Error: \nreturn code: {e.returncode}. \nOutput: {e.stderr}")
 
+def _run_with_passwd(cmd):
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline('\r')
+    p.wait()
+    cmd = p.read()
+    return cmd.decode()
 
 @keyword('Config S3 client')
 def config_s3_client(access_key_id, secret_access_key):
@@ -71,7 +80,6 @@ def config_s3_client(access_key_id, secret_access_key):
     )
 
     return s3_client
-
 
 @keyword('List objects S3 v2')
 def list_objects_s3_v2(s3_client, bucket):
@@ -94,6 +102,12 @@ def list_objects_s3(s3_client, bucket):
     logger.info("Found s3 objects: %s" % obj_list)
     return obj_list
 
+@keyword('Create bucket S3')
+def create_bucket_s3(s3_client):
+    bucket_name = str(uuid.uuid4())
+    s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
+    logger.info("Created S3 bucket: %s" % s3_bucket)
+    return bucket_name
 
 @keyword('List buckets S3')
 def list_buckets_s3(s3_client):
@@ -105,7 +119,6 @@ def list_buckets_s3(s3_client):
         found_buckets.append(bucket['Name'])
 
     return found_buckets
-
 
 @keyword('Put object S3')
 def put_object_s3(s3_client, bucket, filepath):
