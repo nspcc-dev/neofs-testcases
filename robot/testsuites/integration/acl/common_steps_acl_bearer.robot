@@ -5,8 +5,6 @@ Variables   ../../../variables/common.py
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
 ${FILE_OTH_HEADER} =        key1=oth,key2=oth
-${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
-
 
 *** Keywords ***
 

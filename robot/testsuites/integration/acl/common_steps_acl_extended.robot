@@ -5,14 +5,12 @@ Variables   ../../../variables/common.py
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
 ${FILE_OTH_HEADER} =        key1=oth,key2=oth
-${RULE_FOR_ALL} =           REP 2 IN X CBF 1 SELECT 4 FROM * AS X
-
 
 *** Keywords ***
 
 Create Container Public
                             Log	                Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    0x4FFFFFFF    ${RULE_FOR_ALL}
+    ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    0x4FFFFFFF    ${COMMON_PLACEMENT_RULE}
     [Return]                ${PUBLIC_CID_GEN}
 
 
