@@ -841,6 +841,25 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+@keyword('Delete Container')
+# TODO: make the error message about a non-found container more user-friendly https://github.com/nspcc-dev/neofs-contract/issues/121
+def delete_container(cid: str, private_key: str):
+
+    deleteContainerCmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'container delete --cid {cid} --await'
+    )
+    logger.info("Cmd: %s" % deleteContainerCmd)
+
+    try:
+        subprocess.run(deleteContainerCmd, check=True, universal_newlines=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
+
+        logger.info("Container %s has been deleted" % cid)
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("Error: \nreturn code: %s. \nOutput: %s" % (e.returncode, e.stderr))
+
 @keyword('Get file name')
 def get_file_name(filepath):
     filename = os.path.basename(filepath)
@@ -1190,6 +1209,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wif {private_key} --ttl 1 '
         f'object search --root --cid {cid} {oid_cmd}'
     )
+
     try:
         logger.info(Cmd)
         complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
