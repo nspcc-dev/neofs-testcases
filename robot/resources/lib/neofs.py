@@ -841,6 +841,24 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
     except subprocess.CalledProcessError as e:
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
+@keyword('Delete Container')
+def delete_container(cid: str, private_key: str):
+
+    deleteContainerCmd = (
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'container delete --cid {cid} --await'
+    )
+    logger.info("Cmd: %s" % deleteContainerCmd)
+
+    try:
+        subprocess.run(deleteContainerCmd, check=True, universal_newlines=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
+
+        logger.info("Container %s has been deleted" % cid)
+
+    except subprocess.CalledProcessError as e:
+        raise Exception("Error: \nreturn code: {}. \nOutput: {}".format(e.returncode, e.stderr))
+
 @keyword('Get file name')
 def get_file_name(filepath):
     filename = os.path.basename(filepath)
