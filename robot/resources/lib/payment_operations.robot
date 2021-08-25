@@ -41,5 +41,5 @@ Payment Operations
     # For certainty, sleeping during one morph block.
     Sleep                   ${MORPH_BLOCK_TIME}
 
-    ${NEOFS_BALANCE} =  Get NeoFS Balance       ${WIF}
-    Should Be Equal As Numbers                  ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}
+    ${NEOFS_BALANCE} =      Get NeoFS Balance       ${WIF}
+    Should Be Equal As Numbers      ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}

@@ -85,10 +85,10 @@ Generate Key and Pre-payment
 Validate Policy
     [Arguments]    ${POLICY}    ${EXPECTED_VAL}     @{EXPECTED_LIST}
 
-                        Log	                                Container with rule ${POLICY}
+                        Log	                   Container with rule ${POLICY}
 
-    ${CID} =            Create container                    ${PRIV_KEY}    ${EMPTY}      ${POLICY}
-                        Container Existing                  ${PRIV_KEY}    ${CID}
+    ${CID} =            Create container           ${PRIV_KEY}    ${EMPTY}      ${POLICY}
+                        Container Existing         ${PRIV_KEY}    ${CID}
     ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}
-                        Validate storage policy for object  ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   @{EXPECTED_LIST}
+                        Validate storage policy for object      ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   ${EXPECTED_LIST}
                         Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read

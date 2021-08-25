@@ -16,7 +16,7 @@ ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
 NEOFS_EPOCH_TIMEOUT = (os.getenv("NEOFS_EPOCH_TIMEOUT") if os.getenv("NEOFS_EPOCH_TIMEOUT")
                   else os.getenv("NEOFS_IR_TIMERS_EPOCH", "300s"))
 
-SIMPLE_OBJ_SIZE = os.getenv("SIMPLE_OBJ_SIZE", "1024")
+SIMPLE_OBJ_SIZE = os.getenv("SIMPLE_OBJ_SIZE", "1000")
 COMPLEX_OBJ_SIZE = os.getenv("COMPLEX_OBJ_SIZE", "70000000")
 
 MAINNET_BLOCK_TIME = os.getenv('MAINNET_BLOCK_TIME', "15s")
