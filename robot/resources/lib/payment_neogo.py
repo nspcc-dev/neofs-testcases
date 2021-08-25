@@ -1,24 +1,24 @@
 #!/usr/bin/python3
 
-import subprocess
+import os
 import pexpect
 import re
-import uuid
-import requests
-import json
-import os
 
 from robot.api.deco import keyword
 from robot.api import logger
-import robot.errors
-from robot.libraries.BuiltIn import BuiltIn
+from neo3 import wallet
 
 from common import *
+import rpc_client
 
 ROBOT_AUTO_KEYWORDS = False
 
 # path to neofs-cli executable
-NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
+BALANCE_CONTRACT_HASH = os.getenv('NEOFS_CONTRACTS_BALANCE')
+MORPH_TOKEN_POWER = 12
+
+morph_rpc_cli = rpc_client.RPCClient(NEOFS_NEO_API_ENDPOINT)
+mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
 
 
 @keyword('Withdraw Mainnet Gas')
@@ -40,65 +40,47 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
 
 
 @keyword('Transaction accepted in block')
-def transaction_accepted_in_block(tx_id):
+def transaction_accepted_in_block(tx_id: str):
     """
     This function return True in case of accepted TX.
     Parameters:
-    :param tx_id:           transaction is
-    :rtype:                 block number or Exception
+    :param tx_id:           transaction ID
     """
 
-    logger.info("Transaction id: %s" % tx_id)
-
-    headers = {'Content-type': 'application/json'}
-    data = { "jsonrpc": "2.0", "id": 5, "method": "gettransactionheight", "params": [ tx_id ] }
-    response = requests.post(NEO_MAINNET_ENDPOINT, json=data, headers=headers, verify=False)
-
-    if not response.ok:
-        raise Exception(f"""Failed:
-                request: {data},
-                response: {response.text},
-                status code: {response.status_code} {response.reason}""")
-
-    if (response.text == 0):
-        raise Exception( "Transaction is not found in the blocks." )
-
-    logger.info("Transaction has been found in the block %s." % response.text )
-    return response.text
+    try:
+        resp = mainnet_rpc_cli.get_transaction_height(tx_id)
+        if resp is not None:
+            logger.info(f"got block height: {resp}")
+            return True
+    except Exception as e:
+        logger.info(f"request failed with error: {e}")
+        raise e
 
 
 @keyword('Get NeoFS Balance')
-def get_balance(privkey: str):
+def get_balance(wif: str):
     """
-    This function returns NeoFS balance for selected public key.
-    :param public_key:      neo public key
+    This function returns NeoFS balance for given WIF.
     """
 
-    balance = _get_balance_request(privkey)
+    acc = wallet.Account.from_wif(wif, '')
+    payload = [
+                {
+                    'type': 'Hash160',
+                    'value': str(acc.script_hash)
+                }
+            ]
+    try:
+        resp = morph_rpc_cli.invoke_function(
+                BALANCE_CONTRACT_HASH, 'balanceOf', payload
+            )
+        logger.info(resp)
+        value = int(resp['stack'][0]['value'])
+        return value/(10**MORPH_TOKEN_POWER)
+    except Exception as e:
+        logger.error(f"failed to get {wif} balance: {e}")
+        raise e
 
-    return float(balance)
-
-
-def _get_balance_request(privkey: str):
-    '''
-    Internal method.
-    '''
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} --wif {privkey} --rpc-endpoint {NEOFS_ENDPOINT}'
-        f' accounting balance'
-    )
-    logger.info(f"Cmd: {Cmd}")
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info(f"Output: {output}")
-
-    if output is None:
-        BuiltIn().fatal_error(f'Can not parse balance: "{output}"')
-
-    logger.info(f"Balance for '{privkey}' is '{output}'" )
-
-    return output
 
 def _run_sh_with_passwd(passwd, cmd):
     p = pexpect.spawn(cmd)

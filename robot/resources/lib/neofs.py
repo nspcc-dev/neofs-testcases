@@ -1,20 +1,21 @@
 #!/usr/bin/python3.8
 
-import subprocess
+import base58
+import base64
+import binascii
+from datetime import datetime
+import docker
+import hashlib
+import json
 import os
 import re
-import hashlib
+import random
+import subprocess
+
+from neo3 import wallet
 from robot.api.deco import keyword
 from robot.api import logger
-import random
-import base64
-import base58
-import docker
-import json
-import tarfile
-import binascii
 
-from datetime import datetime
 from common import *
 
 ROBOT_AUTO_KEYWORDS = False
@@ -24,22 +25,9 @@ NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
 @keyword('Get ScriptHash')
-def get_scripthash(privkey: str):
-    scripthash = ""
-    Cmd = f'{NEOFS_CLI_EXEC} util keyer -u {privkey}'
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-    output = complProc.stdout
-    logger.info("Output: %s" % output)
-
-    m = re.search(r'ScriptHash3.0   (\w+)', output)
-    if m.start() != m.end():
-        scripthash = m.group(1)
-    else:
-        raise Exception("Can not get ScriptHash.")
-
-    return scripthash
+def get_scripthash(wif: str):
+    acc = wallet.Account.from_wif(wif, '')
+    return str(acc.script_hash)
 
 
 @keyword('Stop nodes')
@@ -279,7 +267,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=None):
+def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=''):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
@@ -295,7 +283,7 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
     logger.info("Cmd: %s" % createContainerCmd)
     try:
         complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300, shell=True)
         output = complProc.stdout
         logger.info("Output: %s" % output)
         cid = _parse_cid(output)
@@ -364,9 +352,11 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 
         if expected_objects_list:
             if sorted(found_objects) == sorted(expected_objects_list):
-                logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
+                logger.info(f"Found objects list '{found_objects}' ",
+                            f"is equal for expected list '{expected_objects_list}'")
             else:
-                raise Exception("Found object list '{}' is not equal to expected list '{}'".format(found_objects, expected_objects_list))
+                raise Exception(f"Found object list {found_objects} ",
+                                f"is not equal to expected list '{expected_objects_list}'")
 
         return found_objects
 
@@ -550,7 +540,7 @@ def _get_raw_split_information(header):
         result_header['Type'] = m.group(1)
     else:
         raise Exception("no Type was parsed from object header: \t%s" % header)
-    
+
     # PayloadLength
     m = re.search(r'Size: (\d+)', header)
     if m is not None:
@@ -581,7 +571,7 @@ def _get_raw_split_information(header):
         result_header['Split ChildID'] = found_objects
     logger.info("Result: %s" % result_header)
 
-    return result_header 
+    return result_header
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
@@ -755,7 +745,7 @@ def decode_object_system_header_json(header):
         result_header["PayloadLength"] = PayloadLength
     else:
         raise Exception("no PayloadLength was parsed from header: \t%s" % header)
-    
+
 
     # HomoHash
     HomoHash = json_header["header"]["homomorphicHash"]["sum"]
@@ -770,14 +760,14 @@ def decode_object_system_header_json(header):
         Checksum_64_d = base64.b64decode(Checksum)
         result_header["Checksum"] = binascii.hexlify(Checksum_64_d)
     else:
-        raise Exception("no Checksum was parsed from header: \t%s" % header)   
+        raise Exception("no Checksum was parsed from header: \t%s" % header)
 
     # Type
     Type = json_header["header"]["objectType"]
     if Type is not None:
         result_header["Type"] = Type
     else:
-        raise Exception("no Type was parsed from header: \t%s" % header)    
+        raise Exception("no Type was parsed from header: \t%s" % header)
 
     # Header - Optional attributes
 

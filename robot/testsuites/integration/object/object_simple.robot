@@ -3,6 +3,7 @@ Variables   ../../../variables/common.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
+Library     ${KEYWORDS}/contract_keywords.py
 
 Resource    common_steps_object.robot
 Resource    ../${RESOURCES}/payment_operations.robot
