@@ -1,5 +1,6 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+Variables   ../../../variables/acl.py
 
 Library    Collections
 Library     ../${RESOURCES}/neofs.py
@@ -28,7 +29,7 @@ Duplicated Object Attributes
     ${WALLET}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}         ${USER_KEY}
 
-    ${PUBLIC_CID} =             Create container       ${USER_KEY}    0x1FFFFFFF    ${POLICY}    ${EMPTY}    
+    ${PUBLIC_CID} =             Create container       ${USER_KEY}    ${PUBLIC_ACL}    ${POLICY}    ${EMPTY}    
     ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
 
 

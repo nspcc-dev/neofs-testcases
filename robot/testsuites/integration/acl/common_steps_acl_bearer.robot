@@ -1,5 +1,6 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+Variables   ../../../variables/acl.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
@@ -16,8 +17,8 @@ Create Container Public
 
 Create Container Inaccessible
                             Log	                  Create Inaccessible Container
-    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}     0x40000000     ${COMMON_PLACEMENT_RULE}
-    [Return]                ${PUBLIC_CID_GEN}
+    ${INACCESSIBLE_CID_GEN} =     Create container      ${USER_KEY}     ${INACCESSIBLE_ACL}     ${COMMON_PLACEMENT_RULE}
+    [Return]                ${INACCESSIBLE_CID_GEN}
 
 
 Generate file
