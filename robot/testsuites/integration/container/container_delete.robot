@@ -1,5 +1,6 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+Variables   ../../../variables/acl.py
 
 Library     ../${RESOURCES}/neofs.py
 Library     ../${RESOURCES}/payment_neogo.py
@@ -21,7 +22,7 @@ Delete Containers
     ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR_OTH}         ${OTHER_KEY}
 
-    ${CID} =                    Create container       ${USER_KEY}        0x1FFFFFFF              ${COMMON_PLACEMENT_RULE}
+    ${CID} =                    Create container       ${USER_KEY}        ${PUBLIC_ACL}              ${COMMON_PLACEMENT_RULE}
                                 Container Existing     ${USER_KEY}        ${CID}   
 
                                 Run Keyword And Expect Error    *
