@@ -9,6 +9,8 @@ Library     ${KEYWORDS}/rpc_call_keywords.py
 Resource    ../${RESOURCES}/payment_operations.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
 
+*** Variables ***
+${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Test cases ***
 NeoFS Simple Netmap
@@ -87,8 +89,9 @@ Validate Policy
 
                         Log	                   Container with rule ${POLICY}
 
-    ${CID} =            Create container           ${PRIV_KEY}    ${EMPTY}      ${POLICY}
-                        Container Existing         ${PRIV_KEY}    ${CID}
-    ${S_OID} =          Put object                 ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}
-                        Validate storage policy for object      ${PRIV_KEY}    ${EXPECTED_VAL}             ${CID}       ${S_OID}   ${EXPECTED_LIST}
+    ${CID} =            Create container               ${PRIV_KEY}    ${EMPTY}      ${POLICY}
+                        Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}      ${CONTAINER_WAIT_INTERVAL}
+                        ...     Container Existing         ${PRIV_KEY}    ${CID}
+    ${S_OID} =          Put object               ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}
+                        Validate storage policy for object      ${PRIV_KEY}    ${EXPECTED_VAL}           ${CID}       ${S_OID}   ${EXPECTED_LIST}
                         Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read

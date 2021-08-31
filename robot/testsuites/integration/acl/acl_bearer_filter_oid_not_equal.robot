@@ -18,7 +18,7 @@ BearerToken Operations with Filter OID NotEqual
 
     [Setup]                 Setup
 
-                            Generate eACL Keys
+                            Generate Keys
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object

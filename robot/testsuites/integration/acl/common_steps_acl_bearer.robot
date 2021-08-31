@@ -6,18 +6,21 @@ Variables   ../../../variables/acl.py
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
 ${FILE_OTH_HEADER} =        key1=oth,key2=oth
+${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Keywords ***
 
 Create Container Public
-                            Log	                  Create Public Container
     ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF     ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
     [Return]                ${PUBLIC_CID_GEN}
 
 
 Create Container Inaccessible
-                            Log	                  Create Inaccessible Container
     ${INACCESSIBLE_CID_GEN} =     Create container      ${USER_KEY}     ${INACCESSIBLE_ACL}     ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing     ${USER_KEY}        ${INACCESSIBLE_CID_GEN}
     [Return]                ${INACCESSIBLE_CID_GEN}
 
 

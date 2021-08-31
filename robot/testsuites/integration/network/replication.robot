@@ -15,6 +15,7 @@ Resource    ../${RESOURCES}/setup_teardown.robot
 ${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 ${EXPECTED_COPIES} =    ${2}
 ${CHECK_INTERVAL} =     1 min
+${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Test cases ***
 NeoFS Object Replication
@@ -27,11 +28,12 @@ NeoFS Object Replication
     ${WALLET}   ${ADDR}     ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}     ${WIF}
 
-    ${CID} =                Create container                      ${WIF}    ${EMPTY}   ${PLACEMENT_RULE}
-                            Container Existing                    ${WIF}    ${CID}
+    ${CID} =                Create container             ${WIF}    ${EMPTY}   ${PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds      ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing       ${WIF}    ${CID}
 
-    ${FILE} =               Generate file of bytes                ${SIMPLE_OBJ_SIZE}
-    ${FILE_HASH} =          Get file hash                         ${FILE}
+    ${FILE} =               Generate file of bytes       ${SIMPLE_OBJ_SIZE}
+    ${FILE_HASH} =          Get file hash                ${FILE}
 
     ${S_OID} =              Put object                  ${WIF}    ${FILE}       ${CID}      ${EMPTY}    ${EMPTY}
                             Validate storage policy for object    ${WIF}        ${EXPECTED_COPIES}      ${CID}      ${S_OID}

@@ -16,6 +16,7 @@ ${ATTR_TIME} =    Timestamp=new
 ${ATTR_DUPLICATE} =    Size=small, Size=big
 ${ATTR_NONE} =    NoAttribute=''
 ${ATTR_SINGLE} =    AttrNum=one
+${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Test Cases ***
 Duplicated Container Attributes
@@ -48,9 +49,11 @@ Duplicated Container Attributes
     # Checking a successful step with a single attribute
     #####################################################
 
-    ${CID} =                    Create container    ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
-    ${ATTRIBUTES} =             Get container attributes    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
-    ${ATTRIBUTES_DICT} =        Decode Container Attributes Json    ${ATTRIBUTES}
+    ${CID} =                Create container    ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
+                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing     ${USER_KEY}     ${CID}
+    ${ATTRIBUTES} =         Get container attributes    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
+    ${ATTRIBUTES_DICT} =    Decode Container Attributes Json    ${ATTRIBUTES}
     Verify Head Attribute    ${ATTRIBUTES_DICT}    ${ATTR_SINGLE}
 
     [Teardown]              Teardown    container_attributes
