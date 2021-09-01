@@ -65,10 +65,10 @@ def get_nodes_with_object(private_key: str, cid: str, oid: str):
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(r'(%s)' % (oid), search_res):
+            if re.search(fr'({oid})', search_res):
                 nodes_list.append(node)
 
-    logger.info("Nodes with object: %s" % nodes_list)
+    logger.info(f"Nodes with object: {nodes_list}")
     return nodes_list
 
 
@@ -82,12 +82,12 @@ def get_nodes_without_object(private_key: str, cid: str, oid: str):
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if not re.search(r'(%s)' % (oid), search_res):
+            if not re.search(fr'({oid})', search_res):
                 nodes_list.append(node)
         else:
             nodes_list.append(node)
 
-    logger.info("Nodes without object: %s" % nodes_list)
+    logger.info(f"Nodes without object: {nodes_list}")
     return nodes_list
 
 
@@ -101,7 +101,7 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(r'(%s)' % (oid), search_res):
+            if re.search(fr'({oid})', search_res):
                 copies += 1
                 found_nodes.append(node)
 
@@ -109,15 +109,15 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
         raise Exception(f"Object copies is not match storage policy.",
                         f"Found: {copies}, expected: {expected_copies}.")
     else:
-        logger.info("Found copies: %s, expected: %s" % (copies, expected_copies))
+        logger.info(f"Found copies: {copies}, expected: {expected_copies}")
 
-    logger.info("Found nodes: %s" % found_nodes)
+    logger.info(f"Found nodes: {found_nodes}")
 
     if expected_node_list:
         if sorted(found_nodes) == sorted(expected_node_list):
-            logger.info("Found node list '{}' is equal for expected list '{}'".format(found_nodes, expected_node_list))
+            logger.info(f"Found node list '{found_nodes}' is equal for expected list '{expected_node_list}'")
         else:
-            raise Exception("Found node list '{}' is not equal to expected list '{}'".format(found_nodes, expected_node_list))
+            raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
 
 
 @keyword('Get eACL')
@@ -127,20 +127,10 @@ def get_eacl(private_key: str, cid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container get-eacl --cid {cid}'
     )
-    logger.info("Cmd: %s" % Cmd)
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % output)
-
-        return output
-
-    except subprocess.CalledProcessError as e:
-        if re.search(r'extended ACL table is not set for this container', e.output):
-            logger.info("Extended ACL table is not set for this container.")
-        else:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {Cmd}")
+    output = _cmd_run(Cmd)
+    if re.search(r'extended ACL table is not set for this container', output):
+        logger.info("Extended ACL table is not set for this container.")
 
 
 @keyword('Set eACL')
@@ -150,13 +140,8 @@ def set_eacl(private_key: str, cid: str, eacl_table_path: str):
         f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
     )
     logger.info(f"Cmd: {cmd}")
-    try:
-        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-        logger.info(f"Output: {output}")
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
+    _cmd_run(cmd)
+
 
 @keyword('Form BearerToken file')
 def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list,
@@ -203,17 +188,11 @@ def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {file_path} '
         f'--to {file_path} --wif {private_key} --json'
     )
-    logger.info("Cmd: %s" % Cmd)
-
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % str(output))
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {Cmd}")
+    _cmd_run(Cmd)
 
     return file_path
+
 
 @keyword('Form eACL json common file')
 def form_eacl_json_common_file(file_path, eacl_oper_list ):
@@ -256,15 +235,9 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
         f'--file {ASSETS_DIR}/{range_file} {options}'
     )
-    logger.info("Cmd: %s" % Cmd)
-
-    try:
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=150, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % str(output))
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {Cmd}")
+    _cmd_run(Cmd)
+    
 
 @keyword('Create container')
 def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=''):
@@ -280,19 +253,12 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container create --policy "{rule}" {basic_acl} {user_headers} --await'
     )
-    logger.info("Cmd: %s" % createContainerCmd)
-    try:
-        complProc = subprocess.run(createContainerCmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300, shell=True)
-        output = complProc.stdout
-        logger.info("Output: %s" % output)
-        cid = _parse_cid(output)
-        logger.info("Created container %s with rule '%s'" % (cid, rule))
+    logger.info(f"Cmd: {createContainerCmd}")
+    output = _cmd_run(createContainerCmd)
+    cid = _parse_cid(output)
+    logger.info(f"Created container {cid} with rule {rule}")
 
-        return cid
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return cid
 
 @keyword('Container List')
 def container_list(private_key: str):
@@ -300,14 +266,13 @@ def container_list(private_key: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container list'
     )
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info("Output: %s" % complProc.stdout)
+    logger.info(f"Cmd: {Cmd}")
+    output = _cmd_run(Cmd)
 
-    container_list = re.findall(r'(\w{43,44})', complProc.stdout)
-    logger.info("Containers list: %s" % container_list)
+    container_list = re.findall(r'(\w{43,44})', output)
+    logger.info(f"Containers list: {container_list}")
     return container_list
+
 
 @keyword('Container Existing')
 def container_existing(private_key: str, cid: str):
@@ -315,13 +280,12 @@ def container_existing(private_key: str, cid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container list'
     )
-    logger.info("Cmd: %s" % Cmd)
-    complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-    logger.info("Output: %s" % complProc.stdout)
+    logger.info(f"Cmd: {Cmd}")
+    output = _cmd_run(Cmd)
 
-    _find_cid(complProc.stdout, cid)
+    _find_cid(output, cid)
     return
+
 
 @keyword('Search object')
 def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: str,
@@ -340,27 +304,20 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
     )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
+    logger.info(f"Cmd: {object_cmd}")
+    output = _cmd_run(object_cmd)
 
-        logger.info("Output: %s" % complProc.stdout)
+    found_objects = re.findall(r'(\w{43,44})', output)
 
-        found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
-
-        if expected_objects_list:
-            if sorted(found_objects) == sorted(expected_objects_list):
-                logger.info(f"Found objects list '{found_objects}' ",
-                            f"is equal for expected list '{expected_objects_list}'")
-            else:
-                raise Exception(f"Found object list {found_objects} ",
+    if expected_objects_list:
+        if sorted(found_objects) == sorted(expected_objects_list):
+            logger.info(f"Found objects list '{found_objects}' ",
+                        f"is equal for expected list '{expected_objects_list}'")
+        else:
+            raise Exception(f"Found object list {found_objects} ",
                                 f"is not equal to expected list '{expected_objects_list}'")
 
-        return found_objects
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return found_objects
 
 
 @keyword('Get Split objects')
@@ -446,9 +403,9 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
             reversed_list = final_verif_data['ID List'][::-1]
 
             if header_link_parsed['Split ChildID'] == reversed_list:
-                logger.info("Split objects list from Linked Object is equal to expected %s" % ', '.join(header_link_parsed['Split ChildID']))
+                logger.info(f"Split objects list from Linked Object is equal to expected {', '.join(header_link_parsed['Split ChildID'])}")
             else:
-                raise Exception("Split objects list from Linking Object (%s) is not equal to expected (%s)" % ', '.join(header_link_parsed['Split ChildID']), ', '.join(reversed_list) )
+                raise Exception(f"Split objects list from Linking Object ({', '.join(header_link_parsed['Split ChildID'])}) is not equal to expected ({', '.join(reversed_list)})")
 
             if int(header_link_parsed['PayloadLength']) == 0:
                 logger.info("Linking object Payload is equal to expected - zero size.")
@@ -461,9 +418,9 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
                 raise Exception("Object Type is not 'regular'.")
 
             if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
-                logger.info("Linking Object Split ID is equal to expected %s." % final_verif_data['Split ID'] )
+                logger.info(f"Linking Object Split ID is equal to expected {final_verif_data['Split ID']}.")
             else:
-                raise Exception("Split ID from Linking Object (%s) is not equal to expected (%s)" % header_link_parsed['Split ID'], final_verif_data['Split ID'] )
+                raise Exception(f"Split ID from Linking Object ({header_link_parsed['Split ID']}) is not equal to expected ({final_verif_data['Split ID']})")
 
             break
 
@@ -477,9 +434,9 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
     header_virtual_parsed = _get_raw_split_information(header_virtual)
 
     if int(header_virtual_parsed['PayloadLength']) == int(final_verif_data['PayloadLength']):
-        logger.info("Split objects PayloadLength are equal to Virtual Object Payload %s" % header_virtual_parsed['PayloadLength'])
+        logger.info(f"Split objects PayloadLength are equal to Virtual Object Payload {header_virtual_parsed['PayloadLength']}")
     else:
-        raise Exception("Split objects PayloadLength from Virtual Object (%s) is not equal to expected (%s)" % header_virtual_parsed['PayloadLength'], final_verif_data['PayloadLength'] )
+        raise Exception(f"Split objects PayloadLength from Virtual Object ({header_virtual_parsed['PayloadLength']}) is not equal to expected ({final_verif_data['PayloadLength']})")
 
     if header_link_parsed['Type'] == 'regular':
         logger.info("Virtual Object Type is 'regular' as expected.")
@@ -501,7 +458,7 @@ def _verify_child_link(private_key: str, cid: str, oid: str, header_last_parsed:
 
     if 'Split ID' in final_verif_data.keys():
         if final_verif_data['Split ID'] != header_last_parsed['Split ID']:
-             raise Exception("Object Split ID (%s) is not expected (%s)." % header_last_parsed['Split ID'], final_verif_data['Split ID'])
+             raise Exception(f"Object Split ID ({header_last_parsed['Split ID']}) is not expected ({final_verif_data['Split ID']}).")
     else:
         final_verif_data['Split ID'] = header_last_parsed['Split ID']
 
@@ -531,21 +488,21 @@ def _get_raw_split_information(header):
     if m is not None:
         result_header['ID'] = m.group(1)
     else:
-        raise Exception("no ID was parsed from object header: \t%s" % header)
+        raise Exception(f"no ID was parsed from object header: \t{header}")
 
     # Type
     m = re.search(r'Type:\s+(\w+)', header)
     if m is not None:
         result_header['Type'] = m.group(1)
     else:
-        raise Exception("no Type was parsed from object header: \t%s" % header)
+        raise Exception(f"no Type was parsed from object header: \t{header}")
 
     # PayloadLength
     m = re.search(r'Size: (\d+)', header)
     if m is not None:
         result_header['PayloadLength'] = m.group(1)
     else:
-        raise Exception("no PayloadLength was parsed from object header: \t%s" % header)
+        raise Exception(f"no PayloadLength was parsed from object header: \t{header}")
 
     # Header - Optional attributes
 
@@ -568,7 +525,7 @@ def _get_raw_split_information(header):
     found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
     if found_objects:
         result_header['Split ChildID'] = found_objects
-    logger.info("Result: %s" % result_header)
+    logger.info(f"Result: {result_header}")
 
     return result_header
 
@@ -578,60 +535,55 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object head --cid {cid} --oid {oid_ts} --json'
     )
-    logger.info("Cmd: %s" % object_cmd)
+    logger.info(f"Cmd: {object_cmd}")
+    output = _cmd_run(object_cmd)
+    full_headers = json.loads(output)
+    logger.info(f"Output: {full_headers}")
 
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        full_headers = json.loads(complProc.stdout)
-        logger.info("Output: %s" % full_headers)
+    # Header verification
+    header_cid = full_headers["header"]["containerID"]["value"]
+    if (_json_cli_decode(header_cid) == cid):
+        logger.info(f"Header CID is expected: {cid} ({header_cid} in the output)")
+    else:
+        raise Exception("Header CID is not expected.")
 
-        # Header verification
-        header_cid = full_headers["header"]["containerID"]["value"]
-        if (_json_cli_decode(header_cid) == cid):
-            logger.info("Header CID is expected: %s (%s in the output)" % (cid, header_cid))
-        else:
-            raise Exception("Header CID is not expected.")
+    header_owner = full_headers["header"]["ownerID"]["value"]
+    if (_json_cli_decode(header_owner) == addr):
+        logger.info(f"Header ownerID is expected: {addr} ({header_owner} in the output)")
+    else:
+        raise Exception("Header ownerID is not expected.")
 
-        header_owner = full_headers["header"]["ownerID"]["value"]
-        if (_json_cli_decode(header_owner) == addr):
-            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_owner))
-        else:
-            raise Exception("Header ownerID is not expected.")
+    header_type = full_headers["header"]["objectType"]
+    if (header_type == "TOMBSTONE"):
+        logger.info(f"Header Type is expected: {header_type}")
+    else:
+        raise Exception("Header Type is not expected.")
 
-        header_type = full_headers["header"]["objectType"]
-        if (header_type == "TOMBSTONE"):
-            logger.info("Header Type is expected: %s" % header_type)
-        else:
-            raise Exception("Header Type is not expected.")
+    header_session_type = full_headers["header"]["sessionToken"]["body"]["object"]["verb"]
+    if (header_session_type == "DELETE"):
+        logger.info(f"Header Session Type is expected: {header_session_type}")
+    else:
+        raise Exception("Header Session Type is not expected.")
 
-        header_session_type = full_headers["header"]["sessionToken"]["body"]["object"]["verb"]
-        if (header_session_type == "DELETE"):
-            logger.info("Header Session Type is expected: %s" % header_session_type)
-        else:
-            raise Exception("Header Session Type is not expected.")
+    header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
+    if (_json_cli_decode(header_session_cid) == cid):
+        logger.info(f"Header ownerID is expected: {addr} ({header_session_cid} in the output)")
+    else:
+        raise Exception("Header Session CID is not expected.")
 
-        header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
-        if (_json_cli_decode(header_session_cid) == cid):
-            logger.info("Header ownerID is expected: %s (%s in the output)" % (addr, header_session_cid))
-        else:
-            raise Exception("Header Session CID is not expected.")
+    header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
+    if (_json_cli_decode(header_session_oid) == oid):
+        logger.info(f"Header Session OID (deleted object) is expected: {oid} ({header_session_oid} in the output)")
+    else:
+        raise Exception("Header Session OID (deleted object) is not expected.")
 
-        header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
-        if (_json_cli_decode(header_session_oid) == oid):
-            logger.info("Header Session OID (deleted object) is expected: %s (%s in the output)" % (oid, header_session_oid))
-        else:
-            raise Exception("Header Session OID (deleted object) is not expected.")
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 def _json_cli_decode(data: str):
     return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
 @keyword('Head object')
 def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
-    user_headers:str="", options:str="", endpoint: str="", ignore_failure: bool = False, json_output: bool = False):
+    user_headers:str="", options:str="", endpoint: str="", json_output: bool = False):
 
     if bearer_token:
         bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
@@ -642,26 +594,17 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
         f'head --cid {cid} --oid {oid} {bearer_token} {options} {"--json" if json_output else ""}'
     )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
+    logger.info(f"Cmd: {object_cmd}")
+    output = _cmd_run(object_cmd)
 
-        if user_headers:
-            for key in user_headers.split(","):
-                if re.search(r'(%s)' % key, complProc.stdout):
-                    logger.info("User header %s was parsed from command output" % key)
-                else:
-                    raise Exception("User header %s was not found in the command output: \t%s" % (key, complProc.stdout))
-        return complProc.stdout
+    if user_headers:
+        for key in user_headers.split(","):
+            if re.search(fr'({key})', output):
+                logger.info(f"User header {key} was parsed from command output")
+            else:
+                raise Exception(f"User header {key} was not found in the command output: \t{output}")
+    return output
 
-    except subprocess.CalledProcessError as e:
-        if ignore_failure:
-            logger.info("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-            return e.output
-        else:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 @keyword('Get container attributes')
 def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_output: bool = False):
@@ -672,15 +615,9 @@ def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_
     container_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} --cid {cid} container get {"--json" if json_output else ""}'
     )
-    logger.info("Cmd: %s" % container_cmd)
-    try:
-        complProc = subprocess.run(container_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-        return complProc.stdout
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {container_cmd}")
+    output = _cmd_run(container_cmd)
+    return output
 
 @keyword('Parse Object Virtual Raw Header')
 def parse_object_virtual_raw_header(header: str):
@@ -700,7 +637,7 @@ def parse_object_virtual_raw_header(header: str):
         if m.start() != m.end(): # e.g., if match found something
             result_header['Last object'] = m.group(1)
 
-    logger.info("Result: %s" % result_header)
+    logger.info(f"Result: {result_header}")
     return result_header
 
 @keyword('Decode Object System Header Json')
@@ -715,35 +652,35 @@ def decode_object_system_header_json(header):
     if ID is not None:
         result_header["ID"] = _json_cli_decode(ID)
     else:
-        raise Exception("no ID was parsed from header: \t%s" % header)
+        raise Exception(f"no ID was parsed from header: \t{header}" )
 
     # CID
     CID = json_header["header"]["containerID"]["value"]
     if CID is not None:
         result_header["CID"] = _json_cli_decode(CID)
     else:
-        raise Exception("no CID was parsed from header: \t%s" % header)
+        raise Exception(f"no CID was parsed from header: \t{header}")
 
     # OwnerID
     OwnerID = json_header["header"]["ownerID"]["value"]
     if OwnerID is not None:
         result_header["OwnerID"] = _json_cli_decode(OwnerID)
     else:
-        raise Exception("no OwnerID was parsed from header: \t%s" % header)
+        raise Exception(f"no OwnerID was parsed from header: \t{header}")
 
     # CreatedAtEpoch
     CreatedAtEpoch = json_header["header"]["creationEpoch"]
     if CreatedAtEpoch is not None:
         result_header["CreatedAtEpoch"] = CreatedAtEpoch
     else:
-        raise Exception("no CreatedAtEpoch was parsed from header: \t%s" % header)
+        raise Exception(f"no CreatedAtEpoch was parsed from header: \t{header}")
 
     # PayloadLength
     PayloadLength = json_header["header"]["payloadLength"]
     if PayloadLength is not None:
         result_header["PayloadLength"] = PayloadLength
     else:
-        raise Exception("no PayloadLength was parsed from header: \t%s" % header)
+        raise Exception(f"no PayloadLength was parsed from header: \t{header}")
 
 
     # HomoHash
@@ -751,7 +688,7 @@ def decode_object_system_header_json(header):
     if HomoHash is not None:
         result_header["HomoHash"] = _json_cli_decode(HomoHash)
     else:
-        raise Exception("no HomoHash was parsed from header: \t%s" % header)
+        raise Exception(f"no HomoHash was parsed from header: \t{header}")
 
     # Checksum
     Checksum = json_header["header"]["payloadHash"]["sum"]
@@ -759,14 +696,14 @@ def decode_object_system_header_json(header):
         Checksum_64_d = base64.b64decode(Checksum)
         result_header["Checksum"] = binascii.hexlify(Checksum_64_d)
     else:
-        raise Exception("no Checksum was parsed from header: \t%s" % header)
+        raise Exception(f"no Checksum was parsed from header: \t{header}")
 
     # Type
     Type = json_header["header"]["objectType"]
     if Type is not None:
         result_header["Type"] = Type
     else:
-        raise Exception("no Type was parsed from header: \t%s" % header)
+        raise Exception(f"no Type was parsed from header: \t{header}")
 
     # Header - Optional attributes
 
@@ -780,9 +717,10 @@ def decode_object_system_header_json(header):
             attributes.append(attribute)
         result_header["Attributes"] = attributes
     else:
-        raise Exception("no Attributes were parsed from header: \t%s" % header)
+        raise Exception(f"no Attributes were parsed from header: \t{header}")
 
     return     result_header
+
 
 @keyword('Decode Container Attributes Json')
 def decode_container_attributes_json(header):
@@ -798,17 +736,19 @@ def decode_container_attributes_json(header):
             attributes.append(attribute)
         result_header["Attributes"] = attributes
     else:
-        raise Exception("no Attributes were parsed from header: \t%s" % header)
+        raise Exception(f"no Attributes were parsed from header: \t{header}")
 
     return     result_header
+
 
 @keyword('Verify Head Attribute')
 def verify_head_attribute(header, attribute):
     attribute_list = header["Attributes"]
     if (attribute in attribute_list):
-        logger.info("Attribute %s is found" % attribute)
+        logger.info(f"Attribute {attribute} is found")
     else:
-        raise Exception("Attribute %s was not found" % attribute)
+        raise Exception(f"Attribute {attribute} was not found")
+
 
 @keyword('Delete object')
 def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
@@ -820,15 +760,12 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-        tombstone = _parse_oid(complProc.stdout)
-        return tombstone
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {object_cmd}")
+    output = _cmd_run(object_cmd)
+    tombstone = _parse_oid(output)
+    
+    return tombstone
+
 
 @keyword('Delete Container')
 # TODO: make the error message about a non-found container more user-friendly https://github.com/nspcc-dev/neofs-contract/issues/121
@@ -838,34 +775,29 @@ def delete_container(cid: str, private_key: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
         f'container delete --cid {cid} --await'
     )
-    logger.info("Cmd: %s" % deleteContainerCmd)
+    logger.info(f"Cmd: {deleteContainerCmd}")
+    _cmd_run(deleteContainerCmd)
 
-    try:
-        subprocess.run(deleteContainerCmd, check=True, universal_newlines=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, shell=True)
-
-        logger.info("Container %s has been deleted" % cid)
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("Error: \nreturn code: %s. \nOutput: %s" % (e.returncode, e.stderr))
 
 @keyword('Get file name')
 def get_file_name(filepath):
     filename = os.path.basename(filepath)
     return filename
 
+
 @keyword('Get file hash')
 def get_file_hash(filename : str):
     file_hash = _get_file_hash(filename)
     return file_hash
+    
 
 @keyword('Verify file hash')
 def verify_file_hash(filename, expected_hash):
     file_hash = _get_file_hash(filename)
     if file_hash == expected_hash:
-        logger.info("Hash is equal to expected: %s" % file_hash)
+        logger.info(f"Hash is equal to expected: {file_hash}")
     else:
-        raise Exception("File hash '{}' is not equal to {}".format(file_hash, expected_hash))
+        raise Exception(f"File hash '{file_hash}' is not equal to {expected_hash}")
 
 
 @keyword('Put object')
@@ -886,15 +818,10 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
         f'put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     )
-    logger.info("Cmd: %s" % putobject_cmd)
-    try:
-        complProc = subprocess.run(putobject_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-        oid = _parse_oid(complProc.stdout)
-        return oid
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {putobject_cmd}")
+    output = _cmd_run(putobject_cmd)
+    oid = _parse_oid(output)
+    return oid
 
 
 @keyword('Get Nodes Log Latest Timestamp')
@@ -920,7 +847,7 @@ def get_logs_latest_timestamp():
 
         nodes_logs_time[container] = timestamp_date
 
-    logger.info("Latest logs timestamp list: %s" % nodes_logs_time)
+    logger.info(f"Latest logs timestamp list: {nodes_logs_time}")
 
     return nodes_logs_time
 
@@ -942,21 +869,20 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
             # Get log since timestamp
             timestamp_date = nodes_logs_time[container]
             log_lines = client_api.logs(container, since=timestamp_date)
-            logger.info("Timestamp since: %s " % timestamp_date)
+            logger.info(f"Timestamp since: {timestamp_date}")
             found_count = len(re.findall(line, log_lines.decode("utf-8") ))
-            logger.info("Node %s log - found counter: %s" % (container, found_count))
+            logger.info(f"Node {container} log - found counter: {found_count}")
             global_count += found_count
 
         else:
-            logger.info("Container %s has not been found." % container)
+            logger.info(f"Container {container} has not been found.")
 
     if global_count > 0:
-        logger.info("Expected line '%s' has been found in the logs." % line)
+        logger.info(f"Expected line '{line}' has been found in the logs.")
     else:
-        raise Exception("Expected line '%s' has not been found in the logs." % line)
+        raise Exception(f"Expected line '{line}' has not been found in the logs.")
 
     return 1
-
 
 
 @keyword('Get Range Hash')
@@ -970,13 +896,9 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         f'object hash --cid {cid} --oid {oid} --range {range_cut} '
         f'{bearer_token} {options}'
     )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    logger.info(f"Cmd: {object_cmd}")
+    _cmd_run(object_cmd)
+    
 
 @keyword('Get object')
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
@@ -997,13 +919,8 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
         f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
         f'{options}'
     )
-    logger.info("Cmd: %s" % object_cmd)
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-    except subprocess.CalledProcessError as e:
-        raise Exception("Error: \nreturn code: {}. \nOutput: {}".format(e.returncode, e.stderr))
+    logger.info(f"Cmd: {object_cmd}")
+    _cmd_run(object_cmd)
     return file_path
 
 
@@ -1021,15 +938,10 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
         f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info(f"Output: {complProc.stdout}" )
+    output = _cmd_run(object_cmd)
+    oid = _parse_oid(output)
 
-        oid = _parse_oid(complProc.stdout)
-        return oid
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return oid
 
 
 @keyword('List Storagegroup')
@@ -1044,23 +956,16 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
     )
 
     logger.info(f"Cmd: {object_cmd}")
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, shell=True)
-        logger.info(f"Output: {complProc.stdout}")
+    output = _cmd_run(object_cmd)
+    found_objects = re.findall(r'(\w{43,44})', output)
 
-        found_objects = re.findall(r'(\w{43,44})', complProc.stdout)
+    if expected_list:
+        if sorted(found_objects) == sorted(expected_list):
+            logger.info(f"Found storage group list '{found_objects}' is equal for expected list '{expected_list}'")
+        else:
+            raise Exception(f"Found storage group '{found_objects}' is not equal to expected list '{expected_list}'")
 
-        if expected_list:
-            if sorted(found_objects) == sorted(expected_list):
-                logger.info("Found storage group list '{}' is equal for expected list '{}'".format(found_objects, expected_list))
-            else:
-                raise Exception("Found storage group '{}' is not equal to expected list '{}'".format(found_objects, expected_list))
-
-        return found_objects
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return found_objects
 
 
 @keyword('Get Storagegroup')
@@ -1071,28 +976,21 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
 
     object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {object_cmd}")
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info(f"Output: {complProc.stdout}")
+    output = _cmd_run(object_cmd)
 
-        if expected_size:
-            if re.search(r'Group size: %s' % expected_size, complProc.stdout):
-                logger.info("Group size %s has been found in the output" % (expected_size))
-            else:
-                raise Exception("Group size %s has not been found in the output" % (expected_size))
+    if expected_size:
+        if re.search(fr'Group size: {expected_size}', output):
+            logger.info(f"Group size {expected_size} has been found in the output")
+        else:
+            raise Exception(f"Group size {expected_size} has not been found in the output")
 
-        found_objects = re.findall(r'\s(\w{43,44})\s', complProc.stdout)
+    found_objects = re.findall(r'\s(\w{43,44})\s', output)
 
-        if expected_objects_list:
-            if sorted(found_objects) == sorted(expected_objects_list):
-                logger.info("Found objects list '{}' is equal for expected list '{}'".format(found_objects, expected_objects_list))
-            else:
-                raise Exception("Found object list '{}' is not equal to expected list '{}'".format(found_objects, expected_objects_list))
-
-
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    if expected_objects_list:
+        if sorted(found_objects) == sorted(expected_objects_list):
+            logger.info(f"Found objects list '{found_objects}' is equal for expected list '{expected_objects_list}'")
+        else:
+            raise Exception(f"Found object list '{found_objects}' is not equal to expected list '{expected_objects_list}'")
 
 
 @keyword('Delete Storagegroup')
@@ -1106,20 +1004,15 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
         f'delete --cid {cid} --id {oid} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
-    try:
-        complProc = subprocess.run(object_cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, shell=True)
-        logger.info(f"Output: {complProc.stdout}")
+    output = _cmd_run(object_cmd)
 
-        m = re.search(r'Tombstone: ([a-zA-Z0-9-]+)', complProc.stdout)
-        if m.start() != m.end(): # e.g., if match found something
-            oid = m.group(1)
-        else:
-            raise Exception("no Tombstone ID was parsed from command output: \t%s" % complProc.stdout)
-        return oid
+    m = re.search(r'Tombstone: ([a-zA-Z0-9-]+)', output)
+    if m.start() != m.end(): # e.g., if match found something
+        oid = m.group(1)
+    else:
+        raise Exception(f"no Tombstone ID was parsed from command output: \t{output}")
+    return oid
 
-    except subprocess.CalledProcessError as e:
-        raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 def _get_file_hash(filename):
     blocksize = 65536
@@ -1127,7 +1020,7 @@ def _get_file_hash(filename):
     with open(filename, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             hash.update(block)
-    logger.info("Hash: %s" % hash.hexdigest())
+    logger.info(f"Hash: {hash.hexdigest()}")
     return hash.hexdigest()
 
 def _find_cid(output: str, cid: str):
@@ -1136,10 +1029,10 @@ def _find_cid(output: str, cid: str):
     Parameters:
     - output: a string with command run output
     """
-    if re.search(r'(%s)' % cid, output):
-        logger.info("CID %s was parsed from command output: \t%s" % (cid, output))
+    if re.search(fr'({cid})', output):
+        logger.info(f"CID {cid} was parsed from command output: \t{output}")
     else:
-        raise Exception("no CID %s was parsed from command output: \t%s" % (cid, output))
+        raise Exception(f"no CID {cid} was parsed from command output: \t{output}")
     return cid
 
 def _parse_oid(input_str: str):
@@ -1199,20 +1092,24 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         f'object search --root --cid {cid} {oid_cmd}'
     )
 
-    try:
-        logger.info(Cmd)
-        complProc = subprocess.run(Cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, shell=True)
-        logger.info("Output: %s" % complProc.stdout)
-        if re.search(r'%s' % oid, complProc.stdout):
-            return oid
-        else:
-            logger.info("Object is not found.")
+    output = _cmd_run(Cmd)
+    if re.search(fr'{oid}', output):
+        return oid
+    else:
+        logger.info("Object is not found.")
 
+    if re.search(r'local node is outside of object placement', output):
+        logger.info("Server is not presented in container.")
+    elif ( re.search(r'timed out after 30 seconds', output) or re.search(r'no route to host', output) or re.search(r'i/o timeout', output)):
+        logger.warn("Node is unavailable")
+
+
+def _cmd_run(cmd):
+    try:
+        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30, shell=True)
+        output = complProc.stdout
+        logger.info(f"Output: {output}")
+        return output
     except subprocess.CalledProcessError as e:
-        if re.search(r'local node is outside of object placement', e.output):
-            logger.info("Server is not presented in container.")
-        elif ( re.search(r'timed out after 30 seconds', e.output) or re.search(r'no route to host', e.output) or re.search(r'i/o timeout', e.output)):
-            logger.warn("Node is unavailable")
-        else:
-            raise Exception("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        raise Exception(f"Error:\nreturn code: {e.returncode} \nOutput: {e.output}")
