@@ -118,6 +118,20 @@ def list_buckets_s3(s3_client):
 
     return found_buckets
 
+@keyword('Delete bucket S3')
+def delete_bucket_s3(s3_client, bucket):
+    response = s3_client.delete_bucket(Bucket=bucket)
+    logger.info(f"S3 Delete bucket result: {response}")
+    return response
+
+
+@keyword('HeadBucket S3')
+def headbucket(bucket, s3_client):
+    response = s3_client.head_bucket(Bucket=bucket)
+    logger.info(f"S3 HeadBucket result: {response}")
+    return response
+
+
 @keyword('Put object S3')
 def put_object_s3(s3_client, bucket, filepath):
     filename = os.path.basename(filepath)
@@ -148,8 +162,12 @@ def delete_object_s3(s3_client, bucket, object_key):
 @keyword('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, new_object):
 
-    response = s3_client.copy_object(Bucket=bucket, CopySource=bucket+"/"+object_key, Key=new_object)
-    logger.info("S3 Copy object result: %s" % response)
+    try:
+        response = s3_client.copy_object(Bucket=bucket, CopySource=bucket+"/"+object_key, Key=new_object)
+        logger.info("S3 Copy object result: %s" % response)
+    except:
+        raise Exception(f"S3 object {new_object} hasn't been coppied")
+    
     return response
 
 
@@ -189,3 +207,4 @@ def get_via_http_gate(cid: str, oid: str):
         shutil.copyfileobj(resp.raw, f)
     del resp
     return filename
+
