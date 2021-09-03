@@ -13,6 +13,7 @@ Resource    ../${RESOURCES}/setup_teardown.robot
 ${PLACEMENT_RULE} =     REP 1 IN X CBF 1 SELECT 1 FROM * AS X
 ${TRANSFER_AMOUNT} =    ${6}
 ${DEPOSIT_AMOUNT} =     ${5}
+${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Test cases ***
 
@@ -28,14 +29,14 @@ NeoFS HTTP Gateway
                         ...  Transaction accepted in block  ${TX}
 
     ${MAINNET_BALANCE} =    Get Mainnet Balance             ${ADDR}
-    Should Be Equal As Numbers                              ${MAINNET_BALANCE}  ${TRANSFER_AMOUNT}
+    Should Be Equal As Numbers                              ${MAINNET_BALANCE}      ${TRANSFER_AMOUNT}
 
-    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WIF}  ${DEPOSIT_AMOUNT}
+    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WIF}      ${DEPOSIT_AMOUNT}
                         Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...  Transaction accepted in block  ${TX_DEPOSIT}
 
-    ${CID} =            Create container                    ${WIF}    0x0FFFFFFF   ${PLACEMENT_RULE}
-                        Wait Until Keyword Succeeds         2 min     30 sec
+    ${CID} =            Create container                    ${WIF}    0x0FFFFFFF    ${PLACEMENT_RULE}
+                        Wait Until Keyword Succeeds         ${MORPH_BLOCK_TIME}     ${CONTAINER_WAIT_INTERVAL}
                         ...  Container Existing             ${WIF}    ${CID}
 
     ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}

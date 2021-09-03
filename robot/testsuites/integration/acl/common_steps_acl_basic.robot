@@ -9,18 +9,18 @@ ${CONTAINER_WAIT_INTERVAL} =    1 min
 
 Create Containers
                             Log	                   Create Private Container
-    ${PRIV_CID_GEN} =       Create container       ${USER_KEY}        ${PRIVATE_ACL}              ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME} ${CONTAINER_WAIT_INTERVAL}
+    ${PRIV_CID_GEN} =       Create container       ${USER_KEY}        ${PRIVATE_ACL}            ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${PRIV_CID_GEN}
 
                             Log	                   Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container       ${USER_KEY}        ${PUBLIC_ACL}              ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME} ${CONTAINER_WAIT_INTERVAL}
+    ${PUBLIC_CID_GEN} =     Create container       ${USER_KEY}        ${PUBLIC_ACL}             ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
 
                             Log	                   Create Read-Only Container
-    ${READONLY_CID_GEN} =   Create container       ${USER_KEY}        ${READONLY_ACL}              ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME} ${CONTAINER_WAIT_INTERVAL}
+    ${READONLY_CID_GEN} =   Create container       ${USER_KEY}        ${READONLY_ACL}           ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${READONLY_CID_GEN}
 
                             Set Global Variable    ${PRIV_CID}        ${PRIV_CID_GEN}
