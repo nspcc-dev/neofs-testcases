@@ -1,15 +1,13 @@
 #!/usr/bin/python3.8
 
-import logging
+import boto3
 import os
+import pexpect
 import re
 import requests
 import shutil
 import subprocess
-import boto3
 import uuid
-import io
-import pexpect
 
 from robot.api.deco import keyword
 from robot.api import logger

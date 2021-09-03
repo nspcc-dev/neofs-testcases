@@ -6,43 +6,59 @@
     - `git clone git@github.com:nspcc-dev/neofs-node.git`
     - `cd neofs-node`
     - `make`
-    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`, add alias path to
-    bin/neofs-cli or run `export NEOFS_EXECUTABLE=<path_to_binary>`
+    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`
 
-    or download binary from releases: https://github.com/nspcc-dev/neofs-node/releases
-
-2. Install cdn-authmate
-    - `git clone git@github.com:nspcc-dev/cdn-authmate.git`
-    - `cd cdn-authmate`
-    - `make build`
-    - `sudo cp bin/cdn-authmate /usr/local/bin/cdn-authmate`, add alias path to
-    bin/cdn-authmate or run `export CDNAUTH_EXEC=<path_to_binary>`
+2. Install neofs-authmate
+    - `git clone git@github.com:nspcc-dev/neofs-s3-gw.git`
+    - `cd neofs-s3-gw`
+    - `make`
+    - `sudo cp bin/neofs-authmate /usr/local/bin/neofs-authmate`
 
 3. Install neo-go
     - `git clone git@github.com:nspcc-dev/neo-go.git`
     - `cd neo-go`
     - `git checkout v0.92.0` (or the current version in the neofs-dev-env)
     - `make`
-    - `sudo cp bin/neo-go /usr/local/bin/neo-go`, add alias path to bin/neo-go
-        or run `export NEOGO_EXECUTABLE=<path_to_binary>`
-
+    - `sudo cp bin/neo-go /usr/local/bin/neo-go`
     or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
 
 4. Install Testcases dependencies
-    - `pip3 install -r requirements.txt`
+    - `pip3.8 install -r requirements.txt`
     - `make deps`
 
-(replace pip3 with the appropriate python package manager on the system).
-
-Test cases are designed to run on Python 3.7+
+Test cases are designed to run on Python 3.8.
 
 ### Run
 
 0. Add keywords repo to PYTHONPATH `export PYTHONPATH=${PYTHONPATH}:~/neofs-keywords/lib::~/neofs-keywords/robot`
 
-1. Execute the command `make run`
+1. Clone neofs-dev-env and prepare it
 
-2. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
+```
+# clean up obsolete volumes
+make down
+# restart
+make clean
+make up
+# decrease maximum object size to 1000 bytes
+make update.max_object_size val=1000
+```
+Also disable Storage Nodes Morph cache
+
+```
+export NEOFS_MORPH_DISABLE_CACHE=true
+```
+
+2. Export neofs-dev-env variables into the shell where you are going to run tests
+
+```
+cd neofs-dev-env
+export `make env`
+```
+
+3. Execute the command `make run`
+
+4. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
 
 
 ### Running an arbitrary test case
