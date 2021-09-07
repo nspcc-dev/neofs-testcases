@@ -1,0 +1,26 @@
+diff -urN bin.orig/activate bin/activate
+--- bin.orig/activate	2018-12-27 14:55:13.916461020 +0900
++++ bin/activate	2018-12-27 20:38:35.223248728 +0900
+@@ -30,6 +30,10 @@
+         unset _OLD_VIRTUAL_PS1
+     fi
+ 
++    # Uset external env variables
++    declare -f env_deactivate > /dev/null && env_deactivate
++    declare -f venv_deactivate > /dev/null && venv_deactivate
++
+     unset VIRTUAL_ENV
+     if [ ! "${1-}" = "nondestructive" ] ; then
+     # Self destruct!
+@@ -47,6 +51,11 @@
+ PATH="$VIRTUAL_ENV/bin:$PATH"
+ export PATH
+ 
++# Set external variables
++if [ -f ${VIRTUAL_ENV}/bin/environment.sh ] ; then
++    . ${VIRTUAL_ENV}/bin/environment.sh
++fi
++
+ # unset PYTHONHOME if set
+ if ! [ -z "${PYTHONHOME+_}" ] ; then
+     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"

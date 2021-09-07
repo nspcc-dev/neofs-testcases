@@ -22,17 +22,7 @@
     - `sudo cp bin/neo-go /usr/local/bin/neo-go`
     or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
 
-4. Install Testcases dependencies
-    - `pip3.8 install -r requirements.txt`
-    - `make deps`
-
-Test cases are designed to run on Python 3.8.
-
-### Run
-
-0. Add keywords repo to PYTHONPATH `export PYTHONPATH=${PYTHONPATH}:~/neofs-keywords/lib::~/neofs-keywords/robot`
-
-1. Clone neofs-dev-env and prepare it
+4. Clone neofs-dev-env and prepare it
 
 ```
 # clean up obsolete volumes
@@ -43,25 +33,18 @@ make up
 # decrease maximum object size to 1000 bytes
 make update.max_object_size val=1000
 ```
-Also disable Storage Nodes Morph cache
 
+5. Build virtual env
 ```
-export NEOFS_MORPH_DISABLE_CACHE=true
-```
-
-2. Export neofs-dev-env variables into the shell where you are going to run tests
-
-```
-cd neofs-dev-env
-export `make env`
+make venv.localtest
+. venv.localtest/bin/activate
 ```
 
-3. Execute the command `make run`
+Test cases are designed to run on Python 3.8.
 
-4. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
+### Run
 
-
-### Running an arbitrary test case
+Execute the command `make run`. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
 
 To run an arbitrary UserScenario or testcase, you need to run the command:
 `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`

@@ -1,18 +1,30 @@
+#!/usr/bin/make -f
+
 .DEFAULT_GOAL := help
 
-OUTPUT_DIR = artifacts/
-KEYWORDS_PATH = ../neofs-keywords
-KEYWORDS_REPO = git@github.com:nspcc-dev/neofs-keywords.git
+SHELL = bash
 
-run: deps
+OUTPUT_DIR = artifacts/
+KEYWORDS_REPO = git@github.com:nspcc-dev/neofs-keywords.git
+VENVS = $(shell ls -1d venv/*/ | sort -u | xargs basename -a)
+
+.PHONY: all
+all: venvs
+
+include venv_template.mk
+
+run: venvs
 	@echo "⇒ Test Run"
 	@robot --timestampoutputs --outputdir $(OUTPUT_DIR) robot/testsuites/integration/
 
-deps: $(KEYWORDS_PATH)
+.PHONY: venvs
+venvs:
+	$(foreach venv,$(VENVS),venv.$(venv))
 
-$(KEYWORDS_PATH):
-	@echo "Cloning keywords repo"
-	@git clone $(KEYWORDS_REPO) $(KEYWORDS_PATH)
+$(foreach venv,$(VENVS),$(eval $(call VENV_template,$(venv))))
+
+clean:
+	rm -rf venv.*
 
 help:
 	@echo "⇒ run          Run testcases ${R}"
