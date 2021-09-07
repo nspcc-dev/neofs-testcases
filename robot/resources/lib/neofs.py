@@ -326,18 +326,20 @@ def get_component_objects(private_key: str, cid: str, oid: str):
     split_id = ""
     nodes = _get_storage_nodes()
     for node in nodes:
-        header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
-        if header_virtual:
-            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+        try:
+            header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
+            if header_virtual:
+                parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
 
-            if 'Linking object' in parsed_header_virtual.keys():
-                return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
+                if 'Linking object' in parsed_header_virtual.keys():
+                    return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
 
-            elif 'Split ID' in parsed_header_virtual.keys():
-                logger.info(f"parsed_header_virtual: !@ {parsed_header_virtual}" )
-                split_id = parsed_header_virtual['Split ID']
+                elif 'Split ID' in parsed_header_virtual.keys():
+                    logger.info(f"parsed_header_virtual: !@ {parsed_header_virtual}" )
+                    split_id = parsed_header_virtual['Split ID']
 
-    logger.warn("Linking object has not been found.")
+        except:
+            logger.warn("Linking object has not been found.")
 
     # Get all existing objects
     full_obj_list = search_object(private_key, cid, None, None, None, None, '--phy')
@@ -373,59 +375,69 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
     logger.info("Collect Split objects information and verify chain of the objects.")
     nodes = _get_storage_nodes()
     for node in nodes:
-        header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
-        parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+        try:
+            header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
+            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
 
-        if 'Last object' in parsed_header_virtual.keys():
-            header_last = head_object(private_key, cid, parsed_header_virtual['Last object'], '', '', '--raw')
-            header_last_parsed = _get_raw_split_information(header_last)
-            marker_last_obj = 1
+            if 'Last object' in parsed_header_virtual.keys():
+                header_last = head_object(private_key, cid, 
+                                    parsed_header_virtual['Last object'], 
+                                    '', '', '--raw')
+                header_last_parsed = _get_raw_split_information(header_last)
+                marker_last_obj = 1
 
-            # Recursive chain validation up to the first object
-            final_verif_data = _verify_child_link(private_key, cid, oid, header_last_parsed, final_verif_data)
-            break
+                # Recursive chain validation up to the first object
+                final_verif_data = _verify_child_link(private_key, cid, oid, header_last_parsed, final_verif_data)
+                break
 
-    if marker_last_obj == 0:
-        raise Exception("Latest object has not been found.")
+        except:
+            if marker_last_obj == 0:
+                raise Exception("Latest object has not been found.")
 
     # Get Linking object
     logger.info("Compare Split objects result information with Linking object.")
     for node in nodes:
+        try:
+            header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
+            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+            if 'Linking object' in parsed_header_virtual.keys():
 
-        header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
-        parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
-        if 'Linking object' in parsed_header_virtual.keys():
+                header_link = head_object(private_key, cid, 
+                                parsed_header_virtual['Linking object'], 
+                                '', '', '--raw')
+                header_link_parsed = _get_raw_split_information(header_link)
+                marker_link_obj = 1
 
-            header_link = head_object(private_key, cid, parsed_header_virtual['Linking object'], '', '', '--raw')
-            header_link_parsed = _get_raw_split_information(header_link)
-            marker_link_obj = 1
+                reversed_list = final_verif_data['ID List'][::-1]
 
-            reversed_list = final_verif_data['ID List'][::-1]
+                if header_link_parsed['Split ChildID'] == reversed_list:
+                    logger.info(f"Split objects list from Linked Object is equal to expected "
+                                f"{', '.join(header_link_parsed['Split ChildID'])}")
+                else:
+                    raise Exception(f"Split objects list from Linking Object "
+                                    f"({', '.join(header_link_parsed['Split ChildID'])}) "
+                                    f"is not equal to expected ({', '.join(reversed_list)})")
 
-            if header_link_parsed['Split ChildID'] == reversed_list:
-                logger.info(f"Split objects list from Linked Object is equal to expected {', '.join(header_link_parsed['Split ChildID'])}")
-            else:
-                raise Exception(f"Split objects list from Linking Object ({', '.join(header_link_parsed['Split ChildID'])}) is not equal to expected ({', '.join(reversed_list)})")
+                if int(header_link_parsed['PayloadLength']) == 0:
+                    logger.info("Linking object Payload is equal to expected - zero size.")
+                else:
+                    raise Exception("Linking object Payload is not equal to expected. Should be zero.")
 
-            if int(header_link_parsed['PayloadLength']) == 0:
-                logger.info("Linking object Payload is equal to expected - zero size.")
-            else:
-                raise Exception("Linking object Payload is not equal to expected. Should be zero.")
+                if header_link_parsed['Type'] == 'regular':
+                    logger.info("Linking Object Type is 'regular' as expected.")
+                else:
+                    raise Exception("Object Type is not 'regular'.")
 
-            if header_link_parsed['Type'] == 'regular':
-                logger.info("Linking Object Type is 'regular' as expected.")
-            else:
-                raise Exception("Object Type is not 'regular'.")
+                if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
+                    logger.info(f"Linking Object Split ID is equal to expected {final_verif_data['Split ID']}.")
+                else:
+                    raise Exception(f"Split ID from Linking Object ({header_link_parsed['Split ID']}) "
+                                    f"is not equal to expected ({final_verif_data['Split ID']})")
 
-            if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
-                logger.info(f"Linking Object Split ID is equal to expected {final_verif_data['Split ID']}.")
-            else:
-                raise Exception(f"Split ID from Linking Object ({header_link_parsed['Split ID']}) is not equal to expected ({final_verif_data['Split ID']})")
-
-            break
-
-    if marker_link_obj == 0:
-        raise Exception("Linked object has not been found.")
+                break
+        except:
+            if marker_link_obj == 0:
+                raise Exception("Linked object has not been found.")
 
 
     logger.info("Compare Split objects result information with Virtual object.")
@@ -434,9 +446,12 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
     header_virtual_parsed = _get_raw_split_information(header_virtual)
 
     if int(header_virtual_parsed['PayloadLength']) == int(final_verif_data['PayloadLength']):
-        logger.info(f"Split objects PayloadLength are equal to Virtual Object Payload {header_virtual_parsed['PayloadLength']}")
+        logger.info(f"Split objects PayloadLength are equal to Virtual Object Payload "
+                    f"{header_virtual_parsed['PayloadLength']}")
     else:
-        raise Exception(f"Split objects PayloadLength from Virtual Object ({header_virtual_parsed['PayloadLength']}) is not equal to expected ({final_verif_data['PayloadLength']})")
+        raise Exception(f"Split objects PayloadLength from Virtual Object "
+                        f"({header_virtual_parsed['PayloadLength']}) is not equal "
+                        f"to expected ({final_verif_data['PayloadLength']})")
 
     if header_link_parsed['Type'] == 'regular':
         logger.info("Virtual Object Type is 'regular' as expected.")
@@ -613,7 +628,8 @@ def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_
         endpoint = NEOFS_ENDPOINT
 
     container_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} --cid {cid} container get {"--json" if json_output else ""}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} '
+        f'--cid {cid} container get {"--json" if json_output else ""}'
     )
     logger.info(f"Cmd: {container_cmd}")
     output = _cmd_run(container_cmd)
