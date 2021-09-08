@@ -21,17 +21,18 @@ BearerToken Operations for Сompound Operations
     [Timeout]               20 min
 
     [Setup]                 Setup
-
-                            Generate Keys
+    
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit 
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Сompound Operations
+    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Сompound Operations
+    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_compound
 
@@ -39,25 +40,24 @@ BearerToken Operations for Сompound Operations
 *** Keywords ***
 
 Check Сompound Operations
-    Check Bearer Сompound Get    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}
-    Check Bearer Сompound Get    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}
-    Check Bearer Сompound Get    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
+                            Check Bearer Сompound Get    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_KEY} 
+                            Check Bearer Сompound Get    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_KEY}
+                            Check Bearer Сompound Get    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}     ${USER_KEY}
 
-    Check Bearer Сompound Delete    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}
-    Check Bearer Сompound Delete    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}
-    Check Bearer Сompound Delete    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}
+                            Check Bearer Сompound Delete    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}     ${USER_KEY}
+                            Check Bearer Сompound Delete    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_KEY}
+                            Check Bearer Сompound Delete    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_KEY} 
 
-    Check Bearer Сompound Get Range Hash    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}
-    Check Bearer Сompound Get Range Hash    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}
-    Check Bearer Сompound Get Range Hash    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}
-
-
+                            Check Bearer Сompound Get Range Hash    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_KEY}    
+                            Check Bearer Сompound Get Range Hash    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}    ${USER_KEY}
+                            Check Bearer Сompound Get Range Hash    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_KEY}
 Check Bearer Сompound Get
-    [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
 
-    ${CID} =            Create Container Public
-    ${S_OID_USER} =     Put object     ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
-    @{S_OBJ_H} =        Create List    ${S_OID_USER}
+    ${CID} =                Create Container Public    ${USER_KEY}
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
+    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
     ${S_OID_USER} =     Put object     ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
                         Put object     ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
@@ -82,10 +82,9 @@ Check Bearer Сompound Get
 
 
 Check Bearer Сompound Delete
-    [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}    
 
-    ${CID} =            Create Container Public
-
+    ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
     ${D_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
                         Put object         ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
@@ -112,14 +111,13 @@ Check Bearer Сompound Delete
 
 
 Check Bearer Сompound Get Range Hash
-    [Arguments]            ${KEY}    ${DENY_GROUP}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
 
-    ${CID} =            Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY}
 
-    ${S_OID_USER} =     Put object         ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
-                        Put object         ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
-                        Get Range Hash     ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
-
+    ${S_OID_USER} =         Put object             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+                            Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
+                            Get Range Hash                  ${NEOFS_SN_WIF}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
                         Set eACL           ${USER_KEY}         ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec

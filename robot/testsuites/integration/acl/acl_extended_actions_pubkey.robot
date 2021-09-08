@@ -23,15 +23,16 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey
+                            Check eACL Deny All Other and Allow All Pubkey    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey
+                            Check eACL Deny All Other and Allow All Pubkey    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
 
 
     [Teardown]              Teardown    acl_extended_actions_pubkey
@@ -40,8 +41,9 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny All Other and Allow All Pubkey
+    [Arguments]    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
 
-    ${CID} =                Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY} 
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
     @{S_OBJ_H} =	        Create List	               ${S_OID_USER}

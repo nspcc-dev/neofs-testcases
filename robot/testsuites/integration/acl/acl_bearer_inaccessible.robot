@@ -20,22 +20,25 @@ BearerToken Operations for Inaccessible Container
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
+                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Container Inaccessible and Allow All Bearer
+    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Container Inaccessible and Allow All Bearer    ${USER_KEY}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Container Inaccessible and Allow All Bearer
+    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Container Inaccessible and Allow All Bearer    ${USER_KEY}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_inaccessible
 
 *** Keywords ***
 
 Check Container Inaccessible and Allow All Bearer
-    ${CID} =    Create Container Inaccessible
+    [Arguments]    ${USER_KEY}    ${FILE_S}
+
+    ${CID} =    Create Container Inaccessible    ${USER_KEY}
 
                 Run Keyword And Expect Error        *
                 ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER}

@@ -17,15 +17,16 @@ Basic ACL Operations for Public Container
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
-                            Create Containers
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Public Container    Simple
+    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Public Container    Simple    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
 
-                            Create Containers
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Public Container    Complex
+    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Public Container    Complex    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_basic_public_container_storagegroup
 
@@ -33,7 +34,7 @@ Basic ACL Operations for Public Container
 *** Keywords ***
 
 Check Public Container
-    [Arguments]     ${RUN_TYPE}
+    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
 
     # Storage group Operations (Put, List, Get, Delete)
                             Log    Storage group Operations for each Role keys
@@ -41,7 +42,7 @@ Check Public Container
     # Put target object to use in storage groups
     ${S_OID} =              Put object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
 
-    @{Roles_keys} =	        Create List    ${USER_KEY}    ${OTHER_KEY}    ${SYSTEM_KEY_IR}    ${SYSTEM_KEY_SN}
+    @{Roles_keys} =	        Create List    ${USER_KEY}    ${OTHER_KEY}    ${NEOFS_IR_WIF}    ${NEOFS_SN_WIF}
 
     FOR	${role_key}	IN	@{Roles_keys}
         ${SG_OID_1} =       Put Storagegroup    ${role_key}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}

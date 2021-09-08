@@ -10,6 +10,7 @@ ${CONTAINER_WAIT_INTERVAL} =    1 min
 *** Keywords ***
 
 Create Container Public
+    [Arguments]             ${USER_KEY}
                             Log	                Create Public Container
     ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    0x4FFFFFFF    ${COMMON_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds        ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
@@ -19,6 +20,7 @@ Create Container Public
 
 Generate files
     [Arguments]             ${SIZE}
+    
     ${FILE_S_GEN_1} =       Generate file of bytes    ${SIZE}
     ${FILE_S_GEN_2} =       Generate file of bytes    ${SIZE}
                             Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}
@@ -27,9 +29,9 @@ Generate files
 
 
 Check eACL Deny and Allow All
-    [Arguments]     ${KEY}       ${DENY_EACL}    ${ALLOW_EACL}
+    [Arguments]     ${KEY}    ${DENY_EACL}    ${ALLOW_EACL}    ${USER_KEY}
 
-    ${CID} =                Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
     @{S_OBJ_H} =	    Create List	               ${S_OID_USER}

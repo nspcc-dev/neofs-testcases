@@ -9,8 +9,8 @@ ${FILE_OTH_HEADER} =        key1=oth,key2=oth
 ${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Keywords ***
-
 Create Container Public
+    [Arguments]    ${USER_KEY}
     ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF     ${COMMON_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
@@ -18,6 +18,7 @@ Create Container Public
 
 
 Create Container Inaccessible
+    [Arguments]    ${USER_KEY}
     ${INACCESSIBLE_CID_GEN} =     Create container      ${USER_KEY}     ${INACCESSIBLE_ACL}     ${COMMON_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${INACCESSIBLE_CID_GEN}
@@ -28,7 +29,7 @@ Generate file
     [Arguments]             ${SIZE}
 
     ${FILE_S_GEN} =         Generate file of bytes    ${SIZE}
-                            Set Global Variable       ${FILE_S}    ${FILE_S_GEN}
+    [Return]                ${FILE_S_GEN}
 
 
 Prepare eACL Role rules
@@ -49,3 +50,4 @@ Prepare eACL Role rules
                                 Form eACL json common file    gen_eacl_deny_all_${role}    ${eACL_gen}
                                 Set Global Variable    ${EACL_DENY_ALL_${role}}       gen_eacl_deny_all_${role}
     END
+    [Return]    gen_eacl_deny_all_${role}

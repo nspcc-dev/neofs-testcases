@@ -19,22 +19,25 @@ BearerToken Operations Filter UserHeader NotEqual
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
+                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
+    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${USER_KEY}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
+    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${USER_KEY}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_filter_userheader_not_equal
 
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
-    ${CID} =            Create Container Public
+    [Arguments]    ${USER_KEY}    ${FILE_S}
+
+    ${CID} =            Create Container Public    ${USER_KEY}
     ${S_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_OTH_HEADER}
     ${S_OID_USER_2} =   Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
     ${D_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}

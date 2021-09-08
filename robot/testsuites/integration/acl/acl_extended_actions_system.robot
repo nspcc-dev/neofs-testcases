@@ -23,15 +23,15 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit    
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All System
+                            Check eACL Deny and Allow All System    ${USER_KEY}    ${FILE_S}
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All System
+                            Check eACL Deny and Allow All System    ${USER_KEY}    ${FILE_S}
 
     [Teardown]              Teardown    acl_extended_actions_system
 
@@ -39,7 +39,9 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny and Allow All System
-    ${CID} =                Create Container Public
+    [Arguments]    ${USER_KEY}    ${FILE_S}
+
+    ${CID} =                Create Container Public    ${USER_KEY} 
 
     ${S_OID_USER} =         Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
     ${D_OID_USER_S} =       Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
@@ -48,25 +50,25 @@ Check eACL Deny and Allow All System
     @{S_OBJ_H} =	        Create List	             ${S_OID_USER}
 
     Put object      ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
-    Put object      ${SYSTEM_KEY_SN}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+    Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
     Get object    ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-    Get object    ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+    Get object    ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
     Search object            ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-    Search object            ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+    Search object            ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
 
     Head object              ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}
-    Head object              ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}
+    Head object              ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
 
     Get Range                ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-    Get Range                ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+    Get Range                ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
     Get Range Hash           ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-    Get Range Hash           ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+    Get Range Hash           ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     Delete object            ${SYSTEM_KEY}       ${CID}    ${D_OID_USER_S}     ${EMPTY}
-    Delete object            ${SYSTEM_KEY_SN}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+    Delete object            ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
 
     Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}
 
@@ -76,17 +78,17 @@ Check eACL Deny and Allow All System
     Run Keyword And Expect Error    *
     ...  Put object        ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
     Run Keyword And Expect Error    *
-    ...  Put object        ${SYSTEM_KEY_SN}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+    ...  Put object        ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
     Run Keyword And Expect Error    *
     ...  Get object      ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
     Run Keyword And Expect Error    *
-    ...  Get object      ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+    ...  Get object      ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
     Run Keyword And Expect Error    *
     ...  Search object              ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
     Run Keyword And Expect Error    *
-    ...  Search object              ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+    ...  Search object              ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
 
 
     Run Keyword And Expect Error        *
