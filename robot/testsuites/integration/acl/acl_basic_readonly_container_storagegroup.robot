@@ -17,15 +17,17 @@ Basic ACL Operations for Read-Only Container
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    
+    ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Read-Only Container    Simple    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
-                            Create Containers
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Read-Only Container    Simple
+    ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Read-Only Container    Complex    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
-                            Create Containers
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Read-Only Container    Complex
 
     [Teardown]              Teardown    acl_basic_readonly_container_storagegroup
 
@@ -34,7 +36,7 @@ Basic ACL Operations for Read-Only Container
 
 
 Check Read-Only Container
-    [Arguments]     ${RUN_TYPE}
+    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
     # Put target object to use in storage groups
     ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
@@ -61,10 +63,10 @@ Check Read-Only Container
 
 
                         Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
+                        ...  Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
+                        ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}

@@ -18,15 +18,16 @@ Basic ACL Operations for Private Container
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
-                            Create Containers
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Private Container    Simple
+    ${PRIV_CID} =           Create Private Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Private Container    Simple    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
-                            Create Containers
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Private Container    Complex
+    ${PRIV_CID} =           Create Private Container    ${USER_KEY}
+    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Private Container    Complex    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_basic_private_container_storagegroup
 
@@ -34,7 +35,7 @@ Basic ACL Operations for Private Container
 *** Keywords ***
 
 Check Private Container
-    [Arguments]     ${RUN_TYPE}
+    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
     # Put target object to use in storage groups
     ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}
@@ -63,24 +64,24 @@ Check Private Container
 
 
     # System group key (storage node)
-    ${SG_OID_1} =       Put Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${SYSTEM_KEY_SN}    ${PRIV_CID}   ${S_OID_USER}
+    ${SG_OID_1} =       Put Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
+    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${S_OID_USER}
                         ...    ELSE IF    "${RUN_TYPE}" == "Simple"    Create List    ${S_OID_USER}
-                        Get Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${SYSTEM_KEY_SN}    ${PRIV_CID}    ${SG_OID_1}    ${EMPTY}
+                        ...  Delete Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${SG_OID_1}    ${EMPTY}
 
 
     # System group key (Inner ring node)
                         Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
+                        ...  Put Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  List Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_INV}
+                        ...  List Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_INV}
 
                         @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
 
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${SYSTEM_KEY_IR}    ${PRIV_CID}    ${SG_OID_INV}    ${EMPTY}
+                        ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${SG_OID_INV}    ${EMPTY}

@@ -19,16 +19,17 @@ BearerToken Operations with Filter OID NotEqual
     [Timeout]               20 min
 
     [Setup]                 Setup
-
-                            Generate Keys
+    
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
+                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
-                            Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter OID NotEqual
+    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check eACL Deny and Allow All Bearer Filter OID NotEqual    ${USER_KEY}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
-                            Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter OID NotEqual
+    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check eACL Deny and Allow All Bearer Filter OID NotEqual    ${USER_KEY}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_filter_oid_not_equal
 
@@ -37,11 +38,13 @@ BearerToken Operations with Filter OID NotEqual
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer Filter OID NotEqual
-    ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object          ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
-    ${S_OID_USER_2} =       Put object          ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object          ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	        ${S_OID_USER}
+    [Arguments]    ${USER_KEY}    ${FILE_S}
+
+    ${CID} =                Create Container Public    ${USER_KEY}
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
+    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
+    @{S_OBJ_H} =	        Create List	                        ${S_OID_USER}
 
                             Put object          ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_OTH_HEADER}
                             Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl

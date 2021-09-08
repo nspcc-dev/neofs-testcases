@@ -1,5 +1,6 @@
 *** Settings ***
 Variables    ../../../variables/common.py
+
 Library     Collections
 Library     neofs.py
 Library     payment_neogo.py
@@ -22,15 +23,16 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check Сompound Operations
+                            Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check Сompound Operations
+                            Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_extended_compound
 
@@ -40,22 +42,23 @@ Extended ACL Operations
 
 
 Check Сompound Operations
-                            Check eACL Сompound Get    ${OTHER_KEY}     ${EACL_COMPOUND_GET_OTHERS}
-                            Check eACL Сompound Get    ${USER_KEY}      ${EACL_COMPOUND_GET_USER}
-                            Check eACL Сompound Get    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_SYSTEM}
+    [Arguments]             ${USER_KEY}    ${OTHER_KEY}
+                            Check eACL Сompound Get    ${OTHER_KEY}     ${EACL_COMPOUND_GET_OTHERS}    ${USER_KEY}
+                            Check eACL Сompound Get    ${USER_KEY}      ${EACL_COMPOUND_GET_USER}    ${USER_KEY}
+                            Check eACL Сompound Get    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_SYSTEM}    ${USER_KEY}
 
-                            Check eACL Сompound Delete    ${OTHER_KEY}     ${EACL_COMPOUND_DELETE_OTHERS}
-                            Check eACL Сompound Delete    ${USER_KEY}      ${EACL_COMPOUND_DELETE_USER}
-                            Check eACL Сompound Delete    ${SYSTEM_KEY}    ${EACL_COMPOUND_DELETE_SYSTEM}
+                            Check eACL Сompound Delete    ${OTHER_KEY}     ${EACL_COMPOUND_DELETE_OTHERS}    ${USER_KEY}
+                            Check eACL Сompound Delete    ${USER_KEY}      ${EACL_COMPOUND_DELETE_USER}    ${USER_KEY} 
+                            Check eACL Сompound Delete    ${SYSTEM_KEY}    ${EACL_COMPOUND_DELETE_SYSTEM}    ${USER_KEY}
 
-                            Check eACL Сompound Get Range Hash    ${OTHER_KEY}     ${EACL_COMPOUND_GET_HASH_OTHERS}
-                            Check eACL Сompound Get Range Hash    ${USER_KEY}      ${EACL_COMPOUND_GET_HASH_USER}
-                            Check eACL Сompound Get Range Hash    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_HASH_SYSTEM}
+                            Check eACL Сompound Get Range Hash    ${OTHER_KEY}     ${EACL_COMPOUND_GET_HASH_OTHERS}    ${USER_KEY}
+                            Check eACL Сompound Get Range Hash    ${USER_KEY}      ${EACL_COMPOUND_GET_HASH_USER}    ${USER_KEY}
+                            Check eACL Сompound Get Range Hash    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_HASH_SYSTEM}    ${USER_KEY}
 
 Check eACL Сompound Get
-    [Arguments]             ${KEY}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}   
 
-    ${CID} =                Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY}
 
     ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
@@ -74,9 +77,9 @@ Check eACL Сompound Get
 
 
 Check eACL Сompound Delete
-    [Arguments]             ${KEY}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}
 
-    ${CID} =                Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY}
 
     ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
     ${D_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
@@ -98,13 +101,13 @@ Check eACL Сompound Delete
 
 
 Check eACL Сompound Get Range Hash
-    [Arguments]             ${KEY}    ${DENY_EACL}
+    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}
 
-    ${CID} =                Create Container Public
+    ${CID} =                Create Container Public    ${USER_KEY}
 
     ${S_OID_USER} =         Put object             ${USER_KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
                             Put object             ${KEY}              ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
-                            Get Range Hash                  ${SYSTEM_KEY_SN}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash                  ${NEOFS_SN_WIF}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
                             Set eACL                        ${USER_KEY}         ${CID}       ${DENY_EACL}
 

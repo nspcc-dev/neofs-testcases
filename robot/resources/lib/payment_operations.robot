@@ -12,19 +12,6 @@ ${DEPOSIT_AMOUNT} =     ${25}
 
 *** Keywords ***
 
-Generate Keys
-    ${WALLET}   ${ADDR}     ${USER_KEY_GEN} =   Init Wallet with Address    ${ASSETS_DIR}
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY_GEN} =   Init Wallet with Address    ${ASSETS_DIR}
-
-    Set Global Variable     ${USER_KEY}          ${USER_KEY_GEN}
-    Set Global Variable     ${OTHER_KEY}         ${OTHER_KEY_GEN}
-    Set Global Variable     ${SYSTEM_KEY_IR}     ${NEOFS_IR_WIF}
-    Set Global Variable     ${SYSTEM_KEY_SN}     ${NEOFS_SN_WIF}
-
-    Payment Operations      ${ADDR}         ${USER_KEY}
-    Payment Operations      ${ADDR_OTH}     ${OTHER_KEY}
-
-
 Payment Operations
     [Arguments]   ${ADDR}     ${WIF}
 
@@ -46,8 +33,9 @@ Payment Operations
     Should Be Equal As Numbers      ${NEOFS_BALANCE}    ${DEPOSIT_AMOUNT}
 
 Prepare Wallet And Deposit
-    [Arguments]    ${DEPOSIT}
-
+    [Arguments]    ${DEPOSIT}=${30}
+    
+    Log    Deposit equals ${DEPOSIT}
     ${WALLET}    ${ADDR}    ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
     ${TX} =    Transfer Mainnet Gas                ${MAINNET_WALLET_WIF}    ${ADDR}    ${DEPOSIT+1}
                Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}

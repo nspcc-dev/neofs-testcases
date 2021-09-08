@@ -19,15 +19,16 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check Filters
+                            Check Filters    ${USER_KEY}    ${OTHER_KEY}
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check Filters
+                            Check Filters    ${USER_KEY}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_extended_filters
 
@@ -35,13 +36,16 @@ Extended ACL Operations
 *** Keywords ***
 
 Check Filters
-                            Check eACL MatchType String Equal Object
-                            Check eACL MatchType String Not Equal Object
-                            Check eACL MatchType String Equal Request Deny
-                            Check eACL MatchType String Equal Request Allow
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}
+    
+                            Check eACL MatchType String Equal Object    ${USER_KEY}    ${OTHER_KEY}
+                            Check eACL MatchType String Not Equal Object    ${USER_KEY}    ${OTHER_KEY}
+                            Check eACL MatchType String Equal Request Deny    ${USER_KEY}    ${OTHER_KEY}
+                            Check eACL MatchType String Equal Request Allow    ${USER_KEY}    ${OTHER_KEY}
 
 Check eACL MatchType String Equal Request Deny
-    ${CID} =                Create Container Public
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}
+    ${CID} =                Create Container Public    ${USER_KEY} 
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
@@ -85,7 +89,9 @@ Check eACL MatchType String Equal Request Deny
 
 
 Check eACL MatchType String Equal Request Allow
-    ${CID} =                Create Container Public
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}
+
+    ${CID} =                Create Container Public    ${USER_KEY} 
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
@@ -129,7 +135,9 @@ Check eACL MatchType String Equal Request Allow
 
 
 Check eACL MatchType String Equal Object
-    ${CID} =                Create Container Public
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}
+
+    ${CID} =                Create Container Public    ${USER_KEY} 
     ${S_OID_USER} =         Put object                      ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
 
     ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
@@ -167,7 +175,9 @@ Check eACL MatchType String Equal Object
 
 
 Check eACL MatchType String Not Equal Object
-    ${CID} =                Create Container Public
+    [Arguments]    ${USER_KEY}    ${OTHER_KEY}
+
+    ${CID} =                Create Container Public    ${USER_KEY} 
 
     ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}      ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
     ${S_OID_OTHER} =        Put object             ${OTHER_KEY}    ${FILE_S_2}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}

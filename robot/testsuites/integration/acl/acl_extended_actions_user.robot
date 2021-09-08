@@ -1,5 +1,6 @@
 *** Settings ***
 Variables    ../../../variables/common.py
+
 Library     Collections
 Library     neofs.py
 Library     payment_neogo.py
@@ -18,15 +19,15 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-                            Generate Keys
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All User
+                            Check eACL Deny and Allow All User    ${USER_KEY}
 
                             Log    Check extended ACL with complex object
                             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All User
+                            Check eACL Deny and Allow All User    ${USER_KEY}
 
     [Teardown]              Teardown    acl_extended_action_user
 
@@ -34,4 +35,5 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny and Allow All User
-                            Check eACL Deny and Allow All    ${USER_KEY}    ${EACL_DENY_ALL_USER}    ${EACL_ALLOW_ALL_USER}
+    [Arguments]             ${USER_KEY}
+                            Check eACL Deny and Allow All    ${USER_KEY}    ${EACL_DENY_ALL_USER}    ${EACL_ALLOW_ALL_USER}    ${USER_KEY}
