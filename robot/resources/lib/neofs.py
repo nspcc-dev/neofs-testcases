@@ -55,15 +55,15 @@ def start_nodes(*nodes_list):
         node = m.group(1)
         client = docker.APIClient()
         client.start(node)
+        
 
 @keyword('Get nodes with object')
 def get_nodes_with_object(private_key: str, cid: str, oid: str):
-    storage_nodes = _get_storage_nodes()
     copies = 0
 
     nodes_list = []
 
-    for node in storage_nodes:
+    for node in NEOFS_NETMAP:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
             if re.search(fr'({oid})', search_res):
@@ -75,12 +75,11 @@ def get_nodes_with_object(private_key: str, cid: str, oid: str):
 
 @keyword('Get nodes without object')
 def get_nodes_without_object(private_key: str, cid: str, oid: str):
-    storage_nodes = _get_storage_nodes()
     copies = 0
 
     nodes_list = []
 
-    for node in storage_nodes:
+    for node in NEOFS_NETMAP:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
             if not re.search(fr'({oid})', search_res):
@@ -95,7 +94,7 @@ def get_nodes_without_object(private_key: str, cid: str, oid: str):
 @keyword('Validate storage policy for object')
 def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid,
                 expected_node_list=[], storage_nodes=[]):
-    storage_nodes = storage_nodes if len(storage_nodes) != 0 else _get_storage_nodes()
+    storage_nodes = storage_nodes if len(storage_nodes) != 0 else NEOFS_NETMAP
     copies = 0
     found_nodes = []
 
@@ -222,8 +221,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
 def get_component_objects(private_key: str, cid: str, oid: str):
     logger.info("Collect Split objects list from Linked object.")
     split_id = ""
-    nodes = _get_storage_nodes()
-    for node in nodes:
+    for node in NEOFS_NETMAP:
         try:
             header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
             if header_virtual:
@@ -271,8 +269,7 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
 
     # Get Latest object
     logger.info("Collect Split objects information and verify chain of the objects.")
-    nodes = _get_storage_nodes()
-    for node in nodes:
+    for node in NEOFS_NETMAP:
         try:
             header_virtual = head_object(private_key, cid, oid, '', '', '--raw --ttl 1', node, True)
             parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
@@ -730,7 +727,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     logger.info("Going to put the object")
 
     if not endpoint:
-      endpoint = random.sample(_get_storage_nodes(), 1)[0]
+      endpoint = random.sample(NEOFS_NETMAP, 1)[0]
 
     if user_headers:
         user_headers = f"--attributes {user_headers}"
@@ -748,18 +745,35 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
     return oid
 
 
+@keyword('Get control endpoint with wif')
+def get_control_endpoint_with_wif(endpoint_number: str = ''):
+    if endpoint_number == '':
+        netmap = []
+        for key in NEOFS_NETMAP_DICT.keys():
+            netmap.append(key)
+        endpoint_num = random.sample(netmap, 1)[0]
+        logger.info(f'Random node chosen: {endpoint_num}')
+    else:
+        endpoint_num = endpoint_number
+
+    endpoint_values = NEOFS_NETMAP_DICT[f'{endpoint_num}']
+    endpoint_control = endpoint_values['control']
+    wif = endpoint_values['wif']
+    
+    return endpoint_num, endpoint_control, wif
+
+
 @keyword('Get Nodes Log Latest Timestamp')
 def get_logs_latest_timestamp():
     """
     Keyword return:
     nodes_logs_time -- structure (dict) of nodes container name (key) and latest logs timestamp (value)
     """
-    nodes = _get_storage_nodes()
     client_api = docker.APIClient()
 
     nodes_logs_time = dict()
 
-    for node in nodes:
+    for node in NEOFS_NETMAP:
         container = node.split('.')[0]
         log_line = client_api.logs(container, tail=1)
 
@@ -832,7 +846,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
     logger.info("Going to get the object")
     if not endpoint:
-      endpoint = random.sample(_get_storage_nodes(), 1)[0]
+      endpoint = random.sample(NEOFS_NETMAP, 1)[0]
 
 
     if bearer_token:
@@ -1003,10 +1017,6 @@ def _parse_cid(input_str: str):
         raise Exception(f"no CID was parsed from command output: \t{fst_str}")
     return splitted[1]
 
-def _get_storage_nodes():
-    # TODO: fix to get netmap from neofs-cli
-    logger.info(f"Storage nodes: {NEOFS_NETMAP}")
-    return NEOFS_NETMAP
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
     if oid:
