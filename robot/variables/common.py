@@ -6,10 +6,6 @@ RESOURCES="%s/resources/lib" % ROOT
 CERT="%s/../../ca" % ROOT
 KEYWORDS="%s/../../../neofs-keywords/robot/" % ROOT
 
-# path from repo root is required for object put and get
-# in case when test is run from root in docker
-ABSOLUTE_FILE_PATH="/robot/testsuites/integration"
-
 # Common NeoFS variables can be declared from neofs-dev-env env variables.
 # High priority is accepted for those envs.
 
@@ -36,7 +32,7 @@ NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph_chain
 HTTP_GATE = os.getenv("HTTP_GATE", 'http://http.neofs.devenv')
 S3_GATE = os.getenv("S3_GATE", 'https://s3.neofs.devenv:8080')
 NEOFS_NETMAP = os.getenv("NEOFS_NETMAP", ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080'])
-GAS_HASH = os.getenv("GAS_HASH", '0xd2a4cff31913016155e38e474a2c06d08be276cf')
+GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
 NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT")
              else os.getenv("NEOFS_IR_CONTRACTS_NEOFS", '008b43d3de8741b896015f79ac0fbfa4055b4574'))
