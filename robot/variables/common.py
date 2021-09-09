@@ -30,7 +30,6 @@ NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main_chain.neof
 NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph_chain.neofs.devenv:30333')
 HTTP_GATE = os.getenv("HTTP_GATE", 'http://http.neofs.devenv')
 S3_GATE = os.getenv("S3_GATE", 'https://s3.neofs.devenv:8080')
-NEOFS_NETMAP = os.getenv("NEOFS_NETMAP", ['s01.neofs.devenv:8080', 's02.neofs.devenv:8080','s03.neofs.devenv:8080','s04.neofs.devenv:8080'])
 GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
 NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT")
@@ -42,3 +41,18 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 MORPH_MAGIC = os.environ["MORPH_MAGIC"]
 GATE_PUB_KEY = '0313b1ac3a8076e155a7e797b24f0b650cccad5941ea59d7cfd51a024a8b2a06bf'
+
+NEOFS_NETMAP_DICT = {'s01': {'rpc': 's01.neofs.devenv:8080',
+                        'control': 's01.neofs.devenv:8081',
+                        'wif': 'Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s'},
+                    's02': {'rpc': 's02.neofs.devenv:8080',
+                        'control': 's02.neofs.devenv:8081',
+                        'wif': 'L1NdHdnrTNGQZH1fJSrdUZJyeYFHvaQSSHZHxhK3udiGFdr5YaZ6'},
+                    's03': {'rpc': 's03.neofs.devenv:8080',
+                        'control': 's03.neofs.devenv:8081',
+                        'wif': 'KzN38k39af6ACWJjK8YrnARWo86ddcc1EuBWz7xFEdcELcP3ZTym'},
+                    's04': {'rpc': 's04.neofs.devenv:8080',
+                        'control': 's04.neofs.devenv:8081',
+                        'wif': 'Kzk1Z3dowAqfNyjqeYKWenZMduFV3NAKgXg9K1sA4jRKYxEc8HEW'}
+                    }
+NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
