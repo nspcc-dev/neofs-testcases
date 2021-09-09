@@ -15,7 +15,7 @@ ${SN_02_ADDR} =    s02.neofs.devenv:8080
 *** Test cases ***
 NetworkInfo RPC Method
     [Documentation]           Testcase to check NetworkInfo RPC method.
-    [Tags]                    RPC  NeoFS  NeoCLI    NetworkInfo
+    [Tags]                    RPC  NeoFS  NeoFSCLI    NetworkInfo
     [Timeout]                 10 min
 
     [Setup]                   Setup
@@ -32,10 +32,10 @@ NetworkInfo RPC Method
     #############################################
     # Checking if morph magic number is relevant
     #############################################
-    
+
     ${NETWORK_MAGIC_S01} =    Parse Magic    ${RESULT1_S01.stdout}
     Should Be Equal    ${NETWORK_MAGIC_S01}    ${MORPH_MAGIC}
-    
+
     ${NETWORK_MAGIC_S02} =    Parse Magic    ${RESULT1_S02.stdout}
     Should Be Equal    ${NETWORK_MAGIC_S02}    ${MORPH_MAGIC}
 
@@ -50,7 +50,7 @@ NetworkInfo RPC Method
     ########################################
     # Ticking epoch and getting new netinfo
     ########################################
-    
+
     Tick Epoch
 
     ${RESULT2_S01}           Run Process    neofs-cli netmap netinfo -r ${SN_01_ADDR} --wif ${MAINNET_WALLET_WIF}    shell=True
@@ -69,13 +69,13 @@ NetworkInfo RPC Method
     ${NEW_EPOCH} =           Evaluate    ${EPOCH1_S01}+${1}
     Should Be Equal    ${EPOCH2_S01}    ${NEW_EPOCH}
 
-    
-    [Teardown]             Teardown    network_rpc_method  
+
+    [Teardown]             Teardown    network_rpc_method
 
 *** Keywords ***
 
 Parse Magic
-    [Arguments]    ${RESULT_STDOUT}     
+    [Arguments]    ${RESULT_STDOUT}
     @{MAGIC} =               Split String    ${RESULT_STDOUT}   ${\n}
     ${NETWORK_MAGIC} =       Get From List    ${MAGIC}    ${1}
     @{MAGIC_INFO} =          Split String    ${NETWORK_MAGIC}   ${SPACE}
@@ -83,7 +83,7 @@ Parse Magic
     [Return]    ${MAGIC_VALUE}
 
 Parse Epoch
-    [Arguments]    ${RESULT_STDOUT}     
+    [Arguments]    ${RESULT_STDOUT}
     @{EPOCH} =               Split String    ${RESULT_STDOUT}   ${\n}
     ${NETWORK_EPOCH} =       Get From List    ${EPOCH}    ${0}
     @{EPOCH_INFO} =          Split String    ${NETWORK_EPOCH}    ${SPACE}
