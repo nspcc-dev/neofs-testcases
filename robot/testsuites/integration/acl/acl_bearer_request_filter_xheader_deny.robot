@@ -1,10 +1,12 @@
 *** Settings ***
 Variables   ../../../variables/common.py
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
 
 Library     Collections
+Library     neofs.py
+Library     acl.py
+Library     payment_neogo.py
 
+Resource    ../../../variables/eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
@@ -25,7 +27,6 @@ BearerToken Operations
                             Check eACL Allow All Bearer Filter Requst Equal Deny
 
                             Log    Check Bearer token with complex object
-
                             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Allow All Bearer Filter Requst Equal Deny
 
@@ -37,10 +38,10 @@ BearerToken Operations
 
 Check eACL Allow All Bearer Filter Requst Equal Deny
     ${CID} =                Create Container Public
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
-    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    ${S_OID_USER} =         Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
+    ${S_OID_USER_2} =       Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
+    ${D_OID_USER} =         Put object         ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
+    @{S_OBJ_H} =	    Create List	       ${S_OID_USER}
 
 
     ${filters}=             Create Dictionary    headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=256
@@ -52,27 +53,28 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
     ${rule6}=               Create Dictionary    Operation=GETRANGE        Access=DENY    Role=USER    Filters=${filters}
     ${rule7}=               Create Dictionary    Operation=GETRANGEHASH    Access=DENY    Role=USER    Filters=${filters}
     ${eACL_gen}=            Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-                            Form BearerToken file               ${USER_KEY}    ${CID}    bearer_allow_all_user   ${eACL_gen}   100500
 
-                            Put object      ${USER_KEY}    ${FILE_S}     ${CID}           bearer_allow_all_user    ${FILE_OTH_HEADER}       ${EMPTY}      --xhdr a=2
-                            Get object    ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}      --xhdr a=2
-                            Search object            ${USER_KEY}    ${CID}        ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${S_OBJ_H}    --xhdr a=2
-                            Head object              ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    ${EMPTY}                 --xhdr a=2
-                            Get Range                ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range              bearer_allow_all_user    0:256         --xhdr a=2
-                            Get Range Hash           ${USER_KEY}    ${CID}        ${S_OID_USER}    bearer_allow_all_user    0:256                    --xhdr a=2
-                            Delete object            ${USER_KEY}    ${CID}        ${D_OID_USER}    bearer_allow_all_user    --xhdr a=2
+    ${EACL_TOKEN} =         Form BearerToken File       ${USER_KEY}    ${CID}    ${eACL_gen}
 
-                            Run Keyword And Expect Error    *
-                            ...  Put object             ${USER_KEY}    ${FILE_S}    ${CID}           bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Get object           ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    local_file_eacl          ${EMPTY}       --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Search object                   ${USER_KEY}    ${CID}       ${EMPTY}         bearer_allow_all_user    ${FILE_USR_HEADER}       ${EMPTY}       --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Head object                     ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    ${EMPTY}                 --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Get Range                       ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range              bearer_allow_all_user    0:256          --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Get Range Hash                  ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    0:256                    --xhdr a=256
-                            Run Keyword And Expect Error    *
-                            ...  Delete object                   ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_allow_all_user    --xhdr a=256
+                        Put object      ${USER_KEY}    ${FILE_S}     ${CID}           ${EACL_TOKEN}    ${FILE_OTH_HEADER}   ${EMPTY}      --xhdr a=2
+                        Get object      ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}      --xhdr a=2
+                        Search object   ${USER_KEY}    ${CID}        ${EMPTY}         ${EACL_TOKEN}    ${FILE_USR_HEADER}   ${S_OBJ_H}    --xhdr a=2
+                        Head object     ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EACL_TOKEN}    ${EMPTY}         --xhdr a=2
+                        Get Range       ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range      ${EACL_TOKEN}    0:256         --xhdr a=2
+                        Get Range Hash  ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EACL_TOKEN}    0:256            --xhdr a=2
+                        Delete object   ${USER_KEY}    ${CID}        ${D_OID_USER}    ${EACL_TOKEN}    --xhdr a=2
+
+                        Run Keyword And Expect Error    *
+                        ...  Put object     ${USER_KEY}    ${FILE_S}    ${CID}       ${EACL_TOKEN}    ${FILE_USR_HEADER}       ${EMPTY}   --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Get object     ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}   --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Search object   ${USER_KEY}    ${CID}       ${EMPTY}     ${EACL_TOKEN}    ${FILE_USR_HEADER}   ${EMPTY}   --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Head object     ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    ${EMPTY}     --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Get Range       ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range      ${EACL_TOKEN}    0:256      --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Get Range Hash  ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    0:256    --xhdr a=256
+                        Run Keyword And Expect Error    *
+                        ...  Delete object   ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    --xhdr a=256

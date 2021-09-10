@@ -17,6 +17,7 @@ from robot.api.deco import keyword
 from robot.api import logger
 
 from common import *
+from cli_helpers import _cmd_run
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -120,115 +121,12 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
             raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
 
 
-@keyword('Get eACL')
-def get_eacl(private_key: str, cid: str):
-
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'container get-eacl --cid {cid}'
-    )
-    logger.info(f"Cmd: {Cmd}")
-    output = _cmd_run(Cmd)
-    if re.search(r'extended ACL table is not set for this container', output):
-        logger.info("Extended ACL table is not set for this container.")
-
-
-@keyword('Set eACL')
-def set_eacl(private_key: str, cid: str, eacl_table_path: str):
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
-    )
-    logger.info(f"Cmd: {cmd}")
-    _cmd_run(cmd)
-
-
-@keyword('Form BearerToken file')
-def form_bearertoken_file(private_key: str, cid: str, file_name: str, eacl_oper_list,
-        lifetime_exp: str ):
-    cid_base58_b = base58.b58decode(cid)
-    cid_base64 = base64.b64encode(cid_base58_b).decode("utf-8")
-    eacl = get_eacl(private_key, cid)
-    json_eacl = {}
-    file_path = f"{ASSETS_DIR}/{file_name}"
-
-    if eacl:
-        res_json = re.split(r'[\s\n]+Signature:', eacl)
-        input_eacl = res_json[0].replace('eACL: ', '')
-        json_eacl = json.loads(input_eacl)
-
-    eacl_result = {"body":{ "eaclTable": { "containerID": { "value": cid_base64 }, "records": [] }, "lifetime": {"exp": lifetime_exp, "nbf": "1", "iat": "0"} } }
-
-    if eacl_oper_list:
-        for record in eacl_oper_list:
-            op_data = dict()
-
-            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
-                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
-            else:
-                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
-
-            if 'Filters' in record.keys():
-                op_data["filters"].append(record['Filters'])
-
-            eacl_result["body"]["eaclTable"]["records"].append(op_data)
-
-        # Add records from current eACL
-        if "records" in json_eacl.keys():
-            for record in json_eacl["records"]:
-                eacl_result["body"]["eaclTable"]["records"].append(record)
-
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(eacl_result, f, ensure_ascii=False, indent=4)
-
-        logger.info(eacl_result)
-
-    # Sign bearer token
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} util sign bearer-token --from {file_path} '
-        f'--to {file_path} --wif {private_key} --json'
-    )
-    logger.info(f"Cmd: {Cmd}")
-    _cmd_run(Cmd)
-
-    return file_path
-
-
-@keyword('Form eACL json common file')
-def form_eacl_json_common_file(file_path, eacl_oper_list ):
-    # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-    eacl = {"records":[]}
-
-    logger.info(eacl_oper_list)
-
-    if eacl_oper_list:
-        for record in eacl_oper_list:
-            op_data = dict()
-
-            if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
-                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"role":record['Role']}]}
-            else:
-                op_data = {"operation":record['Operation'],"action":record['Access'],"filters": [],"targets":[{"keys": [ record['Role'] ]}]}
-
-            if 'Filters' in record.keys():
-                op_data["filters"].append(record['Filters'])
-
-            eacl["records"].append(op_data)
-
-        logger.info(eacl)
-
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(eacl, f, ensure_ascii=False, indent=4)
-
-    return file_path
-
-
 @keyword('Get Range')
 def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str,
         range_cut: str, options:str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
+        bearer_token = f"--bearer {bearer}"
 
     Cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
@@ -237,7 +135,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
     )
     logger.info(f"Cmd: {Cmd}")
     _cmd_run(Cmd)
-    
+
 
 @keyword('Create container')
 def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=''):
@@ -294,7 +192,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
     filters_result = ""
 
     if bearer:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
+        bearer_token = f"--bearer {bearer}"
     if filters:
         for filter_item in filters.split(','):
             filter_item = re.sub(r'=', ' EQ ', filter_item)
@@ -380,8 +278,8 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
             parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
 
             if 'Last object' in parsed_header_virtual.keys():
-                header_last = head_object(private_key, cid, 
-                                    parsed_header_virtual['Last object'], 
+                header_last = head_object(private_key, cid,
+                                    parsed_header_virtual['Last object'],
                                     '', '', '--raw')
                 header_last_parsed = _get_raw_split_information(header_last)
                 marker_last_obj = 1
@@ -402,8 +300,8 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
             parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
             if 'Linking object' in parsed_header_virtual.keys():
 
-                header_link = head_object(private_key, cid, 
-                                parsed_header_virtual['Linking object'], 
+                header_link = head_object(private_key, cid,
+                                parsed_header_virtual['Linking object'],
                                 '', '', '--raw')
                 header_link_parsed = _get_raw_split_information(header_link)
                 marker_link_obj = 1
@@ -601,7 +499,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
     user_headers:str="", options:str="", endpoint: str="", json_output: bool = False):
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
@@ -770,7 +668,7 @@ def verify_head_attribute(header, attribute):
 def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: str=""):
     bearer_token = ""
     if bearer:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer}"
+        bearer_token = f"--bearer {bearer}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
@@ -779,7 +677,7 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
     logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
     tombstone = _parse_oid(output)
-    
+
     return tombstone
 
 
@@ -805,7 +703,7 @@ def get_file_name(filepath):
 def get_file_hash(filename : str):
     file_hash = _get_file_hash(filename)
     return file_hash
-    
+
 
 @keyword('Verify file hash')
 def verify_file_hash(filename, expected_hash):
@@ -828,7 +726,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         user_headers = f"--attributes {user_headers}"
 
     if bearer:
-        bearer = f"--bearer {ASSETS_DIR}/{bearer}"
+        bearer = f"--bearer {bearer}"
 
     putobject_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
@@ -905,7 +803,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         range_cut: str, options: str=""):
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
@@ -914,7 +812,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
     )
     logger.info(f"Cmd: {object_cmd}")
     _cmd_run(object_cmd)
-    
+
 
 @keyword('Get object')
 def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
@@ -928,7 +826,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} '
@@ -947,7 +845,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
     cmd_oid_line = ",".join(oid_list)
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
@@ -964,7 +862,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
 def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expected_list):
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
@@ -988,7 +886,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
 def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, expected_size,  *expected_objects_list):
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {object_cmd}")
@@ -1013,7 +911,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
 def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=""):
 
     if bearer_token:
-        bearer_token = f"--bearer {ASSETS_DIR}/{bearer_token}"
+        bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
@@ -1118,14 +1016,3 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         logger.info("Server is not presented in container.")
     elif ( re.search(r'timed out after 30 seconds', output) or re.search(r'no route to host', output) or re.search(r'i/o timeout', output)):
         logger.warn("Node is unavailable")
-
-
-def _cmd_run(cmd):
-    try:
-        complProc = subprocess.run(cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30, shell=True)
-        output = complProc.stdout
-        logger.info(f"Output: {output}")
-        return output
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"Error:\nreturn code: {e.returncode} \nOutput: {e.output}")
