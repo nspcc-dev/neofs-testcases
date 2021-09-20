@@ -287,10 +287,15 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
                 # Recursive chain validation up to the first object
                 final_verif_data = _verify_child_link(private_key, cid, oid, header_last_parsed, final_verif_data)
                 break
+            logger.info(f"Found Split Object with header:\n\t{parsed_header_virtual}")
+            logger.info("Continue to search Last Split Object")
 
-        except:
-            if marker_last_obj == 0:
-                raise Exception("Latest object has not been found.")
+        except RuntimeError as e:
+            logger.info(f"Failed while collectiong Split Objects: {e}")
+            continue
+
+    if marker_last_obj == 0:
+        raise Exception("Last object has not been found")
 
     # Get Linking object
     logger.info("Compare Split objects result information with Linking object.")
@@ -333,9 +338,14 @@ def verify_split_chain(private_key: str, cid: str, oid: str):
                                     f"is not equal to expected ({final_verif_data['Split ID']})")
 
                 break
-        except:
-            if marker_link_obj == 0:
-                raise Exception("Linked object has not been found.")
+            logger.info(f"Found Linking Object with header:\n\t{parsed_header_virtual}")
+            logger.info("Continue to search Linking Object")
+        except RuntimeError as e:
+            logger.info(f"Failed while collecting Split Object: {e}")
+            continue
+
+    if marker_link_obj == 0:
+        raise Exception("Linked object has not been found")
 
 
     logger.info("Compare Split objects result information with Virtual object.")
@@ -820,7 +830,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
 
     file_path = f"{ASSETS_DIR}/{write_object}"
 
-    logger.info("Going to put the object")
+    logger.info("Going to get the object")
     if not endpoint:
       endpoint = random.sample(_get_storage_nodes(), 1)[0]
 
