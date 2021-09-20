@@ -1,8 +1,9 @@
 *** Settings ***
 Variables    ../../../variables/common.py
-Library      Collections
-Library      ../${RESOURCES}/neofs.py
-Library      ../${RESOURCES}/payment_neogo.py
+Library     Collections
+Library     neofs.py
+Library     payment_neogo.py
+Library     acl.py
 
 Resource     common_steps_acl_extended.robot
 Resource     ../${RESOURCES}/payment_operations.robot
