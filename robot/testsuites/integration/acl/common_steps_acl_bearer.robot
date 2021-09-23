@@ -47,7 +47,7 @@ Prepare eACL Role rules
         ${rule7} =              Create Dictionary    Operation=GETRANGEHASH    Access=DENY    Role=${role}
 
         ${eACL_gen} =           Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-                                Form eACL json common file    gen_eacl_deny_all_${role}    ${eACL_gen}
-                                Set Global Variable    ${EACL_DENY_ALL_${role}}       gen_eacl_deny_all_${role}
+        ${EACL_FILE} =          Form eACL JSON Common File    ${eACL_gen}
+                                Set Global Variable    ${EACL_DENY_ALL_${role}}    ${EACL_FILE}
     END
     [Return]    gen_eacl_deny_all_${role}

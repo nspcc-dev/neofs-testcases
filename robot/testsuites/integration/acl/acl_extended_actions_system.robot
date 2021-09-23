@@ -11,9 +11,6 @@ Resource        ../${RESOURCES}/payment_operations.robot
 Resource        ../${RESOURCES}/setup_teardown.robot
 Resource        ../../../variables/eacl_tables.robot
 
-*** Variables ***
-${SYSTEM_KEY} =     ${NEOFS_IR_WIF}
-
 
 *** Test cases ***
 Extended ACL Operations
@@ -23,7 +20,7 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit    
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}
@@ -39,107 +36,106 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny and Allow All System
-    [Arguments]    ${USER_KEY}    ${FILE_S}
+    [Arguments]     ${USER_KEY}      ${FILE_S}
 
-    ${CID} =                Create Container Public    ${USER_KEY} 
+    ${CID} =                Create Container Public     ${USER_KEY}
 
-    ${S_OID_USER} =         Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
-    ${D_OID_USER_S} =       Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
-    ${D_OID_USER_SN} =      Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
+    ${S_OID_USER} =     Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
+    ${D_OID_USER_S} =   Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
+    ${D_OID_USER_SN} =  Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
 
-    @{S_OBJ_H} =	        Create List	             ${S_OID_USER}
+    @{S_OBJ_H} =	Create List	    ${S_OID_USER}
 
-    Put object      ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
-    Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        Put object      ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
-    Get object    ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-    Get object    ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Get object    ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Get object    ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-    Search object            ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-    Search object            ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
 
-    Head object              ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}
-    Head object              ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
 
-    Get Range                ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-    Get Range                ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
-    Get Range Hash           ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-    Get Range Hash           ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash       ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
-    Delete object            ${SYSTEM_KEY}       ${CID}    ${D_OID_USER_S}     ${EMPTY}
-    Delete object            ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+                        Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
+                        Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
 
-    Set eACL                 ${USER_KEY}     ${CID}        ${EACL_DENY_ALL_SYSTEM}
+                        Set eACL             ${USER_KEY}     ${CID}       ${EACL_DENY_ALL_SYSTEM}
 
-    # The current ACL cache lifetime is 30 sec
-    Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+                        # The current ACL cache lifetime is 30 sec
+                        Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    Run Keyword And Expect Error    *
-    ...  Put object        ${SYSTEM_KEY}       ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
-    Run Keyword And Expect Error    *
-    ...  Put object        ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        Run Keyword And Expect Error    *
+                        ...  Put object        ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        Run Keyword And Expect Error    *
+                        ...  Put object        ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
-    Run Keyword And Expect Error    *
-    ...  Get object      ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-    Run Keyword And Expect Error    *
-    ...  Get object      ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Run Keyword And Expect Error    *
+                        ...  Get object      ${NEOFS_IR_WIF}      ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Run Keyword And Expect Error    *
+                        ...  Get object      ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-    Run Keyword And Expect Error    *
-    ...  Search object              ${SYSTEM_KEY}       ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-    Run Keyword And Expect Error    *
-    ...  Search object              ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-
-
-    Run Keyword And Expect Error        *
-    ...  Head object                         ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}
-    Run Keyword And Expect Error        *
-    ...  Head object                         ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}
-
-    Run Keyword And Expect Error        *
-    ...  Get Range                           ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-    Run Keyword And Expect Error        *
-    ...  Get Range                           ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error    *
+                        ...  Search object              ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        Run Keyword And Expect Error    *
+                        ...  Search object              ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
 
 
-    Run Keyword And Expect Error        *
-    ...  Get Range Hash                      ${SYSTEM_KEY}       ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-    Run Keyword And Expect Error        *
-    ...  Get Range Hash                      ${SYSTEM_KEY_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Head object                ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Head object                ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                  ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range                  ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
-    Run Keyword And Expect Error        *
-    ...  Delete object                       ${SYSTEM_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}
-    Run Keyword And Expect Error        *
-    ...  Delete object                       ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Get Range Hash             ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range Hash             ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
 
-    Set eACL                            ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
-
-    # The current ACL cache lifetime is 30 sec
-    Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
-
-    ${D_OID_USER_S} =       Put object             ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
-    ${D_OID_USER_SN} =      Put object             ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object              ${NEOFS_IR_WIF}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object              ${NEOFS_SN_WIF}    ${CID}        ${S_OID_USER}    ${EMPTY}
 
 
-    Put object             ${SYSTEM_KEY}       ${FILE_S}     ${CID}            ${EMPTY}                   ${FILE_OTH_HEADER}
-    Put object             ${SYSTEM_KEY_SN}    ${FILE_S}     ${CID}            ${EMPTY}                   ${FILE_OTH_HEADER}
+                        Set eACL                        ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
 
-    Get object               ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-    Get object               ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                        # The current ACL cache lifetime is 30 sec
+                        Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    Search object            ${SYSTEM_KEY}       ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
-    Search object            ${SYSTEM_KEY_SN}    ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
+    ${D_OID_USER_S} =   Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
+    ${D_OID_USER_SN} =  Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
 
-    Head object              ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}
-    Head object              ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}
+                        Put object     ${NEOFS_IR_WIF}    ${FILE_S}     ${CID}    ${EMPTY}       ${FILE_OTH_HEADER}
+                        Put object     ${NEOFS_SN_WIF}    ${FILE_S}     ${CID}    ${EMPTY}       ${FILE_OTH_HEADER}
 
-    Get Range                ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
-    Get Range                ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+                        Get object       ${NEOFS_IR_WIF}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
+                        Get object       ${NEOFS_SN_WIF}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
 
-    Get Range Hash           ${SYSTEM_KEY}       ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
-    Get Range Hash           ${SYSTEM_KEY_SN}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
+                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
 
-    Delete object            ${SYSTEM_KEY}       ${CID}        ${D_OID_USER_S}            ${EMPTY}
-    Delete object            ${SYSTEM_KEY_SN}    ${CID}        ${D_OID_USER_SN}           ${EMPTY}
+                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+
+                        Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+                        Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+
+                        Get Range Hash       ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+
+                        Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}        ${EMPTY}
+                        Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}       ${EMPTY}
