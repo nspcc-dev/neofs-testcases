@@ -155,15 +155,16 @@ def sign_bearer_token(wif: str, eacl_rules_file: str):
     _cmd_run(cmd)
 
 
-@keyword('Form eACL json common file')
-def form_eacl_json_common_file(file_path: str, eacl_records: list) -> str:
+@keyword('Form eACL JSON Common File')
+def form_eacl_json_common_file(eacl_records: list) -> str:
     # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
     eacl = {"records":[]}
+    file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
 
     for record in eacl_records:
         op_data = dict()
 
-        if record['Role'] == "USER" or record['Role'] == "SYSTEM" or record['Role'] == "OTHERS":
+        if Role(record['Role']):
             op_data = {
                         "operation": record['Operation'],
                         "action":    record['Access'],
