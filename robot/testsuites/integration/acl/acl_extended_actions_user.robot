@@ -7,8 +7,8 @@ Library     payment_neogo.py
 Library     acl.py
 
 Resource     common_steps_acl_extended.robot
-Resource     ../${RESOURCES}/payment_operations.robot
-Resource     ../${RESOURCES}/setup_teardown.robot
+Resource     payment_operations.robot
+Resource     setup_teardown.robot
 Resource     ../../../variables/eacl_tables.robot
 
 *** Test cases ***
@@ -19,7 +19,7 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
                             Generate files    ${SIMPLE_OBJ_SIZE}

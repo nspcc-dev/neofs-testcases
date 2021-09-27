@@ -1,12 +1,12 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   ../../../../variables/common.py
 
 Library    Collections
 Library    Process
 Library    String
-Library    ${KEYWORDS}/contract_keywords.py
+Library    contract_keywords.py
 
-Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    setup_teardown.robot
 
 *** Variables ***
 ${SN_01_ADDR} =    s01.neofs.devenv:8080

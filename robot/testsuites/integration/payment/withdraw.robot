@@ -1,12 +1,12 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
-Library     ${KEYWORDS}/wallet_keywords.py
-Library     ${KEYWORDS}/rpc_call_keywords.py
+Library     neofs.py
+Library     payment_neogo.py
+Library     wallet_keywords.py
+Library     rpc_call_keywords.py
 
-Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${10}

@@ -4,4 +4,4 @@ pushd ../neofs-dev-env
 export `make env`
 popd
 
-export PYTHONPATH=${PYTHONPATH}:${VIRTUAL_ENV}/neofs-keywords/lib:${VIRTUAL_ENV}/neofs-keywords/robot:~/neofs-testcases/robot/resources/lib
+export PYTHONPATH=${PYTHONPATH}:${VIRTUAL_ENV}/neofs-keywords/lib:${VIRTUAL_ENV}/neofs-keywords/robot:${VIRTUAL_ENV}/../robot/resources/lib

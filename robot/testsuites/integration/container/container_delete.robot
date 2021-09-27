@@ -2,12 +2,12 @@
 Variables   ../../../variables/common.py
 Variables   ../../../variables/acl.py
 
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
-Library     ${KEYWORDS}/wallet_keywords.py
+Library     neofs.py
+Library     payment_neogo.py
+Library     wallet_keywords.py
 
-Resource    ../${RESOURCES}/setup_teardown.robot
-Resource    ../${RESOURCES}/payment_operations.robot
+Resource    setup_teardown.robot
+Resource    payment_operations.robot
 
 *** Variables ***
 ${CONTAINER_WAIT_INTERVAL} =    1 min
