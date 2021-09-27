@@ -1,6 +1,8 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
+Library     acl.py
+
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
@@ -20,7 +22,7 @@ Create Container Public
 
 Generate files
     [Arguments]             ${SIZE}
-    
+
     ${FILE_S_GEN_1} =       Generate file of bytes    ${SIZE}
     ${FILE_S_GEN_2} =       Generate file of bytes    ${SIZE}
                             Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}

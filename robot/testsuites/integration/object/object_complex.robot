@@ -1,13 +1,13 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
-Library    ${KEYWORDS}/contract_keywords.py
+Library     neofs.py
+Library     payment_neogo.py
+Library     contract_keywords.py
 
 Resource    common_steps_object.robot
-Resource    ../${RESOURCES}/setup_teardown.robot
-Resource    ../${RESOURCES}/payment_operations.robot
+Resource    setup_teardown.robot
+Resource    payment_operations.robot
 
 *** Variables ***
 ${CLEANUP_TIMEOUT} =    10s

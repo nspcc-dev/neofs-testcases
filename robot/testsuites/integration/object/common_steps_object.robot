@@ -1,8 +1,8 @@
 *** Settings ***
 Variables   ../../../variables/common.py
 
-Library     ${KEYWORDS}/wallet_keywords.py
-Library     ${KEYWORDS}/rpc_call_keywords.py
+Library     wallet_keywords.py
+Library     rpc_call_keywords.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =    key1=1,key2=abc

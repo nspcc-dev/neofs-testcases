@@ -4,7 +4,6 @@ ROOT='../..'
 
 RESOURCES="%s/resources/lib" % ROOT
 CERT="%s/../../ca" % ROOT
-KEYWORDS="%s/../../../neofs-keywords/robot/" % ROOT
 
 # Common NeoFS variables can be declared from neofs-dev-env env variables.
 # High priority is accepted for those envs.
