@@ -10,11 +10,14 @@ from neo3 import wallet
 
 from common import *
 import rpc_client
+import contract
 
 ROBOT_AUTO_KEYWORDS = False
 
-# path to neofs-cli executable
-BALANCE_CONTRACT_HASH = os.getenv('NEOFS_CONTRACTS_BALANCE')
+NNS_CONTRACT = contract.get_nns_contract_hash(NEOFS_NEO_API_ENDPOINT)
+BALANCE_CONTRACT_HASH = contract.get_morph_contract_hash(
+            'balance.neofs', NNS_CONTRACT, NEOFS_NEO_API_ENDPOINT
+        )
 MORPH_TOKEN_POWER = 12
 
 morph_rpc_cli = rpc_client.RPCClient(NEOFS_NEO_API_ENDPOINT)
