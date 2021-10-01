@@ -1,6 +1,8 @@
 #!/usr/bin/python3.8
 
+from logging import raiseExceptions
 import boto3
+import botocore
 import os
 import pexpect
 import re
@@ -58,6 +60,7 @@ def init_s3_credentials(wallet):
     except subprocess.CalledProcessError as e:
         raise Exception(f"Error: \nreturn code: {e.returncode}. \nOutput: {e.stderr}")
 
+
 def _run_with_passwd(cmd):
     p = pexpect.spawn(cmd)
     p.expect(".*")
@@ -66,70 +69,112 @@ def _run_with_passwd(cmd):
     cmd = p.read()
     return cmd.decode()
 
+
 @keyword('Config S3 client')
 def config_s3_client(access_key_id, secret_access_key):
-    session = boto3.session.Session()
+    try:
+        session = boto3.session.Session()
 
-    s3_client = session.client(
-        service_name='s3',
-        aws_access_key_id=access_key_id,
-        aws_secret_access_key=secret_access_key,
-        endpoint_url=S3_GATE, verify=False
-    )
+        s3_client = session.client(
+            service_name='s3',
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            endpoint_url=S3_GATE, verify=False
+        )
 
-    return s3_client
+        return s3_client
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
+
 
 @keyword('List objects S3 v2')
 def list_objects_s3_v2(s3_client, bucket):
-    response = s3_client.list_objects_v2(Bucket=bucket)
-    logger.info("S3 v2 List objects result: %s" % response['Contents'])
-    obj_list = []
-    for obj in response['Contents']:
-        obj_list.append(obj['Key'])
-    logger.info("Found s3 objects: %s" % obj_list)
-    return obj_list
+    try:
+        response = s3_client.list_objects_v2(Bucket=bucket)
+        logger.info("S3 v2 List objects result: %s" % response['Contents'])
+        obj_list = []
+        for obj in response['Contents']:
+            obj_list.append(obj['Key'])
+        logger.info("Found s3 objects: %s" % obj_list)
+        return obj_list
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('List objects S3')
 def list_objects_s3(s3_client, bucket):
-    response = s3_client.list_objects(Bucket=bucket)
-    logger.info("S3 List objects result: %s" % response['Contents'])
-    obj_list = []
-    for obj in response['Contents']:
-        obj_list.append(obj['Key'])
-    logger.info("Found s3 objects: %s" % obj_list)
-    return obj_list
+    try:
+        response = s3_client.list_objects(Bucket=bucket)
+        logger.info("S3 List objects result: %s" % response['Contents'])
+        obj_list = []
+        for obj in response['Contents']:
+            obj_list.append(obj['Key'])
+        logger.info("Found s3 objects: %s" % obj_list)
+        return obj_list
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
+
 
 @keyword('Create bucket S3')
 def create_bucket_s3(s3_client):
     bucket_name = str(uuid.uuid4())
-    s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
-    logger.info("Created S3 bucket: %s" % s3_bucket)
-    return bucket_name
+
+    try:
+        s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
+        logger.info("Created S3 bucket: %s" % s3_bucket)
+        return bucket_name
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err 
+
 
 @keyword('List buckets S3')
 def list_buckets_s3(s3_client):
     found_buckets = []
-    response = s3_client.list_buckets()
-    logger.info("S3 List buckets result: %s" % response)
+    try:
+        response = s3_client.list_buckets()
+        logger.info("S3 List buckets result: %s" % response)
 
-    for bucket in response['Buckets']:
-        found_buckets.append(bucket['Name'])
+        for bucket in response['Buckets']:
+            found_buckets.append(bucket['Name'])
 
-    return found_buckets
+        return found_buckets
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err 
+
 
 @keyword('Delete bucket S3')
 def delete_bucket_s3(s3_client, bucket):
-    response = s3_client.delete_bucket(Bucket=bucket)
-    logger.info(f"S3 Delete bucket result: {response}")
-    return response
+    try:
+        response = s3_client.delete_bucket(Bucket=bucket)
+        logger.info(f"S3 Delete bucket result: {response}")
+        
+        return response
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('HeadBucket S3')
 def headbucket(bucket, s3_client):
-    response = s3_client.head_bucket(Bucket=bucket)
-    logger.info(f"S3 HeadBucket result: {response}")
-    return response
+    try:
+        response = s3_client.head_bucket(Bucket=bucket)
+        logger.info(f"S3 HeadBucket result: {response}")
+        return response
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('Put object S3')
@@ -139,49 +184,67 @@ def put_object_s3(s3_client, bucket, filepath):
     with open(filepath, "rb") as f:
         fileContent = f.read()
 
-    response = s3_client.put_object(Body=fileContent, Bucket=bucket, Key=filename)
-    logger.info("S3 Put object result: %s" % response)
-    return response
+    try:
+        response = s3_client.put_object(Body=fileContent, Bucket=bucket, Key=filename)
+        logger.info("S3 Put object result: %s" % response)
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('Head object S3')
 def head_object_s3(s3_client, bucket, object_key):
-    response = s3_client.head_object(Bucket=bucket, Key=object_key)
-    logger.info("S3 Head object result: %s" % response)
-    return response
+
+    try:
+        response = s3_client.head_object(Bucket=bucket, Key=object_key)
+        logger.info("S3 Head object result: %s" % response)
+        return response
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err   
 
 
 @keyword('Delete object S3')
 def delete_object_s3(s3_client, bucket, object_key):
+    try:
+        response = s3_client.delete_object(Bucket=bucket, Key=object_key)
+        logger.info("S3 Put object result: %s" % response)
+        return response
 
-    response = s3_client.delete_object(Bucket=bucket, Key=object_key)
-    logger.info("S3 Put object result: %s" % response)
-    return response
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, new_object):
-
     try:
         response = s3_client.copy_object(Bucket=bucket, CopySource=bucket+"/"+object_key, Key=new_object)
         logger.info("S3 Copy object result: %s" % response)
-    except:
-        raise Exception(f"S3 object {new_object} hasn't been coppied")
-    
-    return response
+        return response
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('Get object S3')
 def get_object_s3(s3_client, bucket, object_key, target_file):
-    response = s3_client.get_object(Bucket=bucket, Key=object_key)
+    try:
+        response = s3_client.get_object(Bucket=bucket, Key=object_key)
 
-    with open(f"{target_file}", 'wb') as f:
-        chunk = response['Body'].read(1024)
-        while chunk:
-            f.write(chunk)
+        with open(f"{target_file}", 'wb') as f:
             chunk = response['Body'].read(1024)
+            while chunk:
+                f.write(chunk)
+                chunk = response['Body'].read(1024)
 
-    return target_file
+        return target_file
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
 @keyword('Get via HTTP Gate')
