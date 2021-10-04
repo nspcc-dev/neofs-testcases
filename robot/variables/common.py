@@ -20,6 +20,7 @@ MAINNET_BLOCK_TIME = os.getenv('MAINNET_BLOCK_TIME', "15s")
 MAINNET_TIMEOUT = os.getenv('MAINNET_TIMEOUT', "1min")
 MORPH_BLOCK_TIME = os.getenv("MORPH_BLOCK_TIME", '1s')
 NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
+SHARD_0_GC_SLEEP = os.getenv("NEOFS_STORAGE_SHARD_0_GC_REMOVER_SLEEP_INTERVAL", "1m")
 
 NEOFS_IR_WIF = os.getenv("NEOFS_IR_WIF", "KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY")
 NEOFS_SN_WIF = os.getenv("NEOFS_SN_WIF", "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s")
@@ -46,15 +47,19 @@ GATE_PUB_KEY = '0313b1ac3a8076e155a7e797b24f0b650cccad5941ea59d7cfd51a024a8b2a06
 
 NEOFS_NETMAP_DICT = {'s01': {'rpc': 's01.neofs.devenv:8080',
                         'control': 's01.neofs.devenv:8081',
-                        'wif': 'Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s'},
+                        'wif': 'Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s',
+                        'UN-LOCODE': 'RU MOW'},
                     's02': {'rpc': 's02.neofs.devenv:8080',
                         'control': 's02.neofs.devenv:8081',
-                        'wif': 'L1NdHdnrTNGQZH1fJSrdUZJyeYFHvaQSSHZHxhK3udiGFdr5YaZ6'},
+                        'wif': 'L1NdHdnrTNGQZH1fJSrdUZJyeYFHvaQSSHZHxhK3udiGFdr5YaZ6',
+                        'UN-LOCODE': 'RU LED'},
                     's03': {'rpc': 's03.neofs.devenv:8080',
                         'control': 's03.neofs.devenv:8081',
-                        'wif': 'KzN38k39af6ACWJjK8YrnARWo86ddcc1EuBWz7xFEdcELcP3ZTym'},
+                        'wif': 'KzN38k39af6ACWJjK8YrnARWo86ddcc1EuBWz7xFEdcELcP3ZTym',
+                        'UN-LOCODE': 'SE STO'},
                     's04': {'rpc': 's04.neofs.devenv:8080',
                         'control': 's04.neofs.devenv:8081',
-                        'wif': 'Kzk1Z3dowAqfNyjqeYKWenZMduFV3NAKgXg9K1sA4jRKYxEc8HEW'}
+                        'wif': 'Kzk1Z3dowAqfNyjqeYKWenZMduFV3NAKgXg9K1sA4jRKYxEc8HEW',
+                        'UN-LOCODE': 'FI HEL'}
                     }
 NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]

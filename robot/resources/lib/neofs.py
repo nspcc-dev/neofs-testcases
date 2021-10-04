@@ -763,6 +763,15 @@ def get_control_endpoint_with_wif(endpoint_number: str = ''):
     return endpoint_num, endpoint_control, wif
 
 
+@keyword('Get Locode')
+def get_locode():
+    endpoint_values = random.choice(list(NEOFS_NETMAP_DICT.values()))
+    locode = endpoint_values['UN-LOCODE']
+    logger.info(f'Random locode chosen: {locode}')
+
+    return locode
+
+
 @keyword('Get Nodes Log Latest Timestamp')
 def get_logs_latest_timestamp():
     """
