@@ -10,9 +10,9 @@ Library     contract_keywords.py
 
 Resource    ../../../variables/eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
-Resource    ../${RESOURCES}/payment_operations.robot
-Resource    ../${RESOURCES}/setup_teardown.robot
-Resource    ../${RESOURCES}/storage.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
+Resource    storage.robot
 
 *** Variables ***
 ${FULL_PLACEMENT_RULE} =    REP 4 IN X CBF 1 SELECT 4 FROM * AS X
