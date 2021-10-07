@@ -2,19 +2,17 @@
 Variables   ../../../variables/common.py
 
 Library     Collections
-Library     Process
 Library     neofs.py
 Library     acl.py
 Library     payment_neogo.py
 
-Library     rpc_call_keywords.py
 Library     contract_keywords.py
 
 Resource    ../../../variables/eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    ../${RESOURCES}/payment_operations.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
-
+Resource    ../${RESOURCES}/storage.robot
 
 *** Variables ***
 ${FULL_PLACEMENT_RULE} =    REP 4 IN X CBF 1 SELECT 4 FROM * AS X
@@ -62,15 +60,4 @@ eACL Deny Replication Operations
                             ...     Validate storage policy for object    ${WIF_STORAGE}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
     [Teardown]              Teardown    acl_deny_replication
-
-
-*** Keywords ***
-
-Drop object
-    [Arguments]   ${NODE}    ${WIF_STORAGE}    ${CID}    ${OID}
-
-    ${DROP_SIMPLE} =        Run Process    neofs-cli control drop-objects -r ${NODE} --wif ${WIF_STORAGE} -o ${CID}/${OID}    shell=True
-                            Log Many    stdout: ${DROP_SIMPLE.stdout}    stderr: ${DROP_SIMPLE.stderr}
-                            Should Be Equal As Integers    ${DROP_SIMPLE.rc}    0
-                            
 

@@ -2,9 +2,6 @@
 Variables   ../../../variables/common.py
 Variables   ../../../variables/acl.py
 
-*** Variables ***
-${CONTAINER_WAIT_INTERVAL} =    1 min
-
 *** Keywords ***
 
 Create Private Container

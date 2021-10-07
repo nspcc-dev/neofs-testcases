@@ -7,7 +7,6 @@ Library     acl.py
 ${FILE_USR_HEADER} =        key1=1,key2=abc
 ${FILE_USR_HEADER_DEL} =    key1=del,key2=del
 ${FILE_OTH_HEADER} =        key1=oth,key2=oth
-${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Keywords ***
 
