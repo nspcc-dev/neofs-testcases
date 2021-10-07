@@ -49,9 +49,6 @@ eACL Deny Replication Operations
                             Validate storage policy for object    ${WIF_USER}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
                             Set eACL    ${WIF_USER}    ${CID}    ${EACL_DENY_ALL_USER}
-                            
-                            # The current ACL cache lifetime is 30 sec
-                            Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
                             ...  Put object    ${WIF_USER}    ${FILE}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
@@ -59,12 +56,11 @@ eACL Deny Replication Operations
                             # Drop object to check replication
                             Drop object    ${NODE}    ${WIF_STORAGE}    ${CID}    ${OID}
 
-                            # Tick epoch and sleep epoch time for replication 
                             Tick Epoch
-                            # We assume that during this time objects should be replicated
-                            Sleep   ${NEOFS_EPOCH_TIMEOUT}
 
-                            Validate storage policy for object    ${WIF_STORAGE}    ${EXPECTED_COPIES}    ${CID}    ${OID}
+                            # We assume that during one epoch object should be replicated
+                            Wait Until Keyword Succeeds    ${NEOFS_EPOCH_TIMEOUT}    1m
+                            ...     Validate storage policy for object    ${WIF_STORAGE}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
     [Teardown]              Teardown    acl_deny_replication
 
