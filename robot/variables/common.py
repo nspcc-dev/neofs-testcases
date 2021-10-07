@@ -8,6 +8,8 @@ CERT="%s/../../ca" % ROOT
 # Common NeoFS variables can be declared from neofs-dev-env env variables.
 # High priority is accepted for those envs.
 
+CONTAINER_WAIT_INTERVAL = "1m"
+
 NEOFS_EPOCH_TIMEOUT = (os.getenv("NEOFS_EPOCH_TIMEOUT") if os.getenv("NEOFS_EPOCH_TIMEOUT")
                   else os.getenv("NEOFS_IR_TIMERS_EPOCH", "300s"))
 
