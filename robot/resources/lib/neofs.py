@@ -569,62 +569,73 @@ def decode_object_system_header_json(header):
     # Header - Constant attributes
 
     # ID
-    ID = json_header["objectID"]["value"]
-    if ID is not None:
-        result_header["ID"] = _json_cli_decode(ID)
+    oid = json_header["objectID"]["value"]
+    if oid is not None:
+        result_header["ID"] = _json_cli_decode(oid)
     else:
         raise Exception(f"no ID was parsed from header: \t{header}" )
 
     # CID
-    CID = json_header["header"]["containerID"]["value"]
-    if CID is not None:
-        result_header["CID"] = _json_cli_decode(CID)
+    cid = json_header["header"]["containerID"]["value"]
+    if cid is not None:
+        result_header["CID"] = _json_cli_decode(cid)
     else:
         raise Exception(f"no CID was parsed from header: \t{header}")
 
     # OwnerID
-    OwnerID = json_header["header"]["ownerID"]["value"]
-    if OwnerID is not None:
-        result_header["OwnerID"] = _json_cli_decode(OwnerID)
+    owner_id = json_header["header"]["ownerID"]["value"]
+    if owner_id is not None:
+        result_header["OwnerID"] = _json_cli_decode(owner_id)
     else:
         raise Exception(f"no OwnerID was parsed from header: \t{header}")
 
     # CreatedAtEpoch
-    CreatedAtEpoch = json_header["header"]["creationEpoch"]
-    if CreatedAtEpoch is not None:
-        result_header["CreatedAtEpoch"] = CreatedAtEpoch
+    created_at_epoch = json_header["header"]["creationEpoch"]
+    if created_at_epoch is not None:
+        result_header["CreatedAtEpoch"] = created_at_epoch
     else:
         raise Exception(f"no CreatedAtEpoch was parsed from header: \t{header}")
 
     # PayloadLength
-    PayloadLength = json_header["header"]["payloadLength"]
-    if PayloadLength is not None:
-        result_header["PayloadLength"] = PayloadLength
+    payload_length = json_header["header"]["payloadLength"]
+    if payload_length is not None:
+        result_header["PayloadLength"] = payload_length
     else:
         raise Exception(f"no PayloadLength was parsed from header: \t{header}")
 
 
     # HomoHash
-    HomoHash = json_header["header"]["homomorphicHash"]["sum"]
-    if HomoHash is not None:
-        result_header["HomoHash"] = _json_cli_decode(HomoHash)
+    homo_hash = json_header["header"]["homomorphicHash"]["sum"]
+    if homo_hash is not None:
+        homo_hash_64_d = base64.b64decode(homo_hash)
+        homo_hash_bytes = binascii.hexlify(homo_hash_64_d)
+        result_header["HomoHash"] = bytes.decode(homo_hash_bytes)
     else:
         raise Exception(f"no HomoHash was parsed from header: \t{header}")
 
-    # Checksum
-    Checksum = json_header["header"]["payloadHash"]["sum"]
-    if Checksum is not None:
-        Checksum_64_d = base64.b64decode(Checksum)
-        result_header["Checksum"] = binascii.hexlify(Checksum_64_d)
+    # PayloadHash
+    payload_hash = json_header["header"]["payloadHash"]["sum"]
+    if payload_hash is not None:
+        payload_hash_64_d = base64.b64decode(payload_hash)
+        payload_hash_bytes = binascii.hexlify(payload_hash_64_d)
+        result_header["PayloadHash"] = bytes.decode(payload_hash_bytes)
     else:
         raise Exception(f"no Checksum was parsed from header: \t{header}")
 
     # Type
-    Type = json_header["header"]["objectType"]
-    if Type is not None:
-        result_header["Type"] = Type
+    object_type = json_header["header"]["objectType"]
+    if object_type is not None:
+        result_header["Type"] = object_type
     else:
         raise Exception(f"no Type was parsed from header: \t{header}")
+
+    # Version
+    version = json_header["header"]["version"]
+    if version is not None:
+        version_full = f'v{version["major"]}.{version["minor"]}'
+        result_header["Version"] = version_full
+    else:
+        raise Exception(f"no version was parsed from header: \t{header}" )
 
     # Header - Optional attributes
 
@@ -761,7 +772,6 @@ def get_control_endpoint_with_wif(endpoint_number: str = ''):
     wif = endpoint_values['wif']
     
     return endpoint_num, endpoint_control, wif
-
 
 @keyword('Get Locode')
 def get_locode():

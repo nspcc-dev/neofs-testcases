@@ -141,14 +141,14 @@ Check eACL MatchType String Equal Object
     [Arguments]    ${USER_KEY}    ${OTHER_KEY}
 
     ${CID} =                Create Container Public    ${USER_KEY} 
-    ${S_OID_USER} =         Put object                      ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+    ${S_OID_USER} =         Put Object    ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
 
-    ${HEADER} =             Head object                     ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
+    ${HEADER} =             Head Object    ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
     &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
-                            Get object                      ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
+                            Get Object    ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
 
 
-                            Log	                            Set eACL for Deny GET operation with StringEqual Object ID
+                            Log    Set eACL for Deny GET operation with StringEqual Object ID
     ${ID_value} =	    Get From Dictionary	            ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
@@ -158,22 +158,22 @@ Check eACL MatchType String Equal Object
 
                             Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
-                            ...  Get object                 ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}        ${PATH}
+                            ...  Get object                 ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}    ${PATH}
 
 
                             Log	                 Set eACL for Deny GET operation with StringEqual Object Extended User Header
-    ${S_OID_USER_OTH} =     Put object           ${USER_KEY}     ${FILE_S}    ${CID}               ${EMPTY}        ${FILE_OTH_HEADER}
+    ${S_OID_USER_OTH} =     Put object           ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key1    value=1
-    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
+    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS    Filters=${filters}
     ${eACL_gen} =           Create List    ${rule1}
     ${EACL_CUSTOM} =        Form eACL JSON Common File      ${eACL_gen}
 
 
                             Set eACL             ${USER_KEY}     ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
-                            ...  Get object      ${OTHER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}        ${PATH}
-                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER_OTH}    ${EMPTY}        ${PATH}
+                            ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${PATH}
+                            Get object           ${OTHER_KEY}    ${CID}    ${S_OID_USER_OTH}    ${EMPTY}    ${PATH}
 
 
 
