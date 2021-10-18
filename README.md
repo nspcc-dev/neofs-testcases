@@ -34,6 +34,12 @@ make up
 make update.max_object_size val=1000
 ```
 
+It's recommended to run the above procedure before every test run.
+
+Python virtualenv which we run tests in expects that dev-env is located under
+the `<testcases_root_dir>/../neofs-dev-env` directory. You can change path to
+neofs-dev-env in `venv/localtest/environment.sh` file.
+
 5. Build virtual env
 ```
 make venv.localtest
