@@ -27,17 +27,17 @@ eACL Deny Replication Operations
 
     [Setup]                 Setup
 
-    ${NODE_NUM}    ${NODE}    ${WIF_STORAGE} =    Get control endpoint with wif
-    ${WALLET}   ${ADDR}    ${WIF_USER} =    Prepare Wallet And Deposit
+    ${NODE_NUM}     ${NODE}    ${WIF_STORAGE} =     Get control endpoint with wif
+    ${WALLET}       ${ADDR}    ${WIF_USER} =        Prepare Wallet And Deposit
 
                             Prepare eACL Role rules
 
                             Log    Check Replication with eACL deny - object should be replicated
                             # https://github.com/nspcc-dev/neofs-node/issues/881
-                            
+
     ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
-    
-    ${CID} =                Create container    ${WIF_USER}    0x0FFFFFFF    ${FULL_PLACEMENT_RULE}
+
+    ${CID} =                Create container    ${WIF_USER}    0x0FFFFFFF   ${FULL_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing    ${WIF_USER}    ${CID}
 
@@ -49,7 +49,7 @@ eACL Deny Replication Operations
 
                             Run Keyword And Expect Error    *
                             ...  Put object    ${WIF_USER}    ${FILE}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
-                            
+
                             # Drop object to check replication
                             Drop object    ${NODE}    ${WIF_STORAGE}    ${CID}    ${OID}
 
@@ -60,4 +60,3 @@ eACL Deny Replication Operations
                             ...     Validate storage policy for object    ${WIF_STORAGE}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
     [Teardown]              Teardown    acl_deny_replication
-
