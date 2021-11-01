@@ -47,7 +47,7 @@ CLI Accounting Balance Test
     Should Be Equal As Numbers     ${OUTPUT.rc}        1
 
     # Getting balance with control API
-    ${CONFIG_PATH} =    Write Control API Config    ${NEOFS_ENDPOINT}   ${WIF}
+    ${CONFIG_PATH} =    Write API Config    ${NEOFS_ENDPOINT}   ${WIF}
     ${OUTPUT} =         Run Process     neofs-cli accounting balance --config ${CONFIG_PATH}
                         ...             shell=True
     Should Be Equal As Numbers          ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
@@ -62,11 +62,11 @@ CLI Accounting Balance Test
 
 *** Keywords ***
 
-Write Control API Config
-    [Documentation]     Write YAML config for requesting NeoFS Control API via CLI
+Write API Config
+    [Documentation]     Write YAML config for requesting NeoFS API via CLI
     [Arguments]         ${ENDPOINT}     ${WIF}
 
     Set Local Variable  ${PATH}     ${ASSETS_DIR}/config.yaml
-    Create File         ${PATH}     rpc: ${ENDPOINT}\nwif: ${WIF}
+    Create File         ${PATH}     rpc-endpoint: ${ENDPOINT}\nwif: ${WIF}
 
     [Return]            ${PATH}
