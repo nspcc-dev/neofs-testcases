@@ -1,23 +1,22 @@
 #!/usr/bin/python3.8
 
-import base58
 import base64
 import binascii
 from datetime import datetime
-import docker
 import hashlib
 import json
 import os
 import re
 import random
-import subprocess
+import uuid
+import docker
+import base58
 
 from neo3 import wallet
+from common import *
 from robot.api.deco import keyword
 from robot.api import logger
-
-from common import *
-from cli_helpers import _cmd_run
+from cli_helpers import _run_with_passwd, _cmd_run
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -137,7 +136,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
 
 
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str=''):
+def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str='', session: str=''):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
@@ -145,10 +144,12 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         basic_acl = f"--basic-acl {basic_acl}"
     if user_headers:
         user_headers = f"--attributes {user_headers}"
+    if session:
+        session = f"--session {session}"
 
     createContainerCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'container create --policy "{rule}" {basic_acl} {user_headers} --await'
+        f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --await'
     )
     logger.info(f"Cmd: {createContainerCmd}")
     output = _cmd_run(createContainerCmd)
@@ -969,6 +970,55 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
     else:
         raise Exception(f"no Tombstone ID was parsed from command output: \t{output}")
     return oid
+
+@keyword('Generate Session Token')
+def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bool = False) -> str:
+
+    file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
+
+    owner_64 = base64.b64encode(base58.b58decode(owner)).decode('utf-8')
+    cid_64 = base64.b64encode(cid.encode('utf-8')).decode('utf-8')
+    pub_key_64 = base64.b64encode(bytes.fromhex(pub_key)).decode('utf-8')
+    id_64 = base64.b64encode(uuid.uuid4().bytes).decode('utf-8')
+
+    session_token = {
+                    "body":{
+                        "id":f"{id_64}",
+                        "ownerID":{
+                            "value":f"{owner_64}"
+                        },
+                        "lifetime":{
+                            "exp":"100000000",
+                            "nbf":"0",
+                            "iat":"0"
+                        },
+                        "sessionKey":f"{pub_key_64}",
+                        "container":{
+                            "verb":"PUT",
+                            "wildcard": wildcard,
+                            **({ "containerID":{"value":f"{cid_64}"} } if not wildcard else {})
+                        }
+                    }
+                }
+
+    logger.info(f"Got this Session Token: {session_token}")
+
+    with open(file_path, 'w', encoding='utf-8') as session_token_file:
+        json.dump(session_token, session_token_file, ensure_ascii=False, indent=4)
+
+    return file_path
+
+
+@keyword ('Sign Session Token')
+def sign_session_token(session_token: str, wallet: str, to_file: str=''):
+    if to_file:
+        to_file = f'--to {to_file}' 
+    cmd = (
+        f'{NEOFS_CLI_EXEC} util sign session-token --from {session_token} '
+        f'-w {wallet} {to_file}'
+    )
+    logger.info(f"cmd: {cmd}")
+    _run_with_passwd(cmd)
 
 
 def _get_file_hash(filename):

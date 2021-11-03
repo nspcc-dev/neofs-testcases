@@ -1,22 +1,18 @@
 #!/usr/bin/python3.8
 
-from logging import raiseExceptions
-import boto3
-import botocore
 import os
-import pexpect
 import re
-import requests
 import shutil
 import subprocess
 import uuid
-
-from robot.api.deco import keyword
-from robot.api import logger
-import robot.errors
-from robot.libraries.BuiltIn import BuiltIn
+import requests
+import botocore
+import boto3
 
 from common import *
+from robot.api.deco import keyword
+from robot.api import logger
+from cli_helpers import _run_with_passwd
 
 
 ROBOT_AUTO_KEYWORDS = False
@@ -59,15 +55,6 @@ def init_s3_credentials(wallet):
 
     except subprocess.CalledProcessError as e:
         raise Exception(f"Error: \nreturn code: {e.returncode}. \nOutput: {e.stderr}")
-
-
-def _run_with_passwd(cmd):
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline('\r')
-    p.wait()
-    cmd = p.read()
-    return cmd.decode()
 
 
 @keyword('Config S3 client')
