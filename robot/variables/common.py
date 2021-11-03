@@ -66,3 +66,5 @@ NEOFS_NETMAP_DICT = {'s01': {'rpc': 's01.neofs.devenv:8080',
                         'UN-LOCODE': 'FI HEL'}
                     }
 NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
+NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
+NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')

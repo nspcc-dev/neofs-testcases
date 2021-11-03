@@ -6,6 +6,7 @@ and other CLIs.
 """
 
 import subprocess
+import pexpect
 
 from robot.api import logger
 
@@ -27,3 +28,11 @@ def _cmd_run(cmd):
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(f"Error:\nreturn code: {exc.returncode} "
                 f"\nOutput: {exc.output}") from exc
+
+def _run_with_passwd(cmd):
+    p = pexpect.spawn(cmd)
+    p.expect(".*")
+    p.sendline('\r')
+    p.wait()
+    cmd = p.read()
+    return cmd.decode()
