@@ -722,7 +722,7 @@ def verify_file_hash(filename, expected_hash):
 
 
 @keyword('Put object')
-def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str,
+def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers: str="",
     endpoint: str="", options: str="" ):
     logger.info("Going to put the object")
 
