@@ -1,5 +1,6 @@
 *** Settings ***
 Variables   ../../../variables/common.py
+Variables   ../../../variables/acl.py
 
 Library     Collections
 Library     ../${RESOURCES}/payment_neogo.py
@@ -10,6 +11,7 @@ Library     contract_keywords.py
 
 Resource    ../${RESOURCES}/payment_operations.robot
 Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    common.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
@@ -24,21 +26,31 @@ NeoFS Object Replication
     [Timeout]               25 min
 
     [Setup]                 Setup
+    
+    Log    Check replication mechanism
+    Check Replication    ${EMPTY}
+    Log    Check Sticky Bit with SYSTEM Group via replication mechanism 
+    Check Replication    ${STICKYBIT_PUB_ACL}
+
+    [Teardown]      Teardown    replication
+
+*** Keywords ***
+Check Replication
+    [Arguments]    ${ACL}
 
     ${WALLET}   ${ADDR}     ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}     ${WIF}
+    ${CID} =                Create Container    ${WIF}    ${ACL}   ${PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing    ${WIF}    ${CID}
 
-    ${CID} =                Create container             ${WIF}    ${EMPTY}   ${PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds      ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing       ${WIF}    ${CID}
+    ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+    ${FILE_HASH} =          Get file hash    ${FILE}
 
-    ${FILE} =               Generate file of bytes       ${SIMPLE_OBJ_SIZE}
-    ${FILE_HASH} =          Get file hash                ${FILE}
+    ${S_OID} =              Put Object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    ${EMPTY}
+                            Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
 
-    ${S_OID} =              Put object                  ${WIF}    ${FILE}       ${CID}      ${EMPTY}    ${EMPTY}
-                            Validate storage policy for object    ${WIF}        ${EXPECTED_COPIES}      ${CID}      ${S_OID}
-
-    @{NODES_OBJ} =          Get nodes with object                 ${WIF}    ${CID}          ${S_OID}
+    @{NODES_OBJ} =          Get nodes with Object    ${WIF}    ${CID}    ${S_OID}
     ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
 
     @{NODES_OBJ_STOPPED} =  Stop nodes          1              @{NODES_OBJ}
@@ -49,7 +61,7 @@ NeoFS Object Replication
     FOR    ${i}    IN RANGE   2
         ${PASSED} =     Run Keyword And Return Status
                         ...     Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}
-                        ...     ${CID}      ${S_OID}    ${EMPTY}    ${NETMAP}
+                        ...     ${CID}    ${S_OID}    ${EMPTY}    ${NETMAP}
         Exit For Loop If    ${PASSED}
         Tick Epoch
         Sleep               ${CHECK_INTERVAL}
@@ -69,6 +81,5 @@ NeoFS Object Replication
         Sleep               ${CHECK_INTERVAL}
     END
     Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}
-
-
+    
     [Teardown]      Teardown    replication
