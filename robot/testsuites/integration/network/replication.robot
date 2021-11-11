@@ -54,7 +54,7 @@ NeoFS Object Replication
         Tick Epoch
         Sleep               ${CHECK_INTERVAL}
     END
-    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID}
+    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}
 
     Find in Nodes Log       object successfully replicated    ${NODES_LOG_TIME}
     Start nodes             @{NODES_OBJ_STOPPED}
@@ -63,12 +63,12 @@ NeoFS Object Replication
     # We have 2 or 3 copies. Expected behaviour: during two epochs potential 3rd copy should be removed.
     FOR    ${i}    IN RANGE   2
         ${PASSED} =     Run Keyword And Return Status
-                        ...     Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}       ${CID}      ${S_OID}
+                        ...     Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
         Exit For Loop If    ${PASSED}
         Tick Epoch
         Sleep               ${CHECK_INTERVAL}
     END
-    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID}
+    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}
 
 
     [Teardown]      Teardown    replication
