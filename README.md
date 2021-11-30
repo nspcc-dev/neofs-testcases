@@ -22,25 +22,16 @@
     - `sudo cp bin/neo-go /usr/local/bin/neo-go`
     or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
 
-4. Clone neofs-dev-env and prepare it
+4. Clone neofs-dev-env
+`git clone git@github.com:nspcc-dev/neofs-dev-env.git`
 
-```
-# clean up obsolete volumes
-make down
-# restart
-make clean
-make up
-# decrease maximum object size to 1000 bytes
-make update.max_object_size val=1000
-```
-
-It's recommended to run the above procedure before every test run.
-
-Python virtualenv which we run tests in expects that dev-env is located under
-the `<testcases_root_dir>/../neofs-dev-env` directory. You can change path to
-neofs-dev-env in `venv/localtest/environment.sh` file.
+Note that we expect neofs-dev-env to be located under
+the `<testcases_root_dir>/../neofs-dev-env` directory. If you put this repo in any other place, manually set the full path to neofs-dev-env in the environment variable `DEVENV_PATH` at this step.
 
 5. Build virtual env
+
+In the cloned neofs-testcases repo execute the following commands:
+
 ```
 make venv.localtest
 . venv.localtest/bin/activate
@@ -48,16 +39,27 @@ make venv.localtest
 
 Test cases are designed to run on Python 3.8.
 
-### Run
 
-Execute the command `make run`. Logs will be available in the artifacts/ directory after tests with any of the statuses are completed.
+## Run
 
-To run an arbitrary UserScenario or testcase, you need to run the command:
-`robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`
+Execute `./run.sh` script. It will run all the tests available in this repo. To run an arbitrary UserScenario or testcase(s), you need to run the command:
+`./run.sh robot/testsuites/integration/<UserScenario>` or `./run.sh robot/testsuites/integration/<UserScenario>/<testcase>.robot`
+
+Logs will be saved in the artifacts/ directory after tests with any of the statuses are completed.
 
 The following UserScenarios and testcases are available for execution:
 
  * acl
+     * object_attributes
+         * container_id_filter.robot
+         * creation_epoch_filter.robot
+         * homomorphic_hash_filter.robot
+         * object_id_filter.robot
+         * object_type_filter.robot
+         * owner_id_filter.robot
+         * payload_hash_filter.robot
+         * payload_length_filter.robot
+         * version_filter.robot
      * acl_basic_private_container_storagegroup.robot
      * acl_basic_private_container.robot
      * acl_basic_public_container_storagegroup.robot
@@ -81,10 +83,21 @@ The following UserScenarios and testcases are available for execution:
      * acl_extended_actions_user.robot
      * acl_extended_compound.robot
      * acl_extended_filters.robot
+ * cli
+     * accounting
+        * balance.robot
+     * netmap
+        * networkinfo_rpc_method.robot 
+ * container
+     * container_attributes.robot
+     * container_delete.robot
  * network
+     * netmap_control_drop.robot
+     * netmap_control.robot
      * netmap_simple.robot
      * replication.robot
  * object
+     * object_attributes.robot
      * object_complex.robot
      * object_simple.robot
      * object_storagegroup_simple.robot
@@ -94,7 +107,8 @@ The following UserScenarios and testcases are available for execution:
      * withdraw.robot
  * services
      * http_gate.robot
-     * s3_gate.robot
+     * s3_gate_bucket.robot
+     * s3_gate_object.robot
 
 
 ## Generation of documentation

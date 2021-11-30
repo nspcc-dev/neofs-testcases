@@ -1,6 +1,7 @@
 # DevEnv variables
 export NEOFS_MORPH_DISABLE_CACHE=true
-pushd ../neofs-dev-env
+export DEVENV_PATH="${DEVENV_PATH:-${VIRTUAL_ENV}/../../neofs-dev-env}"
+pushd $DEVENV_PATH
 export `make env`
 popd
 
