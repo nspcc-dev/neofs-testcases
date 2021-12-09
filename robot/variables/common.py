@@ -1,8 +1,6 @@
 import os
 
 ROOT='../..'
-
-RESOURCES="%s/resources/lib" % ROOT
 CERT="%s/../../ca" % ROOT
 
 # Common NeoFS variables can be declared from neofs-dev-env env variables.

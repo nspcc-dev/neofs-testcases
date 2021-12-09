@@ -1,17 +1,17 @@
 *** Settings ***
-Variables       ../../../variables/common.py
-Variables   ../../../variables/acl.py
+Variables    common.py
+Variables    wellknown_acl.py
 
-Library         Process
-Library         contract_keywords.py
-Library         neofs.py
-Library         String
+Library     Process
+Library     contract_keywords.py
+Library     neofs.py
+Library     String
 
-Library         payment_neogo.py
+Library     payment_neogo.py
 
-Resource        setup_teardown.robot
-Resource        payment_operations.robot
-Resource        storage.robot
+Resource    setup_teardown.robot
+Resource    payment_operations.robot
+Resource    storage.robot
 
 *** Variables ***
 ${CONTAINER_WAIT_INTERVAL} =    1 min

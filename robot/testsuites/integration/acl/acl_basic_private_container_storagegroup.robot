@@ -1,13 +1,13 @@
 *** Settings ***
-Variables       ../../../variables/common.py
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
+Variables    common.py
 
+Library     neofs.py
+Library     payment_neogo.py
 Library     Collections
 
 Resource    common_steps_acl_basic.robot
-Resource    ../${RESOURCES}/payment_operations.robot
-Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
 
 
 *** Test cases ***

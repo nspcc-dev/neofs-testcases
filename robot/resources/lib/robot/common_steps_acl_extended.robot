@@ -1,13 +1,13 @@
 *** Settings ***
-Variables   ../../../variables/common.py
-Variables   ../../../variables/eacl_object_filters.py
+Variables   common.py
+Variables   eacl_object_filters.py
 
 Library     acl.py
 Library     neofs.py
 Library     Collections
 
-Resource        common_steps_acl_basic.robot
-Resource        ../${RESOURCES}/payment_operations.robot
+Resource    common_steps_acl_basic.robot
+Resource    payment_operations.robot
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc
