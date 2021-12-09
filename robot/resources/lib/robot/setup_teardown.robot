@@ -1,8 +1,7 @@
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   common.py
 
 Library     OperatingSystem
-
 Library     utility_keywords.py
 
 *** Keywords ***

@@ -1,13 +1,15 @@
 *** Settings ***
-Variables                       ../../../variables/common.py
-Library                         Collections
-Library                         neofs.py
-Library                         payment_neogo.py
-Library                         gates.py
-Library                         wallet_keywords.py
-Library                         contract_keywords.py
+Variables    common.py
 
-Resource                        setup_teardown.robot
+Library     Collections
+Library     neofs.py
+Library     payment_neogo.py
+Library     gates.py
+Library     wallet_keywords.py
+Library     contract_keywords.py
+
+Resource    setup_teardown.robot
+
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${5}
 ${WIF} =                ${MAINNET_WALLET_WIF}

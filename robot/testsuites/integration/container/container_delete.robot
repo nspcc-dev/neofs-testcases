@@ -1,6 +1,6 @@
 *** Settings ***
-Variables   ../../../variables/common.py
-Variables   ../../../variables/acl.py
+Variables   common.py
+Variables   wellknown_acl.py
 
 Library     neofs.py
 Library     payment_neogo.py

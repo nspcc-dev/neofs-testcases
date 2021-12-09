@@ -1,5 +1,5 @@
 *** Settings ***
-Variables       ../../../variables/common.py
+Variables       common.py
 
 Library         acl.py
 Library         neofs.py
@@ -7,9 +7,9 @@ Library         payment_neogo.py
 Library         Collections
 
 Resource        common_steps_acl_extended.robot
-Resource        ../${RESOURCES}/payment_operations.robot
-Resource        ../${RESOURCES}/setup_teardown.robot
-Resource        ../../../variables/eacl_tables.robot
+Resource        payment_operations.robot
+Resource        setup_teardown.robot
+Resource        eacl_tables.robot
 
 *** Variables ***
 ${PATH} =   testfile

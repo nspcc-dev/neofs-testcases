@@ -1,12 +1,12 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   common.py
 
 Library     Collections
 Library     neofs.py
 Library     acl.py
 Library     payment_neogo.py
 
-Resource   ../../../variables/eacl_tables.robot
+Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot

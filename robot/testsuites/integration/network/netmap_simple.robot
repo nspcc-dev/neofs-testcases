@@ -1,13 +1,13 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   common.py
 
 Library     neofs.py
 Library     payment_neogo.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
 
-Resource    ../${RESOURCES}/payment_operations.robot
-Resource    ../${RESOURCES}/setup_teardown.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
 
 *** Variables ***
 ${CONTAINER_WAIT_INTERVAL} =    1 min

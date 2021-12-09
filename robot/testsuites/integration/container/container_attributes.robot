@@ -1,14 +1,14 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   common.py
 
 Library    Collections
-Library     ../${RESOURCES}/neofs.py
-Library     ../${RESOURCES}/payment_neogo.py
+Library    neofs.py
+Library    payment_neogo.py
 Library    String
 
-Resource    ../${RESOURCES}/setup_teardown.robot
-Resource    ../${RESOURCES}/payment_operations.robot
-Resource    ../acl/common_steps_acl_bearer.robot
+Resource    setup_teardown.robot
+Resource    payment_operations.robot
+Resource    common_steps_acl_bearer.robot
 
 *** Variables ***
 ${POLICY} =       REP 2 IN X CBF 1 SELECT 2 FROM * AS X

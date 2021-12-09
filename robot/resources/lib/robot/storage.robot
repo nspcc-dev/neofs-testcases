@@ -1,6 +1,6 @@
 
 *** Settings ***
-Variables   ../../variables/common.py
+Variables   common.py
 
 Library     Process
 

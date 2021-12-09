@@ -1,5 +1,5 @@
 *** Settings ***
-Variables    ../../../variables/common.py
+Variables    common.py
 
 Library     Collections
 Library     neofs.py
@@ -9,7 +9,7 @@ Library     acl.py
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
 Resource     setup_teardown.robot
-Resource     ../../../variables/eacl_tables.robot
+Resource     eacl_tables.robot
 
 *** Test cases ***
 Extended ACL Operations

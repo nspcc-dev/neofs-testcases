@@ -1,16 +1,16 @@
 *** Settings ***
-Variables       ../../../../variables/common.py
-Variables       ../../../../variables/eacl_object_filters.py
+Variables       common.py
+Variables       eacl_object_filters.py
 
 Library         acl.py
 Library         neofs.py
 Library         Collections
 Library         contract_keywords.py
 
-Resource        ../common_steps_acl_extended.robot
-Resource        ../common_steps_acl_basic.robot
-Resource        ../../${RESOURCES}/payment_operations.robot
-Resource        ../../${RESOURCES}/setup_teardown.robot
+Resource        common_steps_acl_extended.robot
+Resource        common_steps_acl_basic.robot
+Resource        payment_operations.robot
+Resource        setup_teardown.robot
 
 *** Variables ***
 ${OBJECT_PATH} =   testfile

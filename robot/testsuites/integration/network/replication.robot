@@ -1,17 +1,16 @@
 *** Settings ***
-Variables   ../../../variables/common.py
-Variables   ../../../variables/acl.py
+Variables   common.py
+Variables   wellknown_acl.py
 
 Library     Collections
-Library     ../${RESOURCES}/payment_neogo.py
-Library     ../${RESOURCES}/neofs.py
+Library     payment_neogo.py
+Library     neofs.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
 Library     contract_keywords.py
 
-Resource    ../${RESOURCES}/payment_operations.robot
-Resource    ../${RESOURCES}/setup_teardown.robot
-Resource    common.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
@@ -38,8 +37,7 @@ NeoFS Object Replication
 Check Replication
     [Arguments]    ${ACL}
 
-    ${WALLET}   ${ADDR}     ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}     ${WIF}
+    ${WALLET}   ${ADDR}     ${WIF} =    Prepare Wallet And Deposit
     ${CID} =                Create Container    ${WIF}    ${ACL}   ${PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing    ${WIF}    ${CID}
@@ -81,5 +79,3 @@ Check Replication
         Sleep               ${CHECK_INTERVAL}
     END
     Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}
-    
-    [Teardown]      Teardown    replication

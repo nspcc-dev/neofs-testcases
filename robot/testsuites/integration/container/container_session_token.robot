@@ -1,14 +1,14 @@
 *** Settings ***
-Variables    ../../../variables/common.py
-Variables   ../../../variables/acl.py
+Variables    common.py
+Variables    wellknown_acl.py
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
-Library    Process
-Library    neofs.py
-Library    String
-Library    OperatingSystem
+Library     Process
+Library     neofs.py
+Library     String
+Library     OperatingSystem
 
 *** Variables ***
 ${SIGNED_FILE} =    ${ASSETS_DIR}/signed_token.json

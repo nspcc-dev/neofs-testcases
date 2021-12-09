@@ -1,6 +1,6 @@
 *** Settings ***
-Variables   ../../../variables/common.py
-Variables   ../../../variables/acl.py
+Variables   common.py
+Variables   wellknown_acl.py
 
 *** Variables ***
 ${FILE_USR_HEADER} =        key1=1,key2=abc

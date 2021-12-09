@@ -1,5 +1,5 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   common.py
 
 Library     neofs.py
 Library     payment_neogo.py

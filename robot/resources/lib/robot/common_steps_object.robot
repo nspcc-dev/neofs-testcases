@@ -1,5 +1,5 @@
 *** Settings ***
-Variables   ../../../variables/common.py
+Variables   common.py
 
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
