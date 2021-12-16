@@ -44,7 +44,7 @@ Check eACL Deny and Allow All System
     ${D_OID_USER_S} =   Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
 
-    @{S_OBJ_H} =	Create List	    ${S_OID_USER}
+    @{S_OBJ_H} =	    Create List	    ${S_OID_USER}
 
                         Put object      ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
                         Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
@@ -57,15 +57,19 @@ Check eACL Deny and Allow All System
 
                         Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
                         Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
-
-                        Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        
+                        Run Keyword And Expect Error    *
+                        ...    Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error    *
+                        ...    Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
                         Get Range Hash       ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
-                        Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
-                        Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+                        Run Keyword And Expect Error    *
+                        ...    Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
+                        Run Keyword And Expect Error    *
+                        ...    Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
 
                         Set eACL             ${USER_KEY}     ${CID}       ${EACL_DENY_ALL_SYSTEM}
 
@@ -116,6 +120,9 @@ Check eACL Deny and Allow All System
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
+                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
+                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+
     ${D_OID_USER_S} =   Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
 
@@ -131,11 +138,15 @@ Check eACL Deny and Allow All System
                         Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
                         Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
 
-                        Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
-                        Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...  Get Range            ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
 
                         Get Range Hash       ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
-                        Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}        ${EMPTY}
-                        Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}       ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}        ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}       ${EMPTY}

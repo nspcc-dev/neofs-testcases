@@ -11,6 +11,7 @@ from neo3 import wallet
 from common import *
 import rpc_client
 import contract
+from wrappers import run_sh_with_passwd_contract
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -29,7 +30,7 @@ def withdraw_mainnet_gas(wallet: str, address: str, scripthash: str, amount: int
     )
 
     logger.info(f"Executing command: {cmd}")
-    out = _run_sh_with_passwd('', cmd)
+    out = (run_sh_with_passwd_contract('', cmd, expect_confirmation=True)).decode('utf-8')
     logger.info(f"Command completed with output: {out}")
     m = re.match(r'^Sent invocation transaction (\w{64})$', out)
     if m is None:

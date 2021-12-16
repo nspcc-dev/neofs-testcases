@@ -29,7 +29,7 @@ Duplicated Object Attributes
     ${WALLET}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}         ${USER_KEY}
 
-    ${PUBLIC_CID} =             Create container       ${USER_KEY}    ${PUBLIC_ACL}    ${POLICY}    ${EMPTY}    
+    ${PUBLIC_CID} =             Create container       ${USER_KEY}    ${PUBLIC_ACL_F}    ${POLICY}    ${EMPTY}    
     ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
 
 

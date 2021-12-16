@@ -3,6 +3,7 @@ Variables    common.py
 
 Library      neofs.py
 Library      payment_neogo.py
+Library      contract_keywords.py
 
 Resource     common_steps_acl_basic.robot
 Resource     payment_operations.robot
@@ -42,13 +43,26 @@ Check Public Container
     # Put target object to use in storage groups
     ${S_OID} =              Put object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
 
-    @{Roles_keys} =	        Create List    ${USER_KEY}    ${OTHER_KEY}    ${NEOFS_IR_WIF}    ${NEOFS_SN_WIF}
+    @{ROLES_KEYS_PASS} =    Create List    ${USER_KEY}    ${OTHER_KEY}
+    @{ROLES_KEYS_SYS} =     Create List    ${NEOFS_IR_WIF}    ${NEOFS_SN_WIF}
 
-    FOR	${role_key}	IN	@{Roles_keys}
-        ${SG_OID_1} =       Put Storagegroup    ${role_key}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${role_key}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_1}
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${role_key}    ${PUBLIC_CID}   ${S_OID}
+    FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_PASS}
+        ${SG_OID_USERS} =    Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_USERS}
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
                             ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
-                            Get Storagegroup    ${role_key}    ${PUBLIC_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${role_key}    ${PUBLIC_CID}    ${SG_OID_1}    ${EMPTY}
+                            Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}    ${EMPTY}
+                            Tick Epoch
+    END
+    FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_SYS}
+        ${SG_OID_SYS} =     Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_SYS}
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
+                            Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Run Keyword And Expect Error        *
+                            ...  Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
+                            Delete Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
+                            Tick Epoch
     END

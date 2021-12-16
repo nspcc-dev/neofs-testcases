@@ -32,7 +32,7 @@ Session Token for Container
 
     Sign Session token    ${SESSION_TOKEN}    ${WALLET}    ${SIGNED_FILE}
     
-    ${CID} =            Create Container    ${GEN_KEY}    ${PRIVATE_ACL}    ${COMMON_PLACEMENT_RULE}    ${EMPTY}    ${SIGNED_FILE}
+    ${CID} =            Create Container    ${GEN_KEY}    ${PRIVATE_ACL_F}    ${COMMON_PLACEMENT_RULE}    ${EMPTY}    ${SIGNED_FILE}
                         Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
                         ...  Container Existing    ${OWNER_KEY}    ${CID}
                         Run Keyword And Expect Error    *

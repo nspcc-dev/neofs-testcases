@@ -5,6 +5,7 @@ Library         acl.py
 Library         neofs.py
 Library         payment_neogo.py
 Library         Collections
+Library    contract_keywords.py
 
 Resource        common_steps_acl_extended.robot
 Resource        payment_operations.robot
@@ -56,7 +57,7 @@ Check eACL MatchType String Equal Request Deny
                             Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
 
 
-    ${ID_value} =	    Get From Dictionary	    ${HEADER_DICT}    ID
+    ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    ID
 
                             Set eACL                ${USER_KEY}    ${CID}    ${EACL_XHEADER_DENY_ALL}
 
@@ -95,16 +96,16 @@ Check eACL MatchType String Equal Request Allow
     [Arguments]    ${USER_KEY}    ${OTHER_KEY}
 
     ${CID} =                Create Container Public    ${USER_KEY} 
-    ${S_OID_USER} =         Put object             ${USER_KEY}     ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
+    ${S_OID_USER} =         Put Object    ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
 
-    ${HEADER} =             Head object            ${USER_KEY}     ${CID}       ${S_OID_USER}    ${EMPTY}    json_output=True
+    ${HEADER} =             Head Object    ${USER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    json_output=True
     &{HEADER_DICT} =        Decode Object System Header Json      ${HEADER}
-                            Get object           ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
+                            Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${PATH}
 
 
-    ${ID_value} =	    Get From Dictionary	    ${HEADER_DICT}    ID
+    ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    ID
 
-                            Set eACL                ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
+                            Set eACL    ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -149,7 +150,7 @@ Check eACL MatchType String Equal Object
 
 
                             Log    Set eACL for Deny GET operation with StringEqual Object ID
-    ${ID_value} =	    Get From Dictionary	            ${HEADER_DICT}    ID
+    ${ID_value} =           Get From dictionary    ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
@@ -194,7 +195,7 @@ Check eACL MatchType String Not Equal Object
                             Get object          ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${PATH}
 
                             Log	                    Set eACL for Deny GET operation with StringNotEqual Object ID
-    ${ID_value} =	    Get From Dictionary	    ${HEADER_DICT}    ID
+    ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    ID
 
     ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=$Object:objectID    value=${ID_value}
     ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS             Filters=${filters}

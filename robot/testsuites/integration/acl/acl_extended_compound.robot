@@ -72,7 +72,12 @@ Check eACL Сompound Get
                             ...  Head object                ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}
 
                             Get object           ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
-                            Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256
+                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                                Run Keyword And Expect Error    *
+                                ...    Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256
+                            ELSE
+                                Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256    
+                            END
                             Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
 
 
@@ -84,7 +89,12 @@ Check eACL Сompound Delete
     ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_USR_HEADER}
     ${D_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${EMPTY}
                             Put object             ${KEY}         ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
-                            Delete object                   ${KEY}         ${CID}       ${D_OID_USER}    ${EMPTY}
+                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                                Run Keyword And Expect Error    *
+                                ...    Delete object                   ${KEY}    ${CID}       ${D_OID_USER}    ${EMPTY}
+                            ELSE
+                                Delete object                   ${KEY}    ${CID}       ${D_OID_USER}    ${EMPTY}    
+                            END
 
                             Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
 
@@ -95,8 +105,12 @@ Check eACL Сompound Delete
                             ...  Head object                ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
                             Run Keyword And Expect Error    *
                             ...  Put object        ${KEY}    ${FILE_S}    ${CID}           ${EMPTY}    ${FILE_OTH_HEADER}
-
-                            Delete object                   ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                                Run Keyword And Expect Error    *
+                                ...    Delete object                   ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+                            ELSE
+                                Delete object                   ${KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    
+                            END
 
 
 

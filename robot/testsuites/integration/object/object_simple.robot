@@ -22,7 +22,7 @@ NeoFS Simple Object Operations
 
     ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}     ${WIF}
-    Prepare container       ${WIF}
+    ${CID} =    Prepare container       ${WIF}
 
     ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
