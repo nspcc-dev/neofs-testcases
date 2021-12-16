@@ -706,7 +706,7 @@ def delete_container(cid: str, private_key: str):
 
     deleteContainerCmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
-        f'container delete --cid {cid} --await'
+        f'container delete --cid {cid}'
     )
     logger.info(f"Cmd: {deleteContainerCmd}")
     _cmd_run(deleteContainerCmd)

@@ -1,5 +1,6 @@
 *** Settings ***
 Variables   common.py
+Variables   wellknown_acl.py
 
 Library     neofs.py
 Library     payment_neogo.py
@@ -7,6 +8,7 @@ Library     gates.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
 
+Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
@@ -22,20 +24,10 @@ NeoFS HTTP Gateway
     [Timeout]           5 min
 
     [Setup]             Setup
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
-    ${TX} =             Transfer Mainnet Gas     ${MAINNET_WALLET_WIF}    ${ADDR}    ${TRANSFER_AMOUNT}
+    
+    ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
 
-                        Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...  Transaction accepted in block  ${TX}
-
-    ${MAINNET_BALANCE} =    Get Mainnet Balance             ${ADDR}
-    Should Be Equal As Numbers                              ${MAINNET_BALANCE}      ${TRANSFER_AMOUNT}
-
-    ${TX_DEPOSIT} =     NeoFS Deposit                       ${WIF}      ${DEPOSIT_AMOUNT}
-                        Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...  Transaction accepted in block  ${TX_DEPOSIT}
-
-    ${CID} =            Create container                    ${WIF}    0x0FFFFFFF    ${PLACEMENT_RULE}
+    ${CID} =            Create container                    ${WIF}    ${PUBLIC_ACL}    ${PLACEMENT_RULE}
                         Wait Until Keyword Succeeds         ${MORPH_BLOCK_TIME}     ${CONTAINER_WAIT_INTERVAL}
                         ...  Container Existing             ${WIF}    ${CID}
 

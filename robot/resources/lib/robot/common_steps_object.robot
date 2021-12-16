@@ -26,4 +26,4 @@ Prepare container
     ${CONTAINER_FEE} =  Evaluate      ${NEOFS_BALANCE} - ${NEW_NEOFS_BALANCE}
     Log                 Container fee is ${CONTAINER_FEE}
 
-    Set Global Variable       ${CID}    ${CID}
+    [Return]    ${CID}

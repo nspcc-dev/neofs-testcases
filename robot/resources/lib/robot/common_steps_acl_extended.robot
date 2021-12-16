@@ -21,9 +21,9 @@ ${EACL_ERR_MSG} =    *
 Create Container Public
     [Arguments]             ${USER_KEY}
                             Log	                Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    0x4FFFFFFF    ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds        ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}       ${PUBLIC_CID_GEN}
+    ${PUBLIC_CID_GEN} =     Create container    ${USER_KEY}    ${PUBLIC_ACL}    ${COMMON_PLACEMENT_RULE}
+                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
+                            ...     Container Existing    ${USER_KEY}    ${PUBLIC_CID_GEN}
     [Return]                ${PUBLIC_CID_GEN}
 
 
@@ -43,7 +43,7 @@ Check eACL Deny and Allow All
     ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
                             Put object                 ${KEY}    ${FILE_S}            ${CID}            ${EMPTY}            ${FILE_OTH_HEADER}
 

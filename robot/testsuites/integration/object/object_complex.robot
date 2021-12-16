@@ -20,9 +20,8 @@ NeoFS Complex Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}     ${WIF}
-    Prepare container       ${WIF}
+    ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
+    ${CID} =            Prepare container       ${WIF}
 
     ${FILE} =           Generate file of bytes              ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}
@@ -37,11 +36,11 @@ NeoFS Complex Object Operations
                         Validate storage policy for object  ${WIF}    2             ${CID}         ${H_OID}
                         Validate storage policy for object  ${WIF}    2             ${CID}         ${H_OID_OTH}
 
-    @{S_OBJ_ALL} =	Create List	                        ${S_OID}       ${H_OID}     ${H_OID_OTH}
-    @{S_OBJ_H} =	Create List	                        ${H_OID}
-    @{S_OBJ_H_OTH} =    Create List	                        ${H_OID_OTH}
+    @{S_OBJ_ALL} =      Create List    ${S_OID}       ${H_OID}     ${H_OID_OTH}
+    @{S_OBJ_H} =        Create List    ${H_OID}
+    @{S_OBJ_H_OTH} =    Create List    ${H_OID_OTH}
 
-                        Search object                       ${WIF}    ${CID}        --root           ${EMPTY}       ${EMPTY}    ${S_OBJ_ALL}
+                        Search Object    ${WIF}    ${CID}        --root           ${EMPTY}       ${EMPTY}    ${S_OBJ_ALL}
 
     ${GET_OBJ_S} =      Get object               ${WIF}    ${CID}        ${S_OID}           ${EMPTY}       s_file_read
     ${GET_OBJ_H} =      Get object               ${WIF}    ${CID}        ${H_OID}           ${EMPTY}       h_file_read

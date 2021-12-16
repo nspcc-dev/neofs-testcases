@@ -37,7 +37,7 @@ eACL Deny Replication Operations
 
     ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
 
-    ${CID} =                Create container    ${WIF_USER}    0x0FFFFFFF   ${FULL_PLACEMENT_RULE}
+    ${CID} =                Create container    ${WIF_USER}    ${PUBLIC_ACL}   ${FULL_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing    ${WIF_USER}    ${CID}
 

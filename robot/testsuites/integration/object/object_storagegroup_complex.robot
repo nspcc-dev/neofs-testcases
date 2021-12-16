@@ -19,7 +19,7 @@ NeoFS Complex Storagegroup
 
     ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}     ${WIF}
-    Prepare container       ${WIF}
+    ${CID} =    Prepare container       ${WIF}
 
     ${FILE_S} =         Generate file of bytes            ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH_S} =    Get file hash                     ${FILE_S}

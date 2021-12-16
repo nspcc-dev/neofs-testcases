@@ -10,7 +10,7 @@ ${FILE_OTH_HEADER} =        key1=oth,key2=oth
 *** Keywords ***
 Create Container Public
     [Arguments]    ${USER_KEY}
-    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    0x0FFFFFFF     ${COMMON_PLACEMENT_RULE}
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    ${PUBLIC_ACL}     ${COMMON_PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
     [Return]                ${PUBLIC_CID_GEN}

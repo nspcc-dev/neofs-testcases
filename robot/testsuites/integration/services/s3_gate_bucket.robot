@@ -7,12 +7,14 @@ Library     payment_neogo.py
 Library     gates.py
 Library     wallet_keywords.py
 Library     contract_keywords.py
+Library     Process
 
 Resource    setup_teardown.robot
+Resource    payment_operations.robot
 
 *** Variables ***
-${DEPOSIT_AMOUNT} =     ${5}
-${WIF} =                ${MAINNET_WALLET_WIF}
+${DEPOSIT} =     ${30}
+${WIF} =    ${MAINNET_WALLET_WIF}
 ${DEPOSIT_TIMEOUT}=    30s
 
 *** Test cases ***
@@ -22,11 +24,7 @@ Buckets in NeoFS S3 Gateway
 
     [Setup]                     Setup
 
-    ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${ASSETS_DIR}     ${WIF}
-    ${TX_DEPOSIT} =             NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}
-                                Wait Until Keyword Succeeds         ${DEPOSIT_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                                ...  Transaction accepted in block  ${TX_DEPOSIT}
-
+    ${WALLET}   ${ADDR}    ${WIF} =    Prepare Wallet And Deposit
     ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
     ${FILE_S3_NAME} =           Get file name             ${FILE_S3}
 
@@ -68,5 +66,3 @@ Buckets in NeoFS S3 Gateway
                                 List Should Not Contain Value    ${BUCKET_LIST}    ${NEW_BUCKET_EMPTY}
 
     [Teardown]                  Teardown    s3_gate_bucket
-
-

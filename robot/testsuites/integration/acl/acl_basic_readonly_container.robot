@@ -38,12 +38,11 @@ Check Read-Only Container
     [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
     # Put
-    ${S_OID_USER} =         Put object                 ${USER_KEY}         ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_USER} =         Put Object         ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
                             Run Keyword And Expect Error        *
-                            ...  Put object            ${OTHER_KEY}        ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
-                            Run Keyword And Expect Error        *
-                            ...  Put object            ${NEOFS_IR_WIF}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
-    ${S_OID_SYS_SN} =       Put object                 ${NEOFS_SN_WIF}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+                            ...  Put object    ${OTHER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_SYS_IR} =       Put Object         ${NEOFS_IR_WIF}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_SYS_SN} =       Put object         ${NEOFS_SN_WIF}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
 
 
     # Storage group Operations (Put, List, Get, Delete)
@@ -64,53 +63,54 @@ Check Read-Only Container
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
 
-                        Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
+    ${SG_OID_IR} =      Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}    ${SG_OID_IR}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
+                        ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_IR}    ${EMPTY}
 
     # Get
-                            Get object               ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get object               ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get object               ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get object               ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get object    ${USER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get Object    ${OTHER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get Object    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get Object    ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
-                            Get Range                           ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range                           ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range                           ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range                           ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range           ${USER_KEY}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range           ${OTHER_KEY}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...    Get Range    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Run Keyword And Expect Error        *
+                        ...    Get Range    ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
     # Get Range Hash
-                            Get Range Hash                      ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash                      ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash                      ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash                      ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash    ${USER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash    ${OTHER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash    ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_RO} =	        Create List	                        ${S_OID_USER}       ${S_OID_SYS_SN}
-                            Search object                       ${USER_KEY}         ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
-                            Search object                       ${OTHER_KEY}        ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
-                            Search object                       ${NEOFS_IR_WIF}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
-                            Search object                       ${NEOFS_SN_WIF}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+    @{S_OBJ_RO} =       Create List       ${S_OID_USER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
+                        Search Object     ${USER_KEY}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                        Search Object     ${OTHER_KEY}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                        Search Object     ${NEOFS_IR_WIF}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
+                        Search Object     ${NEOFS_SN_WIF}    ${READONLY_CID}    --root    ${EMPTY}    ${EMPTY}    ${S_OBJ_RO}
 
 
     # Head
-                            Head object                         ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
-                            Head object                         ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
-                            Head object                         ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
-                            Head object                         ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head Object    ${USER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head Object    ${OTHER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head Object    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
+                        Head Object    ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    ${EMPTY}
 
     # Delete
-                            Run Keyword And Expect Error        *
-                            ...  Delete object                  ${OTHER_KEY}        ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
-                            Run Keyword And Expect Error        *
-                            ...  Delete object                  ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
-                            Run Keyword And Expect Error        *
-                            ...  Delete object                  ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
-                            Delete object                       ${USER_KEY}         ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object    ${OTHER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object    ${NEOFS_SN_WIF}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}
+                        Delete Object         ${USER_KEY}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}

@@ -39,7 +39,7 @@ Check Read-Only Container
     [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
     # Put target object to use in storage groups
-    ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
 
     # Storage group Operations (Put, List, Get, Delete) for Read-only container
 
@@ -62,11 +62,10 @@ Check Read-Only Container
                         ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
 
 
-                        Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
+    ${SG_OID_IR} =      Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}    ${SG_OID_IR}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
                         ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
