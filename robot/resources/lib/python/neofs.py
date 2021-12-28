@@ -140,7 +140,6 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --await'
     )
-    logger.info(f"Cmd: {createContainerCmd}")
     output = _cmd_run(createContainerCmd)
     cid = _parse_cid(output)
     logger.info(f"Created container {cid} with rule {rule}")
@@ -153,7 +152,6 @@ def container_list(private_key: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container list'
     )
-    logger.info(f"Cmd: {Cmd}")
     output = _cmd_run(Cmd)
 
     container_list = re.findall(r'(\w{43,44})', output)
@@ -167,7 +165,6 @@ def container_existing(private_key: str, cid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container list'
     )
-    logger.info(f"Cmd: {Cmd}")
     output = _cmd_run(Cmd)
 
     _find_cid(output, cid)
@@ -181,7 +178,6 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object head --cid {cid} --oid {oid_ts} --json'
     )
-    logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
     full_headers = json.loads(output)
     logger.info(f"Output: {full_headers}")
@@ -234,7 +230,6 @@ def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} '
         f'--cid {cid} container get {"--json" if json_output else ""}'
     )
-    logger.info(f"Cmd: {container_cmd}")
     output = _cmd_run(container_cmd)
     return output
 
@@ -267,7 +262,6 @@ def delete_container(cid: str, private_key: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container delete --cid {cid}'
     )
-    logger.info(f"Cmd: {deleteContainerCmd}")
     _cmd_run(deleteContainerCmd)
 
 
@@ -375,7 +369,6 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
         f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
-    logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
     oid = _parse_oid(output)
 
@@ -392,8 +385,6 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'storagegroup list --cid {cid} {bearer_token}'
     )
-
-    logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
     found_objects = re.findall(r'(\w{43,44})', output)
 
@@ -413,7 +404,6 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
-    logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
 
     if expected_size:
@@ -441,7 +431,6 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
         f'delete --cid {cid} --id {oid} {bearer_token}'
     )
-    logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
 
     m = re.search(r'Tombstone: ([a-zA-Z0-9-]+)', output)
@@ -572,6 +561,5 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {private_key} --ttl 1 '
         f'object search --root --cid {cid} --oid {oid}'
     )
-
     output = _cmd_run(Cmd)
     return output
