@@ -7,10 +7,10 @@ import docker
 
 from neo3 import wallet
 from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
-from cli_helpers import _cmd_run
 from robot.api.deco import keyword
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
+from cli_helpers import _cmd_run
 
 
 ROBOT_AUTO_KEYWORDS = False
@@ -54,30 +54,39 @@ def wif_to_binary(wif: str) -> str:
     return path
 
 @keyword('Make Up')
-def make_up(services: list=[]):
+def make_up(services: list=[], config_dict: dict={}):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
     os.chdir(dev_path)
 
     if len(services) > 0:
         for service in services:
+            if config_dict != {}:
+                with open(f"{dev_path}/.int_test.env", "a") as out:
+                    for key, value in config_dict.items():
+                        out.write(f'{key}={value}')
             cmd = f'make up/{service}'
-            logger.info(f"Cmd: {cmd}")
             _cmd_run(cmd)
     else:
         cmd = f'make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}'
-        logger.info(f"Cmd: {cmd}")
         _cmd_run(cmd, timeout=120)
 
     os.chdir(test_path)
 
 @keyword('Make Down')
-def make_down():
+def make_down(services: list=[]):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
     os.chdir(dev_path)
 
-    cmd = 'make down; make clean'
-    logger.info(f"Cmd: {cmd}")
-    _cmd_run(cmd, timeout=60)
+    if len(services) > 0:
+        for service in services:
+            cmd = f'make down/{service}'
+            _cmd_run(cmd)
+            with open(f"{dev_path}/.int_test.env", "w"):
+                pass
+    else:
+        cmd = 'make down; make clean'
+        _cmd_run(cmd, timeout=60)
+    
     os.chdir(test_path)

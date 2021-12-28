@@ -41,7 +41,6 @@ def get_eacl(wif: str, cid: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
         f'container get-eacl --cid {cid}'
     )
-    logger.info(f"cmd: {cmd}")
     try:
         output = _cmd_run(cmd)
         if re.search(r'extended ACL table is not set for this container', output):
@@ -59,7 +58,6 @@ def set_eacl(wif: str, cid: str, eacl_table_path: str):
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
     )
-    logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)
 
 
@@ -78,7 +76,6 @@ def create_eacl(cid: str, rules_list: list):
         f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} "
         f"{rules}--out {table}"
     )
-    logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)
 
     return table
@@ -167,5 +164,4 @@ def sign_bearer_token(wif: str, eacl_rules_file: str):
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} '
         f'--to {eacl_rules_file} --wallet {wif} --json'
     )
-    logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)
