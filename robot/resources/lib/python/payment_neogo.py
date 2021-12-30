@@ -14,10 +14,6 @@ import contract
 
 ROBOT_AUTO_KEYWORDS = False
 
-NNS_CONTRACT = contract.get_nns_contract_hash(NEOFS_NEO_API_ENDPOINT)
-BALANCE_CONTRACT_HASH = contract.get_morph_contract_hash(
-            'balance.neofs', NNS_CONTRACT, NEOFS_NEO_API_ENDPOINT
-        )
 MORPH_TOKEN_POWER = 12
 
 morph_rpc_cli = rpc_client.RPCClient(NEOFS_NEO_API_ENDPOINT)
@@ -75,7 +71,9 @@ def get_balance(wif: str):
             ]
     try:
         resp = morph_rpc_cli.invoke_function(
-                BALANCE_CONTRACT_HASH, 'balanceOf', payload
+                contract.get_balance_contract_hash(NEOFS_NEO_API_ENDPOINT),
+                'balanceOf',
+                payload
             )
         logger.info(resp)
         value = int(resp['stack'][0]['value'])
