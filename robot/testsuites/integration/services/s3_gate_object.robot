@@ -7,12 +7,14 @@ Library     payment_neogo.py
 Library     gates.py
 Library     wallet_keywords.py
 Library     contract_keywords.py
+Library     utility_keywords.py
 
 Resource    setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${5}
 ${WIF} =                ${MAINNET_WALLET_WIF}
+@{INCLUDE_SVC} =    s3_gate
 
 *** Test cases ***
 Objects in NeoFS S3 Gateway
@@ -20,7 +22,8 @@ Objects in NeoFS S3 Gateway
     [Documentation]             Execute operations with objects via S3 Gate
     [Timeout]                   10 min
 
-    [Setup]                     Setup
+    [Setup]                     Setup    
+                                Make Up    ${INCLUDE_SVC}
 
     ${WALLET}   ${ADDR} =       Init Wallet from WIF    ${ASSETS_DIR}     ${WIF}
     ${TX_DEPOSIT} =             NeoFS Deposit                         ${WIF}    ${DEPOSIT_AMOUNT}

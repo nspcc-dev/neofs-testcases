@@ -16,13 +16,15 @@ Resource    payment_operations.robot
 ${DEPOSIT} =     ${30}
 ${WIF} =    ${MAINNET_WALLET_WIF}
 ${DEPOSIT_TIMEOUT}=    30s
+@{INCLUDE_SVC} =    s3_gate
 
 *** Test cases ***
 Buckets in NeoFS S3 Gateway
     [Documentation]             Execute operations with bucket via S3 Gate
     [Timeout]                   10 min
 
-    [Setup]                     Setup
+    [Setup]                     Setup    
+                                Make Up    ${INCLUDE_SVC}
 
     ${WALLET}   ${ADDR}    ${WIF} =    Prepare Wallet And Deposit
     ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}

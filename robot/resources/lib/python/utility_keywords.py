@@ -1,16 +1,17 @@
 #!/usr/bin/python3.8
 
-import docker
 import os
 import tarfile
 import uuid
+import docker
 
 from neo3 import wallet
 from robot.api.deco import keyword
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
-
 from common import *
+from cli_helpers import _cmd_run
+
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -48,6 +49,32 @@ def get_container_logs(testcase_name: str) -> None:
 def wif_to_binary(wif: str) -> str:
     priv_key = wallet.Account.private_key_from_wif(wif)
     path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
-    with open(path, "wb") as f:
-        f.write(priv_key)
+    with open(path, "wb") as out:
+        out.write(priv_key)
     return path
+
+@keyword('Make Up')
+def make_up(services=['']):
+    test_path = os.getcwd()
+    dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
+    os.chdir(dev_path)
+
+    if services != ['']:
+        for service in services:
+            cmd = f'make up/{service}'
+            _cmd_run(cmd, timeout=80)
+    else:
+        cmd = f'make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}'
+        _cmd_run(cmd, timeout=80)
+
+    os.chdir(test_path)
+
+@keyword('Make Down')
+def make_down():
+    test_path = os.getcwd()
+    dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
+    os.chdir(dev_path)
+
+    cmd = 'make down; make clean'
+    _cmd_run(cmd)
+    os.chdir(test_path)
