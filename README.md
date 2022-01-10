@@ -42,10 +42,8 @@ Test cases are designed to run on Python 3.8.
 
 ## Run
 
-Execute `./run.sh` script. It will run all the tests available in this repo. To run an arbitrary UserScenario or testcase(s), you need to run the command:
-`./run.sh robot/testsuites/integration/<UserScenario>` or `./run.sh robot/testsuites/integration/<UserScenario>/<testcase>.robot`
-
-Logs will be saved in the artifacts/ directory after tests with any of the statuses are completed.
+To run an arbitrary UserScenario or testcase, you need to run the command:
+`robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`
 
 The following UserScenarios and testcases are available for execution:
 

@@ -13,14 +13,14 @@ from robot.api import logger
 ROBOT_AUTO_KEYWORDS = False
 
 
-def _cmd_run(cmd):
+def _cmd_run(cmd, timeout=30):
     """
     Runs given shell command <cmd>, in case of success returns its stdout,
     in case of failure returns error message.
     """
     try:
         compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout,
                     shell=True)
         output = compl_proc.stdout
         logger.info(f"Output: {output}")
