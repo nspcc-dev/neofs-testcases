@@ -25,7 +25,7 @@ CLI Accounting Balance Test
     ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit   ${DEPOSIT_AMOUNT}
 
     # Getting balance with WIF
-    ${OUTPUT} =    Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --wif ${WIF}
+    ${OUTPUT} =    Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --wallet ${WIF}
                    ...            shell=True
     Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
@@ -51,12 +51,6 @@ CLI Accounting Balance Test
     ${OUTPUT} =         Run Process     ${NEOFS_CLI_EXEC} accounting balance --config ${CONFIG_PATH}
                         ...             shell=True
     Should Be Equal As Numbers          ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
-
-    # Getting balance with binary key
-    ${KEY_PATH} =    WIF To Binary   ${WIF}
-    ${OUTPUT} =      Run Process     ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --binary-key ${KEY_PATH}
-                     ...             shell=True
-    Should Be Equal As Numbers       ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     [Teardown]      Teardown    cli_accounting_balance
 

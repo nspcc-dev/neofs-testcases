@@ -42,7 +42,7 @@ Session Token for Container
 # Check container owner 
 ########################
 
-    ${CONTAINER_INFO} =    Run Process    ${NEOFS_CLI_EXEC} container get --cid ${CID} --wif ${GEN_KEY} --rpc-endpoint ${NEOFS_ENDPOINT}    shell=True
+    ${CONTAINER_INFO} =    Run Process    ${NEOFS_CLI_EXEC} container get --cid ${CID} --wallet ${GEN_KEY} --rpc-endpoint ${NEOFS_ENDPOINT}    shell=True
     ${CID_OWNER_ID_LINE} =    Get Line    ${CONTAINER_INFO.stdout}    2
     @{CID_OWNER_ID} =    Split String    ${CID_OWNER_ID_LINE}
     Should Be Equal As Strings    ${OWNER}    ${CID_OWNER_ID}[2]
