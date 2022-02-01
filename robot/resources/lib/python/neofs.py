@@ -60,13 +60,13 @@ def start_nodes(*nodes_list):
 
 
 @keyword('Get nodes with object')
-def get_nodes_with_object(private_key: str, cid: str, oid: str):
+def get_nodes_with_object(wallet: str, cid: str, oid: str):
     copies = 0
 
     nodes_list = []
 
     for node in NEOFS_NETMAP:
-        search_res = _search_object(node, private_key, cid, oid)
+        search_res = _search_object(node, wallet, cid, oid)
         if search_res:
             if oid in search_res:
                 nodes_list.append(node)
@@ -76,13 +76,13 @@ def get_nodes_with_object(private_key: str, cid: str, oid: str):
 
 
 @keyword('Get nodes without object')
-def get_nodes_without_object(private_key: str, cid: str, oid: str):
+def get_nodes_without_object(wallet: str, cid: str, oid: str):
     copies = 0
 
     nodes_list = []
 
     for node in NEOFS_NETMAP:
-        search_res = _search_object(node, private_key, cid, oid)
+        search_res = _search_object(node, wallet, cid, oid)
         if search_res:
             if not re.search(fr'({oid})', search_res):
                 nodes_list.append(node)
@@ -94,7 +94,7 @@ def get_nodes_without_object(private_key: str, cid: str, oid: str):
 
 
 @keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(private_key: str, expected_copies: int, cid, oid,
+def validate_storage_policy_for_object(wallet: str, expected_copies: int, cid, oid,
                 expected_node_list=[], storage_nodes=[]):
     storage_nodes = storage_nodes if len(storage_nodes) != 0 else NEOFS_NETMAP
     copies = 0
@@ -102,7 +102,7 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
     oid = oid.strip()
 
     for node in storage_nodes:
-        search_res = _search_object(node, private_key, cid, oid)
+        search_res = _search_object(node, wallet, cid, oid)
         if search_res:
             if oid in search_res:
                 copies += 1
@@ -123,9 +123,8 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
             raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
 
 
-
 @keyword('Create container')
-def create_container(private_key: str, basic_acl:str, rule:str, user_headers: str='', session: str=''):
+def create_container(wallet: str, basic_acl:str, rule:str, user_headers: str='', session: str=''):
     if rule == "":
         logger.error("Cannot create container with empty placement rule")
 
@@ -137,8 +136,8 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         session = f"--session {session}"
 
     createContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --await'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --config {WALLET_PASS} --await'
     )
     output = _cmd_run(createContainerCmd)
     cid = _parse_cid(output)
@@ -147,10 +146,10 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
     return cid
 
 @keyword('Container List')
-def container_list(private_key: str):
+def container_list(wallet: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'container list'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'container list --config {WALLET_PASS}'
     )
     output = _cmd_run(Cmd)
 
@@ -160,10 +159,10 @@ def container_list(private_key: str):
 
 
 @keyword('Container Existing')
-def container_existing(private_key: str, cid: str):
+def container_existing(wallet: str, cid: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'container list'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'container list --config {WALLET_PASS}'
     )
     output = _cmd_run(Cmd)
 
@@ -172,11 +171,11 @@ def container_existing(private_key: str, cid: str):
 
 
 @keyword('Verify Head Tombstone')
-def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
+def verify_head_tombstone(wallet: str, cid: str, oid_ts: str, oid: str, addr: str):
     # TODO: replace with HEAD from neofs_verbs.py
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object head --cid {cid} --oid {oid_ts} --json'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'--config {WALLET_PASS} object head --cid {cid} --oid {oid_ts} --json'
     )
     output = _cmd_run(object_cmd)
     full_headers = json.loads(output)
@@ -221,13 +220,13 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
 
 
 @keyword('Get container attributes')
-def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_output: bool = False):
+def get_container_attributes(wallet: str, cid: str, endpoint: str="", json_output: bool = False):
 
     if endpoint == "":
         endpoint = NEOFS_ENDPOINT
 
     container_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} --config {WALLET_PASS} '
         f'--cid {cid} container get {"--json" if json_output else ""}'
     )
     output = _cmd_run(container_cmd)
@@ -253,14 +252,13 @@ def decode_container_attributes_json(header):
     return     result_header
 
 
-
 @keyword('Delete Container')
 # TODO: make the error message about a non-found container more user-friendly https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(cid: str, private_key: str):
+def delete_container(cid: str, wallet: str):
 
     deleteContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'container delete --cid {cid}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'container delete --cid {cid} --config {WALLET_PASS}'
     )
     _cmd_run(deleteContainerCmd)
 
@@ -358,7 +356,7 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
 
 
 @keyword('Put Storagegroup')
-def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list):
+def put_storagegroup(wallet: str, cid: str, bearer_token: str="", *oid_list):
 
     cmd_oid_line = ",".join(oid_list)
 
@@ -366,8 +364,8 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
-        f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} --config {WALLET_PASS} '
+        f'storagegroup put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
     output = _cmd_run(object_cmd)
     oid = _parse_oid(output)
@@ -376,14 +374,14 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
 
 
 @keyword('List Storagegroup')
-def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expected_list):
+def list_storagegroup(wallet: str, cid: str, bearer_token: str="", *expected_list):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'storagegroup list --cid {cid} {bearer_token}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'--config {WALLET_PASS} storagegroup list --cid {cid} {bearer_token}'
     )
     output = _cmd_run(object_cmd)
     found_objects = re.findall(r'(\w{43,44})', output)
@@ -398,7 +396,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
 
 
 @keyword('Get Storagegroup')
-def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, expected_size,  *expected_objects_list):
+def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str, expected_size,  *expected_objects_list):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
@@ -422,14 +420,14 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
 
 
 @keyword('Delete Storagegroup')
-def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=""):
+def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str=""):
 
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
-        f'delete --cid {cid} --id {oid} {bearer_token}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} storagegroup '
+        f'delete --cid {cid} --config {WALLET_PASS} --id {oid} {bearer_token}'
     )
     output = _cmd_run(object_cmd)
 
@@ -484,10 +482,10 @@ def sign_session_token(session_token: str, wallet: str, to_file: str=''):
         to_file = f'--to {to_file}'
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign session-token --from {session_token} '
-        f'-w {wallet} {to_file}'
+        f'-w {wallet} {to_file} --config {WALLET_PASS}'
     )
     logger.info(f"cmd: {cmd}")
-    _run_with_passwd(cmd)
+    _cmd_run(cmd)
 
 
 def _get_file_hash(filename):
@@ -556,10 +554,10 @@ def _parse_cid(input_str: str):
     return splitted[1]
 
 
-def _search_object(node:str, private_key: str, cid:str, oid: str):
+def _search_object(node:str, wallet: str, cid:str, oid: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {private_key} --ttl 1 '
-        f'object search --root --cid {cid} --oid {oid}'
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {wallet} --ttl 1 '
+        f'object search --root --cid {cid} --oid {oid} --config {WALLET_PASS}'
     )
     output = _cmd_run(Cmd)
     return output

@@ -22,15 +22,15 @@ BearerToken Operations
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer    Simple    ${USER_KEY}    ${FILE_S}
+                            Check eACL Deny and Allow All Bearer    Simple    ${WALLET}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
     ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer    Complex    ${USER_KEY}    ${FILE_S}
+                            Check eACL Deny and Allow All Bearer    Complex    ${WALLET}    ${FILE_S}
 
 
     [Teardown]              Teardown    acl_bearer_allow_storagegroup
@@ -40,24 +40,24 @@ BearerToken Operations
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer
-    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}
+    [Arguments]     ${RUN_TYPE}    ${WALLET}    ${FILE_S}
 
-    ${CID} =                Create Container Public    ${USER_KEY}
-    ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${CID}
+    ${CID} =                Create Container Public    ${WALLET}
+    ${S_OID_USER} =         Put object    ${WALLET}    ${FILE_S}    ${CID}
                             Prepare eACL Role rules    ${CID}
 
 
     # Storage group Operations (Put, List, Get, Delete)
-    ${SG_OID_INV} =     Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
-    ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
+    ${SG_OID_INV} =     Put Storagegroup    ${WALLET}    ${CID}   ${EMPTY}    ${S_OID_USER}
+    ${SG_OID_1} =       Put Storagegroup    ${WALLET}    ${CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${WALLET}    ${CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If      "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${CID}   ${S_OID_USER}
+                        ...     Get Object Parts By Link Object    ${WALLET}    ${CID}   ${S_OID_USER}
                         ...     ELSE IF      "${RUN_TYPE}" == "Simple"   Create List   ${S_OID_USER}
-                        Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
+                        Get Storagegroup    ${WALLET}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Delete Storagegroup    ${WALLET}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
-                        Set eACL            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}
+                        Set eACL            ${WALLET}    ${CID}        ${EACL_DENY_ALL_USER}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -72,20 +72,20 @@ Check eACL Deny and Allow All Bearer
 
     ${eACL_gen}=        Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
 
-    ${EACL_TOKEN} =     Form BearerToken File       ${USER_KEY}    ${CID}    ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File       ${WALLET}    ${CID}    ${eACL_gen}
 
                         # All storage groups should fail without bearer token
                         Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
+                        ...  Put Storagegroup    ${WALLET}    ${CID}   ${EMPTY}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  List Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
+                        ...  List Storagegroup    ${WALLET}    ${CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
                         Run Keyword And Expect Error        *
-                        ...  Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        ...  Get Storagegroup    ${WALLET}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
+                        ...  Delete Storagegroup    ${WALLET}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
     # Storagegroup should passed with User group key and bearer token
-    ${SG_OID_NEW} =     Put Storagegroup        ${USER_KEY}    ${CID}    ${EACL_TOKEN}    ${S_OID_USER}
-                        List Storagegroup       ${USER_KEY}    ${CID}    ${EACL_TOKEN}    ${SG_OID_NEW}     ${SG_OID_INV}
-                        Get Storagegroup        ${USER_KEY}    ${CID}    ${SG_OID_INV}    ${EACL_TOKEN}     ${EMPTY}    @{EXPECTED_OIDS}
-                        Delete Storagegroup     ${USER_KEY}    ${CID}    ${SG_OID_INV}    ${EACL_TOKEN}
+    ${SG_OID_NEW} =     Put Storagegroup        ${WALLET}    ${CID}    ${EACL_TOKEN}    ${S_OID_USER}
+                        List Storagegroup       ${WALLET}    ${CID}    ${EACL_TOKEN}    ${SG_OID_NEW}     ${SG_OID_INV}
+                        Get Storagegroup        ${WALLET}    ${CID}    ${SG_OID_INV}    ${EACL_TOKEN}     ${EMPTY}    @{EXPECTED_OIDS}
+                        Delete Storagegroup     ${WALLET}    ${CID}    ${SG_OID_INV}    ${EACL_TOKEN}

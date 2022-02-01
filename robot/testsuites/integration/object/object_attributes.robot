@@ -27,10 +27,9 @@ Duplicated Object Attributes
 
     [Setup]                     Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}         ${USER_KEY}
+    ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =             Create container       ${USER_KEY}    ${PUBLIC_ACL_F}    ${POLICY}    ${EMPTY}
+    ${PUBLIC_CID} =             Create container       ${WALLET}    ${PUBLIC_ACL_F}    ${POLICY}    ${EMPTY}
     ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
 
 
@@ -39,24 +38,24 @@ Duplicated Object Attributes
     ###################################################
 
     Run Keyword And Expect Error    *
-    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_FILENAME}
+    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_FILENAME}
     # Robot doesn't allow to create a dictionary with the same keys, so using plain text option here
     Run Keyword And Expect Error    *
-    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    options=--attributes ${ATTR_DUPLICATE}
+    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    options=--attributes ${ATTR_DUPLICATE}
 
     ##################################################
     # Checking that object cannot have empty attibute
     ##################################################
 
     Run Keyword And Expect Error    *
-    ...    Put object        ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_NONE}
+    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_NONE}
 
     #####################################################
     # Checking a successful step with a single attribute
     #####################################################
 
-    ${OID} =            Put object    ${USER_KEY}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_SINGLE}
-    ${HEADER} =         Head object              ${USER_KEY}         ${PUBLIC_CID}    ${OID}
+    ${OID} =            Put object    ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_SINGLE}
+    ${HEADER} =         Head object              ${WALLET}         ${PUBLIC_CID}    ${OID}
                         Dictionary Should Contain Sub Dictionary
                             ...     ${HEADER}[header][attributes]
                             ...     ${ATTR_SINGLE}

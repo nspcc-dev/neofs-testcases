@@ -20,46 +20,46 @@ BearerToken Operations for Inaccessible Container
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Container Inaccessible and Allow All Bearer    ${USER_KEY}    ${FILE_S}
+                            Check Container Inaccessible and Allow All Bearer    ${WALLET}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
     ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Container Inaccessible and Allow All Bearer    ${USER_KEY}    ${FILE_S}
+                            Check Container Inaccessible and Allow All Bearer    ${WALLET}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_inaccessible
 
 *** Keywords ***
 
 Check Container Inaccessible and Allow All Bearer
-    [Arguments]    ${USER_KEY}    ${FILE_S}
+    [Arguments]    ${WALLET}    ${FILE_S}
 
-    ${CID} =    Create Container Inaccessible    ${USER_KEY}
+    ${CID} =    Create Container Inaccessible    ${WALLET}
                 Prepare eACL Role rules    ${CID}
 
                 Run Keyword And Expect Error        *
-                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}    user_headers=${FILE_USR_HEADER}
+                ...  Put object        ${WALLET}    ${FILE_S}     ${CID}    user_headers=${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
-                ...  Get object        ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                ...  Get object        ${WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
                 Run Keyword And Expect Error        *
-                ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}
+                ...  Search object     ${WALLET}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
-                ...  Head object       ${USER_KEY}    ${CID}        ${S_OID_USER}
+                ...  Head object       ${WALLET}    ${CID}        ${S_OID_USER}
                 Run Keyword And Expect Error        *
-                ...  Get Range         ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
+                ...  Get Range         ${WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
                 Run Keyword And Expect Error        *
-                ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER}
+                ...  Delete object     ${WALLET}    ${CID}        ${S_OID_USER}
 
     ${rule1} =          Create Dictionary       Operation=PUT           Access=ALLOW    Role=USER
     ${rule2} =          Create Dictionary       Operation=SEARCH        Access=ALLOW    Role=USER
     ${eACL_gen} =       Create List             ${rule1}    ${rule2}
 
-    ${EACL_TOKEN} =     Form BearerToken File       ${USER_KEY}    ${CID}   ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File       ${WALLET}    ${CID}   ${eACL_gen}
 
                 Run Keyword And Expect Error        *
-                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}       bearer=${EACL_TOKEN}       user_headers=${FILE_USR_HEADER}
+                ...  Put object        ${WALLET}    ${FILE_S}     ${CID}       ${EACL_TOKEN}       user_headers=${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
-                ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}     ${EACL_TOKEN}       ${FILE_USR_HEADER}
+                ...  Search object     ${WALLET}    ${CID}        ${EMPTY}     ${EACL_TOKEN}       ${FILE_USR_HEADER}

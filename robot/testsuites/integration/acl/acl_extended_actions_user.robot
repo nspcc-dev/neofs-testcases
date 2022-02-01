@@ -19,15 +19,15 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-                            Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All User    ${USER_KEY}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+                            Check eACL Deny and Allow All User    ${WALLET}
 
                             Log    Check extended ACL with complex object
-                            Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All User    ${USER_KEY}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
+                            Check eACL Deny and Allow All User    ${WALLET}
 
     [Teardown]              Teardown    acl_extended_action_user
 
@@ -35,5 +35,5 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny and Allow All User
-    [Arguments]             ${USER_KEY}
-                            Check eACL Deny and Allow All    ${USER_KEY}    ${EACL_DENY_ALL_USER}    ${EACL_ALLOW_ALL_USER}    ${USER_KEY}
+    [Arguments]             ${WALLET}
+                            Check eACL Deny and Allow All    ${WALLET}    ${EACL_DENY_ALL_USER}    ${EACL_ALLOW_ALL_USER}    ${WALLET}

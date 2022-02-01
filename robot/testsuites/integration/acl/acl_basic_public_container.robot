@@ -18,16 +18,16 @@ Basic ACL Operations for Public Container
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Public Container    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+                            Check Public Container    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
-    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Public Container    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+                            Check Public Container    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_public_container
 
@@ -35,63 +35,66 @@ Basic ACL Operations for Public Container
 *** Keywords ***
 
 Check Public Container
-    [Arguments]    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+    [Arguments]    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
+
+    ${WALLET_SN}    ${ADDR_SN} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
+    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
     # Put
-    ${S_OID_USER} =         Put Object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}
-    ${S_OID_OTHER} =        Put Object    ${OTHER_KEY}    ${FILE_S}    ${PUBLIC_CID}
-    ${S_OID_SYS_IR} =       Put Object    ${NEOFS_IR_WIF}    ${FILE_S}    ${PUBLIC_CID}
-    ${S_OID_SYS_SN} =       Put Object    ${NEOFS_SN_WIF}    ${FILE_S}    ${PUBLIC_CID}
+    ${S_OID_USER} =         Put Object    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}
+    ${S_OID_OTHER} =        Put Object    ${WALLET_OTH}    ${FILE_S}    ${PUBLIC_CID}
+    ${S_OID_SYS_IR} =       Put Object    ${WALLET_IR}    ${FILE_S}    ${PUBLIC_CID}
+    ${S_OID_SYS_SN} =       Put Object    ${WALLET_SN}    ${FILE_S}    ${PUBLIC_CID}
 
     # Get
-                            Get Object    ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get Object    ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get Object    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                            Get Object    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                            Get Object    ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                            Get Object    ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                            Get Object    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                            Get Object    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
-                            Get Range           ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range           ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            Get Range           ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            Get Range           ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error        *
-                            ...    Get Range    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...    Get Range    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error        *
-                            ...    Get Range    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...    Get Range    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
     # Get Range Hash
-                            Get Range Hash    ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash    ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                            Get Range Hash    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash    ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash    ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                            Get Range Hash    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
     @{S_OBJ_PRIV} =         Create List	      ${S_OID_USER}    ${S_OID_OTHER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
-                            Search object     ${USER_KEY}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
-                            Search object     ${OTHER_KEY}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
-                            Search object     ${NEOFS_IR_WIF}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
-                            Search object     ${NEOFS_SN_WIF}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                            Search object     ${USER_WALLET}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                            Search object     ${WALLET_OTH}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                            Search object     ${WALLET_IR}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                            Search object     ${WALLET_SN}    ${PUBLIC_CID}     keys=--root    expected_objects_list=${S_OBJ_PRIV}
 
     # Head
-                            Head Object    ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}
-                            Head Object    ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_USER}
-                            Head Object    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_USER}
-                            Head Object    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_USER}
+                            Head Object    ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}
+                            Head Object    ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}
+                            Head Object    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_USER}
+                            Head Object    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_USER}
 
-                            Head Object    ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_OTHER}
-                            Head Object    ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_OTHER}
-                            Head Object    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_OTHER}
-                            Head Object    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_OTHER}
+                            Head Object    ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_OTHER}
+                            Head Object    ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_OTHER}
+                            Head Object    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_OTHER}
+                            Head Object    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}
 
-                            Head Object    ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
-                            Head Object    ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
-                            Head Object    ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
-                            Head Object    ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
+                            Head Object    ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
+                            Head Object    ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
+                            Head Object    ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
+                            Head Object    ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
 
 
     # Delete
-                            Delete object            ${USER_KEY}    ${PUBLIC_CID}    ${S_OID_SYS_IR}
-                            Delete Object            ${OTHER_KEY}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
+                            Delete object            ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_SYS_IR}
+                            Delete Object            ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_SYS_SN}
                             Run Keyword And Expect Error        *
-                            ...    Delete object     ${NEOFS_IR_WIF}    ${PUBLIC_CID}    ${S_OID_USER}
+                            ...    Delete object     ${WALLET_IR}    ${PUBLIC_CID}    ${S_OID_USER}
                             Run Keyword And Expect Error        *
-                            ...    Delete object     ${NEOFS_SN_WIF}    ${PUBLIC_CID}    ${S_OID_OTHER}
+                            ...    Delete object     ${WALLET_SN}    ${PUBLIC_CID}    ${S_OID_OTHER}

@@ -6,6 +6,7 @@ Library    Process
 Library    String
 Library    contract_keywords.py
 
+Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
@@ -23,10 +24,12 @@ NetworkInfo RPC Method
     ######################################################################
     # Checking if the command returns equal results for two storage nodes
     ######################################################################
+#TODO: Remove line for it's unnecessary (#194)
+    ${WALLET_MAINNET}    ${ADDR_MAINNET} =     Prepare Wallet with WIF And Deposit    ${MAINNET_WALLET_WIF}
 
-    ${RESULT1_S01}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${MAINNET_WALLET_WIF}    shell=True
+    ${RESULT1_S01}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
     Should Be Equal As Integers    ${RESULT1_S01.rc} 	0
-    ${RESULT1_S02}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${MAINNET_WALLET_WIF}    shell=True
+    ${RESULT1_S02}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
     Should Be Equal As Integers    ${RESULT1_S02.rc} 	0
 
     #############################################
@@ -53,9 +56,9 @@ NetworkInfo RPC Method
 
     Tick Epoch
 
-    ${RESULT2_S01}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${MAINNET_WALLET_WIF}    shell=True
+    ${RESULT2_S01}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
     Should Be Equal As Integers    ${RESULT2_S01.rc} 	0
-    ${RESULT2_S02}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${MAINNET_WALLET_WIF}    shell=True
+    ${RESULT2_S02}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
     Should Be Equal As Integers    ${RESULT2_S02.rc} 	0
 
     Should Be Equal As Strings    ${RESULT2_S01.stdout}    ${RESULT2_S02.stdout}

@@ -22,34 +22,29 @@ CLI Accounting Balance Test
 
     [Setup]                   Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit   ${DEPOSIT_AMOUNT}
-
-    # Getting balance with WIF
-    ${OUTPUT} =    Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --wallet ${WIF}
-                   ...            shell=True
-    Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
+    ${WALLET}   ${ADDR}     ${_} =   Prepare Wallet And Deposit   ${DEPOSIT_AMOUNT}
 
     # Getting balance with wallet and address
-    ${OUTPUT} =    Run Process And Enter Empty Password
-                    ...    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ADDR} --wallet ${WALLET}
-    Should Be Equal As Numbers   ${OUTPUT}   ${DEPOSIT_AMOUNT}
+    ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ADDR} --wallet ${WALLET} --config ${WALLET_PASS}
+                    ...    shell=True
+    Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     # Getting balance with wallet only
-    ${OUTPUT} =    Run Process And Enter Empty Password
-                    ...    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --wallet ${WALLET}
-    Should Be Equal As Numbers   ${OUTPUT}   ${DEPOSIT_AMOUNT}
+    ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --wallet ${WALLET} --config ${WALLET_PASS}
+                    ...    shell=True
+    Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     # Getting balance with wallet and wrong address
     ${ANOTHER_WALLET}   ${ANOTHER_ADDR}     ${ANOTHER_WIF} =   Init Wallet With Address     ${ASSETS_DIR}
-    ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ANOTHER_ADDR} --wallet ${WALLET}
-                    ...            shell=True
+    ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ANOTHER_ADDR} --wallet ${WALLET} --config ${WALLET_PASS}
+                    ...    shell=True
     Should Be Equal As Strings     ${OUTPUT.stderr}    --address option must be specified and valid
     Should Be Equal As Numbers     ${OUTPUT.rc}        1
 
     # Getting balance with control API
-    ${CONFIG_PATH} =    Write API Config    ${NEOFS_ENDPOINT}   ${WIF}
+    ${CONFIG_PATH} =    Write API Config    ${NEOFS_ENDPOINT}   ${WALLET}
     ${OUTPUT} =         Run Process     ${NEOFS_CLI_EXEC} accounting balance --config ${CONFIG_PATH}
-                        ...             shell=True
+                        ...    shell=True
     Should Be Equal As Numbers          ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     [Teardown]      Teardown    cli_accounting_balance
@@ -58,9 +53,9 @@ CLI Accounting Balance Test
 
 Write API Config
     [Documentation]     Write YAML config for requesting NeoFS API via CLI
-    [Arguments]         ${ENDPOINT}     ${WIF}
+    [Arguments]         ${ENDPOINT}     ${WALLET}
 
     Set Local Variable  ${PATH}     ${ASSETS_DIR}/config.yaml
-    Create File         ${PATH}     rpc-endpoint: ${ENDPOINT}\nwif: ${WIF}
+    Create File         ${PATH}     rpc-endpoint: ${ENDPOINT}\nwallet: ${WALLET}\npassword: ''
 
     [Return]            ${PATH}

@@ -25,38 +25,38 @@ BearerToken Operations Filter UserHeader NotEqual
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${USER_KEY}    ${FILE_S}
+                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${WALLET}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
     ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${USER_KEY}    ${FILE_S}
+                            Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual    ${WALLET}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_filter_userheader_not_equal
 
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
-    [Arguments]    ${USER_KEY}    ${FILE_S}
+    [Arguments]    ${WALLET}    ${FILE_S}
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${WALLET}
                         Prepare eACL Role rules    ${CID}
-    ${S_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${ANOTHER_HEADER}
-    ${S_OID_USER_2} =   Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER}
-    ${D_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER_DEL}
+    ${S_OID_USER} =     Put object         ${WALLET}     ${FILE_S}   ${CID}   user_headers=${ANOTHER_HEADER}
+    ${S_OID_USER_2} =   Put object         ${WALLET}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER}
+    ${D_OID_USER} =     Put object         ${WALLET}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =	Create List        ${S_OID_USER_2}
 
-                        Put object          ${USER_KEY}    ${FILE_S}     ${CID}
-                        Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
-                        Search object       ${USER_KEY}    ${CID}        ${EMPTY}             ${EMPTY}      ${USER_HEADER}     ${S_OBJ_H}
-                        Head object         ${USER_KEY}    ${CID}        ${S_OID_USER}
-                        Get Range           ${USER_KEY}    ${CID}        ${S_OID_USER}        s_get_range    ${EMPTY}      0:256
-                        Delete object       ${USER_KEY}    ${CID}        ${D_OID_USER}
+                        Put object          ${WALLET}    ${FILE_S}     ${CID}
+                        Get object          ${WALLET}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
+                        Search object       ${WALLET}    ${CID}        ${EMPTY}             ${EMPTY}      ${USER_HEADER}     ${S_OBJ_H}
+                        Head object         ${WALLET}    ${CID}        ${S_OID_USER}
+                        Get Range           ${WALLET}    ${CID}        ${S_OID_USER}        s_get_range    ${EMPTY}      0:256
+                        Delete object       ${WALLET}    ${CID}        ${D_OID_USER}
 
-                        Set eACL            ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}
+                        Set eACL            ${WALLET}    ${CID}        ${EACL_DENY_ALL_USER}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -73,46 +73,46 @@ Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
 
     ${eACL_gen}=    Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}      ${rule6}    ${rule7}
 
-    ${EACL_TOKEN} =     Form BearerToken File       ${USER_KEY}    ${CID}   ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File       ${WALLET}    ${CID}   ${eACL_gen}
 
                     Run Keyword And Expect Error        *
-                    ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}    user_headers=${USER_HEADER}
+                    ...  Put object        ${WALLET}    ${FILE_S}     ${CID}    user_headers=${USER_HEADER}
                     Run Keyword And Expect Error        *
-                    ...  Get object        ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
+                    ...  Get object        ${WALLET}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
                     Run Keyword And Expect Error        *
-                    ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}           ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                    ...  Search object     ${WALLET}    ${CID}        ${EMPTY}           ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
                     Run Keyword And Expect Error        *
-                    ...  Head object       ${USER_KEY}    ${CID}        ${S_OID_USER}
+                    ...  Head object       ${WALLET}    ${CID}        ${S_OID_USER}
                     Run Keyword And Expect Error        *
-                    ...  Get Range         ${USER_KEY}    ${CID}        ${S_OID_USER}      s_get_range    ${EMPTY}    0:256
+                    ...  Get Range         ${WALLET}    ${CID}        ${S_OID_USER}      s_get_range    ${EMPTY}    0:256
                     Run Keyword And Expect Error        *
-                    ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EMPTY}
+                    ...  Delete object     ${WALLET}    ${CID}        ${S_OID_USER}      ${EMPTY}
 
                     # Search can not use filter by headers
                     Run Keyword And Expect Error        *
-                    ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}       ${EACL_TOKEN}    ${USER_HEADER}    ${S_OBJ_H}
+                    ...  Search object     ${WALLET}    ${CID}        ${EMPTY}       ${EACL_TOKEN}    ${USER_HEADER}    ${S_OBJ_H}
 
                     # Different behaviour for big and small objects!
-                    # Put object                 ${USER_KEY}    ${FILE_S}     ${CID}             ${EACL_TOKEN}    ${ANOTHER_HEADER}
+                    # Put object                 ${WALLET}    ${FILE_S}     ${CID}             ${EACL_TOKEN}    ${FILE_OTH_HEADER}
                     Run Keyword And Expect Error        *
-                    ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}             ${EACL_TOKEN}    ${EMPTY}
+                    ...  Put object        ${WALLET}    ${FILE_S}     ${CID}             ${EACL_TOKEN}    ${EMPTY}
 
-                    Get object             ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}    local_file_eacl
+                    Get object             ${WALLET}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}    local_file_eacl
                     Run Keyword And Expect Error        *
-                    ...  Get object        ${USER_KEY}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}    local_file_eacl
-
-                    Run Keyword And Expect Error        *
-                    ...  Get Range         ${USER_KEY}    ${CID}        ${S_OID_USER}      s_get_range    ${EACL_TOKEN}    0:256
+                    ...  Get object        ${WALLET}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}    local_file_eacl
 
                     Run Keyword And Expect Error        *
-                    ...  Get Range Hash    ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}    0:256
+                    ...  Get Range         ${WALLET}    ${CID}        ${S_OID_USER}      s_get_range    ${EACL_TOKEN}    0:256
 
-                    Head object            ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}
                     Run Keyword And Expect Error        *
-                    ...  Head object       ${USER_KEY}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}
+                    ...  Get Range Hash    ${WALLET}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}    0:256
+
+                    Head object            ${WALLET}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}
+                    Run Keyword And Expect Error        *
+                    ...  Head object       ${WALLET}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}
 
                     # Delete can not be filtered by UserHeader.
                     Run Keyword And Expect Error        *
-                    ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}
+                    ...  Delete object     ${WALLET}    ${CID}        ${S_OID_USER}      ${EACL_TOKEN}
                     Run Keyword And Expect Error        *
-                    ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}
+                    ...  Delete object     ${WALLET}    ${CID}        ${S_OID_USER_2}    ${EACL_TOKEN}

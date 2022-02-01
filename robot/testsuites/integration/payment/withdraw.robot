@@ -21,7 +21,7 @@ NeoFS Deposit and Withdraw
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
+    ${WALLET}   ${ADDR}    ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
     ${SCRIPT_HASH} =        Get ScriptHash                        ${WIF}
 
     ##########################################################
@@ -62,7 +62,7 @@ NeoFS Deposit and Withdraw
 
     ${NEOFS_BALANCE} =      Get NeoFS Balance                     ${WIF}
     ${EXPECTED_BALANCE} =   Evaluate                              ${DEPOSIT_AMOUNT} - ${WITHDRAW_AMOUNT}
-    Should Be Equal As Numbers                ${NEOFS_BALANCE}    ${EXPECTED_BALANCE}
+    Should Be Equal As numbers    ${NEOFS_BALANCE}    ${EXPECTED_BALANCE}
 
     ${MAINNET_BALANCE_AFTER} =      Get Mainnet Balance                   ${ADDR}
     ${MAINNET_BALANCE_DIFF} =       Evaluate    ${MAINNET_BALANCE_AFTER} - ${MAINNET_BALANCE}

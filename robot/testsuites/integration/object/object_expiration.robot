@@ -21,9 +21,8 @@ NeoFS Simple Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}     ${WIF}
-    ${CID} =    Prepare container       ${WIF}
+    ${WALLET}   ${_}     ${WIF} =   Prepare Wallet And Deposit
+    ${CID} =    Prepare container      ${WIF}    ${WALLET}
 
     ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash    ${FILE}
@@ -36,37 +35,37 @@ NeoFS Simple Object Operations
 
                         # Failed on attempt to create epoch from the past
                         Run Keyword And Expect Error        *
-                        ...  Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_PRE}
+                        ...  Put object    ${WALLET}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_PRE}
 
                         # Put object with different expiration epoch numbers (current, next, and from the distant future)
-    ${OID_CUR} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH}
-    ${OID_NXT} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_NEXT}
-    ${OID_PST} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_POST}
+    ${OID_CUR} =        Put object    ${WALLET}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH}
+    ${OID_NXT} =        Put object    ${WALLET}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_NEXT}
+    ${OID_PST} =        Put object    ${WALLET}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_POST}
 
                         # Check objects for existence
-                        Get object    ${WIF}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read_cur
-                        Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read_nxt
-                        Get object    ${WIF}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
+                        Get object    ${WALLET}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read_cur
+                        Get object    ${WALLET}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read_nxt
+                        Get object    ${WALLET}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
                         # Increment epoch to check that expired objects (OID_CUR) will be removed
                         Tick Epoch
                         # we assume that during this time objects must be deleted
                         Sleep   ${CLEANUP_TIMEOUT}
                         Run Keyword And Expect Error        *
-                        ...  Get object    ${WIF}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read
+                        ...  Get object    ${WALLET}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read
 
                         # Check that correct object with expiration in the future is existed
-                        Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
-                        Get object    ${WIF}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
+                        Get object    ${WALLET}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
+                        Get object    ${WALLET}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
                         # Increment one more epoch to check that expired object (OID_NXT) will be removed
                         Tick Epoch
                         # we assume that during this time objects must be deleted
                         Sleep   ${CLEANUP_TIMEOUT}
                         Run Keyword And Expect Error        *
-                        ...  Get object    ${WIF}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
+                        ...  Get object    ${WALLET}    ${CID}    ${OID_NXT}    ${EMPTY}    file_read
 
                         # Check that correct object with expiration in the distant future is existed
-                        Get object    ${WIF}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
+                        Get object    ${WALLET}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
     [Teardown]          Teardown    object_expiration

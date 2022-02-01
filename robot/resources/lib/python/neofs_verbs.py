@@ -11,7 +11,7 @@ import random
 import uuid
 from functools import reduce
 
-from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP
+from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP, WALLET_PASS
 from cli_helpers import _cmd_run
 import json_transformers
 
@@ -25,7 +25,7 @@ NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
 @keyword('Get object')
-def get_object(wif: str, cid: str, oid: str, bearer_token: str="",
+def get_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     write_object: str="", endpoint: str="", options: str="" ):
     '''
     GET from NeoFS.
@@ -50,8 +50,8 @@ def get_object(wif: str, cid: str, oid: str, bearer_token: str="",
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
 
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wif} '
-        f'object get --cid {cid} --oid {oid} --file {file_path} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
+        f'object get --cid {cid} --oid {oid} --file {file_path} --config {WALLET_PASS} '
         f'{"--bearer " + bearer_token if bearer_token else ""} '
         f'{options}'
     )
@@ -60,7 +60,7 @@ def get_object(wif: str, cid: str, oid: str, bearer_token: str="",
 
 
 @keyword('Get Range Hash')
-def get_range_hash(wif: str, cid: str, oid: str, bearer_token: str,
+def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str,
         range_cut: str, options: str=""):
     '''
     GETRANGEHASH of given Object.
@@ -77,8 +77,8 @@ def get_range_hash(wif: str, cid: str, oid: str, bearer_token: str,
         None
     '''
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object hash --cid {cid} --oid {oid} --range {range_cut} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'object hash --cid {cid} --oid {oid} --range {range_cut} --config {WALLET_PASS} '
         f'{"--bearer " + bearer_token if bearer_token else ""} '
         f'{options}'
     )
@@ -86,7 +86,7 @@ def get_range_hash(wif: str, cid: str, oid: str, bearer_token: str,
 
 
 @keyword('Put object')
-def put_object(wif: str, path: str, cid: str, bearer: str="", user_headers: dict={},
+def put_object(wallet: str, path: str, cid: str, bearer: str="", user_headers: dict={},
     endpoint: str="", options: str="" ):
     '''
     PUT of given file.
@@ -105,8 +105,8 @@ def put_object(wif: str, path: str, cid: str, bearer: str="", user_headers: dict
     if not endpoint:
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wif} '
-        f'object put --file {path} --cid {cid} {options} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
+        f'object put --file {path} --cid {cid} {options} --config {WALLET_PASS} '
         f'{"--bearer " + bearer if bearer else ""} '
         f'{"--attributes " + _dict_to_attrs(user_headers) if user_headers else ""}'
     )
@@ -118,7 +118,7 @@ def put_object(wif: str, path: str, cid: str, bearer: str="", user_headers: dict
 
 
 @keyword('Delete object')
-def delete_object(wif: str, cid: str, oid: str, bearer: str="", options: str=""):
+def delete_object(wallet: str, cid: str, oid: str, bearer: str="", options: str=""):
     '''
     DELETE an Object.
 
@@ -132,8 +132,8 @@ def delete_object(wif: str, cid: str, oid: str, bearer: str="", options: str="")
         (str): Tombstone ID
     '''
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object delete --cid {cid} --oid {oid} {options} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'object delete --cid {cid} --oid {oid} {options} --config {WALLET_PASS} '
         f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
@@ -143,7 +143,7 @@ def delete_object(wif: str, cid: str, oid: str, bearer: str="", options: str="")
 
 
 @keyword('Get Range')
-def get_range(wif: str, cid: str, oid: str, range_file: str, bearer: str,
+def get_range(wallet: str, cid: str, oid: str, range_file: str, bearer: str,
         range_cut: str, options:str=""):
     '''
     GETRANGE an Object.
@@ -160,8 +160,8 @@ def get_range(wif: str, cid: str, oid: str, range_file: str, bearer: str,
         None
     '''
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object range --cid {cid} --oid {oid} --range {range_cut} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'object range --cid {cid} --oid {oid} --range {range_cut} --config {WALLET_PASS} '
         f'--file {ASSETS_DIR}/{range_file} {options} '
         f'{"--bearer " + bearer if bearer else ""} '
     )
@@ -169,7 +169,7 @@ def get_range(wif: str, cid: str, oid: str, range_file: str, bearer: str,
 
 
 @keyword('Search object')
-def search_object(wif: str, cid: str, keys: str="", bearer: str="", filters: dict={},
+def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: dict={},
         expected_objects_list=[], options:str=""):
     '''
     GETRANGE an Object.
@@ -193,8 +193,8 @@ def search_object(wif: str, cid: str, keys: str="", bearer: str="", filters: dic
         filters_result += ','.join(map(lambda i: f"'{i} EQ {filters[i]}'", filters))
 
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object search {keys} --cid {cid} {filters_result} {options} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'object search {keys} --cid {cid} {filters_result} {options} --config {WALLET_PASS} '
         f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
@@ -213,7 +213,7 @@ def search_object(wif: str, cid: str, keys: str="", bearer: str="", filters: dic
 
 
 @keyword('Head object')
-def head_object(wif: str, cid: str, oid: str, bearer_token: str="",
+def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     options:str="", endpoint: str="", json_output: bool = True,
     is_raw: bool = False, is_direct: bool = False):
     '''
@@ -240,7 +240,7 @@ def head_object(wif: str, cid: str, oid: str, bearer_token: str="",
     '''
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint if endpoint else NEOFS_ENDPOINT} '
-        f'--wallet {wif} '
+        f'--wallet {wallet} --config {WALLET_PASS} '
         f'object head --cid {cid} --oid {oid} {options} '
         f'{"--bearer " + bearer_token if bearer_token else ""} '
         f'{"--json" if json_output else ""} '

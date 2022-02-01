@@ -20,16 +20,16 @@ Basic ACL Operations for Public Container
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Public Container    Simple    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+                            Check Public Container    Simple    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
-    ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
+    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Public Container    Complex    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+                            Check Public Container    Complex    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_public_container_storagegroup
 
@@ -37,36 +37,39 @@ Basic ACL Operations for Public Container
 *** Keywords ***
 
 Check Public Container
-    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
+    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
     # Storage group Operations (Put, List, Get, Delete)
                             Log    Storage group Operations for each Role keys
 
     # Put target object to use in storage groups
-    ${S_OID} =              Put object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}
+    ${S_OID} =              Put object    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}
 
-    @{ROLES_KEYS_PASS} =    Create List    ${USER_KEY}    ${OTHER_KEY}
-    @{ROLES_KEYS_SYS} =     Create List    ${NEOFS_IR_WIF}    ${NEOFS_SN_WIF}
-
-    FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_PASS}
-        ${SG_OID_USERS} =    Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_USERS}
+    ${WALLET_SN}    ${ADDR_SN} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
+    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
+    
+    @{ROLES_WALLETS_PASS} =    Create List    ${USER_WALLET}    ${WALLET_OTH}
+    @{ROLES_WALLETS_SYS} =     Create List    ${WALLET_IR}    ${WALLET_SN}
+    
+    FOR	${ROLE_WALLET}	IN	@{ROLES_WALLETS_PASS}
+        ${SG_OID_USERS} =    Put Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_USERS}
         @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                            ...     Get Object Parts By Link Object    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...     Get Object Parts By Link Object    ${ROLE_WALLET}    ${PUBLIC_CID}   ${S_OID}
                             ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
-                            Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}    ${EMPTY}
+                            Get Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_USERS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Delete Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_USERS}    ${EMPTY}
                             Tick Epoch
     END
-    FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_SYS}
-        ${SG_OID_SYS} =     Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_SYS}
+    FOR	${ROLE_WALLET}	IN	@{ROLES_WALLETS_SYS}
+        ${SG_OID_SYS} =     Put Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
+                            List Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_SYS}
         @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                            ...     Get Object Parts By Link Object    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...     Get Object Parts By Link Object    ${ROLE_WALLET}    ${PUBLIC_CID}   ${S_OID}
                             ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
-                            Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                            Get Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                             Run Keyword And Expect Error        *
-                            ...  Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
-                            Delete Storagegroup    ${USER_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
+                            ...  Delete Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
+                            Delete Storagegroup    ${USER_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
                             Tick Epoch
     END

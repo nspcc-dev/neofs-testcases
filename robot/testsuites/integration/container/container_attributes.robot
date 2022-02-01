@@ -26,33 +26,32 @@ Duplicated Container Attributes
 
     [Setup]                     Setup
 
-    ${_}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}         ${USER_KEY}
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
     ######################################################
     # Checking that container attributes cannot duplicate
     ######################################################
 
     Run Keyword And Expect Error    *
-    ...    Create container        ${USER_KEY}    ${EMPTY}    ${POLICY}   ${ATTR_TIME}
+    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}   ${ATTR_TIME}
     Run Keyword And Expect Error    *
-    ...    Create container        ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_DUPLICATE}
+    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_DUPLICATE}
 
     ######################################################
     # Checking that container cannot have empty attribute
     ######################################################
 
     Run Keyword And Expect Error    *
-    ...    Create container        ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_NONE}
+    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_NONE}
 
     #####################################################
     # Checking a successful step with a single attribute
     #####################################################
 
-    ${CID} =                Create container    ${USER_KEY}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
+    ${CID} =                Create container    ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}     ${CID}
-    ${ATTRIBUTES} =         Get container attributes    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
+                            ...     Container Existing     ${WALLET}     ${CID}
+    ${ATTRIBUTES} =         Get container attributes    ${WALLET}    ${CID}    ${EMPTY}    json_output=True
     &{ATTRIBUTES_DICT} =    Decode Container Attributes Json    ${ATTRIBUTES}
                             List Should Contain Value
                                 ...     ${ATTRIBUTES_DICT}[Attributes]
