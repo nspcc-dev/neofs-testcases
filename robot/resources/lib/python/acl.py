@@ -38,7 +38,7 @@ class Role(AutoName):
 @keyword('Get eACL')
 def get_eacl(wif: str, cid: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {wif} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
         f'container get-eacl --cid {cid}'
     )
     logger.info(f"cmd: {cmd}")
@@ -56,7 +56,7 @@ def get_eacl(wif: str, cid: str):
 @keyword('Set eACL')
 def set_eacl(wif: str, cid: str, eacl_table_path: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {wif} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --await'
     )
     logger.info(f"cmd: {cmd}")
@@ -149,7 +149,7 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
 def sign_bearer_token(wif: str, eacl_rules_file: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} '
-        f'--to {eacl_rules_file} --wif {wif} --json'
+        f'--to {eacl_rules_file} --wallet {wif} --json'
     )
     logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)

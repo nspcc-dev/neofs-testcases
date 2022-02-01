@@ -127,7 +127,7 @@ def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str
         bearer_token = f"--bearer {bearer}"
 
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
         f'--file {ASSETS_DIR}/{range_file} {options}'
     )
@@ -148,7 +148,7 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
         session = f"--session {session}"
 
     createContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --await'
     )
     logger.info(f"Cmd: {createContainerCmd}")
@@ -161,7 +161,7 @@ def create_container(private_key: str, basic_acl:str, rule:str, user_headers: st
 @keyword('Container List')
 def container_list(private_key: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container list'
     )
     logger.info(f"Cmd: {Cmd}")
@@ -175,7 +175,7 @@ def container_list(private_key: str):
 @keyword('Container Existing')
 def container_existing(private_key: str, cid: str):
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container list'
     )
     logger.info(f"Cmd: {Cmd}")
@@ -199,7 +199,7 @@ def search_object(private_key: str, cid: str, keys: str, bearer: str, filters: s
             filters_result += f"--filters '{filter_item}' "
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -453,7 +453,7 @@ def _get_raw_split_information(header):
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object head --cid {cid} --oid {oid_ts} --json'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -512,7 +512,7 @@ def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
         endpoint = NEOFS_ENDPOINT
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} object '
         f'head --cid {cid} --oid {oid} {bearer_token} {options} {"--json" if json_output else ""}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -534,7 +534,7 @@ def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_
         endpoint = NEOFS_ENDPOINT
 
     container_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} '
         f'--cid {cid} container get {"--json" if json_output else ""}'
     )
     logger.info(f"Cmd: {container_cmd}")
@@ -690,7 +690,7 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
         bearer_token = f"--bearer {bearer}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object delete --cid {cid} --oid {oid} {bearer_token} {options}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -705,7 +705,7 @@ def delete_object(private_key: str, cid: str, oid: str, bearer: str, options: st
 def delete_container(cid: str, private_key: str):
 
     deleteContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'container delete --cid {cid}'
     )
     logger.info(f"Cmd: {deleteContainerCmd}")
@@ -748,7 +748,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
         bearer = f"--bearer {bearer}"
 
     putobject_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} object '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} object '
         f'put --file {path} --cid {cid} {bearer} {user_headers} {options}'
     )
     logger.info(f"Cmd: {putobject_cmd}")
@@ -850,7 +850,7 @@ def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'object hash --cid {cid} --oid {oid} --range {range_cut} '
         f'{bearer_token} {options}'
     )
@@ -873,7 +873,7 @@ def get_object(private_key: str, cid: str, oid: str, bearer_token: str,
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} '
         f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
         f'{options}'
     )
@@ -892,7 +892,7 @@ def put_storagegroup(private_key: str, cid: str, bearer_token: str="", *oid_list
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
         f'put --cid {cid} --members {cmd_oid_line} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -909,7 +909,7 @@ def list_storagegroup(private_key: str, cid: str, bearer_token: str="", *expecte
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
         f'storagegroup list --cid {cid} {bearer_token}'
     )
 
@@ -932,7 +932,7 @@ def get_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str, ex
     if bearer_token:
         bearer_token = f"--bearer {bearer_token}"
 
-    object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
+    object_cmd = f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup get --cid {cid} --id {oid} {bearer_token}'
     logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
 
@@ -958,7 +958,7 @@ def delete_storagegroup(private_key: str, cid: str, oid: str, bearer_token: str=
         bearer_token = f"--bearer {bearer_token}"
 
     object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wif {private_key} storagegroup '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} storagegroup '
         f'delete --cid {cid} --id {oid} {bearer_token}'
     )
     logger.info(f"Cmd: {object_cmd}")
@@ -1091,7 +1091,7 @@ def _search_object(node:str, private_key: str, cid:str, oid: str):
     if oid:
         oid_cmd = "--oid %s" % oid
     Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wif {private_key} --ttl 1 '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {private_key} --ttl 1 '
         f'object search --root --cid {cid} {oid_cmd}'
     )
 
