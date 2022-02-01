@@ -11,12 +11,12 @@ ${CONTAINER_WAIT_INTERVAL} =    1 min
 *** Keywords ***
 
 Prepare container
-    [Arguments]     ${WIF}
+    [Arguments]     ${WIF}    ${WALLET}
     ${NEOFS_BALANCE} =  Get NeoFS Balance       ${WIF}
 
-    ${CID} =            Create container          ${WIF}   ${EMPTY}     ${PLACEMENT_RULE}
+    ${CID} =            Create container          ${WALLET}   ${EMPTY}     ${PLACEMENT_RULE}
                         Wait Until Keyword Succeeds        ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                        ...     Container Existing         ${WIF}   ${CID}
+                        ...     Container Existing         ${WALLET}   ${CID}
 
     ${NEW_NEOFS_BALANCE} =  Get NeoFS Balance     ${WIF}
     Should Be True      ${NEW_NEOFS_BALANCE} < ${NEOFS_BALANCE}

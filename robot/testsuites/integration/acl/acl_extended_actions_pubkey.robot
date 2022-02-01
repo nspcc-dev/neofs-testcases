@@ -27,16 +27,16 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-                            Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+                            Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
                             Log    Check extended ACL with complex object
-                            Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
+                            Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
 
     [Teardown]              Teardown    acl_extended_actions_pubkey
@@ -45,47 +45,49 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny All Other and Allow All Pubkey
-    [Arguments]    ${USER_KEY}    ${FILE_S}    ${OTHER_KEY}
+    [Arguments]    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
 
-    ${CID} =                Create Container Public    ${USER_KEY}
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
+    ${CID} =                Create Container Public    ${USER_WALLET}
+    ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}
+    ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
-                            Put object                  ${EACL_KEY}    ${FILE_S}     ${CID}       user_headers=${ANOTHER_HEADER}
-                            Get object                  ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object               ${EACL_KEY}    ${CID}        ${EMPTY}                 ${EMPTY}            ${USER_HEADER}        ${S_OBJ_H}
-                            Head object                 ${EACL_KEY}    ${CID}        ${S_OID_USER}
-                            Get Range                   ${EACL_KEY}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
-                            Get Range Hash              ${EACL_KEY}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
-                            Delete object               ${EACL_KEY}    ${CID}        ${D_OID_USER}
+    ${WALLET_EACL}    ${_} =    Prepare Wallet with WIF And Deposit    ${EACL_KEY}
 
-                            Set eACL                    ${USER_KEY}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}
+                            Put object                  ${WALLET_EACL}    ${FILE_S}     ${CID}       user_headers=${ANOTHER_HEADER}
+                            Get object                  ${WALLET_EACL}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            Search object               ${WALLET_EACL}    ${CID}        ${EMPTY}                 ${EMPTY}            ${USER_HEADER}        ${S_OBJ_H}
+                            Head object                 ${WALLET_EACL}    ${CID}        ${S_OID_USER}
+                            Get Range                   ${WALLET_EACL}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
+                            Get Range Hash              ${WALLET_EACL}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+                            Delete object               ${WALLET_EACL}    ${CID}        ${D_OID_USER}
+
+                            Set eACL                    ${USER_WALLET}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-                            Get eACL                            ${USER_KEY}    ${CID}
+                            Get eACL                            ${USER_WALLET}    ${CID}
 
                             Run Keyword And Expect Error        *
-                            ...  Put object                          ${OTHER_KEY}    ${FILE_S}     ${CID}    user_headers=${USER_HEADER}
+                            ...  Put object                          ${WALLET_OTH}    ${FILE_S}     ${CID}    user_headers=${USER_HEADER}
                             Run Keyword And Expect Error        *
-                            ...  Get object                          ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}            local_file_eacl
+                            ...  Get object                          ${WALLET_OTH}    ${CID}        ${S_OID_USER}     ${EMPTY}            local_file_eacl
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${OTHER_KEY}    ${CID}        ${EMPTY}          ${EMPTY}            ${USER_HEADER}      ${S_OBJ_H}
+                            ...  Search object                       ${WALLET_OTH}    ${CID}        ${EMPTY}          ${EMPTY}            ${USER_HEADER}      ${S_OBJ_H}
                             Run Keyword And Expect Error        *
-                            ...  Head object                         ${OTHER_KEY}    ${CID}        ${S_OID_USER}
+                            ...  Head object                         ${WALLET_OTH}    ${CID}        ${S_OID_USER}
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${OTHER_KEY}    ${CID}        ${S_OID_USER}     s_get_range     ${EMPTY}            0:256
+                            ...  Get Range                           ${WALLET_OTH}    ${CID}        ${S_OID_USER}     s_get_range     ${EMPTY}            0:256
                             Run Keyword And Expect Error        *
-                            ...  Get Range Hash                      ${OTHER_KEY}    ${CID}        ${S_OID_USER}     ${EMPTY}        0:256
+                            ...  Get Range Hash                      ${WALLET_OTH}    ${CID}        ${S_OID_USER}     ${EMPTY}        0:256
                             Run Keyword And Expect Error        *
-                            ...  Delete object                       ${OTHER_KEY}    ${CID}        ${S_OID_USER}
+                            ...  Delete object                       ${WALLET_OTH}    ${CID}        ${S_OID_USER}
 
-                            Put object              ${EACL_KEY}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_HEADER}
-                            Get object              ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
-                            Search object           ${EACL_KEY}    ${CID}        ${EMPTY}                ${EMPTY}            ${USER_HEADER}     ${S_OBJ_H}
-                            Head object             ${EACL_KEY}    ${CID}        ${S_OID_USER}
-                            Get Range               ${EACL_KEY}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
-                            Get Range Hash          ${EACL_KEY}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
-                            Delete object           ${EACL_KEY}    ${CID}        ${S_OID_USER}
+                            Put object              ${WALLET_EACL}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_HEADER}
+                            Get object              ${WALLET_EACL}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
+                            Search object           ${WALLET_EACL}    ${CID}        ${EMPTY}                ${EMPTY}            ${USER_HEADER}     ${S_OBJ_H}
+                            Head object             ${WALLET_EACL}    ${CID}        ${S_OID_USER}
+                            Get Range               ${WALLET_EACL}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
+                            Get Range Hash          ${WALLET_EACL}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
+                            Delete object           ${WALLET_EACL}    ${CID}        ${S_OID_USER}

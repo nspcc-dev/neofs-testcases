@@ -19,17 +19,16 @@ Basic ACL Operations for Read-Only Container
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
+    ${READONLY_CID} =       Create Read-Only Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Read-Only Container    Simple    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
+                            Check Read-Only Container    Simple    ${WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
 
-    ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
+    ${READONLY_CID} =       Create Read-Only Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Read-Only Container    Complex    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
-
+                            Check Read-Only Container    Complex    ${WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_readonly_container_storagegroup
 
@@ -38,39 +37,41 @@ Basic ACL Operations for Read-Only Container
 
 
 Check Read-Only Container
-    [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
+    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
+
+    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
     # Put target object to use in storage groups
-    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}
+    ${S_OID_USER} =     Put object    ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}
 
     # Storage group Operations (Put, List, Get, Delete) for Read-only container
 
-    ${SG_OID_INV} =     Put Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-    ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${USER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
+    ${SG_OID_INV} =     Put Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+    ${SG_OID_1} =       Put Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
+                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
                         ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Delete Storagegroup    ${USER_KEY}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}
+                        Get Storagegroup    ${USER_WALLET}    ${READONLY_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Delete Storagegroup    ${USER_WALLET}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}
 
 
                         Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${OTHER_KEY}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
+                        ...  Put Storagegroup    ${WALLET_OTH}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${WALLET_OTH}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
+                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
                         ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${WALLET_OTH}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${OTHER_KEY}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
+                        ...  Delete Storagegroup    ${WALLET_OTH}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
 
 
-    ${SG_OID_IR} =      Put Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}    ${SG_OID_IR}
+    ${SG_OID_IR} =      Put Storagegroup    ${WALLET_IR}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
+                        List Storagegroup    ${WALLET_IR}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}    ${SG_OID_IR}
     @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${READONLY_CID}   ${S_OID_USER}
+                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
                         ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
+                        Get Storagegroup    ${WALLET_IR}    ${READONLY_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
+                        ...  Delete Storagegroup    ${WALLET_IR}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}

@@ -29,32 +29,32 @@ Creation Epoch Object Filter for Extended ACL
     Log    Check eACL creationEpoch Filter with MatchType String Not Equal
     Check $Object:creationEpoch Filter with MatchType String Not Equal    $Object:creationEpoch
 
+    [Teardown]          Teardown    creation_epoch_filter
+
 *** Keywords ***
 
 Check $Object:creationEpoch Filter with MatchType String Not Equal
     [Arguments]    ${FILTER}
 
-    ${_}   ${_}    ${USER_KEY} =    Prepare Wallet And Deposit
-    ${_}   ${_}    ${OTHER_KEY} =    Prepare Wallet And Deposit
+    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${WALLET}
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID} =          Put Object    ${USER_KEY}    ${FILE_S}    ${CID}
+    ${S_OID} =          Put Object    ${WALLET}    ${FILE_S}    ${CID}
                         Tick Epoch
-    ${S_OID_NEW} =      Put Object    ${USER_KEY}    ${FILE_S}    ${CID}
+    ${S_OID_NEW} =      Put Object    ${WALLET}    ${FILE_S}    ${CID}
 
-                        Get Object    ${USER_KEY}    ${CID}    ${S_OID_NEW}    ${EMPTY}    local_file_eacl
+                        Get Object    ${WALLET}    ${CID}    ${S_OID_NEW}    ${EMPTY}    local_file_eacl
 
-    &{HEADER_DICT} =    Head Object    ${USER_KEY}    ${CID}    ${S_OID_NEW}
+    &{HEADER_DICT} =    Head Object    ${WALLET}    ${CID}    ${S_OID_NEW}
     ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    DENY    OTHERS
-                        Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
+                        Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
 
     Run Keyword And Expect Error   ${EACL_ERR_MSG}
-    ...  Get object    ${OTHER_KEY}    ${CID}    ${S_OID}    ${EMPTY}    ${OBJECT_PATH}
-    Get object    ${OTHER_KEY}    ${CID}    ${S_OID_NEW}     ${EMPTY}    ${OBJECT_PATH}
+    ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID}    ${EMPTY}    ${OBJECT_PATH}
+    Get object    ${WALLET_OTH}    ${CID}    ${S_OID_NEW}     ${EMPTY}    ${OBJECT_PATH}
     Run Keyword And Expect error    ${EACL_ERR_MSG}
-    ...  Head object    ${OTHER_KEY}    ${CID}    ${S_OID}
-    Head object    ${OTHER_KEY}    ${CID}    ${S_OID_NEW}
-
-    [Teardown]          Teardown    creation_epoch_filter
+    ...  Head object    ${WALLET_OTH}    ${CID}    ${S_OID}
+    Head object    ${WALLET_OTH}    ${CID}    ${S_OID_NEW}

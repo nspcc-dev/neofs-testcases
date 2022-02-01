@@ -25,16 +25,16 @@ BearerToken Operations for Сompound Operations
 
     [Setup]             Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                         Log    Check Bearer token with simple object
     ${FILE_S} =         Generate file    ${SIMPLE_OBJ_SIZE}
-                        Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
+                        Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
                         Log    Check Bearer token with complex object
     ${FILE_S} =         Generate file    ${COMPLEX_OBJ_SIZE}
-                        Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
+                        Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
     [Teardown]          Teardown    acl_bearer_compound
 
@@ -42,30 +42,33 @@ BearerToken Operations for Сompound Operations
 *** Keywords ***
 
 Check Сompound Operations
-    [Arguments]    ${USER_KEY}    ${OTHER_KEY}    ${FILE_S}
-                        Check Bearer Сompound Get    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_KEY}
-                        Check Bearer Сompound Get    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_KEY}
-                        Check Bearer Сompound Get    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}     ${USER_KEY}
+    [Arguments]         ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
 
-                        Check Bearer Сompound Delete    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}     ${USER_KEY}
-                        Check Bearer Сompound Delete    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_KEY}
-                        Check Bearer Сompound Delete    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_KEY}
+    ${WALLET_SYS}    ${ADDR_SYS} =     Prepare Wallet with WIF And Deposit    ${SYSTEM_KEY}
 
-                        Check Bearer Сompound Get Range Hash    ${OTHER_KEY}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_KEY}
-                        Check Bearer Сompound Get Range Hash    ${USER_KEY}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}    ${USER_KEY}
-                        Check Bearer Сompound Get Range Hash    ${SYSTEM_KEY}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_KEY}
+                        Check Bearer Сompound Get    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Get    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Get    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
+
+                        Check Bearer Сompound Delete    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Delete    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Delete    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
+
+                        Check Bearer Сompound Get Range Hash    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}   
+                        Check Bearer Сompound Get Range Hash    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
+                        Check Bearer Сompound Get Range Hash    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
 Check Bearer Сompound Get
-    [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${USER_WALLET}
                         Prepare eACL Role rules    ${CID}
-    ${S_OID_USER} =     Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
+    ${S_OID_USER} =     Put object                 ${USER_WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     @{S_OBJ_H} =        Create List	           ${S_OID_USER}
 
-    ${S_OID_USER} =     Put object     ${USER_KEY}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
-                        Put object     ${KEY}         ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}
-                        Get object     ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Set eACL       ${USER_KEY}    ${CID}       ${DENY_EACL}
+    ${S_OID_USER} =     Put object     ${USER_WALLET}     ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
+                        Put object     ${WALLET}    ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}
+                        Get object     ${WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Set eACL       ${USER_WALLET}     ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -74,37 +77,37 @@ Check Bearer Сompound Get
     ${rule2}=           Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=${DENY_GROUP}
     ${rule3}=           Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=${DENY_GROUP}
     ${eACL_gen}=        Create List    ${rule1}    ${rule2}    ${rule3}
-    ${EACL_TOKEN} =     Form BearerToken File      ${USER_KEY}    ${CID}    ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File      ${USER_WALLET}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Head object     ${KEY}    ${CID}    ${S_OID_USER}    bearer_token=${EACL_TOKEN}
+                        ...  Head object     ${WALLET}    ${CID}    ${S_OID_USER}    bearer_token=${EACL_TOKEN}
 
-                        Get object           ${KEY}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      local_file_eacl
-                        IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                        Get Object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      local_file_eacl
+                        IF    "${WALLET}" == "${WALLET_SYS}"
                             Run Keyword And Expect Error    *
-                            ...    Get Range            ${KEY}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
+                            ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
                         ELSE
-                            Get Range            ${KEY}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
+                            Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
                         END
-                        Get Range Hash       ${KEY}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      0:256
+                        Get Range Hash    ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      0:256
 
 
 Check Bearer Сompound Delete
-    [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${USER_WALLET}
                         Prepare eACL Role rules    ${CID}
-    ${S_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-    ${D_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}
-                        Put object         ${KEY}         ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                        IF    "${KEY}" == "${NEOFS_IR_WIF}"
+    ${S_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+    ${D_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}
+                        Put object         ${WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                        IF    "${WALLET}" == "${WALLET_SYS}"
                             Run Keyword And Expect Error    *
-                            ...    Delete object                   ${KEY}    ${CID}       ${D_OID_USER}
+                            ...    Delete object    ${WALLET}    ${CID}       ${D_OID_USER}    ${EMPTY}
                         ELSE
-                            Delete object                   ${KEY}    ${CID}       ${D_OID_USER}
+                            Delete object    ${WALLET}    ${CID}       ${D_OID_USER}    ${EMPTY}
                         END
 
-                        Set eACL           ${USER_KEY}    ${CID}       ${DENY_EACL}
+                        Set eACL    ${USER_WALLET}    ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -113,27 +116,27 @@ Check Bearer Сompound Delete
     ${rule2} =          Create Dictionary    Operation=PUT             Access=DENY     Role=${DENY_GROUP}
     ${rule3} =          Create Dictionary    Operation=HEAD            Access=DENY     Role=${DENY_GROUP}
     ${eACL_gen} =       Create List    ${rule1}    ${rule2}    ${rule3}
-    ${EACL_TOKEN} =     Form BearerToken File           ${USER_KEY}    ${CID}    ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File           ${USER_WALLET}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Head object   ${KEY}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}
+                        ...  Head object   ${WALLET}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}
                         Run Keyword And Expect Error    *
-                        ...  Put object    ${KEY}    ${FILE_S}    ${CID}    bearer=${EACL_TOKEN}    user_headers=${ANOTHER_HEADER}
+                        ...  Put object    ${WALLET}    ${FILE_S}    ${CID}   bearer=${EACL_TOKEN}    user_headers=${ANOTHER_HEADER}
 
-                        Delete object      ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer=${EACL_TOKEN}
+                        Delete object      ${USER_WALLET}    ${CID}       ${S_OID_USER}    bearer=${EACL_TOKEN}
 
 
 
 Check Bearer Сompound Get Range Hash
-    [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${USER_WALLET}
                         Prepare eACL Role rules    ${CID}
 
-    ${S_OID_USER} =     Put object             ${USER_KEY}         ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-                        Put object             ${KEY}              ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                        Get Range Hash         ${NEOFS_SN_WIF}     ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
-                        Set eACL           ${USER_KEY}         ${CID}       ${DENY_EACL}
+    ${S_OID_USER} =     Put object             ${USER_WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+                        Put object             ${WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                        Get Range hash         ${WALLET_SYS}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
+                        Set eACL           ${USER_WALLET}         ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -142,11 +145,11 @@ Check Bearer Сompound Get Range Hash
     ${rule2} =          Create Dictionary    Operation=GETRANGE        Access=DENY     Role=${DENY_GROUP}
     ${rule3} =          Create Dictionary    Operation=GET             Access=DENY     Role=${DENY_GROUP}
     ${eACL_gen} =       Create List    ${rule1}    ${rule2}    ${rule3}
-    ${EACL_TOKEN} =     Form BearerToken File      ${USER_KEY}    ${CID}    ${eACL_gen}
+    ${EACL_TOKEN} =     Form BearerToken File      ${USER_WALLET}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Get Range      ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EACL_TOKEN}    0:256
+                        ...  Get Range      ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EACL_TOKEN}    0:256
                         Run Keyword And Expect Error    *
-                        ...  Get object     ${KEY}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl
+                        ...  Get object     ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl
 
-                        Get Range Hash      ${KEY}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}    0:256
+                        Get Range Hash      ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}    0:256

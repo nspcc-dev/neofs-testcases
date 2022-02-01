@@ -8,8 +8,8 @@ Library     neofs.py
 Library     s3_gate.py
 Library     contract_keywords.py
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
+Resource    setup_teardown.robot
 
 *** Variables ***
 @{INCLUDE_SVC} =        s3_gate     coredns
@@ -23,7 +23,7 @@ Objects in NeoFS S3 Gateway
     [Setup]                     Setup
                                 Make Up    ${INCLUDE_SVC}
 
-    ${WALLET}   ${_}    ${WIF} =    Prepare Wallet And Deposit
+    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
 
     ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
     ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
@@ -35,7 +35,7 @@ Objects in NeoFS S3 Gateway
     ...  ${SEC_ACCESS_KEY}
     ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${WALLET}
 
-    ${CONTEINERS_LIST} =        Container List               ${WIF}
+    ${CONTEINERS_LIST} =        Container List               ${WALLET}
                                 List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
 
     ${S3_CLIENT} =              Config S3 client    ${ACCESS_KEY_ID}    ${SEC_ACCESS_KEY}

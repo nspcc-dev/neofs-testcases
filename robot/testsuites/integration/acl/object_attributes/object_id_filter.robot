@@ -48,16 +48,16 @@ Object ID Object Filter for Extended ACL
 Check eACL Filters with MatchType String Equal with two contradicting filters
     [Arguments]    ${FILTER}
 
-    ${_}   ${_}     ${USER_KEY} =    Prepare Wallet And Deposit  
-    ${_}   ${_}     ${OTHER_KEY} =    Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${_}     ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${USER_KEY} 
+    ${CID} =            Create Container Public    ${WALLET} 
     ${FILE_S_USER}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_USER} =     Put Object    ${USER_KEY}     ${FILE_S_USER}    ${CID}    ${EMPTY}
-    &{HEADER_DICT_USER} =    Object Header Decoded    ${USER_KEY}    ${CID}    ${S_OID_USER}
+    ${S_OID_USER} =     Put Object    ${WALLET}     ${FILE_S_USER}    ${CID}    ${EMPTY}
+    &{HEADER_DICT_USER} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
    
-                        Get Object    ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        Get Object    ${WALLET_OTH}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
 
     ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
     ${filters} =        Set Variable    obj:${FILTER}=${filter_value}
@@ -67,24 +67,24 @@ Check eACL Filters with MatchType String Equal with two contradicting filters
     ${eACL_gen} =       Create List    ${rule}    ${contradicting_rule}
     ${EACL_CUSTOM} =    Create eACL    ${CID}      ${eACL_gen}
 
-                        Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
-                        Get object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
+                        Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
 
 Check eACL Filters, two matchTypes
     [Arguments]    ${FILTER}
 
-    ${_}   ${_}    ${USER_KEY} =    Prepare Wallet And Deposit  
-    ${_}   ${_}    ${OTHER_KEY} =    Prepare Wallet And Deposit
+    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit  
+    ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${USER_KEY}
+    ${CID} =            Create Container Public    ${WALLET}
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_USER} =     Put Object    ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}
-    ${S_OID_OTHER} =    Put Object    ${OTHER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}
-    &{HEADER_DICT_USER} =    Object Header Decoded    ${USER_KEY}    ${CID}    ${S_OID_USER}
+    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}    ${EMPTY}
+    ${S_OID_OTHER} =    Put Object    ${WALLET_OTH}    ${FILE_S}    ${CID}    ${EMPTY}
+    &{HEADER_DICT_USER} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
 
-                        Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${OBJECT_PATH}
-                        Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
+                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${OBJECT_PATH}
+                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
 
     ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
     ${noneq_filters} =    Set Variable    obj:${FILTER}!=${filter_value}
@@ -94,8 +94,8 @@ Check eACL Filters, two matchTypes
     ${eACL_gen} =       Create List    ${rule_noneq_filter}    ${rule_eq_filter}
     ${EACL_CUSTOM} =    Create eACL    ${CID}      ${eACL_gen}
 
-                        Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
+                        Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
                         Run Keyword And Expect Error    *
-                        ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
+                        ...  Get object      ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
                         Run Keyword And Expect Error    *
-                        ...  Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        ...  Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}

@@ -38,18 +38,18 @@ NeoFS Object Replication
 Check Replication
     [Arguments]    ${ACL}
 
-    ${_}   ${_}     ${WIF} =    Prepare Wallet And Deposit
-    ${CID} =                Create Container    ${WIF}    ${ACL}   ${PLACEMENT_RULE}
+    ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
+    ${CID} =                Create Container    ${WALLET}    ${ACL}   ${PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing    ${WIF}    ${CID}
+                            ...     Container Existing    ${WALLET}    ${CID}
 
     ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash    ${FILE}
 
-    ${S_OID} =              Put Object    ${WIF}    ${FILE}    ${CID}
-                            Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
+    ${S_OID} =              Put Object    ${WALLET}    ${FILE}    ${CID}
+                            Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
 
-    @{NODES_OBJ} =          Get nodes with Object    ${WIF}    ${CID}    ${S_OID}
+    @{NODES_OBJ} =          Get nodes with Object    ${WALLET}    ${CID}    ${S_OID}
     ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
 
     @{NODES_OBJ_STOPPED} =  Stop nodes          1              @{NODES_OBJ}
@@ -59,7 +59,7 @@ Check Replication
     # We expect that during two epochs the missed copy will be replicated.
     FOR    ${i}    IN RANGE   2
         ${PASSED} =     Run Keyword And Return Status
-                        ...     Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}
+                        ...     Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}
                         ...     ${CID}    ${S_OID}    ${EMPTY}    ${NETMAP}
         Exit For Loop If    ${PASSED}
         Tick Epoch
@@ -74,7 +74,7 @@ Check Replication
     # We have 2 or 3 copies. Expected behaviour: during two epochs potential 3rd copy should be removed.
     FOR    ${i}    IN RANGE   2
         ${PASSED} =     Run Keyword And Return Status
-                        ...     Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
+                        ...     Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
         Exit For Loop If    ${PASSED}
         Tick Epoch
         Sleep               ${CHECK_INTERVAL}

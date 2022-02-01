@@ -45,14 +45,6 @@ def get_container_logs(testcase_name: str) -> None:
             os.remove(file_name)
     tar.close()
 
-@keyword('WIF to Binary')
-def wif_to_binary(wif: str) -> str:
-    priv_key = wallet.Account.private_key_from_wif(wif)
-    path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
-    with open(path, "wb") as out:
-        out.write(priv_key)
-    return path
-
 @keyword('Make Up')
 def make_up(services: list=[], config_dict: dict={}):
     test_path = os.getcwd()

@@ -26,16 +26,16 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-                    Log    Check extended ACL with simple object
-                    Generate files    ${SIMPLE_OBJ_SIZE}
-                    Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}
+                            Log    Check extended ACL with simple object
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+                            Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}   
 
-                    Log    Check extended ACL with complex object
-                    Generate files    ${COMPLEX_OBJ_SIZE}
-                    Check Сompound Operations    ${USER_KEY}    ${OTHER_KEY}
+                            Log    Check extended ACL with complex object
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
+                            Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
     [Teardown]      Teardown    acl_extended_compound
 
@@ -43,97 +43,99 @@ Extended ACL Operations
 *** Keywords ***
 
 
-
 Check Сompound Operations
-    [Arguments]             ${USER_KEY}    ${OTHER_KEY}
-                            Check eACL Сompound Get    ${OTHER_KEY}     ${EACL_COMPOUND_GET_OTHERS}    ${USER_KEY}
-                            Check eACL Сompound Get    ${USER_KEY}      ${EACL_COMPOUND_GET_USER}    ${USER_KEY}
-                            Check eACL Сompound Get    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_SYSTEM}    ${USER_KEY}
+    [Arguments]             ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
-                            Check eACL Сompound Delete    ${OTHER_KEY}     ${EACL_COMPOUND_DELETE_OTHERS}    ${USER_KEY}
-                            Check eACL Сompound Delete    ${USER_KEY}      ${EACL_COMPOUND_DELETE_USER}    ${USER_KEY}
-                            Check eACL Сompound Delete    ${SYSTEM_KEY}    ${EACL_COMPOUND_DELETE_SYSTEM}    ${USER_KEY}
+    ${WALLET_SYS}    ${ADDR_SYS} =     Prepare Wallet with WIF And Deposit    ${SYSTEM_KEY}
 
-                            Check eACL Сompound Get Range Hash    ${OTHER_KEY}     ${EACL_COMPOUND_GET_HASH_OTHERS}    ${USER_KEY}
-                            Check eACL Сompound Get Range Hash    ${USER_KEY}      ${EACL_COMPOUND_GET_HASH_USER}    ${USER_KEY}
-                            Check eACL Сompound Get Range Hash    ${SYSTEM_KEY}    ${EACL_COMPOUND_GET_HASH_SYSTEM}    ${USER_KEY}
+                            Check eACL Сompound Get    ${WALLET_OTH}     ${EACL_COMPOUND_GET_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get    ${WALLET}      ${EACL_COMPOUND_GET_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get    ${WALLET_SYS}       ${EACL_COMPOUND_GET_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+
+                            Check eACL Сompound Delete    ${WALLET_OTH}     ${EACL_COMPOUND_DELETE_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Delete    ${WALLET}      ${EACL_COMPOUND_DELETE_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Delete    ${WALLET_SYS}       ${EACL_COMPOUND_DELETE_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+
+                            Check eACL Сompound Get Range Hash    ${WALLET_OTH}     ${EACL_COMPOUND_GET_HASH_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get Range Hash    ${WALLET}      ${EACL_COMPOUND_GET_HASH_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get Range Hash    ${WALLET_SYS}       ${EACL_COMPOUND_GET_HASH_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
 
 Check eACL Сompound Get
-    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}
+    [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container Public    ${USER_KEY}
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
-    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-                            Put object             ${KEY}         ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                            Get object           ${KEY}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
+    ${S_OID_USER} =         Put object    ${USER_WALLET}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
+                            Put object    ${WALLET}         ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}
+                            Get object    ${WALLET}         ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Set eACL      ${USER_WALLET}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
-                            ...  Head object                ${KEY}    ${CID}    ${S_OID_USER}
+                            ...  Head object    ${WALLET}    ${CID}    ${S_OID_USER}
 
-                            Get object           ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
-                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                            Get object        ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            IF    "${WALLET}" == "${WALLET_SYS}"
                                 Run Keyword And Expect Error    *
-                                ...    Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256
+                                ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             ELSE
-                                Get Range                       ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}           0:256
+                                Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             END
-                            Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
+                            Get Range Hash    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
 
 
 Check eACL Сompound Delete
-    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}
+    [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container Public    ${USER_KEY}
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
-    ${S_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-    ${D_OID_USER} =         Put object             ${USER_KEY}    ${FILE_S}    ${CID}
-                            Put object             ${KEY}         ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+    ${S_OID_USER} =         Put object             ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+    ${D_OID_USER} =         Put object             ${USER_WALLET}    ${FILE_S}    ${CID}
+                            Put object             ${WALLET}         ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                            IF    "${WALLET}" == "${WALLET_SYS}"
                                 Run Keyword And Expect Error    *
-                                ...    Delete object                   ${KEY}    ${CID}       ${D_OID_USER}
+                                ...    Delete object                   ${WALLET}    ${CID}       ${D_OID_USER}
                             ELSE
-                                Delete object                   ${KEY}    ${CID}       ${D_OID_USER}
+                                Delete object                   ${WALLET}    ${CID}       ${D_OID_USER}
                             END
 
-                            Set eACL                        ${USER_KEY}    ${CID}       ${DENY_EACL}
+                            Set eACL    ${USER_WALLET}    ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
-                            ...  Head object                ${KEY}    ${CID}       ${S_OID_USER}
+                            ...  Head object                ${WALLET}    ${CID}       ${S_OID_USER}
                             Run Keyword And Expect Error    *
-                            ...  Put object        ${KEY}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                            IF    "${KEY}" == "${NEOFS_IR_WIF}"
+                            ...  Put object        ${WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                            IF    "${WALLET}" == "${WALLET_SYS}"
                                 Run Keyword And Expect Error    *
-                                ...    Delete object                   ${KEY}    ${CID}       ${S_OID_USER}
+                                ...    Delete object                   ${WALLET}    ${CID}       ${S_OID_USER}
                             ELSE
-                                Delete object                   ${KEY}    ${CID}       ${S_OID_USER}
+                                Delete object                   ${WALLET}    ${CID}       ${S_OID_USER}
                             END
 
 
 
 Check eACL Сompound Get Range Hash
-    [Arguments]             ${KEY}    ${DENY_EACL}    ${USER_KEY}
+    [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container Public    ${USER_KEY}
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
-    ${S_OID_USER} =         Put object             ${USER_KEY}          ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-                            Put object             ${KEY}               ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                            Get Range Hash         ${NEOFS_SN_WIF}      ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
+    ${S_OID_USER} =         Put object             ${USER_WALLET}          ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+                            Put object             ${WALLET}               ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                            Get Range Hash         ${WALLET_SYS}      ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
 
-                            Set eACL               ${USER_KEY}         ${CID}       ${DENY_EACL}
+                            Set eACL               ${USER_WALLET}         ${CID}       ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
-                            ...  Get Range                  ${KEY}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...  Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                             Run Keyword And Expect Error    *
-                            ...  Get object      ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       local_file_eacl
+                            ...  Get object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-                            Get Range Hash                  ${KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
+                            Get Range Hash     ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256

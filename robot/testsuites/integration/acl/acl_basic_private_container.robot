@@ -18,16 +18,16 @@ Basic ACL Operations for Private Container
 
     [Setup]                 Setup
 
-    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${PRIV_CID} =           Create Private Container    ${USER_KEY}
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Private Container    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
+    ${PRIV_CID} =           Create Private Container    ${WALLET}
+    ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
+                            Check Private Container    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
 
-    ${PRIV_CID} =           Create Private Container    ${USER_KEY}
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Private Container    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
+    ${PRIV_CID} =           Create Private Container    ${WALLET}
+    ${FILE_S}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
+                            Check Private Container    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_private_container
 
@@ -35,62 +35,63 @@ Basic ACL Operations for Private Container
 *** Keywords ***
 
 Check Private Container
-    [Arguments]    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
+    [Arguments]    ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
+
+    ${WALLET_SN}    ${ADDR_SN} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
+    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
     # Put
-    ${S_OID_USER} =     Put Object         ${USER_KEY}    ${FILE_S}    ${PRIV_CID}
-                        Run Keyword And Expect Error      *
-                        ...  Put object    ${OTHER_KEY}    ${FILE_S}    ${PRIV_CID}
-    ${S_OID_SYS_IR} =    Put Object        ${NEOFS_IR_WIF}    ${FILE_S}    ${PRIV_CID}
-    ${S_OID_SYS_SN} =    Put Object        ${NEOFS_SN_WIF}    ${FILE_S}    ${PRIV_CID}
-
-                        Sleep   5s
+    ${S_OID_USER} =     Put Object         ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}
+                        Run Keyword And Expect Error        *
+                        ...  Put object    ${WALLET_OTH}    ${FILE_S}    ${PRIV_CID}
+    ${S_OID_SYS_IR} =    Put Object        ${WALLET_IR}    ${FILE_S}    ${PRIV_CID}
+    ${S_OID_SYS_SN} =    Put Object        ${WALLET_SN}    ${FILE_S}    ${PRIV_CID}
 
     # Get
-                        Get Object         ${USER_KEY}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Run Keyword And Expect Error      *
-                        ...  Get object    ${OTHER_KEY}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get Object         ${NEOFS_IR_WIF}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
-                        Get Object         ${NEOFS_SN_WIF}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Get Object         ${USER_WALLET}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Run Keyword And Expect Error        *
+                        ...  Get object    ${WALLET_OTH}        ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Get Object         ${WALLET_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
+                        Get Object         ${WALLET_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}      s_file_read
 
     # Get Range
-                        Get Range         ${USER_KEY}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range         ${USER_WALLET}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range    ${OTHER_KEY}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range    ${WALLET_OTH}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range    ${WALLET_IR}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range    ${WALLET_SN}    ${PRIV_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
     # Get Range Hash
-                        Get Range hash         ${USER_KEY}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash         ${USER_WALLET}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...  Get Range Hash    ${OTHER_KEY}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range hash         ${NEOFS_IR_WIF}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range hash         ${NEOFS_SN_WIF}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        ...  Get Range Hash    ${WALLET_OTH}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash         ${WALLET_IR}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash         ${WALLET_SN}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
     @{S_OBJ_PRIV} =     Create List    ${S_OID_USER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
-                        Search Object         ${USER_KEY}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                        Search Object         ${USER_WALLET}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
                         Run Keyword And Expect Error        *
-                        ...  Search object    ${OTHER_KEY}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
-                        Search Object         ${NEOFS_IR_WIF}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
-                        Search Object         ${NEOFS_SN_WIF}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                        ...  Search object    ${WALLET_OTH}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                        Search Object         ${WALLET_IR}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
+                        Search Object         ${WALLET_SN}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
 
 
     # Head
-                        Head Object         ${USER_KEY}    ${PRIV_CID}    ${S_OID_USER}
+                        Head Object         ${USER_WALLET}    ${PRIV_CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Head object    ${OTHER_KEY}    ${PRIV_CID}    ${S_OID_USER}
-                        Head Object         ${NEOFS_IR_WIF}    ${PRIV_CID}    ${S_OID_USER}
-                        Head Object         ${NEOFS_SN_WIF}    ${PRIV_CID}    ${S_OID_USER}
+                        ...  Head object    ${WALLET_OTH}    ${PRIV_CID}    ${S_OID_USER}
+                        Head Object         ${WALLET_IR}    ${PRIV_CID}    ${S_OID_USER}
+                        Head Object         ${WALLET_SN}    ${PRIV_CID}    ${S_OID_USER}
 
 
     # Delete
                         Run Keyword And Expect Error        *
-                        ...  Delete object    ${OTHER_KEY}    ${PRIV_CID}    ${S_OID_USER}
+                        ...  Delete object    ${WALLET_OTH}    ${PRIV_CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Delete object    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${S_OID_USER}
+                        ...  Delete object    ${WALLET_IR}    ${PRIV_CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Delete object    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${S_OID_USER}
-                        Delete Object         ${USER_KEY}    ${PRIV_CID}    ${S_OID_USER}
+                        ...  Delete object    ${WALLET_SN}    ${PRIV_CID}    ${S_OID_USER}
+                        Delete Object         ${USER_WALLET}    ${PRIV_CID}    ${S_OID_USER}
