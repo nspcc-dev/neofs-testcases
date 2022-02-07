@@ -27,12 +27,17 @@ def _cmd_run(cmd, timeout=30):
         return output
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(f"Error:\nreturn code: {exc.returncode} "
-                f"\nOutput: {exc.output}") from exc
+        f"\nOutput: {exc.output}") from exc
+    except Exception as exc:
+        return_code, _ = subprocess.getstatusoutput(cmd)
+        logger.info(f"Error:\nreturn code: {return_code}\nOutput: "
+        f"{exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}")
+        raise
 
 def _run_with_passwd(cmd):
-    p = pexpect.spawn(cmd)
-    p.expect(".*")
-    p.sendline('\r')
-    p.wait()
-    cmd = p.read()
+    child = pexpect.spawn(cmd)
+    child.expect(".*")
+    child.sendline('\r')
+    child.wait()
+    cmd = child.read()
     return cmd.decode()
