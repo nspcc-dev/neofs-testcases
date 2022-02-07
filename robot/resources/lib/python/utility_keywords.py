@@ -6,11 +6,11 @@ import uuid
 import docker
 
 from neo3 import wallet
+from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
+from cli_helpers import _cmd_run
 from robot.api.deco import keyword
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
-from common import *
-from cli_helpers import _cmd_run
 
 
 ROBOT_AUTO_KEYWORDS = False
@@ -62,9 +62,11 @@ def make_up(services=['']):
     if services != ['']:
         for service in services:
             cmd = f'make up/{service}'
-            _cmd_run(cmd, timeout=80)
+            logger.info(f"Cmd: {cmd}")
+            _cmd_run(cmd)
     else:
         cmd = f'make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}'
+        logger.info(f"Cmd: {cmd}")
         _cmd_run(cmd, timeout=80)
 
     os.chdir(test_path)
@@ -76,5 +78,6 @@ def make_down():
     os.chdir(dev_path)
 
     cmd = 'make down; make clean'
-    _cmd_run(cmd)
+    logger.info(f"Cmd: {cmd}")
+    _cmd_run(cmd, timeout=60)
     os.chdir(test_path)
