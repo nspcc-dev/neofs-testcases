@@ -1,0 +1,3 @@
+[submodule "neofs-keywords"]
+	path = neofs-keywords
+	url = ssh://git@github.com/nspcc-dev/neofs-keywords.git
