@@ -20,7 +20,6 @@ BearerToken Operations for Inaccessible Container
     [Setup]                 Setup
 
     ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
@@ -38,6 +37,7 @@ Check Container Inaccessible and Allow All Bearer
     [Arguments]    ${USER_KEY}    ${FILE_S}
 
     ${CID} =    Create Container Inaccessible    ${USER_KEY}
+                Prepare eACL Role rules    ${CID}
 
                 Run Keyword And Expect Error        *
                 ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}    user_headers=${FILE_USR_HEADER}

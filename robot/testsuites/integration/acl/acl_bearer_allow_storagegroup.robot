@@ -21,8 +21,7 @@ BearerToken Operations
     [Setup]                 Setup
 
     ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
-                            Prepare eACL Role rules
-
+                            
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer    Simple    ${USER_KEY}    ${FILE_S}
@@ -43,6 +42,7 @@ Check eACL Deny and Allow All Bearer
     
     ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
+    Prepare eACL Role rules    ${CID}
 
 
     # Storage group Operations (Put, List, Get, Delete)

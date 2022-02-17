@@ -25,7 +25,6 @@ BearerToken Operations
     [Setup]                 Setup
 
     ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
@@ -45,6 +44,7 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
     [Arguments]    ${USER_KEY}    ${FILE_S}
 
     ${CID} =                Create Container Public    ${USER_KEY}
+                            Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}

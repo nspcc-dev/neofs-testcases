@@ -89,22 +89,22 @@ Check eACL Deny and Allow All
                             Delete object           ${KEY}    ${CID}        ${S_OID_USER}
 
 Compose eACL Custom
-    [Arguments]    ${HEADER_DICT}    ${MATCH_TYPE}    ${FILTER}    ${ACCESS}    ${ROLE}
+    [Arguments]    ${CID}    ${HEADER_DICT}    ${MATCH_TYPE}    ${FILTER}    ${ACCESS}    ${ROLE}
 
     ${filter_value} =    Get From dictionary    ${HEADER_DICT}[header]    ${EACL_OBJ_FILTERS}[${FILTER}]
 
-    ${filters} =        Create Dictionary    headerType=OBJECT    matchType=${MATCH_TYPE}    key=${FILTER}    value=${filter_value}
-    ${rule_get}=        Create Dictionary    Operation=GET             Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_head}=       Create Dictionary    Operation=HEAD            Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_put}=        Create Dictionary    Operation=PUT             Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_del}=        Create Dictionary    Operation=DELETE          Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_search}=     Create Dictionary    Operation=SEARCH          Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_range}=      Create Dictionary    Operation=GETRANGE        Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
-    ${rule_rangehash}=    Create Dictionary    Operation=GETRANGEHASH    Access=${ACCESS}    Role=${ROLE}    Filters=${filters}
+    ${filters} =        Set Variable    obj:${FILTER}${MATCH_TYPE}${filter_value}
+    ${rule_get}=        Set Variable    ${ACCESS} get ${filters} ${ROLE}
+    ${rule_head}=       Set Variable    ${ACCESS} head ${filters} ${ROLE}
+    ${rule_put}=        Set Variable    ${ACCESS} put ${filters} ${ROLE}
+    ${rule_del}=        Set Variable    ${ACCESS} delete ${filters} ${ROLE}
+    ${rule_search}=     Set Variable    ${ACCESS} search ${filters} ${ROLE}
+    ${rule_range}=      Set Variable    ${ACCESS} getrange ${filters} ${ROLE}
+    ${rule_rangehash}=    Set Variable    ${ACCESS} getrangehash ${filters} ${ROLE}
 
     ${eACL_gen}=        Create List    ${rule_get}    ${rule_head}    ${rule_put}    ${rule_del}
     ...  ${rule_search}    ${rule_range}    ${rule_rangehash}
-    ${EACL_CUSTOM} =    Form eACL JSON Common File    ${eACL_gen}
+    ${EACL_CUSTOM} =    Create eACL    ${CID}    ${eACL_gen}
 
     [Return]    ${EACL_CUSTOM}
 
@@ -136,8 +136,9 @@ Check eACL Filters with MatchType String Equal
                         Delete Object    ${OTHER_KEY}    ${CID}    ${D_OID_USER}
 
     &{HEADER_DICT} =    Object Header Decoded    ${USER_KEY}    ${CID}    ${S_OID_USER}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${HEADER_DICT}    STRING_EQUAL    ${FILTER}    DENY    OTHERS
+    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    =    ${FILTER}    deny    others
                         Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
+                        Sleep                   ${MORPH_BLOCK_TIME}
 
     IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect Error   ${EACL_ERR_MSG}
@@ -185,7 +186,7 @@ Check eACL Filters with MatchType String Not Equal
                         Get Range Hash    ${USER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     &{HEADER_DICT} =    Object Header Decoded    ${USER_KEY}    ${CID}    ${S_OID_USER}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${HEADER_DICT}    STRING_NOT_EQUAL    ${FILTER}    DENY    OTHERS
+    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    deny    others
                         Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
 
     IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]

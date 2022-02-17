@@ -2,8 +2,8 @@
 
 ${ACL_TEST_FILES} =     robot/resources/files/eacl_tables
 
-${EACL_DENY_ALL_OTHER} =      ${ACL_TEST_FILES}/gen_eacl_deny_all_OTHERS
-${EACL_ALLOW_ALL_OTHER} =     ${ACL_TEST_FILES}/gen_eacl_allow_all_OTHERS
+${EACL_DENY_ALL_OTHERS} =      ${ACL_TEST_FILES}/gen_eacl_deny_all_OTHERS
+${EACL_ALLOW_ALL_OTHERS} =     ${ACL_TEST_FILES}/gen_eacl_allow_all_OTHERS
 
 ${EACL_DENY_ALL_USER} =       ${ACL_TEST_FILES}/gen_eacl_deny_all_USER
 ${EACL_ALLOW_ALL_USER} =      ${ACL_TEST_FILES}/gen_eacl_allow_all_USER

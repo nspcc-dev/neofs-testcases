@@ -16,6 +16,8 @@ Resource        eacl_tables.robot
 ${PATH} =   testfile
 &{USER_HEADER} =        key1=1      key2=abc
 &{ANOTHER_HEADER} =     key1=oth    key2=oth
+${ID_FILTER} =    $Object:objectID
+${CUSTOM_FILTER} =    $Object:key1
 
 *** Test cases ***
 Extended ACL Operations
@@ -94,7 +96,7 @@ Check eACL MatchType String Equal Request Allow
     ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =         Put Object    ${USER_KEY}     ${FILE_S}    ${CID}
                             Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${PATH}
-
+                            
                             Set eACL    ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
 
                             # The current ACL cache lifetime is 30 sec
@@ -136,27 +138,27 @@ Check eACL MatchType String Equal Object
                             Get Object    ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
 
                             Log    Set eACL for Deny GET operation with StringEqual Object ID
+
     &{HEADER_DICT} =        Head Object    ${USER_KEY}     ${CID}       ${S_OID_USER}
-    ${ID_value} =           Get From dictionary    ${HEADER_DICT}    objectID
-
-    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=$Object:objectID    value=${ID_value}
-    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS             Filters=${filters}
-    ${eACL_gen} =           Create List          ${rule1}
-    ${EACL_CUSTOM} =        Form eACL JSON Common File      ${eACL_gen}
-
-                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
+    ${ID_value} =           Get From dictionary    ${HEADER_DICT}    ${EACL_OBJ_FILTERS}[${ID_FILTER}]
+    
+    ${filters} =            Set Variable    obj:${ID_FILTER}=${ID_value}
+    ${rule1} =              Set Variable    deny get ${filters} others
+    ${eACL_gen} =           Create List     ${rule1}
+    ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
+                            Set eACL           ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
-                            ...  Get object                 ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}    ${PATH}
+                            ...  Get object    ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}    ${PATH}
 
 
                             Log	                 Set eACL for Deny GET operation with StringEqual Object Extended User Header
+
     ${S_OID_USER_OTH} =     Put object           ${USER_KEY}     ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-
-    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_EQUAL    key=key1    value=1
-    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY               Role=OTHERS    Filters=${filters}
-    ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL JSON Common File      ${eACL_gen}
-
+    
+    ${filters} =            Set Variable    obj:${CUSTOM_FILTER}=1
+    ${rule1} =              Set Variable    deny get ${filters} others
+    ${eACL_gen} =           Create List     ${rule1}
+    ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
 
                             Set eACL             ${USER_KEY}     ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
@@ -176,29 +178,30 @@ Check eACL MatchType String Not Equal Object
                             Get object          ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${PATH}
 
                             Log	                    Set eACL for Deny GET operation with StringNotEqual Object ID
+                            
     &{HEADER_DICT} =        Head object        ${USER_KEY}    ${CID}    ${S_OID_USER}
-    ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    objectID
+    ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    ${EACL_OBJ_FILTERS}[${ID_FILTER}]
+    
+    ${filters} =            Set Variable    obj:${ID_FILTER}!=${ID_value}
+    ${rule1} =              Set Variable    deny get ${filters} others
+    ${eACL_gen} =           Create List     ${rule1}
+    ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
 
-    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=$Object:objectID    value=${ID_value}
-    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS             Filters=${filters}
-    ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL JSON Common File      ${eACL_gen}
-
-                            Set eACL                        ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
+                            Set eACL             ${USER_KEY}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}      ${CID}    ${S_OID_OTHER}    ${EMPTY}            ${PATH}
                             Get object           ${OTHER_KEY}      ${CID}    ${S_OID_USER}     ${EMPTY}            ${PATH}
 
 
                             Log	               Set eACL for Deny GET operation with StringEqual Object Extended User Header
-    ${S_OID_USER_OTH} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                            
+    ${S_OID_USER_OTH} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}   
+    ${filters} =            Set Variable    obj:${CUSTOM_FILTER}!=1
+    ${rule1} =              Set Variable    deny get ${filters} others
+    ${eACL_gen} =           Create List     ${rule1}
+    ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
 
-    ${filters} =            Create Dictionary    headerType=OBJECT    matchType=STRING_NOT_EQUAL    key=key1       value=1
-    ${rule1} =              Create Dictionary    Operation=GET        Access=DENY                   Role=OTHERS    Filters=${filters}
-    ${eACL_gen} =           Create List    ${rule1}
-    ${EACL_CUSTOM} =        Form eACL JSON Common File      ${eACL_gen}
-
-                            Set eACL                        ${USER_KEY}    ${CID}       ${EACL_CUSTOM}
+                            Set eACL             ${USER_KEY}    ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object      ${OTHER_KEY}    ${CID}      ${S_OID_USER_OTH}    ${EMPTY}            ${PATH}
                             Get object           ${OTHER_KEY}    ${CID}      ${S_OID_USER}        ${EMPTY}            ${PATH}
