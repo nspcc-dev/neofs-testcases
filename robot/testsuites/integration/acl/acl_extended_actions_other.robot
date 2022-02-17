@@ -37,4 +37,4 @@ Extended ACL Operations
 
 Check eACL Deny and Allow All Other
     [Arguments]    ${USER_KEY}    ${OTHER_KEY}
-                            Check eACL Deny and Allow All    ${OTHER_KEY}    ${EACL_DENY_ALL_OTHER}    ${EACL_ALLOW_ALL_OTHER}    ${USER_KEY} 
+                            Check eACL Deny and Allow All    ${OTHER_KEY}    ${EACL_DENY_ALL_OTHERS}    ${EACL_ALLOW_ALL_OTHERS}    ${USER_KEY} 

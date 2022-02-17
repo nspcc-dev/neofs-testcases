@@ -26,7 +26,6 @@ BearerToken Operations for Сompound Operations
 
     ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
     ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
-                        Prepare eACL Role rules
 
                         Log    Check Bearer token with simple object
     ${FILE_S} =         Generate file    ${SIMPLE_OBJ_SIZE}
@@ -58,8 +57,9 @@ Check Bearer Сompound Get
     [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
 
     ${CID} =            Create Container Public    ${USER_KEY}
+                        Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
-    @{S_OBJ_H} =        Create List	           ${S_OID_USER}
+    @{S_OBJ_H} =        Create List	               ${S_OID_USER}
 
     ${S_OID_USER} =     Put object     ${USER_KEY}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
                         Put object     ${KEY}         ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}
@@ -92,6 +92,7 @@ Check Bearer Сompound Delete
     [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
 
     ${CID} =            Create Container Public    ${USER_KEY}
+                        Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}
                         Put object         ${KEY}         ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
@@ -126,6 +127,7 @@ Check Bearer Сompound Get Range Hash
     [Arguments]         ${KEY}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_KEY}
 
     ${CID} =            Create Container Public    ${USER_KEY}
+                        Prepare eACL Role rules    ${CID}
 
     ${S_OID_USER} =     Put object             ${USER_KEY}         ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
                         Put object             ${KEY}              ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}

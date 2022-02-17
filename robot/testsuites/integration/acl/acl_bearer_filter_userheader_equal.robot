@@ -25,7 +25,6 @@ BearerToken Operations with Filter UserHeader Equal
     [Setup]                 Setup
 
     ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
-                            Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
@@ -42,10 +41,11 @@ BearerToken Operations with Filter UserHeader Equal
 Check eACL Deny and Allow All Bearer Filter UserHeader Equal
     [Arguments]    ${USER_KEY}    ${FILE_S}
     ${CID} =                Create Container Public    ${USER_KEY}
+                            Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
                             Put object       ${USER_KEY}    ${FILE_S}    ${CID}               user_headers=${ANOTHER_HEADER}
                             Get object       ${USER_KEY}    ${CID}       ${S_OID_USER}        ${EMPTY}      local_file_eacl

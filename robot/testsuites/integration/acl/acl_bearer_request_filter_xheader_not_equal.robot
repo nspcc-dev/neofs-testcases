@@ -24,8 +24,7 @@ BearerToken Operations with Filter Requst NotEqual
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
-                            Prepare eACL Role rules
+    ${_}    ${_}    ${USER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
@@ -47,7 +46,7 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
                             Put object         ${USER_KEY}    ${FILE_S}     ${CID}           user_headers=${ANOTHER_USER_HEADER}
                             Get object         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}      local_file_eacl

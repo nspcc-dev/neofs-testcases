@@ -47,7 +47,7 @@ Check $Object:creationEpoch Filter with MatchType String Not Equal
                         Get Object    ${USER_KEY}    ${CID}    ${S_OID_NEW}    ${EMPTY}    local_file_eacl
 
     &{HEADER_DICT} =    Head Object    ${USER_KEY}    ${CID}    ${S_OID_NEW}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${HEADER_DICT}    STRING_NOT_EQUAL    ${FILTER}    DENY    OTHERS
+    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    DENY    OTHERS
                         Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
 
     Run Keyword And Expect Error   ${EACL_ERR_MSG}

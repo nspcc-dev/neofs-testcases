@@ -67,6 +67,22 @@ def _encode_cid_for_eacl(cid: str) -> str:
     cid_base58 = base58.b58decode(cid)
     return base64.b64encode(cid_base58).decode("utf-8")
 
+@keyword('Create eACL')
+def create_eacl(cid: str, rules_list: list):
+    table = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
+    rules = ""
+    for rule in rules_list:
+# TODO: check if $Object: is still necessary for filtering in the newest releases
+        rules += f"--rule '{rule}' "
+    cmd = (
+        f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} "
+        f"{rules}--out {table}"
+    )
+    logger.info(f"cmd: {cmd}")
+    _cmd_run(cmd)
+
+    return table
+
 
 @keyword('Form BearerToken File')
 def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
@@ -153,48 +169,3 @@ def sign_bearer_token(wif: str, eacl_rules_file: str):
     )
     logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)
-
-
-@keyword('Form eACL JSON Common File')
-def form_eacl_json_common_file(eacl_records: list) -> str:
-    # Input role can be Role (USER, SYSTEM, OTHERS) or public key.
-    eacl = {"records":[]}
-    file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
-
-    for record in eacl_records:
-        op_data = dict()
-
-        if Role(record['Role']):
-            op_data = {
-                        "operation": record['Operation'],
-                        "action":    record['Access'],
-                        "filters":   [],
-                        "targets": [
-                            {
-                                "role": record['Role']
-                            }
-                        ]
-                    }
-        else:
-            op_data = {
-                        "operation": record['Operation'],
-                        "action":    record['Access'],
-                        "filters":   [],
-                        "targets": [
-                            {
-                                "keys": [ record['Role'] ]
-                            }
-                        ]
-                    }
-
-        if 'Filters' in record.keys():
-            op_data["filters"].append(record['Filters'])
-
-        eacl["records"].append(op_data)
-
-    logger.info(f"Got these extended ACL records: {eacl}")
-
-    with open(file_path, 'w', encoding='utf-8') as eacl_file:
-        json.dump(eacl, eacl_file, ensure_ascii=False, indent=4)
-
-    return file_path

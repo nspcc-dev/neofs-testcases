@@ -40,6 +40,8 @@ Object ID Object Filter for Extended ACL
     Log    Check two matchTypes applied
     Check eACL Filters, two matchTypes    $Object:objectID
 
+    [Teardown]          Teardown    object_id
+
 
 *** Keywords ***
  
@@ -58,28 +60,12 @@ Check eACL Filters with MatchType String Equal with two contradicting filters
                         Get Object    ${OTHER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
 
     ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
-    ${filters} =        Create Dictionary    
-                            ...    headerType=OBJECT    
-                            ...    matchType=STRING_EQUAL    
-                            ...    key=${FILTER}    
-                            ...    value=${filter_value}
-    ${rule} =           Create Dictionary    
-                            ...    Operation=GET    
-                            ...    Access=ALLOW    
-                            ...    Role=OTHERS    
-                            ...    Filters=${filters}
-    ${contradicting_filters} =     Create Dictionary    
-                            ...    headerType=OBJECT    
-                            ...    matchType=STRING_EQUAL    
-                            ...    key=$Object:payloadLength    
-                            ...    value=${SIMPLE_OBJ_SIZE}
-    ${contradicting_rule} =    Create Dictionary    
-                            ...    Operation=GET    
-                            ...    Access=DENY    
-                            ...    Role=OTHERS    
-                            ...    Filters=${contradicting_filters}
+    ${filters} =        Set Variable    obj:${FILTER}=${filter_value}
+    ${rule} =           Set Variable    allow get ${filters} others
+    ${contradicting_filters} =     Set Variable    obj:$Object:payloadLength=${SIMPLE_OBJ_SIZE}
+    ${contradicting_rule} =    Set Variable    deny get ${contradicting_filters} others
     ${eACL_gen} =       Create List    ${rule}    ${contradicting_rule}
-    ${EACL_CUSTOM} =    Form eACL JSON Common File      ${eACL_gen}
+    ${EACL_CUSTOM} =    Create eACL    ${CID}      ${eACL_gen}
 
                         Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
                         Get object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
@@ -101,34 +87,15 @@ Check eACL Filters, two matchTypes
                         Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
 
     ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
-    ${noneq_filters} =    Create Dictionary    
-                            ...    headerType=OBJECT    
-                            ...    matchType=STRING_NOT_EQUAL    
-                            ...    key=${FILTER}    
-                            ...    value=${filter_value}
-    ${rule_noneq_filter} =    Create Dictionary    
-                            ...    Operation=GET    
-                            ...    Access=DENY    
-                            ...    Role=OTHERS    
-                            ...    Filters=${noneq_filters}
-    ${eq_filters} =     Create Dictionary    
-                            ...    headerType=OBJECT    
-                            ...    matchType=STRING_EQUAL    
-                            ...    key=${FILTER}    
-                            ...    value=${filter_value}
-    ${rule_eq_filter} =    Create Dictionary    
-                            ...    Operation=GET    
-                            ...    Access=DENY    
-                            ...    Role=OTHERS    
-                            ...    Filters=${eq_filters}
+    ${noneq_filters} =    Set Variable    obj:${FILTER}!=${filter_value}
+    ${rule_noneq_filter} =    Set Variable    deny get ${noneq_filters} others
+    ${eq_filters} =     Set Variable    obj:${FILTER}=${filter_value}
+    ${rule_eq_filter} =    Set Variable    deny get ${eq_filters} others
     ${eACL_gen} =       Create List    ${rule_noneq_filter}    ${rule_eq_filter}
-    ${EACL_CUSTOM} =    Form eACL JSON Common File      ${eACL_gen}
+    ${EACL_CUSTOM} =    Create eACL    ${CID}      ${eACL_gen}
 
                         Set eACL    ${USER_KEY}    ${CID}    ${EACL_CUSTOM}
                         Run Keyword And Expect Error    *
                         ...  Get object      ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
                         Run Keyword And Expect Error    *
                         ...  Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
-
-
-    [Teardown]          Teardown    object_id
