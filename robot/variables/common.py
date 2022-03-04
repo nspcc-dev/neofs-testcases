@@ -30,8 +30,8 @@ MAINNET_WALLET_WIF = os.getenv("MAINNET_WALLET_WIF", "KxDgvEKzgSBPPfuVfw67oPQBSj
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
 NEOGO_CLI_EXEC = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 
-NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main_chain.neofs.devenv:30333')
-NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph_chain.neofs.devenv:30333')
+NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main-chain.neofs.devenv:30333')
+NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph-chain.neofs.devenv:30333')
 HTTP_GATE = os.getenv("HTTP_GATE", 'http://http.neofs.devenv')
 S3_GATE = os.getenv("S3_GATE", 'https://s3.neofs.devenv:8080')
 GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
