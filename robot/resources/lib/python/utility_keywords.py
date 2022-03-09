@@ -67,7 +67,7 @@ def make_up(services=['']):
     else:
         cmd = f'make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}'
         logger.info(f"Cmd: {cmd}")
-        _cmd_run(cmd, timeout=80)
+        _cmd_run(cmd, timeout=120)
 
     os.chdir(test_path)
 
