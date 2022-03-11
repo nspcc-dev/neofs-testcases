@@ -54,7 +54,7 @@ def start_nodes(*nodes_list):
         node = m.group(1)
         client = docker.APIClient()
         client.start(node)
-        
+
 
 @keyword('Get nodes with object')
 def get_nodes_with_object(private_key: str, cid: str, oid: str):
@@ -712,12 +712,6 @@ def delete_container(cid: str, private_key: str):
     _cmd_run(deleteContainerCmd)
 
 
-@keyword('Get file name')
-def get_file_name(filepath):
-    filename = os.path.basename(filepath)
-    return filename
-
-
 @keyword('Get file hash')
 def get_file_hash(filename : str):
     file_hash = _get_file_hash(filename)
@@ -771,7 +765,7 @@ def get_control_endpoint_with_wif(endpoint_number: str = ''):
     endpoint_values = NEOFS_NETMAP_DICT[f'{endpoint_num}']
     endpoint_control = endpoint_values['control']
     wif = endpoint_values['wif']
-    
+
     return endpoint_num, endpoint_control, wif
 
 @keyword('Get Locode')
@@ -1012,7 +1006,7 @@ def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bo
 @keyword ('Sign Session Token')
 def sign_session_token(session_token: str, wallet: str, to_file: str=''):
     if to_file:
-        to_file = f'--to {to_file}' 
+        to_file = f'--to {to_file}'
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign session-token --from {session_token} '
         f'-w {wallet} {to_file}'

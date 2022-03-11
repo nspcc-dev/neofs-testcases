@@ -2,33 +2,29 @@
 Variables    common.py
 
 Library     Collections
+Library     OperatingSystem
+
 Library     neofs.py
-Library     payment_neogo.py
-Library     gates.py
-Library     wallet_keywords.py
+Library     s3_gate.py
 Library     contract_keywords.py
-Library     Process
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
 *** Variables ***
-${DEPOSIT} =     ${30}
-${WIF} =    ${MAINNET_WALLET_WIF}
-${DEPOSIT_TIMEOUT}=    30s
-@{INCLUDE_SVC} =    s3_gate
+@{INCLUDE_SVC} =    s3_gate     coredns
 
 *** Test cases ***
 Buckets in NeoFS S3 Gateway
     [Documentation]             Execute operations with bucket via S3 Gate
     [Timeout]                   10 min
 
-    [Setup]                     Setup    
+    [Setup]                     Setup
                                 Make Up    ${INCLUDE_SVC}
 
-    ${WALLET}   ${ADDR}    ${WIF} =    Prepare Wallet And Deposit
-    ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
-    ${FILE_S3_NAME} =           Get file name             ${FILE_S3}
+    ${WALLET}   ${_}    ${WIF} =        Prepare Wallet And Deposit
+    ${FILE_S3} =                        Generate file of bytes      ${COMPLEX_OBJ_SIZE}
+    ${_}        ${S3_OBJECT_KEY} =      Split Path                  ${FILE_S3}
 
     ${CID}
     ...  ${BUCKET}
@@ -44,24 +40,24 @@ Buckets in NeoFS S3 Gateway
     ${NEW_BUCKET} =             Create Bucket S3    ${S3_CLIENT}
     ${NEW_BUCKET_EMPTY} =       Create Bucket S3    ${S3_CLIENT}
 
-                                HeadBucket S3    ${BUCKET}    ${S3_CLIENT}
-                                HeadBucket S3    ${NEW_BUCKET}    ${S3_CLIENT}
+                                Head bucket S3    ${S3_CLIENT}      ${BUCKET}
+                                Head bucket S3    ${S3_CLIENT}      ${NEW_BUCKET}
 
                                 Put object S3    ${S3_CLIENT}    ${NEW_BUCKET}    ${FILE_S3}
-                                Head object S3   ${S3_CLIENT}    ${NEW_BUCKET}    ${FILE_S3_NAME}
+                                Head object S3   ${S3_CLIENT}    ${NEW_BUCKET}    ${S3_OBJECT_KEY}
 
     ${LIST_S3_OBJECTS} =        List objects S3              ${S3_CLIENT}             ${NEW_BUCKET}
-                                List Should Contain Value    ${LIST_S3_OBJECTS}       ${FILE_S3_NAME}
-                                
+                                List Should Contain Value    ${LIST_S3_OBJECTS}       ${S3_OBJECT_KEY}
+
                                 Run Keyword and Expect Error    *
                                 ...  Delete Bucket S3    ${S3_CLIENT}    ${NEW_BUCKET}
-                                HeadBucket S3    ${NEW_BUCKET}    ${S3_CLIENT}
+                                Head bucket S3    ${S3_CLIENT}      ${NEW_BUCKET}
 
                                 Delete Bucket S3    ${S3_CLIENT}    ${NEW_BUCKET_EMPTY}
                                 Tick Epoch
                                 Run Keyword And Expect Error    *
-                                ...  HeadBucket S3    ${NEW_BUCKET_EMPTY}    ${S3_CLIENT}
-    
+                                ...  Head bucket S3    ${S3_CLIENT}     ${NEW_BUCKET_EMPTY}
+
     ${BUCKET_LIST} =            List Buckets S3    ${S3_CLIENT}
                                 Tick Epoch
                                 List Should Contain Value    ${BUCKET_LIST}    ${NEW_BUCKET}
