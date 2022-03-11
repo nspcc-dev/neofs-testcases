@@ -3,19 +3,13 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     neofs.py
-Library     payment_neogo.py
-Library     gates.py
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
-Library     utility_keywords.py
+Library     http_gate.py
 
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     REP 1 IN X CBF 1 SELECT 1 FROM * AS X
-${TRANSFER_AMOUNT} =    ${6}
-${DEPOSIT_AMOUNT} =     ${5}
 ${CONTAINER_WAIT_INTERVAL} =    1 min
 @{INCLUDE_SVC} =    http_gate
 
@@ -25,9 +19,9 @@ NeoFS HTTP Gateway
     [Documentation]     Creates container and does PUT, GET via HTTP Gate
     [Timeout]           5 min
 
-    [Setup]             Setup    
+    [Setup]             Setup
                         Make Up    ${INCLUDE_SVC}
-    
+
     ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
 
     ${CID} =            Create container                    ${WIF}    ${PUBLIC_ACL}    ${PLACEMENT_RULE}

@@ -54,12 +54,12 @@ def wif_to_binary(wif: str) -> str:
     return path
 
 @keyword('Make Up')
-def make_up(services=['']):
+def make_up(services: list=[]):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
     os.chdir(dev_path)
 
-    if services != ['']:
+    if len(services) > 0:
         for service in services:
             cmd = f'make up/{service}'
             logger.info(f"Cmd: {cmd}")
