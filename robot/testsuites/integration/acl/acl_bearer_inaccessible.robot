@@ -14,12 +14,12 @@ Resource    setup_teardown.robot
 *** Test cases ***
 BearerToken Operations for Inaccessible Container
     [Documentation]         Testcase to validate NeoFS operations with BearerToken for Inaccessible Container.
-    [Tags]                  ACL  NeoFSCLI BearerToken
+    [Tags]                  ACL   BearerToken
     [Timeout]               20 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
                             Prepare eACL Role rules
 
                             Log    Check Bearer token with simple object
@@ -40,17 +40,17 @@ Check Container Inaccessible and Allow All Bearer
     ${CID} =    Create Container Inaccessible    ${USER_KEY}
 
                 Run Keyword And Expect Error        *
-                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}       ${FILE_USR_HEADER}
+                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}    user_headers=${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
                 ...  Get object        ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}       local_file_eacl
                 Run Keyword And Expect Error        *
                 ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
-                ...  Head object       ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                ...  Head object       ${USER_KEY}    ${CID}        ${S_OID_USER}
                 Run Keyword And Expect Error        *
                 ...  Get Range         ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
                 Run Keyword And Expect Error        *
-                ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                ...  Delete object     ${USER_KEY}    ${CID}        ${S_OID_USER}
 
     ${rule1} =          Create Dictionary       Operation=PUT           Access=ALLOW    Role=USER
     ${rule2} =          Create Dictionary       Operation=SEARCH        Access=ALLOW    Role=USER
@@ -59,6 +59,6 @@ Check Container Inaccessible and Allow All Bearer
     ${EACL_TOKEN} =     Form BearerToken File       ${USER_KEY}    ${CID}   ${eACL_gen}
 
                 Run Keyword And Expect Error        *
-                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}       ${EACL_TOKEN}       ${FILE_USR_HEADER}
+                ...  Put object        ${USER_KEY}    ${FILE_S}     ${CID}       bearer=${EACL_TOKEN}       user_headers=${FILE_USR_HEADER}
                 Run Keyword And Expect Error        *
                 ...  Search object     ${USER_KEY}    ${CID}        ${EMPTY}     ${EACL_TOKEN}       ${FILE_USR_HEADER}

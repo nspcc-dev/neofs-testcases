@@ -8,6 +8,8 @@ Resource    common_steps_object.robot
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
+*** Variables ***
+${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
 
 *** Test cases ***
 NeoFS Simple Storagegroup
