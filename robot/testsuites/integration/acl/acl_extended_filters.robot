@@ -3,6 +3,7 @@ Variables       common.py
 
 Library         acl.py
 Library         neofs.py
+Library         neofs_verbs.py
 Library         payment_neogo.py
 Library         Collections
 Library         contract_keywords.py
@@ -16,8 +17,8 @@ Resource        eacl_tables.robot
 ${PATH} =   testfile
 &{USER_HEADER} =        key1=1      key2=abc
 &{ANOTHER_HEADER} =     key1=oth    key2=oth
-${ID_FILTER} =    $Object:objectID
-${CUSTOM_FILTER} =    $Object:key1
+${ID_FILTER} =          $Object:objectID
+${CUSTOM_FILTER} =      $Object:key1
 
 *** Test cases ***
 Extended ACL Operations
@@ -96,7 +97,7 @@ Check eACL MatchType String Equal Request Allow
     ${CID} =                Create Container Public    ${USER_KEY}
     ${S_OID_USER} =         Put Object    ${USER_KEY}     ${FILE_S}    ${CID}
                             Get Object    ${OTHER_KEY}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${PATH}
-                            
+
                             Set eACL    ${USER_KEY}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
 
                             # The current ACL cache lifetime is 30 sec
@@ -141,7 +142,7 @@ Check eACL MatchType String Equal Object
 
     &{HEADER_DICT} =        Head Object    ${USER_KEY}     ${CID}       ${S_OID_USER}
     ${ID_value} =           Get From dictionary    ${HEADER_DICT}    ${EACL_OBJ_FILTERS}[${ID_FILTER}]
-    
+
     ${filters} =            Set Variable    obj:${ID_FILTER}=${ID_value}
     ${rule1} =              Set Variable    deny get ${filters} others
     ${eACL_gen} =           Create List     ${rule1}
@@ -154,7 +155,7 @@ Check eACL MatchType String Equal Object
                             Log	                 Set eACL for Deny GET operation with StringEqual Object Extended User Header
 
     ${S_OID_USER_OTH} =     Put object           ${USER_KEY}     ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-    
+
     ${filters} =            Set Variable    obj:${CUSTOM_FILTER}=1
     ${rule1} =              Set Variable    deny get ${filters} others
     ${eACL_gen} =           Create List     ${rule1}
@@ -178,10 +179,10 @@ Check eACL MatchType String Not Equal Object
                             Get object          ${OTHER_KEY}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${PATH}
 
                             Log	                    Set eACL for Deny GET operation with StringNotEqual Object ID
-                            
+
     &{HEADER_DICT} =        Head object        ${USER_KEY}    ${CID}    ${S_OID_USER}
     ${ID_value} =           Get From Dictionary	    ${HEADER_DICT}    ${EACL_OBJ_FILTERS}[${ID_FILTER}]
-    
+
     ${filters} =            Set Variable    obj:${ID_FILTER}!=${ID_value}
     ${rule1} =              Set Variable    deny get ${filters} others
     ${eACL_gen} =           Create List     ${rule1}
@@ -194,8 +195,8 @@ Check eACL MatchType String Not Equal Object
 
 
                             Log	               Set eACL for Deny GET operation with StringEqual Object Extended User Header
-                            
-    ${S_OID_USER_OTH} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}   
+
+    ${S_OID_USER_OTH} =     Put object         ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
     ${filters} =            Set Variable    obj:${CUSTOM_FILTER}!=1
     ${rule1} =              Set Variable    deny get ${filters} others
     ${eACL_gen} =           Create List     ${rule1}

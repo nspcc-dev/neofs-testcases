@@ -2,6 +2,7 @@
 Variables   common.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
@@ -92,6 +93,6 @@ Validate Policy
     ${CID} =            Create container               ${PRIV_KEY}    ${EMPTY}      ${POLICY}
                         Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}      ${CONTAINER_WAIT_INTERVAL}
                         ...     Container Existing         ${PRIV_KEY}    ${CID}
-    ${S_OID} =          Put object               ${PRIV_KEY}    ${FILE}       ${CID}        ${EMPTY}     ${EMPTY}
+    ${S_OID} =          Put object               ${PRIV_KEY}    ${FILE}       ${CID}
                         Validate storage policy for object      ${PRIV_KEY}    ${EXPECTED_VAL}           ${CID}       ${S_OID}   ${EXPECTED_LIST}
                         Get object               ${PRIV_KEY}    ${CID}    ${S_OID}    ${EMPTY}    s_file_read

@@ -58,6 +58,8 @@ Objects in NeoFS S3 Gateway
 
     ${OBJ_PATH} =               Get object S3    ${S3_CLIENT}    ${NEW_BUCKET}    ${S3_OBJECT_KEY}
                                 Verify file hash    ${OBJ_PATH}    ${FILE_S3_HASH}
+    ${HASH} =                   Get file hash       ${OBJ_PATH}
+                                Should Be Equal     ${FILE_S3_HASH}      ${HASH}
 
     #TODO: Solve the issue on CopyObject #260 https://github.com/nspcc-dev/neofs-s3-gw/issues/260
 

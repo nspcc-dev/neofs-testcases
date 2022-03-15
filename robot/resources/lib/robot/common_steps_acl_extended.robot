@@ -4,6 +4,7 @@ Variables   eacl_object_filters.py
 
 Library     acl.py
 Library     neofs.py
+Library     neofs_verbs.py
 Library     Collections
 
 Resource    common_steps_acl_basic.robot
@@ -91,7 +92,7 @@ Check eACL Deny and Allow All
 Compose eACL Custom
     [Arguments]    ${CID}    ${HEADER_DICT}    ${MATCH_TYPE}    ${FILTER}    ${ACCESS}    ${ROLE}
 
-    ${filter_value} =    Get From dictionary    ${HEADER_DICT}[header]    ${EACL_OBJ_FILTERS}[${FILTER}]
+    ${filter_value} =    Get From dictionary    ${HEADER_DICT}   ${EACL_OBJ_FILTERS}[${FILTER}]
 
     ${filters} =        Set Variable    obj:${FILTER}${MATCH_TYPE}${filter_value}
     ${rule_get}=        Set Variable    ${ACCESS} get ${filters} ${ROLE}
@@ -112,8 +113,12 @@ Object Header Decoded
     [Arguments]    ${USER_KEY}    ${CID}    ${OID}
 
     &{HEADER} =         Head Object    ${USER_KEY}    ${CID}    ${OID}
+    # FIXME
+    # 'objectID' key repositioning in dictionary for the calling keyword might
+    # work uniformly with any key from 'header'
+                        Set To Dictionary   ${HEADER}[header]   objectID     ${HEADER}[objectID]
 
-    [Return]    &{HEADER}
+    [Return]    &{HEADER}[header]
 
 Check eACL Filters with MatchType String Equal
     [Arguments]    ${FILTER}

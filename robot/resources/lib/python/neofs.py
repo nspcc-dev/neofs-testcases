@@ -1,7 +1,6 @@
-#!/usr/bin/python3.8
+#!/usr/bin/python3
 
 import base64
-import binascii
 from datetime import datetime
 import hashlib
 import json
@@ -11,13 +10,15 @@ import random
 import uuid
 import docker
 import base58
-from functools import reduce
 
 from neo3 import wallet
 from common import *
 from robot.api.deco import keyword
 from robot.api import logger
+
 from cli_helpers import _run_with_passwd, _cmd_run
+import neofs_verbs
+import json_transformers
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -67,7 +68,7 @@ def get_nodes_with_object(private_key: str, cid: str, oid: str):
     for node in NEOFS_NETMAP:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(fr'({oid})', search_res):
+            if oid in search_res:
                 nodes_list.append(node)
 
     logger.info(f"Nodes with object: {nodes_list}")
@@ -98,11 +99,12 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
     storage_nodes = storage_nodes if len(storage_nodes) != 0 else NEOFS_NETMAP
     copies = 0
     found_nodes = []
+    oid = oid.strip()
 
     for node in storage_nodes:
         search_res = _search_object(node, private_key, cid, oid)
         if search_res:
-            if re.search(fr'({oid})', search_res):
+            if oid in search_res:
                 copies += 1
                 found_nodes.append(node)
 
@@ -120,21 +122,6 @@ def validate_storage_policy_for_object(private_key: str, expected_copies: int, c
         else:
             raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
 
-
-@keyword('Get Range')
-def get_range(private_key: str, cid: str, oid: str, range_file: str, bearer: str,
-        range_cut: str, options:str=""):
-    bearer_token = ""
-    if bearer:
-        bearer_token = f"--bearer {bearer}"
-
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object range --cid {cid} --oid {oid} {bearer_token} --range {range_cut} '
-        f'--file {ASSETS_DIR}/{range_file} {options}'
-    )
-    logger.info(f"Cmd: {Cmd}")
-    _cmd_run(Cmd)
 
 
 @keyword('Create container')
@@ -187,39 +174,6 @@ def container_existing(private_key: str, cid: str):
     return
 
 
-@keyword('Search object')
-def search_object(private_key: str, cid: str, keys: str="", bearer: str="", filters: dict={},
-        expected_objects_list=[], options:str=""):
-    bearer_token = ""
-    filters_result = ""
-
-    if bearer:
-        bearer_token = f"--bearer {bearer}"
-    if filters:
-        filters_result += "--filters "
-        logger.info(filters)
-        for k, v in filters.items():
-            filters_result += f"'{k} EQ {v}' "
-
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object search {keys} --cid {cid} {bearer_token} {filters_result} {options}'
-    )
-    logger.info(f"Cmd: {object_cmd}")
-    output = _cmd_run(object_cmd)
-
-    found_objects = re.findall(r'(\w{43,44})', output)
-
-    if expected_objects_list:
-        if sorted(found_objects) == sorted(expected_objects_list):
-            logger.info(f"Found objects list '{found_objects}' ",
-                        f"is equal for expected list '{expected_objects_list}'")
-        else:
-            raise Exception(f"Found object list {found_objects} ",
-                                f"is not equal to expected list '{expected_objects_list}'")
-
-    return found_objects
-
 
 @keyword('Get Split objects')
 def get_component_objects(private_key: str, cid: str, oid: str):
@@ -227,36 +181,36 @@ def get_component_objects(private_key: str, cid: str, oid: str):
     split_id = ""
     for node in NEOFS_NETMAP:
         try:
-            header_virtual = head_object(private_key, cid, oid, options=' --ttl 1',
+            parsed_header_virtual = neofs_verbs.head_object(private_key, cid, oid, options=' --ttl 1',
                                 endpoint=node, is_raw=True)
-            if header_virtual:
-                parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
 
-                if 'Linking object' in parsed_header_virtual.keys():
-                    return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
+            if 'link' in parsed_header_virtual.keys():
+                return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
 
-                elif 'Split ID' in parsed_header_virtual.keys():
-                    logger.info(f"parsed_header_virtual: !@ {parsed_header_virtual}" )
-                    split_id = parsed_header_virtual['Split ID']
+            elif 'split' in parsed_header_virtual['header'].keys():
+                logger.info(f"parsed_header_virtual: !@ {parsed_header_virtual}" )
+                split_id = parsed_header_virtual['header']['splitID']
 
         except:
             logger.warn("Linking object has not been found.")
 
     # Get all existing objects
-    full_obj_list = search_object(private_key, cid, None, None, None, None, '--phy')
+    full_obj_list = neofs_verbs.search_object(private_key, cid, None, None, None, None, '--phy')
 
     # Search expected Linking object
     for targer_oid in full_obj_list:
-        header_parsed = head_object(private_key, cid, targer_oid, is_raw=True)
-        if header_parsed['Split ID'] == split_id and 'Split ChildID' in header_parsed.keys():
-            logger.info("Linking object has been found in additional check (head of all objects).")
-            return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
+        header_parsed = neofs_verbs.head_object(private_key, cid, targer_oid, is_raw=True)
+        if header_parsed['header']['split']:
+            if header_parsed['header']['split']['splitID'] == split_id and 'children' in header_parsed['header']['split'].keys():
+                logger.info("Linking object has been found in additional check (head of all objects).")
+                return _collect_split_objects_from_header(private_key, cid, parsed_header_virtual)
+
 
     raise Exception("Linking object is not found at all - all existed objects have been headed.")
 
 def _collect_split_objects_from_header(private_key, cid, parsed_header):
-    header_link_parsed = head_object(private_key, cid, parsed_header['Linking object'], is_raw=True)
-    return header_link_parsed['Split ChildID']
+    header_link_parsed = neofs_verbs.head_object(private_key, cid, parsed_header['link'])
+    return header_link_parsed['header']['split']['children']
 
 
 @keyword('Verify Split Chain')
@@ -274,19 +228,18 @@ def verify_split_chain(wif: str, cid: str, oid: str):
     logger.info("Collect Split objects information and verify chain of the objects.")
     for node in NEOFS_NETMAP:
         try:
-            header_virtual = head_object(wif, cid, oid, options=' --ttl 1',
-                            endpoint=node, json_output=False, is_raw=True)
-            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
+            parsed_header_virtual = neofs_verbs.head_object(wif, cid, oid, options=' --ttl 1',
+                            endpoint=node, is_raw=True)
+            logger.info(f"header {parsed_header_virtual}")
 
-            if 'Last object' in parsed_header_virtual.keys():
-                header_last = head_object(wif, cid,
-                                    parsed_header_virtual['Last object'],
-                                    is_raw=True, json_output=False)
-                header_last_parsed = _get_raw_split_information(header_last)
+            if 'lastPart' in parsed_header_virtual.keys():
+                header_last_parsed = neofs_verbs.head_object(wif, cid,
+                                    parsed_header_virtual['lastPart'],
+                                    is_raw=True)
                 marker_last_obj = 1
 
                 # Recursive chain validation up to the first object
-                final_verif_data = _verify_child_link(wif, cid, oid, header_last_parsed, final_verif_data)
+                final_verif_data = _verify_child_link(wif, cid, oid, header_last_parsed['header'], final_verif_data)
                 break
             logger.info(f"Found Split Object with header:\n\t{parsed_header_virtual}")
             logger.info("Continue to search Last Split Object")
@@ -302,41 +255,39 @@ def verify_split_chain(wif: str, cid: str, oid: str):
     logger.info("Compare Split objects result information with Linking object.")
     for node in NEOFS_NETMAP:
         try:
-            header_virtual = head_object(wif, cid, oid, options=' --ttl 1',
-                            endpoint=node, json_output=False, is_raw=True)
-            parsed_header_virtual = parse_object_virtual_raw_header(header_virtual)
-            if 'Linking object' in parsed_header_virtual.keys():
-                header_link = head_object(wif, cid,
-                                parsed_header_virtual['Linking object'],
-                                is_raw=True, json_output=False)
-                header_link_parsed = _get_raw_split_information(header_link)
+            parsed_header_virtual = neofs_verbs.head_object(wif, cid, oid, options=' --ttl 1',
+                            endpoint=node, is_raw=True)
+            if 'link' in parsed_header_virtual.keys():
+                header_link_parsed = neofs_verbs.head_object(wif, cid,
+                                parsed_header_virtual['link'],
+                                is_raw=True)
                 marker_link_obj = 1
 
-                reversed_list = final_verif_data['ID List'][::-1]
+                reversed_list = final_verif_data['header']['split']['children'][::-1]
 
-                if header_link_parsed['Split ChildID'] == reversed_list:
+                if header_link_parsed['header']['split']['children'] == reversed_list:
                     logger.info(f"Split objects list from Linked Object is equal to expected "
-                                f"{', '.join(header_link_parsed['Split ChildID'])}")
+                                f"{', '.join(header_link_parsed['header']['split']['children'])}")
                 else:
                     raise Exception(f"Split objects list from Linking Object "
-                                    f"({', '.join(header_link_parsed['Split ChildID'])}) "
+                                    f"({', '.join(header_link_parsed['header']['split']['children'])}) "
                                     f"is not equal to expected ({', '.join(reversed_list)})")
 
-                if int(header_link_parsed['PayloadLength']) == 0:
+                if int(header_link_parsed['header']['payloadLength']) == 0:
                     logger.info("Linking object Payload is equal to expected - zero size.")
                 else:
                     raise Exception("Linking object Payload is not equal to expected. Should be zero.")
 
-                if header_link_parsed['Type'] == 'regular':
+                if header_link_parsed['header']['objectType'] == 'REGULAR':
                     logger.info("Linking Object Type is 'regular' as expected.")
                 else:
                     raise Exception("Object Type is not 'regular'.")
 
-                if header_link_parsed['Split ID'] == final_verif_data['Split ID']:
-                    logger.info(f"Linking Object Split ID is equal to expected {final_verif_data['Split ID']}.")
+                if header_link_parsed['header']['split']['children'] == final_verif_data['split']['children']:
+                    logger.info(f"Linking Object Split ID is equal to expected {final_verif_data['split']['children']}.")
                 else:
-                    raise Exception(f"Split ID from Linking Object ({header_link_parsed['Split ID']}) "
-                                    f"is not equal to expected ({final_verif_data['Split ID']})")
+                    raise Exception(f"Split ID from Linking Object ({header_link_parsed['header']['split']['children']}) "
+                                    f"is not equal to expected ({final_verif_data['split']['children']})")
 
                 break
             logger.info(f"Found Linking Object with header:\n\t{parsed_header_virtual}")
@@ -351,100 +302,47 @@ def verify_split_chain(wif: str, cid: str, oid: str):
 
     logger.info("Compare Split objects result information with Virtual object.")
 
-    header_virtual = head_object(wif, cid, oid, json_output=False)
-    header_virtual_parsed = _get_raw_split_information(header_virtual)
+    header_virtual_parsed = neofs_verbs.head_object(wif, cid, oid)
 
-    if int(header_virtual_parsed['PayloadLength']) == int(final_verif_data['PayloadLength']):
+    if int(header_virtual_parsed['header']['payloadLength']) == int(final_verif_data['payloadLength']):
         logger.info(f"Split objects PayloadLength are equal to Virtual Object Payload "
-                    f"{header_virtual_parsed['PayloadLength']}")
+                    f"{header_virtual_parsed['header']['payloadLength']}")
     else:
         raise Exception(f"Split objects PayloadLength from Virtual Object "
-                        f"({header_virtual_parsed['PayloadLength']}) is not equal "
-                        f"to expected ({final_verif_data['PayloadLength']})")
+                        f"({header_virtual_parsed['header']['payloadLength']}) is not equal "
+                        f"to expected ({final_verif_data['payloadLength']})")
 
-    if header_link_parsed['Type'] == 'regular':
+    if header_link_parsed['header']['objectType'] == 'REGULAR':
         logger.info("Virtual Object Type is 'regular' as expected.")
     else:
         raise Exception("Object Type is not 'regular'.")
 
 
-def _get_raw_split_information(header):
-    result_header = dict()
-
-    # Header - Constant attributes
-
-    # ID
-    m = re.search(r'^ID: (\w+)', header)
-    if m is not None:
-        result_header['ID'] = m.group(1)
-    else:
-        raise Exception(f"no ID was parsed from object header: \t{header}")
-
-    # Type
-    m = re.search(r'Type:\s+(\w+)', header)
-    if m is not None:
-        result_header['Type'] = m.group(1)
-    else:
-        raise Exception(f"no Type was parsed from object header: \t{header}")
-
-    # PayloadLength
-    m = re.search(r'Size: (\d+)', header)
-    if m is not None:
-        result_header['PayloadLength'] = m.group(1)
-    else:
-        raise Exception(f"no PayloadLength was parsed from object header: \t{header}")
-
-    # Header - Optional attributes
-
-    # SplitID
-    m = re.search(r'Split ID:\s+([\w-]+)', header)
-    if m is not None:
-        result_header['Split ID'] = m.group(1)
-
-    # Split PreviousID
-    m = re.search(r'Split PreviousID:\s+(\w+)', header)
-    if m is not None:
-        result_header['Split PreviousID'] = m.group(1)
-
-    # Split ParentID
-    m = re.search(r'Split ParentID:\s+(\w+)', header)
-    if m is not None:
-        result_header['Split ParentID'] = m.group(1)
-
-    # Split ChildID list
-    found_objects = re.findall(r'Split ChildID:\s+(\w+)', header)
-    if found_objects:
-        result_header['Split ChildID'] = found_objects
-    logger.info(f"Result: {result_header}")
-
-    return result_header
-
-
 def _verify_child_link(wif: str, cid: str, oid: str, header_last_parsed: dict, final_verif_data: dict):
 
-    if 'PayloadLength' in final_verif_data.keys():
-        final_verif_data['PayloadLength'] = int(final_verif_data['PayloadLength']) + int(header_last_parsed['PayloadLength'])
+    if 'payloadLength' in final_verif_data.keys():
+            final_verif_data['payloadLength'] = int(final_verif_data['payloadLength']) + int(header_last_parsed['payloadLength'])
     else:
-        final_verif_data['PayloadLength'] = int(header_last_parsed['PayloadLength'])
+        final_verif_data['payloadLength'] = int(header_last_parsed['payloadLength'])
 
-    if header_last_parsed['Type'] != 'regular':
+    if header_last_parsed['objectType'] != 'REGULAR':
         raise Exception("Object Type is not 'regular'.")
 
-    if 'Split ID' in final_verif_data.keys():
-        if final_verif_data['Split ID'] != header_last_parsed['Split ID']:
-             raise Exception(f"Object Split ID ({header_last_parsed['Split ID']}) is not expected ({final_verif_data['Split ID']}).")
+    if 'split' in final_verif_data.keys():
+        if final_verif_data['split']['splitID'] != header_last_parsed['split']['splitID']:
+             raise Exception(f"Object Split ID ({header_last_parsed['split']['splitID']}) "
+                            f"is not expected ({final_verif_data['split']['splitID']}).")
     else:
-        final_verif_data['Split ID'] = header_last_parsed['Split ID']
+        final_verif_data['split']['splitID'] = header_last_parsed['split']['splitID']
 
-    if 'ID List' in final_verif_data.keys():
-        final_verif_data['ID List'].append(header_last_parsed['ID'])
+    if 'children' in final_verif_data['split'].keys():
+        final_verif_data['split']['children'].append(header_last_parsed['split']['children'])
     else:
-        final_verif_data['ID List'] = []
-        final_verif_data['ID List'].append(header_last_parsed['ID'])
+        final_verif_data['split']['children'] = []
+        final_verif_data['split']['children'].append(header_last_parsed['split']['children'])
 
-    if 'Split PreviousID' in header_last_parsed.keys():
-        header_virtual = head_object(wif, cid, header_last_parsed['Split PreviousID'], is_raw=True, json_output=False)
-        parsed_header_virtual = _get_raw_split_information(header_virtual)
+    if 'previous' in header_last_parsed['split'].keys():
+        parsed_header_virtual = neofs_verbs.head_object(wif, cid, header_last_parsed['split']['previous'], is_raw=True)
 
         final_verif_data = _verify_child_link(wif, cid, oid, parsed_header_virtual, final_verif_data)
     else:
@@ -455,9 +353,10 @@ def _verify_child_link(wif: str, cid: str, oid: str, header_last_parsed: dict, f
 
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
+    # TODO: replace with HEAD from neofs_verbs.py
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object head --cid {cid} --oid {oid_ts} --json --no-progress'
+        f'object head --cid {cid} --oid {oid_ts} --json'
     )
     logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
@@ -466,13 +365,13 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
 
     # Header verification
     header_cid = full_headers["header"]["containerID"]["value"]
-    if (_json_cli_decode(header_cid) == cid):
+    if (json_transformers.json_reencode(header_cid) == cid):
         logger.info(f"Header CID is expected: {cid} ({header_cid} in the output)")
     else:
         raise Exception("Header CID is not expected.")
 
     header_owner = full_headers["header"]["ownerID"]["value"]
-    if (_json_cli_decode(header_owner) == addr):
+    if (json_transformers.json_reencode(header_owner) == addr):
         logger.info(f"Header ownerID is expected: {addr} ({header_owner} in the output)")
     else:
         raise Exception("Header ownerID is not expected.")
@@ -490,77 +389,16 @@ def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, add
         raise Exception("Header Session Type is not expected.")
 
     header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
-    if (_json_cli_decode(header_session_cid) == cid):
+    if (json_transformers.json_reencode(header_session_cid) == cid):
         logger.info(f"Header ownerID is expected: {addr} ({header_session_cid} in the output)")
     else:
         raise Exception("Header Session CID is not expected.")
 
     header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
-    if (_json_cli_decode(header_session_oid) == oid):
+    if (json_transformers.json_reencode(header_session_oid) == oid):
         logger.info(f"Header Session OID (deleted object) is expected: {oid} ({header_session_oid} in the output)")
     else:
         raise Exception("Header Session OID (deleted object) is not expected.")
-
-
-def _json_cli_decode(data: str):
-    return base58.b58encode(base64.b64decode(data)).decode("utf-8")
-
-@keyword('Head object')
-def head_object(private_key: str, cid: str, oid: str, bearer_token: str="",
-    options:str="", endpoint: str="", json_output: bool = True,
-    is_raw: bool = False):
-
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint if endpoint else NEOFS_ENDPOINT} '
-        f'--wallet {private_key} '
-        f'object head --cid {cid} --oid {oid} {options} '
-        f'{"--bearer " + bearer_token if bearer_token else ""} '
-        f'{"--json" if json_output else ""} '
-        f'{"--raw" if is_raw else ""}'
-    )
-    logger.info(f"cmd: {cmd}")
-    output = _cmd_run(cmd)
-
-    if json_output:
-        decoded = json.loads(output)
-        output = _decode_json_output(decoded)
-
-    return output
-
-
-def _decode_json_output(data: dict):
-    '''
-        We get JSON output as an automatically decoded structure from
-        protobuf. Some fields are decoded with boilerplates and binary
-        values are Base64-encoded.
-
-        This function rearranges the structure and reencodes binary
-        data from Base64 to Base58.
-
-        Args:
-            data (dict): a dictionary which neofs-cli returns to reencode.
-
-        Returns:
-            dict: dictionary which contains data in a more organized form.
-    '''
-    try:
-        # reencoding binary IDs
-        data["objectID"] = _json_cli_decode(data["objectID"]["value"])
-        data["header"]["containerID"] = _json_cli_decode(data["header"]["containerID"]["value"])
-        data["header"]["ownerID"] = _json_cli_decode(data["header"]["ownerID"]["value"])
-        data["header"]["homomorphicHash"] = _json_cli_decode(data["header"]["homomorphicHash"]["sum"])
-        data["header"]["payloadHash"] = _json_cli_decode(data["header"]["payloadHash"]["sum"])
-        data["header"]["version"] = f"{data['header']['version']['major']}{data['header']['version']['minor']}"
-
-        # object attributes view normalization
-        ugly_attrs = data["header"]["attributes"]
-        data["header"]["attributes"] = {}
-        for attr in ugly_attrs:
-            data["header"]["attributes"][attr["key"]] = attr["value"]
-    except Exception as exc:
-        raise RuntimeError(f"failed to decode JSON output: {exc}") from exc
-
-    return data
 
 
 @keyword('Get container attributes')
@@ -576,28 +414,6 @@ def get_container_attributes(private_key: str, cid: str, endpoint: str="", json_
     logger.info(f"Cmd: {container_cmd}")
     output = _cmd_run(container_cmd)
     return output
-
-# TODO: replace with JSON parser when https://github.com/nspcc-dev/neofs-node/issues/1233
-# is done
-@keyword('Parse Object Virtual Raw Header')
-def parse_object_virtual_raw_header(header: str):
-    result_header = dict()
-    m = re.search(r'Split ID:\s+([\w-]+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Split ID'] = m.group(1)
-
-    m = re.search(r'Linking object:\s+(\w+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Linking object'] = m.group(1)
-
-    m = re.search(r'Last object:\s+(\w+)', header)
-    if m != None:
-        if m.start() != m.end(): # e.g., if match found something
-            result_header['Last object'] = m.group(1)
-
-    logger.info(f"Result: {result_header}")
 
 
 @keyword('Decode Container Attributes Json')
@@ -619,22 +435,6 @@ def decode_container_attributes_json(header):
     return     result_header
 
 
-@keyword('Delete object')
-def delete_object(private_key: str, cid: str, oid: str, bearer: str="", options: str=""):
-    bearer_token = ""
-    if bearer:
-        bearer_token = f"--bearer {bearer}"
-
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object delete --cid {cid} --oid {oid} {bearer_token} {options}'
-    )
-    logger.info(f"Cmd: {object_cmd}")
-    output = _cmd_run(object_cmd)
-    tombstone = _parse_oid(output)
-
-    return tombstone
-
 
 @keyword('Delete Container')
 # TODO: make the error message about a non-found container more user-friendly https://github.com/nspcc-dev/neofs-contract/issues/121
@@ -652,41 +452,6 @@ def delete_container(cid: str, private_key: str):
 def get_file_hash(filename : str):
     file_hash = _get_file_hash(filename)
     return file_hash
-
-
-@keyword('Put object')
-def put_object(private_key: str, path: str, cid: str, bearer: str="", user_headers: dict={},
-    endpoint: str="", options: str="" ):
-    if not endpoint:
-      endpoint = random.sample(NEOFS_NETMAP, 1)[0]
-
-    if bearer:
-        bearer = f"--bearer {bearer}"
-
-    putobject_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} object '
-        f'put --no-progress --file {path} --cid {cid} {bearer} {options} '
-        f'{"--attributes " + _dict_to_attrs(user_headers) if user_headers else ""}'
-    )
-    logger.info(f"cmd: {putobject_cmd}")
-    output = _cmd_run(putobject_cmd)
-    oid = _parse_oid(output)
-    return oid
-
-
-def _dict_to_attrs(attrs: dict):
-    '''
-    This function takes dictionary of object attributes and converts them
-    into the string. The string is passed to `--attibutes` key of the
-    neofs-cli.
-
-    Args:
-        attrs (dict): object attirbutes in {"a": "b", "c": "d"} format.
-
-    Returns:
-        (str): string in "a=b,c=d" format.
-    '''
-    return reduce(lambda a,b: f"{a},{b}", map(lambda i: f"{i}={attrs[i]}", attrs))
 
 
 @keyword('Get control endpoint with wif')
@@ -775,45 +540,6 @@ def find_in_nodes_Log(line: str, nodes_logs_time: dict):
     return 1
 
 
-@keyword('Get Range Hash')
-def get_range_hash(private_key: str, cid: str, oid: str, bearer_token: str,
-        range_cut: str, options: str=""):
-    if bearer_token:
-        bearer_token = f"--bearer {bearer_token}"
-
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object hash --cid {cid} --oid {oid} --range {range_cut} '
-        f'{bearer_token} {options}'
-    )
-    logger.info(f"Cmd: {object_cmd}")
-    _cmd_run(object_cmd)
-
-
-@keyword('Get object')
-def get_object(private_key: str, cid: str, oid: str, bearer_token: str="",
-    write_object: str="", endpoint: str="", options: str="" ):
-
-    if not write_object:
-        write_object = str(uuid.uuid4())
-    file_path = f"{ASSETS_DIR}/{write_object}"
-
-    logger.info("Going to get the object")
-    if not endpoint:
-      endpoint = random.sample(NEOFS_NETMAP, 1)[0]
-
-
-    if bearer_token:
-        bearer_token = f"--bearer {bearer_token}"
-
-    object_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} '
-        f'object get --cid {cid} --oid {oid} --file {file_path} {bearer_token} '
-        f'{options}'
-    )
-    logger.info(f"Cmd: {object_cmd}")
-    _cmd_run(object_cmd)
-    return file_path
 
 
 
@@ -1022,20 +748,10 @@ def _parse_cid(input_str: str):
 
 
 def _search_object(node:str, private_key: str, cid:str, oid: str):
-    if oid:
-        oid_cmd = "--oid %s" % oid
     Cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {private_key} --ttl 1 '
-        f'object search --root --cid {cid} {oid_cmd}'
+        f'object search --root --cid {cid} --oid {oid}'
     )
 
     output = _cmd_run(Cmd)
-    if re.search(fr'{oid}', output):
-        return oid
-    else:
-        logger.info("Object is not found.")
-
-    if re.search(r'local node is outside of object placement', output):
-        logger.info("Server is not presented in container.")
-    elif ( re.search(r'timed out after 30 seconds', output) or re.search(r'no route to host', output) or re.search(r'i/o timeout', output)):
-        logger.warn("Node is unavailable")
+    return output

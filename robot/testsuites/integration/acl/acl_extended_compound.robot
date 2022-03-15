@@ -3,6 +3,7 @@ Variables    common.py
 
 Library     Collections
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     acl.py
 

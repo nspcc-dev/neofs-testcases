@@ -1,10 +1,8 @@
 *** Settings ***
 Variables    common.py
 
-Library     Collections
 Library     neofs.py
 Library     payment_neogo.py
-Library     acl.py
 
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
@@ -19,7 +17,7 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
+    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
@@ -37,4 +35,4 @@ Extended ACL Operations
 
 Check eACL Deny and Allow All Other
     [Arguments]    ${USER_KEY}    ${OTHER_KEY}
-                            Check eACL Deny and Allow All    ${OTHER_KEY}    ${EACL_DENY_ALL_OTHERS}    ${EACL_ALLOW_ALL_OTHERS}    ${USER_KEY} 
+                            Check eACL Deny and Allow All    ${OTHER_KEY}    ${EACL_DENY_ALL_OTHERS}    ${EACL_ALLOW_ALL_OTHERS}    ${USER_KEY}

@@ -3,6 +3,7 @@ Variables    common.py
 
 Library     Collections
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     acl.py
 
@@ -19,7 +20,7 @@ Resource    eacl_tables.robot
 *** Test cases ***
 Extended ACL Operations
     [Documentation]         Testcase to validate NeoFS operations with extended ACL.
-    [Tags]                  ACL  eACL  NeoFS  NeoCLI
+    [Tags]                  ACL  eACL
     [Timeout]               20 min
 
     [Setup]                 Setup

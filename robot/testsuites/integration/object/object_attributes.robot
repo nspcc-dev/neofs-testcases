@@ -2,10 +2,11 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
-Library    Collections
 Library    neofs.py
+Library    neofs_verbs.py
 Library    payment_neogo.py
 Library    String
+Library    Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot

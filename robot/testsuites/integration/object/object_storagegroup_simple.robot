@@ -2,6 +2,7 @@
 Variables   common.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 
 Resource    common_steps_object.robot
@@ -10,6 +11,7 @@ Resource    payment_operations.robot
 
 *** Variables ***
 ${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
+&{USER_HEADER} =        key1=1      key2=2
 
 *** Test cases ***
 NeoFS Simple Storagegroup
@@ -28,8 +30,8 @@ NeoFS Simple Storagegroup
 
 
     # Put two Simple Object
-    ${S_OID_1} =        Put object    ${WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${EMPTY}
-    ${S_OID_2} =        Put object    ${WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
+    ${S_OID_1} =        Put object    ${WIF}    ${FILE_S}    ${CID}
+    ${S_OID_2} =        Put object    ${WIF}    ${FILE_S}    ${CID}    user_headers=&{USER_HEADER}
 
     @{S_OBJ_ALL} =	    Create List    ${S_OID_1}    ${S_OID_2}
 

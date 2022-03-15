@@ -4,6 +4,7 @@ Variables   common.py
 Library     Collections
 Library     acl.py
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 
 Resource    eacl_tables.robot
@@ -15,13 +16,13 @@ Resource    setup_teardown.robot
 *** Test cases ***
 BearerToken Operations
     [Documentation]         Testcase to validate NeoFS operations with BearerToken.
-    [Tags]                  ACL  NeoFS  NeoCLI BearerToken
+    [Tags]                  ACL  BearerToken
     [Timeout]               20 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
-                            
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+
                             Log    Check Bearer token with simple object
     ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer    Simple    ${USER_KEY}    ${FILE_S}
@@ -39,10 +40,10 @@ BearerToken Operations
 
 Check eACL Deny and Allow All Bearer
     [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}
-    
+
     ${CID} =                Create Container Public    ${USER_KEY}
-    ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
-    Prepare eACL Role rules    ${CID}
+    ${S_OID_USER} =         Put object    ${USER_KEY}    ${FILE_S}    ${CID}
+                            Prepare eACL Role rules    ${CID}
 
 
     # Storage group Operations (Put, List, Get, Delete)

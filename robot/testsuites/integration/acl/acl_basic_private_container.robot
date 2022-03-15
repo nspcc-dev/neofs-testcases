@@ -2,6 +2,7 @@
 Variables       common.py
 
 Library         neofs.py
+Library         neofs_verbs.py
 Library         payment_neogo.py
 
 Resource        common_steps_acl_basic.robot

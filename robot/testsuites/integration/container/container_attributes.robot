@@ -1,10 +1,10 @@
 *** Settings ***
 Variables   common.py
 
-Library    Collections
 Library    neofs.py
 Library    payment_neogo.py
 Library    String
+Library    Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
@@ -26,7 +26,7 @@ Duplicated Container Attributes
 
     [Setup]                     Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
+    ${_}   ${ADDR}     ${USER_KEY} =   Init Wallet with Address    ${ASSETS_DIR}
     Payment Operations      ${ADDR}         ${USER_KEY}
 
     ######################################################
@@ -53,7 +53,10 @@ Duplicated Container Attributes
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing     ${USER_KEY}     ${CID}
     ${ATTRIBUTES} =         Get container attributes    ${USER_KEY}    ${CID}    ${EMPTY}    json_output=True
-    ${ATTRIBUTES_DICT} =    Decode Container Attributes Json    ${ATTRIBUTES}
-    Verify Head Attribute    ${ATTRIBUTES_DICT}    ${ATTR_SINGLE}
+    &{ATTRIBUTES_DICT} =    Decode Container Attributes Json    ${ATTRIBUTES}
+                            List Should Contain Value
+                                ...     ${ATTRIBUTES_DICT}[Attributes]
+                                ...     ${ATTR_SINGLE}
+                                ...     "No expected container attributes found"
 
     [Teardown]              Teardown    container_attributes

@@ -3,6 +3,7 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     http_gate.py
 
 Resource    payment_operations.robot
@@ -33,8 +34,8 @@ NeoFS HTTP Gateway
     ${FILE_HASH} =      Get file hash                       ${FILE}
     ${FILE_L_HASH} =    Get file hash                       ${FILE_L}
 
-    ${S_OID} =          Put object                 ${WIF}    ${FILE}      ${CID}    ${EMPTY}    ${EMPTY}
-    ${L_OID} =          Put object                 ${WIF}    ${FILE_L}    ${CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID} =          Put object                 ${WIF}    ${FILE}      ${CID}
+    ${L_OID} =          Put object                 ${WIF}    ${FILE_L}    ${CID}
 
     # By request from Service team - try to GET object from the node without object
 
@@ -44,8 +45,10 @@ NeoFS HTTP Gateway
     ${GET_OBJ_S} =      Get object               ${WIF}     ${CID}    ${S_OID}    ${EMPTY}    s_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}    ${S_OID}
 
-                        Verify file hash                    ${GET_OBJ_S}    ${FILE_HASH}
-                        Verify file hash                    ${FILEPATH}    ${FILE_HASH}
+    ${PLAIN_FILE_HASH} =    Get file hash       ${GET_OBJ_S}
+    ${GATE_FILE_HASH} =     Get file hash       ${FILEPATH}
+                            Should Be Equal     ${FILE_HASH}      ${PLAIN_FILE_HASH}
+                            Should Be Equal     ${FILE_HASH}      ${GATE_FILE_HASH}
 
     @{GET_NODE_LIST} =  Get nodes without object            ${WIF}    ${CID}    ${L_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
@@ -53,7 +56,9 @@ NeoFS HTTP Gateway
     ${GET_OBJ_L} =      Get object               ${WIF}     ${CID}    ${L_OID}    ${EMPTY}    l_file_read    ${NODE}
     ${FILEPATH} =       Get via HTTP Gate                   ${CID}    ${L_OID}
 
-                        Verify file hash                    ${GET_OBJ_L}    ${FILE_L_HASH}
-                        Verify file hash                    ${FILEPATH}    ${FILE_L_HASH}
+    ${PLAIN_FILE_HASH} =    Get file hash       ${GET_OBJ_L}
+    ${GATE_FILE_HASH} =     Get file hash       ${FILEPATH}
+                            Should Be Equal     ${FILE_L_HASH}      ${PLAIN_FILE_HASH}
+                            Should Be Equal     ${FILE_L_HASH}      ${GATE_FILE_HASH}
 
     [Teardown]          Teardown    http_gate

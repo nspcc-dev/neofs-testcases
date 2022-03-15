@@ -19,6 +19,7 @@ def _cmd_run(cmd, timeout=30):
     in case of failure returns error message.
     """
     try:
+        logger.info(f"Executing command: {cmd}")
         compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout,
                     shell=True)

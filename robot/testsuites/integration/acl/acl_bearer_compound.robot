@@ -4,6 +4,7 @@ Variables   common.py
 Library     Collections
 Library     acl.py
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 
 Resource    eacl_tables.robot
@@ -59,7 +60,7 @@ Check Bearer Сompound Get
     ${CID} =            Create Container Public    ${USER_KEY}
                         Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
-    @{S_OBJ_H} =        Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =        Create List	           ${S_OID_USER}
 
     ${S_OID_USER} =     Put object     ${USER_KEY}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
                         Put object     ${KEY}         ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}

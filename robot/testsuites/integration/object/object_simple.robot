@@ -2,6 +2,7 @@
 Variables   common.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     contract_keywords.py
 Library     Collections
@@ -25,7 +26,7 @@ NeoFS Simple Object Operations
     [Setup]             Setup
 
     ${WALLET}   ${ADDR}     ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
-    Payment Operations      ${ADDR}     ${WIF}
+                Payment Operations      ${ADDR}     ${WIF}
     ${CID} =    Prepare container       ${WIF}
 
     ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}

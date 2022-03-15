@@ -1,9 +1,10 @@
 *** Settings ***
 Variables   common.py
 
-Library     Collections
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
+Library     Collections
 
 Resource    common_steps_object.robot
 Resource    setup_teardown.robot
@@ -11,11 +12,12 @@ Resource    payment_operations.robot
 
 *** Variables ***
 ${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
+&{USER_HEADER} =        key1=1  key2=2
 
 *** Test cases ***
 NeoFS Complex Storagegroup
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.
-    [Tags]              Object  NeoFS  NeoCLI
+    [Tags]              Object
     [Timeout]           20 min
 
     [Setup]             Setup
@@ -28,8 +30,8 @@ NeoFS Complex Storagegroup
     ${FILE_HASH_S} =    Get file hash                     ${FILE_S}
 
     # Put two Simple Object
-    ${S_OID_1} =        Put object    ${WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${EMPTY}
-    ${S_OID_2} =        Put object    ${WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
+    ${S_OID_1} =        Put object    ${WIF}    ${FILE_S}    ${CID}
+    ${S_OID_2} =        Put object    ${WIF}    ${FILE_S}    ${CID}    user_headers=&{USER_HEADER}
 
     @{S_OBJ_ALL} =	Create List    ${S_OID_1}    ${S_OID_2}
 

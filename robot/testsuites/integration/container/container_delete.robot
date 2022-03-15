@@ -16,13 +16,13 @@ ${CONTAINER_WAIT_INTERVAL} =    1 min
 *** Test Cases ***
 Delete Containers
     [Documentation]     Testcase to check if containers can be deleted.
-    [Tags]              Container  NeoFS  NeoCLI
+    [Tags]              Container
     [Timeout]           10 min
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
     ${CID} =            Create container    ${USER_KEY}    ${PRIVATE_ACL_F}      ${COMMON_PLACEMENT_RULE}
                         Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
@@ -41,6 +41,6 @@ Delete Containers
                         ...  Get container attributes    ${USER_KEY}    ${CID}
 
                         Log    If one tries to delete an already deleted container, they should expect success.
-                        Delete Container    ${CID}    ${USER_KEY}  
+                        Delete Container    ${CID}    ${USER_KEY}
 
     [Teardown]                  Teardown    container_delete

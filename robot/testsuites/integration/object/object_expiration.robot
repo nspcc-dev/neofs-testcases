@@ -2,6 +2,7 @@
 Variables   common.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     contract_keywords.py
 
@@ -35,12 +36,12 @@ NeoFS Simple Object Operations
 
                         # Failed on attempt to create epoch from the past
                         Run Keyword And Expect Error        *
-                        ...  Put object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    __NEOFS__EXPIRATION_EPOCH=${EPOCH_PRE}
+                        ...  Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_PRE}
 
                         # Put object with different expiration epoch numbers (current, next, and from the distant future)
-    ${OID_CUR} =        Put object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    __NEOFS__EXPIRATION_EPOCH=${EPOCH}
-    ${OID_NXT} =        Put object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    __NEOFS__EXPIRATION_EPOCH=${EPOCH_NEXT}
-    ${OID_PST} =        Put object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    __NEOFS__EXPIRATION_EPOCH=${EPOCH_POST}
+    ${OID_CUR} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH}
+    ${OID_NXT} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_NEXT}
+    ${OID_PST} =        Put object    ${WIF}    ${FILE}    ${CID}    options= --attributes __NEOFS__EXPIRATION_EPOCH=${EPOCH_POST}
 
                         # Check objects for existence
                         Get object    ${WIF}    ${CID}    ${OID_CUR}    ${EMPTY}    file_read_cur
