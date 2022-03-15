@@ -2,6 +2,7 @@
 Variables    common.py
 
 Library      neofs.py
+Library      neofs_verbs.py
 Library      payment_neogo.py
 Library      contract_keywords.py
 
@@ -13,20 +14,20 @@ Resource     setup_teardown.robot
 *** Test cases ***
 Basic ACL Operations for Public Container
     [Documentation]         Testcase to validate NeoFS operations with ACL for Public Container.
-    [Tags]                  ACL  NeoFS  NeoCLI
+    [Tags]                  ACL
     [Timeout]               20 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit  
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
     ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Public Container    Simple    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
 
     ${PUBLIC_CID} =         Create Public Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container    Complex    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_basic_public_container_storagegroup
@@ -41,7 +42,7 @@ Check Public Container
                             Log    Storage group Operations for each Role keys
 
     # Put target object to use in storage groups
-    ${S_OID} =              Put object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID} =              Put object    ${USER_KEY}    ${FILE_S}    ${PUBLIC_CID}
 
     @{ROLES_KEYS_PASS} =    Create List    ${USER_KEY}    ${OTHER_KEY}
     @{ROLES_KEYS_SYS} =     Create List    ${NEOFS_IR_WIF}    ${NEOFS_SN_WIF}

@@ -5,6 +5,7 @@ Variables   wellknown_acl.py
 Library     Collections
 Library     payment_neogo.py
 Library     neofs.py
+Library     neofs_verbs.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
 Library     contract_keywords.py
@@ -25,10 +26,10 @@ NeoFS Object Replication
     [Timeout]               25 min
 
     [Setup]                 Setup
-    
+
     Log    Check replication mechanism
     Check Replication    ${EMPTY}
-    Log    Check Sticky Bit with SYSTEM Group via replication mechanism 
+    Log    Check Sticky Bit with SYSTEM Group via replication mechanism
     Check Replication    ${STICKYBIT_PUB_ACL}
 
     [Teardown]      Teardown    replication
@@ -37,7 +38,7 @@ NeoFS Object Replication
 Check Replication
     [Arguments]    ${ACL}
 
-    ${WALLET}   ${ADDR}     ${WIF} =    Prepare Wallet And Deposit
+    ${_}   ${_}     ${WIF} =    Prepare Wallet And Deposit
     ${CID} =                Create Container    ${WIF}    ${ACL}   ${PLACEMENT_RULE}
                             Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
                             ...     Container Existing    ${WIF}    ${CID}
@@ -45,7 +46,7 @@ Check Replication
     ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash    ${FILE}
 
-    ${S_OID} =              Put Object    ${WIF}    ${FILE}    ${CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID} =              Put Object    ${WIF}    ${FILE}    ${CID}
                             Validate storage policy for object    ${WIF}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
 
     @{NODES_OBJ} =          Get nodes with Object    ${WIF}    ${CID}    ${S_OID}

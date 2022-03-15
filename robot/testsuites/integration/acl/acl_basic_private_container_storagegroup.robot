@@ -2,6 +2,7 @@
 Variables    common.py
 
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 Library     Collections
 
@@ -13,20 +14,20 @@ Resource    setup_teardown.robot
 *** Test cases ***
 Basic ACL Operations for Private Container
     [Documentation]         Testcase to validate NeoFS operations with ACL for Private Container.
-    [Tags]                  ACL  NeoFS  NeoCLI
+    [Tags]                  ACL
     [Timeout]               20 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
     ${PRIV_CID} =           Create Private Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Private Container    Simple    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
     ${PRIV_CID} =           Create Private Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Private Container    Complex    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
     [Teardown]              Teardown    acl_basic_private_container_storagegroup
@@ -38,7 +39,7 @@ Check Private Container
     [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${OTHER_KEY}
 
     # Put target object to use in storage groups
-    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${PRIV_CID}
 
 
     # Storage group Operations (Put, List, Get, Delete) with different Keys

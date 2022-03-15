@@ -2,12 +2,13 @@
 Variables    common.py
 Variables    wellknown_acl.py
 
-Library     Process
 Library     contract_keywords.py
 Library     neofs.py
-Library     String
+Library     neofs_verbs.py
 
 Library     payment_neogo.py
+Library     String
+Library     Process
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot

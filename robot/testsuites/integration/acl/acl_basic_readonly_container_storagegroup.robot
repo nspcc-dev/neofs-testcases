@@ -2,6 +2,7 @@
 Variables    common.py
 
 Library      neofs.py
+Library      neofs_verbs.py
 Library      payment_neogo.py
 
 Resource     common_steps_acl_basic.robot
@@ -12,20 +13,20 @@ Resource     setup_teardown.robot
 *** Test cases ***
 Basic ACL Operations for Read-Only Container
     [Documentation]         Testcase to validate NeoFS operations with ACL for Read-Only Container.
-    [Tags]                  ACL  NeoFS  NeoCLI
+    [Tags]                  ACL
     [Timeout]               20 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}     ${USER_KEY} =   Prepare Wallet And Deposit 
-    ${WALLET_OTH}   ${ADDR_OTH}     ${OTHER_KEY} =   Prepare Wallet And Deposit
-    
+    ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
+    ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
+
     ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =                        Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Read-Only Container    Simple    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
     ${READONLY_CID} =       Create Read-Only Container    ${USER_KEY}
-    ${FILE_S}    ${FILE_S_HASH} =             Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Read-Only Container    Complex    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
 
@@ -39,7 +40,7 @@ Check Read-Only Container
     [Arguments]     ${RUN_TYPE}    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${OTHER_KEY}
 
     # Put target object to use in storage groups
-    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}    ${EMPTY}    ${EMPTY}
+    ${S_OID_USER} =     Put object    ${USER_KEY}    ${FILE_S}    ${READONLY_CID}
 
     # Storage group Operations (Put, List, Get, Delete) for Read-only container
 

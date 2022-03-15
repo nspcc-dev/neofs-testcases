@@ -3,6 +3,7 @@ Variables   common.py
 
 Library     Collections
 Library     neofs.py
+Library     neofs_verbs.py
 Library     acl.py
 Library     payment_neogo.py
 
@@ -46,7 +47,7 @@ Check eACL Deny and Allow All Bearer Filter UserHeader NotEqual
     ${S_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${ANOTHER_HEADER}
     ${S_OID_USER_2} =   Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object         ${USER_KEY}     ${FILE_S}   ${CID}   user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List        ${S_OID_USER_2}
+    @{S_OBJ_H} =	Create List        ${S_OID_USER_2}
 
                         Put object          ${USER_KEY}    ${FILE_S}     ${CID}
                         Get object          ${USER_KEY}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl

@@ -4,6 +4,7 @@ Variables   common.py
 Library     Collections
 Library     acl.py
 Library     neofs.py
+Library     neofs_verbs.py
 Library     payment_neogo.py
 
 Resource    eacl_tables.robot
@@ -48,7 +49,7 @@ Check eACL Deny and Allow All Bearer Filter Requst Equal
     ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}
     ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
                             Put object         ${USER_KEY}    ${FILE_S}     ${CID}
                             Get object         ${USER_KEY}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
@@ -71,7 +72,7 @@ Check eACL Deny and Allow All Bearer Filter Requst Equal
     ${rule6}=           Create Dictionary    Operation=GETRANGE        Access=ALLOW    Role=USER    Filters=${filters}
     ${rule7}=           Create Dictionary    Operation=GETRANGEHASH    Access=ALLOW    Role=USER    Filters=${filters}
     ${eACL_gen}=        Create List    ${rule1}    ${rule2}    ${rule3}    ${rule4}    ${rule5}    ${rule6}    ${rule7}
-    
+
     ${EACL_TOKEN} =     Form BearerToken File      ${USER_KEY}    ${CID}   ${eACL_gen}
 
                         Run Keyword And Expect Error    ${EACL_ERROR_MSG}
