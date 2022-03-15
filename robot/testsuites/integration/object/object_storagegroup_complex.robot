@@ -9,6 +9,9 @@ Resource    common_steps_object.robot
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
+*** Variables ***
+${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
+
 *** Test cases ***
 NeoFS Complex Storagegroup
     [Documentation]     Testcase to validate NeoFS operations with Storagegroup.

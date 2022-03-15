@@ -11,6 +11,10 @@ Resource    payment_operations.robot
 Resource    setup_teardown.robot
 Resource    eacl_tables.robot
 
+*** Variables ***
+&{USER_HEADER} =        key1=1      key2=abc
+&{USER_HEADER_DEL} =    key1=del    key2=del
+&{ANOTHER_USER_HEADER} =        key1=oth    key2=oth
 
 *** Test cases ***
 Extended ACL Operations
@@ -38,26 +42,26 @@ Extended ACL Operations
 Check eACL Deny and Allow All System
     [Arguments]     ${USER_KEY}      ${FILE_S}
 
-    ${CID} =                Create Container Public     ${USER_KEY}
+    ${CID} =            Create Container Public     ${USER_KEY}
 
-    ${S_OID_USER} =     Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER}
-    ${D_OID_USER_S} =   Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
-    ${D_OID_USER_SN} =  Put object      ${USER_KEY}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
+    ${S_OID_USER} =     Put object      ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+    ${D_OID_USER_S} =   Put object      ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
+    ${D_OID_USER_SN} =  Put object      ${USER_KEY}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
 
-    @{S_OBJ_H} =	    Create List	    ${S_OID_USER}
+    @{S_OBJ_H} =	Create List	    ${S_OID_USER}
 
-                        Put object      ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
-                        Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        Put object      ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
+                        Put object      ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
                         Get object    ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
                         Get object    ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
 
-                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
-                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
-                        
+                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}
+                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}
+
                         Run Keyword And Expect Error    *
                         ...    Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error    *
@@ -67,9 +71,9 @@ Check eACL Deny and Allow All System
                         Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
                         Run Keyword And Expect Error    *
-                        ...    Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
+                        ...    Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}
                         Run Keyword And Expect Error    *
-                        ...    Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+                        ...    Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}
 
                         Set eACL             ${USER_KEY}     ${CID}       ${EACL_DENY_ALL_SYSTEM}
 
@@ -77,9 +81,9 @@ Check eACL Deny and Allow All System
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                         Run Keyword And Expect Error    *
-                        ...  Put object        ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        ...  Put object        ${NEOFS_IR_WIF}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
                         Run Keyword And Expect Error    *
-                        ...  Put object        ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_OTH_HEADER}
+                        ...  Put object        ${NEOFS_SN_WIF}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
                         Run Keyword And Expect Error    *
                         ...  Get object      ${NEOFS_IR_WIF}      ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
@@ -87,15 +91,15 @@ Check eACL Deny and Allow All System
                         ...  Get object      ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
                         Run Keyword And Expect Error    *
-                        ...  Search object              ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        ...  Search object              ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
                         Run Keyword And Expect Error    *
-                        ...  Search object              ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        ...  Search object              ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
 
 
                         Run Keyword And Expect Error        *
-                        ...  Head object                ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        ...  Head object                ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Head object                ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        ...  Head object                ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
                         ...  Get Range                  ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
@@ -110,9 +114,9 @@ Check eACL Deny and Allow All System
 
 
                         Run Keyword And Expect Error        *
-                        ...  Delete object              ${NEOFS_IR_WIF}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                        ...  Delete object              ${NEOFS_IR_WIF}    ${CID}        ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Delete object              ${NEOFS_SN_WIF}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                        ...  Delete object              ${NEOFS_SN_WIF}    ${CID}        ${S_OID_USER}
 
 
                         Set eACL                        ${USER_KEY}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
@@ -120,23 +124,23 @@ Check eACL Deny and Allow All System
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_S}     ${EMPTY}
-                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_SN}    ${EMPTY}
+                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_S}
+                        Delete object        ${USER_KEY}    ${CID}    ${D_OID_USER_SN}
 
-    ${D_OID_USER_S} =   Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
-    ${D_OID_USER_SN} =  Put object     ${USER_KEY}     ${FILE_S}    ${CID}    ${EMPTY}    ${FILE_USR_HEADER_DEL}
+    ${D_OID_USER_S} =   Put object     ${USER_KEY}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
+    ${D_OID_USER_SN} =  Put object     ${USER_KEY}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
 
-                        Put object     ${NEOFS_IR_WIF}    ${FILE_S}     ${CID}    ${EMPTY}       ${FILE_OTH_HEADER}
-                        Put object     ${NEOFS_SN_WIF}    ${FILE_S}     ${CID}    ${EMPTY}       ${FILE_OTH_HEADER}
+                        Put object     ${NEOFS_IR_WIF}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
+                        Put object     ${NEOFS_SN_WIF}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
                         Get object       ${NEOFS_IR_WIF}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
                         Get object       ${NEOFS_SN_WIF}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
 
-                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
-                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${FILE_USR_HEADER}       ${S_OBJ_H}
+                        Search object        ${NEOFS_IR_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}
+                        Search object        ${NEOFS_SN_WIF}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}
 
-                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
-                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}
+                        Head object          ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}
+                        Head object          ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
                         ...  Get Range            ${NEOFS_IR_WIF}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
@@ -147,6 +151,6 @@ Check eACL Deny and Allow All System
                         Get Range Hash       ${NEOFS_SN_WIF}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
                         Run Keyword And Expect Error        *
-                        ...  Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}        ${EMPTY}
+                        ...  Delete object        ${NEOFS_IR_WIF}    ${CID}    ${D_OID_USER_S}
                         Run Keyword And Expect Error        *
-                        ...  Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}       ${EMPTY}
+                        ...  Delete object        ${NEOFS_SN_WIF}    ${CID}    ${D_OID_USER_SN}

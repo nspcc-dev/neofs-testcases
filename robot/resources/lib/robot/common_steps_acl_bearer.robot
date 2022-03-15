@@ -2,11 +2,6 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
-*** Variables ***
-${FILE_USR_HEADER} =        key1=1,key2=abc
-${FILE_USR_HEADER_DEL} =    key1=del,key2=del
-${FILE_OTH_HEADER} =        key1=oth,key2=oth
-
 *** Keywords ***
 Create Container Public
     [Arguments]    ${USER_KEY}

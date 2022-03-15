@@ -11,6 +11,10 @@ Resource    common_steps_acl_bearer.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
+*** Variables ***
+&{USER_HEADER} =        key1=1      key2=abc
+&{USER_HEADER_DEL} =    key1=del    key2=del
+&{ANOTHER_USER_HEADER} =        key1=oth    key2=oth
 
 *** Test cases ***
 BearerToken Operations with Filter Requst NotEqual
@@ -40,17 +44,17 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     [Arguments]    ${USER_KEY}    ${FILE_S}
 
     ${CID} =                Create Container Public    ${USER_KEY}
-    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER}
-    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${EMPTY}
-    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  ${EMPTY}  ${FILE_USR_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
+    ${S_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
+    ${S_OID_USER_2} =       Put object                 ${USER_KEY}     ${FILE_S}   ${CID}
+    ${D_OID_USER} =         Put object                 ${USER_KEY}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
+    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
-                            Put object         ${USER_KEY}    ${FILE_S}     ${CID}           ${EMPTY}      ${FILE_OTH_HEADER}
+                            Put object         ${USER_KEY}    ${FILE_S}     ${CID}           user_headers=${ANOTHER_USER_HEADER}
                             Get object         ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}      local_file_eacl
-                            Search object      ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}      ${FILE_USR_HEADER}     ${S_OBJ_H}
-                            Head object        ${USER_KEY}    ${CID}        ${S_OID_USER}    ${EMPTY}
+                            Search object      ${USER_KEY}    ${CID}        ${EMPTY}         ${EMPTY}      ${USER_HEADER}     ${S_OBJ_H}
+                            Head object        ${USER_KEY}    ${CID}        ${S_OID_USER}
                             Get Range          ${USER_KEY}    ${CID}        ${S_OID_USER}    s_get_range       ${EMPTY}      0:256
-                            Delete object      ${USER_KEY}    ${CID}        ${D_OID_USER}    ${EMPTY}
+                            Delete object      ${USER_KEY}    ${CID}        ${D_OID_USER}
 
                             Set eACL           ${USER_KEY}    ${CID}        ${EACL_DENY_ALL_USER}
 
@@ -69,22 +73,22 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${EACL_TOKEN} =     Form BearerToken File      ${USER_KEY}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Put object      ${USER_KEY}    ${FILE_S}    ${CID}           ${EMPTY}       ${FILE_USR_HEADER}
+                        ...  Put object      ${USER_KEY}    ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
                         Run Keyword And Expect Error    *
                         ...  Get object      ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
                         #Run Keyword And Expect Error    *
-                        #...  Search object  ${USER_KEY}    ${CID}       ${EMPTY}         ${EMPTY}       ${FILE_USR_HEADER}    ${S_OBJ_H}
+                        #...  Search object  ${USER_KEY}    ${CID}       ${EMPTY}         ${EMPTY}       ${USER_HEADER}    ${S_OBJ_H}
                         Run Keyword And Expect Error    *
-                        ...  Head object     ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+                        ...  Head object     ${USER_KEY}    ${CID}       ${S_OID_USER}
                         Run Keyword And Expect Error    *
                         ...  Get Range       ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error    *
-                        ...  Delete object   ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EMPTY}
+                        ...  Delete object   ${USER_KEY}    ${CID}       ${S_OID_USER}
 
-                        Put object       ${USER_KEY}    ${FILE_S}    ${CID}           ${EACL_TOKEN}    ${FILE_USR_HEADER}   ${EMPTY}       --xhdr a=2
+                        Put object       ${USER_KEY}    ${FILE_S}    ${CID}   bearer=${EACL_TOKEN}    user_headers=${USER_HEADER}   options=--xhdr a=2
                         Get object       ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}       --xhdr a=2
-                        Search object    ${USER_KEY}    ${CID}       ${EMPTY}         ${EACL_TOKEN}    ${FILE_USR_HEADER}   ${EMPTY}       --xhdr a=2
-                        Head object      ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    ${EMPTY}         --xhdr a=2
+                        Search object    ${USER_KEY}    ${CID}       ${EMPTY}         ${EACL_TOKEN}    ${USER_HEADER}   ${EMPTY}       --xhdr a=2
+                        Head object      ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}    options=--xhdr a=2
                         Get Range        ${USER_KEY}    ${CID}       ${S_OID_USER}    s_get_range      ${EACL_TOKEN}    0:256          --xhdr a=2
                         Get Range Hash   ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    0:256            --xhdr a=2
-                        Delete object    ${USER_KEY}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    --xhdr a=2
+                        Delete object    ${USER_KEY}    ${CID}       ${S_OID_USER}    bearer=${EACL_TOKEN}    options=--xhdr a=2
