@@ -454,7 +454,7 @@ def _get_raw_split_information(header):
 def verify_head_tombstone(private_key: str, cid: str, oid_ts: str, oid: str, addr: str):
     object_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {private_key} '
-        f'object head --cid {cid} --oid {oid_ts} --json'
+        f'object head --cid {cid} --oid {oid_ts} --json --no-progress'
     )
     logger.info(f"Cmd: {object_cmd}")
     output = _cmd_run(object_cmd)
@@ -743,7 +743,7 @@ def put_object(private_key: str, path: str, cid: str, bearer: str, user_headers:
 
     putobject_cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {private_key} object '
-        f'put --file {path} --cid {cid} {bearer} {user_headers} {options}'
+        f'put --no-progress --file {path} --cid {cid} {bearer} {user_headers} {options}'
     )
     logger.info(f"Cmd: {putobject_cmd}")
     output = _cmd_run(putobject_cmd)
