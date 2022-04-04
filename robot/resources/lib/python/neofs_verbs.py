@@ -133,8 +133,8 @@ def delete_object(wif: str, cid: str, oid: str, bearer: str="", options: str="")
     '''
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object delete --cid {cid} --oid {oid} {options}'
-        f'{"--bearer " + bearer if bearer else ""} '
+        f'object delete --cid {cid} --oid {oid} {options} '
+        f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
     id_str = output.split('\n')[1]
@@ -162,7 +162,7 @@ def get_range(wif: str, cid: str, oid: str, range_file: str, bearer: str,
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
         f'object range --cid {cid} --oid {oid} --range {range_cut} '
-        f'--file {ASSETS_DIR}/{range_file} {options}'
+        f'--file {ASSETS_DIR}/{range_file} {options} '
         f'{"--bearer " + bearer if bearer else ""} '
     )
     _cmd_run(cmd)
@@ -190,13 +190,12 @@ def search_object(wif: str, cid: str, keys: str="", bearer: str="", filters: dic
     if filters:
         filters_result += "--filters "
         logger.info(filters)
-        for key, value in filters.items():
-            filters_result += f"'{key} EQ {value}' "
+        filters_result += ','.join(map(lambda i: f"'{i} EQ {filters[i]}'", filters))
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wif} '
-        f'object search {keys} --cid {cid} {filters_result} {options}'
-        f'{"--bearer " + bearer if bearer else ""} '
+        f'object search {keys} --cid {cid} {filters_result} {options} '
+        f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
 
