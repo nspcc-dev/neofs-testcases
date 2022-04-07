@@ -9,6 +9,7 @@ Library      contract_keywords.py
 Resource     common_steps_acl_basic.robot
 Resource     payment_operations.robot
 Resource     setup_teardown.robot
+Resource     complex_object_operations.robot
 
 
 *** Test cases ***
@@ -50,8 +51,9 @@ Check Public Container
     FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_PASS}
         ${SG_OID_USERS} =    Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
                             List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_USERS}
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
+                            ...     Get Object Parts By Link Object    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
                             Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                             Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_USERS}    ${EMPTY}
                             Tick Epoch
@@ -59,8 +61,9 @@ Check Public Container
     FOR	${ROLE_KEY}	IN	@{ROLES_KEYS_SYS}
         ${SG_OID_SYS} =     Put Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
                             List Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_SYS}
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
-                            ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
+        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
+                            ...     Get Object Parts By Link Object    ${ROLE_KEY}    ${PUBLIC_CID}   ${S_OID}
+                            ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
                             Get Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                             Run Keyword And Expect Error        *
                             ...  Delete Storagegroup    ${ROLE_KEY}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}

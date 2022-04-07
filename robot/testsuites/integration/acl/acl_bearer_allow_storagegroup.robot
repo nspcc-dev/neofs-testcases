@@ -11,6 +11,7 @@ Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
+Resource    complex_object_operations.robot
 
 
 *** Test cases ***
@@ -50,8 +51,9 @@ Check eACL Deny and Allow All Bearer
     ${SG_OID_INV} =     Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
     ${SG_OID_1} =       Put Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${USER_KEY}    ${CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If      "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${CID}   ${S_OID_USER}
-                        ...    ELSE IF      "${RUN_TYPE}" == "Simple"   Create List   ${S_OID_USER}
+    @{EXPECTED_OIDS} =  Run Keyword If      "${RUN_TYPE}" == "Complex"
+                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${CID}   ${S_OID_USER}
+                        ...     ELSE IF      "${RUN_TYPE}" == "Simple"   Create List   ${S_OID_USER}
                         Get Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Delete Storagegroup    ${USER_KEY}    ${CID}    ${SG_OID_1}    ${EMPTY}
 
