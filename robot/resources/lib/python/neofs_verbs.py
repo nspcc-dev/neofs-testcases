@@ -215,7 +215,7 @@ def search_object(wif: str, cid: str, keys: str="", bearer: str="", filters: dic
 @keyword('Head object')
 def head_object(wif: str, cid: str, oid: str, bearer_token: str="",
     options:str="", endpoint: str="", json_output: bool = True,
-    is_raw: bool = False):
+    is_raw: bool = False, is_direct: bool = False):
     '''
     HEAD an Object.
 
@@ -230,6 +230,8 @@ def head_object(wif: str, cid: str, oid: str, bearer_token: str="",
                                     turns into `--json` key
         is_raw(optional, bool): send "raw" request or not; this flag
                                     turns into `--raw` key
+        is_direct(optional, bool): send request directly to the node or not; this flag
+                                    turns into `--ttl 1` key
     Returns:
         depending on the `json_output` parameter value, the function returns
         (dict): HEAD response in JSON format
@@ -242,7 +244,8 @@ def head_object(wif: str, cid: str, oid: str, bearer_token: str="",
         f'object head --cid {cid} --oid {oid} {options} '
         f'{"--bearer " + bearer_token if bearer_token else ""} '
         f'{"--json" if json_output else ""} '
-        f'{"--raw" if is_raw else ""}'
+        f'{"--raw" if is_raw else ""} '
+        f'{"--ttl 1" if is_direct else ""}'
     )
     output = _cmd_run(cmd)
 

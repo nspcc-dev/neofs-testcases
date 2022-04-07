@@ -9,6 +9,7 @@ Library     Collections
 Resource    common_steps_acl_basic.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
+Resource    complex_object_operations.robot
 
 
 *** Test cases ***
@@ -47,8 +48,9 @@ Check Private Container
     ${SG_OID_INV} =     Put Storagegroup    ${USER_KEY}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
     ${SG_OID} =         Put Storagegroup    ${USER_KEY}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${USER_KEY}    ${PRIV_CID}   ${EMPTY}    ${SG_OID}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
+    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
+                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
+                        ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
                         Get Storagegroup    ${USER_KEY}    ${PRIV_CID}    ${SG_OID}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Delete Storagegroup    ${USER_KEY}    ${PRIV_CID}    ${SG_OID}    ${EMPTY}
 
@@ -67,8 +69,9 @@ Check Private Container
     # System group key (Storage Node)
     ${SG_OID_SN} =      Put Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_SN}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF    "${RUN_TYPE}" == "Simple"    Create List    ${S_OID_USER}
+    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
+                        ...     Get Object Parts By Link Object    ${NEOFS_SN_WIF}    ${PRIV_CID}   ${S_OID_USER}
+                        ...     ELSE IF    "${RUN_TYPE}" == "Simple"    Create List    ${S_OID_USER}
                         Get Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${SG_OID_SN}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${NEOFS_SN_WIF}    ${PRIV_CID}    ${SG_OID_SN}    ${EMPTY}
@@ -77,8 +80,9 @@ Check Private Container
     # System group key (Inner Ring Node)
     ${SG_OID_IR} =      Put Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}   ${EMPTY}    ${S_OID_USER}
                         List Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}   ${EMPTY}    ${SG_OID_SN}    ${SG_OID_IR}    ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"    Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
-                        ...    ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
+    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
+                        ...     Get Object Parts By Link Object    ${USER_KEY}    ${PRIV_CID}   ${S_OID_USER}
+                        ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
                         Get Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
                         Run Keyword And Expect Error        *
                         ...  Delete Storagegroup    ${NEOFS_IR_WIF}    ${PRIV_CID}    ${SG_OID_IR}    ${EMPTY}

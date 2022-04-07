@@ -13,6 +13,7 @@ Library     Process
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    storage.robot
+Resource    complex_object_operations.robot
 
 *** Variables ***
 ${CONTAINER_WAIT_INTERVAL} =    1 min
@@ -69,7 +70,7 @@ Drop command in control group
                         Get object    ${USER_KEY}    ${PRIV_CID}    ${C_OID}    ${EMPTY}    s_file_read
                         Head object    ${USER_KEY}    ${PRIV_CID}    ${C_OID}
 
-    @{SPLIT_OIDS} =     Get Split objects    ${USER_KEY}    ${PRIV_CID}   ${C_OID}
+    @{SPLIT_OIDS} =     Get Object Parts By Link Object    ${USER_KEY}    ${PRIV_CID}   ${C_OID}
     FOR    ${CHILD_OID}    IN    @{SPLIT_OIDS}
         Drop object    ${NODE}    ${WIF}    ${PRIV_CID}    ${CHILD_OID}
 

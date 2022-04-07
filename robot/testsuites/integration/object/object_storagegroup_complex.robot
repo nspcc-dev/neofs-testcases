@@ -9,6 +9,7 @@ Library     Collections
 Resource    common_steps_object.robot
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
+Resource    complex_object_operations.robot
 
 *** Variables ***
 ${UNEXIST_OID} =        B2DKvkHnLnPvapbDgfpU1oVUPuXQo5LTfKVxmNDZXQff
@@ -38,7 +39,7 @@ NeoFS Complex Storagegroup
                         Log    Storage group with 1 object
     ${SG_OID_1} =       Put Storagegroup    ${WIF}    ${CID}   ${EMPTY}    ${S_OID_1}
                         List Storagegroup    ${WIF}    ${CID}   ${EMPTY}    ${SG_OID_1}
-    @{SPLIT_OBJ_1} =    Get Split objects    ${WIF}    ${CID}   ${S_OID_1}
+    @{SPLIT_OBJ_1} =    Get Object Parts By Link Object    ${WIF}    ${CID}   ${S_OID_1}
                         Get Storagegroup    ${WIF}    ${CID}    ${SG_OID_1}   ${EMPTY}    ${COMPLEX_OBJ_SIZE}    @{SPLIT_OBJ_1}
     ${Tombstone} =      Delete Storagegroup    ${WIF}    ${CID}    ${SG_OID_1}    ${EMPTY}
                         Verify Head tombstone    ${WIF}    ${CID}    ${Tombstone}    ${SG_OID_1}    ${ADDR}
@@ -49,7 +50,7 @@ NeoFS Complex Storagegroup
                         Log    Storage group with 2 objects
     ${SG_OID_2} =       Put Storagegroup    ${WIF}    ${CID}    ${EMPTY}    @{S_OBJ_ALL}
                         List Storagegroup    ${WIF}    ${CID}   ${EMPTY}    ${SG_OID_2}
-    @{SPLIT_OBJ_2} =    Get Split objects    ${WIF}    ${CID}   ${S_OID_2}
+    @{SPLIT_OBJ_2} =    Get Object Parts By Link Object    ${WIF}    ${CID}   ${S_OID_2}
     @{SPLIT_OBJ_ALL} =  Combine Lists    ${SPLIT_OBJ_1}    ${SPLIT_OBJ_2}
     ${EXPECTED_SIZE} =  Evaluate    2*${COMPLEX_OBJ_SIZE}
                         Get Storagegroup    ${WIF}    ${CID}    ${SG_OID_2}   ${EMPTY}    ${EXPECTED_SIZE}    @{SPLIT_OBJ_ALL}
