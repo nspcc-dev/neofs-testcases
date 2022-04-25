@@ -4,6 +4,7 @@ Variables    common.py
 Library     Collections
 Library     OperatingSystem
 
+Library     container.py
 Library     neofs.py
 Library     s3_gate.py
 Library     contract_keywords.py
@@ -35,8 +36,8 @@ Objects in NeoFS S3 Gateway
     ...  ${SEC_ACCESS_KEY}
     ...  ${OWNER_PRIV_KEY} =    Init S3 Credentials    ${WALLET}
 
-    ${CONTEINERS_LIST} =        Container List               ${WALLET}
-                                List Should Contain Value    ${CONTEINERS_LIST}    ${CID}
+    @{CONTAINERS_LIST} =        List Containers              ${WALLET}
+                                List Should Contain Value    ${CONTAINERS_LIST}    ${CID}
 
     ${S3_CLIENT} =              Config S3 client    ${ACCESS_KEY_ID}    ${SEC_ACCESS_KEY}
 
@@ -64,10 +65,10 @@ Objects in NeoFS S3 Gateway
     #TODO: Solve the issue on CopyObject #260 https://github.com/nspcc-dev/neofs-s3-gw/issues/260
 
     ${COPIED_OBJ_PATH} =        Copy object S3               ${S3_CLIENT}           ${NEW_BUCKET}       ${S3_OBJECT_KEY}
-                                ${LIST_S3_OBJECTS} =         List objects S3        ${S3_CLIENT}        ${NEW_BUCKET}
+    ${LIST_S3_OBJECTS} =        List objects S3             ${S3_CLIENT}        ${NEW_BUCKET}
                                 List Should Contain Value    ${LIST_S3_OBJECTS}     ${COPIED_OBJ_PATH}
     ${COPIED_OBJ_PATH_2} =      Copy object S3               ${S3_CLIENT}           ${NEW_BUCKET_2}     ${S3_OBJECT_KEY}
-                                ${LIST_S3_OBJECTS_2} =       List objects S3        ${S3_CLIENT}        ${NEW_BUCKET_2}
+    ${LIST_S3_OBJECTS_2} =      List objects S3             ${S3_CLIENT}        ${NEW_BUCKET_2}
                                 List Should Contain Value    ${LIST_S3_OBJECTS_2}   ${COPIED_OBJ_PATH_2}
 
                                 Delete object S3                 ${S3_CLIENT}          ${NEW_BUCKET}       ${S3_OBJECT_KEY}

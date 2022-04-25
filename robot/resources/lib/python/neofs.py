@@ -17,7 +17,6 @@ from robot.api.deco import keyword
 from robot.api import logger
 
 from cli_helpers import _run_with_passwd, _cmd_run
-import neofs_verbs
 import json_transformers
 
 ROBOT_AUTO_KEYWORDS = False
@@ -123,53 +122,6 @@ def validate_storage_policy_for_object(wallet: str, expected_copies: int, cid, o
             raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
 
 
-@keyword('Create container')
-def create_container(wallet: str, basic_acl:str, rule:str, user_headers: str='', session: str=''):
-    if rule == "":
-        logger.error("Cannot create container with empty placement rule")
-
-    if basic_acl:
-        basic_acl = f"--basic-acl {basic_acl}"
-    if user_headers:
-        user_headers = f"--attributes {user_headers}"
-    if session:
-        session = f"--session {session}"
-
-    createContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container create --policy "{rule}" {basic_acl} {user_headers} {session} --config {WALLET_PASS} --await'
-    )
-    output = _cmd_run(createContainerCmd)
-    cid = _parse_cid(output)
-    logger.info(f"Created container {cid} with rule {rule}")
-
-    return cid
-
-@keyword('Container List')
-def container_list(wallet: str):
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container list --config {WALLET_PASS}'
-    )
-    output = _cmd_run(Cmd)
-
-    container_list = re.findall(r'(\w{43,44})', output)
-    logger.info(f"Containers list: {container_list}")
-    return container_list
-
-
-@keyword('Container Existing')
-def container_existing(wallet: str, cid: str):
-    Cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container list --config {WALLET_PASS}'
-    )
-    output = _cmd_run(Cmd)
-
-    _find_cid(output, cid)
-    return
-
-
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(wallet: str, cid: str, oid_ts: str, oid: str, addr: str):
     # TODO: replace with HEAD from neofs_verbs.py
@@ -219,50 +171,6 @@ def verify_head_tombstone(wallet: str, cid: str, oid_ts: str, oid: str, addr: st
         raise Exception("Header Session OID (deleted object) is not expected.")
 
 
-@keyword('Get container attributes')
-def get_container_attributes(wallet: str, cid: str, endpoint: str="", json_output: bool = False):
-
-    if endpoint == "":
-        endpoint = NEOFS_ENDPOINT
-
-    container_cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} --config {WALLET_PASS} '
-        f'--cid {cid} container get {"--json" if json_output else ""}'
-    )
-    output = _cmd_run(container_cmd)
-    return output
-
-
-@keyword('Decode Container Attributes Json')
-def decode_container_attributes_json(header):
-    result_header = dict()
-    json_header = json.loads(header)
-
-    attributes = []
-    attribute_list = json_header["attributes"]
-    if attribute_list is not None:
-        for e in attribute_list:
-            values_list = list(e.values())
-            attribute = values_list[0] + '=' + values_list[1]
-            attributes.append(attribute)
-        result_header["Attributes"] = attributes
-    else:
-        raise Exception(f"no Attributes were parsed from header: \t{header}")
-
-    return     result_header
-
-
-@keyword('Delete Container')
-# TODO: make the error message about a non-found container more user-friendly https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(cid: str, wallet: str):
-
-    deleteContainerCmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container delete --cid {cid} --config {WALLET_PASS}'
-    )
-    _cmd_run(deleteContainerCmd)
-
-
 @keyword('Get file hash')
 def get_file_hash(filename : str):
     file_hash = _get_file_hash(filename)
@@ -285,6 +193,7 @@ def get_control_endpoint_with_wif(endpoint_number: str = ''):
     wif = endpoint_values['wif']
 
     return endpoint_num, endpoint_control, wif
+
 
 @keyword('Get Locode')
 def get_locode():
@@ -438,6 +347,7 @@ def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str=""):
         raise Exception(f"no Tombstone ID was parsed from command output: \t{output}")
     return oid
 
+
 @keyword('Generate Session Token')
 def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bool = False) -> str:
 
@@ -497,17 +407,6 @@ def _get_file_hash(filename):
     logger.info(f"Hash: {hash.hexdigest()}")
     return hash.hexdigest()
 
-def _find_cid(output: str, cid: str):
-    """
-    This function parses CID from given CLI output.
-    Parameters:
-    - output: a string with command run output
-    """
-    if re.search(fr'({cid})', output):
-        logger.info(f"CID {cid} was parsed from command output: \t{output}")
-    else:
-        raise Exception(f"no CID {cid} was parsed from command output: \t{output}")
-    return cid
 
 def _parse_oid(input_str: str):
     """
@@ -529,28 +428,6 @@ def _parse_oid(input_str: str):
     splitted = snd_str.split(": ")
     if len(splitted) != 2:
         raise Exception(f"no OID was parsed from command output: \t{snd_str}")
-    return splitted[1]
-
-def _parse_cid(input_str: str):
-    """
-    This function parses CID from given CLI output. The input string we
-    expect:
-            container ID: 2tz86kVTDpJxWHrhw3h6PbKMwkLtBEwoqhHQCKTre1FN
-            awaiting...
-            container has been persisted on sidechain
-    We want to take 'container ID' value from the string.
-
-    Parameters:
-    - input_str: a string with command run output
-    """
-    try:
-        # taking first string from command output
-        fst_str = input_str.split('\n')[0]
-    except:
-        logger.error(f"Got empty output: {input_str}")
-    splitted = fst_str.split(": ")
-    if len(splitted) != 2:
-        raise Exception(f"no CID was parsed from command output: \t{fst_str}")
     return splitted[1]
 
 

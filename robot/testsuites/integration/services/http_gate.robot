@@ -2,6 +2,7 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     http_gate.py
@@ -11,7 +12,6 @@ Resource    setup_teardown.robot
 
 *** Variables ***
 ${PLACEMENT_RULE} =     REP 1 IN X CBF 1 SELECT 1 FROM * AS X
-${CONTAINER_WAIT_INTERVAL} =    1 min
 @{INCLUDE_SVC} =    http_gate
 
 *** Test cases ***
@@ -24,11 +24,7 @@ NeoFS HTTP Gateway
                         Make Up    ${INCLUDE_SVC}
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-
-    ${CID} =            Create container                    ${WALLET}    ${PUBLIC_ACL}    ${PLACEMENT_RULE}
-                        Wait Until Keyword Succeeds         ${MORPH_BLOCK_TIME}     ${CONTAINER_WAIT_INTERVAL}
-                        ...  Container Existing             ${WALLET}    ${CID}
-
+    ${CID} =            Create container                    ${WALLET}    rule=${PLACEMENT_RULE}  basic_acl=${PUBLIC_ACL}
     ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
     ${FILE_L} =         Generate file of bytes              ${COMPLEX_OBJ_SIZE}
     ${FILE_HASH} =      Get file hash                       ${FILE}

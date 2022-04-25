@@ -2,20 +2,18 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
+Library     container.py
+
 *** Keywords ***
 Create Container Public
     [Arguments]    ${USER_KEY}
-    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    ${PUBLIC_ACL}     ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
+    ${PUBLIC_CID_GEN} =     Create container      ${USER_KEY}    basic_acl=${PUBLIC_ACL}
     [Return]                ${PUBLIC_CID_GEN}
 
 
 Create Container Inaccessible
     [Arguments]    ${USER_KEY}
-    ${INACCESSIBLE_CID_GEN} =     Create container      ${USER_KEY}     ${INACCESSIBLE_ACL}     ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}        ${INACCESSIBLE_CID_GEN}
+    ${INACCESSIBLE_CID_GEN} =     Create container      ${USER_KEY}     basic_acl=${INACCESSIBLE_ACL}
     [Return]                ${INACCESSIBLE_CID_GEN}
 
 
