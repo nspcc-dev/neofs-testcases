@@ -2,17 +2,17 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
-Library    neofs.py
-Library    neofs_verbs.py
-Library    payment_neogo.py
-Library    String
-Library    Collections
+Library     container.py
+Library     neofs.py
+Library     neofs_verbs.py
+Library     payment_neogo.py
+Library     String
+Library     Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
 *** Variables ***
-${POLICY} =       REP 2 IN X CBF 1 SELECT 2 FROM * AS X
 &{ATTR_FILENAME} =      FileName=new
 ${ATTR_DUPLICATE} =     FileType=jpg,FileType=png
 &{ATTR_NONE} =          NoAttribute=''
@@ -22,14 +22,14 @@ ${ATTR_DUPLICATE} =     FileType=jpg,FileType=png
 
 Duplicated Object Attributes
     [Documentation]             Testcase to check duplicated attributes.
-    [Tags]                      Object  NeoFS  NeoCLI
+    [Tags]                      Object
     [Timeout]                   10 min
 
     [Setup]                     Setup
 
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =             Create container       ${WALLET}    ${PUBLIC_ACL_F}    ${POLICY}    ${EMPTY}
+    ${PUBLIC_CID} =             Create Container       ${WALLET}    basic_acl=${PUBLIC_ACL_F}
     ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
 
 
@@ -61,4 +61,4 @@ Duplicated Object Attributes
                             ...     ${ATTR_SINGLE}
                             ...     msg="No expected User Attribute in HEAD response"
 
-    [Teardown]              Teardown    object_attributes
+    [Teardown]          Teardown    object_attributes

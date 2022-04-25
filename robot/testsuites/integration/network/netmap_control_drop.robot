@@ -2,11 +2,12 @@
 Variables    common.py
 Variables    wellknown_acl.py
 
+Library     container.py
 Library     contract_keywords.py
 Library     neofs.py
 Library     neofs_verbs.py
-
 Library     payment_neogo.py
+
 Library     String
 Library     Process
 
@@ -15,13 +16,9 @@ Resource    payment_operations.robot
 Resource    storage.robot
 Resource    complex_object_operations.robot
 
-*** Variables ***
-${CONTAINER_WAIT_INTERVAL} =    1 min
-
 *** Test Cases ***
 Drop command in control group
     [Documentation]         Testcase to check drop-objects command from control group.
-    [Tags]                  NeoFSCLI
     [Timeout]               10 min
 
     [Setup]                 Setup
@@ -35,9 +32,8 @@ Drop command in control group
 
     ${WALLET}    ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${PRIV_CID} =       Create container             ${WALLET}    ${PRIVATE_ACL_F}   REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '${LOCODE}' AS LOC
-                        Wait Until Keyword Succeeds      ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                        ...  Container Existing       ${WALLET}    ${PRIV_CID}
+    ${PRIV_CID} =       Create container             ${WALLET}    basic_acl=${PRIVATE_ACL_F}
+                        ...     rule=REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '${LOCODE}' AS LOC
 
     #########################
     # Dropping simple object

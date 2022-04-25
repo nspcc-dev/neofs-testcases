@@ -3,28 +3,27 @@ Variables   common.py
 Variables   eacl_object_filters.py
 
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
+
 Library     Collections
 
 Resource    common_steps_acl_basic.robot
 Resource    payment_operations.robot
 
 *** Variables ***
-&{USER_HEADER} =        key1=1      key2=abc
+&{USER_HEADER} =        key1=1          key2=abc
 &{USER_HEADER_DEL} =    key1=del        key2=del
 &{ANOTHER_HEADER} =     key1=oth        key2=oth
-${OBJECT_PATH} =   testfile
-${EACL_ERR_MSG} =    *
+${OBJECT_PATH} =        testfile
+${EACL_ERR_MSG} =       *
 
 *** Keywords ***
 
 Create Container Public
     [Arguments]             ${WALLET}
-                            Log	                Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container    ${WALLET}    ${PUBLIC_ACL}    ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing    ${WALLET}    ${PUBLIC_CID_GEN}
+    ${PUBLIC_CID_GEN} =     Create container    ${WALLET}    basic_acl=${PUBLIC_ACL}
     [Return]                ${PUBLIC_CID_GEN}
 
 Generate files
@@ -34,7 +33,7 @@ Generate files
     ${FILE_S_GEN_2} =       Generate file of bytes    ${SIZE}
                             Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}
                             Set Global Variable       ${FILE_S_2}    ${FILE_S_GEN_2}
-    
+
 
 Check eACL Deny and Allow All
     [Arguments]     ${WALLET}    ${DENY_EACL}    ${ALLOW_EACL}    ${USER_WALLET}
@@ -122,11 +121,11 @@ Object Header Decoded
 Check eACL Filters with MatchType String Equal
     [Arguments]    ${FILTER}
 
-    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit  
+    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${WALLET} 
-    ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
+    ${CID} =                Create Container Public    ${WALLET}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}  user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object    ${WALLET}    ${FILE_S}    ${CID}
@@ -146,8 +145,8 @@ Check eACL Filters with MatchType String Equal
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]  
-        Run Keyword And Expect Error   ${EACL_ERR_MSG}    
+    IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]
+        Run Keyword And Expect Error   ${EACL_ERR_MSG}
         ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
     END
     IF    'HEAD' in ${VERB_FILTER_DEP}[${FILTER}]

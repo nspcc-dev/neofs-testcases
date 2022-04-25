@@ -1,14 +1,15 @@
 *** Settings ***
 Variables   common.py
 
-Library     Collections
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     acl.py
 Library     payment_neogo.py
-
 Library     contract_keywords.py
 Library     wallet_keywords.py
+
+Library     Collections
 
 Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
@@ -25,7 +26,7 @@ ${DEPOSIT} =                ${30}
 *** Test cases ***
 eACL Deny Replication Operations
     [Documentation]         Testcase to validate NeoFS replication with eACL deny rules.
-    [Tags]                  ACL  NeoFS_CLI  Replication
+    [Tags]                  ACL   Replication
     [Timeout]               20 min
 
     [Setup]                 Setup
@@ -35,16 +36,11 @@ eACL Deny Replication Operations
 
     ${WALLET}    ${_}    ${_} =    Prepare Wallet And Deposit
 
-                        Log    Check Replication with eACL deny - object should be replicated
                         # https://github.com/nspcc-dev/neofs-node/issues/881
 
-    ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
-
-    ${CID} =            Create container    ${WALLET}    ${PUBLIC_ACL}   ${FULL_PLACEMENT_RULE}
-                        Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                        ...     Container Existing    ${WALLET}    ${CID}
-
-                        Prepare eACL Role rules    ${CID}
+    ${FILE} =           Generate file of bytes      ${SIMPLE_OBJ_SIZE}
+    ${CID} =            Create container            ${WALLET}    basic_acl=${PUBLIC_ACL}   rule=${FULL_PLACEMENT_RULE}
+                        Prepare eACL Role rules     ${CID}
 
     ${OID} =            Put object    ${WALLET}    ${FILE}    ${CID}
 

@@ -1,28 +1,27 @@
 *** Settings ***
 Variables   common.py
 
-Library    neofs.py
-Library    payment_neogo.py
-Library    String
-Library    Collections
+Library     container.py
+Library     neofs.py
+Library     payment_neogo.py
+Library     String
+Library     Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    common_steps_acl_bearer.robot
 
 *** Variables ***
-${POLICY} =       REP 2 IN X CBF 1 SELECT 2 FROM * AS X
-${ATTR_TIME} =    Timestamp=new
-${ATTR_DUPLICATE} =    Size=small, Size=big
-${ATTR_NONE} =    NoAttribute=''
-${ATTR_SINGLE} =    AttrNum=one
-${CONTAINER_WAIT_INTERVAL} =    1 min
+&{ATTR_TIME} =          Timestamp=new
+&{ATTR_NONE} =          NoAttribute=
+&{ATTR_SINGLE} =        AttrNum=one
+${ERROR_MSG} =          invalid container attribute
 
 *** Test Cases ***
 Duplicated Container Attributes
     [Documentation]             Testcase to check duplicated container attributes.
-    [Tags]                      Container  NeoFS  NeoCLI
-    [Timeout]                   10 min
+    [Tags]                      Container
+    [Timeout]                   5 min
 
     [Setup]                     Setup
 
@@ -32,30 +31,33 @@ Duplicated Container Attributes
     # Checking that container attributes cannot duplicate
     ######################################################
 
-    Run Keyword And Expect Error    *
-    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}   ${ATTR_TIME}
-    Run Keyword And Expect Error    *
-    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_DUPLICATE}
+    # TODO: unstable case, the behaviour needs to be defined
+    # https://github.com/nspcc-dev/neofs-node/issues/1339
+    #Run Keyword And Expect Error    *
+    #...    Create container        ${WALLET}    attributes=${ATTR_TIME}
+
+    ${ERR} =    Run Keyword And Expect Error    *
+                ...    Create Container        ${WALLET}    options=--attributes Size=small, Size=big
+                Should Contain      ${ERR}      ${ERROR_MSG}
 
     ######################################################
     # Checking that container cannot have empty attribute
     ######################################################
 
-    Run Keyword And Expect Error    *
-    ...    Create container        ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_NONE}
+    # TODO: the same unstable case, referenced in the above issue
+    #${ERR} =    Run Keyword And Expect Error    *
+    #            ...    Create Container        ${WALLET}    attributes=${ATTR_NONE}
+    #            Should Contain      ${ERR}      ${ERROR_MSG}
 
     #####################################################
     # Checking a successful step with a single attribute
     #####################################################
 
-    ${CID} =                Create container    ${WALLET}    ${EMPTY}    ${POLICY}    ${ATTR_SINGLE}
-                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${WALLET}     ${CID}
-    ${ATTRIBUTES} =         Get container attributes    ${WALLET}    ${CID}    ${EMPTY}    json_output=True
-    &{ATTRIBUTES_DICT} =    Decode Container Attributes Json    ${ATTRIBUTES}
-                            List Should Contain Value
-                                ...     ${ATTRIBUTES_DICT}[Attributes]
+    ${CID} =                Create Container    ${WALLET}    attributes=${ATTR_SINGLE}
+    &{ATTRIBUTES} =         Get Container Attributes    ${WALLET}    ${CID}
+                            Dictionary Should Contain Sub Dictionary
+                                ...     ${ATTRIBUTES}
                                 ...     ${ATTR_SINGLE}
-                                ...     "No expected container attributes found"
+                                ...     msg="No expected container attributes found"
 
     [Teardown]              Teardown    container_attributes

@@ -2,30 +2,23 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
+Library     container.py
+
 *** Keywords ***
 
 Create Private Container
     [Arguments]    ${USER_KEY}
-                            Log	                   Create Private Container
-    ${PRIV_CID_GEN} =       Create container       ${USER_KEY}        ${PRIVATE_ACL_F}            ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}        ${PRIV_CID_GEN}
+    ${PRIV_CID_GEN} =       Create container       ${USER_KEY}        basic_acl=${PRIVATE_ACL_F}
     [Return]    ${PRIV_CID_GEN}
 
 Create Public Container
     [Arguments]    ${USER_KEY}
-                            Log	                   Create Public Container
-    ${PUBLIC_CID_GEN} =     Create container       ${USER_KEY}        ${PUBLIC_ACL_F}             ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}        ${PUBLIC_CID_GEN}
-    [Return]    ${PUBLIC_CID_GEN}                           
+    ${PUBLIC_CID_GEN} =     Create container       ${USER_KEY}        basic_acl=${PUBLIC_ACL_F}
+    [Return]    ${PUBLIC_CID_GEN}
 
 Create Read-Only Container
     [Arguments]    ${USER_KEY}
-                            Log	                   Create Read-Only Container
-    ${READONLY_CID_GEN} =   Create container       ${USER_KEY}        ${READONLY_ACL_F}           ${COMMON_PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds               ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing     ${USER_KEY}        ${READONLY_CID_GEN}
+    ${READONLY_CID_GEN} =   Create container       ${USER_KEY}        basic_acl=${READONLY_ACL_F}
     [Return]    ${READONLY_CID_GEN}
 
 

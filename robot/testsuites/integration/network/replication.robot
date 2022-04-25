@@ -2,7 +2,7 @@
 Variables   common.py
 Variables   wellknown_acl.py
 
-Library     Collections
+Library     container.py
 Library     payment_neogo.py
 Library     neofs.py
 Library     neofs_verbs.py
@@ -10,19 +10,19 @@ Library     wallet_keywords.py
 Library     rpc_call_keywords.py
 Library     contract_keywords.py
 
+Library     Collections
+
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
-${PLACEMENT_RULE} =     REP 2 IN X CBF 1 SELECT 4 FROM * AS X
 ${EXPECTED_COPIES} =    ${2}
 ${CHECK_INTERVAL} =     1 min
-${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Test cases ***
 NeoFS Object Replication
     [Documentation]         Testcase to validate NeoFS object replication.
-    [Tags]                  Migration  Replication  NeoFS  NeoCLI
+    [Tags]                  Migration  Replication
     [Timeout]               25 min
 
     [Setup]                 Setup
@@ -39,9 +39,7 @@ Check Replication
     [Arguments]    ${ACL}
 
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
-    ${CID} =                Create Container    ${WALLET}    ${ACL}   ${PLACEMENT_RULE}
-                            Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                            ...     Container Existing    ${WALLET}    ${CID}
+    ${CID} =                Create Container    ${WALLET}    basic_acl=${ACL}
 
     ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
     ${FILE_HASH} =          Get file hash    ${FILE}

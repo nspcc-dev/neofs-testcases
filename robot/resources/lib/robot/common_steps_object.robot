@@ -1,22 +1,16 @@
 *** Settings ***
 Variables   common.py
 
+Library     container.py
 Library     wallet_keywords.py
 Library     rpc_call_keywords.py
-
-*** Variables ***
-${PLACEMENT_RULE} =    REP 2 IN X CBF 1 SELECT 2 FROM * AS X
-${CONTAINER_WAIT_INTERVAL} =    1 min
 
 *** Keywords ***
 
 Prepare container
     [Arguments]     ${WIF}    ${WALLET}
     ${NEOFS_BALANCE} =  Get NeoFS Balance       ${WIF}
-
-    ${CID} =            Create container          ${WALLET}   ${EMPTY}     ${PLACEMENT_RULE}
-                        Wait Until Keyword Succeeds        ${MORPH_BLOCK_TIME}       ${CONTAINER_WAIT_INTERVAL}
-                        ...     Container Existing         ${WALLET}   ${CID}
+    ${CID} =            Create container          ${WALLET}
 
     ${NEW_NEOFS_BALANCE} =  Get NeoFS Balance     ${WIF}
     Should Be True      ${NEW_NEOFS_BALANCE} < ${NEOFS_BALANCE}

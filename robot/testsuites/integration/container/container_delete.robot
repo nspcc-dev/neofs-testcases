@@ -1,46 +1,49 @@
 *** Settings ***
 Variables   common.py
-Variables   wellknown_acl.py
 
-Library     neofs.py
-Library     payment_neogo.py
+Library     container.py
 Library     wallet_keywords.py
 Library     contract_keywords.py
+Library     Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
-*** Variables ***
-${CONTAINER_WAIT_INTERVAL} =    1 min
-
 *** Test Cases ***
 Delete Containers
-    [Documentation]     Testcase to check if containers can be deleted.
+    [Documentation]     Testcase to check if containers can be deleted by its owner only.
     [Tags]              Container
-    [Timeout]           10 min
+    [Timeout]           2 min
 
     [Setup]             Setup
 
     ${_}   ${_}     ${USER_KEY} =   Prepare Wallet And Deposit
     ${_}   ${_}     ${OTHER_KEY} =   Prepare Wallet And Deposit
 
-    ${CID} =            Create container    ${USER_KEY}    ${PRIVATE_ACL_F}      ${COMMON_PLACEMENT_RULE}
-                        Wait Until Keyword Succeeds    ${MORPH_BLOCK_TIME}    ${CONTAINER_WAIT_INTERVAL}
-                        ...     Container Existing     ${USER_KEY}    ${CID}
+    ${CID} =            Create container    ${USER_KEY}
 
     ################################################################
     # No explicit error is expected upon container deletion attempt
     ################################################################
-                        Delete Container    ${CID}    ${OTHER_KEY}
+                        Delete Container    ${OTHER_KEY}    ${CID}
                         Tick Epoch
-                        Get container attributes    ${USER_KEY}    ${CID}
+    @{CONTAINERS} =     List Containers     ${USER_KEY}
+                        List Should Contain Value
+                            ...     ${CONTAINERS}
+                            ...     ${CID}
+                            ...     msg="A key which doesn't owe the container is able to delete ${CID}"
 
-                        Delete Container    ${CID}    ${USER_KEY}
+                        Delete Container    ${USER_KEY}     ${CID}
                         Tick Epoch
-                        Run Keyword And Expect Error    *
-                        ...  Get container attributes    ${USER_KEY}    ${CID}
+    @{CONTAINERS} =     List Containers     ${USER_KEY}
+                        List Should Not Contain Value
+                            ...     ${CONTAINERS}
+                            ...     ${CID}
+                            ...     msg="${CID} is still in container list"
 
-                        Log    If one tries to delete an already deleted container, they should expect success.
-                        Delete Container    ${CID}    ${USER_KEY}
+    ###################################################################################
+    # If one tries to delete an already deleted container, they should expect success.
+    ###################################################################################
+                        Delete Container    ${USER_KEY}     ${CID}
 
-    [Teardown]                  Teardown    container_delete
+    [Teardown]          Teardown    container_delete

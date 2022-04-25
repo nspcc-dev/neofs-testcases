@@ -9,11 +9,11 @@ import os
 import re
 import random
 import uuid
-from functools import reduce
 
 from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP, WALLET_PASS
 from cli_helpers import _cmd_run
 import json_transformers
+from data_formatters import dict_to_attrs
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -108,7 +108,7 @@ def put_object(wallet: str, path: str, cid: str, bearer: str="", user_headers: d
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
         f'object put --file {path} --cid {cid} {options} --config {WALLET_PASS} '
         f'{"--bearer " + bearer if bearer else ""} '
-        f'{"--attributes " + _dict_to_attrs(user_headers) if user_headers else ""}'
+        f'{"--attributes " + dict_to_attrs(user_headers) if user_headers else ""}'
     )
     output = _cmd_run(cmd)
     # splitting CLI output to lines and taking the penultimate line
@@ -282,18 +282,3 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
 
     logger.info("decoding simple header")
     return json_transformers.decode_simple_header(decoded)
-
-
-def _dict_to_attrs(attrs: dict):
-    '''
-    This function takes dictionary of object attributes and converts them
-    into the string. The string is passed to `--attibutes` key of the
-    neofs-cli.
-
-    Args:
-        attrs (dict): object attirbutes in {"a": "b", "c": "d"} format.
-
-    Returns:
-        (str): string in "a=b,c=d" format.
-    '''
-    return reduce(lambda a,b: f"{a},{b}", map(lambda i: f"{i}={attrs[i]}", attrs))
