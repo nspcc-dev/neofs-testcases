@@ -2,7 +2,7 @@
 Variables   common.py
 
 Library     neofs_verbs.py
-Library     complex_object_operations.py
+Library     complex_object_actions.py
 
 
 *** Keywords ***
@@ -14,7 +14,7 @@ Get Object Parts By Link Object
     [Arguments]         ${WIF}  ${CID}  ${LARGE_OID}
 
 
-    &{RESPONSE} =       Get Link Object     ${WIF}  ${CID}  ${LARGE_OID}
-    &{LINK_HEADER} =    Head Object         ${WIF}  ${CID}  ${RESPONSE.link}    is_raw=True
+    ${LINK_OID} =       Get Link Object     ${WIF}  ${CID}  ${LARGE_OID}
+    &{LINK_HEADER} =    Head Object         ${WIF}  ${CID}  ${LINK_OID}    is_raw=True
 
     [Return]    ${LINK_HEADER.header.split.children}
