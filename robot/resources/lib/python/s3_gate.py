@@ -20,6 +20,7 @@ urllib3.disable_warnings()
 ##########################################################
 
 ROBOT_AUTO_KEYWORDS = False
+CREDENTIALS_CREATE_TIMEOUT = '30s'
 
 NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
 
@@ -28,9 +29,9 @@ def init_s3_credentials(wallet):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = "robot/resources/files/s3_bearer_rules.json"
     cmd = (
-        f'{NEOFS_EXEC} --debug --with-log issue-secret --wallet {wallet} '
-        f'--gate-public-key={GATE_PUB_KEY} --peer {NEOFS_ENDPOINT} '
-        f'--container-friendly-name {bucket} '
+        f'{NEOFS_EXEC} --debug --with-log --timeout {CREDENTIALS_CREATE_TIMEOUT} '
+        f'issue-secret --wallet {wallet} --gate-public-key={GATE_PUB_KEY} '
+        f'--peer {NEOFS_ENDPOINT} --container-friendly-name {bucket} '
         f'--bearer-rules {s3_bearer_rules}'
     )
     logger.info(f"Executing command: {cmd}")
