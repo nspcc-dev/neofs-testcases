@@ -5,6 +5,7 @@ venv.$(1)/bin/activate: venv/$(1)/requirements.txt submodules
 	@echo "Creating $(1) venv in $$@ from $$<"
 	virtualenv --python=python3.8 --prompt="($(1))" venv.$(1)
 	source venv.$(1)/bin/activate && \
+	pip3.8 install -U setuptools==56.0.0 && \
 	pip3.8 install -Ur venv/$(1)/requirements.txt && \
 	pip3.8 install -Ur neofs-keywords/requirements.txt
 	@echo "Applying activate script patch"
