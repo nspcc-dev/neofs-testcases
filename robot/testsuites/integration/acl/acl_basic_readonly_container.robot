@@ -1,14 +1,13 @@
 *** Settings ***
 Variables    common.py
 
-Library      neofs.py
-Library      neofs_verbs.py
-Library      payment_neogo.py
+Library     neofs.py
+Library     neofs_verbs.py
+Library     payment_neogo.py
 
-Resource     common_steps_acl_basic.robot
-Resource     payment_operations.robot
-Resource     setup_teardown.robot
-Resource     complex_object_operations.robot
+Resource    common_steps_acl_basic.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
 
 
 *** Test cases ***
@@ -38,8 +37,8 @@ Basic ACL Operations for Read-Only Container
 Check Read-Only Container
     [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
 
-    ${WALLET_SN}    ${ADDR_SN} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
-    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
+    ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
+    ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
     # Put
     ${S_OID_USER} =         Put Object         ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}
@@ -47,36 +46,6 @@ Check Read-Only Container
                             ...  Put object    ${WALLET_OTH}    ${FILE_S}    ${READONLY_CID}
     ${S_OID_SYS_IR} =       Put Object         ${WALLET_IR}    ${FILE_S}    ${READONLY_CID}
     ${S_OID_SYS_SN} =       Put object         ${WALLET_SN}    ${FILE_S}    ${READONLY_CID}
-
-
-    # Storage group Operations (Put, List, Get, Delete)
-    ${SG_OID_INV} =     Put Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-    ${SG_OID_1} =       Put Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${USER_WALLET}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_1}  ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
-                        ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${USER_WALLET}    ${READONLY_CID}    ${SG_OID_1}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Delete Storagegroup    ${USER_WALLET}    ${READONLY_CID}    ${SG_OID_1}    ${EMPTY}
-
-                        Run Keyword And Expect Error        *
-                        ...  Put Storagegroup    ${WALLET_OTH}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${WALLET_OTH}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
-                        ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${WALLET_OTH}    ${READONLY_CID}    ${SG_OID_INV}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${WALLET_OTH}    ${READONLY_CID}    ${SG_OID_INV}    ${EMPTY}
-
-    ${SG_OID_IR} =      Put Storagegroup    ${WALLET_IR}    ${READONLY_CID}   ${EMPTY}    ${S_OID_USER}
-                        List Storagegroup    ${WALLET_IR}    ${READONLY_CID}   ${EMPTY}    ${SG_OID_INV}    ${SG_OID_IR}
-    @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                        ...     Get Object Parts By Link Object    ${USER_WALLET}    ${READONLY_CID}   ${S_OID_USER}
-                        ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID_USER}
-                        Get Storagegroup    ${WALLET_IR}    ${READONLY_CID}    ${SG_OID_IR}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                        Run Keyword And Expect Error        *
-                        ...  Delete Storagegroup    ${WALLET_IR}    ${READONLY_CID}    ${SG_OID_IR}    ${EMPTY}
 
     # Get
                         Get object    ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
