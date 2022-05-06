@@ -26,7 +26,6 @@ Generate file
 
 Prepare eACL Role rules
     [Arguments]    ${CID}
-                            Log	                    Set eACL for different Role cases
 
     # eACL rules for all operations and similar permissions
     @{Roles} =	        Create List    others    user    system

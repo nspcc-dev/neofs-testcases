@@ -21,13 +21,14 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Get Link Object')
-def get_link_object(wallet: str, cid: str, oid: str):
+def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str=""):
     """
         Args:
             wallet (str): path to the wallet on whose behalf the Storage Nodes
                             are requested
             cid (str): Container ID which stores the Large Object
             oid (str): Large Object ID
+            bearer_token (optional, str): path to Bearer token file
         Returns:
             (str): Link Object ID
             When no Link Object ID is found after all Storage Nodes polling,
@@ -38,7 +39,8 @@ def get_link_object(wallet: str, cid: str, oid: str):
             resp = neofs_verbs.head_object(wallet, cid, oid,
                     endpoint=node,
                     is_raw=True,
-                    is_direct=True)
+                    is_direct=True,
+                    bearer_token=bearer_token)
             if resp['link']:
                 return resp['link']
         except Exception:

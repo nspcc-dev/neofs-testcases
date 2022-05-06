@@ -1,15 +1,16 @@
 *** Settings ***
 Variables    common.py
 
-Library      neofs.py
-Library      neofs_verbs.py
-Library      payment_neogo.py
-Library      contract_keywords.py
+Library     neofs.py
+Library     neofs_verbs.py
+Library     payment_neogo.py
+Library     contract_keywords.py
+Library     storage_group.py
 
-Resource     common_steps_acl_basic.robot
-Resource     payment_operations.robot
-Resource     setup_teardown.robot
-Resource     complex_object_operations.robot
+Resource    common_steps_acl_basic.robot
+Resource    payment_operations.robot
+Resource    setup_teardown.robot
+Resource    storage_group.robot
 
 
 *** Test cases ***
@@ -39,37 +40,15 @@ Basic ACL Operations for Public Container
 Check Public Container
     [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
-    # Storage group Operations (Put, List, Get, Delete)
-                            Log    Storage group Operations for each Role keys
+    ${OID} =            Put object    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}
+    @{OBJECTS} =        Create List      ${OID}
 
-    # Put target object to use in storage groups
-    ${S_OID} =              Put object    ${USER_WALLET}    ${FILE_S}    ${PUBLIC_CID}
+                        Run Storage Group Operations And Expect Success
+                        ...     ${USER_WALLET}      ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
 
-    ${WALLET_SN}    ${ADDR_SN} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
-    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
-    
-    @{ROLES_WALLETS_PASS} =    Create List    ${USER_WALLET}    ${WALLET_OTH}
-    @{ROLES_WALLETS_SYS} =     Create List    ${WALLET_IR}    ${WALLET_SN}
-    
-    FOR	${ROLE_WALLET}	IN	@{ROLES_WALLETS_PASS}
-        ${SG_OID_USERS} =    Put Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_USERS}
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                            ...     Get Object Parts By Link Object    ${ROLE_WALLET}    ${PUBLIC_CID}   ${S_OID}
-                            ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
-                            Get Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_USERS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Delete Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_USERS}    ${EMPTY}
-                            Tick Epoch
-    END
-    FOR	${ROLE_WALLET}	IN	@{ROLES_WALLETS_SYS}
-        ${SG_OID_SYS} =     Put Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${S_OID}
-                            List Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}   ${EMPTY}    ${SG_OID_SYS}
-        @{EXPECTED_OIDS} =  Run Keyword If    "${RUN_TYPE}" == "Complex"
-                            ...     Get Object Parts By Link Object    ${ROLE_WALLET}    ${PUBLIC_CID}   ${S_OID}
-                            ...     ELSE IF   "${RUN_TYPE}" == "Simple"    Create List   ${S_OID}
-                            Get Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}   ${EMPTY}    ${EMPTY}    @{EXPECTED_OIDS}
-                            Run Keyword And Expect Error        *
-                            ...  Delete Storagegroup    ${ROLE_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
-                            Delete Storagegroup    ${USER_WALLET}    ${PUBLIC_CID}    ${SG_OID_SYS}    ${EMPTY}
-                            Tick Epoch
-    END
+                        Run Storage Group Operations And Expect Success
+                        ...     ${WALLET_OTH}       ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
+
+                        # System isn't allowed to DELETE in Public Container
+                        Run Storage Group Operations On System's Behalf In RO Container
+                        ...                         ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
