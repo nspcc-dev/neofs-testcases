@@ -26,9 +26,21 @@
 `git clone git@github.com:nspcc-dev/neofs-dev-env.git`
 
 Note that we expect neofs-dev-env to be located under
-the `<testcases_root_dir>/../neofs-dev-env` directory. If you put this repo in any other place, manually set the full path to neofs-dev-env in the environment variable `DEVENV_PATH` at this step.
+the `<testcases_root_dir>/../neofs-dev-env` directory. If you put this repo in any other place,
+manually set the full path to neofs-dev-env in the environment variable `DEVENV_PATH` at this step.
 
-5. Build virtual env
+5. Make sure you have installed all of the following prerequisites on your machine
+
+```
+make
+python3.9
+python3.9-dev
+libssl-dev
+```
+As we use neofs-dev-env, you'll also need to install
+[prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
+
+6. Build virtual env
 
 In the cloned neofs-testcases repo execute the following commands:
 
@@ -37,76 +49,13 @@ make venv.localtest
 . venv.localtest/bin/activate
 ```
 
-Test cases are designed to run on Python 3.8.
+Test cases are designed to run on Python 3.9.
 
 
 ## Run
 
 To run an arbitrary UserScenario or testcase, you need to run the command:
 `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`
-
-The following UserScenarios and testcases are available for execution:
-
- * acl
-     * object_attributes
-         * container_id_filter.robot
-         * creation_epoch_filter.robot
-         * homomorphic_hash_filter.robot
-         * object_id_filter.robot
-         * object_type_filter.robot
-         * owner_id_filter.robot
-         * payload_hash_filter.robot
-         * payload_length_filter.robot
-         * version_filter.robot
-     * acl_basic_private_container_storagegroup.robot
-     * acl_basic_private_container.robot
-     * acl_basic_public_container_storagegroup.robot
-     * acl_basic_public_container.robot
-     * acl_basic_readonly_container_storagegroup.robot
-     * acl_basic_readonly_container.robot
-     * acl_bearer_allow_storagegroup.robot
-     * acl_bearer_allow.robot
-     * acl_bearer_compound.robot
-     * acl_bearer_filter_oid_equal.robot
-     * acl_bearer_filter_oid_not_equal.robot
-     * acl_bearer_filter_userheader_equal.robot
-     * acl_bearer_filter_userheader_not_equal.robot
-     * acl_bearer_inaccessible.robot
-     * acl_bearer_request_filter_xheader_deny.robot
-     * acl_bearer_request_filter_xheader_equal.robot
-     * acl_bearer_request_filter_xheader_not_equal.robot
-     * acl_extended_actions_other.robot
-     * acl_extended_actions_pubkey.robot
-     * acl_extended_actions_system.robot
-     * acl_extended_actions_user.robot
-     * acl_extended_compound.robot
-     * acl_extended_filters.robot
- * cli
-     * accounting
-        * balance.robot
-     * netmap
-        * networkinfo_rpc_method.robot 
- * container
-     * container_attributes.robot
-     * container_delete.robot
- * network
-     * netmap_control_drop.robot
-     * netmap_control.robot
-     * netmap_simple.robot
-     * replication.robot
- * object
-     * object_attributes.robot
-     * object_complex.robot
-     * object_simple.robot
-     * object_storagegroup_simple.robot
-     * object_storagegroup_complex.robot
-     * object_expiration.robot
- * payment
-     * withdraw.robot
- * services
-     * http_gate.robot
-     * s3_gate_bucket.robot
-     * s3_gate_object.robot
 
 
 ## Generation of documentation
