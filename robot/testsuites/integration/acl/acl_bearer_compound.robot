@@ -3,6 +3,7 @@ Variables   common.py
 
 Library     Collections
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     payment_neogo.py
@@ -54,13 +55,13 @@ Check Сompound Operations
                         Check Bearer Сompound Delete    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
                         Check Bearer Сompound Delete    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-                        Check Bearer Сompound Get Range Hash    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}   
+                        Check Bearer Сompound Get Range Hash    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
                         Check Bearer Сompound Get Range Hash    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
                         Check Bearer Сompound Get Range Hash    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
 Check Bearer Сompound Get
     [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_WALLET}
+    ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object                 ${USER_WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     @{S_OBJ_H} =        Create List	           ${S_OID_USER}
@@ -95,7 +96,7 @@ Check Bearer Сompound Get
 Check Bearer Сompound Delete
     [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_WALLET}
+    ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}
@@ -130,13 +131,13 @@ Check Bearer Сompound Delete
 Check Bearer Сompound Get Range Hash
     [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
 
-    ${CID} =            Create Container Public    ${USER_WALLET}
+    ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
 
-    ${S_OID_USER} =     Put object             ${USER_WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-                        Put object             ${WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                        Get Range hash         ${WALLET_SYS}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
-                        Set eACL           ${USER_WALLET}         ${CID}       ${DENY_EACL}
+    ${S_OID_USER} =     Put object              ${USER_WALLET}      ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+                        Put object              ${WALLET}           ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+                        Get Range hash          ${WALLET_SYS}       ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
+                        Set eACL                ${USER_WALLET}      ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}

@@ -3,6 +3,7 @@ Variables   common.py
 
 Library     Collections
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     payment_neogo.py
@@ -43,11 +44,11 @@ BearerToken Operations with Filter Requst NotEqual
 Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     [Arguments]    ${WALLET}    ${FILE_S}
 
-    ${CID} =                Create Container Public    ${WALLET}
-    ${S_OID_USER} =         Put object                 ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
-    ${S_OID_USER_2} =       Put object                 ${WALLET}     ${FILE_S}   ${CID}
-    ${D_OID_USER} =         Put object                 ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    ${CID} =                Create Container    ${WALLET}       basic_acl=eacl-public-read-write
+    ${S_OID_USER} =         Put object          ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
+    ${S_OID_USER_2} =       Put object          ${WALLET}     ${FILE_S}   ${CID}
+    ${D_OID_USER} =         Put object          ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
+    @{S_OBJ_H} =	    Create List	        ${S_OID_USER}
 
                             Put object         ${WALLET}    ${FILE_S}     ${CID}           user_headers=${ANOTHER_USER_HEADER}
                             Get object         ${WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}      local_file_eacl
@@ -73,7 +74,7 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
     ${EACL_TOKEN} =     Form BearerToken File      ${WALLET}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Put object      ${WALLET}    ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
+                        ...  Put object      ${WALLET}    ${FILE_S}    ${CID}
                         Run Keyword And Expect Error    *
                         ...  Get object      ${WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
                         #Run Keyword And Expect Error    *
@@ -85,7 +86,7 @@ Check eACL Deny and Allow All Bearer Filter Requst NotEqual
                         Run Keyword And Expect Error    *
                         ...  Delete object   ${WALLET}    ${CID}       ${S_OID_USER}
 
-                        Put object       ${WALLET}    ${FILE_S}    ${CID}   bearer=${EACL_TOKEN}    user_headers=${USER_HEADER}   options=--xhdr a=2
+                        Put object       ${WALLET}    ${FILE_S}    ${CID}   bearer=${EACL_TOKEN}     user_headers=${USER_HEADER}   options=--xhdr a=2
                         Get object       ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}       --xhdr a=2
                         Search object    ${WALLET}    ${CID}       ${EMPTY}         ${EACL_TOKEN}    ${USER_HEADER}   ${EMPTY}       --xhdr a=2
                         Head object      ${WALLET}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}    options=--xhdr a=2

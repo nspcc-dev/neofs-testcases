@@ -2,9 +2,10 @@
 Variables   common.py
 
 Library     Collections
+Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     acl.py
 Library     payment_neogo.py
 
 Resource    eacl_tables.robot
@@ -37,7 +38,8 @@ BearerToken Operations for Inaccessible Container
 Check Container Inaccessible and Allow All Bearer
     [Arguments]    ${WALLET}    ${FILE_S}
 
-    ${CID} =    Create Container Inaccessible    ${WALLET}
+                # 0x40000000 is inaccessible ACL
+    ${CID} =    Create Container           ${WALLET}    basic_acl=0x40000000
                 Prepare eACL Role rules    ${CID}
 
                 Run Keyword And Expect Error        *
