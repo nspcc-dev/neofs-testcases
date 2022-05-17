@@ -2,9 +2,10 @@
 Variables   common.py
 
 Library     Collections
+Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     acl.py
 Library     payment_neogo.py
 
 Resource    eacl_tables.robot
@@ -45,7 +46,7 @@ BearerToken Operations
 Check eACL Deny and Allow All Bearer
     [Arguments]    ${WALLET}    ${FILE_S}
 
-    ${CID} =            Create Container Public    ${WALLET}
+    ${CID} =            Create Container           ${WALLET}    basic_acl=eacl-public-read-write
     ${S_OID_USER} =     Put object        ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object        ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =        Create List	      ${S_OID_USER}

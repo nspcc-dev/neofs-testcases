@@ -3,6 +3,7 @@ Variables   common.py
 
 Library     Collections
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 
@@ -38,7 +39,7 @@ BearerToken Operations
 Check eACL Deny and Allow All Bearer
     [Arguments]         ${RUN_TYPE}    ${WALLET}    ${FILE_S}
 
-    ${CID} =            Create Container Public     ${WALLET}
+    ${CID} =            Create Container            ${WALLET}   basic_acl=eacl-public-read-write
     ${OID} =            Put object      ${WALLET}    ${FILE_S}    ${CID}
     @{OBJECTS} =        Create List     ${OID}
 

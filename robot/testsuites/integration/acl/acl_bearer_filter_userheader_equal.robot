@@ -3,6 +3,7 @@ Variables   common.py
 
 Library     Collections
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     payment_neogo.py
@@ -41,7 +42,7 @@ BearerToken Operations with Filter UserHeader Equal
 *** Keywords ***
 Check eACL Deny and Allow All Bearer Filter UserHeader Equal
     [Arguments]    ${WALLET}    ${FILE_S}
-    ${CID} =                Create Container Public    ${WALLET}
+    ${CID} =                Create Container           ${WALLET}    basic_acl=eacl-public-read-write
                             Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =         Put object                 ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
     ${S_OID_USER_2} =       Put object                 ${WALLET}     ${FILE_S}   ${CID}
