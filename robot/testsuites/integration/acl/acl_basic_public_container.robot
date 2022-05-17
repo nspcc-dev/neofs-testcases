@@ -1,6 +1,7 @@
 *** Settings ***
 Variables    common.py
 
+Library      container.py
 Library      neofs.py
 Library      neofs_verbs.py
 Library      payment_neogo.py
@@ -21,11 +22,11 @@ Basic ACL Operations for Public Container
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
+    ${PUBLIC_CID} =         Create Container    ${WALLET}       basic_acl=public-read-write
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Public Container    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
-    ${PUBLIC_CID} =         Create Public Container    ${WALLET}
+    ${PUBLIC_CID} =         Create Container    ${WALLET}       basic_acl=public-read-write
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 

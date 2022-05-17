@@ -1,6 +1,7 @@
 *** Settings ***
 Variables       common.py
 
+Library         container.py
 Library         neofs.py
 Library         neofs_verbs.py
 Library         payment_neogo.py
@@ -21,12 +22,12 @@ Basic ACL Operations for Private Container
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${PRIV_CID} =           Create Private Container    ${WALLET}
-    ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
+    ${PRIV_CID} =           Create Container    ${WALLET}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check Private Container    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
 
-    ${PRIV_CID} =           Create Private Container    ${WALLET}
-    ${FILE_S}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
+    ${PRIV_CID} =           Create Container    ${WALLET}
+    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Private Container    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_private_container
