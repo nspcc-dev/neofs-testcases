@@ -1,6 +1,7 @@
 *** Settings ***
 Variables    common.py
 
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     payment_neogo.py
@@ -21,13 +22,11 @@ Basic ACL Operations for Read-Only Container
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${READONLY_CID} =       Create Read-Only Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Read-Only Container    Simple    ${WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
+                            Check Read-Only Container    Simple    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
-    ${READONLY_CID} =       Create Read-Only Container    ${WALLET}
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Read-Only Container    Complex    ${WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
+                            Check Read-Only Container    Complex    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
     [Teardown]              Teardown    acl_basic_readonly_container
 
@@ -35,7 +34,9 @@ Basic ACL Operations for Read-Only Container
 *** Keywords ***
 
 Check Read-Only Container
-    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}    ${WALLET_OTH}
+    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
+
+    ${READONLY_CID} =   Create Container    ${USER_WALLET}      basic_acl=public-read
 
     ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
     ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
