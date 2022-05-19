@@ -3,6 +3,7 @@ Variables    common.py
 Variables    eacl_object_filters.py
 
 Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     Collections
 
@@ -23,9 +24,7 @@ Payload Length Object Filter for Extended ACL
 
     [Setup]                 Setup
 
-    Log    Check eACL payloadLength Filter with MatchType String Equal
     Check eACL Filters with MatchType String Equal    $Object:payloadLength
-    Log    Check eACL payloadLength Filter with MatchType String Not Equal
     Check $Object:payloadLength Filter with MatchType String Not Equal    $Object:payloadLength
 
     [Teardown]          Teardown    payload_length_filter
@@ -38,7 +37,7 @@ Check $Object:payloadLength Filter with MatchType String Not Equal
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${WALLET}
+    ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
     ${FILE_0}    ${_} =    Generate file    ${0}
 
@@ -46,10 +45,9 @@ Check $Object:payloadLength Filter with MatchType String Not Equal
     ${S_OID} =          Put Object    ${WALLET}    ${FILE_S}    ${CID}
 
                         Get Object    ${WALLET}    ${CID}    ${S_OID}    ${EMPTY}    local_file_eacl
-                        Head Object    ${WALLET}    ${CID}    ${S_OID}
+    &{HEADER} =         Head Object    ${WALLET}    ${CID}    ${S_OID}
 
-    &{HEADER_DICT} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    DENY    OTHERS
+    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER}[header][payloadLength]    !=    ${FILTER}    DENY    OTHERS
                         Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
 
     Run Keyword And Expect Error   ${EACL_ERR_MSG}

@@ -3,6 +3,7 @@ Variables    common.py
 
 Library      Collections
 Library      acl.py
+Library      container.py
 Library      neofs.py
 Library      neofs_verbs.py
 Library      payment_neogo.py
@@ -47,7 +48,7 @@ Extended ACL Operations
 Check eACL Deny All Other and Allow All Pubkey
     [Arguments]    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
 
-    ${CID} =                Create Container Public    ${USER_WALLET}
+    ${CID} =                Create Container           ${USER_WALLET}     basic_acl=eacl-public-read-write
     ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
