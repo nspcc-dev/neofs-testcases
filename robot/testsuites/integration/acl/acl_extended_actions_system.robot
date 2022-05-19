@@ -2,10 +2,11 @@
 Variables    common.py
 
 Library     Collections
+Library     acl.py
+Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     payment_neogo.py
-Library     acl.py
 
 Resource    common_steps_acl_extended.robot
 Resource    payment_operations.robot
@@ -46,13 +47,13 @@ Check eACL Deny and Allow All System
     ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
     ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
-    ${CID} =            Create Container Public     ${WALLET}
+    ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
 
     ${S_OID_USER} =     Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER_S} =   Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
 
-    @{S_OBJ_H} =	Create List	    ${S_OID_USER}
+    @{S_OBJ_H} =	Create List     ${S_OID_USER}
 
                         Put object      ${WALLET_IR}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
                         Put object      ${WALLET_SN}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}

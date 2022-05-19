@@ -8,6 +8,7 @@ Library     neofs.py
 Library     neofs_verbs.py
 
 Library     Collections
+Library     String
 
 Resource    common_steps_acl_basic.robot
 Resource    payment_operations.robot
@@ -21,11 +22,6 @@ ${EACL_ERR_MSG} =       *
 
 *** Keywords ***
 
-Create Container Public
-    [Arguments]             ${WALLET}
-    ${PUBLIC_CID_GEN} =     Create container    ${WALLET}    basic_acl=${PUBLIC_ACL}
-    [Return]                ${PUBLIC_CID_GEN}
-
 Generate files
     [Arguments]             ${SIZE}
 
@@ -38,23 +34,23 @@ Generate files
 Check eACL Deny and Allow All
     [Arguments]     ${WALLET}    ${DENY_EACL}    ${ALLOW_EACL}    ${USER_WALLET}
 
-    ${CID} =                Create Container Public    ${USER_WALLET}
-    ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
-    ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
-    ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}    ${CID}      user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
+    ${CID} =                Create Container    ${USER_WALLET}      basic_acl=eacl-public-read-write
+    ${FILE_S}    ${_} =     Generate file       ${SIMPLE_OBJ_SIZE}
+    ${S_OID_USER} =         Put object          ${USER_WALLET}      ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
+    ${D_OID_USER} =         Put object          ${USER_WALLET}      ${FILE_S}    ${CID}      user_headers=${USER_HEADER_DEL}
+    @{S_OBJ_H} =	    Create List	        ${S_OID_USER}
 
-                            Put object                 ${WALLET}    ${FILE_S}    ${CID}            user_headers=${ANOTHER_HEADER}
+                            Put object          ${WALLET}    ${FILE_S}      ${CID}          user_headers=${ANOTHER_HEADER}
 
-                            Get object                 ${WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                            Search object              ${WALLET}    ${CID}        ${EMPTY}         ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
-                            Head object                ${WALLET}    ${CID}        ${S_OID_USER}
+                            Get object          ${WALLET}    ${CID}         ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            Search object       ${WALLET}    ${CID}         ${EMPTY}         ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                            Head object         ${WALLET}    ${CID}         ${S_OID_USER}
 
-                            Get Range                  ${WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range Hash             ${WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}    0:256
-                            Delete object              ${WALLET}    ${CID}        ${D_OID_USER}
+                            Get Range           ${WALLET}    ${CID}         ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            Get Range Hash      ${WALLET}    ${CID}         ${S_OID_USER}    ${EMPTY}    0:256
+                            Delete object       ${WALLET}    ${CID}         ${D_OID_USER}
 
-                            Set eACL                   ${USER_WALLET}     ${CID}        ${DENY_EACL}
+                            Set eACL            ${USER_WALLET}     ${CID}        ${DENY_EACL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -88,9 +84,7 @@ Check eACL Deny and Allow All
                             Delete object     ${WALLET}    ${CID}        ${S_OID_USER}
 
 Compose eACL Custom
-    [Arguments]    ${CID}    ${HEADER_DICT}    ${MATCH_TYPE}    ${FILTER}    ${ACCESS}    ${ROLE}
-
-    ${filter_value} =    Get From dictionary    ${HEADER_DICT}   ${EACL_OBJ_FILTERS}[${FILTER}]
+    [Arguments]    ${CID}    ${filter_value}    ${MATCH_TYPE}    ${FILTER}    ${ACCESS}    ${ROLE}
 
     ${filters} =        Set Variable    obj:${FILTER}${MATCH_TYPE}${filter_value}
     ${rule_get}=        Set Variable    ${ACCESS} get ${filters} ${ROLE}
@@ -107,16 +101,6 @@ Compose eACL Custom
 
     [Return]    ${EACL_CUSTOM}
 
-Object Header Decoded
-    [Arguments]    ${WALLET}    ${CID}    ${OID}
-
-    &{HEADER} =         Head Object    ${WALLET}    ${CID}    ${OID}
-    # FIXME
-    # 'objectID' key repositioning in dictionary for the calling keyword might
-    # work uniformly with any key from 'header'
-                        Set To Dictionary   ${HEADER}[header]   objectID     ${HEADER}[objectID]
-
-    [Return]    &{HEADER}[header]
 
 Check eACL Filters with MatchType String Equal
     [Arguments]    ${FILTER}
@@ -124,23 +108,30 @@ Check eACL Filters with MatchType String Equal
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =                Create Container Public    ${WALLET}
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
+    ${CID} =                Create Container        ${WALLET}       basic_acl=eacl-public-read-write
+    ${FILE_S}    ${_} =     Generate file           ${SIMPLE_OBJ_SIZE}
 
     ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}  user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object    ${WALLET}    ${FILE_S}    ${CID}
-    @{S_OBJ_H} =	    Create List    ${S_OID_USER}
+    @{S_OBJ_H} =	Create List    ${S_OID_USER}
 
-                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Search Object    ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
-                        Head Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
-                        Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range Hash    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Delete Object    ${WALLET_OTH}    ${CID}    ${D_OID_USER}
+                        Get Object          ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Search Object       ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+    &{HEADER} =         Head Object         ${WALLET_OTH}    ${CID}    ${S_OID_USER}
+                        Get Range           ${WALLET_OTH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range Hash      ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Delete Object       ${WALLET_OTH}    ${CID}    ${D_OID_USER}
 
-    &{HEADER_DICT} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    =    ${FILTER}    DENY    OTHERS
-                        Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
+    ${K}    ${V} =      Split String            ${FILTER}    :
+    ${EACL_CUSTOM} =    Set Variable
+                        IF      """${v}""" == """objectID"""
+                            ${EACL_CUSTOM} =    Compose eACL Custom     ${CID}    ${HEADER}[${V}]
+                                                ...                 =    ${FILTER}   DENY    OTHERS
+                        ELSE
+                            ${EACL_CUSTOM} =    Compose eACL Custom     ${CID}    ${HEADER}[header][${V}]
+                                                ...                 =    ${FILTER}   DENY    OTHERS
+                        END
+                        Set eACL    ${WALLET}   ${CID}    ${EACL_CUSTOM}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -176,23 +167,30 @@ Check eACL Filters with MatchType String Not Equal
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${WALLET}
+    ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_OTH} =      Put Object    ${WALLET_OTH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-    ${D_OID_USER} =     Put object    ${WALLET}    ${FILE_S}    ${CID}
-    @{S_OBJ_H} =	    Create List    ${S_OID_USER}
+    ${S_OID_OTH} =      Put Object    ${WALLET_OTH}     ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+    ${S_OID_USER} =     Put Object    ${WALLET}         ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+    ${D_OID_USER} =     Put object    ${WALLET}         ${FILE_S}    ${CID}
+    @{S_OBJ_H} =	Create List   ${S_OID_USER}
 
-                        Get Object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Head Object    ${WALLET}    ${CID}    ${S_OID_USER}
-                        Search Object    ${WALLET}    ${CID}    ${EMPTY}    ${EMPTY}    ${FILE_USR_HEADER}    ${S_OBJ_H}
-                        Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Get Range Hash    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Object      ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+    &{HEADER} =         Head Object     ${WALLET}    ${CID}    ${S_OID_USER}
+                        Search Object   ${WALLET}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        Get Range       ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range Hash  ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
-    &{HEADER_DICT} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    deny    others
-                        Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
+    ${K}    ${V} =      Split String            ${FILTER}    :
+    ${EACL_CUSTOM} =    Set Variable
+                        IF      """${v}""" == """objectID"""
+                            ${EACL_CUSTOM} =    Compose eACL Custom     ${CID}    ${HEADER}[${V}]
+                                                ...                 !=    ${FILTER}   DENY    OTHERS
+                        ELSE
+                            ${EACL_CUSTOM} =    Compose eACL Custom     ${CID}    ${HEADER}[header][${V}]
+                                                ...                 !=    ${FILTER}   DENY    OTHERS
+                        END
+                        Set eACL    ${WALLET}   ${CID}    ${EACL_CUSTOM}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
