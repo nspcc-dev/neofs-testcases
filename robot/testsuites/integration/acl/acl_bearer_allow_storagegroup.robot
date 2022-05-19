@@ -24,10 +24,10 @@ BearerToken Operations
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer    Simple    ${WALLET}    ${FILE_S}
 
-    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer    Complex    ${WALLET}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_allow_storagegroup
