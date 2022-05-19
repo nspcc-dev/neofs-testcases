@@ -3,14 +3,14 @@
 import os
 import tarfile
 import uuid
+import hashlib
 import docker
 
-from neo3 import wallet
 from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
+from cli_helpers import _cmd_run
 from robot.api.deco import keyword
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
-from cli_helpers import _cmd_run
 
 
 ROBOT_AUTO_KEYWORDS = False
@@ -22,11 +22,31 @@ def generate_file_of_bytes(size: str) -> str:
     :param size:        the size in bytes, can be declared as 6e+6 for example
     """
     size = int(float(size))
-    filename = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
+    filename = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
     with open(filename, 'wb') as fout:
         fout.write(os.urandom(size))
     logger.info(f"file with size {size} bytes has been generated: {filename}")
     return filename
+
+@keyword('Generate file')
+def generate_file_and_file_hash(size: str) -> str:
+    """
+    Function generates a big binary file with the specified size in bytes and its hash.
+    Args:
+        size (str): the size in bytes, can be declared as 6e+6 for example
+    Returns:
+        (str): the path to the generated file
+        (str): the hash of the generated file
+    """
+    size = int(float(size))
+    filename = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
+    with open(filename, 'wb') as fout:
+        fout.write(os.urandom(size))
+    logger.info(f"file with size {size} bytes has been generated: {filename}")
+
+    file_hash = _get_file_hash(filename)
+
+    return filename, file_hash
 
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:
@@ -80,5 +100,14 @@ def make_down(services: list=[]):
     else:
         cmd = 'make down; make clean'
         _cmd_run(cmd, timeout=60)
-    
+
     os.chdir(test_path)
+
+def _get_file_hash(filename: str):
+    blocksize = 65536
+    file_hash = hashlib.md5()
+    with open(filename, "rb") as out:
+        for block in iter(lambda: out.read(blocksize), b""):
+            file_hash.update(block)
+    logger.info(f"Hash: {file_hash.hexdigest()}")
+    return file_hash.hexdigest()

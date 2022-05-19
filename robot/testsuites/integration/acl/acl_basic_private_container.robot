@@ -2,11 +2,9 @@
 Variables       common.py
 
 Library         container.py
-Library         neofs.py
 Library         neofs_verbs.py
-Library         payment_neogo.py
+Library         utility_keywords.py
 
-Resource        common_steps_acl_basic.robot
 Resource        payment_operations.robot
 Resource        setup_teardown.robot
 

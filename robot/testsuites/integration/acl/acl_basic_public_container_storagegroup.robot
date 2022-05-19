@@ -2,13 +2,9 @@
 Variables    common.py
 
 Library     container.py
-Library     neofs.py
 Library     neofs_verbs.py
-Library     payment_neogo.py
-Library     contract_keywords.py
-Library     storage_group.py
+Library     utility_keywords.py
 
-Resource    common_steps_acl_basic.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 Resource    storage_group.robot
@@ -52,4 +48,4 @@ Check Public Container
 
                         # System isn't allowed to DELETE in Public Container
                         Run Storage Group Operations On System's Behalf In RO Container
-                        ...                         ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
+                        ...     ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
