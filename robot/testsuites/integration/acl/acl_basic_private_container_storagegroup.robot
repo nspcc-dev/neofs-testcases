@@ -2,16 +2,12 @@
 Variables    common.py
 
 Library     container.py
-Library     neofs.py
 Library     neofs_verbs.py
-Library     payment_neogo.py
-Library     storage_group.py
-Library     Collections
+Library     utility_keywords.py
 
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 Resource    storage_group.robot
-Resource    common_steps_acl_basic.robot
 
 
 *** Test cases ***
