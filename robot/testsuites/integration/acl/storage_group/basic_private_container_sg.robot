@@ -41,12 +41,13 @@ Check Private Container
 
     ${OID} =            Put object      ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}
     @{OBJECTS} =        Create List     ${OID}
+    ${SG} =             Put Storagegroup    ${USER_WALLET}  ${PRIV_CID}  ${OBJECTS}
 
                         Run Storage Group Operations And Expect Success
                         ...     ${USER_WALLET}    ${PRIV_CID}   ${OBJECTS}      ${RUN_TYPE}
 
                         Run Storage Group Operations And Expect Failure
-                        ...     ${OTHER_WALLET}    ${PRIV_CID}   ${OBJECTS}     ${RUN_TYPE}
+                        ...     ${OTHER_WALLET}    ${PRIV_CID}   ${OBJECTS}     ${SG}
 
     # In private container, Inner Ring is allowed to read (Storage Group List and Get),
     # so using here keyword for read-only container.
