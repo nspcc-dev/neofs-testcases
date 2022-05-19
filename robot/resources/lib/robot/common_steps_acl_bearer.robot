@@ -2,12 +2,6 @@
 Variables   common.py
 
 *** Keywords ***
-Generate file
-    [Arguments]             ${SIZE}
-
-    ${FILE_S_GEN} =         Generate file of bytes    ${SIZE}
-    [Return]                ${FILE_S_GEN}
-
 
 Prepare eACL Role rules
     [Arguments]    ${CID}
