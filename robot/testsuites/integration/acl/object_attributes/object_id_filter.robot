@@ -4,11 +4,9 @@ Variables       eacl_object_filters.py
 
 Library         acl.py
 Library         container.py
-Library         neofs.py
-Library         Collections
+Library         utility_keywords.py
 
 Resource        common_steps_acl_extended.robot
-Resource        common_steps_acl_basic.robot
 Resource        payment_operations.robot
 Resource        setup_teardown.robot
 

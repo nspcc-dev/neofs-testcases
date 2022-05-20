@@ -4,9 +4,7 @@ Variables   common.py
 Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     payment_neogo.py
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
+Library     utility_keywords.py
 
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
@@ -23,7 +21,7 @@ NeoFS Simple Netmap
     [Setup]             Setup
 
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
-    ${FILE} =          Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+    ${FILE}    ${_} =          Generate file    ${SIMPLE_OBJ_SIZE}
 
     Validate Policy    ${WALLET}    ${FILE}    REP 2 IN X CBF 2 SELECT 2 FROM * AS X    2    @{EMPTY}
 

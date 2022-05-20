@@ -2,7 +2,6 @@
 
 import base64
 from datetime import datetime
-import hashlib
 import json
 import os
 import re
@@ -12,12 +11,12 @@ import docker
 import base58
 
 from neo3 import wallet
-from common import *
+from common import (NEOFS_NETMAP, WALLET_PASS, NEOFS_ENDPOINT,
+NEOFS_NETMAP_DICT, ASSETS_DIR)
+from cli_helpers import _cmd_run
+import json_transformers
 from robot.api.deco import keyword
 from robot.api import logger
-
-from cli_helpers import _run_with_passwd, _cmd_run
-import json_transformers
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -36,9 +35,9 @@ def get_scripthash(wif: str):
 def stop_nodes(down_num: int, *nodes_list):
 
     # select nodes to stop from list
-    stop_nodes = random.sample(nodes_list, down_num)
+    nodes = random.sample(nodes_list, down_num)
 
-    for node in stop_nodes:
+    for node in nodes:
         m = re.search(r'(s\d+).', node)
         node = m.group(1)
 
@@ -60,14 +59,13 @@ def start_nodes(*nodes_list):
 
 @keyword('Get nodes with object')
 def get_nodes_with_object(wallet: str, cid: str, oid: str):
-    copies = 0
 
     nodes_list = []
 
     for node in NEOFS_NETMAP:
-        search_res = _search_object(node, wallet, cid, oid)
-        if search_res:
-            if oid in search_res:
+        res = _search_object(node, wallet, cid, oid)
+        if res:
+            if oid in res:
                 nodes_list.append(node)
 
     logger.info(f"Nodes with object: {nodes_list}")
@@ -76,7 +74,6 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str):
 
 @keyword('Get nodes without object')
 def get_nodes_without_object(wallet: str, cid: str, oid: str):
-    copies = 0
 
     nodes_list = []
 
@@ -101,14 +98,14 @@ def validate_storage_policy_for_object(wallet: str, expected_copies: int, cid, o
     oid = oid.strip()
 
     for node in storage_nodes:
-        search_res = _search_object(node, wallet, cid, oid)
-        if search_res:
-            if oid in search_res:
+        res = _search_object(node, wallet, cid, oid)
+        if res:
+            if oid in res:
                 copies += 1
                 found_nodes.append(node)
 
     if copies != expected_copies:
-        raise Exception(f"Object copies is not match storage policy.",
+        raise Exception("Object copies is not match storage policy."
                         f"Found: {copies}, expected: {expected_copies}.")
     else:
         logger.info(f"Found copies: {copies}, expected: {expected_copies}")
@@ -117,9 +114,11 @@ def validate_storage_policy_for_object(wallet: str, expected_copies: int, cid, o
 
     if expected_node_list:
         if sorted(found_nodes) == sorted(expected_node_list):
-            logger.info(f"Found node list '{found_nodes}' is equal for expected list '{expected_node_list}'")
+            logger.info(f"Found node list '{found_nodes}' "
+            f"is equal for expected list '{expected_node_list}'")
         else:
-            raise Exception(f"Found node list '{found_nodes}' is not equal to expected list '{expected_node_list}'")
+            raise Exception(f"Found node list '{found_nodes}' "
+            f"is not equal to expected list '{expected_node_list}'")
 
 
 @keyword('Verify Head Tombstone')
@@ -135,46 +134,40 @@ def verify_head_tombstone(wallet: str, cid: str, oid_ts: str, oid: str, addr: st
 
     # Header verification
     header_cid = full_headers["header"]["containerID"]["value"]
-    if (json_transformers.json_reencode(header_cid) == cid):
+    if json_transformers.json_reencode(header_cid) == cid:
         logger.info(f"Header CID is expected: {cid} ({header_cid} in the output)")
     else:
         raise Exception("Header CID is not expected.")
 
     header_owner = full_headers["header"]["ownerID"]["value"]
-    if (json_transformers.json_reencode(header_owner) == addr):
+    if json_transformers.json_reencode(header_owner) == addr:
         logger.info(f"Header ownerID is expected: {addr} ({header_owner} in the output)")
     else:
         raise Exception("Header ownerID is not expected.")
 
     header_type = full_headers["header"]["objectType"]
-    if (header_type == "TOMBSTONE"):
+    if header_type == "TOMBSTONE":
         logger.info(f"Header Type is expected: {header_type}")
     else:
         raise Exception("Header Type is not expected.")
 
     header_session_type = full_headers["header"]["sessionToken"]["body"]["object"]["verb"]
-    if (header_session_type == "DELETE"):
+    if header_session_type == "DELETE":
         logger.info(f"Header Session Type is expected: {header_session_type}")
     else:
         raise Exception("Header Session Type is not expected.")
 
     header_session_cid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["containerID"]["value"]
-    if (json_transformers.json_reencode(header_session_cid) == cid):
+    if json_transformers.json_reencode(header_session_cid) == cid:
         logger.info(f"Header ownerID is expected: {addr} ({header_session_cid} in the output)")
     else:
         raise Exception("Header Session CID is not expected.")
 
     header_session_oid = full_headers["header"]["sessionToken"]["body"]["object"]["address"]["objectID"]["value"]
-    if (json_transformers.json_reencode(header_session_oid) == oid):
+    if json_transformers.json_reencode(header_session_oid) == oid:
         logger.info(f"Header Session OID (deleted object) is expected: {oid} ({header_session_oid} in the output)")
     else:
         raise Exception("Header Session OID (deleted object) is not expected.")
-
-
-@keyword('Get file hash')
-def get_file_hash(filename : str):
-    file_hash = _get_file_hash(filename)
-    return file_hash
 
 
 @keyword('Get control endpoint with wif')
@@ -232,7 +225,7 @@ def get_logs_latest_timestamp():
 
 
 @keyword('Find in Nodes Log')
-def find_in_nodes_Log(line: str, nodes_logs_time: dict):
+def find_in_nodes_log(line: str, nodes_logs_time: dict):
 
     client_api = docker.APIClient()
     container_names = list()
@@ -314,16 +307,6 @@ def sign_session_token(session_token: str, wallet: str, to_file: str=''):
     _cmd_run(cmd)
 
 
-def _get_file_hash(filename):
-    blocksize = 65536
-    hash = hashlib.md5()
-    with open(filename, "rb") as f:
-        for block in iter(lambda: f.read(blocksize), b""):
-            hash.update(block)
-    logger.info(f"Hash: {hash.hexdigest()}")
-    return hash.hexdigest()
-
-
 def _parse_oid(input_str: str):
     """
     This function parses OID from given CLI output. The input string we
@@ -348,9 +331,9 @@ def _parse_oid(input_str: str):
 
 
 def _search_object(node:str, wallet: str, cid:str, oid: str):
-    Cmd = (
+    cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {node} --wallet {wallet} --ttl 1 '
         f'object search --root --cid {cid} --oid {oid} --config {WALLET_PASS}'
     )
-    output = _cmd_run(Cmd)
+    output = _cmd_run(cmd)
     return output

@@ -6,6 +6,7 @@ Library     acl.py
 Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
+Library     utility_keywords.py
 
 Resource    common_steps_acl_bearer.robot
 Resource    eacl_tables.robot

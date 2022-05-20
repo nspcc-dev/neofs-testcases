@@ -4,9 +4,9 @@ Variables   common.py
 Library     neofs_verbs.py
 Library     complex_object_actions.py
 Library     neofs.py
-Library     payment_neogo.py
 Library     contract_keywords.py
 Library     Collections
+Library     utility_keywords.py
 
 Resource    common_steps_object.robot
 Resource    setup_teardown.robot
@@ -30,8 +30,7 @@ NeoFS Complex Object Operations
     ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
     ${CID} =            Prepare container       ${WIF}    ${WALLET}
 
-    ${FILE} =           Generate file of bytes              ${COMPLEX_OBJ_SIZE}
-    ${FILE_HASH} =      Get file hash                       ${FILE}
+    ${FILE}    ${FILE_HASH} =    Generate file    ${COMPLEX_OBJ_SIZE}
 
     ${S_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}
     ${H_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}        user_headers=${FILE_USR_HEADER}

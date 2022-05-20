@@ -3,12 +3,10 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     container.py
-Library     payment_neogo.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
 Library     contract_keywords.py
+Library     utility_keywords.py
 
 Library     Collections
 
@@ -41,8 +39,7 @@ Check Replication
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
     ${CID} =                Create Container    ${WALLET}    basic_acl=${ACL}
 
-    ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
-    ${FILE_HASH} =          Get file hash    ${FILE}
+    ${FILE}    ${_} =       Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID} =              Put Object    ${WALLET}    ${FILE}    ${CID}
                             Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}

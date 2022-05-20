@@ -6,6 +6,7 @@ Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     http_gate.py
+Library     utility_keywords.py
 
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
@@ -24,11 +25,9 @@ NeoFS HTTP Gateway
                         Make Up    ${INCLUDE_SVC}
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-    ${CID} =            Create container                    ${WALLET}    rule=${PLACEMENT_RULE}  basic_acl=${PUBLIC_ACL}
-    ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
-    ${FILE_L} =         Generate file of bytes              ${COMPLEX_OBJ_SIZE}
-    ${FILE_HASH} =      Get file hash                       ${FILE}
-    ${FILE_L_HASH} =    Get file hash                       ${FILE_L}
+    ${CID} =    Create container                    ${WALLET}    rule=${PLACEMENT_RULE}  basic_acl=${PUBLIC_ACL}
+    ${FILE}    ${HASH} =    Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_L}    ${L_HASH} =    Generate file    ${COMPLEX_OBJ_SIZE}
 
     ${S_OID} =          Put object                 ${WALLET}    ${FILE}      ${CID}
     ${L_OID} =          Put object                 ${WALLET}    ${FILE_L}    ${CID}
@@ -43,8 +42,8 @@ NeoFS HTTP Gateway
 
     ${PLAIN_FILE_HASH} =    Get file hash       ${GET_OBJ_S}
     ${GATE_FILE_HASH} =     Get file hash       ${FILEPATH}
-                            Should Be Equal     ${FILE_HASH}      ${PLAIN_FILE_HASH}
-                            Should Be Equal     ${FILE_HASH}      ${GATE_FILE_HASH}
+                            Should Be Equal     ${HASH}      ${PLAIN_FILE_HASH}
+                            Should Be Equal     ${HASH}      ${GATE_FILE_HASH}
 
     @{GET_NODE_LIST} =  Get nodes without object            ${WALLET}    ${CID}    ${L_OID}
     ${NODE} =           Evaluate                            random.choice($GET_NODE_LIST)    random
@@ -54,7 +53,7 @@ NeoFS HTTP Gateway
 
     ${PLAIN_FILE_HASH} =    Get file hash       ${GET_OBJ_L}
     ${GATE_FILE_HASH} =     Get file hash       ${FILEPATH}
-                            Should Be Equal     ${FILE_L_HASH}      ${PLAIN_FILE_HASH}
-                            Should Be Equal     ${FILE_L_HASH}      ${GATE_FILE_HASH}
+                            Should Be Equal     ${L_HASH}      ${PLAIN_FILE_HASH}
+                            Should Be Equal     ${L_HASH}      ${GATE_FILE_HASH}
 
     [Teardown]          Teardown    http_gate
