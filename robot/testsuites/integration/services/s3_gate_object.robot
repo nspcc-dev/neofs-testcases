@@ -8,6 +8,7 @@ Library     container.py
 Library     neofs.py
 Library     s3_gate.py
 Library     contract_keywords.py
+Library     utility_keywords.py
 
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
@@ -26,8 +27,7 @@ Objects in NeoFS S3 Gateway
 
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${FILE_S3} =                Generate file of bytes    ${COMPLEX_OBJ_SIZE}
-    ${FILE_S3_HASH} =           Get file hash             ${FILE_S3}
+    ${FILE_S3}    ${FILE_S3_HASH} =    Generate file    ${COMPLEX_OBJ_SIZE}
     ${_}    ${S3_OBJECT_KEY} =  Split Path                ${FILE_S3}
 
     ${CID}

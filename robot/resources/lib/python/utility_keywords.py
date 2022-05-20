@@ -15,19 +15,6 @@ from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
 
-@keyword('Generate file of bytes')
-def generate_file_of_bytes(size: str) -> str:
-    """
-    Function generates big binary file with the specified size in bytes.
-    :param size:        the size in bytes, can be declared as 6e+6 for example
-    """
-    size = int(float(size))
-    filename = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
-    with open(filename, 'wb') as fout:
-        fout.write(os.urandom(size))
-    logger.info(f"file with size {size} bytes has been generated: {filename}")
-    return filename
-
 @keyword('Generate file')
 def generate_file_and_file_hash(size: str) -> str:
     """
@@ -44,9 +31,28 @@ def generate_file_and_file_hash(size: str) -> str:
         fout.write(os.urandom(size))
     logger.info(f"file with size {size} bytes has been generated: {filename}")
 
-    file_hash = _get_file_hash(filename)
+    file_hash = get_file_hash(filename)
 
     return filename, file_hash
+
+
+@keyword('Get File Hash')
+def get_file_hash(filename: str):
+    """
+    This function generates hash for the specified file.
+    Args:
+        filename (str): the path to the file to generate hash for
+    Returns:
+        (str): the hash of the file
+    """
+    blocksize = 65536
+    file_hash = hashlib.md5()
+    with open(filename, "rb") as out:
+        for block in iter(lambda: out.read(blocksize), b""):
+            file_hash.update(block)
+    logger.info(f"Hash: {file_hash.hexdigest()}")
+    return file_hash.hexdigest()
+    
 
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:
@@ -102,12 +108,3 @@ def make_down(services: list=[]):
         _cmd_run(cmd, timeout=60)
 
     os.chdir(test_path)
-
-def _get_file_hash(filename: str):
-    blocksize = 65536
-    file_hash = hashlib.md5()
-    with open(filename, "rb") as out:
-        for block in iter(lambda: out.read(blocksize), b""):
-            file_hash.update(block)
-    logger.info(f"Hash: {file_hash.hexdigest()}")
-    return file_hash.hexdigest()

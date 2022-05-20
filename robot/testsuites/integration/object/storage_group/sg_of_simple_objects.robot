@@ -1,10 +1,9 @@
 *** Settings ***
 Variables   common.py
 
-Library     neofs.py
 Library     neofs_verbs.py
-Library     payment_neogo.py
 Library     storage_group.py
+Library     utility_keywords.py
 
 Resource    common_steps_object.robot
 Resource    setup_teardown.robot
@@ -25,7 +24,7 @@ NeoFS Simple Storagegroup
     ${WALLET}   ${_}     ${WIF} =   Prepare Wallet And Deposit
     ${CID} =            Prepare container      ${WIF}    ${WALLET}
 
-    ${FILE_S} =         Generate file of bytes            ${SIMPLE_OBJ_SIZE}
+    ${FILE_S}    ${_} =    Generate file            ${SIMPLE_OBJ_SIZE}
 
     ${OID_1} =          Put object    ${WALLET}    ${FILE_S}    ${CID}
     ${OID_2} =          Put object    ${WALLET}    ${FILE_S}    ${CID}

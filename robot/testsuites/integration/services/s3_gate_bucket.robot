@@ -7,6 +7,7 @@ Library     OperatingSystem
 Library     neofs.py
 Library     s3_gate.py
 Library     contract_keywords.py
+Library     utility_keywords.py
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
@@ -23,7 +24,7 @@ Buckets in NeoFS S3 Gateway
                                 Make Up    ${INCLUDE_SVC}
 
     ${WALLET}   ${_}    ${WIF} =        Prepare Wallet And Deposit
-    ${FILE_S3} =                        Generate file of bytes      ${COMPLEX_OBJ_SIZE}
+    ${FILE_S3}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
     ${_}        ${S3_OBJECT_KEY} =      Split Path                  ${FILE_S3}
 
     ${CID}

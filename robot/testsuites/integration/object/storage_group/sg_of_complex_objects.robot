@@ -5,6 +5,7 @@ Library     neofs.py
 Library     neofs_verbs.py
 Library     storage_group.py
 Library     Collections
+Library     utility_keywords.py
 
 Resource    common_steps_object.robot
 Resource    setup_teardown.robot
@@ -25,7 +26,7 @@ NeoFS Complex Storagegroup
     ${WALLET}   ${_}     ${WIF} =   Prepare Wallet And Deposit
     ${CID} =            Prepare container    ${WIF}    ${WALLET}
 
-    ${FILE} =           Generate file of bytes     ${COMPLEX_OBJ_SIZE}
+    ${FILE}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
 
     ${OID_1} =          Put object    ${WALLET}    ${FILE}    ${CID}
     ${OID_2} =          Put object    ${WALLET}    ${FILE}    ${CID}
