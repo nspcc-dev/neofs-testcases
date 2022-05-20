@@ -5,11 +5,8 @@ Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     acl.py
-Library     payment_neogo.py
 Library     contract_keywords.py
-Library     wallet_keywords.py
-
-Library     Collections
+Library     utility_keywords.py
 
 Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
@@ -38,8 +35,8 @@ eACL Deny Replication Operations
 
                         # https://github.com/nspcc-dev/neofs-node/issues/881
 
-    ${FILE} =           Generate file of bytes      ${SIMPLE_OBJ_SIZE}
-    ${CID} =            Create container            ${WALLET}    basic_acl=${PUBLIC_ACL}   rule=${FULL_PLACEMENT_RULE}
+    ${FILE}    ${_} =    Generate file      ${SIMPLE_OBJ_SIZE}
+    ${CID} =            Create container            ${WALLET}    basic_acl=eacl-public-read-write   rule=${FULL_PLACEMENT_RULE}
                         Prepare eACL Role rules     ${CID}
 
     ${OID} =            Put object    ${WALLET}    ${FILE}    ${CID}

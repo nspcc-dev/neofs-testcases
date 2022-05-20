@@ -10,7 +10,6 @@ Library     neofs_verbs.py
 Library     Collections
 Library     String
 
-Resource    common_steps_acl_basic.robot
 Resource    payment_operations.robot
 
 *** Variables ***
@@ -21,15 +20,6 @@ ${OBJECT_PATH} =        testfile
 ${EACL_ERR_MSG} =       *
 
 *** Keywords ***
-
-Generate files
-    [Arguments]             ${SIZE}
-
-    ${FILE_S_GEN_1} =       Generate file of bytes    ${SIZE}
-    ${FILE_S_GEN_2} =       Generate file of bytes    ${SIZE}
-                            Set Global Variable       ${FILE_S}      ${FILE_S_GEN_1}
-                            Set Global Variable       ${FILE_S_2}    ${FILE_S_GEN_2}
-
 
 Check eACL Deny and Allow All
     [Arguments]     ${WALLET}    ${DENY_EACL}    ${ALLOW_EACL}    ${USER_WALLET}
