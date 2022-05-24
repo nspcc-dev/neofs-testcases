@@ -16,16 +16,15 @@ from robot.libraries.BuiltIn import BuiltIn
 ROBOT_AUTO_KEYWORDS = False
 
 @keyword('Generate file')
-def generate_file_and_file_hash(size: str) -> str:
+def generate_file_and_file_hash(size: int) -> str:
     """
     Function generates a big binary file with the specified size in bytes and its hash.
     Args:
-        size (str): the size in bytes, can be declared as 6e+6 for example
+        size (int): the size in bytes, can be declared as 6e+6 for example
     Returns:
         (str): the path to the generated file
         (str): the hash of the generated file
     """
-    size = int(float(size))
     filename = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
     with open(filename, 'wb') as fout:
         fout.write(os.urandom(size))
