@@ -3,11 +3,11 @@ Variables   common.py
 
 Library     neofs.py
 Library     neofs_verbs.py
+Library     container.py
 Library     contract_keywords.py
 Library     Collections
 Library     utility_keywords.py
 
-Resource    common_steps_object.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
@@ -25,8 +25,8 @@ NeoFS Simple Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
-    ${CID} =    Prepare container      ${WIF}    ${WALLET}
+    ${WALLET}    ${ADDR}    ${_} =   Prepare Wallet And Deposit
+    ${CID} =            Create container    ${WALLET}
 
     ${FILE}    ${FILE_HASH} =    Generate file    ${SIMPLE_OBJ_SIZE}
 

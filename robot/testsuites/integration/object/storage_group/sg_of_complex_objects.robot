@@ -2,12 +2,12 @@
 Variables   common.py
 
 Library     neofs.py
+Library     container.py
 Library     neofs_verbs.py
 Library     storage_group.py
 Library     Collections
 Library     utility_keywords.py
 
-Resource    common_steps_object.robot
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    storage_group.robot
@@ -23,8 +23,8 @@ NeoFS Complex Storagegroup
 
     [Setup]             Setup
 
-    ${WALLET}   ${_}     ${WIF} =   Prepare Wallet And Deposit
-    ${CID} =            Prepare container    ${WIF}    ${WALLET}
+    ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
+    ${CID} =            Create container    ${WALLET}
 
     ${FILE}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
 
