@@ -77,3 +77,49 @@ def get_complex_object_copies(wallet: str, cid: str, oid: str):
     """
     last_oid = complex_object_actions.get_last_object(wallet, cid, oid)
     return get_simple_object_copies(wallet, cid, last_oid)
+
+
+@keyword('Get Nodes With Object')
+def get_nodes_with_object(wallet: str, cid: str, oid: str):
+    """
+       The function returns list of nodes which store
+       the given object.
+       Args:
+            wallet (str): the path to the wallet on whose behalf
+                        we request the nodes
+            cid (str): ID of the container which store the object
+            oid (str): object ID
+       Returns:
+            (list): nodes which store the object
+    """
+    nodes_list = []
+    for node in NEOFS_NETMAP:
+        res = neofs_verbs.head_object(wallet, cid, oid,
+                        endpoint=node,
+                        is_direct=True)
+        if res is not None:
+            nodes_list.append(node)
+    return nodes_list
+
+
+@keyword('Get Nodes Without Object')
+def get_nodes_without_object(wallet: str, cid: str, oid: str):
+    """
+       The function returns list of nodes which do not store
+       the given object.
+       Args:
+            wallet (str): the path to the wallet on whose behalf
+                        we request the nodes
+            cid (str): ID of the container which store the object
+            oid (str): object ID
+       Returns:
+            (list): nodes which do not store the object
+    """
+    nodes_list = []
+    for node in NEOFS_NETMAP:
+        res = neofs_verbs.head_object(wallet, cid, oid,
+                        endpoint=node,
+                        is_direct=True)
+        if res is None:
+            nodes_list.append(node)
+    return nodes_list
