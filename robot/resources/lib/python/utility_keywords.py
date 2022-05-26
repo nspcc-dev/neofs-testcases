@@ -49,9 +49,8 @@ def get_file_hash(filename: str):
     with open(filename, "rb") as out:
         for block in iter(lambda: out.read(blocksize), b""):
             file_hash.update(block)
-    logger.info(f"Hash: {file_hash.hexdigest()}")
     return file_hash.hexdigest()
-    
+
 
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:

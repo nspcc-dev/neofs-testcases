@@ -1,13 +1,16 @@
 *** Settings ***
 Variables   common.py
 
-Library     neofs_verbs.py
+
 Library     container.py
 Library     complex_object_actions.py
-Library     neofs.py
 Library     contract_keywords.py
-Library     Collections
+Library     neofs_verbs.py
+Library     neofs.py
+Library     storage_policy.py
 Library     utility_keywords.py
+
+Library     Collections
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
@@ -15,8 +18,7 @@ Resource    payment_operations.robot
 *** Variables ***
 ${CLEANUP_TIMEOUT} =    10s
 &{FILE_USR_HEADER} =        key1=1      key2=abc
-&{FILE_USR_HEADER_OTH} =    key1=2
-${ALREADY_REMOVED_ERROR} =    code = 1024 message = object already removed
+${ALREADY_REMOVED_ERROR} =    code = 2052 message = object already removed
 
 
 *** Test cases ***
@@ -34,19 +36,13 @@ NeoFS Complex Object Operations
 
     ${S_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}
     ${H_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}        user_headers=${FILE_USR_HEADER}
-    ${H_OID_OTH} =      Put object                 ${WALLET}    ${FILE}       ${CID}        user_headers=${FILE_USR_HEADER_OTH}
 
-    Should Be True     '${S_OID}'!='${H_OID}' and '${H_OID}'!='${H_OID_OTH}'
+                        Should Not Be Equal        ${H_OID}    ${S_OID}
 
-                        Validate storage policy for object  ${WALLET}    2             ${CID}         ${S_OID}
-                        Validate storage policy for object  ${WALLET}    2             ${CID}         ${H_OID}
-                        Validate storage policy for object  ${WALLET}    2             ${CID}         ${H_OID_OTH}
-
-    @{S_OBJ_ALL} =      Create List    ${S_OID}       ${H_OID}     ${H_OID_OTH}
-    @{S_OBJ_H} =        Create List    ${H_OID}
-    @{S_OBJ_H_OTH} =    Create List    ${H_OID_OTH}
-
-                        Search Object    ${WALLET}    ${CID}        --root       expected_objects_list=${S_OBJ_ALL}
+     ${COPIES} =        Get Complex Object Copies       ${WALLET}   ${CID}  ${S_OID}
+                        Should Be Equal As Numbers  2   ${COPIES}
+     ${COPIES} =        Get Complex Object Copies       ${WALLET}   ${CID}  ${H_OID}
+                        Should Be Equal As Numbers  2   ${COPIES}
 
     ${GET_OBJ_S} =      Get object               ${WALLET}    ${CID}        ${S_OID}
     ${GET_OBJ_H} =      Get object               ${WALLET}    ${CID}        ${H_OID}
@@ -63,9 +59,11 @@ NeoFS Complex Object Operations
                         Get Range                ${WALLET}    ${CID}        ${S_OID}          s_get_range    ${EMPTY}       0:10
                         Get Range                ${WALLET}    ${CID}        ${H_OID}          h_get_range    ${EMPTY}       0:10
 
+    @{S_OBJ_ALL} =      Create List    ${S_OID}       ${H_OID}
+    @{S_OBJ_H} =        Create List    ${H_OID}
+
                         Search object            ${WALLET}    ${CID}        --root        expected_objects_list=${S_OBJ_ALL}
                         Search object            ${WALLET}    ${CID}        --root        filters=${FILE_USR_HEADER}      expected_objects_list=${S_OBJ_H}
-                        Search object            ${WALLET}    ${CID}        --root        filters=${FILE_USR_HEADER_OTH}  expected_objects_list=${S_OBJ_H_OTH}
 
     &{S_RESPONSE} =     Head object              ${WALLET}    ${CID}        ${S_OID}
     &{H_RESPONSE} =     Head object              ${WALLET}    ${CID}        ${H_OID}
@@ -74,9 +72,13 @@ NeoFS Complex Object Operations
                             ...     ${FILE_USR_HEADER}
                             ...     msg="There are no User Headers in HEAD response"
 
-    ${PAYLOAD_LENGTH}    ${SPLIT_ID}     ${SPLIT_OBJECTS} =      Restore Large Object By Last
+    ${PAYLOAD_LENGTH}
+    ...     ${SPLIT_ID}
+    ...     ${SPLIT_OBJECTS} =      Restore Large Object By Last
                                                 ...     ${WALLET}    ${CID}        ${S_OID}
-    ${H_PAYLOAD_LENGTH}    ${H_SPLIT_ID}       ${H_SPLIT_OBJECTS} =  Restore Large Object By Last
+    ${H_PAYLOAD_LENGTH}
+    ...     ${H_SPLIT_ID}
+    ...     ${H_SPLIT_OBJECTS} =  Restore Large Object By Last
                                                 ...     ${WALLET}    ${CID}        ${H_OID}
 
                         Compare With Link Object    ${WALLET}  ${CID}  ${S_OID}    ${SPLIT_ID}     ${SPLIT_OBJECTS}
