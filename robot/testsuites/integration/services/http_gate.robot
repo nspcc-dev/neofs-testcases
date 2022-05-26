@@ -6,6 +6,7 @@ Library     container.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     http_gate.py
+Library     storage_policy.py
 Library     utility_keywords.py
 
 Resource    payment_operations.robot

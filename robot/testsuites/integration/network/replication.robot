@@ -4,8 +4,8 @@ Variables   wellknown_acl.py
 
 Library     container.py
 Library     contract_keywords.py
-Library     neofs.py
 Library     neofs_verbs.py
+Library     nodes_management.py
 Library     storage_policy.py
 Library     utility_keywords.py
 
@@ -46,10 +46,9 @@ Check Replication
     ${COPIES} =             Get Object Copies   Simple      ${WALLET}   ${CID}  ${S_OID}
                             Should Be Equal     ${EXPECTED_COPIES}  ${COPIES}
 
-    @{NODES_OBJ} =          Get nodes with Object    ${WALLET}    ${CID}    ${S_OID}
-    ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
+    @{NODES_OBJ} =          Get Nodes With Object    ${WALLET}    ${CID}    ${S_OID}
 
-    @{NODES_OBJ_STOPPED} =  Stop nodes          1       ${NODES_OBJ}
+    @{NODES_OBJ_STOPPED} =  Stop Nodes          1       ${NODES_OBJ}
     @{NETMAP} =             Convert To List             ${NEOFS_NETMAP}
                             Remove Values From List     ${NETMAP}   ${NODES_OBJ_STOPPED}
 
@@ -65,8 +64,7 @@ Check Replication
     Run Keyword Unless      ${PASSED}     Fail
     ...     Storage policy for object ${S_OID} in container ${CID} isn't valid
 
-    Find in Nodes Log       object successfully replicated    ${NODES_LOG_TIME}
-    Start nodes             ${NODES_OBJ_STOPPED}
+    Start Nodes             ${NODES_OBJ_STOPPED}
     Tick Epoch
 
     # We have 2 or 3 copies. Expected behaviour: during two epochs potential 3rd copy should be removed.
