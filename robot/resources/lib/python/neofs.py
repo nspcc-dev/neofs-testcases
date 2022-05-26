@@ -32,7 +32,7 @@ def get_scripthash(wif: str):
 
 
 @keyword('Stop nodes')
-def stop_nodes(down_num: int, *nodes_list):
+def stop_nodes(down_num: int, nodes_list: list):
 
     # select nodes to stop from list
     nodes = random.sample(nodes_list, down_num)
@@ -44,11 +44,11 @@ def stop_nodes(down_num: int, *nodes_list):
         client = docker.APIClient()
         client.stop(node)
 
-    return stop_nodes
+    return nodes
 
 
 @keyword('Start nodes')
-def start_nodes(*nodes_list):
+def start_nodes(nodes_list: list):
 
     for node in nodes_list:
         m = re.search(r'(s\d+).', node)
@@ -87,38 +87,6 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str):
 
     logger.info(f"Nodes without object: {nodes_list}")
     return nodes_list
-
-
-@keyword('Validate storage policy for object')
-def validate_storage_policy_for_object(wallet: str, expected_copies: int, cid, oid,
-                expected_node_list=[], storage_nodes=[]):
-    storage_nodes = storage_nodes if len(storage_nodes) != 0 else NEOFS_NETMAP
-    copies = 0
-    found_nodes = []
-    oid = oid.strip()
-
-    for node in storage_nodes:
-        res = _search_object(node, wallet, cid, oid)
-        if res:
-            if oid in res:
-                copies += 1
-                found_nodes.append(node)
-
-    if copies != expected_copies:
-        raise Exception("Object copies is not match storage policy."
-                        f"Found: {copies}, expected: {expected_copies}.")
-    else:
-        logger.info(f"Found copies: {copies}, expected: {expected_copies}")
-
-    logger.info(f"Found nodes: {found_nodes}")
-
-    if expected_node_list:
-        if sorted(found_nodes) == sorted(expected_node_list):
-            logger.info(f"Found node list '{found_nodes}' "
-            f"is equal for expected list '{expected_node_list}'")
-        else:
-            raise Exception(f"Found node list '{found_nodes}' "
-            f"is not equal to expected list '{expected_node_list}'")
 
 
 @keyword('Verify Head Tombstone')
@@ -212,7 +180,7 @@ def get_logs_latest_timestamp():
         log_line = client_api.logs(container, tail=1)
 
         m = re.search(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)', str(log_line))
-        if m != None:
+        if m is not None:
             timestamp = m.group(1)
 
         timestamp_date = datetime.fromisoformat(timestamp[:-1])
@@ -305,29 +273,6 @@ def sign_session_token(session_token: str, wallet: str, to_file: str=''):
     )
     logger.info(f"cmd: {cmd}")
     _cmd_run(cmd)
-
-
-def _parse_oid(input_str: str):
-    """
-    This function parses OID from given CLI output. The input string we
-    expect:
-        Object successfully stored
-          ID: 4MhrLA7RXTBXCsaNnbahYVAPuoQdiUPuyNEWnywvoSEs
-          CID: HeZu2DXBuPve6HXbuHZx64knS7KcGtfSj2L59Li72kkg
-    We want to take 'ID' value from the string.
-
-    Parameters:
-    - input_str: a string with command run output
-    """
-    try:
-        # taking second string from command output
-        snd_str = input_str.split('\n')[1]
-    except:
-        logger.error(f"Got empty input: {input_str}")
-    splitted = snd_str.split(": ")
-    if len(splitted) != 2:
-        raise Exception(f"no OID was parsed from command output: \t{snd_str}")
-    return splitted[1]
 
 
 def _search_object(node:str, wallet: str, cid:str, oid: str):

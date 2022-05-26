@@ -247,7 +247,12 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
         f'{"--raw" if is_raw else ""} '
         f'{"--ttl 1" if is_direct else ""}'
     )
-    output = _cmd_run(cmd)
+    output = None
+    try:
+        output = _cmd_run(cmd)
+    except Exception as exc:
+        logger.info(f"Head request failed with output: {output}")
+        return None
 
     if not json_output:
         return output
