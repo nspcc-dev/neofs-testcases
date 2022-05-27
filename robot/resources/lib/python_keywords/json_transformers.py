@@ -101,6 +101,10 @@ def json_reencode(data: str):
     '''
     return base58.b58encode(base64.b64decode(data)).decode("utf-8")
 
+
+def encode_for_json(data: str):
+    return base64.b64encode(base58.b58decode(data)).decode('utf-8')
+
 def decode_common_fields(data: dict):
     '''
     Despite of type (simple/complex Object, Storage Group, etc) every Object

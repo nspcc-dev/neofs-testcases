@@ -11,6 +11,7 @@ import time
 from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_PASS
 from cli_helpers import _cmd_run
 from data_formatters import dict_to_attrs
+import json_transformers
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -90,8 +91,8 @@ def list_containers(wallet: str):
     return output.split()
 
 
-@keyword('Get Container Attributes')
-def get_container_attributes(wallet: str, cid: str):
+@keyword('Get Container')
+def get_container(wallet: str, cid: str):
     """
         A wrapper for `neofs-cli container get` call. It extracts
         container attributes and rearranges them to more compact view.
@@ -110,7 +111,10 @@ def get_container_attributes(wallet: str, cid: str):
     attributes = dict()
     for attr in container_info['attributes']:
         attributes[attr['key']] = attr['value']
-    return attributes
+    container_info['attributes'] = attributes
+    container_info['ownerID'] = json_transformers.json_reencode(
+            container_info['ownerID']['value'])
+    return container_info
 
 
 @keyword('Delete Container')
