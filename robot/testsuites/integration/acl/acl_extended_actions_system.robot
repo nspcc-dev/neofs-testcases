@@ -1,10 +1,11 @@
 *** Settings ***
 Variables    common.py
 
-Library     acl.py
-Library     container.py
+Library     Collections
+Library     neofs.py
 Library     neofs_verbs.py
-Library     utility_keywords.py
+Library     payment_neogo.py
+Library     acl.py
 
 Resource    common_steps_acl_extended.robot
 Resource    payment_operations.robot
@@ -27,11 +28,11 @@ Extended ACL Operations
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All System    ${WALLET}    ${FILE_S}
 
                             Log    Check extended ACL with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All System    ${WALLET}    ${FILE_S}
 
     [Teardown]              Teardown    acl_extended_actions_system
@@ -45,13 +46,13 @@ Check eACL Deny and Allow All System
     ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
     ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
 
-    ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
+    ${CID} =            Create Container Public     ${WALLET}
 
     ${S_OID_USER} =     Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER_S} =   Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object      ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
 
-    @{S_OBJ_H} =	Create List     ${S_OID_USER}
+    @{S_OBJ_H} =	Create List	    ${S_OID_USER}
 
                         Put object      ${WALLET_IR}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
                         Put object      ${WALLET_SN}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}

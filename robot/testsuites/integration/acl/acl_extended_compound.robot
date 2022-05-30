@@ -1,10 +1,11 @@
 *** Settings ***
 Variables    common.py
 
-Library     acl.py
-Library     container.py
+Library     Collections
+Library     neofs.py
 Library     neofs_verbs.py
-Library     utility_keywords.py
+Library     payment_neogo.py
+Library     acl.py
 
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
@@ -29,11 +30,11 @@ Extended ACL Operations
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+                            Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}   
 
                             Log    Check extended ACL with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
                             Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
     [Teardown]      Teardown    acl_extended_compound
@@ -47,22 +48,22 @@ Check Сompound Operations
 
     ${WALLET_SYS}    ${ADDR_SYS} =     Prepare Wallet with WIF And Deposit    ${SYSTEM_KEY}
 
-    Check eACL Сompound Get    ${WALLET_OTH}    ${EACL_COMPOUND_GET_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Get    ${WALLET}        ${EACL_COMPOUND_GET_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Get    ${WALLET_SYS}    ${EACL_COMPOUND_GET_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get    ${WALLET_OTH}     ${EACL_COMPOUND_GET_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get    ${WALLET}      ${EACL_COMPOUND_GET_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get    ${WALLET_SYS}       ${EACL_COMPOUND_GET_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
 
-    Check eACL Сompound Delete    ${WALLET_OTH}     ${EACL_COMPOUND_DELETE_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Delete    ${WALLET}         ${EACL_COMPOUND_DELETE_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Delete    ${WALLET_SYS}     ${EACL_COMPOUND_DELETE_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Delete    ${WALLET_OTH}     ${EACL_COMPOUND_DELETE_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Delete    ${WALLET}      ${EACL_COMPOUND_DELETE_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Delete    ${WALLET_SYS}       ${EACL_COMPOUND_DELETE_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
 
-    Check eACL Сompound Get Range Hash    ${WALLET_OTH}     ${EACL_COMPOUND_GET_HASH_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Get Range Hash    ${WALLET}         ${EACL_COMPOUND_GET_HASH_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
-    Check eACL Сompound Get Range Hash    ${WALLET_SYS}     ${EACL_COMPOUND_GET_HASH_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get Range Hash    ${WALLET_OTH}     ${EACL_COMPOUND_GET_HASH_OTHERS}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get Range Hash    ${WALLET}      ${EACL_COMPOUND_GET_HASH_USER}      ${FILE_S}    ${WALLET}    ${WALLET_SYS}
+                            Check eACL Сompound Get Range Hash    ${WALLET_SYS}       ${EACL_COMPOUND_GET_HASH_SYSTEM}    ${FILE_S}    ${WALLET}    ${WALLET_SYS}
 
 Check eACL Сompound Get
     [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container    ${USER_WALLET}  basic_acl=eacl-public-read-write
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
     ${S_OID_USER} =         Put object    ${USER_WALLET}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
                             Put object    ${WALLET}         ${FILE_S}    ${CID}           user_headers=${ANOTHER_HEADER}
@@ -88,7 +89,7 @@ Check eACL Сompound Get
 Check eACL Сompound Delete
     [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container       ${USER_WALLET}   basic_acl=eacl-public-read-write
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
     ${S_OID_USER} =         Put object             ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =         Put object             ${USER_WALLET}    ${FILE_S}    ${CID}
@@ -117,10 +118,11 @@ Check eACL Сompound Delete
                             END
 
 
+
 Check eACL Сompound Get Range Hash
     [Arguments]             ${WALLET}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
 
-    ${CID} =                Create Container       ${USER_WALLET}   basic_acl=eacl-public-read-write
+    ${CID} =                Create Container Public    ${USER_WALLET}
 
     ${S_OID_USER} =         Put object             ${USER_WALLET}          ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
                             Put object             ${WALLET}               ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}

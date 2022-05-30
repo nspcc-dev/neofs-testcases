@@ -3,9 +3,13 @@ Variables    common.py
 Variables    wellknown_acl.py
 
 Library     container.py
+Library     contract_keywords.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     utility_keywords.py
+Library     payment_neogo.py
+
+Library     String
+Library     Process
 
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
@@ -23,12 +27,12 @@ Drop command in control group
     ${WALLET_STORAGE}    ${_} =          Prepare Wallet with WIF And Deposit    ${WIF_STORAGE}
     ${LOCODE} =         Get Locode
 
-    ${FILE_SIMPLE}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
-    ${FILE_COMPLEX}    ${_} =   Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_SIMPLE} =    Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+    ${FILE_COMPLEX} =   Generate file of bytes    ${COMPLEX_OBJ_SIZE}
 
     ${WALLET}    ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${PRIV_CID} =       Create Container    ${WALLET}
+    ${PRIV_CID} =       Create container             ${WALLET}    basic_acl=${PRIVATE_ACL_F}
                         ...     rule=REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '${LOCODE}' AS LOC
 
     #########################

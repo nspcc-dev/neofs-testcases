@@ -1,10 +1,12 @@
 *** Settings ***
 Variables   common.py
 
+Library     Collections
 Library     acl.py
 Library     container.py
+Library     neofs.py
 Library     neofs_verbs.py
-Library     utility_keywords.py
+Library     payment_neogo.py
 
 Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
@@ -26,11 +28,11 @@ BearerToken Operations with Filter OID NotEqual
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check Bearer token with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S} =             Generate file    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual    ${WALLET}    ${FILE_S}
 
                             Log    Check Bearer token with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S} =             Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual    ${WALLET}    ${FILE_S}
 
     [Teardown]              Teardown    acl_bearer_filter_oid_not_equal

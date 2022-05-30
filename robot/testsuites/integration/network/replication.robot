@@ -3,11 +3,12 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     container.py
-Library     contract_keywords.py
+Library     payment_neogo.py
+Library     neofs.py
 Library     neofs_verbs.py
-Library     nodes_management.py
-Library     storage_policy.py
-Library     utility_keywords.py
+Library     wallet_keywords.py
+Library     rpc_call_keywords.py
+Library     contract_keywords.py
 
 Library     Collections
 
@@ -16,6 +17,7 @@ Resource    setup_teardown.robot
 
 *** Variables ***
 ${EXPECTED_COPIES} =    ${2}
+${CHECK_INTERVAL} =     1 min
 
 *** Test cases ***
 NeoFS Object Replication
@@ -26,7 +28,7 @@ NeoFS Object Replication
     [Setup]                 Setup
 
     Log    Check replication mechanism
-    Check Replication
+    Check Replication    ${EMPTY}
     Log    Check Sticky Bit with SYSTEM Group via replication mechanism
     Check Replication    ${STICKYBIT_PUB_ACL}
 
@@ -34,47 +36,45 @@ NeoFS Object Replication
 
 *** Keywords ***
 Check Replication
-    [Arguments]    ${ACL}=${EMPTY}
+    [Arguments]    ${ACL}
 
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
     ${CID} =                Create Container    ${WALLET}    basic_acl=${ACL}
 
-    ${FILE}    ${_} =       Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE} =               Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+    ${FILE_HASH} =          Get file hash    ${FILE}
 
     ${S_OID} =              Put Object    ${WALLET}    ${FILE}    ${CID}
+                            Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
 
-    ${COPIES} =             Get Object Copies   Simple      ${WALLET}   ${CID}  ${S_OID}
-                            Should Be Equal     ${EXPECTED_COPIES}  ${COPIES}
+    @{NODES_OBJ} =          Get nodes with Object    ${WALLET}    ${CID}    ${S_OID}
+    ${NODES_LOG_TIME} =     Get Nodes Log Latest Timestamp
 
-    @{NODES_OBJ} =          Get Nodes With Object    ${WALLET}    ${CID}    ${S_OID}
-
-    @{NODES_OBJ_STOPPED} =  Stop Nodes          1       ${NODES_OBJ}
-    @{NETMAP} =             Convert To List             ${NEOFS_NETMAP}
-                            Remove Values From List     ${NETMAP}   ${NODES_OBJ_STOPPED}
+    @{NODES_OBJ_STOPPED} =  Stop nodes          1              @{NODES_OBJ}
+    @{NETMAP} =             Convert To List     ${NEOFS_NETMAP}
+                            Remove Values From List     ${NETMAP}   @{NODES_OBJ_STOPPED}
 
     # We expect that during two epochs the missed copy will be replicated.
     FOR    ${i}    IN RANGE   2
-        ${COPIES} =     Get Object Copies   Simple      ${WALLET}   ${CID}  ${S_OID}
         ${PASSED} =     Run Keyword And Return Status
-                        ...     Should Be Equal     ${EXPECTED_COPIES}  ${COPIES}
+                        ...     Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}
+                        ...     ${CID}    ${S_OID}    ${EMPTY}    ${NETMAP}
         Exit For Loop If    ${PASSED}
         Tick Epoch
-        Sleep               ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+        Sleep               ${CHECK_INTERVAL}
     END
-    Run Keyword Unless      ${PASSED}     Fail
-    ...     Storage policy for object ${S_OID} in container ${CID} isn't valid
+    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}
 
-    Start Nodes             ${NODES_OBJ_STOPPED}
+    Find in Nodes Log       object successfully replicated    ${NODES_LOG_TIME}
+    Start nodes             @{NODES_OBJ_STOPPED}
     Tick Epoch
 
     # We have 2 or 3 copies. Expected behaviour: during two epochs potential 3rd copy should be removed.
     FOR    ${i}    IN RANGE   2
-        ${COPIES} =     Get Object Copies   Simple      ${WALLET}   ${CID}  ${S_OID}
         ${PASSED} =     Run Keyword And Return Status
-                        ...     Should Be Equal     ${EXPECTED_COPIES}  ${COPIES}
+                        ...     Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${S_OID}
         Exit For Loop If    ${PASSED}
         Tick Epoch
-        Sleep               ${NEOFS_CONTRACT_CACHE_TIMEOUT}
+        Sleep               ${CHECK_INTERVAL}
     END
-    Run Keyword Unless      ${PASSED}     Fail
-    ...     Storage policy for object ${S_OID} in container ${CID} isn't valid
+    Run Keyword Unless      ${PASSED}     Fail   Keyword failed: Validate storage policy for object ${S_OID} in container ${CID}

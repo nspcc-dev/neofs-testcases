@@ -1,7 +1,10 @@
 *** Settings ***
 Variables    common.py
 
-Library      utility_keywords.py
+Library     Collections
+Library     neofs.py
+Library     payment_neogo.py
+Library     acl.py
 
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
@@ -19,11 +22,11 @@ Extended ACL Operations
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny and Allow All User    ${WALLET}
 
                             Log    Check extended ACL with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All User    ${WALLET}
 
     [Teardown]              Teardown    acl_extended_action_user

@@ -1,10 +1,11 @@
 *** Settings ***
 Variables    common.py
 
+Library      Collections
 Library      acl.py
-Library      container.py
+Library      neofs.py
 Library      neofs_verbs.py
-Library      utility_keywords.py
+Library      payment_neogo.py
 
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
@@ -30,11 +31,11 @@ Extended ACL Operations
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
                             Log    Check extended ACL with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${SIMPLE_OBJ_SIZE}
                             Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
                             Log    Check extended ACL with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
+    ${FILE_S} =             Generate file of bytes    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
 
 
@@ -46,7 +47,7 @@ Extended ACL Operations
 Check eACL Deny All Other and Allow All Pubkey
     [Arguments]    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
 
-    ${CID} =                Create Container           ${USER_WALLET}     basic_acl=eacl-public-read-write
+    ${CID} =                Create Container Public    ${USER_WALLET}
     ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =	    Create List	               ${S_OID_USER}

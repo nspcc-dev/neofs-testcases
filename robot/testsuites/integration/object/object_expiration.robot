@@ -1,11 +1,12 @@
 *** Settings ***
 Variables   common.py
 
+Library     neofs.py
 Library     neofs_verbs.py
-Library     container.py
+Library     payment_neogo.py
 Library     contract_keywords.py
-Library     utility_keywords.py
 
+Resource    common_steps_object.robot
 Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
@@ -20,10 +21,12 @@ NeoFS Simple Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
-    ${CID} =            Create container    ${WALLET}
+    ${WALLET}   ${_}     ${WIF} =   Prepare Wallet And Deposit
+    ${CID} =    Prepare container      ${WIF}    ${WALLET}
 
-    ${FILE}    ${FILE_HASH} =    Generate File    ${SIMPLE_OBJ_SIZE}
+    ${FILE} =           Generate file of bytes    ${SIMPLE_OBJ_SIZE}
+    ${FILE_HASH} =      Get file hash    ${FILE}
+
     ${EPOCH} =          Get Epoch
 
     ${EPOCH_PRE} =      Evaluate    ${EPOCH}-1

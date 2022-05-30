@@ -3,8 +3,10 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     container.py
+Library     neofs.py
 Library     neofs_verbs.py
-Library     utility_keywords.py
+Library     payment_neogo.py
+Library     String
 Library     Collections
 
 Resource    setup_teardown.robot
@@ -28,7 +30,7 @@ Duplicated Object Attributes
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
 
     ${PUBLIC_CID} =             Create Container       ${WALLET}    basic_acl=${PUBLIC_ACL_F}
-    ${FILE_S}    ${_} =         Generate File    ${SIMPLE_OBJ_SIZE}
+    ${FILE_S} =                 Generate file of bytes            ${SIMPLE_OBJ_SIZE}
 
 
     ###################################################

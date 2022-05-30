@@ -3,10 +3,12 @@ Variables       common.py
 Variables       eacl_object_filters.py
 
 Library         acl.py
-Library         container.py
-Library         utility_keywords.py
+Library         neofs.py
+Library         Collections
+Library         contract_keywords.py
 
 Resource        common_steps_acl_extended.robot
+Resource        common_steps_acl_basic.robot
 Resource        payment_operations.robot
 Resource        setup_teardown.robot
 
@@ -22,7 +24,9 @@ Creation Epoch Object Filter for Extended ACL
 
     [Setup]                 Setup
 
+    Log    Check eACL creationEpoch Filter with MatchType String Equal
     Check eACL Filters with MatchType String Equal    $Object:creationEpoch
+    Log    Check eACL creationEpoch Filter with MatchType String Not Equal
     Check $Object:creationEpoch Filter with MatchType String Not Equal    $Object:creationEpoch
 
     [Teardown]          Teardown    creation_epoch_filter
@@ -35,16 +39,17 @@ Check $Object:creationEpoch Filter with MatchType String Not Equal
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container    ${WALLET}       basic_acl=eacl-public-read-write
+    ${CID} =            Create Container Public    ${WALLET}
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID} =          Put Object    ${WALLET}    ${FILE_S}    ${CID}
+                        Tick Epoch
     ${S_OID_NEW} =      Put Object    ${WALLET}    ${FILE_S}    ${CID}
 
                         Get Object    ${WALLET}    ${CID}    ${S_OID_NEW}    ${EMPTY}    local_file_eacl
-    &{HEADER} =         Head Object    ${WALLET}    ${CID}    ${S_OID_NEW}
 
-    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER}[header][creationEpoch]    !=    ${FILTER}    DENY    OTHERS
+    &{HEADER_DICT} =    Head Object    ${WALLET}    ${CID}    ${S_OID_NEW}
+    ${EACL_CUSTOM} =    Compose eACL Custom    ${CID}    ${HEADER_DICT}    !=    ${FILTER}    DENY    OTHERS
                         Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
 
     Run Keyword And Expect Error   ${EACL_ERR_MSG}

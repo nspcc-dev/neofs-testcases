@@ -1,13 +1,15 @@
 *** Settings ***
 Variables   common.py
 
-Library     acl.py
 Library     container.py
-Library     contract_keywords.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     storage_policy.py
-Library     utility_keywords.py
+Library     acl.py
+Library     payment_neogo.py
+Library     contract_keywords.py
+Library     wallet_keywords.py
+
+Library     Collections
 
 Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
@@ -18,6 +20,8 @@ Resource    storage.robot
 *** Variables ***
 ${FULL_PLACEMENT_RULE} =    REP 4 IN X CBF 1 SELECT 4 FROM * AS X
 ${EXPECTED_COPIES} =        ${4}
+${DEPOSIT} =                ${30}
+
 
 *** Test cases ***
 eACL Deny Replication Operations
@@ -34,14 +38,13 @@ eACL Deny Replication Operations
 
                         # https://github.com/nspcc-dev/neofs-node/issues/881
 
-    ${FILE}    ${_} =    Generate file      ${SIMPLE_OBJ_SIZE}
-    ${CID} =            Create container            ${WALLET}    basic_acl=eacl-public-read-write   rule=${FULL_PLACEMENT_RULE}
+    ${FILE} =           Generate file of bytes      ${SIMPLE_OBJ_SIZE}
+    ${CID} =            Create container            ${WALLET}    basic_acl=${PUBLIC_ACL}   rule=${FULL_PLACEMENT_RULE}
                         Prepare eACL Role rules     ${CID}
 
     ${OID} =            Put object    ${WALLET}    ${FILE}    ${CID}
 
-    ${COPIES} =         Get Object Copies   Simple  ${WALLET}   ${CID}  ${OID}
-                        Should Be Equal As Numbers     ${EXPECTED_COPIES}  ${COPIES}
+                        Validate storage policy for object    ${WALLET}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
                         Set eACL    ${WALLET}    ${CID}    ${EACL_DENY_ALL_USER}
 
@@ -52,11 +55,9 @@ eACL Deny Replication Operations
                         Drop object    ${NODE}    ${WALLET_STORAGE}    ${CID}    ${OID}
 
                         Tick Epoch
-                        Sleep   ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                         # We assume that during one epoch object should be replicated
-    ${COPIES} =         Get Object Copies   Simple      ${WALLET_STORAGE}   ${CID}  ${OID}
-                        Should Be Equal As Numbers      ${EXPECTED_COPIES}  ${COPIES}
-                        ...     msg="Dropped object should be replicated in one epoch"
+                        Wait Until Keyword Succeeds    ${NEOFS_EPOCH_TIMEOUT}    1m
+                        ...     Validate storage policy for object    ${WALLET_STORAGE}    ${EXPECTED_COPIES}    ${CID}    ${OID}
 
     [Teardown]          Teardown    acl_deny_replication
