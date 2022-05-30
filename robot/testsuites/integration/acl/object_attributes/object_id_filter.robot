@@ -3,11 +3,10 @@ Variables       common.py
 Variables       eacl_object_filters.py
 
 Library         acl.py
-Library         neofs.py
-Library         Collections
+Library         container.py
+Library         utility_keywords.py
 
 Resource        common_steps_acl_extended.robot
-Resource        common_steps_acl_basic.robot
 Resource        payment_operations.robot
 Resource        setup_teardown.robot
 
@@ -18,48 +17,44 @@ ${EACL_ERR_MSG} =    *
 *** Test cases ***
 Object ID Object Filter for Extended ACL
     [Documentation]         Testcase to validate if $Object:objectID eACL filter is correctly handled.
-    [Tags]                  ACL  eACL  NeoFS  NeoCLI
+    [Tags]                  ACL  eACL
     [Timeout]               20 min
 
     [Setup]                 Setup
-    
-    Log    Check eACL objectID Filter with MatchType String Equal
+
     Check eACL Filters with MatchType String Equal    $Object:objectID
-    Log    Check eACL objectID Filter with MatchType String Not Equal
     Check eACL Filters with MatchType String Not Equal   $Object:objectID
 
     #################################################################################
     # If the first eACL rule contradicts the second, the second one won't be applied
     #################################################################################
-    Log    Check if the second rule that contradicts the first is not applied
     Check eACL Filters with MatchType String Equal with two contradicting filters    $Object:objectID
 
     ###########################################################################################################################
     # If both STRING_EQUAL and STRING_NOT_EQUAL matchTypes are applied for the same filter value, no object can be operated on
     ###########################################################################################################################
-    Log    Check two matchTypes applied
     Check eACL Filters, two matchTypes    $Object:objectID
 
     [Teardown]          Teardown    object_id
 
 
 *** Keywords ***
- 
+
 Check eACL Filters with MatchType String Equal with two contradicting filters
     [Arguments]    ${FILTER}
 
-    ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit  
+    ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${WALLET} 
+    ${CID} =            Create Container         ${WALLET}      basic_acl=eacl-public-read-write
     ${FILE_S_USER}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID_USER} =     Put Object    ${WALLET}     ${FILE_S_USER}    ${CID}    ${EMPTY}
-    &{HEADER_DICT_USER} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
-   
+
                         Get Object    ${WALLET_OTH}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
 
-    ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
+    &{HEADER} =         Head Object    ${WALLET}    ${CID}    ${S_OID_USER}
+    ${filter_value} =    Get From Dictionary    ${HEADER}    ${EACL_OBJ_FILTERS}[${FILTER}]
     ${filters} =        Set Variable    obj:${FILTER}=${filter_value}
     ${rule} =           Set Variable    allow get ${filters} others
     ${contradicting_filters} =     Set Variable    obj:$Object:payloadLength=${SIMPLE_OBJ_SIZE}
@@ -70,23 +65,24 @@ Check eACL Filters with MatchType String Equal with two contradicting filters
                         Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
                         Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
 
+
 Check eACL Filters, two matchTypes
     [Arguments]    ${FILTER}
 
-    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit  
+    ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}    ${_} =    Prepare Wallet And Deposit
 
-    ${CID} =            Create Container Public    ${WALLET}
+    ${CID} =            Create Container    ${WALLET}       basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}    ${EMPTY}
     ${S_OID_OTHER} =    Put Object    ${WALLET_OTH}    ${FILE_S}    ${CID}    ${EMPTY}
-    &{HEADER_DICT_USER} =    Object Header Decoded    ${WALLET}    ${CID}    ${S_OID_USER}
+    &{HEADER} =         Head Object   ${WALLET}    ${CID}    ${S_OID_USER}
 
                         Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${OBJECT_PATH}
                         Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
 
-    ${filter_value} =    Get From Dictionary    ${HEADER_DICT_USER}    ${EACL_OBJ_FILTERS}[${FILTER}]
+    ${filter_value} =    Get From Dictionary    ${HEADER}    ${EACL_OBJ_FILTERS}[${FILTER}]
     ${noneq_filters} =    Set Variable    obj:${FILTER}!=${filter_value}
     ${rule_noneq_filter} =    Set Variable    deny get ${noneq_filters} others
     ${eq_filters} =     Set Variable    obj:${FILTER}=${filter_value}

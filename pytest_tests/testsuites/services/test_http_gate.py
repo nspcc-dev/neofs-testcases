@@ -4,16 +4,16 @@ from time import sleep
 
 import allure
 import pytest
-
 from contract_keywords import get_epoch, tick_epoch
-from python_keyworgs.container import create_container
-from python_keyworgs.http_gate import (get_via_http_gate,
-                                      get_via_http_gate_by_attribute,
-                                      get_via_zip_http_gate,
-                                      upload_via_http_gate)
-from python_keyworgs.neofs import get_file_hash, get_nodes_without_object
-from python_keyworgs.neofs_verbs import get_object, put_object
-from python_keyworgs.payment_neogo import get_balance
+from python_keywords.container import create_container
+from python_keywords.http_gate import (get_via_http_gate,
+                                       get_via_http_gate_by_attribute,
+                                       get_via_zip_http_gate,
+                                       upload_via_http_gate)
+from python_keywords.neofs_verbs import get_object, put_object
+from python_keywords.payment_neogo import get_balance
+from python_keywords.storage_policy import get_nodes_without_object
+from python_keywords.utility_keywords import get_file_hash
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')

@@ -3,12 +3,12 @@ from time import sleep
 
 import allure
 from contract_keywords import tick_epoch
-from python_keyworgs.neofs import (get_file_hash,
-                                  validate_storage_policy_for_object,
-                                  verify_head_tombstone)
-from python_keyworgs.neofs_verbs import (delete_object, get_object, get_range,
-                                        get_range_hash, head_object,
-                                        put_object, search_object)
+from python_keywords.neofs import verify_head_tombstone
+from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
+                                         get_range_hash, head_object,
+                                         put_object, search_object)
+from python_keywords.storage_policy import get_simple_object_copies
+from python_keywords.utility_keywords import get_file_hash
 
 logger = logging.getLogger('NeoLogger')
 
@@ -36,7 +36,7 @@ def test_object_api(prepare_container, generate_file):
 
     with allure.step('Validate storage policy for objects'):
         for oid_to_check in oids:
-            validate_storage_policy_for_object(wallet=wallet, expected_copies=2, cid=cid, oid=oid_to_check)
+            assert get_simple_object_copies(wallet=wallet, cid=cid, oid=oid_to_check) == 2, 'Expected 2 copies'
 
     with allure.step('Get objects and compare hashes'):
         for oid_to_check in oids:

@@ -1,20 +1,21 @@
 *** Settings ***
 Variables   common.py
 
+Library     container.py
+Library     contract_keywords.py
 Library     neofs.py
 Library     neofs_verbs.py
-Library     payment_neogo.py
-Library     contract_keywords.py
+Library     storage_policy.py
+Library     utility_keywords.py
+
 Library     Collections
 
-Resource    common_steps_object.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
 ${CLEANUP_TIMEOUT} =    10s
 &{FILE_USR_HEADER} =       key1=1     key2=abc
-&{FILE_USR_HEADER_OTH} =   key1=2
 
 
 *** Test cases ***
@@ -25,24 +26,21 @@ NeoFS Simple Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${WIF} =   Prepare Wallet And Deposit
-    ${CID} =    Prepare container      ${WIF}    ${WALLET}
+    ${WALLET}    ${ADDR}    ${_} =   Prepare Wallet And Deposit
+    ${CID} =            Create container    ${WALLET}
 
-    ${FILE} =           Generate file of bytes              ${SIMPLE_OBJ_SIZE}
-    ${FILE_HASH} =      Get file hash                       ${FILE}
-
+    ${FILE}    ${FILE_HASH} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
     ${S_OID} =          Put object          ${WALLET}    ${FILE}       ${CID}
     ${H_OID} =          Put object          ${WALLET}    ${FILE}       ${CID}      user_headers=${FILE_USR_HEADER}
-    ${H_OID_OTH} =      Put object          ${WALLET}    ${FILE}       ${CID}      user_headers=${FILE_USR_HEADER_OTH}
 
-                        Validate storage policy for object  ${WALLET}    2         ${CID}            ${S_OID}
-                        Validate storage policy for object  ${WALLET}    2         ${CID}            ${H_OID}
-                        Validate storage policy for object  ${WALLET}    2         ${CID}            ${H_OID_OTH}
+    ${COPIES} =         Get Simple Object Copies    ${WALLET}   ${CID}  ${S_OID}
+                        Should Be Equal As Numbers      2       ${COPIES}
+    ${COPIES} =         Get Simple Object Copies    ${WALLET}   ${CID}  ${H_OID}
+                        Should Be Equal As Numbers      2       ${COPIES}
 
-    @{S_OBJ_ALL} =	Create List         ${S_OID}       ${H_OID}      ${H_OID_OTH}
+    @{S_OBJ_ALL} =	Create List         ${S_OID}       ${H_OID}
     @{S_OBJ_H} =	Create List         ${H_OID}
-    @{S_OBJ_H_OTH} =    Create List         ${H_OID_OTH}
 
     ${GET_OBJ_S} =      Get object          ${WALLET}    ${CID}        ${S_OID}
     ${GET_OBJ_H} =      Get object          ${WALLET}    ${CID}        ${H_OID}
@@ -61,7 +59,6 @@ NeoFS Simple Object Operations
 
                         Search object           ${WALLET}    ${CID}        expected_objects_list=${S_OBJ_ALL}
                         Search object           ${WALLET}    ${CID}        filters=${FILE_USR_HEADER}        expected_objects_list=${S_OBJ_H}
-                        Search object           ${WALLET}    ${CID}        filters=${FILE_USR_HEADER_OTH}    expected_objects_list=${S_OBJ_H_OTH}
 
                         Head object             ${WALLET}    ${CID}        ${S_OID}
     &{RESPONSE} =       Head object             ${WALLET}    ${CID}        ${H_OID}

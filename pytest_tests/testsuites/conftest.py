@@ -9,9 +9,9 @@ import rpc_client
 import wallet
 from common import (ASSETS_DIR, COMPLEX_OBJ_SIZE, MAINNET_WALLET_WIF,
                     NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE)
-from python_keyworgs.container import create_container
-from python_keyworgs.payment_neogo import get_balance
-from python_keyworgs.utility_keywords import generate_file_of_bytes
+from python_keywords.container import create_container
+from python_keywords.payment_neogo import get_balance
+from python_keywords.utility_keywords import generate_file_and_file_hash
 from robot.api import deco
 from wallet_keywords import neofs_deposit, transfer_mainnet_gas
 
@@ -87,8 +87,8 @@ def wait_unitl_transaction_accepted_in_block(tx_id: str):
 @pytest.fixture()
 @allure.title('Generate files')
 def generate_files():
-    file_name_simple = generate_file_of_bytes(SIMPLE_OBJ_SIZE)
-    large_file_name = generate_file_of_bytes(COMPLEX_OBJ_SIZE)
+    file_name_simple, _ = generate_file_and_file_hash(SIMPLE_OBJ_SIZE)
+    large_file_name, _ = generate_file_and_file_hash(COMPLEX_OBJ_SIZE)
 
     return file_name_simple, large_file_name
 
@@ -96,6 +96,6 @@ def generate_files():
 @pytest.fixture()
 @allure.title('Generate file')
 def generate_file():
-    file_name_simple = generate_file_of_bytes(SIMPLE_OBJ_SIZE)
+    file_name_simple, _ = generate_file_and_file_hash(SIMPLE_OBJ_SIZE)
 
     return file_name_simple

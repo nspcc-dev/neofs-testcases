@@ -5,4 +5,4 @@ pushd $DEVENV_PATH > /dev/null
 export `make env`
 popd > /dev/null
 
-export PYTHONPATH=${PYTHONPATH}:${VIRTUAL_ENV}/../neofs-keywords/lib:${VIRTUAL_ENV}/../neofs-keywords/robot:${VIRTUAL_ENV}/../robot/resources/lib/python:${VIRTUAL_ENV}/../robot/resources/lib/robot:${VIRTUAL_ENV}/../robot/variables
+export PYTHONPATH=${PYTHONPATH}:${VIRTUAL_ENV}/../neofs-keywords/lib:${VIRTUAL_ENV}/../neofs-keywords/robot:${VIRTUAL_ENV}/../robot/resources/lib/python_keywords:${VIRTUAL_ENV}/../robot/resources/lib/robot:${VIRTUAL_ENV}/../robot/variables

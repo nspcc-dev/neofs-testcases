@@ -5,6 +5,7 @@ Helper functions to use with `neofs-cli`, `neo-go`
 and other CLIs.
 """
 
+import sys
 import subprocess
 from datetime import datetime
 from textwrap import shorten
@@ -31,14 +32,7 @@ def _cmd_run(cmd, timeout=30):
         return_code = compl_proc.returncode
         end_time = datetime.now()
         logger.info(f"Output: {output}")
-        command_attachment = (
-            f"COMMAND: '{cmd}'\n"
-            f'OUTPUT:\n {output}\n'
-            f'RC: {return_code}\n'
-            f'Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}'
-        )
-        with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
-            allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
+        _attach_allure_log(cmd, output, return_code, start_time, end_time)
 
         return output
     except subprocess.CalledProcessError as exc:
@@ -58,3 +52,15 @@ def _run_with_passwd(cmd):
     child.wait()
     cmd = child.read()
     return cmd.decode()
+
+
+def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime):
+    if 'allure' in sys.modules:
+        command_attachment = (
+            f"COMMAND: '{cmd}'\n"
+            f'OUTPUT:\n {output}\n'
+            f'RC: {return_code}\n'
+            f'Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}'
+        )
+        with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
+            allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)

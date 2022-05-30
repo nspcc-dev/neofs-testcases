@@ -2,11 +2,11 @@
 Variables       common.py
 
 Library         acl.py
+Library         container.py
+Library         contract_keywords.py
 Library         neofs.py
 Library         neofs_verbs.py
-Library         payment_neogo.py
 Library         Collections
-Library         contract_keywords.py
 
 Resource        common_steps_acl_extended.robot
 Resource        payment_operations.robot
@@ -28,16 +28,8 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
-
-                            Log    Check extended ACL with simple object
-    ${FILE_S}    ${FILE_S_2} =             Generate files    ${SIMPLE_OBJ_SIZE}
-                            Check Filters    ${WALLET}    ${WALLET_OTH}
-
-                            Log    Check extended ACL with complex object
-    ${FILE_S}    ${FILE_S_2} =             Generate files    ${COMPLEX_OBJ_SIZE}
-                            Check Filters    ${WALLET}    ${WALLET_OTH}
+    Check Filters    Simple
+    Check Filters    Complex
 
     [Teardown]              Teardown    acl_extended_filters
 
@@ -45,20 +37,28 @@ Extended ACL Operations
 *** Keywords ***
 
 Check Filters
-    [Arguments]    ${WALLET}    ${WALLET_OTH}
+    [Arguments]    ${OBJ_COMPLEXITY}
 
-                            Check eACL MatchType String Equal Object    ${WALLET}    ${WALLET_OTH}
-                            Check eACL MatchType String Not Equal Object    ${WALLET}    ${WALLET_OTH}
-                            Check eACL MatchType String Equal Request Deny    ${WALLET}    ${WALLET_OTH}
-                            Check eACL MatchType String Equal Request Allow    ${WALLET}    ${WALLET_OTH}
+    ${SIZE} =     Set Variable IF
+    ...  """${OBJ_COMPLEXITY}""" == """Simple"""    ${SIMPLE_OBJ_SIZE}    ${COMPLEX_OBJ_SIZE}
+
+    ${WALLET}        ${_}    ${_} =    Prepare Wallet And Deposit
+    ${WALLET_OTH}    ${_}    ${_} =    Prepare Wallet And Deposit
+    ${FILE_S}        ${_} =            Generate File    ${SIZE}
+
+    Check eACL MatchType String Equal Object           ${WALLET}    ${WALLET_OTH}    ${FILE_S}
+    Check eACL MatchType String Not Equal Object       ${WALLET}    ${WALLET_OTH}    ${FILE_S}
+    Check eACL MatchType String Equal Request Deny     ${WALLET}    ${WALLET_OTH}    ${FILE_S}
+    Check eACL MatchType String Equal Request Allow    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
+
 
 Check eACL MatchType String Equal Request Deny
-    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}
-    ${CID} =                Create Container Public    ${USER_WALLET}
-    ${S_OID_USER} =         Put object             ${USER_WALLET}     ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
-                            Get object           ${USER_WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
+    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
+    ${CID} =                Create Container       ${USER_WALLET}    basic_acl=eacl-public-read-write
+    ${S_OID_USER} =         Put object             ${USER_WALLET}    ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
+                            Get object             ${USER_WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
 
-                            Set eACL                ${USER_WALLET}    ${CID}    ${EACL_XHEADER_DENY_ALL}
+                            Set eACL               ${USER_WALLET}    ${CID}    ${EACL_XHEADER_DENY_ALL}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -92,11 +92,11 @@ Check eACL MatchType String Equal Request Deny
 
 
 Check eACL MatchType String Equal Request Allow
-    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}
+    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
 
-    ${CID} =                Create Container Public    ${USER_WALLET}
-    ${S_OID_USER} =         Put Object    ${USER_WALLET}     ${FILE_S}    ${CID}
-                            Get Object    ${OTHER_WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${PATH}
+    ${CID} =                Create Container    ${USER_WALLET}      basic_acl=eacl-public-read-write
+    ${S_OID_USER} =         Put Object          ${USER_WALLET}      ${FILE_S}   ${CID}
+                            Get Object          ${OTHER_WALLET}     ${CID}      ${S_OID_USER}    ${EMPTY}    ${PATH}
 
                             Set eACL    ${USER_WALLET}    ${CID}    ${EACL_XHEADER_ALLOW_ALL}
 
@@ -132,9 +132,9 @@ Check eACL MatchType String Equal Request Allow
 
 
 Check eACL MatchType String Equal Object
-    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}
+    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
 
-    ${CID} =                Create Container Public    ${USER_WALLET}
+    ${CID} =                Create Container       ${USER_WALLET}   basic_acl=eacl-public-read-write
     ${S_OID_USER} =         Put Object    ${USER_WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
                             Get Object    ${OTHER_WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${PATH}
 
@@ -147,10 +147,9 @@ Check eACL MatchType String Equal Object
     ${rule1} =              Set Variable    deny get ${filters} others
     ${eACL_gen} =           Create List     ${rule1}
     ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
-                            Set eACL           ${USER_WALLET}       ${CID}    ${EACL_CUSTOM}
+                            Set eACL        ${USER_WALLET}       ${CID}    ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
                             ...  Get object    ${OTHER_WALLET}      ${CID}    ${S_OID_USER}     ${EMPTY}    ${PATH}
-
 
                             Log	                 Set eACL for Deny GET operation with StringEqual Object Extended User Header
 
@@ -168,12 +167,12 @@ Check eACL MatchType String Equal Object
 
 
 Check eACL MatchType String Not Equal Object
-    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}
+    [Arguments]    ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
 
-    ${CID} =                Create Container Public    ${USER_WALLET}
+    ${CID} =                Create Container   ${USER_WALLET}       basic_acl=eacl-public-read-write
 
     ${S_OID_USER} =         Put object         ${USER_WALLET}     ${FILE_S}      ${CID}    user_headers=${USER_HEADER}
-    ${S_OID_OTHER} =        Put object         ${OTHER_WALLET}    ${FILE_S_2}    ${CID}    user_headers=${ANOTHER_HEADER}
+    ${S_OID_OTHER} =        Put object         ${OTHER_WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
                             Get object          ${OTHER_WALLET}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${PATH}
                             Get object          ${OTHER_WALLET}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${PATH}
 
@@ -194,11 +193,11 @@ Check eACL MatchType String Not Equal Object
 
                             Log	               Set eACL for Deny GET operation with StringEqual Object Extended User Header
 
-    ${S_OID_USER_OTH} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-    ${filters} =            Set Variable    obj:${CUSTOM_FILTER}!=1
-    ${rule1} =              Set Variable    deny get ${filters} others
-    ${eACL_gen} =           Create List     ${rule1}
-    ${EACL_CUSTOM} =        Create eACL     ${CID}    ${eACL_gen}
+    ${S_OID_USER_OTH} =     Put object          ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
+    ${filters} =            Set Variable        obj:${CUSTOM_FILTER}!=1
+    ${rule1} =              Set Variable        deny get ${filters} others
+    ${eACL_gen} =           Create List         ${rule1}
+    ${EACL_CUSTOM} =        Create eACL         ${CID}    ${eACL_gen}
 
                             Set eACL             ${USER_WALLET}    ${CID}       ${EACL_CUSTOM}
                             Run Keyword And Expect Error    *
