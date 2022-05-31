@@ -5,8 +5,8 @@ Helper functions to use with `neofs-cli`, `neo-go`
 and other CLIs.
 """
 
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from textwrap import shorten
 

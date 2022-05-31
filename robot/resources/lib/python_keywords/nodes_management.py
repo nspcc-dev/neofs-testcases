@@ -8,10 +8,10 @@
 import random
 
 import docker
-
 from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
+
 
 @keyword('Stop Nodes')
 def stop_nodes(number: int, nodes: list):

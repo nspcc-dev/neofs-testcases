@@ -1,17 +1,16 @@
 #!/usr/bin/python3.8
 
+import hashlib
 import os
 import tarfile
 import uuid
-import hashlib
+
 import docker
-
-from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
 from cli_helpers import _cmd_run
-from robot.api.deco import keyword
+from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
 from robot.api import logger
+from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
-
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -63,15 +62,16 @@ def get_container_logs(testcase_name: str) -> None:
         container_name = container['Names'][0][1:]
         if client.inspect_container(container_name)['Config']['Domainname'] == "neofs.devenv":
             file_name = f"{logs_dir}/docker_log_{container_name}"
-            with open(file_name,'wb') as out:
+            with open(file_name, 'wb') as out:
                 out.write(client.logs(container_name))
             logger.info(f"Collected logs from container {container_name}")
             tar.add(file_name)
             os.remove(file_name)
     tar.close()
 
+
 @keyword('Make Up')
-def make_up(services: list=[], config_dict: dict={}):
+def make_up(services: list = [], config_dict: dict = {}):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
     os.chdir(dev_path)
@@ -90,8 +90,9 @@ def make_up(services: list=[], config_dict: dict={}):
 
     os.chdir(test_path)
 
+
 @keyword('Make Down')
-def make_down(services: list=[]):
+def make_down(services: list = []):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
     os.chdir(dev_path)

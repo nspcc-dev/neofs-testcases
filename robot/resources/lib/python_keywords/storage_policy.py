@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
-'''
+"""
     This module contains keywords which are used for asserting
     that storage policies are kept.
-'''
+"""
 
-from common import NEOFS_NETMAP
 import complex_object_actions
 import neofs_verbs
-
+from common import NEOFS_NETMAP
 from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
@@ -52,8 +51,8 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str):
     copies = 0
     for node in NEOFS_NETMAP:
         response = neofs_verbs.head_object(wallet, cid, oid,
-                                endpoint=node,
-                                is_direct=True)
+                                           endpoint=node,
+                                           is_direct=True)
         if response:
             copies += 1
     return copies
@@ -95,8 +94,8 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str):
     nodes_list = []
     for node in NEOFS_NETMAP:
         res = neofs_verbs.head_object(wallet, cid, oid,
-                        endpoint=node,
-                        is_direct=True)
+                                      endpoint=node,
+                                      is_direct=True)
         if res is not None:
             nodes_list.append(node)
     return nodes_list
@@ -118,8 +117,8 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str):
     nodes_list = []
     for node in NEOFS_NETMAP:
         res = neofs_verbs.head_object(wallet, cid, oid,
-                        endpoint=node,
-                        is_direct=True)
+                                      endpoint=node,
+                                      is_direct=True)
         if res is None:
             nodes_list.append(node)
     return nodes_list

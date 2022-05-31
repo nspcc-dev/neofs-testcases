@@ -1,22 +1,21 @@
 #!/usr/bin/python3
 
-'''
+"""
     This module contains wrappers for NeoFS verbs executed via neofs-cli.
-'''
+"""
 
 import json
 import os
-import re
 import random
+import re
 import uuid
 
-from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP, WALLET_PASS
-from cli_helpers import _cmd_run
 import json_transformers
+from cli_helpers import _cmd_run
+from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP, WALLET_PASS
 from data_formatters import dict_to_attrs
-
-from robot.api.deco import keyword
 from robot.api import logger
+from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -25,8 +24,8 @@ NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
 @keyword('Get object')
-def get_object(wallet: str, cid: str, oid: str, bearer_token: str="",
-    write_object: str="", endpoint: str="", options: str="" ):
+def get_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
+               write_object: str = "", endpoint: str = "", options: str = ""):
     '''
     GET from NeoFS.
 
@@ -61,7 +60,7 @@ def get_object(wallet: str, cid: str, oid: str, bearer_token: str="",
 
 @keyword('Get Range Hash')
 def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str,
-        range_cut: str, options: str=""):
+                   range_cut: str, options: str = ""):
     '''
     GETRANGEHASH of given Object.
 
@@ -86,8 +85,8 @@ def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str,
 
 
 @keyword('Put object')
-def put_object(wallet: str, path: str, cid: str, bearer: str="", user_headers: dict={},
-    endpoint: str="", options: str="" ):
+def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers: dict = {},
+               endpoint: str = "", options: str = ""):
     '''
     PUT of given file.
 
@@ -118,7 +117,7 @@ def put_object(wallet: str, path: str, cid: str, bearer: str="", user_headers: d
 
 
 @keyword('Delete object')
-def delete_object(wallet: str, cid: str, oid: str, bearer: str="", options: str=""):
+def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", options: str = ""):
     '''
     DELETE an Object.
 
@@ -144,7 +143,7 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str="", options: str=
 
 @keyword('Get Range')
 def get_range(wallet: str, cid: str, oid: str, range_file: str, bearer: str,
-        range_cut: str, options:str=""):
+              range_cut: str, options: str = ""):
     '''
     GETRANGE an Object.
 
@@ -169,8 +168,8 @@ def get_range(wallet: str, cid: str, oid: str, range_file: str, bearer: str,
 
 
 @keyword('Search object')
-def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: dict={},
-        expected_objects_list=[], options:str=""):
+def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filters: dict = {},
+                  expected_objects_list=[], options: str = ""):
     '''
     GETRANGE an Object.
 
@@ -207,15 +206,15 @@ def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: 
                         f"is equal for expected list '{expected_objects_list}'")
         else:
             raise Exception(f"Found object list {found_objects} ",
-                                f"is not equal to expected list '{expected_objects_list}'")
+                            f"is not equal to expected list '{expected_objects_list}'")
 
     return found_objects
 
 
 @keyword('Head object')
-def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
-    options:str="", endpoint: str="", json_output: bool = True,
-    is_raw: bool = False, is_direct: bool = False):
+def head_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
+                options: str = "", endpoint: str = "", json_output: bool = True,
+                is_raw: bool = False, is_direct: bool = False):
     '''
     HEAD an Object.
 
@@ -251,7 +250,7 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     try:
         output = _cmd_run(cmd)
     except Exception as exc:
-        logger.info(f"Head request failed with output: {output}")
+        logger.info(f"Head request failed with output: {output}\nException:{exc}")
         return None
 
     if not json_output:

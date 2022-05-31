@@ -3,18 +3,17 @@
 import base64
 import json
 import os
-import re
 import random
 import uuid
-import base58
 
-from neo3 import wallet
-from common import (NEOFS_NETMAP, WALLET_PASS, NEOFS_ENDPOINT,
-NEOFS_NETMAP_DICT, ASSETS_DIR)
-from cli_helpers import _cmd_run
+import base58
 import json_transformers
-from robot.api.deco import keyword
+from cli_helpers import _cmd_run
+from common import (WALLET_PASS, NEOFS_ENDPOINT,
+                    NEOFS_NETMAP_DICT, ASSETS_DIR)
+from neo3 import wallet
 from robot.api import logger
+from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -107,7 +106,6 @@ def get_locode():
 
 @keyword('Generate Session Token')
 def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bool = False) -> str:
-
     file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
 
     owner_64 = base64.b64encode(base58.b58decode(owner)).decode('utf-8')
@@ -116,24 +114,24 @@ def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bo
     id_64 = base64.b64encode(uuid.uuid4().bytes).decode('utf-8')
 
     session_token = {
-                    "body":{
-                        "id":f"{id_64}",
-                        "ownerID":{
-                            "value":f"{owner_64}"
-                        },
-                        "lifetime":{
-                            "exp":"100000000",
-                            "nbf":"0",
-                            "iat":"0"
-                        },
-                        "sessionKey":f"{pub_key_64}",
-                        "container":{
-                            "verb":"PUT",
-                            "wildcard": wildcard,
-                            **({ "containerID":{"value":f"{cid_64}"} } if not wildcard else {})
-                        }
-                    }
-                }
+        "body": {
+            "id": f"{id_64}",
+            "ownerID": {
+                "value": f"{owner_64}"
+            },
+            "lifetime": {
+                "exp": "100000000",
+                "nbf": "0",
+                "iat": "0"
+            },
+            "sessionKey": f"{pub_key_64}",
+            "container": {
+                "verb": "PUT",
+                "wildcard": wildcard,
+                **({"containerID": {"value": f"{cid_64}"}} if not wildcard else {})
+            }
+        }
+    }
 
     logger.info(f"Got this Session Token: {session_token}")
 
@@ -143,8 +141,8 @@ def generate_session_token(owner: str, pub_key: str, cid: str = "", wildcard: bo
     return file_path
 
 
-@keyword ('Sign Session Token')
-def sign_session_token(session_token: str, wallet: str, to_file: str=''):
+@keyword('Sign Session Token')
+def sign_session_token(session_token: str, wallet: str, to_file: str = ''):
     if to_file:
         to_file = f'--to {to_file}'
     cmd = (

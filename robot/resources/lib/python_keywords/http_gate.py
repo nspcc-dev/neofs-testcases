@@ -8,16 +8,16 @@ from urllib.parse import quote_plus
 
 import allure
 import requests
+from common import HTTP_GATE
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
-
-from common import HTTP_GATE
 
 ROBOT_AUTO_KEYWORDS = False
 
 if "pytest" in sys.modules:
     import os
+
     ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 else:
     ASSETS_DIR = BuiltIn().get_variable_value("${ASSETS_DIR}")

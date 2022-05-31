@@ -1,16 +1,14 @@
 #!/usr/bin/python3
 
-import os
-import pexpect
 import re
 
-from robot.api.deco import keyword
-from robot.api import logger
-from neo3 import wallet
-
-from common import *
-import rpc_client
 import contract
+import pexpect
+import rpc_client
+from common import *
+from neo3 import wallet
+from robot.api import logger
+from robot.api.deco import keyword
 from wrappers import run_sh_with_passwd_contract
 
 ROBOT_AUTO_KEYWORDS = False
@@ -65,20 +63,20 @@ def get_balance(wif: str):
 
     acc = wallet.Account.from_wif(wif, '')
     payload = [
-                {
-                    'type': 'Hash160',
-                    'value': str(acc.script_hash)
-                }
-            ]
+        {
+            'type': 'Hash160',
+            'value': str(acc.script_hash)
+        }
+    ]
     try:
         resp = morph_rpc_cli.invoke_function(
-                contract.get_balance_contract_hash(NEOFS_NEO_API_ENDPOINT),
-                'balanceOf',
-                payload
-            )
+            contract.get_balance_contract_hash(NEOFS_NEO_API_ENDPOINT),
+            'balanceOf',
+            payload
+        )
         logger.info(resp)
         value = int(resp['stack'][0]['value'])
-        return value/(10**MORPH_TOKEN_POWER)
+        return value / (10 ** MORPH_TOKEN_POWER)
     except Exception as e:
         logger.error(f"failed to get {wif} balance: {e}")
         raise e
