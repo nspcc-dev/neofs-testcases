@@ -1,17 +1,19 @@
 #!/usr/bin/python3
 
-import os
-import pexpect
 import re
+import time
+import pexpect
+import converters
 
-from robot.api.deco import keyword
-from robot.api import logger
 from neo3 import wallet
-
-from common import *
+from common import (NEOFS_NEO_API_ENDPOINT, NEO_MAINNET_ENDPOINT,
+NEOFS_CONTRACT, NEOGO_CLI_EXEC)
 import rpc_client
 import contract
 from wrappers import run_sh_with_passwd_contract
+import wallet_keywords
+from robot.api.deco import keyword
+from robot.api import logger
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -55,6 +57,31 @@ def transaction_accepted_in_block(tx_id: str):
     except Exception as e:
         logger.info(f"request failed with error: {e}")
         raise e
+
+
+@keyword('NeoFS Deposit')
+def neofs_deposit(wif: str, amount: int):
+    """
+        Transferring GAS from given wallet to NeoFS contract address.
+        Args:
+            wif (str): the wif of the wallet to transfer GAS from
+            amount (str): the amount of GAS to transfer
+    """
+    # get NeoFS contract address
+    deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
+    logger.info(f"NeoFS contract address: {deposit_addr}")
+    tx_id = wallet_keywords.transfer_mainnet_gas(wif, deposit_addr, amount)
+
+    i = 0
+    while i < 60: # deadline in seconds to accept transaction
+        time.sleep(1)
+        if transaction_accepted_in_block(tx_id):
+            return
+        i += 1
+    raise RuntimeError(
+                    f"After 60 seconds the transaction "
+                    f"{tx_id} hasn't been done; exiting"
+                )
 
 
 @keyword('Get NeoFS Balance')

@@ -17,9 +17,7 @@ Prepare Wallet And Deposit
                Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                ...    Transaction accepted in block    ${TX}
 
-    ${TX_DEPOSIT} =    NeoFS Deposit           ${WIF}          ${DEPOSIT}
-                       Wait Until Keyword Succeeds             ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                       ...    Transaction accepted in block    ${TX_DEPOSIT}
+    NeoFS Deposit           ${WIF}          ${DEPOSIT}
     # Now we have TX in main chain, but deposit might not propagate into the side chain yet.
     # For certainty, sleeping during one morph block.
     Sleep               ${MORPH_BLOCK_TIME}
@@ -34,9 +32,7 @@ Prepare Wallet with WIF And Deposit
                         Wait Until Keyword Succeeds         ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
                         ...    Transaction accepted in block    ${TX}
 
-    ${TX_DEPOSIT} =     NeoFS Deposit           ${WIF}          ${DEPOSIT}
-                        Wait Until Keyword Succeeds             ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...    Transaction accepted in block    ${TX_DEPOSIT}
+    NeoFS Deposit           ${WIF}          ${DEPOSIT}
     Sleep               ${MORPH_BLOCK_TIME}
 
     [Return]    ${WALLET}    ${ADDR}
