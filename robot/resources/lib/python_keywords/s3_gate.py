@@ -22,12 +22,13 @@ ROBOT_AUTO_KEYWORDS = False
 CREDENTIALS_CREATE_TIMEOUT = '30s'
 
 NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
+ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
 @keyword('Init S3 Credentials')
-def init_s3_credentials(wallet):
+def init_s3_credentials(wallet, s3_bearer_rules_file: str = None):
     bucket = str(uuid.uuid4())
-    s3_bearer_rules = "robot/resources/files/s3_bearer_rules.json"
+    s3_bearer_rules = s3_bearer_rules_file or "robot/resources/files/s3_bearer_rules.json"
     cmd = (
         f'{NEOFS_EXEC} --debug --with-log --timeout {CREDENTIALS_CREATE_TIMEOUT} '
         f'issue-secret --wallet {wallet} --gate-public-key={GATE_PUB_KEY} '
@@ -51,7 +52,7 @@ def init_s3_credentials(wallet):
                 output_dict['owner_private_key'])
 
     except Exception as exc:
-        raise RuntimeError("failed to init s3 credentials") from exc
+        raise RuntimeError(f"Failed to init s3 credentials because of error\n{exc}") from exc
 
 
 @keyword('Config S3 client')
@@ -94,9 +95,10 @@ def list_objects_s3_v2(s3_client, bucket):
 def list_objects_s3(s3_client, bucket):
     try:
         response = s3_client.list_objects(Bucket=bucket)
-        logger.info(f"S3 List objects result: {response['Contents']}")
+        content = response.get('Contents', [])
+        logger.info(f"S3 List objects result: {content}")
         obj_list = []
-        for obj in response['Contents']:
+        for obj in content:
             obj_list.append(obj['Key'])
         logger.info(f"Found s3 objects: {obj_list}")
         return obj_list
@@ -193,7 +195,7 @@ def head_object_s3(s3_client, bucket, object_key):
 def delete_object_s3(s3_client, bucket, object_key):
     try:
         response = s3_client.delete_object(Bucket=bucket, Key=object_key)
-        logger.info(f"S3 Put object result: {response}")
+        logger.info(f"S3 Delete object result: {response}")
         return response
 
     except botocore.exceptions.ClientError as err:
@@ -202,10 +204,10 @@ def delete_object_s3(s3_client, bucket, object_key):
 
 
 @keyword('Copy object S3')
-def copy_object_s3(s3_client, bucket, object_key):
+def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):
     filename = f"{os.getcwd()}/{uuid.uuid4()}"
     try:
-        response = s3_client.copy_object(Bucket=bucket,
+        response = s3_client.copy_object(Bucket=bucket_dst or bucket,
                                          CopySource=f"{bucket}/{object_key}",
                                          Key=filename)
         logger.info(f"S3 Copy object result: {response}")
@@ -218,7 +220,7 @@ def copy_object_s3(s3_client, bucket, object_key):
 
 @keyword('Get object S3')
 def get_object_s3(s3_client, bucket, object_key):
-    filename = f"{os.getcwd()}/{uuid.uuid4()}"
+    filename = f"{ASSETS_DIR}/{uuid.uuid4()}"
     try:
         response = s3_client.get_object(Bucket=bucket, Key=object_key)
 

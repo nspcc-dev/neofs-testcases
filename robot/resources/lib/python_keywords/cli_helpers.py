@@ -47,10 +47,13 @@ def _cmd_run(cmd, timeout=30):
 
 def _run_with_passwd(cmd):
     child = pexpect.spawn(cmd)
+    child.delaybeforesend = 1
     child.expect(".*")
     child.sendline('\r')
-    child.wait()
-    cmd = child.read()
+    # child.wait()
+    # cmd = child.read()
+    child.expect(pexpect.EOF)
+    cmd = child.before
     return cmd.decode()
 
 
