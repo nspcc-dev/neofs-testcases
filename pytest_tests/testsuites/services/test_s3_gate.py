@@ -3,12 +3,15 @@ import os
 
 import allure
 import pytest
+from contract_keywords import tick_epoch
 from python_keywords.container import list_containers
 from python_keywords.s3_gate import (config_s3_client, copy_object_s3,
-                                     create_bucket_s3, delete_object_s3,
-                                     get_object_s3, head_object_s3,
-                                     init_s3_credentials, list_objects_s3,
-                                     list_objects_s3_v2, put_object_s3)
+                                     create_bucket_s3, delete_bucket_s3,
+                                     delete_object_s3, get_object_s3,
+                                     head_bucket, head_object_s3,
+                                     init_s3_credentials, list_buckets_s3,
+                                     list_objects_s3, list_objects_s3_v2,
+                                     put_object_s3)
 from python_keywords.utility_keywords import get_file_hash
 
 logger = logging.getLogger('NeoLogger')
@@ -33,7 +36,72 @@ class TestS3Gate:
         client = config_s3_client(access_key_id, secret_access_key)
         TestS3Gate.s3_client = client
 
-    @allure.title('Test S3 API')
+    @allure.title('Test S3 Bucket API')
+    @pytest.mark.current
+    def test_s3_buckets(self, generate_files):
+        """
+        Test base S3 Bucket API.
+
+        Steps:
+        1. Create simple objects.
+        2. Create two buckets.
+        3. Check buckets are presented in the system with S3 list command
+        4. Check buckets are empty.
+        5. Check buckets are visible with S3 head command.
+        6. Check we can put/head/list object with S3 commands.
+        7. Try to delete not empty bucket and get error.
+        8. Delete empty bucket.
+        9. Check only empty bucket deleted.
+        """
+
+        file_name_simple, file_name_large = generate_files
+        file_name = self.file_name(file_name_simple)
+
+        with allure.step('Create buckets'):
+            bucket_1 = create_bucket_s3(self.s3_client)
+            bucket_2 = create_bucket_s3(self.s3_client)
+
+        with allure.step('Check buckets are presented in the system'):
+            buckets = list_buckets_s3(self.s3_client)
+            assert bucket_1 in buckets, f'Expected bucket {bucket_1} is in the list'
+            assert bucket_2 in buckets, f'Expected bucket {bucket_2} is in the list'
+
+        with allure.step('Bucket must be empty'):
+            for bucket in (bucket_1, bucket_2):
+                objects_list = list_objects_s3(self.s3_client, bucket)
+                assert not objects_list, f'Expected empty bucket, got {objects_list}'
+
+        with allure.step('Check buckets are visible with S3 head command'):
+            head_bucket(self.s3_client, bucket_1)
+            head_bucket(self.s3_client, bucket_2)
+
+        with allure.step('Check we can put/list object with S3 commands'):
+            put_object_s3(self.s3_client, bucket_1, file_name_simple)
+            head_object_s3(self.s3_client, bucket_1, file_name)
+
+            bucket_objects = list_objects_s3(self.s3_client, bucket_1)
+            assert file_name in bucket_objects, \
+                f'Expected file {file_name} in objects list {bucket_objects}'
+
+        with allure.step('Try to delete not empty bucket and get error'):
+            with pytest.raises(Exception, match=r'.*The bucket you tried to delete is not empty.*'):
+                delete_bucket_s3(self.s3_client, bucket_1)
+
+            head_bucket(self.s3_client, bucket_1)
+
+        with allure.step('Delete empty bucket'):
+            delete_bucket_s3(self.s3_client, bucket_2)
+            tick_epoch()
+
+        with allure.step('Check bucket deleted'):
+            with pytest.raises(Exception, match=r'.*Not Found.*'):
+                head_bucket(self.s3_client, bucket_2)
+
+            buckets = list_buckets_s3(self.s3_client)
+            assert bucket_1 in buckets, f'Expected bucket {bucket_1} is in the list'
+            assert bucket_2 not in buckets, f'Expected bucket {bucket_2} is not in the list'
+
+    @allure.title('Test S3 Object API')
     @pytest.mark.parametrize('file_type', ['simple', 'large'], ids=['Simple object', 'Large object'])
     def test_s3_api(self, generate_files, file_type):
         """

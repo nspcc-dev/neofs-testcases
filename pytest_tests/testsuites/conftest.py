@@ -69,6 +69,9 @@ def wait_unitl_transaction_accepted_in_block(tx_id: str):
     """
     mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
 
+    if isinstance(tx_id, bytes):
+        tx_id = tx_id.decode()
+
     sleep_interval, attempts = 5, 10
 
     for __attempt in range(attempts):
