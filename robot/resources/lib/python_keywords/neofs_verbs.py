@@ -31,7 +31,7 @@ def get_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     GET from NeoFS.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf GET is done
+        wallet (str): wallet on whose behalf GET is done
         cid (str): ID of Container where we get the Object from
         oid (str): Object ID
         bearer_token (optional, str): path to Bearer Token file, appends to `--bearer` key
@@ -59,19 +59,20 @@ def get_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     return file_path
 
 
+# TODO: make `bearer_token` optional
 @keyword('Get Range Hash')
-def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str,
-        range_cut: str, options: str=""):
+def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str, range_cut: str,
+        options: str=""):
     '''
     GETRANGEHASH of given Object.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf GETRANGEHASH is done
+        wallet (str): wallet on whose behalf GETRANGEHASH is done
         cid (str): ID of Container where we get the Object from
         oid (str): Object ID
-        bearer_token (str): path to Bearer Token file, appends to `--bearer` key
         range_cut (str): Range to take hash from in the form offset1:length1,...,
                         value to pass to the `--range` parameter
+        bearer_token (optional, str): path to Bearer Token file, appends to `--bearer` key
         options (optional, str): any options which `neofs-cli object hash` accepts
     Returns:
         None
@@ -82,7 +83,9 @@ def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str,
         f'{"--bearer " + bearer_token if bearer_token else ""} '
         f'{options}'
     )
-    _cmd_run(cmd)
+    output = _cmd_run(cmd)
+    # cutting off output about range offset and length
+    return output.split(':')[1].strip()
 
 
 @keyword('Put object')
@@ -92,7 +95,7 @@ def put_object(wallet: str, path: str, cid: str, bearer: str="", user_headers: d
     PUT of given file.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf PUT is done
+        wallet (str): wallet on whose behalf PUT is done
         path (str): path to file to be PUT
         cid (str): ID of Container where we get the Object from
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
@@ -123,7 +126,7 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str="", options: str=
     DELETE an Object.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf DELETE is done
+        wallet (str): wallet on whose behalf DELETE is done
         cid (str): ID of Container where we get the Object from
         oid (str): ID of Object we are going to delete
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
@@ -142,47 +145,52 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str="", options: str=
     return tombstone.strip()
 
 
+# TODO: remove `file_path` parameter as it is a boilerplate
+# TODO: make `bearer` an optional parameter
 @keyword('Get Range')
-def get_range(wallet: str, cid: str, oid: str, range_file: str, bearer: str,
-        range_cut: str, options:str=""):
+def get_range(wallet: str, cid: str, oid: str, file_path: str, bearer: str, range_cut: str,
+         options:str=""):
     '''
     GETRANGE an Object.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf GETRANGE is done
+        wallet (str): wallet on whose behalf GETRANGE is done
         cid (str): ID of Container where we get the Object from
         oid (str): ID of Object we are going to request
-        range_file (str): file where payload range data will be written
-        bearer (str): path to Bearer Token file, appends to `--bearer` key
         range_cut (str): range to take data from in the form offset:length
+        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         options (optional, str): any options which `neofs-cli object range` accepts
     Returns:
-        None
+        (void)
     '''
+    range_file = f"{ASSETS_DIR}/{uuid.uuid4()}"
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
         f'object range --cid {cid} --oid {oid} --range {range_cut} --config {WALLET_PASS} '
-        f'--file {ASSETS_DIR}/{range_file} {options} '
+        f'{options} --file {range_file} '
         f'{"--bearer " + bearer if bearer else ""} '
     )
     _cmd_run(cmd)
+    content = ''
+    with open(range_file, 'rb') as fout:
+        content = fout.read()
+    return range_file, content
 
 
 @keyword('Search object')
 def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: dict={},
-        expected_objects_list=[], options:str=""):
+        expected_objects_list=[]):
     '''
-    GETRANGE an Object.
+    SEARCH an Object.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf SEARCH is done
+        wallet (str): wallet on whose behalf SEARCH is done
         cid (str): ID of Container where we get the Object from
         keys(optional, str): any keys for Object SEARCH which `neofs-cli object search`
                             accepts, e.g. `--oid`
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         filters (optional, dict): key=value pairs to filter Objects
         expected_objects_list (optional, list): a list of ObjectIDs to compare found Objects with
-        options (optional, str): any options which `neofs-cli object search` accepts
     Returns:
         (list): list of found ObjectIDs
     '''
@@ -194,7 +202,7 @@ def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: 
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'object search {keys} --cid {cid} {filters_result} {options} --config {WALLET_PASS} '
+        f'object search {keys} --cid {cid} {filters_result} --config {WALLET_PASS} '
         f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
@@ -206,7 +214,7 @@ def search_object(wallet: str, cid: str, keys: str="", bearer: str="", filters: 
             logger.info(f"Found objects list '{found_objects}' ",
                         f"is equal for expected list '{expected_objects_list}'")
         else:
-            raise Exception(f"Found object list {found_objects} ",
+            logger.warn(f"Found object list {found_objects} ",
                                 f"is not equal to expected list '{expected_objects_list}'")
 
     return found_objects
@@ -220,7 +228,7 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     HEAD an Object.
 
     Args:
-        wif (str): WIF of the wallet on whose behalf HEAD is done
+        wallet (str): wallet on whose behalf HEAD is done
         cid (str): ID of Container where we get the Object from
         oid (str): ObjectID to HEAD
         bearer_token (optional, str): path to Bearer Token file, appends to `--bearer` key
@@ -278,6 +286,10 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str="",
     if decoded['header']['objectType'] == 'STORAGE_GROUP':
         logger.info("decoding storage group")
         return json_transformers.decode_storage_group(decoded)
+
+    if decoded['header']['objectType'] == 'TOMBSTONE':
+        logger.info("decoding tombstone")
+        return json_transformers.decode_tombstone(decoded)
 
     logger.info("decoding simple header")
     return json_transformers.decode_simple_header(decoded)
