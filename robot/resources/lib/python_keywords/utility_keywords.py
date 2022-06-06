@@ -44,11 +44,9 @@ def get_file_hash(filename: str):
     Returns:
         (str): the hash of the file
     """
-    blocksize = 65536
-    file_hash = hashlib.md5()
+    file_hash = hashlib.sha256()
     with open(filename, "rb") as out:
-        for block in iter(lambda: out.read(blocksize), b""):
-            file_hash.update(block)
+        file_hash.update(out.read())
     return file_hash.hexdigest()
 
 

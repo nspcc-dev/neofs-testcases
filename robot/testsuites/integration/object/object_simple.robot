@@ -2,21 +2,12 @@
 Variables   common.py
 
 Library     container.py
-Library     contract_keywords.py
-Library     neofs.py
-Library     neofs_verbs.py
 Library     storage_policy.py
 Library     utility_keywords.py
 
-Library     Collections
-
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
-
-*** Variables ***
-${CLEANUP_TIMEOUT} =    10s
-&{FILE_USR_HEADER} =       key1=1     key2=abc
-
+Resource    verbs.robot
 
 *** Test cases ***
 NeoFS Simple Object Operations
@@ -26,61 +17,18 @@ NeoFS Simple Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}    ${ADDR}    ${_} =   Prepare Wallet And Deposit
+    ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
 
-    ${FILE}    ${FILE_HASH} =    Generate file    ${SIMPLE_OBJ_SIZE}
+    ${OID} =
+    ...     Run All Verbs Except Delete And Expect Success
+    ...     ${WALLET}   ${CID}  Simple
 
-    ${S_OID} =          Put object          ${WALLET}    ${FILE}       ${CID}
-    ${H_OID} =          Put object          ${WALLET}    ${FILE}       ${CID}      user_headers=${FILE_USR_HEADER}
-
-    ${COPIES} =         Get Simple Object Copies    ${WALLET}   ${CID}  ${S_OID}
-                        Should Be Equal As Numbers      2       ${COPIES}
-    ${COPIES} =         Get Simple Object Copies    ${WALLET}   ${CID}  ${H_OID}
+    ${COPIES} =         Get Simple Object Copies    ${WALLET}   ${CID}  ${OID}
                         Should Be Equal As Numbers      2       ${COPIES}
 
-    @{S_OBJ_ALL} =	Create List         ${S_OID}       ${H_OID}
-    @{S_OBJ_H} =	Create List         ${H_OID}
+                        Delete Object And Validate Tombstone
+                        ...     ${WALLET}   ${CID}  ${OID}
 
-    ${GET_OBJ_S} =      Get object          ${WALLET}    ${CID}        ${S_OID}
-    ${GET_OBJ_H} =      Get object          ${WALLET}    ${CID}        ${H_OID}
-
-    ${FILE_HASH_S} =    Get file hash            ${GET_OBJ_S}
-    ${FILE_HASH_H} =    Get file hash            ${GET_OBJ_H}
-
-                        Should Be Equal        ${FILE_HASH_S}   ${FILE_HASH}
-                        Should Be Equal        ${FILE_HASH_H}   ${FILE_HASH}
-
-                        Get Range Hash          ${WALLET}    ${CID}        ${S_OID}            ${EMPTY}       0:10
-                        Get Range Hash          ${WALLET}    ${CID}        ${H_OID}            ${EMPTY}       0:10
-
-                        Get Range               ${WALLET}    ${CID}        ${S_OID}            s_get_range    ${EMPTY}       0:10
-                        Get Range               ${WALLET}    ${CID}        ${H_OID}            h_get_range    ${EMPTY}       0:10
-
-                        Search object           ${WALLET}    ${CID}        expected_objects_list=${S_OBJ_ALL}
-                        Search object           ${WALLET}    ${CID}        filters=${FILE_USR_HEADER}        expected_objects_list=${S_OBJ_H}
-
-                        Head object             ${WALLET}    ${CID}        ${S_OID}
-    &{RESPONSE} =       Head object             ${WALLET}    ${CID}        ${H_OID}
-                        Dictionary Should Contain Sub Dictionary
-                            ...     ${RESPONSE}[header][attributes]
-                            ...     ${FILE_USR_HEADER}
-                            ...     msg="There are no User Headers in HEAD response"
-
-    ${TOMBSTONE_S} =    Delete object                       ${WALLET}    ${CID}        ${S_OID}
-    ${TOMBSTONE_H} =    Delete object                       ${WALLET}    ${CID}        ${H_OID}
-
-                        Verify Head tombstone               ${WALLET}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
-                        Verify Head tombstone               ${WALLET}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
-
-                        Tick Epoch
-                        # we assume that during this time objects must be deleted
-                        Sleep   ${CLEANUP_TIMEOUT}
-
-                        Run Keyword And Expect Error        *
-                        ...  Get object          ${WALLET}    ${CID}        ${S_OID}           ${EMPTY}       ${GET_OBJ_S}
-
-                        Run Keyword And Expect Error        *
-                        ...  Get object          ${WALLET}    ${CID}        ${H_OID}           ${EMPTY}       ${GET_OBJ_H}
 
     [Teardown]          Teardown    object_simple
