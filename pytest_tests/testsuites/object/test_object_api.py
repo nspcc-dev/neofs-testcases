@@ -2,6 +2,7 @@ import logging
 from time import sleep
 
 import allure
+import pytest
 from contract_keywords import tick_epoch
 from python_keywords.neofs import verify_head_tombstone
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
@@ -16,6 +17,7 @@ CLEANUP_TIMEOUT = 10
 
 
 @allure.title('Test native object API')
+@pytest.mark.grpc_api
 def test_object_api(prepare_container, generate_file):
     cid, wallet, addr = prepare_container
     wallet_cid = {'wallet': wallet, 'cid': cid}

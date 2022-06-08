@@ -1,18 +1,21 @@
 import logging
 import os
+from random import choice, choices
 
 import allure
 import pytest
+from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from contract_keywords import tick_epoch
 from python_keywords.container import list_containers
 from python_keywords.s3_gate import (config_s3_client, copy_object_s3,
                                      create_bucket_s3, delete_bucket_s3,
-                                     delete_object_s3, get_object_s3,
-                                     head_bucket, head_object_s3,
-                                     init_s3_credentials, list_buckets_s3,
-                                     list_objects_s3, list_objects_s3_v2,
-                                     put_object_s3)
-from python_keywords.utility_keywords import get_file_hash
+                                     delete_object_s3, delete_objects_s3,
+                                     get_object_s3, head_bucket,
+                                     head_object_s3, init_s3_credentials,
+                                     list_buckets_s3, list_objects_s3,
+                                     list_objects_s3_v2, put_object_s3)
+from python_keywords.utility_keywords import (generate_file_and_file_hash,
+                                              get_file_hash)
 
 logger = logging.getLogger('NeoLogger')
 
@@ -36,8 +39,14 @@ class TestS3Gate:
         client = config_s3_client(access_key_id, secret_access_key)
         TestS3Gate.s3_client = client
 
+    @pytest.fixture
+    @allure.title('Create two buckets')
+    def create_buckets(self):
+        bucket_1 = create_bucket_s3(self.s3_client)
+        bucket_2 = create_bucket_s3(self.s3_client)
+        return bucket_1, bucket_2
+
     @allure.title('Test S3 Bucket API')
-    @pytest.mark.current
     def test_s3_buckets(self, generate_files):
         """
         Test base S3 Bucket API.
@@ -129,27 +138,65 @@ class TestS3Gate:
                 assert not objects_list, f'Expected empty bucket, got {objects_list}'
 
             put_object_s3(self.s3_client, bucket, file_name_path)
+            put_object_s3(self.s3_client, bucket, file_name_large)
             head_object_s3(self.s3_client, bucket, file_name)
 
             bucket_objects = list_objects_s3(self.s3_client, bucket)
             assert file_name in bucket_objects, \
                 f'Expected file {file_name} in objects list {bucket_objects}'
 
-            bucket_objects = list_objects_s3_v2(self.s3_client, bucket)
-            assert file_name in bucket_objects, \
-                f'Expected file {file_name} in objects list {bucket_objects}'
+    @allure.title('Test delete object & delete objects S3 API')
+    def test_s3_api_delete(self, create_buckets):
+        """
+        Check delete_object and delete_objects S3 API operation. From first bucket some objects deleted one by one.
+        From second bucket some objects deleted all at once.
+        """
+        max_obj_count = 20
+        max_delete_objects = 17
+        put_objects = []
+        file_paths = []
+        obj_sizes = [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE]
 
-        with allure.step('Get objects and check they are the same as original ones'):
-            for bucket in (bucket_1, bucket_2):
-                got_file = get_object_s3(self.s3_client, bucket, file_name)
-                assert get_file_hash(got_file) == get_file_hash(file_name_path), 'Hashes must be the same'
+        bucket_1, bucket_2 = create_buckets
 
-        with allure.step('Delete original object from bucket and check copy is presented'):
-            for bucket in (bucket_1, bucket_2):
-                delete_object_s3(self.s3_client, bucket, file_name)
-                bucket_objects = list_objects_s3(self.s3_client, bucket)
-                assert got_file not in bucket_objects, \
-                    f'Expected file {file_name} not in objects list {bucket_objects}'
+        with allure.step(f'Generate {max_obj_count} files'):
+            for _ in range(max_obj_count):
+                file_paths.append(generate_file_and_file_hash(choice(obj_sizes))[0])
+
+        for bucket in (bucket_1, bucket_2):
+            with allure.step(f'Bucket {bucket} must be empty as it just created'):
+                objects_list = list_objects_s3_v2(self.s3_client, bucket)
+                assert not objects_list, f'Expected empty bucket, got {objects_list}'
+
+            for file_path in file_paths:
+                put_object_s3(self.s3_client, bucket, file_path)
+                put_objects.append(self.file_name(file_path))
+
+            with allure.step(f'Check all objects put in bucket {bucket} successfully'):
+                bucket_objects = list_objects_s3_v2(self.s3_client, bucket)
+                assert set(put_objects) == set(bucket_objects), \
+                    f'Expected all objects {put_objects} in objects list {bucket_objects}'
+
+        with allure.step('Delete some objects from bucket_1 one by one'):
+            objects_to_delete_b1 = choices(put_objects, k=max_delete_objects)
+            for obj in objects_to_delete_b1:
+                delete_object_s3(self.s3_client, bucket_1, obj)
+
+        with allure.step('Check deleted objects are not visible in bucket bucket_1'):
+            bucket_objects = list_objects_s3_v2(self.s3_client, bucket_1)
+            assert set(put_objects).difference(set(objects_to_delete_b1)) == set(bucket_objects), \
+                f'Expected all objects {put_objects} in objects list {bucket_objects}'
+            self.try_to_get_object_and_got_error(bucket_1, objects_to_delete_b1)
+
+        with allure.step('Delete some objects from bucket_2 at once'):
+            objects_to_delete_b2 = choices(put_objects, k=max_delete_objects)
+            delete_objects_s3(self.s3_client, bucket_2, objects_to_delete_b2)
+
+        with allure.step('Check deleted objects are not visible in bucket bucket_2'):
+            objects_list = list_objects_s3_v2(self.s3_client, bucket_2)
+            assert set(put_objects).difference(set(objects_to_delete_b2)) == set(objects_list), \
+                f'Expected all objects {put_objects} in objects list {bucket_objects}'
+            self.try_to_get_object_and_got_error(bucket_2, objects_to_delete_b2)
 
     @allure.title('Test S3: Copy object to the same bucket')
     def test_s3_copy_same_bucket(self, generate_files):
@@ -263,6 +310,15 @@ class TestS3Gate:
         for bucket_object in unexpected_objects:
             assert bucket_object not in bucket_objects, \
                 f'Expected object {bucket_object} not in objects list {bucket_objects}'
+
+    @allure.step('Try to get object and got error')
+    def try_to_get_object_and_got_error(self, bucket: str, unexpected_objects: list):
+        for obj in unexpected_objects:
+            try:
+                get_object_s3(self.s3_client, bucket, obj)
+                raise AssertionError(f'Object {obj} found in bucket {bucket}')
+            except Exception as err:
+                assert 'The specified key does not exist' in str(err), f'Expected error in exception {err}'
 
     @staticmethod
     def file_name(full_path: str) -> str:

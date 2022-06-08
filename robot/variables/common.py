@@ -46,19 +46,24 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
 GATE_PUB_KEY = '0313b1ac3a8076e155a7e797b24f0b650cccad5941ea59d7cfd51a024a8b2a06bf'
 
-NEOFS_NETMAP_DICT = {'s01': {'rpc': 's01.neofs.devenv:8080',
+DATA_NODE_1 = os.getenv('DATA_NODE_1', 's01.neofs.devenv:8080')
+DATA_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
+DATA_NODE_3 = os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080')
+DATA_NODE_4 = os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080')
+
+NEOFS_NETMAP_DICT = {'s01': {'rpc': DATA_NODE_1,
                         'control': 's01.neofs.devenv:8081',
                         'wif': 'Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s',
                         'UN-LOCODE': 'RU MOW'},
-                    's02': {'rpc': 's02.neofs.devenv:8080',
+                    's02': {'rpc': DATA_NODE_2,
                         'control': 's02.neofs.devenv:8081',
                         'wif': 'L1NdHdnrTNGQZH1fJSrdUZJyeYFHvaQSSHZHxhK3udiGFdr5YaZ6',
                         'UN-LOCODE': 'RU LED'},
-                    's03': {'rpc': 's03.neofs.devenv:8080',
+                    's03': {'rpc': DATA_NODE_3,
                         'control': 's03.neofs.devenv:8081',
                         'wif': 'KzN38k39af6ACWJjK8YrnARWo86ddcc1EuBWz7xFEdcELcP3ZTym',
                         'UN-LOCODE': 'SE STO'},
-                    's04': {'rpc': 's04.neofs.devenv:8080',
+                    's04': {'rpc': DATA_NODE_4,
                         'control': 's04.neofs.devenv:8081',
                         'wif': 'Kzk1Z3dowAqfNyjqeYKWenZMduFV3NAKgXg9K1sA4jRKYxEc8HEW',
                         'UN-LOCODE': 'FI HEL'}

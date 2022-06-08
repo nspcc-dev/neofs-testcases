@@ -1,12 +1,14 @@
 import logging
 import os
 import shutil
+from re import search
 from time import sleep
 
 import allure
 import pytest
 import rpc_client
 import wallet
+from cli_helpers import _cmd_run
 from common import (ASSETS_DIR, COMPLEX_OBJ_SIZE, MAINNET_WALLET_WIF,
                     NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE)
 from python_keywords.container import create_container
@@ -20,6 +22,24 @@ deco.keyword = allure.step
 
 logger = logging.getLogger('NeoLogger')
 NEOFS_IR_CONTRACTS_NEOFS = 'ee3dee6d05dc79c24a5b8f6985e10d68b7cacc62'
+
+
+@pytest.fixture(scope='session', autouse=True)
+@allure.title('Check binary versions')
+def check_binary_versions(request):
+    environment_dir = request.config.getoption('--alluredir')
+    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
+    env_out = {}
+    for binary in binaries:
+        out = _cmd_run(f'{binary} --version')
+        version = search(r'(v?\d.*)\s+', out)
+        version = version.group(1) if version else 'Unknown'
+        env_out[binary.upper()] = version
+
+    if environment_dir:
+        with open(f'{environment_dir}/environment.properties', 'w') as out_file:
+            for env, env_value in env_out.items():
+                out_file.write(f'{env}={env_value}\n')
 
 
 @pytest.fixture(scope='session')
@@ -102,3 +122,11 @@ def generate_file():
     file_name_simple, _ = generate_file_and_file_hash(SIMPLE_OBJ_SIZE)
 
     return file_name_simple
+
+
+@pytest.fixture()
+@allure.title('Generate large file')
+def generate_large_file():
+    file_path, file_hash = generate_file_and_file_hash(COMPLEX_OBJ_SIZE * 10000)
+
+    return file_path, file_hash

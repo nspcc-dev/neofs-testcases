@@ -79,9 +79,10 @@ def config_s3_client(access_key_id, secret_access_key):
 def list_objects_s3_v2(s3_client, bucket):
     try:
         response = s3_client.list_objects_v2(Bucket=bucket)
-        logger.info(f"S3 v2 List objects result: {response['Contents']}")
+        content = response.get('Contents', [])
+        logger.info(f"S3 v2 List objects result: {response['Contents'] if content else response}")
         obj_list = []
-        for obj in response['Contents']:
+        for obj in content:
             obj_list.append(obj['Key'])
         logger.info(f"Found s3 objects: {obj_list}")
         return obj_list
@@ -203,6 +204,18 @@ def delete_object_s3(s3_client, bucket, object_key):
                         f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
+@keyword('Delete objects S3')
+def delete_objects_s3(s3_client, bucket: str, object_keys: list):
+    try:
+        response = s3_client.delete_objects(Bucket=bucket, Delete=_make_objs_dict(object_keys))
+        logger.info(f"S3 Delete objects result: {response}")
+        return response
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+                        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
+
+
 @keyword('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):
     filename = f"{os.getcwd()}/{uuid.uuid4()}"
@@ -235,3 +248,12 @@ def get_object_s3(s3_client, bucket, object_key):
     except botocore.exceptions.ClientError as err:
         raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
                         f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
+
+
+def _make_objs_dict(key_names):
+    objs_list = []
+    for key in key_names:
+        obj_dict = {'Key': key}
+        objs_list.append(obj_dict)
+    objs_dict = {'Objects': objs_list}
+    return objs_dict
