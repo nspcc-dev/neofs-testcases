@@ -10,12 +10,12 @@ import os
 import uuid
 
 from neo3 import wallet
-from common import WALLET_PASS, ASSETS_DIR
-from cli_helpers import _cmd_run
-import json_transformers
-
-from robot.api.deco import keyword
 from robot.api import logger
+from robot.api.deco import keyword
+
+import json_transformers
+from cli_helpers import _cmd_run
+from common import WALLET_PASS, ASSETS_DIR
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -24,7 +24,7 @@ NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
 @keyword('Generate Session Token')
-def generate_session_token(owner: str, session_wallet: str, cid: str='') -> str:
+def generate_session_token(owner: str, session_wallet: str, cid: str = '') -> str:
     """
         This function generates session token for ContainerSessionContext
         and writes it to the file. It is able to prepare session token file
@@ -47,34 +47,33 @@ def generate_session_token(owner: str, session_wallet: str, cid: str='') -> str:
         session_wlt_content = json.load(fout)
     session_wlt = wallet.Wallet.from_json(session_wlt_content, password="")
     pub_key_64 = base64.b64encode(
-                        bytes.fromhex(
-                            str(session_wlt.accounts[0].public_key)
-                        )
-                    ).decode('utf-8')
+        bytes.fromhex(
+            str(session_wlt.accounts[0].public_key)
+        )
+    ).decode('utf-8')
 
     session_token = {
-                    "body":{
-                        "id":f"{base64.b64encode(uuid.uuid4().bytes).decode('utf-8')}",
-                        "ownerID":{
-                            "value":f"{json_transformers.encode_for_json(owner)}"
-                        },
-                        "lifetime":{
-                            "exp":"100000000",
-                            "nbf":"0",
-                            "iat":"0"
-                        },
-                        "sessionKey":f"{pub_key_64}",
-                        "container":{
-                            "verb":"PUT",
-                            "wildcard": cid != '',
-                            **({ "containerID":
-                                    {"value":
-                                        f"{base64.b64encode(cid.encode('utf-8')).decode('utf-8')}"}
-                                } if cid != '' else {}
-                            )
-                        }
-                    }
-                }
+        "body": {
+            "id": f"{base64.b64encode(uuid.uuid4().bytes).decode('utf-8')}",
+            "ownerID": {
+                "value": f"{json_transformers.encode_for_json(owner)}"
+            },
+            "lifetime": {
+                "exp": "100000000",
+                "nbf": "0",
+                "iat": "0"
+            },
+            "sessionKey": f"{pub_key_64}",
+            "container": {
+                "verb": "PUT",
+                "wildcard": cid != '',
+                **({"containerID":
+                        {"value": f"{base64.b64encode(cid.encode('utf-8')).decode('utf-8')}"}
+                    } if cid != '' else {}
+                   )
+            }
+        }
+    }
 
     logger.info(f"Got this Session Token: {session_token}")
     with open(file_path, 'w', encoding='utf-8') as session_token_file:
@@ -83,7 +82,7 @@ def generate_session_token(owner: str, session_wallet: str, cid: str='') -> str:
     return file_path
 
 
-@keyword ('Sign Session Token')
+@keyword('Sign Session Token')
 def sign_session_token(session_token: str, wlt: str):
     """
         This function signs the session token by the given wallet.

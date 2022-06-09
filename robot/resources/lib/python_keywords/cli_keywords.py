@@ -6,6 +6,7 @@ from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
+
 @keyword('Run Process And Enter Empty Password')
 def run_proccess_and_interact(cmd: str) -> str:
     p = pexpect.spawn(cmd)

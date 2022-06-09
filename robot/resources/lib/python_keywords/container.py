@@ -8,22 +8,21 @@
 import json
 import time
 
-from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_PASS
-from cli_helpers import _cmd_run
-from data_formatters import dict_to_attrs
-import json_transformers
-
-from robot.api.deco import keyword
 from robot.api import logger
+from robot.api.deco import keyword
 
+import json_transformers
+from cli_helpers import _cmd_run
+from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_PASS
+from data_formatters import dict_to_attrs
 
 ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Create Container')
-def create_container(wallet: str, rule: str=COMMON_PLACEMENT_RULE, basic_acl: str='',
-        attributes: dict={}, session_token: str='', session_wallet: str='',
-        options: str=''):
+def create_container(wallet: str, rule: str = COMMON_PLACEMENT_RULE, basic_acl: str = '',
+                     attributes: dict = {}, session_token: str = '', session_wallet: str = '',
+                     options: str = ''):
     """
         A wrapper for `neofs-cli container create` call.
 
@@ -58,18 +57,18 @@ def create_container(wallet: str, rule: str=COMMON_PLACEMENT_RULE, basic_acl: st
 
     logger.info("Container created; waiting until it is persisted in sidechain")
 
-    deadline_to_persist = 15 # seconds
+    deadline_to_persist = 15  # seconds
     for i in range(0, deadline_to_persist):
         time.sleep(1)
         containers = list_containers(wallet)
         if cid in containers:
             break
         logger.info(f"There is no {cid} in {containers} yet; continue")
-        if i+1 == deadline_to_persist:
+        if i + 1 == deadline_to_persist:
             raise RuntimeError(
-                            f"After {deadline_to_persist} seconds the container "
-                            f"{cid} hasn't been persisted; exiting"
-                        )
+                f"After {deadline_to_persist} seconds the container "
+                f"{cid} hasn't been persisted; exiting"
+            )
     return cid
 
 
@@ -113,7 +112,7 @@ def get_container(wallet: str, cid: str):
         attributes[attr['key']] = attr['value']
     container_info['attributes'] = attributes
     container_info['ownerID'] = json_transformers.json_reencode(
-            container_info['ownerID']['value'])
+        container_info['ownerID']['value'])
     return container_info
 
 
