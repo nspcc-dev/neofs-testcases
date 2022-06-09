@@ -1,23 +1,21 @@
 #!/usr/bin/python3.8
 
-from enum import Enum, auto
+import base64
 import json
 import os
 import re
 import uuid
+from enum import Enum, auto
 
-import base64
 import base58
 from cli_helpers import _cmd_run
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_PASS
-from robot.api.deco import keyword
 from robot.api import logger
-
+from robot.api.deco import keyword
 
 """
 Robot Keywords and helper functions for work with NeoFS ACL.
 """
-
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -25,9 +23,11 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 EACL_LIFETIME = 100500
 
+
 class AutoName(Enum):
     def _generate_next_value_(name, start, count, last_values):
         return name
+
 
 class Role(AutoName):
     USER = auto()
@@ -65,12 +65,13 @@ def _encode_cid_for_eacl(cid: str) -> str:
     cid_base58 = base58.b58decode(cid)
     return base64.b64encode(cid_base58).decode("utf-8")
 
+
 @keyword('Create eACL')
 def create_eacl(cid: str, rules_list: list):
     table = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
     rules = ""
     for rule in rules_list:
-# TODO: check if $Object: is still necessary for filtering in the newest releases
+        # TODO: check if $Object: is still necessary for filtering in the newest releases
         rules += f"--rule '{rule}' "
     cmd = (
         f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} "
@@ -99,47 +100,47 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
         json_eacl = json.loads(eacl)
     logger.info(json_eacl)
     eacl_result = {
-                    "body":
+        "body":
+            {
+                "eaclTable":
                     {
-                        "eaclTable":
-                        {
-                            "containerID":
+                        "containerID":
                             {
                                 "value": enc_cid
                             },
-                            "records": []
-                        },
-                        "lifetime":
-                        {
-                            "exp": EACL_LIFETIME,
-                            "nbf": "1",
-                            "iat": "0"
-                        }
+                        "records": []
+                    },
+                "lifetime":
+                    {
+                        "exp": EACL_LIFETIME,
+                        "nbf": "1",
+                        "iat": "0"
                     }
-                }
+            }
+    }
 
     if not eacl_records:
-        raise(f"Got empty eacl_records list: {eacl_records}")
+        raise (f"Got empty eacl_records list: {eacl_records}")
     for record in eacl_records:
         op_data = {
-                "operation": record['Operation'],
-                "action":   record['Access'],
-                "filters":  [],
-                "targets":  []
-            }
+            "operation": record['Operation'],
+            "action": record['Access'],
+            "filters": [],
+            "targets": []
+        }
 
         if Role(record['Role']):
             op_data['targets'] = [
-                                    {
-                                        "role": record['Role']
-                                    }
-                                ]
+                {
+                    "role": record['Role']
+                }
+            ]
         else:
             op_data['targets'] = [
-                                    {
-                                        "keys": [ record['Role'] ]
-                                    }
-                                ]
+                {
+                    "keys": [record['Role']]
+                }
+            ]
 
         if 'Filters' in record.keys():
             op_data["filters"].append(record['Filters'])

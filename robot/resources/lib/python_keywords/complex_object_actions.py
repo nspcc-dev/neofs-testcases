@@ -10,18 +10,18 @@
     first non-null response.
 """
 
-from common import NEOFS_NETMAP
-import neofs_verbs
-
-from robot.api.deco import keyword
 from robot.api import logger
+from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
+
+import neofs_verbs
+from common import NEOFS_NETMAP
 
 ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Get Link Object')
-def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str=""):
+def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = ""):
     """
         Args:
             wallet (str): path to the wallet on whose behalf the Storage Nodes
@@ -37,10 +37,10 @@ def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str=""):
     for node in NEOFS_NETMAP:
         try:
             resp = neofs_verbs.head_object(wallet, cid, oid,
-                    endpoint=node,
-                    is_raw=True,
-                    is_direct=True,
-                    bearer_token=bearer_token)
+                                           endpoint=node,
+                                           is_raw=True,
+                                           is_direct=True,
+                                           bearer_token=bearer_token)
             if resp['link']:
                 return resp['link']
         except Exception:
@@ -65,9 +65,9 @@ def get_last_object(wallet: str, cid: str, oid: str):
     for node in NEOFS_NETMAP:
         try:
             resp = neofs_verbs.head_object(wallet, cid, oid,
-                    endpoint=node,
-                    is_raw=True,
-                    is_direct=True)
+                                           endpoint=node,
+                                           is_raw=True,
+                                           is_direct=True)
             if resp['lastPart']:
                 return resp['lastPart']
         except Exception:

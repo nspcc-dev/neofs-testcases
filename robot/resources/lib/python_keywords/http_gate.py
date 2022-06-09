@@ -3,14 +3,15 @@
 import shutil
 
 import requests
+from robot.api import logger
+from robot.api.deco import keyword
+from robot.libraries.BuiltIn import BuiltIn
 
 from common import HTTP_GATE
-from robot.api.deco import keyword
-from robot.api import logger
-from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
 ASSETS_DIR = BuiltIn().get_variable_value("${ASSETS_DIR}")
+
 
 @keyword('Get via HTTP Gate')
 def get_via_http_gate(cid: str, oid: str):

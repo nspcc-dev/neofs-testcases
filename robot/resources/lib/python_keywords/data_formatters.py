@@ -7,15 +7,15 @@ from functools import reduce
 
 
 def dict_to_attrs(attrs: dict):
-    '''
+    """
     This function takes dictionary of object attributes and converts them
-    into the string. The string is passed to `--attibutes` key of the
+    into the string. The string is passed to `--attributes` key of the
     neofs-cli.
 
     Args:
-        attrs (dict): object attirbutes in {"a": "b", "c": "d"} format.
+        attrs (dict): object attributes in {"a": "b", "c": "d"} format.
 
     Returns:
         (str): string in "a=b,c=d" format.
-    '''
-    return reduce(lambda a,b: f"{a},{b}", map(lambda i: f"{i}={attrs[i]}", attrs))
+    """
+    return reduce(lambda a, b: f"{a},{b}", map(lambda i: f"{i}={attrs[i]}", attrs))

@@ -5,16 +5,16 @@
     It contains wrappers for `neofs-cli storagegroup` verbs.
 """
 
-from cli_helpers import _cmd_run
-
-from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_PASS
 from robot.api.deco import keyword
+
+from cli_helpers import _cmd_run
+from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_PASS
 
 ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Put Storagegroup')
-def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str=""):
+def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = ""):
     """
         Wrapper for `neofs-cli storagegroup put`. Before the SG is created,
         neofs-cli performs HEAD on `objects`, so this verb must be allowed
@@ -40,7 +40,7 @@ def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str="")
 
 
 @keyword('List Storagegroup')
-def list_storagegroup(wallet: str, cid: str, bearer_token: str=""):
+def list_storagegroup(wallet: str, cid: str, bearer_token: str = ""):
     """
         Wrapper for `neofs-cli storagegroup list`.  This operation
         requires SEARCH allowed for `wallet` in `cid`.
@@ -64,7 +64,7 @@ def list_storagegroup(wallet: str, cid: str, bearer_token: str=""):
 
 
 @keyword('Get Storagegroup')
-def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str=''):
+def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ''):
     """
         Wrapper for `neofs-cli storagegroup get`.
         Args:
@@ -103,7 +103,7 @@ def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str=''):
 
 
 @keyword('Delete Storagegroup')
-def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str=""):
+def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ""):
     """
         Wrapper for `neofs-cli storagegroup delete`.
         Args:

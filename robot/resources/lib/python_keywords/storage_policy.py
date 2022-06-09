@@ -5,12 +5,12 @@
     that storage policies are kept.
 '''
 
-from common import NEOFS_NETMAP
+from robot.api import logger
+from robot.api.deco import keyword
+
 import complex_object_actions
 import neofs_verbs
-
-from robot.api.deco import keyword
-from robot.api import logger
+from common import NEOFS_NETMAP
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -54,8 +54,8 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str):
     for node in NEOFS_NETMAP:
         try:
             response = neofs_verbs.head_object(wallet, cid, oid,
-                                    endpoint=node,
-                                    is_direct=True)
+                                               endpoint=node,
+                                               is_direct=True)
             if response:
                 copies += 1
         except Exception as exc:
@@ -101,8 +101,8 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str):
     for node in NEOFS_NETMAP:
         try:
             res = neofs_verbs.head_object(wallet, cid, oid,
-                            endpoint=node,
-                            is_direct=True)
+                                          endpoint=node,
+                                          is_direct=True)
             if res is not None:
                 nodes_list.append(node)
         except Exception as exc:
@@ -127,8 +127,8 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str):
     nodes_list = []
     for node in NEOFS_NETMAP:
         res = neofs_verbs.head_object(wallet, cid, oid,
-                        endpoint=node,
-                        is_direct=True)
+                                      endpoint=node,
+                                      is_direct=True)
         if res is None:
             nodes_list.append(node)
     return nodes_list
