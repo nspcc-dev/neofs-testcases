@@ -7,15 +7,20 @@ import pytest
 from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from contract_keywords import tick_epoch
 from python_keywords.container import list_containers
-from python_keywords.s3_gate import (config_s3_client, copy_object_s3,
-                                     create_bucket_s3, delete_bucket_s3,
-                                     delete_object_s3, delete_objects_s3,
+from python_keywords.s3_gate import (VersioningStatus, config_s3_client,
+                                     copy_object_s3, create_bucket_s3,
+                                     delete_bucket_s3, delete_object_s3,
+                                     delete_objects_s3,
+                                     get_bucket_versioning_status,
                                      get_object_s3, head_bucket,
                                      head_object_s3, init_s3_credentials,
                                      list_buckets_s3, list_objects_s3,
-                                     list_objects_s3_v2, put_object_s3)
+                                     list_objects_s3_v2,
+                                     list_objects_versions_s3, put_object_s3,
+                                     set_bucket_versioning)
 from python_keywords.utility_keywords import (generate_file_and_file_hash,
                                               get_file_hash)
+from utility import create_file_with_content, get_file_content
 
 logger = logging.getLogger('NeoLogger')
 
@@ -144,6 +149,59 @@ class TestS3Gate:
             bucket_objects = list_objects_s3(self.s3_client, bucket)
             assert file_name in bucket_objects, \
                 f'Expected file {file_name} in objects list {bucket_objects}'
+
+    @allure.title('Test S3 Object versioning')
+    @pytest.mark.current
+    def test_s3_api_versioning(self):
+        """
+        Test checks basic versioning functionality for S3 bucket.
+        """
+        version_1_content = 'Version 1'
+        version_2_content = 'Version 2'
+        file_name_simple = create_file_with_content(content=version_1_content)
+        obj_key = os.path.basename(file_name_simple)
+
+        bucket = create_bucket_s3(self.s3_client)
+
+        with allure.step('Set versioning enable for bucket'):
+            status = get_bucket_versioning_status(self.s3_client, bucket)
+            assert status == VersioningStatus.SUSPENDED.value, f'Expected suspended status. Got {status}'
+
+            set_bucket_versioning(self.s3_client, bucket, status=VersioningStatus.ENABLED)
+            status = get_bucket_versioning_status(self.s3_client, bucket)
+            assert status == VersioningStatus.ENABLED.value, f'Expected enabled status. Got {status}'
+
+        with allure.step('Put several versions of object into bucket'):
+            version_id_1 = put_object_s3(self.s3_client, bucket, file_name_simple)
+            create_file_with_content(file_path=file_name_simple, content=version_2_content)
+            version_id_2 = put_object_s3(self.s3_client, bucket, file_name_simple)
+
+        with allure.step('Check bucket shows all versions'):
+            versions = list_objects_versions_s3(self.s3_client, bucket)
+            obj_versions = {version.get('VersionId') for version in versions if version.get('Key') == obj_key}
+            assert obj_versions == {version_id_1, version_id_2}, \
+                f'Expected object has versions: {version_id_1, version_id_2}'
+
+        with allure.step('Delete object and check it was deleted'):
+            response = delete_object_s3(self.s3_client, bucket, obj_key)
+            version_id_delete = response.get('VersionId')
+
+            with pytest.raises(Exception, match=r'.*Not Found.*'):
+                head_object_s3(self.s3_client, bucket, obj_key)
+
+        with allure.step('Get content for all versions and check it is correct'):
+            for version, content in ((version_id_2, version_2_content), (version_id_1, version_1_content)):
+                file_name = get_object_s3(self.s3_client, bucket, obj_key, version_id=version)
+                got_content = get_file_content(file_name)
+                assert got_content == content, f'Expected object content is\n{content}\nGot\n{got_content}'
+
+        with allure.step('Restore previous object version'):
+            delete_object_s3(self.s3_client, bucket, obj_key, version_id=version_id_delete)
+
+            file_name = get_object_s3(self.s3_client, bucket, obj_key)
+            got_content = get_file_content(file_name)
+            assert got_content == version_2_content, \
+                f'Expected object content is\n{version_2_content}\nGot\n{got_content}'
 
     @allure.title('Test delete object & delete objects S3 API')
     def test_s3_api_delete(self, create_buckets):

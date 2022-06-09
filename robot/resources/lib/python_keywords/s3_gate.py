@@ -3,6 +3,7 @@
 import json
 import os
 import uuid
+from enum import Enum
 
 import boto3
 import botocore
@@ -23,6 +24,11 @@ CREDENTIALS_CREATE_TIMEOUT = '30s'
 
 NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
+
+
+class VersioningStatus(Enum):
+    ENABLED = 'Enabled'
+    SUSPENDED = 'Suspended'
 
 
 @keyword('Init S3 Credentials')
@@ -109,6 +115,19 @@ def list_objects_s3(s3_client, bucket):
                         f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
+@keyword('List objects versions S3')
+def list_objects_versions_s3(s3_client, bucket):
+    try:
+        response = s3_client.list_object_versions(Bucket=bucket)
+        versions = response.get('Versions', [])
+        logger.info(f"S3 List objects versions result: {versions}")
+        return versions
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
+                        f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
+
+
 @keyword('Create bucket S3')
 def create_bucket_s3(s3_client):
     bucket_name = str(uuid.uuid4())
@@ -165,6 +184,27 @@ def head_bucket(s3_client, bucket):
                         f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
 
 
+@keyword('Set bucket versioning status')
+def set_bucket_versioning(s3_client, bucket_name, status: VersioningStatus):
+    try:
+        s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': status.value})
+        logger.info(f"S3 Set bucket versioning to: {status.value}")
+
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Got error during set bucket versioning: {err}") from err
+
+
+@keyword('Get bucket versioning status')
+def get_bucket_versioning_status(s3_client, bucket_name) -> str:
+    try:
+        response = s3_client.get_bucket_versioning(Bucket=bucket_name)
+        status = response.get('Status')
+        logger.info(f"S3 Got bucket versioning status: {status}")
+        return status
+    except botocore.exceptions.ClientError as err:
+        raise Exception(f"Got error during get bucket versioning status: {err}") from err
+
+
 @keyword('Put object S3')
 def put_object_s3(s3_client, bucket, filepath):
     filename = os.path.basename(filepath)
@@ -175,6 +215,7 @@ def put_object_s3(s3_client, bucket, filepath):
     try:
         response = s3_client.put_object(Body=file_content, Bucket=bucket, Key=filename)
         logger.info(f"S3 Put object result: {response}")
+        return response.get('VersionId')
     except botocore.exceptions.ClientError as err:
         raise Exception(f"Error Message: {err.response['Error']['Message']}\n"
                         f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}") from err
@@ -193,9 +234,12 @@ def head_object_s3(s3_client, bucket, object_key):
 
 
 @keyword('Delete object S3')
-def delete_object_s3(s3_client, bucket, object_key):
+def delete_object_s3(s3_client, bucket, object_key, version_id: str = None):
     try:
-        response = s3_client.delete_object(Bucket=bucket, Key=object_key)
+        params = {'Bucket': bucket, 'Key': object_key}
+        if version_id:
+            params['VersionId'] = version_id
+        response = s3_client.delete_object(**params)
         logger.info(f"S3 Delete object result: {response}")
         return response
 
@@ -232,10 +276,13 @@ def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):
 
 
 @keyword('Get object S3')
-def get_object_s3(s3_client, bucket, object_key):
+def get_object_s3(s3_client, bucket: str, object_key: str, version_id: str = None):
     filename = f"{ASSETS_DIR}/{uuid.uuid4()}"
     try:
-        response = s3_client.get_object(Bucket=bucket, Key=object_key)
+        params = {'Bucket': bucket, 'Key': object_key}
+        if version_id:
+            params['VersionId'] = version_id
+        response = s3_client.get_object(**params)
 
         with open(f"{filename}", 'wb') as get_file:
             chunk = response['Body'].read(1024)
