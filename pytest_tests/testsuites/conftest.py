@@ -21,7 +21,7 @@ deco.keyword = allure.step
 
 
 logger = logging.getLogger('NeoLogger')
-NEOFS_IR_CONTRACTS_NEOFS = 'ee3dee6d05dc79c24a5b8f6985e10d68b7cacc62'
+NEOFS_IR_CONTRACTS_NEOFS = 'd07ec2a43d2f8638934d340bfb60b6c23afce106'
 
 
 @pytest.fixture(scope='session', autouse=True)
