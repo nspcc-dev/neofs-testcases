@@ -7,7 +7,9 @@ and other CLIs.
 
 import subprocess
 import sys
+from contextlib import suppress
 from datetime import datetime
+from json import dumps
 from textwrap import shorten
 
 import allure
@@ -64,6 +66,20 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
             f'OUTPUT:\n {output}\n'
             f'RC: {return_code}\n'
             f'Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}'
+        )
+        with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
+            allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
+
+
+def log_command_execution(cmd: str, output: str):
+    logger.info(f'{cmd}: {output}')
+    if 'allure' in sys.modules:
+        with suppress(Exception):
+            json_output = dumps(output, indent=4, sort_keys=True)
+            output = json_output
+        command_attachment = (
+            f"COMMAND: '{cmd}'\n"
+            f'OUTPUT:\n {output}\n'
         )
         with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
             allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)

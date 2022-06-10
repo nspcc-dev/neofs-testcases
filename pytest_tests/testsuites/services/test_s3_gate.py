@@ -92,11 +92,11 @@ class TestS3Gate:
 
             s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
 
-        with allure.step('Delete empty bucket'):
+        with allure.step(f'Delete empty bucket {bucket_2}'):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_2)
             tick_epoch()
 
-        with allure.step('Check bucket deleted'):
+        with allure.step(f'Check bucket {bucket_2} deleted'):
             with pytest.raises(Exception, match=r'.*Not Found.*'):
                 s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
 
@@ -284,7 +284,7 @@ class TestS3Gate:
         got_tags = s3_gate_object.get_object_tagging(self.s3_client, bucket, obj_key)
         assert not got_tags, f'Expected there is no tags for bucket {bucket}, got {got_tags}'
 
-    @allure.title('Test delete object & delete objects S3 API')
+    @allure.title('Test S3: Delete object & delete objects S3 API')
     def test_s3_api_delete(self, create_buckets):
         """
         Check delete_object and delete_objects S3 API operation. From first bucket some objects deleted one by one.
@@ -341,16 +341,6 @@ class TestS3Gate:
     def test_s3_copy_same_bucket(self, generate_files):
         """
         Test object can be copied to the same bucket.
-
-        Steps:
-        1. Create simple and large objects.
-        2. Create bucket.
-        3. Check bucket is empty.
-        4. Put objects into buckets using S3 client.
-        5. Copy one object to the same bucket.
-        6. Check all objects shown in the bucket.
-        7. Get copied object from bucket and compare with original.
-        8. Delete original object from the bucket and check copied one is still presented.
         """
         file_simple, file_large = generate_files
         file_name_simple = self.object_key_from_file_path(file_simple)
@@ -387,17 +377,6 @@ class TestS3Gate:
     def test_s3_copy_to_another_bucket(self, generate_files):
         """
         Test object can be copied to another bucket.
-
-        Steps:
-        1. Create simple and large objects.
-        2. Create two buckets.
-        3. Check buckets are empty.
-        4. Put objects into one bucket using S3 client.
-        5. Copy object from first bucket into second.
-        6. Check copied object has the same content.
-        7. Delete 'source' object from first bucket.
-        8. Check buckets content.
-        9. Delete copied object from second bucket and check it is empty.
         """
         file_simple, file_large = generate_files
         file_name_simple = self.object_key_from_file_path(file_simple)

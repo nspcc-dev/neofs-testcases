@@ -11,7 +11,7 @@ import urllib3
 from robot.api import logger
 from robot.api.deco import keyword
 
-from cli_helpers import _run_with_passwd
+from cli_helpers import _run_with_passwd, log_command_execution
 from common import GATE_PUB_KEY, NEOFS_ENDPOINT, S3_GATE
 
 ##########################################################
@@ -88,7 +88,8 @@ def create_bucket_s3(s3_client):
 
     try:
         s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
-        logger.info(f'Created S3 bucket: {s3_bucket}')
+        log_command_execution(f'Created S3 bucket {bucket_name}', s3_bucket)
+        # logger.info(f'Created S3 bucket: {s3_bucket}')
         return bucket_name
 
     except ClientError as err:
@@ -101,7 +102,8 @@ def list_buckets_s3(s3_client):
     found_buckets = []
     try:
         response = s3_client.list_buckets()
-        logger.info(f'S3 List buckets result: {response}')
+        log_command_execution('S3 List buckets result', response)
+        # logger.info(f'S3 List buckets result: {response}')
 
         for bucket in response['Buckets']:
             found_buckets.append(bucket['Name'])
@@ -117,11 +119,13 @@ def list_buckets_s3(s3_client):
 def delete_bucket_s3(s3_client, bucket: str):
     try:
         response = s3_client.delete_bucket(Bucket=bucket)
-        logger.info(f'S3 Delete bucket result: {response}')
+        log_command_execution('S3 Delete bucket result', response)
+        # logger.info(f'S3 Delete bucket result: {response}')
 
         return response
 
     except ClientError as err:
+        log_command_execution('S3 Delete bucket error', str(err))
         raise Exception(f'Error Message: {err.response["Error"]["Message"]}\n'
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
@@ -130,10 +134,12 @@ def delete_bucket_s3(s3_client, bucket: str):
 def head_bucket(s3_client, bucket: str):
     try:
         response = s3_client.head_bucket(Bucket=bucket)
-        logger.info(f'S3 Head bucket result: {response}')
+        # logger.info(f'S3 Head bucket result: {response}')
+        log_command_execution('S3 Head bucket result', response)
         return response
 
     except ClientError as err:
+        log_command_execution('S3 Head bucket error', str(err))
         raise Exception(f'Error Message: {err.response["Error"]["Message"]}\n'
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
@@ -141,8 +147,9 @@ def head_bucket(s3_client, bucket: str):
 @keyword('Set bucket versioning status')
 def set_bucket_versioning(s3_client, bucket_name: str, status: VersioningStatus):
     try:
-        s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': status.value})
-        logger.info(f'S3 Set bucket versioning to: {status.value}')
+        response = s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': status.value})
+        # logger.info(f'S3 Set bucket versioning to: {status.value}')
+        log_command_execution('S3 Set bucket versioning to', response)
 
     except ClientError as err:
         raise Exception(f'Got error during set bucket versioning: {err}') from err
@@ -153,7 +160,8 @@ def get_bucket_versioning_status(s3_client, bucket_name: str) -> str:
     try:
         response = s3_client.get_bucket_versioning(Bucket=bucket_name)
         status = response.get('Status')
-        logger.info(f'S3 Got bucket versioning status: {status}')
+        # logger.info(f'S3 Got bucket versioning status: {status}')
+        log_command_execution('S3 Got bucket versioning status', response)
         return status
     except ClientError as err:
         raise Exception(f'Got error during get bucket versioning status: {err}') from err
@@ -164,8 +172,9 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
     try:
         tags = [{'Key': tag_key, 'Value': tag_value} for tag_key, tag_value in tags]
         tagging = {'TagSet': tags}
-        s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging=tagging)
-        logger.info(f'S3 Put bucket tagging: {tags}')
+        response = s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging=tagging)
+        # logger.info(f'S3 Put bucket tagging: {tags}')
+        log_command_execution('S3 Put bucket tagging', response)
 
     except ClientError as err:
         raise Exception(f'Got error during put bucket tagging: {err}') from err
@@ -175,7 +184,8 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
 def get_bucket_tagging(s3_client, bucket_name: str) -> list:
     try:
         response = s3_client.get_bucket_tagging(Bucket=bucket_name)
-        logger.info(f'S3 Get bucket tagging: {response}')
+        # logger.info(f'S3 Get bucket tagging: {response}')
+        log_command_execution('S3 Get bucket tagging', response)
         return response.get('TagSet')
 
     except ClientError as err:
@@ -186,7 +196,8 @@ def get_bucket_tagging(s3_client, bucket_name: str) -> list:
 def delete_bucket_tagging(s3_client, bucket_name: str):
     try:
         response = s3_client.delete_bucket_tagging(Bucket=bucket_name)
-        logger.info(f'S3 Delete bucket tagging: {response}')
+        # logger.info(f'S3 Delete bucket tagging: {response}')
+        log_command_execution('S3 Delete bucket tagging', response)
 
     except ClientError as err:
         raise Exception(f'Got error during delete bucket tagging: {err}') from err
