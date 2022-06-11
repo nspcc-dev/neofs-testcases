@@ -70,7 +70,7 @@ def prepare_wallet_and_deposit(init_wallet_with_address):
 
 
 @pytest.fixture()
-@allure.title('Prepare container')
+@allure.title('Create Container')
 def prepare_container(prepare_wallet_and_deposit):
     wallet, addr, wif = prepare_wallet_and_deposit
     balance = get_balance(wif)
