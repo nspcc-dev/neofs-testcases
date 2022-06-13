@@ -10,13 +10,14 @@ Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
-${SN_01_ADDR} =    s01.neofs.devenv:8080
-${SN_02_ADDR} =    s02.neofs.devenv:8080
+${SN_01_ADDR} =     s01.neofs.devenv:8080
+${SN_02_ADDR} =     s02.neofs.devenv:8080
+${DEPOSIT} =        ${30}
 
 *** Test cases ***
 NetworkInfo RPC Method
     [Documentation]           Testcase to check NetworkInfo RPC method.
-    [Tags]                    RPC  NeoFS  NeoFSCLI    NetworkInfo
+    [Tags]                    RPC  NetworkInfo
     [Timeout]                 10 min
 
     [Setup]                   Setup
@@ -24,53 +25,54 @@ NetworkInfo RPC Method
     ######################################################################
     # Checking if the command returns equal results for two storage nodes
     ######################################################################
-#TODO: Remove line for it's unnecessary (#194)
-    ${WALLET_MAINNET}    ${ADDR_MAINNET} =     Prepare Wallet with WIF And Deposit    ${MAINNET_WALLET_WIF}
-
-    ${RESULT1_S01}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
-    Should Be Equal As Integers    ${RESULT1_S01.rc} 	0
-    ${RESULT1_S02}            Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
-    Should Be Equal As Integers    ${RESULT1_S02.rc} 	0
+    ${RESULT1_S01} =        Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${STORAGE_WALLET_PATH} --config ${WALLET_CONFIG}
+                            ...             shell=True
+                            Should Be Equal As Integers    ${RESULT1_S01.rc} 	0
+    ${RESULT1_S02} =        Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${STORAGE_WALLET_PATH} --config ${WALLET_CONFIG}
+                            ...             shell=True
+                            Should Be Equal As Integers    ${RESULT1_S02.rc} 	0
 
     #############################################
     # Checking if morph magic number is relevant
     #############################################
 
-    ${NETWORK_MAGIC_S01} =    Parse Magic    ${RESULT1_S01.stdout}
-    Should Be Equal    ${NETWORK_MAGIC_S01}    ${MORPH_MAGIC}
+    ${NETWORK_MAGIC_S01} =  Parse Magic    ${RESULT1_S01.stdout}
+                            Should Be Equal    ${NETWORK_MAGIC_S01}    ${MORPH_MAGIC}
 
-    ${NETWORK_MAGIC_S02} =    Parse Magic    ${RESULT1_S02.stdout}
-    Should Be Equal    ${NETWORK_MAGIC_S02}    ${MORPH_MAGIC}
+    ${NETWORK_MAGIC_S02} =  Parse Magic    ${RESULT1_S02.stdout}
+                            Should Be Equal    ${NETWORK_MAGIC_S02}    ${MORPH_MAGIC}
 
     #######################################################################
     # Checking if epoch numbers requested from two storage nodes are equal
     #######################################################################
 
-    ${EPOCH1_S01} =          Parse Epoch    ${RESULT1_S01.stdout}
-    ${EPOCH1_S02} =          Parse Epoch    ${RESULT1_S02.stdout}
-    Should Be Equal As Integers    ${EPOCH1_S01}    ${EPOCH1_S02}
+    ${EPOCH1_S01} =         Parse Epoch    ${RESULT1_S01.stdout}
+    ${EPOCH1_S02} =         Parse Epoch    ${RESULT1_S02.stdout}
+                            Should Be Equal As Integers    ${EPOCH1_S01}    ${EPOCH1_S02}
 
     ########################################
     # Ticking epoch and getting new netinfo
     ########################################
 
-    Tick Epoch
+                            Tick Epoch
 
-    ${RESULT2_S01}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
-    Should Be Equal As Integers    ${RESULT2_S01.rc} 	0
-    ${RESULT2_S02}           Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${WALLET_MAINNET} --config ${WALLET_PASS}    shell=True
-    Should Be Equal As Integers    ${RESULT2_S02.rc} 	0
+    ${RESULT2_S01} =        Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_01_ADDR} --wallet ${STORAGE_WALLET_PATH} --config ${WALLET_CONFIG}
+                            ...             shell=True
+                            Should Be Equal As Integers    ${RESULT2_S01.rc} 	0
+    ${RESULT2_S02} =        Run Process    ${NEOFS_CLI_EXEC} netmap netinfo -r ${SN_02_ADDR} --wallet ${STORAGE_WALLET_PATH} --config ${WALLET_CONFIG}
+                            ...             shell=True
+                            Should Be Equal As Integers    ${RESULT2_S02.rc} 	0
 
-    Should Be Equal As Strings    ${RESULT2_S01.stdout}    ${RESULT2_S02.stdout}
+                            Should Be Equal As Strings    ${RESULT2_S01.stdout}    ${RESULT2_S02.stdout}
 
-    ${EPOCH2_S01} =          Parse Epoch    ${RESULT2_S01.stdout}
+    ${EPOCH2_S01} =         Parse Epoch    ${RESULT2_S01.stdout}
 
     #################################################################
     # Checking if the second epoch value is more than the first by 1
     #################################################################
 
-    ${NEW_EPOCH} =           Evaluate    ${EPOCH1_S01}+${1}
-    Should Be Equal    ${EPOCH2_S01}    ${NEW_EPOCH}
+    ${NEW_EPOCH} =          Evaluate    ${EPOCH1_S01}+${1}
+                            Should Be Equal    ${EPOCH2_S01}    ${NEW_EPOCH}
 
 
     [Teardown]             Teardown    network_rpc_method

@@ -8,13 +8,14 @@
 import json
 import time
 
+from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_CONFIG
+from cli_helpers import _cmd_run
+from data_formatters import dict_to_attrs
+import json_transformers
+
 from robot.api import logger
 from robot.api.deco import keyword
 
-import json_transformers
-from cli_helpers import _cmd_run
-from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_PASS
-from data_formatters import dict_to_attrs
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -46,7 +47,7 @@ def create_container(wallet: str, rule: str = COMMON_PLACEMENT_RULE, basic_acl: 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} container create '
         f'--wallet {session_wallet if session_wallet else wallet} '
-        f'--config {WALLET_PASS} --policy "{rule}" '
+        f'--config {WALLET_CONFIG} --policy "{rule}" '
         f'{"--basic-acl " + basic_acl if basic_acl else ""} '
         f'{"--attributes " + dict_to_attrs(attributes) if attributes else ""} '
         f'{"--session " + session_token if session_token else ""} '
@@ -84,7 +85,7 @@ def list_containers(wallet: str):
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_PASS} container list'
+        f'--config {WALLET_CONFIG} container list'
     )
     output = _cmd_run(cmd)
     return output.split()
@@ -103,7 +104,7 @@ def get_container(wallet: str, cid: str):
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_PASS} --cid {cid} container get --json'
+        f'--config {WALLET_CONFIG} --cid {cid} container get --json'
     )
     output = _cmd_run(cmd)
     container_info = json.loads(output)
@@ -130,7 +131,7 @@ def delete_container(wallet: str, cid: str):
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_PASS} container delete --cid {cid}'
+        f'--config {WALLET_CONFIG} container delete --cid {cid}'
     )
     _cmd_run(cmd)
 
