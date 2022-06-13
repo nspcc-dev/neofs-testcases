@@ -23,21 +23,16 @@ NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
 
 SHARD_0_GC_SLEEP = os.getenv("NEOFS_STORAGE_SHARD_0_GC_REMOVER_SLEEP_INTERVAL", "1m")
 
-NEOFS_IR_WIF = os.getenv("NEOFS_IR_WIF", "KxyjQ8eUa4FHt3Gvioyt1Wz29cTUrE4eTqX3yFSk1YFCsPL8uNsY")
-NEOFS_SN_WIF = os.getenv("NEOFS_SN_WIF", "Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s")
-MAINNET_WALLET_WIF = os.getenv("MAINNET_WALLET_WIF", "KxDgvEKzgSBPPfuVfw67oPQBSjidEiqTHURKSDL1R7yGaGYAeYnr")
-
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
 NEOGO_CLI_EXEC = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 
 NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main-chain.neofs.devenv:30333')
-NEOFS_NEO_API_ENDPOINT = os.getenv("NEOFS_NEO_API_ENDPOINT", 'http://morph-chain.neofs.devenv:30333')
+MORPH_ENDPOINT = os.getenv("MORPH_ENDPOINT", 'http://morph-chain.neofs.devenv:30333')
 HTTP_GATE = os.getenv("HTTP_GATE", 'http://http.neofs.devenv')
 S3_GATE = os.getenv("S3_GATE", 'https://s3.neofs.devenv:8080')
 GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
-NEOFS_CONTRACT = (os.getenv("NEOFS_CONTRACT") if os.getenv("NEOFS_CONTRACT")
-                  else os.getenv("NEOFS_IR_CONTRACTS_NEOFS", '008b43d3de8741b896015f79ac0fbfa4055b4574'))
+NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
 COMMON_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
@@ -72,4 +67,12 @@ NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
 NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
-WALLET_PASS = f"{os.getcwd()}/wallet_pass.yml"
+WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/empty_passwd.yml"
+MAINNET_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/chain/node-wallet.json"
+MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/mainnet_wallet_passwd.yml"
+MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
+MAINNET_WALLET_PASS = 'one'
+IR_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/ir/wallet01.json"
+IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/ir_wallet_passwd.yml"
+IR_WALLET_PASS = 'one'
+STORAGE_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/storage/wallet01.json"

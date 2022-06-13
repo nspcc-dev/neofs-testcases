@@ -22,33 +22,33 @@ Control Operations with storage nodes
     ${WALLET_STORAGE}    ${ADDR_STORAGE} =    Prepare Wallet with WIF And Deposit    ${WIF}     
     ${empty_list} =         Create List
 
-    ${SNAPSHOT} =           Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
-    ${HEALTHCHECK} =        Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
+    ${SNAPSHOT} =           Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
+    ${HEALTHCHECK} =        Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
                             Should Be Equal As Integers    ${HEALTHCHECK.rc}    0
 
-                            Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS} --status 'offline'    shell=True
+                            Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG} --status 'offline'    shell=True
                             
                             Sleep    ${MAINNET_BLOCK_TIME}
                             Tick Epoch
 
-    ${SNAPSHOT_OFFLINE}=    Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
+    ${SNAPSHOT_OFFLINE}=    Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
     ${NODE_NUM_OFFLINE}=    Get Regexp Matches        ${SNAPSHOT_OFFLINE.stdout}    ${NODE_NUM}
                             Should Be Equal    ${NODE_NUM_OFFLINE}    ${empty_list}
 
-    ${HEALTHCHECK_OFFLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
+    ${HEALTHCHECK_OFFLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
                             Should Be Equal As Integers    ${HEALTHCHECK_OFFLINE.rc}    0
                             Should Not Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_OFFLINE.stdout} 
     
-                            Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS} --status 'online'    shell=True
+                            Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG} --status 'online'    shell=True
 
                             Sleep    ${MAINNET_BLOCK_TIME}
                             Tick Epoch
 
-    ${SNAPSHOT_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
+    ${SNAPSHOT_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
     ${NODE_NUM_ONLINE} =    Get Regexp Matches        ${SNAPSHOT_ONLINE.stdout}    ${NODE_NUM}    
                             Should Be Equal    ${NODE_NUM_ONLINE}[0]    ${NODE_NUM}
 
-    ${HEALTHCHECK_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_PASS}    shell=True
+    ${HEALTHCHECK_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${WALLET_STORAGE} --config ${WALLET_CONFIG}    shell=True
                             Should Be Equal As Integers    ${HEALTHCHECK_ONLINE.rc}    0
                             Should Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_ONLINE.stdout}    
 

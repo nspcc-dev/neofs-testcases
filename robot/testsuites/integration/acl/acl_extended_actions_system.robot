@@ -15,6 +15,7 @@ Resource    eacl_tables.robot
 &{USER_HEADER} =        key1=1      key2=abc
 &{USER_HEADER_DEL} =    key1=del    key2=del
 &{ANOTHER_USER_HEADER} =        key1=oth    key2=oth
+${DEPOSIT} =            ${30}
 
 *** Test cases ***
 Extended ACL Operations
@@ -42,8 +43,10 @@ Extended ACL Operations
 Check eACL Deny and Allow All System
     [Arguments]     ${WALLET}      ${FILE_S}
 
-    ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
-    ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
+                        Transfer Mainnet Gas    ${STORAGE_WALLET_PATH}  ${DEPOSIT + 1}
+                        NeoFS Deposit           ${STORAGE_WALLET_PATH}  ${DEPOSIT}
+                        Transfer Mainnet Gas    ${IR_WALLET_PATH}       ${DEPOSIT + 1}  wallet_password=${IR_WALLET_PASS}
+                        NeoFS Deposit           ${IR_WALLET_PATH}       ${DEPOSIT}      wallet_password=${IR_WALLET_PASS}
 
     ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
 
@@ -53,30 +56,30 @@ Check eACL Deny and Allow All System
 
     @{S_OBJ_H} =	Create List     ${S_OID_USER}
 
-                        Put object      ${WALLET_IR}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
-                        Put object      ${WALLET_SN}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
+                        Put object      ${IR_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
+                        Put object      ${STORAGE_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
-                        Get object    ${WALLET_IR}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Get object    ${WALLET_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Get object    ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl     wallet_config=${IR_WALLET_CONFIG}
+                        Get object    ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
-                        Search object        ${WALLET_IR}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
-                        Search object        ${WALLET_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        Search object        ${IR_WALLET_PATH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}     wallet_config=${IR_WALLET_CONFIG}
+                        Search object        ${STORAGE_WALLET_PATH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
 
-                        Head object          ${WALLET_IR}    ${CID}    ${S_OID_USER}
-                        Head object          ${WALLET_SN}    ${CID}    ${S_OID_USER}
-
-                        Run Keyword And Expect Error    *
-                        ...    Get Range            ${WALLET_IR}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Run Keyword And Expect Error    *
-                        ...    Get Range            ${WALLET_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-
-                        Get Range Hash       ${WALLET_IR}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash       ${WALLET_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Head object          ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}     wallet_config=${IR_WALLET_CONFIG}
+                        Head object          ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error    *
-                        ...    Delete object        ${WALLET_IR}    ${CID}    ${D_OID_USER_S}
+                        ...    Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error    *
-                        ...    Delete object        ${WALLET_SN}    ${CID}    ${D_OID_USER_SN}
+                        ...    Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+
+                        #Get Range Hash       ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
+                        #Get Range Hash       ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+
+                        Run Keyword And Expect Error    *
+                        ...    Delete object        ${IR_WALLET_PATH}    ${CID}    ${D_OID_USER_S}     wallet_config=${IR_WALLET_CONFIG}
+                        Run Keyword And Expect Error    *
+                        ...    Delete object        ${STORAGE_WALLET_PATH}    ${CID}    ${D_OID_USER_SN}
 
                         Set eACL             ${WALLET}     ${CID}       ${EACL_DENY_ALL_SYSTEM}
 
@@ -84,42 +87,42 @@ Check eACL Deny and Allow All System
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                         Run Keyword And Expect Error    *
-                        ...  Put object        ${WALLET_IR}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
+                        ...  Put object        ${IR_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error    *
-                        ...  Put object        ${WALLET_SN}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
-
-                        Run Keyword And Expect Error    *
-                        ...  Get object      ${WALLET_IR}      ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Run Keyword And Expect Error    *
-                        ...  Get object      ${WALLET_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        ...  Put object        ${STORAGE_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
                         Run Keyword And Expect Error    *
-                        ...  Search object              ${WALLET_IR}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        ...  Get object      ${IR_WALLET_PATH}      ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error    *
-                        ...  Search object              ${WALLET_SN}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        ...  Get object      ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+
+                        Run Keyword And Expect Error    *
+                        ...  Search object              ${IR_WALLET_PATH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}     wallet_config=${IR_WALLET_CONFIG}
+                        Run Keyword And Expect Error    *
+                        ...  Search object              ${STORAGE_WALLET_PATH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
 
 
                         Run Keyword And Expect Error        *
-                        ...  Head object                ${WALLET_IR}    ${CID}    ${S_OID_USER}
+                        ...  Head object                ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Head object                ${WALLET_SN}    ${CID}    ${S_OID_USER}
+                        ...  Head object                ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
-                        ...  Get Range                  ${WALLET_IR}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range                  ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Get Range                  ${WALLET_SN}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-
-
-                        Run Keyword And Expect Error        *
-                        ...  Get Range Hash             ${WALLET_IR}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Run Keyword And Expect Error        *
-                        ...  Get Range Hash             ${WALLET_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        ...  Get Range                  ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
                         Run Keyword And Expect Error        *
-                        ...  Delete object              ${WALLET_IR}    ${CID}        ${S_OID_USER}
+                        ...  Get Range Hash             ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Delete object              ${WALLET_SN}    ${CID}        ${S_OID_USER}
+                        ...  Get Range Hash             ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+
+
+                        Run Keyword And Expect Error        *
+                        ...  Delete object              ${IR_WALLET_PATH}    ${CID}        ${S_OID_USER}     wallet_config=${IR_WALLET_CONFIG}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object              ${STORAGE_WALLET_PATH}    ${CID}        ${S_OID_USER}
 
 
                         Set eACL                        ${WALLET}     ${CID}        ${EACL_ALLOW_ALL_SYSTEM}
@@ -133,27 +136,27 @@ Check eACL Deny and Allow All System
     ${D_OID_USER_S} =   Put object     ${WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object     ${WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
 
-                        Put object     ${WALLET_IR}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
-                        Put object     ${WALLET_SN}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
+                        Put object     ${IR_WALLET_PATH}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
+                        Put object     ${STORAGE_WALLET_PATH}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
-                        Get object       ${WALLET_IR}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
-                        Get object       ${WALLET_SN}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
+                        Get object       ${IR_WALLET_PATH}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl     wallet_config=${IR_WALLET_CONFIG}
+                        Get object       ${STORAGE_WALLET_PATH}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
 
-                        Search object        ${WALLET_IR}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}
-                        Search object        ${WALLET_SN}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}
+                        Search object        ${IR_WALLET_PATH}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}     wallet_config=${IR_WALLET_CONFIG}
+                        Search object        ${STORAGE_WALLET_PATH}    ${CID}    ${EMPTY}        ${EMPTY}     ${USER_HEADER}       ${S_OBJ_H}
 
-                        Head object          ${WALLET_IR}    ${CID}    ${S_OID_USER}
-                        Head object          ${WALLET_SN}    ${CID}    ${S_OID_USER}
-
-                        Run Keyword And Expect Error        *
-                        ...  Get Range            ${WALLET_IR}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
-                        Run Keyword And Expect Error        *
-                        ...  Get Range            ${WALLET_SN}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
-
-                        Get Range Hash       ${WALLET_IR}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range Hash       ${WALLET_SN}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        Head object          ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}     wallet_config=${IR_WALLET_CONFIG}
+                        Head object          ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
-                        ...  Delete object        ${WALLET_IR}    ${CID}    ${D_OID_USER_S}
+                        ...  Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Delete object        ${WALLET_SN}    ${CID}    ${D_OID_USER_SN}
+                        ...  Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+
+                        #Get Range Hash       ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
+                        #Get Range Hash       ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
+
+                        Run Keyword And Expect Error        *
+                        ...  Delete object        ${IR_WALLET_PATH}    ${CID}    ${D_OID_USER_S}     wallet_config=${IR_WALLET_CONFIG}
+                        Run Keyword And Expect Error        *
+                        ...  Delete object        ${STORAGE_WALLET_PATH}    ${CID}    ${D_OID_USER_SN}

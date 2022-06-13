@@ -5,16 +5,17 @@
     It contains wrappers for `neofs-cli storagegroup` verbs.
 """
 
-from robot.api.deco import keyword
-
 from cli_helpers import _cmd_run
-from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_PASS
+from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+
+from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Put Storagegroup')
-def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = ""):
+def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = "",
+            wallet_config: str = WALLET_CONFIG):
     """
         Wrapper for `neofs-cli storagegroup put`. Before the SG is created,
         neofs-cli performs HEAD on `objects`, so this verb must be allowed
@@ -24,12 +25,13 @@ def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = "
             cid (str): ID of Container to put SG to
             objects (list): list of Object IDs to include into the SG
             bearer_token (optional, str): path to Bearer token file
+            wallet_config (optional, str): path to neofs-cli config file
         Returns:
             (str): Object ID of created Storage Group
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} '
-        f'--wallet {wallet} --config {WALLET_PASS} '
+        f'--wallet {wallet} --config {wallet_config} '
         f'storagegroup put --cid {cid} '
         f'--members {",".join(objects)} '
         f'{"--bearer " + bearer_token if bearer_token else ""}'
@@ -40,7 +42,8 @@ def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = "
 
 
 @keyword('List Storagegroup')
-def list_storagegroup(wallet: str, cid: str, bearer_token: str = ""):
+def list_storagegroup(wallet: str, cid: str, bearer_token: str = "",
+            wallet_config: str = WALLET_CONFIG):
     """
         Wrapper for `neofs-cli storagegroup list`.  This operation
         requires SEARCH allowed for `wallet` in `cid`.
@@ -49,12 +52,13 @@ def list_storagegroup(wallet: str, cid: str, bearer_token: str = ""):
                         listed in the container
             cid (str): ID of Container to list
             bearer_token (optional, str): path to Bearer token file
+            wallet_config (optional, str): path to neofs-cli config file
         Returns:
             (list): Object IDs of found Storage Groups
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} '
-        f'--wallet {wallet} --config {WALLET_PASS} storagegroup list '
+        f'--wallet {wallet} --config {wallet_config} storagegroup list '
         f'--cid {cid} {"--bearer " + bearer_token if bearer_token else ""}'
     )
     output = _cmd_run(cmd)
@@ -64,7 +68,8 @@ def list_storagegroup(wallet: str, cid: str, bearer_token: str = ""):
 
 
 @keyword('Get Storagegroup')
-def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ''):
+def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = '',
+            wallet_config: str = WALLET_CONFIG):
     """
         Wrapper for `neofs-cli storagegroup get`.
         Args:
@@ -72,13 +77,14 @@ def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ''):
             cid (str): ID of Container where SG is stored
             oid (str): ID of the Storage Group
             bearer_token (optional, str): path to Bearer token file
+            wallet_config (optional, str): path to neofs-cli config file
         Returns:
             (dict): detailed information on the Storage Group
     """
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} '
-        f'--wallet {wallet} --config {WALLET_PASS} '
+        f'--wallet {wallet} --config {wallet_config} '
         f'storagegroup get --cid {cid} --id {oid} '
         f'{"--bearer " + bearer_token if bearer_token else ""}'
     )
@@ -103,7 +109,8 @@ def get_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ''):
 
 
 @keyword('Delete Storagegroup')
-def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = ""):
+def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = "",
+            wallet_config: str = WALLET_CONFIG):
     """
         Wrapper for `neofs-cli storagegroup delete`.
         Args:
@@ -111,13 +118,14 @@ def delete_storagegroup(wallet: str, cid: str, oid: str, bearer_token: str = "")
             cid (str): ID of Container where SG is stored
             oid (str): ID of the Storage Group
             bearer_token (optional, str): path to Bearer token file
+            wallet_config (optional, str): path to neofs-cli config file
         Returns:
             (str): Tombstone ID of the deleted Storage Group
     """
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} '
-        f'--wallet {wallet} --config {WALLET_PASS} '
+        f'--wallet {wallet} --config {wallet_config} '
         f'storagegroup delete --cid {cid} --id {oid} '
         f'{"--bearer " + bearer_token if bearer_token else ""}'
     )

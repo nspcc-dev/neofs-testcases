@@ -9,7 +9,7 @@ from enum import Enum, auto
 
 import base58
 from cli_helpers import _cmd_run
-from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_PASS
+from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
 from robot.api import logger
 from robot.api.deco import keyword
 
@@ -39,7 +39,7 @@ class Role(AutoName):
 def get_eacl(wallet: str, cid: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container get-eacl --cid {cid} --config {WALLET_PASS}'
+        f'container get-eacl --cid {cid} --config {WALLET_CONFIG}'
     )
     try:
         output = _cmd_run(cmd)
@@ -56,7 +56,7 @@ def get_eacl(wallet: str, cid: str):
 def set_eacl(wallet: str, cid: str, eacl_table_path: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'container set-eacl --cid {cid} --table {eacl_table_path} --config {WALLET_PASS} --await'
+        f'container set-eacl --cid {cid} --table {eacl_table_path} --config {WALLET_CONFIG} --await'
     )
     _cmd_run(cmd)
 
@@ -163,6 +163,6 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
 def sign_bearer_token(wallet: str, eacl_rules_file: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} '
-        f'--to {eacl_rules_file} --wallet {wallet} --config {WALLET_PASS} --json'
+        f'--to {eacl_rules_file} --wallet {wallet} --config {WALLET_CONFIG} --json'
     )
     _cmd_run(cmd)

@@ -10,12 +10,13 @@ import os
 import uuid
 
 from neo3 import wallet
+from common import WALLET_CONFIG, ASSETS_DIR
+from cli_helpers import _cmd_run
+import json_transformers
+
+from robot.api.deco import keyword
 from robot.api import logger
 from robot.api.deco import keyword
-
-import json_transformers
-from cli_helpers import _cmd_run
-from common import WALLET_PASS, ASSETS_DIR
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -95,7 +96,7 @@ def sign_session_token(session_token: str, wlt: str):
     signed_token = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign session-token --from {session_token} '
-        f'-w {wlt} --to {signed_token} --config {WALLET_PASS}'
+        f'-w {wlt} --to {signed_token} --config {WALLET_CONFIG}'
     )
     _cmd_run(cmd)
     return signed_token

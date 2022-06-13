@@ -10,6 +10,9 @@
     first non-null response.
 """
 
+from common import NEOFS_NETMAP, WALLET_CONFIG
+import neofs_verbs
+
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
@@ -21,7 +24,9 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Get Link Object')
-def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = ""):
+<<<<<<< HEAD
+def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
+        wallet_config: str = WALLET_CONFIG):
     """
         Args:
             wallet (str): path to the wallet on whose behalf the Storage Nodes
@@ -29,6 +34,7 @@ def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = ""):
             cid (str): Container ID which stores the Large Object
             oid (str): Large Object ID
             bearer_token (optional, str): path to Bearer token file
+            wallet_config (optional, str): path to the neofs-cli config file
         Returns:
             (str): Link Object ID
             When no Link Object ID is found after all Storage Nodes polling,
@@ -40,7 +46,8 @@ def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = ""):
                                            endpoint=node,
                                            is_raw=True,
                                            is_direct=True,
-                                           bearer_token=bearer_token)
+                                           bearer_token=bearer_token,
+                                           wallet_config=wallet_config)
             if resp['link']:
                 return resp['link']
         except Exception:

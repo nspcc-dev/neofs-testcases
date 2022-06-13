@@ -23,22 +23,16 @@ IR GAS emission threshold value
 
     [Setup]             Setup
 
-    ${WALLET}    ${ADDR}    ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
+    ${WALLET}    ${ADDR}    ${_} =    Init Wallet with Address    ${ASSETS_DIR}
 
     ${SC_BALANCE} =     Get Sidechain Balance    ${ADDR}
+                        Transfer Mainnet Gas                    ${WALLET}    ${DEPOSIT}
 
-    ${TX} =             Transfer Mainnet Gas                    ${MAINNET_WALLET_WIF}    ${ADDR}    ${DEPOSIT}
-                        Wait Until Keyword Succeeds             ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...    Transaction accepted in block    ${TX}
-                        
 ##########################################################################################
 # Threshold is set to default 0 and sidechain balance has changed after deposit operation
 ##########################################################################################
 
-    ${TX_DEPOSIT} =     NeoFS Deposit                           ${WIF}          ${DEPOSIT_AMOUNT}
-                        Wait Until Keyword Succeeds             ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...    Transaction accepted in block    ${TX_DEPOSIT}
-
+                        NeoFS Deposit           ${WALLET}      ${DEPOSIT_AMOUNT}
                         Sleep    ${MAINNET_BLOCK_TIME}
 
     ${BALANCE_CHANGED} =    Get Sidechain Balance    ${ADDR}
@@ -51,10 +45,7 @@ IR GAS emission threshold value
 # Threshold is exceeded and sidechain balance has not changed after deposit operation
 ######################################################################################
 
-    ${TX_DEPOSIT} =     NeoFS Deposit                           ${WIF}          ${DEPOSIT_AMOUNT}
-                        Wait Until Keyword Succeeds             ${MAINNET_TIMEOUT}    ${MAINNET_BLOCK_TIME}
-                        ...    Transaction accepted in block    ${TX_DEPOSIT}
-
+                        NeoFS Deposit           ${WALLET}      ${DEPOSIT_AMOUNT}
                         Sleep    ${MAINNET_BLOCK_TIME}
 
     ${BALANCE_UNCHANGED} =    Get Sidechain Balance    ${ADDR}

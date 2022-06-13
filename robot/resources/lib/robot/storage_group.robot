@@ -5,10 +5,10 @@ Library     storage_group.py
 Library     Collections
 
 Resource    complex_object_operations.robot
-Resource    payment_operations.robot
 
 *** Variables ***
 ${PERMISSION_ERROR} =   status: code = 2048 message = access to object operation denied
+${DEPOSIT} =            ${30}
 
 *** Keywords ***
 
@@ -85,40 +85,40 @@ Run Storage Group Operations On System's Behalf In RO Container
             ...         and include an Object created on behalf of some user. We expect
             ...         that System key is granted to make all operations except DELETE.
 
-    # TODO: get rid of WIF and remove `payment_operations.robot` import
-    ${IR_WALLET}    ${_} =  Prepare Wallet With WIF And Deposit     ${NEOFS_IR_WIF}
+                Transfer Mainnet Gas        ${IR_WALLET_PATH}    ${DEPOSIT + 1}  wallet_password=${IR_WALLET_PASS}
+                NeoFS Deposit               ${IR_WALLET_PATH}    ${DEPOSIT}      wallet_password=${IR_WALLET_PASS}
 
-    ${SG} =     Put Storagegroup            ${IR_WALLET}    ${CID}  ${OBJECTS}
-                Verify List Storage Group   ${IR_WALLET}    ${CID}  ${SG}
-                Verify Get Storage Group    ${IR_WALLET}    ${CID}  ${SG}   ${OBJECTS}  ${OBJ_COMPLEXITY}
+    ${SG} =     Put Storagegroup            ${IR_WALLET_PATH}    ${CID}  ${OBJECTS}     wallet_config=${IR_WALLET_CONFIG}
+                Verify List Storage Group   ${IR_WALLET_PATH}    ${CID}  ${SG}          WALLET_CFG=${IR_WALLET_CONFIG}
+                Verify Get Storage Group    ${IR_WALLET_PATH}    ${CID}  ${SG}   ${OBJECTS}  ${OBJ_COMPLEXITY}      WALLET_CFG=${IR_WALLET_CONFIG}
     ${ERR} =    Run Keyword And Expect Error    *
-                ...     Delete Storagegroup    ${IR_WALLET}    ${CID}    ${SG}
+                ...     Delete Storagegroup    ${IR_WALLET_PATH}    ${CID}    ${SG}     wallet_config=${IR_WALLET_CONFIG}
                 Should Contain      ${ERR}      ${PERMISSION_ERROR}
 
 
 Verify List Storage Group
-    [Arguments]         ${WALLET}   ${CID}  ${SG}   ${BEARER}=${EMPTY}
+    [Arguments]         ${WALLET}   ${CID}  ${SG}   ${BEARER}=${EMPTY}  ${WALLET_CFG}=${WALLET_CONFIG}
 
-    @{STORAGE_GROUPS} =     List Storagegroup           ${WALLET}           ${CID}     bearer_token=${BEARER}
+    @{STORAGE_GROUPS} =     List Storagegroup           ${WALLET}           ${CID}     bearer_token=${BEARER}   wallet_config=${WALLET_CFG}
                             List Should Contain Value   ${STORAGE_GROUPS}   ${SG}
                             ...     msg="Storage Group hasn't been persisted"
 
 
 Verify Get Storage Group
-    [Arguments]         ${WALLET}   ${CID}  ${SG}   ${OBJECTS}   ${OBJ_COMPLEXITY}     ${BEARER}=${EMPTY}
+    [Arguments]         ${WALLET}   ${CID}  ${SG}   ${OBJECTS}   ${OBJ_COMPLEXITY}     ${BEARER}=${EMPTY}   ${WALLET_CFG}=${WALLET_CONFIG}
 
     @{PART_OIDS} =      Create List
     IF    """${OBJ_COMPLEXITY}""" == """Complex"""
         FOR     ${OBJ}      IN      @{OBJECTS}
             ${OIDS} =       Get Object Parts By Link Object
-                            ...     ${WALLET}    ${CID}   ${OBJ}    ${BEARER}
+                            ...     ${WALLET}    ${CID}   ${OBJ}    BEARER=${BEARER}   WALLET_CFG=${WALLET_CFG}
             @{PART_OIDS} =  Combine Lists       ${PART_OIDS}    ${OIDS}
         END
     END
 
     ${OBJECTS_NUMBER} =     Get Length      ${OBJECTS}
 
-    &{SG_DATA} =        Get Storagegroup        ${WALLET}    ${CID}    ${SG}    bearer_token=${BEARER}
+    &{SG_DATA} =        Get Storagegroup        ${WALLET}    ${CID}    ${SG}    bearer_token=${BEARER}   wallet_config=${WALLET_CFG}
 
     IF      """${OBJ_COMPLEXITY}""" == """Simple"""
         ${EXPECTED_SIZE} =      Evaluate        ${SIMPLE_OBJ_SIZE} * ${OBJECTS_NUMBER}

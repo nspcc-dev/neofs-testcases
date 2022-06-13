@@ -8,6 +8,8 @@ Library     utility_keywords.py
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
+*** Variables ***
+${DEPOSIT} =    ${30}
 
 *** Test cases ***
 Basic ACL Operations for Read-Only Container
@@ -17,14 +19,8 @@ Basic ACL Operations for Read-Only Container
 
     [Setup]                 Setup
 
-    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
-
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Read-Only Container    Simple    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
-
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Read-Only Container    Complex    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
+                            Check Read-Only Container    Simple
+                            Check Read-Only Container    Complex
 
     [Teardown]              Teardown    acl_basic_readonly_container
 
@@ -32,60 +28,70 @@ Basic ACL Operations for Read-Only Container
 *** Keywords ***
 
 Check Read-Only Container
-    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
+    [Arguments]     ${COMPLEXITY}
+
+     ${FILE_S}    ${_} =    Run Keyword If    """${COMPLEXITY}""" == """Simple"""
+                            ...         Generate file    ${SIMPLE_OBJ_SIZE}
+                            ...     ELSE
+                            ...         Generate file    ${COMPLEX_OBJ_SIZE}
+
+    ${USER_WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
     ${READONLY_CID} =   Create Container    ${USER_WALLET}      basic_acl=public-read
 
-    ${WALLET_SN}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_SN_WIF}
-    ${WALLET_IR}    ${_} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
+                        Transfer Mainnet Gas    ${STORAGE_WALLET_PATH}  ${DEPOSIT + 1}
+                        NeoFS Deposit           ${STORAGE_WALLET_PATH}  ${DEPOSIT}
+                        Transfer Mainnet Gas    ${IR_WALLET_PATH}       ${DEPOSIT + 1}  wallet_password=${IR_WALLET_PASS}
+                        NeoFS Deposit           ${IR_WALLET_PATH}       ${DEPOSIT}      wallet_password=${IR_WALLET_PASS}
 
     # Put
     ${S_OID_USER} =         Put Object         ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}
                             Run Keyword And Expect Error        *
                             ...  Put object    ${WALLET_OTH}    ${FILE_S}    ${READONLY_CID}
-    ${S_OID_SYS_IR} =       Put Object         ${WALLET_IR}    ${FILE_S}    ${READONLY_CID}
-    ${S_OID_SYS_SN} =       Put object         ${WALLET_SN}    ${FILE_S}    ${READONLY_CID}
+    ${S_OID_SYS_IR} =       Put Object         ${IR_WALLET_PATH}    ${FILE_S}    ${READONLY_CID}    wallet_config=${IR_WALLET_CONFIG}
+    ${S_OID_SYS_SN} =       Put object         ${STORAGE_WALLET_PATH}    ${FILE_S}    ${READONLY_CID}
 
     # Get
                         Get object    ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
                         Get Object    ${WALLET_OTH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                        Get Object    ${WALLET_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
-                        Get Object    ${WALLET_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
+                        Get Object    ${IR_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read    wallet_config=${IR_WALLET_CONFIG}
+                        Get Object    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
                         Get Range           ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Get Range           ${WALLET_OTH}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
                         Run Keyword And Expect Error        *
-                        ...    Get Range    ${WALLET_IR}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...    Get Range    ${IR_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256    wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...    Get Range    ${WALLET_SN}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...    Get Range    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
 
 
     # Get Range Hash
                         Get Range hash    ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Get Range hash    ${WALLET_OTH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range hash    ${WALLET_IR}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
-                        Get Range hash    ${WALLET_SN}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
+                        #Get Range hash    ${IR_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256    wallet_config=${IR_WALLET_CONFIG}
+                        #Get Range hash    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
     @{S_OBJ_RO} =       Create List       ${S_OID_USER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
                         Search Object     ${USER_WALLET}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
                         Search Object     ${WALLET_OTH}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
-                        Search Object     ${WALLET_IR}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
-                        Search Object     ${WALLET_SN}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
+                        Search Object     ${IR_WALLET_PATH}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}    wallet_config=${IR_WALLET_CONFIG}
+                        Search Object     ${STORAGE_WALLET_PATH}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
 
 
     # Head
                         Head Object    ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}
                         Head Object    ${WALLET_OTH}    ${READONLY_CID}    ${S_OID_USER}
-                        Head Object    ${WALLET_IR}    ${READONLY_CID}    ${S_OID_USER}
-                        Head Object    ${WALLET_SN}    ${READONLY_CID}    ${S_OID_USER}
+                        Head Object    ${IR_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    wallet_config=${IR_WALLET_CONFIG}
+                        Head Object    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}
 
     # Delete
                         Run Keyword And Expect Error        *
                         ...  Delete object    ${WALLET_OTH}    ${READONLY_CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Delete object    ${WALLET_IR}    ${READONLY_CID}    ${S_OID_USER}
+                        ...  Delete object    ${IR_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Delete object    ${WALLET_SN}    ${READONLY_CID}    ${S_OID_USER}
+                        ...  Delete object    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}
                         Delete Object         ${USER_WALLET}    ${READONLY_CID}    ${S_OID_USER}
