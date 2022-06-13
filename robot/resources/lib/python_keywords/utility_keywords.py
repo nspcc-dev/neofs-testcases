@@ -6,11 +6,12 @@ import tarfile
 import uuid
 
 import docker
-from cli_helpers import _cmd_run
-from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
+
+from cli_helpers import _cmd_run
+from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -44,11 +45,9 @@ def get_file_hash(filename: str):
     Returns:
         (str): the hash of the file
     """
-    blocksize = 65536
-    file_hash = hashlib.md5()
+    file_hash = hashlib.sha256()
     with open(filename, "rb") as out:
-        for block in iter(lambda: out.read(blocksize), b""):
-            file_hash.update(block)
+        file_hash.update(out.read())
     return file_hash.hexdigest()
 
 

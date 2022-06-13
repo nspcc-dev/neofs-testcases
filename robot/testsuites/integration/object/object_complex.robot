@@ -13,12 +13,8 @@ Library     utility_keywords.py
 Library     Collections
 
 Resource    setup_teardown.robot
+Resource    verbs.robot
 Resource    payment_operations.robot
-
-*** Variables ***
-${CLEANUP_TIMEOUT} =    10s
-&{FILE_USR_HEADER} =        key1=1      key2=abc
-${ALREADY_REMOVED_ERROR} =    code = 2052 message = object already removed
 
 
 *** Test cases ***
@@ -29,80 +25,26 @@ NeoFS Complex Object Operations
 
     [Setup]             Setup
 
-    ${WALLET}   ${ADDR}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
 
-    ${FILE}    ${FILE_HASH} =    Generate file    ${COMPLEX_OBJ_SIZE}
+    ${OID} =
+    ...                 Run All Verbs Except Delete And Expect Success
+    ...                 ${WALLET}   ${CID}      Complex
 
-    ${S_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}
-    ${H_OID} =          Put object                 ${WALLET}    ${FILE}       ${CID}        user_headers=${FILE_USR_HEADER}
-
-                        Should Not Be Equal        ${H_OID}    ${S_OID}
-
-     ${COPIES} =        Get Complex Object Copies       ${WALLET}   ${CID}  ${S_OID}
+     ${COPIES} =        Get Complex Object Copies       ${WALLET}   ${CID}  ${OID}
                         Should Be Equal As Numbers  2   ${COPIES}
-     ${COPIES} =        Get Complex Object Copies       ${WALLET}   ${CID}  ${H_OID}
-                        Should Be Equal As Numbers  2   ${COPIES}
-
-    ${GET_OBJ_S} =      Get object               ${WALLET}    ${CID}        ${S_OID}
-    ${GET_OBJ_H} =      Get object               ${WALLET}    ${CID}        ${H_OID}
-
-    ${FILE_HASH_S} =    Get file hash            ${GET_OBJ_S}
-    ${FILE_HASH_H} =    Get file hash            ${GET_OBJ_H}
-
-                        Should Be Equal          ${FILE_HASH_S}   ${FILE_HASH}
-                        Should Be Equal          ${FILE_HASH_H}   ${FILE_HASH}
-
-                        Get Range Hash           ${WALLET}    ${CID}        ${S_OID}          ${EMPTY}       0:10
-                        Get Range Hash           ${WALLET}    ${CID}        ${H_OID}          ${EMPTY}       0:10
-
-                        Get Range                ${WALLET}    ${CID}        ${S_OID}          s_get_range    ${EMPTY}       0:10
-                        Get Range                ${WALLET}    ${CID}        ${H_OID}          h_get_range    ${EMPTY}       0:10
-
-    @{S_OBJ_ALL} =      Create List    ${S_OID}       ${H_OID}
-    @{S_OBJ_H} =        Create List    ${H_OID}
-
-                        Search object            ${WALLET}    ${CID}        --root        expected_objects_list=${S_OBJ_ALL}
-                        Search object            ${WALLET}    ${CID}        --root        filters=${FILE_USR_HEADER}      expected_objects_list=${S_OBJ_H}
-
-    &{S_RESPONSE} =     Head object              ${WALLET}    ${CID}        ${S_OID}
-    &{H_RESPONSE} =     Head object              ${WALLET}    ${CID}        ${H_OID}
-                        Dictionary Should Contain Sub Dictionary
-                            ...     ${H_RESPONSE}[header][attributes]
-                            ...     ${FILE_USR_HEADER}
-                            ...     msg="There are no User Headers in HEAD response"
 
     ${PAYLOAD_LENGTH}
     ...     ${SPLIT_ID}
-    ...     ${SPLIT_OBJECTS} =      Restore Large Object By Last
-                                                ...     ${WALLET}    ${CID}        ${S_OID}
-    ${H_PAYLOAD_LENGTH}
-    ...     ${H_SPLIT_ID}
-    ...     ${H_SPLIT_OBJECTS} =  Restore Large Object By Last
-                                                ...     ${WALLET}    ${CID}        ${H_OID}
+    ...     ${SPLIT_OBJECTS} =
+    ...                 Restore Large Object By Last    ${WALLET}   ${CID}  ${OID}
+                        Compare With Link Object        ${WALLET}   ${CID}  ${OID}    ${SPLIT_ID}     ${SPLIT_OBJECTS}
+    &{RESPONSE} =       Head object                     ${WALLET}   ${CID}  ${OID}
+                        Should Be Equal As Numbers      ${RESPONSE.header.payloadLength}  ${PAYLOAD_LENGTH}
 
-                        Compare With Link Object    ${WALLET}  ${CID}  ${S_OID}    ${SPLIT_ID}     ${SPLIT_OBJECTS}
-                        Compare With Link Object    ${WALLET}  ${CID}  ${H_OID}    ${H_SPLIT_ID}     ${H_SPLIT_OBJECTS}
-
-                        Should Be Equal As Numbers     ${S_RESPONSE.header.payloadLength}  ${PAYLOAD_LENGTH}
-                        Should Be Equal As Numbers     ${H_RESPONSE.header.payloadLength}  ${H_PAYLOAD_LENGTH}
-
-    ${TOMBSTONE_S} =    Delete object            ${WALLET}    ${CID}        ${S_OID}
-    ${TOMBSTONE_H} =    Delete object            ${WALLET}    ${CID}        ${H_OID}
-
-                        Verify Head tombstone    ${WALLET}    ${CID}        ${TOMBSTONE_S}     ${S_OID}    ${ADDR}
-                        Verify Head tombstone    ${WALLET}    ${CID}        ${TOMBSTONE_H}     ${H_OID}    ${ADDR}
-
-                        Tick Epoch
-                        # we assume that during this time objects must be deleted
-                        Sleep   ${CLEANUP_TIMEOUT}
-
-     ${ERR_MSG} =       Run Keyword And Expect Error        *
-                        ...  Get object          ${WALLET}    ${CID}        ${S_OID}
-                        Should Contain      ${ERR_MSG}      ${ALREADY_REMOVED_ERROR}
-     ${ERR_MSG} =       Run Keyword And Expect Error        *
-                        ...  Get object          ${WALLET}    ${CID}        ${H_OID}
-                        Should Contain      ${ERR_MSG}      ${ALREADY_REMOVED_ERROR}
+                        Delete Object And Validate Tombstone
+                        ...     ${WALLET}   ${CID}  ${OID}
 
     [Teardown]          Teardown    object_complex
 

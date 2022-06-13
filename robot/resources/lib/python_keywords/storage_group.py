@@ -5,10 +5,10 @@
     It contains wrappers for `neofs-cli storagegroup` verbs.
 """
 
-from cli_helpers import _cmd_run
-
-from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_PASS
 from robot.api.deco import keyword
+
+from cli_helpers import _cmd_run
+from common import NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_PASS
 
 ROBOT_AUTO_KEYWORDS = False
 

@@ -10,11 +10,12 @@
     first non-null response.
 """
 
-import neofs_verbs
-from common import NEOFS_NETMAP
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
+
+import neofs_verbs
+from common import NEOFS_NETMAP
 
 ROBOT_AUTO_KEYWORDS = False
 

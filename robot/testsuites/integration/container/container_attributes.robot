@@ -54,9 +54,9 @@ Duplicated Container Attributes
     #####################################################
 
     ${CID} =                Create Container    ${WALLET}    attributes=${ATTR_SINGLE}
-    &{ATTRIBUTES} =         Get Container Attributes    ${WALLET}    ${CID}
+    &{ATTRIBUTES} =         Get Container       ${WALLET}    ${CID}
                             Dictionary Should Contain Sub Dictionary
-                                ...     ${ATTRIBUTES}
+                                ...     ${ATTRIBUTES}[attributes]
                                 ...     ${ATTR_SINGLE}
                                 ...     msg="No expected container attributes found"
 

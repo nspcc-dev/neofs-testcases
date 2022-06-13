@@ -95,6 +95,31 @@ def decode_storage_group(data: dict):
     return data
 
 
+def decode_tombstone(data: dict):
+    """
+    This function reencodes Tombstone header.
+    """
+    try:
+        data = decode_simple_header(data)
+        data['header']['sessionToken'] = decode_session_token(
+            data['header']['sessionToken'])
+    except Exception as exc:
+        raise ValueError(f"failed to decode JSON output: {exc}") from exc
+    return data
+
+
+def decode_session_token(data: dict):
+    """
+    This function reencodes a fragment of header which contains
+    information about session token.
+    """
+    data['body']['object']['address']['containerID'] = json_reencode(
+        data['body']['object']['address']['containerID']['value'])
+    data['body']['object']['address']['objectID'] = json_reencode(
+        data['body']['object']['address']['objectID']['value'])
+    return data
+
+
 def json_reencode(data: str):
     """
     According to JSON protocol, binary data (Object/Container/Storage Group IDs, etc)
@@ -103,6 +128,14 @@ def json_reencode(data: str):
     This function reencodes given Base58 string into the Base64 one.
     """
     return base58.b58encode(base64.b64decode(data)).decode("utf-8")
+
+
+def encode_for_json(data: str):
+    """
+    This function encodes binary data for sending them as protobuf
+    structures.
+    """
+    return base64.b64encode(base58.b58decode(data)).decode('utf-8')
 
 
 def decode_common_fields(data: dict):

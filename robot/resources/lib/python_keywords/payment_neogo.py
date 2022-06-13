@@ -2,13 +2,14 @@
 
 import re
 
-import contract
 import pexpect
-import rpc_client
-from common import *
 from neo3 import wallet
 from robot.api import logger
 from robot.api.deco import keyword
+
+import contract
+import rpc_client
+from common import *
 from wrappers import run_sh_with_passwd_contract
 
 ROBOT_AUTO_KEYWORDS = False

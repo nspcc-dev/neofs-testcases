@@ -18,45 +18,61 @@ ${ATTR_DUPLICATE} =     FileType=jpg,FileType=png
 
 *** Test Cases ***
 
-Duplicated Object Attributes
-    [Documentation]             Testcase to check duplicated attributes.
-    [Tags]                      Object
-    [Timeout]                   10 min
+Object Attrubutes
+    [Timeout]           10 min
+    [Setup]             Setup
 
-    [Setup]                     Setup
+                        Check Various Object Attributes     Simple
+                        Check Various Object Attributes     Complex
+
+    [Teardown]          Teardown    object_attributes
+
+
+*** Keywords ***
+
+Check Various Object Attributes
+    [Arguments]         ${COMPLEXITY}
 
     ${WALLET}   ${_}     ${_} =    Prepare Wallet And Deposit
 
-    ${PUBLIC_CID} =             Create Container       ${WALLET}    basic_acl=${PUBLIC_ACL_F}
-    ${FILE_S}    ${_} =         Generate File    ${SIMPLE_OBJ_SIZE}
-
+    ${PUBLIC_CID} =         Create Container       ${WALLET}    basic_acl=${PUBLIC_ACL_F}
+    ${OBJ_SIZE} =           Run Keyword If  """${COMPLEXITY}""" == """Simple"""
+                            ...     Set Variable    ${SIMPLE_OBJ_SIZE}
+                            ...     ELSE
+                            ...     Set Variable    ${COMPLEX_OBJ_SIZE}
+    ${FILE}    ${_} =       Generate File           ${OBJ_SIZE}
 
     ###################################################
     # Checking that object attributes cannot duplicate
     ###################################################
 
-    Run Keyword And Expect Error    *
-    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_FILENAME}
-    # Robot doesn't allow to create a dictionary with the same keys, so using plain text option here
-    Run Keyword And Expect Error    *
-    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    options=--attributes ${ATTR_DUPLICATE}
+    ${ERR} =    Run Keyword And Expect Error    *
+                ...    Put object   ${WALLET}   ${FILE}     ${PUBLIC_CID}    user_headers=${ATTR_FILENAME}
+                Should Contain      ${ERR}      code = 1024 message = duplication of attributes detected
+    # Robot doesn't allow to create a dictionary with the same keys,
+    # so using plain text option here
+    ${ERR} =    Run Keyword And Expect Error    *
+                ...    Put object   ${WALLET}   ${FILE}     ${PUBLIC_CID}    options=--attributes ${ATTR_DUPLICATE}
+                Should Contain      ${ERR}      code = 1024 message = duplication of attributes detected
 
     ##################################################
     # Checking that object cannot have empty attibute
     ##################################################
 
-    Run Keyword And Expect Error    *
-    ...    Put object        ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_NONE}
+    ${ERR} =    Run Keyword And Expect Error    *
+                ...    Put object   ${WALLET}   ${FILE}     ${PUBLIC_CID}    user_headers=${ATTR_NONE}
+                Should Contain      ${ERR}      code = 1024 message = empty attribute value
 
     #####################################################
     # Checking a successful step with a single attribute
     #####################################################
 
-    ${OID} =            Put object    ${WALLET}         ${FILE_S}    ${PUBLIC_CID}    user_headers=${ATTR_SINGLE}
-    ${HEADER} =         Head object              ${WALLET}         ${PUBLIC_CID}    ${OID}
+    ${OID} =            Put object      ${WALLET}     ${FILE}    ${PUBLIC_CID}    user_headers=${ATTR_SINGLE}
+    ${HEADER} =         Head object     ${WALLET}     ${PUBLIC_CID}    ${OID}
                         Dictionary Should Contain Sub Dictionary
                             ...     ${HEADER}[header][attributes]
                             ...     ${ATTR_SINGLE}
                             ...     msg="No expected User Attribute in HEAD response"
-
-    [Teardown]          Teardown    object_attributes
+    ${FOUND_OIDS} =     Search Object       ${WALLET}   ${PUBLIC_CID}  filters=${ATTR_SINGLE}
+                        Should Be Equal     ${OID}      ${FOUND_OIDS}[0]
+                            ...     msg="Cannot SEARCH an object by User Attribute"
