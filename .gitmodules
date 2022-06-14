@@ -1,4 +1,4 @@
 [submodule "neofs-keywords"]
 	path = neofs-keywords
-	url = git@github.com:e7506c/neofs-keywords.git
+	url = ssh://git@github.com/nspcc-dev/neofs-keywords.git
         ignore = all

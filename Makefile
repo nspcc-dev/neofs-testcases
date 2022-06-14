@@ -8,19 +8,13 @@ OUTPUT_DIR = artifacts/
 KEYWORDS_REPO = git@github.com:nspcc-dev/neofs-keywords.git
 VENVS = $(shell ls -1d venv/*/ | sort -u | xargs basename -a)
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-
-PY_VARIABLES                  =                         	\
-	PY_MARKERS=$(CI_MARKERS)                                \
-	PY_VEGMAN_CFG=$(CI_VEGMAN_CFG)                          \
-	PY_JOB_NAME=$(JOB_NAME)
+DEV_IMAGE_PY             ?= registry.spb.yadro.com/tools/pytest-neofs-x86_64:1
 
 
 ifeq ($(shell uname -s),Darwin)
 	DOCKER_NETWORK         = --network bridge -p 389:389 -p 636:636
 endif
 
-PY_VARIABLES			 := $(strip $(foreach a, $(PY_VARIABLES),     -e $(a)))
-DEV_IMAGE_PY             ?= registry.spb.yadro.com/tools/pytest-neofs-x86_64:1
 
 .PHONY: all
 all: venvs
@@ -58,19 +52,19 @@ pytest-docker:
 	-docker rm   neofs_tests_py
 	-docker pull $(DEV_IMAGE_PY)
 	docker run -t --rm                                  \
-		--name neofs_tests_py                           \
-		-e PYTHONPATH="/root/neofs-keywords/lib:/root/neofs-keywords/robot:/root/robot/resources/lib:/root/robot/resources/lib/python_keywords:/root/robot/variables:/root/pytest_tests/helpers"			\
-		$(PY_VARIABLES)									\
-		-v $(CURDIR):/root			 			        \
-		-v /var/run/docker.sock:/var/run/docker.sock    \
-		-v $(NEO_BIN_DIR):/neofs	\
-		--privileged                                    \
-		$(DOCKER_NETWORK)                               \
-		$(DEV_IMAGE_PY)                                 \
-		-v 											    \
-		-m "$(CI_MARKERS)"				              	\
+		--name neofs_tests_py --user 2000:2000			\
+		-e PYTHONPATH="/root/neofs-keywords/lib:/root/neofs-keywords/robot:/root/robot/resources/lib:/root/robot/resources/lib/python_keywords:/root/robot/variables:/root/pytest_tests/helpers"		\
+		-v $(CURDIR):/root			 					\
+		-v /var/run/docker.sock:/var/run/docker.sock	\
+		-v $(NEO_BIN_DIR):/neofs						\
+		--privileged									\
+		$(DOCKER_NETWORK)								\
+		--env-file $(CURDIR)/.env						\
+		$(DEV_IMAGE_PY)									\
+		-v 												\
+		-m "$(CI_MARKERS)"								\
 		--color=no										\
 		--junitxml=/root/xunit_results.xml				\
-		--alluredir=/root/allure_results 		        \
+		--alluredir=/root/allure_results 				\
 		--setup-show									\
 		/root/pytest_tests/testsuites

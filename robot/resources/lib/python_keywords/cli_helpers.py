@@ -52,11 +52,12 @@ def _run_with_passwd(cmd):
     child.delaybeforesend = 1
     child.expect(".*")
     child.sendline('\r')
-    # TODO: check this
-    # child.wait()
-    # cmd = child.read()
-    child.expect(pexpect.EOF)
-    cmd = child.before
+    if sys.platform == "darwin":
+        child.expect(pexpect.EOF)
+        cmd = child.before
+    else:
+        child.wait()
+        cmd = child.read()
     return cmd.decode()
 
 

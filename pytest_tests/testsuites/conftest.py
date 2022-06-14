@@ -9,19 +9,19 @@ import pytest
 import rpc_client
 import wallet
 from cli_helpers import _cmd_run
-from common import (ASSETS_DIR, COMPLEX_OBJ_SIZE, MAINNET_WALLET_WIF,
-                    NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE)
+from common import (ASSETS_DIR, COMMON_PLACEMENT_RULE, COMPLEX_OBJ_SIZE,
+                    MAINNET_WALLET_WIF, NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE)
 from python_keywords.container import create_container
 from python_keywords.payment_neogo import get_balance
 from python_keywords.utility_keywords import generate_file_and_file_hash
 from robot.api import deco
 from wallet_keywords import neofs_deposit, transfer_mainnet_gas
+from wellknown_acl import PUBLIC_ACL
 
 deco.keyword = allure.step
 
 
 logger = logging.getLogger('NeoLogger')
-NEOFS_IR_CONTRACTS_NEOFS = 'd07ec2a43d2f8638934d340bfb60b6c23afce106'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -62,22 +62,37 @@ def prepare_wallet_and_deposit(init_wallet_with_address):
 
     txid = transfer_mainnet_gas(MAINNET_WALLET_WIF, addr, deposit + 1)
     wait_unitl_transaction_accepted_in_block(txid)
-    deposit_tx = neofs_deposit(wif, deposit, contract=NEOFS_IR_CONTRACTS_NEOFS)
+    deposit_tx = neofs_deposit(wif, deposit)
     wait_unitl_transaction_accepted_in_block(deposit_tx)
 
-    sleep(5)
-    return wallet, addr, wif
+    return wallet, wif
 
 
 @pytest.fixture()
 @allure.title('Create Container')
 def prepare_container(prepare_wallet_and_deposit):
-    wallet, addr, wif = prepare_wallet_and_deposit
+    wallet, wif = prepare_wallet_and_deposit
+    return prepare_container_impl(wallet, wif)
+
+
+@pytest.fixture(scope='module')
+@allure.title('Create Public Container')
+def prepare_public_container(prepare_wallet_and_deposit):
+    placement_rule = 'REP 1 IN X CBF 1 SELECT 1 FROM * AS X'
+    wallet, wif = prepare_wallet_and_deposit
+    return prepare_container_impl(wallet, wif, rule=placement_rule, basic_acl=PUBLIC_ACL)
+
+
+def prepare_container_impl(wallet: str, wif: str, rule=COMMON_PLACEMENT_RULE, basic_acl: str = ''):
     balance = get_balance(wif)
-    cid = create_container(wallet)
+    assert balance > 0, f'Expected balance is greater than 0. Got {balance}'
+
+    cid = create_container(wallet, rule=rule, basic_acl=basic_acl)
+
     new_balance = get_balance(wif)
-    assert new_balance < balance
-    return cid, wallet, addr
+    assert new_balance < balance, 'Expected some fee has charged'
+
+    return cid, wallet
 
 
 @allure.step('Wait until transaction accepted in block')
@@ -127,6 +142,7 @@ def generate_file():
 @pytest.fixture()
 @allure.title('Generate large file')
 def generate_large_file():
-    file_path, file_hash = generate_file_and_file_hash(COMPLEX_OBJ_SIZE * 10000)
+    obj_size = int(os.getenv('BIG_OBJ_SIZE', COMPLEX_OBJ_SIZE))
+    file_path, file_hash = generate_file_and_file_hash(obj_size)
 
     return file_path, file_hash

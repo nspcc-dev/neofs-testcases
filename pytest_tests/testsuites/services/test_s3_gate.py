@@ -23,7 +23,7 @@ class TestS3Gate:
     @pytest.fixture(scope='class', autouse=True)
     @allure.title('[Class/Autouse]: Create S3 client')
     def s3_client(self, prepare_wallet_and_deposit):
-        wallet, addr, wif = prepare_wallet_and_deposit
+        wallet, wif = prepare_wallet_and_deposit
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
 
         cid, bucket, access_key_id, secret_access_key, owner_private_key = \

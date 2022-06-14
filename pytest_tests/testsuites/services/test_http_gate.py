@@ -5,33 +5,18 @@ from time import sleep
 import allure
 import pytest
 from contract_keywords import get_epoch, tick_epoch
-from python_keywords.container import create_container
 from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
                                        get_via_http_gate_by_attribute,
                                        get_via_zip_http_gate,
                                        upload_via_http_gate,
                                        upload_via_http_gate_curl)
 from python_keywords.neofs_verbs import get_object, put_object
-from python_keywords.payment_neogo import get_balance
 from python_keywords.storage_policy import get_nodes_without_object
 from python_keywords.utility_keywords import get_file_hash
-from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')
 
-PLACEMENT_RULE = 'REP 1 IN X CBF 1 SELECT 1 FROM * AS X'
 CLEANUP_TIMEOUT = 10
-
-
-@pytest.fixture(scope='module')
-@allure.title('Create Container')
-def prepare_container(prepare_wallet_and_deposit):
-    wallet, addr, wif = prepare_wallet_and_deposit
-    balance = get_balance(wif)
-    cid = create_container(wallet, rule=PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
-    new_balance = get_balance(wif)
-    assert new_balance < balance
-    return cid, wallet, addr
 
 
 @allure.link('https://github.com/nspcc-dev/neofs-http-gw#neofs-http-gateway', name='neofs-http-gateway')
@@ -41,7 +26,7 @@ def prepare_container(prepare_wallet_and_deposit):
 class TestHttpGate:
 
     @allure.title('Test Put over gRPC, Get over HTTP')
-    def test_put_grpc_get_http(self, prepare_container, generate_files):
+    def test_put_grpc_get_http(self, prepare_public_container, generate_files):
         """
         Test that object can be put using gRPC interface and get using HTTP.
 
@@ -56,7 +41,7 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet, addr = prepare_container
+        cid, wallet = prepare_public_container
         file_name_simple, large_file_name = generate_files
 
         with allure.step('Put objects using gRPC'):
@@ -69,7 +54,7 @@ class TestHttpGate:
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#uploading', name='uploading')
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#downloading', name='downloading')
     @allure.title('Test Put over HTTP, Get over HTTP')
-    def test_put_http_get_http(self, prepare_container, generate_files):
+    def test_put_http_get_http(self, prepare_public_container, generate_files):
         """
         Test that object can be put and get using HTTP interface.
 
@@ -82,7 +67,7 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet, addr = prepare_container
+        cid, wallet = prepare_public_container
         file_name_simple, large_file_name = generate_files
 
         with allure.step('Put objects using HTTP'):
@@ -101,7 +86,7 @@ class TestHttpGate:
                                  {'cat%jpeg': 'cat%jpeg'}
                              ], ids=['simple', 'hyphen', 'percent']
                              )
-    def test_put_http_get_http_with_headers(self, prepare_container, generate_files, attributes):
+    def test_put_http_get_http_with_headers(self, prepare_public_container, generate_files, attributes):
         """
         Test that object can be downloaded using different attributes in HTTP header.
 
@@ -114,7 +99,7 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet, addr = prepare_container
+        cid, wallet = prepare_public_container
         file_name_simple, _ = generate_files
 
         with allure.step('Put objects using HTTP with attribute'):
@@ -124,8 +109,8 @@ class TestHttpGate:
         self.get_object_by_attr_and_verify_hashes(oid_simple, file_name_simple, cid, attributes)
 
     @allure.title('Test Expiration-Epoch in HTTP header')
-    def test_expiration_epoch_in_http(self, prepare_container, generate_file):
-        cid, wallet, addr = prepare_container
+    def test_expiration_epoch_in_http(self, prepare_public_container, generate_file):
+        cid, wallet = prepare_public_container
         file_name_simple = generate_file
         object_not_found_err = 'object not found'
         oids = []
@@ -157,8 +142,8 @@ class TestHttpGate:
                     get_via_http_gate(cid=cid, oid=oid)
 
     @allure.title('Test Zip in HTTP header')
-    def test_zip_in_http(self, prepare_container, generate_files):
-        cid, wallet, addr = prepare_container
+    def test_zip_in_http(self, prepare_public_container, generate_files):
+        cid, wallet = prepare_public_container
         file_name_simple, file_name_complex = generate_files
         common_prefix = 'my_files'
 
@@ -177,11 +162,11 @@ class TestHttpGate:
     @pytest.mark.curl
     @pytest.mark.long
     @allure.title('Test Put over HTTP/Curl, Get over HTTP/Curl for large object')
-    def test_put_http_get_http_large_file(self, prepare_container, generate_large_file):
+    def test_put_http_get_http_large_file(self, prepare_public_container, generate_large_file):
         """
         This test checks upload and download using curl with 'large' object. Large is object with size up to 20Mb.
         """
-        cid, wallet, addr = prepare_container
+        cid, wallet = prepare_public_container
         file_path, file_hash = generate_large_file
 
         with allure.step('Put objects using HTTP'):
@@ -193,11 +178,11 @@ class TestHttpGate:
 
     @pytest.mark.curl
     @allure.title('Test Put/Get over HTTP using Curl utility')
-    def test_put_http_get_http_curl(self, prepare_container, generate_files):
+    def test_put_http_get_http_curl(self, prepare_public_container, generate_files):
         """
         Test checks upload and download over HTTP using curl utility.
         """
-        cid, wallet, addr = prepare_container
+        cid, wallet = prepare_public_container
         file_name_simple, large_file_name = generate_files
 
         with allure.step('Put objects using curl utility'):

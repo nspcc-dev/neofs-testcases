@@ -126,9 +126,15 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str):
     """
     nodes_list = []
     for node in NEOFS_NETMAP:
-        res = neofs_verbs.head_object(wallet, cid, oid,
-                                      endpoint=node,
-                                      is_direct=True)
-        if res is None:
-            nodes_list.append(node)
+        try:
+            res = neofs_verbs.head_object(wallet, cid, oid,
+                                          endpoint=node,
+                                          is_direct=True)
+            if res is None:
+                nodes_list.append(node)
+        except Exception as err:
+            if 'object not found' in str(err):
+                nodes_list.append(node)
+            else:
+                raise Exception(f'Got error {err} on head object command') from err
     return nodes_list

@@ -18,8 +18,9 @@ CLEANUP_TIMEOUT = 10
 
 @allure.title('Test native object API')
 @pytest.mark.grpc_api
+@pytest.mark.current
 def test_object_api(prepare_container, generate_file):
-    cid, wallet, addr = prepare_container
+    cid, wallet = prepare_container
     wallet_cid = {'wallet': wallet, 'cid': cid}
     file_usr_header = {'key1': 1, 'key2': 'abc'}
     file_usr_header_oth = {'key1': 2}
@@ -49,7 +50,7 @@ def test_object_api(prepare_container, generate_file):
     with allure.step('Get range/range hash'):
         get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
         get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
-        get_range(**wallet_cid, oid=oids[1], range_file='s_get_range', bearer='', range_cut=range_cut)
+        get_range(**wallet_cid, oid=oids[1], file_path='s_get_range', bearer='', range_cut=range_cut)
 
     with allure.step('Search objects'):
         search_object(**wallet_cid, expected_objects_list=oids)
@@ -65,8 +66,8 @@ def test_object_api(prepare_container, generate_file):
         tombstone_s = delete_object(**wallet_cid, oid=oids[0])
         tombstone_h = delete_object(**wallet_cid, oid=oids[1])
 
-    verify_head_tombstone(**wallet_cid, oid_ts=tombstone_s, oid=oids[0], addr=addr)
-    verify_head_tombstone(**wallet_cid, oid_ts=tombstone_h, oid=oids[1], addr=addr)
+    verify_head_tombstone(wallet_path=wallet, cid=cid, oid_ts=tombstone_s, oid=oids[0])
+    verify_head_tombstone(wallet_path=wallet, cid=cid, oid_ts=tombstone_h, oid=oids[1])
 
     tick_epoch()
     sleep(CLEANUP_TIMEOUT)
