@@ -4,15 +4,21 @@ from random import choice, choices
 
 import allure
 import pytest
-from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
+from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from contract_keywords import tick_epoch
 from python_keywords import s3_gate_bucket, s3_gate_object
+from python_keywords.aws_cli_client import AwsCliClient
 from python_keywords.container import list_containers
 from python_keywords.utility_keywords import (generate_file_and_file_hash,
                                               get_file_hash)
 from utility import create_file_with_content, get_file_content, split_file
 
 logger = logging.getLogger('NeoLogger')
+
+
+def pytest_generate_tests(metafunc):
+    if "s3_client" in metafunc.fixturenames:
+        metafunc.parametrize("s3_client", ['aws cli', 'boto3'], indirect=True)
 
 
 @allure.link('https://github.com/nspcc-dev/neofs-s3-gw#neofs-s3-gateway', name='neofs-s3-gateway')
@@ -22,7 +28,7 @@ class TestS3Gate:
 
     @pytest.fixture(scope='class', autouse=True)
     @allure.title('[Class/Autouse]: Create S3 client')
-    def s3_client(self, prepare_wallet_and_deposit):
+    def s3_client(self, prepare_wallet_and_deposit, request):
         wallet, wif = prepare_wallet_and_deposit
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
 
@@ -31,7 +37,16 @@ class TestS3Gate:
         containers_list = list_containers(wallet)
         assert cid in containers_list, f'Expected cid {cid} in {containers_list}'
 
-        client = s3_gate_bucket.config_s3_client(access_key_id, secret_access_key)
+        if request.param == 'aws cli':
+            try:
+                client = AwsCliClient(access_key_id, secret_access_key)
+            except Exception as err:
+                if 'command was not found or was not executable' in str(err):
+                    pytest.skip('AWS CLI was not found')
+                else:
+                    raise RuntimeError('Error on creating instance for AwsCliClient') from err
+        else:
+            client = s3_gate_bucket.config_s3_client(access_key_id, secret_access_key)
         TestS3Gate.s3_client = client
 
     @pytest.fixture
@@ -130,8 +145,40 @@ class TestS3Gate:
             assert file_name in bucket_objects, \
                 f'Expected file {file_name} in objects list {bucket_objects}'
 
+        with allure.step("Check object's attributes"):
+            for attrs in (['ETag'], ['ObjectSize', 'StorageClass']):
+                s3_gate_object.get_object_attributes(self.s3_client, bucket, file_name, *attrs)
+
+    @allure.title('Test S3 Sync directory')
+    @pytest.mark.current
+    def test_s3_sync_dir(self, bucket):
+        """
+        Test checks sync directory with AWS CLI utility.
+        """
+        file_path_1 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_1"
+        file_path_2 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_2"
+        key_to_path = {'test_file_1': file_path_1, 'test_file_2': file_path_2}
+
+        if not isinstance(self.s3_client, AwsCliClient):
+            pytest.skip('This test is not supported with boto3 client')
+
+        create_file_with_content(file_path=file_path_1)
+        create_file_with_content(file_path=file_path_2)
+
+        self.s3_client.sync(bucket_name=bucket, dir_path=os.path.dirname(file_path_1))
+
+        with allure.step('Check objects are synced'):
+            objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
+
+        with allure.step('Check these are the same objects'):
+            assert set(key_to_path.keys()) == set(objects), f'Expected all abjects saved. Got {objects}'
+            for obj_key in objects:
+                got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key)
+                assert get_file_hash(got_object) == get_file_hash(key_to_path.get(obj_key)), \
+                    'Expected hashes are the same'
+
     @allure.title('Test S3 Object versioning')
-    def test_s3_api_versioning(self):
+    def test_s3_api_versioning(self, bucket):
         """
         Test checks basic versioning functionality for S3 bucket.
         """
@@ -139,8 +186,6 @@ class TestS3Gate:
         version_2_content = 'Version 2'
         file_name_simple = create_file_with_content(content=version_1_content)
         obj_key = os.path.basename(file_name_simple)
-
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
 
         with allure.step('Set versioning enable for bucket'):
             status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
@@ -164,10 +209,17 @@ class TestS3Gate:
         with allure.step('Show information about particular version'):
             for version_id in (version_id_1, version_id_2):
                 response = s3_gate_object.head_object_s3(self.s3_client, bucket, obj_key, version_id=version_id)
-                assert response.get('LastModified'), 'Expected LastModified field'
-                assert response.get('ETag'), 'Expected ETag field'
+                assert 'LastModified' in response, 'Expected LastModified field'
+                assert 'ETag' in response, 'Expected ETag field'
                 assert response.get('VersionId') == version_id, f'Expected VersionId is {version_id}'
                 assert response.get('ContentLength') != 0, 'Expected ContentLength is not zero'
+
+        with allure.step("Check object's attributes"):
+            for version_id in (version_id_1, version_id_2):
+                got_attrs = s3_gate_object.get_object_attributes(self.s3_client, bucket, obj_key, 'ETag',
+                                                                 version_id=version_id)
+                if got_attrs:
+                    assert got_attrs.get('VersionId') == version_id, f'Expected VersionId is {version_id}'
 
         with allure.step('Delete object and check it was deleted'):
             response = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key)
@@ -235,6 +287,8 @@ class TestS3Gate:
         with allure.step('Check we can get whole object from bucket'):
             got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, object_key)
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
+        self.check_object_attributes(bucket, object_key, parts_count)
 
     @allure.title('Test S3 Bucket tagging API')
     def test_s3_api_bucket_tagging(self, bucket):
@@ -415,6 +469,34 @@ class TestS3Gate:
         with allure.step('Delete one object from second bucket and check it is empty'):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
             self.check_objects_in_bucket(bucket_2, expected_objects=[])
+
+    def check_object_attributes(self, bucket: str, object_key: str, parts_count: int):
+        if not isinstance(self.s3_client, AwsCliClient):
+            logger.warning('Attributes check is not supported for boto3 implementation')
+            return
+
+        with allure.step("Check object's attributes"):
+            obj_parts = s3_gate_object.get_object_attributes(self.s3_client, bucket, object_key, 'ObjectParts',
+                                                             get_full_resp=False)
+            assert obj_parts.get('TotalPartsCount') == parts_count, f'Expected TotalPartsCount is {parts_count}'
+            assert len(obj_parts.get('Parts')) == parts_count, f'Expected Parts cunt is {parts_count}'
+
+        with allure.step("Check object's attribute max-parts"):
+            max_parts = 2
+            obj_parts = s3_gate_object.get_object_attributes(self.s3_client, bucket, object_key, 'ObjectParts',
+                                                             max_parts=max_parts, get_full_resp=False)
+            assert obj_parts.get('TotalPartsCount') == parts_count, f'Expected TotalPartsCount is {parts_count}'
+            assert obj_parts.get('MaxParts') == max_parts, f'Expected MaxParts is {parts_count}'
+            assert len(obj_parts.get('Parts')) == max_parts, f'Expected Parts count is {parts_count}'
+
+        with allure.step("Check object's attribute part-number-marker"):
+            part_number_marker = 3
+            obj_parts = s3_gate_object.get_object_attributes(self.s3_client, bucket, object_key, 'ObjectParts',
+                                                             part_number=part_number_marker, get_full_resp=False)
+            assert obj_parts.get('TotalPartsCount') == parts_count, f'Expected TotalPartsCount is {parts_count}'
+            assert obj_parts.get(
+                'PartNumberMarker') == part_number_marker, f'Expected PartNumberMarker is {part_number_marker}'
+            assert len(obj_parts.get('Parts')) == 1, f'Expected Parts count is {parts_count}'
 
     @allure.step('Expected all objects are presented in the bucket')
     def check_objects_in_bucket(self, bucket, expected_objects: list, unexpected_objects: list = None):

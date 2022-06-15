@@ -4,7 +4,7 @@
 Helper functions to use with `neofs-cli`, `neo-go`
 and other CLIs.
 """
-
+from typing import Union
 import subprocess
 import sys
 from contextlib import suppress
@@ -61,6 +61,29 @@ def _run_with_passwd(cmd):
     return cmd.decode()
 
 
+def _configure_aws_cli(cmd, key_id, access_key, out_format='json'):
+    child = pexpect.spawn(cmd)
+    child.delaybeforesend = 1
+
+    child.expect("AWS Access Key ID.*")
+    child.sendline(key_id)
+
+    child.expect("AWS Secret Access Key.*")
+    child.sendline(access_key)
+
+    child.expect("Default region name.*")
+    child.sendline('')
+
+    child.expect("Default output format.*")
+    child.sendline(out_format)
+
+    child.wait()
+    cmd = child.read()
+    # child.expect(pexpect.EOF)
+    # cmd = child.before
+    return cmd.decode()
+
+
 def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime):
     if 'allure' in sys.modules:
         command_attachment = (
@@ -73,7 +96,7 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
             allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
 
 
-def log_command_execution(cmd: str, output: str):
+def log_command_execution(cmd: str, output: Union[str, dict]):
     logger.info(f'{cmd}: {output}')
     if 'allure' in sys.modules:
         with suppress(Exception):

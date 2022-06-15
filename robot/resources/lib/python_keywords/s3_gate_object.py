@@ -5,12 +5,13 @@ import uuid
 from enum import Enum
 from typing import Optional, List
 
-from botocore.exceptions import ClientError
 import urllib3
+from botocore.exceptions import ClientError
 from robot.api import logger
 from robot.api.deco import keyword
 
 from cli_helpers import log_command_execution
+from python_keywords.aws_cli_client import AwsCliClient
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the
@@ -80,8 +81,11 @@ def list_objects_versions_s3(s3_client, bucket: str) -> list:
 def put_object_s3(s3_client, bucket: str, filepath: str):
     filename = os.path.basename(filepath)
 
-    with open(filepath, 'rb') as put_file:
-        file_content = put_file.read()
+    if isinstance(s3_client, AwsCliClient):
+        file_content = filepath
+    else:
+        with open(filepath, 'rb') as put_file:
+            file_content = put_file.read()
 
     try:
         response = s3_client.put_object(Body=file_content, Bucket=bucket, Key=filename)
@@ -156,14 +160,19 @@ def get_object_s3(s3_client, bucket: str, object_key: str, version_id: str = Non
         params = {'Bucket': bucket, 'Key': object_key}
         if version_id:
             params['VersionId'] = version_id
+
+        if isinstance(s3_client, AwsCliClient):
+            params['file_path'] = filename
+
         response = s3_client.get_object(**params)
         log_command_execution('S3 Get objects result', response)
 
-        with open(f'{filename}', 'wb') as get_file:
-            chunk = response['Body'].read(1024)
-            while chunk:
-                get_file.write(chunk)
+        if not isinstance(s3_client, AwsCliClient):
+            with open(f'{filename}', 'wb') as get_file:
                 chunk = response['Body'].read(1024)
+                while chunk:
+                    get_file.write(chunk)
+                    chunk = response['Body'].read(1024)
 
         return filename
 
@@ -212,8 +221,11 @@ def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upl
 
 @keyword('Upload part S3')
 def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, filepath: str) -> str:
-    with open(filepath, 'rb') as put_file:
-        file_content = put_file.read()
+    if isinstance(s3_client, AwsCliClient):
+        file_content = filepath
+    else:
+        with open(filepath, 'rb') as put_file:
+            file_content = put_file.read()
 
     try:
         response = s3_client.upload_part(UploadId=upload_id, Bucket=bucket_name, Key=object_key, PartNumber=part_num,
@@ -285,6 +297,28 @@ def delete_object_tagging(s3_client, bucket_name: str, object_key: str):
 
     except ClientError as err:
         raise Exception(f'Got error during delete object tagging: {err}') from err
+
+
+@keyword('Get object tagging')
+def get_object_attributes(s3_client, bucket_name: str, object_key: str, *attributes: str, version_id: str = None,
+                          max_parts: int = None, part_number: int = None, get_full_resp=True) -> dict:
+    try:
+        if not isinstance(s3_client, AwsCliClient):
+            logger.warn('Method get_object_attributes is not supported by boto3 client')
+            return {}
+        response = s3_client.get_object_attributes(bucket_name, object_key, *attributes, version_id=version_id,
+                                                   max_parts=max_parts, part_number=part_number)
+        log_command_execution('S3 Get object attributes', response)
+        for attr in attributes:
+            assert attr in response, f'Expected attribute {attr} in {response}'
+
+        if get_full_resp:
+            return response
+        else:
+            return response.get(attributes[0])
+
+    except ClientError as err:
+        raise Exception(f'Got error during get object attributes: {err}') from err
 
 
 def _make_objs_dict(key_names):

@@ -89,7 +89,6 @@ def create_bucket_s3(s3_client):
     try:
         s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
         log_command_execution(f'Created S3 bucket {bucket_name}', s3_bucket)
-        # logger.info(f'Created S3 bucket: {s3_bucket}')
         return bucket_name
 
     except ClientError as err:
@@ -103,7 +102,6 @@ def list_buckets_s3(s3_client):
     try:
         response = s3_client.list_buckets()
         log_command_execution('S3 List buckets result', response)
-        # logger.info(f'S3 List buckets result: {response}')
 
         for bucket in response['Buckets']:
             found_buckets.append(bucket['Name'])
@@ -120,7 +118,6 @@ def delete_bucket_s3(s3_client, bucket: str):
     try:
         response = s3_client.delete_bucket(Bucket=bucket)
         log_command_execution('S3 Delete bucket result', response)
-        # logger.info(f'S3 Delete bucket result: {response}')
 
         return response
 
@@ -134,7 +131,6 @@ def delete_bucket_s3(s3_client, bucket: str):
 def head_bucket(s3_client, bucket: str):
     try:
         response = s3_client.head_bucket(Bucket=bucket)
-        # logger.info(f'S3 Head bucket result: {response}')
         log_command_execution('S3 Head bucket result', response)
         return response
 
@@ -148,7 +144,6 @@ def head_bucket(s3_client, bucket: str):
 def set_bucket_versioning(s3_client, bucket_name: str, status: VersioningStatus):
     try:
         response = s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': status.value})
-        # logger.info(f'S3 Set bucket versioning to: {status.value}')
         log_command_execution('S3 Set bucket versioning to', response)
 
     except ClientError as err:
@@ -160,7 +155,6 @@ def get_bucket_versioning_status(s3_client, bucket_name: str) -> str:
     try:
         response = s3_client.get_bucket_versioning(Bucket=bucket_name)
         status = response.get('Status')
-        # logger.info(f'S3 Got bucket versioning status: {status}')
         log_command_execution('S3 Got bucket versioning status', response)
         return status
     except ClientError as err:
@@ -173,7 +167,6 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
         tags = [{'Key': tag_key, 'Value': tag_value} for tag_key, tag_value in tags]
         tagging = {'TagSet': tags}
         response = s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging=tagging)
-        # logger.info(f'S3 Put bucket tagging: {tags}')
         log_command_execution('S3 Put bucket tagging', response)
 
     except ClientError as err:
@@ -184,7 +177,6 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
 def get_bucket_tagging(s3_client, bucket_name: str) -> list:
     try:
         response = s3_client.get_bucket_tagging(Bucket=bucket_name)
-        # logger.info(f'S3 Get bucket tagging: {response}')
         log_command_execution('S3 Get bucket tagging', response)
         return response.get('TagSet')
 
@@ -196,7 +188,6 @@ def get_bucket_tagging(s3_client, bucket_name: str) -> list:
 def delete_bucket_tagging(s3_client, bucket_name: str):
     try:
         response = s3_client.delete_bucket_tagging(Bucket=bucket_name)
-        # logger.info(f'S3 Delete bucket tagging: {response}')
         log_command_execution('S3 Delete bucket tagging', response)
 
     except ClientError as err:

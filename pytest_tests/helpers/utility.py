@@ -6,12 +6,18 @@ from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
 
 
 def create_file_with_content(file_path: str = None, content: str = None) -> str:
+    mode = 'w+'
     if not content:
         content = os.urandom(SIMPLE_OBJ_SIZE)
+        mode = 'wb'
 
     if not file_path:
         file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
-    with open(file_path, 'w+') as out_file:
+    else:
+        if not os.path.exists(os.path.dirname(file_path)):
+            os.makedirs(os.path.dirname(file_path))
+
+    with open(file_path, mode) as out_file:
         out_file.write(content)
 
     return file_path
