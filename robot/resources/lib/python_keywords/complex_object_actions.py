@@ -24,7 +24,6 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Get Link Object')
-<<<<<<< HEAD
 def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
         wallet_config: str = WALLET_CONFIG):
     """
