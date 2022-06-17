@@ -52,8 +52,8 @@ pytest-docker:
 	-docker pull $(DEV_IMAGE_PY)
 	docker run -t --rm                                  \
 		--name neofs_tests_py							\
-		-e PYTHONPATH="/root/neofs-keywords/lib:/root/neofs-keywords/robot:/root/robot/resources/lib:/root/robot/resources/lib/python_keywords:/root/robot/variables:/root/pytest_tests/helpers"		\
-		-v $(CURDIR):/root			 					\
+		-e PYTHONPATH="/tests/neofs-keywords/lib:/tests/neofs-keywords/robot:/tests/robot/resources/lib:/tests/robot/resources/lib/python_keywords:/tests/robot/variables:/tests/pytest_tests/helpers"		\
+		-v $(CURDIR):/tests			 					\
 		-v /var/run/docker.sock:/var/run/docker.sock	\
 		-v $(NEO_BIN_DIR):/neofs						\
 		--privileged									\
@@ -63,7 +63,7 @@ pytest-docker:
 		-v 												\
 		-m "$(CI_MARKERS)"								\
 		--color=no										\
-		--junitxml=/root/xunit_results.xml				\
-		--alluredir=/root/allure_results 				\
+		--junitxml=/tests/xunit_results.xml				\
+		--alluredir=/tests/allure_results 				\
 		--setup-show									\
-		/root/pytest_tests/testsuites
+		/tests/pytest_tests/testsuites

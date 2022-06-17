@@ -29,6 +29,7 @@ COPY requirements.txt ./
 RUN python3 -m pip install awscliv2
 RUN ln /usr/local/bin/awscliv2 /usr/bin/aws
 RUN awsv2 --install
+RUN aws --version
 
 RUN pip install --no-cache-dir -r requirements.txt
 
