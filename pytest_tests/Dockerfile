@@ -20,6 +20,7 @@ RUN apt-get -y update && apt-get -y install \
     libssl-dev                  \
     expect                      \
     runc                        \
+    awscli                      \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
