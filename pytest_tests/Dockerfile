@@ -20,11 +20,14 @@ RUN apt-get -y update && apt-get -y install \
     libssl-dev                  \
     expect                      \
     runc                        \
-    awscli                      \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 COPY requirements.txt ./
+
+# install aws cli utility v2 from pip
+RUN python3 -m pip install awscliv2
+RUN ln /usr/local/bin/awscliv2 /usr/bin/aws
 
 RUN pip install --no-cache-dir -r requirements.txt
 

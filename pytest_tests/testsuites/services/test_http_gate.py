@@ -53,6 +53,7 @@ class TestHttpGate:
 
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#uploading', name='uploading')
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#downloading', name='downloading')
+    @pytest.mark.sanity
     @allure.title('Test Put over HTTP, Get over HTTP')
     def test_put_http_get_http(self, prepare_public_container, generate_files):
         """

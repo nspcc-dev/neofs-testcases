@@ -120,6 +120,7 @@ class TestS3Gate:
             assert bucket_2 not in buckets, f'Expected bucket {bucket_2} is not in the list'
 
     @allure.title('Test S3 Object API')
+    @pytest.mark.sanity
     @pytest.mark.parametrize('file_type', ['simple', 'large'], ids=['Simple object', 'Large object'])
     def test_s3_api_object(self, generate_files, file_type):
         """
@@ -150,7 +151,6 @@ class TestS3Gate:
                 s3_gate_object.get_object_attributes(self.s3_client, bucket, file_name, *attrs)
 
     @allure.title('Test S3 Sync directory')
-    @pytest.mark.current
     def test_s3_sync_dir(self, bucket):
         """
         Test checks sync directory with AWS CLI utility.
@@ -188,8 +188,7 @@ class TestS3Gate:
         obj_key = os.path.basename(file_name_simple)
 
         with allure.step('Set versioning enable for bucket'):
-            status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
-            assert status == s3_gate_bucket.VersioningStatus.SUSPENDED.value, f'Expected suspended status. Got {status}'
+            s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
 
             s3_gate_bucket.set_bucket_versioning(self.s3_client, bucket, status=s3_gate_bucket.VersioningStatus.ENABLED)
             status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)

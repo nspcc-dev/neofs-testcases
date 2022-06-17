@@ -28,7 +28,7 @@ logger = logging.getLogger('NeoLogger')
 @allure.title('Check binary versions')
 def check_binary_versions(request):
     environment_dir = request.config.getoption('--alluredir')
-    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
+    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate', 'aws']
     env_out = {}
     for binary in binaries:
         out = _cmd_run(f'{binary} --version')

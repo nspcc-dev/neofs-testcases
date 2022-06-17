@@ -17,8 +17,8 @@ CLEANUP_TIMEOUT = 10
 
 
 @allure.title('Test native object API')
+@pytest.mark.sanity
 @pytest.mark.grpc_api
-@pytest.mark.current
 def test_object_api(prepare_container, generate_file):
     cid, wallet = prepare_container
     wallet_cid = {'wallet': wallet, 'cid': cid}
