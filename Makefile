@@ -51,6 +51,7 @@ pytest-docker:
 	-docker rm   neofs_tests_py
 	-docker pull $(DEV_IMAGE_PY)
 	docker run -t --rm                                  \
+		-w /tests										\
 		--name neofs_tests_py							\
 		-e PYTHONPATH="/tests/neofs-keywords/lib:/tests/neofs-keywords/robot:/tests/robot/resources/lib:/tests/robot/resources/lib/python_keywords:/tests/robot/variables:/tests/pytest_tests/helpers"		\
 		-v $(CURDIR):/tests			 					\
