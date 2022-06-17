@@ -8,7 +8,7 @@ OUTPUT_DIR = artifacts/
 KEYWORDS_REPO = git@github.com:nspcc-dev/neofs-keywords.git
 VENVS = $(shell ls -1d venv/*/ | sort -u | xargs basename -a)
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-DEV_IMAGE_PY             ?= registry.spb.yadro.com/tools/pytest-neofs-x86_64:3
+DEV_IMAGE_PY             ?= registry.spb.yadro.com/tools/pytest-neofs-x86_64:4
 
 ifeq ($(shell uname -s),Darwin)
 	DOCKER_NETWORK         = --network bridge -p 389:389 -p 636:636
