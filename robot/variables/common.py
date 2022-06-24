@@ -46,21 +46,22 @@ STORAGE_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
 STORAGE_NODE_3 = os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080')
 STORAGE_NODE_4 = os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080')
 
+DEVENV_SERVICES_PATH = f"{os.getenv('DEVENV_PATH')}/services"
 NEOFS_NETMAP_DICT = {'s01': {'rpc': STORAGE_NODE_1,
                              'control': 's01.neofs.devenv:8081',
-                             'wif': 'Kwk6k2eC3L3QuPvD8aiaNyoSXgQ2YL1bwS5CP1oKoA9waeAze97s',
+                             'wallet_path':f"{DEVENV_SERVICES_PATH}/storage/wallet01.json",
                              'UN-LOCODE': 'RU MOW'},
                      's02': {'rpc': STORAGE_NODE_2,
                              'control': 's02.neofs.devenv:8081',
-                             'wif': 'L1NdHdnrTNGQZH1fJSrdUZJyeYFHvaQSSHZHxhK3udiGFdr5YaZ6',
+                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet02.json",
                              'UN-LOCODE': 'RU LED'},
                      's03': {'rpc': STORAGE_NODE_3,
                              'control': 's03.neofs.devenv:8081',
-                             'wif': 'KzN38k39af6ACWJjK8YrnARWo86ddcc1EuBWz7xFEdcELcP3ZTym',
+                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet03.json",
                              'UN-LOCODE': 'SE STO'},
                      's04': {'rpc': STORAGE_NODE_4,
                              'control': 's04.neofs.devenv:8081',
-                             'wif': 'Kzk1Z3dowAqfNyjqeYKWenZMduFV3NAKgXg9K1sA4jRKYxEc8HEW',
+                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet04.json",
                              'UN-LOCODE': 'FI HEL'}
                      }
 NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
@@ -68,11 +69,11 @@ NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/empty_passwd.yml"
-MAINNET_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/chain/node-wallet.json"
+MAINNET_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/chain/node-wallet.json"
 MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/mainnet_wallet_passwd.yml"
 MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
 MAINNET_WALLET_PASS = 'one'
-IR_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/ir/wallet01.json"
+IR_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/ir/wallet01.json"
 IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/ir_wallet_passwd.yml"
 IR_WALLET_PASS = 'one'
-STORAGE_WALLET_PATH = f"{os.getenv('DEVENV_PATH')}/services/storage/wallet01.json"
+STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"

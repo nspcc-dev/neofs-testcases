@@ -27,8 +27,7 @@ eACL Deny Replication Operations
 
     [Setup]                 Setup
 
-    ${_}     ${NODE}    ${WIF_STORAGE} =     Get control endpoint with wif
-    ${WALLET_STORAGE}    ${_} =    Prepare Wallet with WIF And Deposit    ${WIF_STORAGE}
+    ${_}    ${NODE}    ${STORAGE_WALLET} =    Get control endpoint and wallet
 
     ${WALLET}    ${_}    ${_} =    Prepare Wallet And Deposit
 
@@ -49,13 +48,13 @@ eACL Deny Replication Operations
                         ...  Put object    ${WALLET}    ${FILE}    ${CID}
 
                         # Drop object to check replication
-                        Drop object    ${NODE}    ${WALLET_STORAGE}    ${CID}    ${OID}
+                        Drop object    ${NODE}    ${STORAGE_WALLET}    ${CID}    ${OID}
 
                         Tick Epoch
                         Sleep   ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                         # We assume that during one epoch object should be replicated
-    ${COPIES} =         Get Object Copies   Simple      ${WALLET_STORAGE}   ${CID}  ${OID}
+    ${COPIES} =         Get Object Copies   Simple      ${STORAGE_WALLET}   ${CID}  ${OID}
                         Should Be Equal As Numbers      ${EXPECTED_COPIES}  ${COPIES}
                         ...     msg="Dropped object should be replicated in one epoch"
 

@@ -19,8 +19,7 @@ Drop command in control group
 
     [Setup]                 Setup
 
-    ${_}    ${NODE}    ${WIF_STORAGE} =     Get control endpoint with wif
-    ${WALLET_STORAGE}    ${_} =          Prepare Wallet with WIF And Deposit    ${WIF_STORAGE}
+    ${_}    ${NODE}    ${STORAGE_WALLET}=     Get control endpoint and wallet
     ${LOCODE} =         Get Locode
 
     ${FILE_SIMPLE}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
@@ -39,7 +38,7 @@ Drop command in control group
                         Get object    ${WALLET}    ${PRIV_CID}    ${S_OID}    ${EMPTY}    s_file_read
                         Head object    ${WALLET}    ${PRIV_CID}    ${S_OID}
 
-                        Drop object    ${NODE}    ${WALLET_STORAGE}    ${PRIV_CID}    ${S_OID}
+                        Drop object    ${NODE}    ${STORAGE_WALLET}    ${PRIV_CID}    ${S_OID}
 
                         Wait Until Keyword Succeeds    3x    ${SHARD_0_GC_SLEEP}
                         ...  Run Keyword And Expect Error    Error:*
@@ -48,7 +47,7 @@ Drop command in control group
                         ...  Run Keyword And Expect Error    Error:*
                         ...  Head object    ${WALLET}    ${PRIV_CID}    ${S_OID}    options=--ttl 1
 
-                        Drop object    ${NODE}    ${WALLET_STORAGE}    ${PRIV_CID}    ${S_OID}
+                        Drop object    ${NODE}    ${STORAGE_WALLET}    ${PRIV_CID}    ${S_OID}
 
     ##########################
     # Dropping complex object
@@ -58,14 +57,14 @@ Drop command in control group
                         Get object    ${WALLET}    ${PRIV_CID}    ${C_OID}    ${EMPTY}    s_file_read
                         Head object    ${WALLET}    ${PRIV_CID}    ${C_OID}
 
-                        Drop object    ${NODE}    ${WALLET_STORAGE}    ${PRIV_CID}    ${C_OID}
+                        Drop object    ${NODE}    ${STORAGE_WALLET}    ${PRIV_CID}    ${C_OID}
 
                         Get object    ${WALLET}    ${PRIV_CID}    ${C_OID}    ${EMPTY}    s_file_read
                         Head object    ${WALLET}    ${PRIV_CID}    ${C_OID}
 
     @{SPLIT_OIDS} =     Get Object Parts By Link Object    ${WALLET}    ${PRIV_CID}   ${C_OID}
     FOR    ${CHILD_OID}    IN    @{SPLIT_OIDS}
-        Drop object    ${NODE}    ${WALLET_STORAGE}    ${PRIV_CID}    ${CHILD_OID}
+        Drop object    ${NODE}    ${STORAGE_WALLET}    ${PRIV_CID}    ${CHILD_OID}
 
     END
 
