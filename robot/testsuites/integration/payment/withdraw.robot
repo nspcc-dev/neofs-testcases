@@ -20,8 +20,7 @@ NeoFS Deposit and Withdraw
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}    ${WIF} =   Init Wallet with Address    ${ASSETS_DIR}
-    ${SCRIPT_HASH} =        Get ScriptHash                        ${WIF}
+    ${WALLET}   ${ADDR}    ${_} =   Init Wallet with Address    ${ASSETS_DIR}
 
     ##########################################################
     # Transferring GAS from initial wallet to our test wallet
@@ -47,15 +46,15 @@ NeoFS Deposit and Withdraw
     ###########################
     # Withdrawing deposit back
     ###########################
-                            Withdraw Mainnet Gas          ${WALLET}              ${ADDR}    ${SCRIPT_HASH}    ${WITHDRAW_AMOUNT}
+                            Withdraw Mainnet Gas    ${WALLET}    ${WITHDRAW_AMOUNT}
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
     ${NEOFS_BALANCE} =      Get NeoFS Balance             ${WALLET}
     ${EXPECTED_BALANCE} =   Evaluate                      ${DEPOSIT_AMOUNT} - ${WITHDRAW_AMOUNT}
                             Should Be Equal As numbers    ${NEOFS_BALANCE}    ${EXPECTED_BALANCE}
 
-    ${MAINNET_BALANCE_AFTER} =      Get Mainnet Balance                   ${ADDR}
-    ${MAINNET_BALANCE_DIFF} =       Evaluate    ${MAINNET_BALANCE_AFTER} - ${MAINNET_BALANCE}
-                                    Should Be True          ${MAINNET_BALANCE_DIFF} < ${WITHDRAW_AMOUNT}
+    ${MAINNET_BALANCE_AFTER} =      Get Mainnet Balance    ${ADDR}
+    ${MAINNET_BALANCE_DIFF} =       Evaluate               ${MAINNET_BALANCE_AFTER} - ${MAINNET_BALANCE}
+                                    Should Be True         ${MAINNET_BALANCE_DIFF} < ${WITHDRAW_AMOUNT}
 
     [Teardown]              Teardown    withdraw

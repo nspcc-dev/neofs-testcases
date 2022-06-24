@@ -18,13 +18,6 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
-# TODO: move to neofs-keywords
-@keyword('Get ScriptHash')
-def get_scripthash(wif: str):
-    acc = wallet.Account.from_wif(wif, '')
-    return str(acc.script_hash)
-
-
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
     header = neofs_verbs.head_object(wallet_path, cid, oid_ts)

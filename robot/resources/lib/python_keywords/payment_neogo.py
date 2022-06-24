@@ -8,9 +8,10 @@ from common import (MAINNET_WALLET_PATH, MORPH_ENDPOINT,
 import rpc_client
 import contract
 import converters
-import wallet
+from wallet import nep17_transfer
 from wrappers import run_sh_with_passwd_contract
 from converters import load_wallet
+from neo3 import wallet
 
 from robot.api.deco import keyword
 from robot.api import logger
@@ -31,7 +32,10 @@ mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
 
 
 @keyword('Withdraw Mainnet Gas')
-def withdraw_mainnet_gas(wlt: str, address: str, scripthash: str, amount: int):
+def withdraw_mainnet_gas(wlt: str, amount: int):
+    address = _address_from_wallet(wlt, EMPTY_PASSWORD)
+    scripthash = wallet.Account.address_to_script_hash(address)
+
     cmd = (
         f"{NEOGO_CLI_EXEC} contract invokefunction -w {wlt} -a {address} "
         f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
@@ -65,9 +69,9 @@ def transaction_accepted(tx_id: str):
             if resp is not None:
                 logger.info(f"TX is accepted in block: {resp}")
                 return True
-    except Exception as e:
-        logger.info(f"request failed with error: {e}")
-        raise e
+    except Exception as out:
+        logger.info(f"request failed with error: {out}")
+        raise out
     return False
 
 
@@ -93,9 +97,9 @@ def get_balance(wallet_path: str):
         logger.info(f"Got response \n{resp}")
         value = int(resp['stack'][0]['value'])
         return value / (10 ** MORPH_TOKEN_POWER)
-    except Exception as e:
-        logger.error(f"failed to get wallet balance: {e}")
-        raise e
+    except Exception as out:
+        logger.error(f"failed to get wallet balance: {out}")
+        raise out
 
 
 @keyword('Transfer Mainnet Gas')
@@ -112,11 +116,9 @@ def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMP
     Returns:
         (void)
     '''
-    wlt = load_wallet(wallet_to, wallet_password)
-    address_to = wlt.accounts[-1].address
-    logger.info(f"got address to: {address_to}")
+    address_to = _address_from_wallet(wallet_to, wallet_password)
 
-    txid = wallet.nep17_transfer(MAINNET_WALLET_PATH, address_to, amount, NEO_MAINNET_ENDPOINT,
+    txid = nep17_transfer(MAINNET_WALLET_PATH, address_to, amount, NEO_MAINNET_ENDPOINT,
             wallet_pass=MAINNET_WALLET_PASS, addr_from=MAINNET_SINGLE_ADDR)
     if not transaction_accepted(txid):
         raise RuntimeError(f"TX {txid} hasn't been processed")
@@ -131,11 +133,23 @@ def neofs_deposit(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASS
     deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
     logger.info(f"NeoFS contract address: {deposit_addr}")
 
-    wlt = load_wallet(wallet_to, wallet_password)
-    address_to = wlt.accounts[-1].address
-    logger.info(f"got address to: {address_to}")
+    address_to = _address_from_wallet(wallet_to, wallet_password)
 
-    txid = wallet.nep17_transfer(wallet_to, deposit_addr, amount, NEO_MAINNET_ENDPOINT,
+    txid = nep17_transfer(wallet_to, deposit_addr, amount, NEO_MAINNET_ENDPOINT,
             wallet_pass=wallet_password, addr_from=address_to)
     if not transaction_accepted(txid):
         raise RuntimeError(f"TX {txid} hasn't been processed")
+
+def _address_from_wallet(wlt: str,  wallet_password: str):
+    """
+    Extracting the address from the given wallet.
+    Args:
+        wlt (str):  the path to the wallet to extract address from
+        wallet_password (str): the password for the given wallet
+    Returns:
+        (str): the address for the wallet
+    """
+    wallet_loaded = load_wallet(wlt, wallet_password)
+    address = wallet_loaded.accounts[-1].address
+    logger.info(f"got address: {address}")
+    return address

@@ -35,7 +35,7 @@ CLI Accounting Balance Test
     Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     # Getting balance with wallet and wrong address
-    ${ANOTHER_WALLET}   ${ANOTHER_ADDR}     ${ANOTHER_WIF} =   Init Wallet With Address     ${ASSETS_DIR}
+    ${_}   ${ANOTHER_ADDR}     ${_} =   Init Wallet With Address     ${ASSETS_DIR}
     ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ANOTHER_ADDR} --wallet ${WALLET} --config ${WALLET_CONFIG}
                     ...    shell=True
     Should Be Equal As Strings     ${OUTPUT.stderr}    --address option must be specified and valid
