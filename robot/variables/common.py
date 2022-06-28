@@ -1,15 +1,9 @@
 import os
 
-ROOT = '../..'
-CERT = "%s/../../ca" % ROOT
-
 # Common NeoFS variables can be declared from neofs-dev-env env variables.
 # High priority is accepted for those envs.
 
 CONTAINER_WAIT_INTERVAL = "1m"
-
-NEOFS_EPOCH_TIMEOUT = (os.getenv("NEOFS_EPOCH_TIMEOUT") if os.getenv("NEOFS_EPOCH_TIMEOUT")
-                       else os.getenv("NEOFS_IR_TIMERS_EPOCH", "300s"))
 
 SIMPLE_OBJ_SIZE = 1000
 COMPLEX_OBJ_SIZE = 2000
@@ -70,10 +64,10 @@ NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/empty_passwd.yml"
 MAINNET_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/chain/node-wallet.json"
-MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/mainnet_wallet_passwd.yml"
+MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
 MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
 MAINNET_WALLET_PASS = 'one'
 IR_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/ir/wallet01.json"
-IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/ir_wallet_passwd.yml"
+IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
 IR_WALLET_PASS = 'one'
 STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"

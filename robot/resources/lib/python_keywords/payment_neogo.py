@@ -50,7 +50,7 @@ def withdraw_mainnet_gas(wlt: str, amount: int):
         raise Exception("Can not get Tx.")
     tx = m.group(1)
     if not transaction_accepted(tx):
-        raise RuntimeError(f"TX {tx} hasn't been processed")
+        raise AssertionError(f"TX {tx} hasn't been processed")
 
 
 def transaction_accepted(tx_id: str):
@@ -121,7 +121,7 @@ def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMP
     txid = nep17_transfer(MAINNET_WALLET_PATH, address_to, amount, NEO_MAINNET_ENDPOINT,
             wallet_pass=MAINNET_WALLET_PASS, addr_from=MAINNET_SINGLE_ADDR)
     if not transaction_accepted(txid):
-        raise RuntimeError(f"TX {txid} hasn't been processed")
+        raise AssertionError(f"TX {txid} hasn't been processed")
 
 
 @keyword('NeoFS Deposit')
@@ -138,7 +138,7 @@ def neofs_deposit(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASS
     txid = nep17_transfer(wallet_to, deposit_addr, amount, NEO_MAINNET_ENDPOINT,
             wallet_pass=wallet_password, addr_from=address_to)
     if not transaction_accepted(txid):
-        raise RuntimeError(f"TX {txid} hasn't been processed")
+        raise AssertionError(f"TX {txid} hasn't been processed")
 
 def _address_from_wallet(wlt: str,  wallet_password: str):
     """
