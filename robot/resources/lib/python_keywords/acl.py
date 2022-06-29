@@ -8,6 +8,7 @@ import uuid
 from enum import Enum, auto
 
 import base58
+from neo3 import wallet
 from cli_helpers import _cmd_run
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
 from robot.api import logger
@@ -53,9 +54,25 @@ def get_eacl(wallet: str, cid: str):
 
 
 @keyword('Set eACL')
-def set_eacl(wallet: str, cid: str, eacl_table_path: str):
+def set_eacl(wlt: str, cid: str, eacl_table_path: str, allow_wlt: str=None):
+    if allow_wlt is not None:
+        wlt_content = ''
+        with open(allow_wlt) as out:
+            wlt_content = json.load(out)
+        wallet_from_json = wallet.Wallet.from_json(wlt_content, password="")
+        pub_key_64 = base64.b64encode(
+            bytes.fromhex(str(wallet_from_json.accounts[0].public_key))).decode('utf-8')
+        with open(eacl_table_path, 'r') as out:
+            json_d = json.loads(out.read())
+            for i in json_d['records']:
+                if 'keys' in i['targets'][0].keys():
+                    i['targets'][0]['keys'] = [pub_key_64]
+        with open(f"{ASSETS_DIR}/eacl_allow_pubkey_deny_others", 'w') as out:
+            json.dump(json_d, out, indent=4)
+        eacl_table_path = f"{ASSETS_DIR}/eacl_allow_pubkey_deny_others"
+
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wlt} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --config {WALLET_CONFIG} --await'
     )
     _cmd_run(cmd)
@@ -83,16 +100,16 @@ def create_eacl(cid: str, rules_list: list):
 
 
 @keyword('Form BearerToken File')
-def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
+def form_bearertoken_file(wlt: str, cid: str, eacl_records: list) -> str:
     """
-    This function fetches eACL for given <cid> on behalf of <wif>,
+    This function fetches eACL for given <cid> on behalf of <wlt>,
     then extends it with filters taken from <eacl_records>, signs
     with bearer token and writes to file
     """
     enc_cid = _encode_cid_for_eacl(cid)
     file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
 
-    eacl = get_eacl(wif, cid)
+    eacl = get_eacl(wlt, cid)
     json_eacl = dict()
     if eacl:
         eacl = eacl.replace('eACL: ', '')
@@ -156,7 +173,7 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
         json.dump(eacl_result, eacl_file, ensure_ascii=False, indent=4)
 
     logger.info(f"Got these extended ACL records: {eacl_result}")
-    sign_bearer_token(wif, file_path)
+    sign_bearer_token(wlt, file_path)
     return file_path
 
 
