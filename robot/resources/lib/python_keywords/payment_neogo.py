@@ -1,31 +1,30 @@
 #!/usr/bin/python3
 
+import os
 import re
 import time
 
-from common import (MAINNET_WALLET_PATH, MORPH_ENDPOINT,
-        NEO_MAINNET_ENDPOINT, NEOFS_CONTRACT, MAINNET_SINGLE_ADDR)
-import rpc_client
+from neo3 import wallet
+from robot.api import logger
+from robot.api.deco import keyword
+
 import contract
 import converters
+import rpc_client
+from common import (MAINNET_WALLET_PATH, MORPH_ENDPOINT,
+                    NEO_MAINNET_ENDPOINT, NEOFS_CONTRACT, MAINNET_SINGLE_ADDR)
+from converters import load_wallet
 from wallet import nep17_transfer
 from wrappers import run_sh_with_passwd_contract
-from converters import load_wallet
-from neo3 import wallet
-
-from robot.api.deco import keyword
-from robot.api import logger
-from robot.libraries.BuiltIn import BuiltIn
-
 
 ROBOT_AUTO_KEYWORDS = False
 
 MORPH_TOKEN_POWER = 12
 EMPTY_PASSWORD = ''
 MAINNET_WALLET_PASS = 'one'
-TX_PERSIST_TIMEOUT = 15 #seconds
+TX_PERSIST_TIMEOUT = 15  # seconds
 
-NEOGO_CLI_EXEC = BuiltIn().get_variable_value("${NEOGO_CLI_EXEC}")
+NEOGO_CLI_EXEC = os.getenv('NEOGO_CLI_EXEC')
 
 morph_rpc_cli = rpc_client.RPCClient(MORPH_ENDPOINT)
 mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
@@ -90,10 +89,10 @@ def get_balance(wallet_path: str):
     ]
     try:
         resp = morph_rpc_cli.invoke_function(
-                contract.get_balance_contract_hash(MORPH_ENDPOINT),
-                'balanceOf',
-                payload
-            )
+            contract.get_balance_contract_hash(MORPH_ENDPOINT),
+            'balanceOf',
+            payload
+        )
         logger.info(f"Got response \n{resp}")
         value = int(resp['stack'][0]['value'])
         return value / (10 ** MORPH_TOKEN_POWER)
@@ -103,8 +102,9 @@ def get_balance(wallet_path: str):
 
 
 @keyword('Transfer Mainnet Gas')
-def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASSWORD):
-    '''
+def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASSWORD,
+                         wallet_path: str = MAINNET_WALLET_PATH):
+    """
     This function transfer GAS in main chain from mainnet wallet to
     the provided wallet. If the wallet contains more than one address,
     the assets will be transferred to the last one.
@@ -113,13 +113,14 @@ def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMP
         amount (int): amount of gas to transfer
         wallet_password (optional, str): password of the wallet; it is
             required to decode the wallet and extract its addresses
+        wallet_path (str): path to chain node wallet
     Returns:
         (void)
-    '''
+    """
     address_to = _address_from_wallet(wallet_to, wallet_password)
 
-    txid = nep17_transfer(MAINNET_WALLET_PATH, address_to, amount, NEO_MAINNET_ENDPOINT,
-            wallet_pass=MAINNET_WALLET_PASS, addr_from=MAINNET_SINGLE_ADDR)
+    txid = nep17_transfer(wallet_path, address_to, amount, NEO_MAINNET_ENDPOINT,
+                          wallet_pass=MAINNET_WALLET_PASS, addr_from=MAINNET_SINGLE_ADDR)
     if not transaction_accepted(txid):
         raise AssertionError(f"TX {txid} hasn't been processed")
 
@@ -136,11 +137,12 @@ def neofs_deposit(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASS
     address_to = _address_from_wallet(wallet_to, wallet_password)
 
     txid = nep17_transfer(wallet_to, deposit_addr, amount, NEO_MAINNET_ENDPOINT,
-            wallet_pass=wallet_password, addr_from=address_to)
+                          wallet_pass=wallet_password, addr_from=address_to)
     if not transaction_accepted(txid):
         raise AssertionError(f"TX {txid} hasn't been processed")
 
-def _address_from_wallet(wlt: str,  wallet_password: str):
+
+def _address_from_wallet(wlt: str, wallet_password: str):
     """
     Extracting the address from the given wallet.
     Args:
