@@ -6,20 +6,22 @@ from time import sleep
 
 import allure
 import pytest
+from robot.api import deco
+
 import rpc_client
 import wallet
 from cli_helpers import _cmd_run
-from common import (ASSETS_DIR, COMMON_PLACEMENT_RULE, COMPLEX_OBJ_SIZE,
-                    MAINNET_WALLET_WIF, NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE)
+from common import (ASSETS_DIR, COMPLEX_OBJ_SIZE, COMMON_PLACEMENT_RULE,
+                    MAINNET_WALLET_PATH, NEO_MAINNET_ENDPOINT, SIMPLE_OBJ_SIZE, REMOTE_HOST, CONTROL_NODE_USER,
+                    CONTROL_NODE_PWD)
+from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.container import create_container
 from python_keywords.payment_neogo import get_balance
 from python_keywords.utility_keywords import generate_file_and_file_hash
-from robot.api import deco
-from wallet_keywords import neofs_deposit, transfer_mainnet_gas
+from ssh_helper import HostClient
 from wellknown_acl import PUBLIC_ACL
 
 deco.keyword = allure.step
-
 
 logger = logging.getLogger('NeoLogger')
 
@@ -57,39 +59,43 @@ def init_wallet_with_address():
 @allure.title('Prepare wallet and deposit')
 def prepare_wallet_and_deposit(init_wallet_with_address):
     deposit = 30
-    wallet, addr, wif = init_wallet_with_address
-    logger.info(f'Init wallet: {wallet},\naddr: {addr},\nwif: {wif}')
+    local_wallet_path = None
+    wallet, addr, _ = init_wallet_with_address
+    logger.info(f'Init wallet: {wallet},\naddr: {addr}')
 
-    txid = transfer_mainnet_gas(MAINNET_WALLET_WIF, addr, deposit + 1)
-    wait_unitl_transaction_accepted_in_block(txid)
-    deposit_tx = neofs_deposit(wif, deposit)
-    wait_unitl_transaction_accepted_in_block(deposit_tx)
+    if REMOTE_HOST:
+        ssh_client = HostClient(REMOTE_HOST, CONTROL_NODE_USER, CONTROL_NODE_PWD)
+        local_wallet_path = os.path.join(ASSETS_DIR, os.path.basename(MAINNET_WALLET_PATH))
+        ssh_client.copy_file_from_host(MAINNET_WALLET_PATH, local_wallet_path)
 
-    return wallet, wif
+    transfer_mainnet_gas(wallet, deposit + 1, wallet_path=local_wallet_path or MAINNET_WALLET_PATH)
+    neofs_deposit(wallet, deposit)
+
+    return wallet
 
 
 @pytest.fixture()
 @allure.title('Create Container')
 def prepare_container(prepare_wallet_and_deposit):
-    wallet, wif = prepare_wallet_and_deposit
-    return prepare_container_impl(wallet, wif)
+    wallet = prepare_wallet_and_deposit
+    return prepare_container_impl(wallet)
 
 
 @pytest.fixture(scope='module')
 @allure.title('Create Public Container')
 def prepare_public_container(prepare_wallet_and_deposit):
     placement_rule = 'REP 1 IN X CBF 1 SELECT 1 FROM * AS X'
-    wallet, wif = prepare_wallet_and_deposit
-    return prepare_container_impl(wallet, wif, rule=placement_rule, basic_acl=PUBLIC_ACL)
+    wallet = prepare_wallet_and_deposit
+    return prepare_container_impl(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
 
 
-def prepare_container_impl(wallet: str, wif: str, rule=COMMON_PLACEMENT_RULE, basic_acl: str = ''):
-    balance = get_balance(wif)
+def prepare_container_impl(wallet: str, rule=COMMON_PLACEMENT_RULE, basic_acl: str = ''):
+    balance = get_balance(wallet)
     assert balance > 0, f'Expected balance is greater than 0. Got {balance}'
 
     cid = create_container(wallet, rule=rule, basic_acl=basic_acl)
 
-    new_balance = get_balance(wif)
+    new_balance = get_balance(wallet)
     assert new_balance < balance, 'Expected some fee has charged'
 
     return cid, wallet

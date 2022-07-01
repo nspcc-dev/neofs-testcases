@@ -3,6 +3,10 @@
 import re
 import time
 
+from neo3 import wallet
+from robot.api import logger
+from robot.api.deco import keyword
+
 import contract
 import converters
 import rpc_client
@@ -10,9 +14,6 @@ from common import (GAS_HASH, MAINNET_SINGLE_ADDR, MAINNET_WALLET_PATH,
                     MORPH_ENDPOINT, NEO_MAINNET_ENDPOINT, NEOFS_CONTRACT,
                     NEOGO_CLI_EXEC)
 from converters import load_wallet
-from neo3 import wallet
-from robot.api import logger
-from robot.api.deco import keyword
 from wallet import nep17_transfer
 from wrappers import run_sh_with_passwd_contract
 
@@ -101,9 +102,9 @@ def get_balance(wallet_path: str):
 
 
 @keyword('Transfer Mainnet Gas')
-def transfer_mainnet_gas(wallet_to: str, amount: int,
-                         wallet_password: str = EMPTY_PASSWORD):
-    '''
+def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASSWORD,
+                         wallet_path: str = MAINNET_WALLET_PATH):
+    """
     This function transfer GAS in main chain from mainnet wallet to
     the provided wallet. If the wallet contains more than one address,
     the assets will be transferred to the last one.
@@ -112,15 +113,14 @@ def transfer_mainnet_gas(wallet_to: str, amount: int,
         amount (int): amount of gas to transfer
         wallet_password (optional, str): password of the wallet; it is
             required to decode the wallet and extract its addresses
+        wallet_path (str): path to chain node wallet
     Returns:
         (void)
-    '''
+    """
     address_to = _address_from_wallet(wallet_to, wallet_password)
 
-    txid = nep17_transfer(MAINNET_WALLET_PATH, address_to, amount,
-                          NEO_MAINNET_ENDPOINT,
-                          wallet_pass=MAINNET_WALLET_PASS,
-                          addr_from=MAINNET_SINGLE_ADDR)
+    txid = nep17_transfer(wallet_path, address_to, amount, NEO_MAINNET_ENDPOINT,
+                          wallet_pass=MAINNET_WALLET_PASS, addr_from=MAINNET_SINGLE_ADDR)
     if not transaction_accepted(txid):
         raise AssertionError(f"TX {txid} hasn't been processed")
 
@@ -137,14 +137,13 @@ def neofs_deposit(wallet_to: str, amount: int,
 
     address_to = _address_from_wallet(wallet_to, wallet_password)
 
-    txid = nep17_transfer(wallet_to, deposit_addr, amount,
-                          NEO_MAINNET_ENDPOINT, wallet_pass=wallet_password,
-                          addr_from=address_to)
+    txid = nep17_transfer(wallet_to, deposit_addr, amount, NEO_MAINNET_ENDPOINT,
+                          wallet_pass=wallet_password, addr_from=address_to)
     if not transaction_accepted(txid):
         raise AssertionError(f"TX {txid} hasn't been processed")
 
 
-def _address_from_wallet(wlt: str,  wallet_password: str):
+def _address_from_wallet(wlt: str, wallet_password: str):
     """
     Extracting the address from the given wallet.
     Args:
