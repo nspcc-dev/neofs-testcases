@@ -71,3 +71,7 @@ IR_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/ir/wallet01.json"
 IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
 IR_WALLET_PASS = 'one'
 STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
+
+CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
+CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
+REMOTE_HOST = os.getenv('REMOTE_HOST')
