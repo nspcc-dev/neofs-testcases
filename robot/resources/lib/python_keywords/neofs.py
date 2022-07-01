@@ -18,13 +18,6 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
 
-# TODO: move to neofs-keywords
-@keyword('Get ScriptHash')
-def get_scripthash(wif: str):
-    acc = wallet.Account.from_wif(wif, '')
-    return str(acc.script_hash)
-
-
 @keyword('Verify Head Tombstone')
 def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
     header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
@@ -57,22 +50,31 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
                               msg="Header Session OID is wrong")
 
 
-@keyword('Get control endpoint with wif')
-def get_control_endpoint_with_wif(endpoint_number: str = ''):
+@keyword('Get control endpoint and wallet')
+def get_control_endpoint_and_wallet(endpoint_number: str = ''):
+    """
+        Gets control endpoint for a random or given node
+
+        Args:
+            endpoint_number (optional, str): the number of the node
+                                        in the form of 's01', 's02', etc.
+                                        given in NEOFS_NETMAP_DICT as keys 
+        Returns:
+            (str): the number of the node
+            (str): endpoint control for the node
+            (str): the wallet of the respective node
+    """    
     if endpoint_number == '':
-        netmap = []
-        for key in NEOFS_NETMAP_DICT.keys():
-            netmap.append(key)
-        endpoint_num = random.sample(netmap, 1)[0]
+        endpoint_num = random.choice(list(NEOFS_NETMAP_DICT.keys()))
         logger.info(f'Random node chosen: {endpoint_num}')
     else:
         endpoint_num = endpoint_number
 
     endpoint_values = NEOFS_NETMAP_DICT[f'{endpoint_num}']
     endpoint_control = endpoint_values['control']
-    wif = endpoint_values['wif']
+    wlt = endpoint_values['wallet_path']
 
-    return endpoint_num, endpoint_control, wif
+    return endpoint_num, endpoint_control, wlt
 
 
 @keyword('Get Locode')

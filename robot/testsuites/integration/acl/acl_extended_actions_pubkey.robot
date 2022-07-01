@@ -26,16 +26,12 @@ Extended ACL Operations
 
     [Setup]                 Setup
 
-    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
-                            Log    Check extended ACL with simple object
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
+                            Check eACL Deny All Other and Allow All Pubkey    ${FILE_S}
 
-                            Log    Check extended ACL with complex object
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny All Other and Allow All Pubkey    ${WALLET}    ${FILE_S}    ${WALLET_OTH}
+                            Check eACL Deny All Other and Allow All Pubkey    ${FILE_S}
 
 
     [Teardown]              Teardown    acl_extended_actions_pubkey
@@ -44,7 +40,10 @@ Extended ACL Operations
 *** Keywords ***
 
 Check eACL Deny All Other and Allow All Pubkey
-    [Arguments]    ${USER_WALLET}    ${FILE_S}    ${WALLET_OTH}
+    [Arguments]    ${FILE_S}
+
+    ${USER_WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
 
     ${CID} =                Create Container           ${USER_WALLET}     basic_acl=eacl-public-read-write
     ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}

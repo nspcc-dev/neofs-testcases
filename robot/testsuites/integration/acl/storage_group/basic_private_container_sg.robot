@@ -18,16 +18,8 @@ Basic ACL Operations for Private Container
 
     [Setup]                 Setup
 
-    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-    ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
-
-    ${PRIV_CID} =           Create Container    ${WALLET}
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check Private Container    Simple    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
-
-    ${PRIV_CID} =           Create Container    ${WALLET}
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check Private Container    Complex    ${WALLET}    ${FILE_S}    ${PRIV_CID}    ${WALLET_OTH}
+                            Check Private Container    Simple
+                            Check Private Container    Complex
 
     [Teardown]              Teardown    acl_basic_private_container_storagegroup
 
@@ -35,16 +27,23 @@ Basic ACL Operations for Private Container
 *** Keywords ***
 
 Check Private Container
-    [Arguments]     ${RUN_TYPE}    ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}    ${OTHER_WALLET}
+    [Arguments]     ${COMPLEXITY}
 
-    ${WALLET_IR}    ${ADDR_IR} =     Prepare Wallet with WIF And Deposit    ${NEOFS_IR_WIF}
+    ${FILE_S}    ${_} =     Run Keyword If      """${COMPLEXITY}""" == """Simple"""
+                            ...         Generate file    ${SIMPLE_OBJ_SIZE}
+                            ...     ELSE
+                            ...         Generate file    ${COMPLEX_OBJ_SIZE}
+
+    ${USER_WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${OTHER_WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
+    ${PRIV_CID} =       Create Container    ${USER_WALLET}
 
     ${OID} =            Put object      ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}
     @{OBJECTS} =        Create List     ${OID}
     ${SG} =             Put Storagegroup    ${USER_WALLET}  ${PRIV_CID}  ${OBJECTS}
 
                         Run Storage Group Operations And Expect Success
-                        ...     ${USER_WALLET}    ${PRIV_CID}   ${OBJECTS}      ${RUN_TYPE}
+                        ...     ${USER_WALLET}    ${PRIV_CID}   ${OBJECTS}      ${COMPLEXITY}
 
                         Run Storage Group Operations And Expect Failure
                         ...     ${OTHER_WALLET}    ${PRIV_CID}   ${OBJECTS}     ${SG}
@@ -52,4 +51,4 @@ Check Private Container
     # In private container, Inner Ring is allowed to read (Storage Group List and Get),
     # so using here keyword for read-only container.
                         Run Storage Group Operations On System's Behalf In RO Container
-                        ...                         ${PRIV_CID}   ${OBJECTS}    ${RUN_TYPE}
+                        ...                         ${PRIV_CID}   ${OBJECTS}    ${COMPLEXITY}

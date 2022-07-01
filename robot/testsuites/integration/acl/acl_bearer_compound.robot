@@ -12,7 +12,7 @@ Resource    payment_operations.robot
 Resource    setup_teardown.robot
 
 *** Variables ***
-${SYSTEM_KEY} =     ${NEOFS_IR_WIF}
+${DEPOSIT} =            ${30}
 &{USER_HEADER} =        key1=1      key2=abc
 &{ANOTHER_HEADER} =     key1=oth    key2=oth
 
@@ -43,21 +43,22 @@ BearerToken Operations for Сompound Operations
 Check Сompound Operations
     [Arguments]         ${USER_WALLET}    ${OTHER_WALLET}    ${FILE_S}
 
-    ${WALLET_SYS}    ${ADDR_SYS} =     Prepare Wallet with WIF And Deposit    ${SYSTEM_KEY}
+                        Transfer Mainnet Gas    ${IR_WALLET_PATH}       ${DEPOSIT + 1}  wallet_password=${IR_WALLET_PASS}
+                        NeoFS Deposit           ${IR_WALLET_PATH}       ${DEPOSIT}      wallet_password=${IR_WALLET_PASS}
 
-                        Check Bearer Сompound Get    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
-                        Check Bearer Сompound Get    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
-                        Check Bearer Сompound Get    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Get    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}    ${USER_WALLET}
+                        Check Bearer Сompound Get    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}
+                        #Check Bearer Сompound Get    ${IR_WALLET_PATH}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}     ${USER_WALLET}
 
-                        Check Bearer Сompound Delete    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
-                        Check Bearer Сompound Delete    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}    ${WALLET_SYS}
-                        Check Bearer Сompound Delete    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
+                        Check Bearer Сompound Delete    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${FILE_S}     ${USER_WALLET}
+                        Check Bearer Сompound Delete    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${FILE_S}     ${USER_WALLET}
+                        #Check Bearer Сompound Delete    ${IR_WALLET_PATH}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${FILE_S}    ${USER_WALLET}
 
-                        Check Bearer Сompound Get Range Hash    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
-                        Check Bearer Сompound Get Range Hash    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
-                        Check Bearer Сompound Get Range Hash    ${WALLET_SYS}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
+                        Check Bearer Сompound Get Range Hash    ${OTHER_WALLET}     OTHERS    ${EACL_DENY_ALL_OTHERS}    ${USER_WALLET}    ${FILE_S}
+                        Check Bearer Сompound Get Range Hash    ${USER_WALLET}      USER      ${EACL_DENY_ALL_USER}    ${USER_WALLET}    ${FILE_S}
+                        #Check Bearer Сompound Get Range Hash    ${IR_WALLET_PATH}    SYSTEM    ${EACL_DENY_ALL_SYSTEM}    ${USER_WALLET}    ${FILE_S}
 Check Bearer Сompound Get
-    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}
 
     ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
@@ -82,7 +83,7 @@ Check Bearer Сompound Get
                         ...  Head object     ${WALLET}    ${CID}    ${S_OID_USER}    bearer_token=${EACL_TOKEN}
 
                         Get Object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      local_file_eacl
-                        IF    "${WALLET}" == "${WALLET_SYS}"
+                        IF    "${WALLET}" == "${IR_WALLET_PATH}"
                             Run Keyword And Expect Error    *
                             ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
                         ELSE
@@ -92,14 +93,14 @@ Check Bearer Сompound Get
 
 
 Check Bearer Сompound Delete
-    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}    ${WALLET_SYS}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${FILE_S}    ${USER_WALLET}
 
     ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
     ${S_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =     Put object         ${USER_WALLET}    ${FILE_S}    ${CID}
                         Put object         ${WALLET}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                        IF    "${WALLET}" == "${WALLET_SYS}"
+                        IF    "${WALLET}" == "${IR_WALLET_PATH}"
                             Run Keyword And Expect Error    *
                             ...    Delete object    ${WALLET}    ${CID}       ${D_OID_USER}    ${EMPTY}
                         ELSE
@@ -127,14 +128,14 @@ Check Bearer Сompound Delete
 
 
 Check Bearer Сompound Get Range Hash
-    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${USER_WALLET}    ${FILE_S}    ${WALLET_SYS}
+    [Arguments]         ${WALLET}    ${DENY_GROUP}    ${DENY_EACL}    ${USER_WALLET}    ${FILE_S}
 
     ${CID} =            Create Container           ${USER_WALLET}   basic_acl=eacl-public-read-write
                         Prepare eACL Role rules    ${CID}
 
     ${S_OID_USER} =     Put object              ${USER_WALLET}      ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
                         Put object              ${WALLET}           ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-                        Get Range hash          ${WALLET_SYS}       ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
+                        Get Range hash          ${IR_WALLET_PATH}       ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
                         Set eACL                ${USER_WALLET}      ${CID}       ${DENY_EACL}
 
                         # The current ACL cache lifetime is 30 sec
