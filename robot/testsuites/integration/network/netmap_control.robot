@@ -2,7 +2,7 @@
 Variables       common.py
 
 Library         Process
-Library         contract_keywords.py
+Library         epoch.py
 Library         neofs.py
 Library         String
 Library         acl.py
@@ -26,7 +26,7 @@ Control Operations with storage nodes
                             Should Be Equal As Integers    ${HEALTHCHECK.rc}    0
 
                             Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${STORAGE_WALLET} --config ${WALLET_CONFIG} --status 'offline'    shell=True
-                            
+
                             Sleep    ${MAINNET_BLOCK_TIME}
                             Tick Epoch
 
@@ -36,19 +36,19 @@ Control Operations with storage nodes
 
     ${HEALTHCHECK_OFFLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${STORAGE_WALLET} --config ${WALLET_CONFIG}    shell=True
                             Should Be Equal As Integers    ${HEALTHCHECK_OFFLINE.rc}    0
-                            Should Not Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_OFFLINE.stdout} 
-    
+                            Should Not Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_OFFLINE.stdout}
+
                             Run Process    ${NEOFS_CLI_EXEC} control set-status --endpoint ${NODE} --wallet ${STORAGE_WALLET} --config ${WALLET_CONFIG} --status 'online'    shell=True
 
                             Sleep    ${MAINNET_BLOCK_TIME}
                             Tick Epoch
 
     ${SNAPSHOT_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control netmap-snapshot --endpoint ${NODE} --wallet ${STORAGE_WALLET} --config ${WALLET_CONFIG}    shell=True
-    ${NODE_NUM_ONLINE} =    Get Regexp Matches        ${SNAPSHOT_ONLINE.stdout}    ${NODE_NUM}    
+    ${NODE_NUM_ONLINE} =    Get Regexp Matches        ${SNAPSHOT_ONLINE.stdout}    ${NODE_NUM}
                             Should Be Equal    ${NODE_NUM_ONLINE}[0]    ${NODE_NUM}
 
     ${HEALTHCHECK_ONLINE} =    Run Process    ${NEOFS_CLI_EXEC} control healthcheck --endpoint ${NODE} --wallet ${STORAGE_WALLET} --config ${WALLET_CONFIG}    shell=True
                             Should Be Equal As Integers    ${HEALTHCHECK_ONLINE.rc}    0
-                            Should Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_ONLINE.stdout}    
+                            Should Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_ONLINE.stdout}
 
     [Teardown]    Teardown    netmap_control

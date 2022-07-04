@@ -7,7 +7,7 @@ Library     OperatingSystem
 Library     neofs.py
 Library     container.py
 Library     s3_gate.py
-Library     contract_keywords.py
+Library     epoch.py
 Library     utility_keywords.py
 
 Resource    setup_teardown.robot

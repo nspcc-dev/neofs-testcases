@@ -50,6 +50,7 @@ Check eACL Deny All Other and Allow All Pubkey
     ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
     @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
 
+    # TODO: should be deleted in the scope of https://github.com/nspcc-dev/neofs-testcases/issues/191
     ${WALLET_EACL}    ${_} =    Prepare Wallet with WIF And Deposit    ${EACL_KEY}
 
                             Put object                  ${WALLET_EACL}    ${FILE_S}     ${CID}       user_headers=${ANOTHER_HEADER}

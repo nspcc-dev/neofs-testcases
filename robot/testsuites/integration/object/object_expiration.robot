@@ -3,7 +3,7 @@ Variables   common.py
 
 Library     neofs_verbs.py
 Library     container.py
-Library     contract_keywords.py
+Library     epoch.py
 Library     utility_keywords.py
 
 Resource    setup_teardown.robot

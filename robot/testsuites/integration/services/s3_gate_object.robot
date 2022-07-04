@@ -7,7 +7,6 @@ Library     OperatingSystem
 Library     container.py
 Library     neofs.py
 Library     s3_gate.py
-Library     contract_keywords.py
 Library     utility_keywords.py
 
 Resource    payment_operations.robot

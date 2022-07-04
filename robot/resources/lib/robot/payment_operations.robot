@@ -1,8 +1,7 @@
 *** Settings ***
 Variables   common.py
 
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
+Library     utility_keywords.py
 Library     payment_neogo.py
 
 
@@ -13,7 +12,7 @@ Prepare Wallet And Deposit
 
     ${WALLET}
     ...     ${ADDR}
-    ...     ${WIF} =    Init Wallet with Address    ${ASSETS_DIR}
+    ...     ${WIF} =    Generate Wallet
                         Transfer Mainnet Gas        ${WALLET}   ${DEPOSIT+1}
                         NeoFS Deposit               ${WALLET}   ${DEPOSIT}
     # Now we have TX in main chain, but deposit might not propagate into the side chain yet.
@@ -22,6 +21,7 @@ Prepare Wallet And Deposit
 
     [Return]    ${WALLET}    ${ADDR}    ${WIF}
 
+# TODO: should be deleted in the scope of https://github.com/nspcc-dev/neofs-testcases/issues/191
 Prepare Wallet with WIF And Deposit
     [Arguments]    ${WIF}    ${DEPOSIT}=${30}
 

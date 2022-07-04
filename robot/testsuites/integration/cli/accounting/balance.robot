@@ -4,8 +4,6 @@ Variables   common.py
 Library    Collections
 Library    Process
 Library    String
-Library    contract_keywords.py
-Library    cli_keywords.py
 Library    utility_keywords.py
 
 Resource    setup_teardown.robot
@@ -17,7 +15,6 @@ ${DEPOSIT_AMOUNT} =     ${10}
 *** Test cases ***
 CLI Accounting Balance Test
     [Documentation]           neofs-cli accounting balance test
-    [Tags]                    NeoFSCLI    Accounting
     [Timeout]                 10 min
 
     [Setup]                   Setup
@@ -35,10 +32,10 @@ CLI Accounting Balance Test
     Should Be Equal As Numbers   ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
     # Getting balance with wallet and wrong address
-    ${_}   ${ANOTHER_ADDR}     ${_} =   Init Wallet With Address     ${ASSETS_DIR}
+    ${_}   ${ANOTHER_ADDR}     ${_} =   Generate Wallet
     ${OUTPUT} =     Run Process    ${NEOFS_CLI_EXEC} accounting balance -r ${NEOFS_ENDPOINT} --address ${ANOTHER_ADDR} --wallet ${WALLET} --config ${WALLET_CONFIG}
                     ...    shell=True
-    Should Be Equal As Strings     ${OUTPUT.stderr}    --address option must be specified and valid
+    Should Contain                 ${OUTPUT.stderr}    --address option must be specified and valid
     Should Be Equal As Numbers     ${OUTPUT.rc}        1
 
     # Getting balance with control API

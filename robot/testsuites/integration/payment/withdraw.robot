@@ -3,8 +3,7 @@ Variables   common.py
 
 Library     neofs.py
 Library     payment_neogo.py
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
+Library     utility_keywords.py
 
 Resource    setup_teardown.robot
 
@@ -20,7 +19,7 @@ NeoFS Deposit and Withdraw
 
     [Setup]                 Setup
 
-    ${WALLET}   ${ADDR}    ${_} =   Init Wallet with Address    ${ASSETS_DIR}
+    ${WALLET}   ${ADDR}    ${_} =   Generate Wallet
 
     ##########################################################
     # Transferring GAS from initial wallet to our test wallet
