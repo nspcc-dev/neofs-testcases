@@ -3,7 +3,7 @@ Variables   common.py
 Variables   wellknown_acl.py
 
 Library     container.py
-Library     contract_keywords.py
+Library     epoch.py
 Library     neofs_verbs.py
 Library     nodes_management.py
 Library     storage_policy.py

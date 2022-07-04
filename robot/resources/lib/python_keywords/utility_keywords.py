@@ -6,12 +6,13 @@ import tarfile
 import uuid
 
 import docker
+import wallet
+from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
 
 from cli_helpers import _cmd_run
-from common import SIMPLE_OBJ_SIZE, ASSETS_DIR
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -19,7 +20,8 @@ ROBOT_AUTO_KEYWORDS = False
 @keyword('Generate file')
 def generate_file_and_file_hash(size: int) -> str:
     """
-    Function generates a big binary file with the specified size in bytes and its hash.
+    Function generates a big binary file with the specified size in bytes
+    and its hash.
     Args:
         size (int): the size in bytes, can be declared as 6e+6 for example
     Returns:
@@ -51,6 +53,18 @@ def get_file_hash(filename: str):
     return file_hash.hexdigest()
 
 
+@keyword('Generate Wallet')
+def generate_wallet():
+    return wallet.init_wallet_w_addr(ASSETS_DIR)
+
+
+# TODO: should be deleted in the scope
+# of https://github.com/nspcc-dev/neofs-testcases/issues/191
+@keyword('Init Wallet from WIF')
+def init_wallet_from_wif(dir_path: str, wif: str):
+    return wallet.init_wallet_from_wif(dir_path, wif)
+
+
 @keyword('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:
     client = docker.APIClient(base_url='unix://var/run/docker.sock')
@@ -59,7 +73,8 @@ def get_container_logs(testcase_name: str) -> None:
     tar = tarfile.open(tar_name, "w:gz")
     for container in client.containers():
         container_name = container['Names'][0][1:]
-        if client.inspect_container(container_name)['Config']['Domainname'] == "neofs.devenv":
+        if (client.inspect_container(container_name)['Config']['Domainname']
+                == "neofs.devenv"):
             file_name = f"{logs_dir}/docker_log_{container_name}"
             with open(file_name, 'wb') as out:
                 out.write(client.logs(container_name))
@@ -84,7 +99,10 @@ def make_up(services: list = [], config_dict: dict = {}):
             cmd = f'make up/{service}'
             _cmd_run(cmd)
     else:
-        cmd = f'make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}'
+        cmd = (
+            f'make up/basic;'
+            f'make update.max_object_size val={SIMPLE_OBJ_SIZE}'
+        )
         _cmd_run(cmd, timeout=120)
 
     os.chdir(test_path)

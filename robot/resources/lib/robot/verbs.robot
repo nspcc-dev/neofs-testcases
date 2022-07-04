@@ -1,7 +1,7 @@
 *** Settings ***
 Variables   common.py
 
-Library     contract_keywords.py
+Library     epoch.py
 Library     neofs.py
 Library     neofs_verbs.py
 Library     utility_keywords.py

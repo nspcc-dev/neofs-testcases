@@ -3,7 +3,6 @@ Variables       common.py
 
 Library         acl.py
 Library         container.py
-Library         contract_keywords.py
 Library         neofs.py
 Library         neofs_verbs.py
 Library         Collections
@@ -24,7 +23,7 @@ ${CUSTOM_FILTER} =      $Object:key1
 Extended ACL Operations
     [Documentation]         Testcase to validate NeoFS operations with extended ACL.
     [Tags]                  ACL  eACL
-    [Timeout]               20 min
+    [Timeout]               2 min
 
     [Setup]                 Setup
 

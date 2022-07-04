@@ -2,8 +2,7 @@
 Variables   common.py
 
 Library     payment_neogo.py
-Library     wallet_keywords.py
-Library     rpc_call_keywords.py
+Library     utility_keywords.py
 Library     Process
 
 Resource    setup_teardown.robot
@@ -23,7 +22,7 @@ IR GAS emission threshold value
 
     [Setup]             Setup
 
-    ${WALLET}    ${ADDR}    ${_} =    Init Wallet with Address    ${ASSETS_DIR}
+    ${WALLET}    ${ADDR}    ${_} =    Generate Wallet
 
     ${SC_BALANCE} =     Get Sidechain Balance    ${ADDR}
                         Transfer Mainnet Gas                    ${WALLET}    ${DEPOSIT}

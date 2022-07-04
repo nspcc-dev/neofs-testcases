@@ -4,7 +4,6 @@ Variables   common.py
 
 Library     container.py
 Library     complex_object_actions.py
-Library     contract_keywords.py
 Library     neofs_verbs.py
 Library     neofs.py
 Library     storage_policy.py
