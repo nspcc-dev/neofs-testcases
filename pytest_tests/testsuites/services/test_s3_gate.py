@@ -5,11 +5,11 @@ from random import choice, choices
 import allure
 import pytest
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
-from contract_keywords import tick_epoch
+from epoch import tick_epoch
 from python_keywords import s3_gate_bucket, s3_gate_object
 from python_keywords.aws_cli_client import AwsCliClient
 from python_keywords.container import list_containers
-from python_keywords.utility_keywords import (generate_file_and_file_hash,
+from python_keywords.utility_keywords import (generate_file, generate_file_and_file_hash,
                                               get_file_hash)
 from utility import create_file_with_content, get_file_content, split_file
 
@@ -67,13 +67,13 @@ class TestS3Gate:
         s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
     @allure.title('Test S3 Bucket API')
-    def test_s3_buckets(self, generate_files):
+    def test_s3_buckets(self):
         """
         Test base S3 Bucket API (Create/List/Head/Delete).
         """
 
-        file_name_simple, file_name_large = generate_files
-        file_name = self.object_key_from_file_path(file_name_simple)
+        file_path = generate_file()
+        file_name = self.object_key_from_file_path(file_path)
 
         with allure.step('Create buckets'):
             bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
@@ -94,7 +94,7 @@ class TestS3Gate:
             s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
 
         with allure.step('Check we can put/list object with S3 commands'):
-            s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_name_simple)
+            s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path)
             s3_gate_object.head_object_s3(self.s3_client, bucket_1, file_name)
 
             bucket_objects = s3_gate_object.list_objects_s3(self.s3_client, bucket_1)
@@ -122,13 +122,12 @@ class TestS3Gate:
     @allure.title('Test S3 Object API')
     @pytest.mark.sanity
     @pytest.mark.parametrize('file_type', ['simple', 'large'], ids=['Simple object', 'Large object'])
-    def test_s3_api_object(self, generate_files, file_type):
+    def test_s3_api_object(self, file_type):
         """
         Test base S3 Object API (Put/Head/List) for simple and large objects.
         """
-        file_name_simple, file_name_large = generate_files
-        file_name_path = file_name_simple if file_type == 'simple' else file_name_large
-        file_name = self.object_key_from_file_path(file_name_path)
+        file_path = generate_file(SIMPLE_OBJ_SIZE if file_type == 'simple' else COMPLEX_OBJ_SIZE)
+        file_name = self.object_key_from_file_path(file_path)
 
         bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
         bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
@@ -138,8 +137,7 @@ class TestS3Gate:
                 objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)
                 assert not objects_list, f'Expected empty bucket, got {objects_list}'
 
-            s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_path)
-            s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_large)
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
             s3_gate_object.head_object_s3(self.s3_client, bucket, file_name)
 
             bucket_objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
@@ -391,13 +389,13 @@ class TestS3Gate:
             self.try_to_get_object_and_got_error(bucket_2, objects_to_delete_b2)
 
     @allure.title('Test S3: Copy object to the same bucket')
-    def test_s3_copy_same_bucket(self, generate_files):
+    def test_s3_copy_same_bucket(self):
         """
         Test object can be copied to the same bucket.
         """
-        file_simple, file_large = generate_files
-        file_name_simple = self.object_key_from_file_path(file_simple)
-        file_name_large = self.object_key_from_file_path(file_large)
+        file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
+        file_name_simple = self.object_key_from_file_path(file_path_simple)
+        file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_objects = [file_name_simple, file_name_large]
 
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
@@ -407,8 +405,8 @@ class TestS3Gate:
             assert not objects_list, f'Expected empty bucket, got {objects_list}'
 
         with allure.step('Put objects into bucket'):
-            for obj in (file_simple, file_large):
-                s3_gate_object.put_object_s3(self.s3_client, bucket, obj)
+            for file_path in (file_path_simple, file_path_large):
+                s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
 
         with allure.step('Copy one object into the same bucket'):
             copy_obj_path = s3_gate_object.copy_object_s3(self.s3_client, bucket, file_name_simple)
@@ -418,7 +416,7 @@ class TestS3Gate:
 
         with allure.step('Check copied object has the same content'):
             got_copied_file = s3_gate_object.get_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert get_file_hash(file_simple) == get_file_hash(got_copied_file), 'Hashes must be the same'
+            assert get_file_hash(file_path_simple) == get_file_hash(got_copied_file), 'Hashes must be the same'
 
         with allure.step('Delete one object from bucket'):
             s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name_simple)
@@ -427,13 +425,13 @@ class TestS3Gate:
         self.check_objects_in_bucket(bucket, expected_objects=bucket_objects, unexpected_objects=[file_name_simple])
 
     @allure.title('Test S3: Copy object to another bucket')
-    def test_s3_copy_to_another_bucket(self, generate_files):
+    def test_s3_copy_to_another_bucket(self):
         """
         Test object can be copied to another bucket.
         """
-        file_simple, file_large = generate_files
-        file_name_simple = self.object_key_from_file_path(file_simple)
-        file_name_large = self.object_key_from_file_path(file_large)
+        file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
+        file_name_simple = self.object_key_from_file_path(file_path_simple)
+        file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_1_objects = [file_name_simple, file_name_large]
 
         bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
@@ -445,8 +443,8 @@ class TestS3Gate:
                 assert not objects_list, f'Expected empty bucket, got {objects_list}'
 
         with allure.step('Put objects into one bucket'):
-            for obj in (file_simple, file_large):
-                s3_gate_object.put_object_s3(self.s3_client, bucket_1, obj)
+            for file_path in (file_path_simple, file_path_large):
+                s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path)
 
         with allure.step('Copy object from first bucket into second'):
             copy_obj_path_b2 = s3_gate_object.copy_object_s3(self.s3_client, bucket_1, file_name_large,
@@ -456,7 +454,7 @@ class TestS3Gate:
 
         with allure.step('Check copied object has the same content'):
             got_copied_file_b2 = s3_gate_object.get_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
-            assert get_file_hash(file_large) == get_file_hash(got_copied_file_b2), 'Hashes must be the same'
+            assert get_file_hash(file_path_large) == get_file_hash(got_copied_file_b2), 'Hashes must be the same'
 
         with allure.step('Delete one object from first bucket'):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_1, file_name_simple)

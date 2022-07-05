@@ -3,6 +3,7 @@
 import hashlib
 import os
 import tarfile
+from typing import Tuple
 import uuid
 
 import docker
@@ -17,10 +18,26 @@ from cli_helpers import _cmd_run
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword('Generate file')
-def generate_file_and_file_hash(size: int) -> str:
+def generate_file(size: int = SIMPLE_OBJ_SIZE) -> str:
     """
-    Function generates a big binary file with the specified size in bytes
+    Function generates a binary file with the specified size in bytes.
+    Args:
+        size (int): the size in bytes, can be declared as 6e+6 for example
+    Returns:
+        (str): the path to the generated file
+    """
+    file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
+    with open(file_path, 'wb') as fout:
+        fout.write(os.urandom(size))
+    logger.info(f"file with size {size} bytes has been generated: {file_path}")
+
+    return file_path
+
+
+@keyword('Generate file')
+def generate_file_and_file_hash(size: int) -> Tuple[str, str]:
+    """
+    Function generates a binary file with the specified size in bytes
     and its hash.
     Args:
         size (int): the size in bytes, can be declared as 6e+6 for example
@@ -28,14 +45,10 @@ def generate_file_and_file_hash(size: int) -> str:
         (str): the path to the generated file
         (str): the hash of the generated file
     """
-    filename = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
-    with open(filename, 'wb') as fout:
-        fout.write(os.urandom(size))
-    logger.info(f"file with size {size} bytes has been generated: {filename}")
+    file_path = generate_file(size)
+    file_hash = get_file_hash(file_path)
 
-    file_hash = get_file_hash(filename)
-
-    return filename, file_hash
+    return file_path, file_hash
 
 
 @keyword('Get File Hash')

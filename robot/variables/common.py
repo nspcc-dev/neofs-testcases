@@ -75,3 +75,5 @@ STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
 CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
 CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
 REMOTE_HOST = os.getenv('REMOTE_HOST')
+
+FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"

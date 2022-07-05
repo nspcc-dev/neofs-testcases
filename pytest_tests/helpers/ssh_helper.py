@@ -71,7 +71,7 @@ class HostClient:
         self.ip = ip
         self.login = login
         self.password = password
-        self.pk = os.getenv('SSH_PK_PATH', '/root/.ssh/id_rsa')
+        self.pk = os.getenv('SSH_PK_PATH')
         if init_ssh_client:
             self.create_connection(self.SSH_CONNECTION_ATTEMPTS)
 
