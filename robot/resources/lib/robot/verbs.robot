@@ -2,7 +2,7 @@
 Variables   common.py
 
 Library     epoch.py
-Library     neofs.py
+Library     tombstone.py
 Library     neofs_verbs.py
 Library     utility_keywords.py
 Library     Collections

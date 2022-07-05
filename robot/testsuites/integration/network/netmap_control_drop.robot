@@ -3,7 +3,7 @@ Variables    common.py
 Variables    wellknown_acl.py
 
 Library     container.py
-Library     neofs.py
+Library     nodes_management.py
 Library     neofs_verbs.py
 Library     utility_keywords.py
 

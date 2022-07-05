@@ -4,7 +4,6 @@ Variables    common.py
 Library     Collections
 Library     OperatingSystem
 
-Library     neofs.py
 Library     container.py
 Library     s3_gate.py
 Library     epoch.py
@@ -24,9 +23,9 @@ Buckets in NeoFS S3 Gateway
     [Setup]                     Setup
                                 Make Up    ${INCLUDE_SVC}
 
-    ${WALLET}   ${_}    ${_} =        Prepare Wallet And Deposit
-    ${FILE_S3}    ${_} =    Generate file    ${COMPLEX_OBJ_SIZE}
-    ${_}        ${S3_OBJECT_KEY} =      Split Path                  ${FILE_S3}
+    ${WALLET}   ${_}    ${_} =          Prepare Wallet And Deposit
+    ${FILE_S3}    ${_} =                Generate file    ${COMPLEX_OBJ_SIZE}
+    ${_}        ${S3_OBJECT_KEY} =      Split Path       ${FILE_S3}
 
     ${CID}
     ...  ${BUCKET}

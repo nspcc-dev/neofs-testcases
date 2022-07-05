@@ -3,7 +3,6 @@ Variables       common.py
 
 Library         acl.py
 Library         container.py
-Library         neofs.py
 Library         neofs_verbs.py
 Library         Collections
 

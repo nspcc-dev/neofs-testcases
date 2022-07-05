@@ -4,7 +4,7 @@ Variables   common.py
 Library     acl.py
 Library     container.py
 Library     epoch.py
-Library     neofs.py
+Library     nodes_management.py
 Library     neofs_verbs.py
 Library     storage_policy.py
 Library     utility_keywords.py

@@ -5,7 +5,6 @@ Library     Collections
 Library     OperatingSystem
 
 Library     container.py
-Library     neofs.py
 Library     s3_gate.py
 Library     utility_keywords.py
 

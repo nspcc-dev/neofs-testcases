@@ -2,8 +2,6 @@
 Variables   common.py
 
 Library     container.py
-Library     neofs.py
-Library     payment_neogo.py
 Library     String
 Library     Collections
 

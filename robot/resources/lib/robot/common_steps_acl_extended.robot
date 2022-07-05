@@ -4,7 +4,6 @@ Variables   eacl_object_filters.py
 
 Library     acl.py
 Library     container.py
-Library     neofs.py
 Library     neofs_verbs.py
 
 Library     Collections
