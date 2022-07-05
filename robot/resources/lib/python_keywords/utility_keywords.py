@@ -55,7 +55,7 @@ def get_file_hash(filename: str):
 
 @keyword('Generate Wallet')
 def generate_wallet():
-    return wallet.init_wallet_w_addr(ASSETS_DIR)
+    return wallet.init_wallet(ASSETS_DIR)
 
 
 # TODO: should be deleted in the scope
