@@ -5,7 +5,7 @@ Variables   wellknown_acl.py
 Library     container.py
 Library     epoch.py
 Library     neofs_verbs.py
-Library     nodes_management.py
+Library     node_management.py
 Library     storage_policy.py
 Library     utility_keywords.py
 

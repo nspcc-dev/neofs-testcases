@@ -3,13 +3,13 @@ from time import sleep
 
 import allure
 import pytest
-from contract_keywords import tick_epoch
+from epoch import tick_epoch
 from python_keywords.neofs import verify_head_tombstone
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
                                          get_range_hash, head_object,
                                          put_object, search_object)
 from python_keywords.storage_policy import get_simple_object_copies
-from python_keywords.utility_keywords import get_file_hash
+from python_keywords.utility_keywords import generate_file, get_file_hash
 
 logger = logging.getLogger('NeoLogger')
 
@@ -19,7 +19,7 @@ CLEANUP_TIMEOUT = 10
 @allure.title('Test native object API')
 @pytest.mark.sanity
 @pytest.mark.grpc_api
-def test_object_api(prepare_container, generate_file):
+def test_object_api(prepare_container):
     cid, wallet = prepare_container
     wallet_cid = {'wallet': wallet, 'cid': cid}
     file_usr_header = {'key1': 1, 'key2': 'abc'}
@@ -27,15 +27,15 @@ def test_object_api(prepare_container, generate_file):
     range_cut = '0:10'
     oids = []
 
-    file_name = generate_file
-    file_hash = get_file_hash(file_name)
+    file_path = generate_file()
+    file_hash = get_file_hash(file_path)
 
     search_object(**wallet_cid, expected_objects_list=oids)
 
     with allure.step('Put objects'):
-        oids.append(put_object(wallet=wallet, path=file_name, cid=cid))
-        oids.append(put_object(wallet=wallet, path=file_name, cid=cid, user_headers=file_usr_header))
-        oids.append(put_object(wallet=wallet, path=file_name, cid=cid, user_headers=file_usr_header_oth))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, user_headers=file_usr_header))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, user_headers=file_usr_header_oth))
 
     with allure.step('Validate storage policy for objects'):
         for oid_to_check in oids:
