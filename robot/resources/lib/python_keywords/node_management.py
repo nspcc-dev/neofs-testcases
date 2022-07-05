@@ -8,10 +8,10 @@
 import random
 import re
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 
 import docker
-from common import DEPLOY_PATH, NEOFS_NETMAP_DICT
+from common import NEOFS_NETMAP_DICT, STORAGE_NODE_BIN_PATH, STORAGE_NODE_CONFIG_PATH
 from robot.api import logger
 from robot.api.deco import keyword
 from ssh_helper import HostClient
@@ -152,10 +152,8 @@ def node_healthcheck(client: HostClient, node_name: str) -> HealthStatus:
 
     node_config = NEOFS_NETMAP_DICT.get(node_name)
     control_url = node_config.get('control')
-    host, port = control_url.split(':')
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control healthcheck --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml'
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control healthcheck --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH}'
     output = client.exec_with_confirmation(cmd, [''])
     return HealthStatus.from_stdout(output.stdout)
 
@@ -176,10 +174,8 @@ def node_set_status(client: HostClient, node_name: str, status: str):
 
     node_config = NEOFS_NETMAP_DICT.get(node_name)
     control_url = node_config.get('control')
-    host, port = control_url.split(':')
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control set-status --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml --status {status}'
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control set-status --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH} --status {status}'
     client.exec_with_confirmation(cmd, [''])
 
 
@@ -200,10 +196,8 @@ def get_netmap_snapshot(client: HostClient, node_name: str = None) -> str:
 
     node_config = NEOFS_NETMAP_DICT.get(node_name)
     control_url = node_config.get('control')
-    host, port = control_url.split(':')
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control netmap-snapshot --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml'
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control netmap-snapshot --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH}'
     output = client.exec_with_confirmation(cmd, [''])
     return output.stdout
 
@@ -218,10 +212,10 @@ def node_shard_list(client: HostClient, node_name: str) -> List[str]:
         Returns:
             list of shards.
     """
-    control_url, port = _url_port_for_node(node_name)
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control shards list --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml'
+    node_config = NEOFS_NETMAP_DICT.get(node_name)
+    control_url = node_config.get('control')
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control shards list --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH}'
     output = client.exec_with_confirmation(cmd, [''])
     return re.findall(r'Shard (.*):', output.stdout)
 
@@ -236,10 +230,10 @@ def node_shard_set_mode(client: HostClient, node_name: str, shard: str, mode: st
         Returns:
             health status as HealthStatus object.
     """
-    control_url, port = _url_port_for_node(node_name)
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control shards set-mode --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml --id {shard} --mode {mode}'
+    node_config = NEOFS_NETMAP_DICT.get(node_name)
+    control_url = node_config.get('control')
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control shards set-mode --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH} --id {shard} --mode {mode}'
     output = client.exec_with_confirmation(cmd, [''])
     return output.stdout
 
@@ -254,27 +248,9 @@ def drop_object(client: HostClient, node_name: str, cid: str, oid: str) -> str:
         Returns:
             health status as HealthStatus object.
     """
-    control_url, port = _url_port_for_node(node_name)
-    cmd = f'{DEPLOY_PATH}/vendor/neofs-cli control drop-objects --endpoint {control_url} ' \
-          f'--wallet {DEPLOY_PATH}/services/storage/wallet0{port[-1]}.json ' \
-          f'--config {DEPLOY_PATH}/services/storage/cli-cfg.yml -o {cid}/{oid}'
-    output = client.exec_with_confirmation(cmd, [''])
-    return output.stdout
-
-
-def _url_port_for_node(node_name: str) -> Tuple[str, str]:
-    """
-    Returns control url and port for particular storage node.
-    Args:
-        node_name: str node bane from NEOFS_NETMAP_DICT
-
-    Returns:
-        control url and port as a tuple.
-    """
-    if node_name not in NEOFS_NETMAP_DICT:
-        raise AssertionError(f'Node {node_name} is not found!')
-
     node_config = NEOFS_NETMAP_DICT.get(node_name)
     control_url = node_config.get('control')
-    port = control_url.split(':')[-1]
-    return control_url, port
+    cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control drop-objects --endpoint {control_url} ' \
+          f'--config {STORAGE_NODE_CONFIG_PATH} -o {cid}/{oid}'
+    output = client.exec_with_confirmation(cmd, [''])
+    return output.stdout

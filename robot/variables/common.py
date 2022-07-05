@@ -32,34 +32,44 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
 
-STORAGE_NODE_1 = os.getenv('DATA_NODE_1', 's01.neofs.devenv:8080')
-STORAGE_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
-STORAGE_NODE_3 = os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080')
-STORAGE_NODE_4 = os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080')
-
-CONTROL_NODE_1 = os.getenv('NEOFS_CONTROL_NODE_1', 's01.neofs.devenv:8081')
-CONTROL_NODE_2 = os.getenv('NEOFS_CONTROL_NODE_2', 's02.neofs.devenv:8081')
-CONTROL_NODE_3 = os.getenv('NEOFS_CONTROL_NODE_3', 's03.neofs.devenv:8081')
-CONTROL_NODE_4 = os.getenv('NEOFS_CONTROL_NODE_4', 's04.neofs.devenv:8081')
-
 DEVENV_SERVICES_PATH = f"{os.getenv('DEVENV_PATH')}/services"
-NEOFS_NETMAP_DICT = {'s01': {'rpc': STORAGE_NODE_1,
-                             'control': CONTROL_NODE_1,
-                             'wallet_path':f"{DEVENV_SERVICES_PATH}/storage/wallet01.json",
-                             'UN-LOCODE': 'RU MOW'},
-                     's02': {'rpc': STORAGE_NODE_2,
-                             'control': CONTROL_NODE_2,
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet02.json",
-                             'UN-LOCODE': 'RU LED'},
-                     's03': {'rpc': STORAGE_NODE_3,
-                             'control': CONTROL_NODE_3,
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet03.json",
-                             'UN-LOCODE': 'SE STO'},
-                     's04': {'rpc': STORAGE_NODE_4,
-                             'control': CONTROL_NODE_4,
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet04.json",
-                             'UN-LOCODE': 'FI HEL'}
-                     }
+
+STORAGE_RPC_ENDPOINT_1 = os.getenv('STORAGE_RPC_ENDPOINT_1', os.getenv('DATA_NODE_1', 's01.neofs.devenv:8080'))
+STORAGE_RPC_ENDPOINT_2 = os.getenv('STORAGE_RPC_ENDPOINT_2', os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080'))
+STORAGE_RPC_ENDPOINT_3 = os.getenv('STORAGE_RPC_ENDPOINT_3', os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080'))
+STORAGE_RPC_ENDPOINT_4 = os.getenv('STORAGE_RPC_ENDPOINT_4', os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080'))
+
+STORAGE_CONTROL_ENDPOINT_1 = os.getenv('STORAGE_CONTROL_ENDPOINT_1', os.getenv('NEOFS_CONTROL_NODE_1', 's01.neofs.devenv:8081'))
+STORAGE_CONTROL_ENDPOINT_2 = os.getenv('STORAGE_CONTROL_ENDPOINT_2', os.getenv('NEOFS_CONTROL_NODE_2', 's02.neofs.devenv:8081'))
+STORAGE_CONTROL_ENDPOINT_3 = os.getenv('STORAGE_CONTROL_ENDPOINT_3', os.getenv('NEOFS_CONTROL_NODE_3', 's03.neofs.devenv:8081'))
+STORAGE_CONTROL_ENDPOINT_4 = os.getenv('STORAGE_CONTROL_ENDPOINT_4', os.getenv('NEOFS_CONTROL_NODE_4', 's04.neofs.devenv:8081'))
+
+NEOFS_NETMAP_DICT = {
+    's01': {
+        'rpc': STORAGE_RPC_ENDPOINT_1,
+        'control': STORAGE_CONTROL_ENDPOINT_1,
+        'wallet_path':f"{DEVENV_SERVICES_PATH}/storage/wallet01.json",
+        'UN-LOCODE': 'RU MOW'
+    },
+    's02': {
+        'rpc': STORAGE_RPC_ENDPOINT_2,
+        'control': STORAGE_CONTROL_ENDPOINT_2,
+        'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet02.json",
+        'UN-LOCODE': 'RU LED'
+    },
+    's03': {
+        'rpc': STORAGE_RPC_ENDPOINT_3,
+        'control': STORAGE_CONTROL_ENDPOINT_3,
+        'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet03.json",
+        'UN-LOCODE': 'SE STO'
+    },
+    's04': {
+        'rpc': STORAGE_RPC_ENDPOINT_4,
+        'control': STORAGE_CONTROL_ENDPOINT_4,
+        'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet04.json",
+        'UN-LOCODE': 'FI HEL'
+    },
+}
 NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
 NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
@@ -76,8 +86,11 @@ STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
 S3_GATE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/s3_gate/wallet.json"
 S3_GATE_WALLET_PASS = 's3'
 
-CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
-CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
-DEPLOY_PATH = os.getenv('DEPLOY_PATH', '/opt/dev-env')
+WALLET_PASS = f"{os.getcwd()}/wallet_pass.yml"
+
+STORAGE_NODE_USER = os.getenv('STORAGE_NODE_USER', 'root')
+STORAGE_NODE_PWD = os.getenv('STORAGE_NODE_PWD')
+STORAGE_NODE_BIN_PATH = os.getenv('STORAGE_NODE_BIN_PATH', '/opt/dev-env/vendor/neofs-cli')
+STORAGE_NODE_CONFIG_PATH = os.getenv('STORAGE_NODE_CONFIG_PATH', '/opt/dev-env/services/storage/cli-cfg.yml')
 
 FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
