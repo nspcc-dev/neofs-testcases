@@ -1,7 +1,6 @@
 *** Settings ***
 Variables   common.py
 
-Library     neofs.py
 Library     payment_neogo.py
 Library     utility_keywords.py
 

@@ -1,7 +1,6 @@
 *** Settings ***
 Variables   common.py
 
-Library     neofs.py
 Library     container.py
 Library     neofs_verbs.py
 Library     storage_group.py

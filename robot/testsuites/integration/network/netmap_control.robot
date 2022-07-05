@@ -3,7 +3,7 @@ Variables       common.py
 
 Library         Process
 Library         epoch.py
-Library         neofs.py
+Library         nodes_management.py
 Library         String
 Library         acl.py
 
@@ -13,7 +13,6 @@ Resource        payment_operations.robot
 *** Test Cases ***
 Control Operations with storage nodes
     [Documentation]         Testcase to check NetworkInfo control command.
-    [Tags]                  NeoFSCLI    NetworkInfo
     [Timeout]               5 min
 
     [Setup]                 Setup
