@@ -5,7 +5,8 @@ Library     Collections
 Library     OperatingSystem
 
 Library     container.py
-Library     s3_gate.py
+Library     s3_gate_bucket.py
+Library     s3_gate_object.py
 Library     utility_keywords.py
 
 Resource    payment_operations.robot
