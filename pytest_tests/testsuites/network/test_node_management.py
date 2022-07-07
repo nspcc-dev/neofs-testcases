@@ -6,7 +6,7 @@ import allure
 import pytest
 from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
                     NEOFS_NETMAP_DICT, SHARD_0_GC_SLEEP)
-from contract_keywords import tick_epoch
+from epoch import tick_epoch
 from utility_keywords import generate_file
 from python_keywords.container import create_container, get_container
 from python_keywords.neofs_verbs import (delete_object, get_object,
@@ -28,7 +28,7 @@ logger = logging.getLogger('NeoLogger')
 
 @pytest.fixture
 @allure.title('Create container and pick the node with data')
-def crate_container_and_pick_node(create_remote_connection, prepare_wallet_and_deposit):
+def crate_container_and_pick_node(prepare_wallet_and_deposit):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     placement_rule = 'REP 1 IN X CBF 1 SELECT 1 FROM * AS X'
@@ -44,63 +44,63 @@ def crate_container_and_pick_node(create_remote_connection, prepare_wallet_and_d
 
     yield cid, node_name
 
-    shards = node_shard_list(create_remote_connection, node_name)
+    shards = node_shard_list(node_name)
     assert shards
 
     for shard in shards:
-        node_shard_set_mode(create_remote_connection, node_name, shard, 'read-write')
+        node_shard_set_mode(node_name, shard, 'read-write')
 
-    node_shard_list(create_remote_connection, node_name)
+    node_shard_list(node_name)
 
 
 @pytest.fixture
 @pytest.mark.skip(reason="docker API works only for devenv")
-def start_node_if_needed(create_remote_connection):
+def start_node_if_needed():
     yield
     try:
-        start_nodes_remote(create_remote_connection, list(NEOFS_NETMAP_DICT.keys()))
+        start_nodes_remote(list(NEOFS_NETMAP_DICT.keys()))
     except Exception as err:
         logger.error(f'Node start fails with error:\n{err}')
 
 
 @allure.title('Control Operations with storage nodes')
 @pytest.mark.node_mgmt
-def test_nodes_management(prepare_tmp_dir, create_remote_connection):
+def test_nodes_management(prepare_tmp_dir):
     """
     This test checks base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
     """
     random_node = choice(list(NEOFS_NETMAP_DICT))
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != random_node])
-    snapshot = get_netmap_snapshot(create_remote_connection, node_name=alive_node)
+    snapshot = get_netmap_snapshot(node_name=alive_node)
     assert random_node in snapshot, f'Expected node {random_node} in netmap'
 
     with allure.step('Run health check for all storage nodes'):
         for node_name in NEOFS_NETMAP_DICT.keys():
-            health_check = node_healthcheck(create_remote_connection, node_name)
+            health_check = node_healthcheck(node_name)
             assert health_check.health_status == 'READY' and health_check.network_status == 'ONLINE'
 
     with allure.step(f'Move node {random_node} to offline state'):
-        node_set_status(create_remote_connection, random_node, status='offline')
+        node_set_status(random_node, status='offline')
 
     sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f'Check node {random_node} went to offline'):
-        health_check = node_healthcheck(create_remote_connection, random_node)
+        health_check = node_healthcheck(random_node)
         assert health_check.health_status == 'READY' and health_check.network_status == 'STATUS_UNDEFINED'
-        snapshot = get_netmap_snapshot(create_remote_connection, node_name=alive_node)
+        snapshot = get_netmap_snapshot(node_name=alive_node)
         assert random_node not in snapshot, f'Expected node {random_node} not in netmap'
 
     with allure.step(f'Check node {random_node} went to online'):
-        node_set_status(create_remote_connection, random_node, status='online')
+        node_set_status(random_node, status='online')
 
     sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f'Check node {random_node} went to online'):
-        health_check = node_healthcheck(create_remote_connection, random_node)
+        health_check = node_healthcheck(random_node)
         assert health_check.health_status == 'READY' and health_check.network_status == 'ONLINE'
-        snapshot = get_netmap_snapshot(create_remote_connection, node_name=alive_node)
+        snapshot = get_netmap_snapshot(node_name=alive_node)
         assert random_node in snapshot, f'Expected node {random_node} in netmap'
 
 
@@ -170,7 +170,7 @@ def test_placement_policy_negative(prepare_wallet_and_deposit, placement_rule, e
 @pytest.mark.node_mgmt
 @pytest.mark.skip(reason="docker API works only for devenv")
 @allure.title('NeoFS object replication on node failover')
-def test_replication(prepare_wallet_and_deposit, create_remote_connection, start_node_if_needed):
+def test_replication(prepare_wallet_and_deposit, start_node_if_needed):
     """
     Test checks object replication on storage not failover and come back.
     """
@@ -185,22 +185,22 @@ def test_replication(prepare_wallet_and_deposit, create_remote_connection, start
     assert len(nodes) == expected_nodes_count, f'Expected {expected_nodes_count} copies, got {len(nodes)}'
 
     node_names = [name for name, config in NEOFS_NETMAP_DICT.items() if config.get('rpc') in nodes]
-    stopped_nodes = stop_nodes_remote(create_remote_connection, 1, node_names)
+    stopped_nodes = stop_nodes_remote(1, node_names)
 
     wait_for_expected_object_copies(wallet, cid, oid)
 
-    start_nodes_remote(create_remote_connection, stopped_nodes)
+    start_nodes_remote(stopped_nodes)
     tick_epoch()
 
     for node_name in node_names:
-        wait_for_node_go_online(create_remote_connection, node_name)
+        wait_for_node_go_online(node_name)
 
     wait_for_expected_object_copies(wallet, cid, oid)
 
 
 @pytest.mark.node_mgmt
 @allure.title('NeoFS object could be dropped using control command')
-def test_drop_object(prepare_wallet_and_deposit, create_remote_connection):
+def test_drop_object(prepare_wallet_and_deposit):
     """
     Test checks object could be dropped using `neofs-cli control drop-objects` command.
     """
@@ -224,7 +224,7 @@ def test_drop_object(prepare_wallet_and_deposit, create_remote_connection):
         with allure.step(f'Drop object {oid}'):
             get_object(wallet, cid, oid)
             head_object(wallet, cid, oid)
-            drop_object(create_remote_connection, node_name, cid, oid)
+            drop_object(node_name, cid, oid)
             wait_for_obj_dropped(wallet, cid, oid, get_object)
             wait_for_obj_dropped(wallet, cid, oid, head_object)
 
@@ -232,7 +232,7 @@ def test_drop_object(prepare_wallet_and_deposit, create_remote_connection):
 @pytest.mark.node_mgmt
 @pytest.mark.skip(reason='Need to clarify scenario')
 @allure.title('Control Operations with storage nodes')
-def test_shards(prepare_wallet_and_deposit, create_remote_connection, crate_container_and_pick_node):
+def test_shards(prepare_wallet_and_deposit, crate_container_and_pick_node):
     """
     This test checks base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
     """
@@ -244,13 +244,13 @@ def test_shards(prepare_wallet_and_deposit, create_remote_connection, crate_cont
 
     # for mode in ('read-only', 'degraded'):
     for mode in ('degraded',):
-        shards = node_shard_list(create_remote_connection, node_name)
+        shards = node_shard_list(node_name)
         assert shards
 
         for shard in shards:
-            node_shard_set_mode(create_remote_connection, node_name, shard, mode)
+            node_shard_set_mode(node_name, shard, mode)
 
-        shards = node_shard_list(create_remote_connection, node_name)
+        shards = node_shard_list(node_name)
         assert shards
 
         with pytest.raises(RuntimeError):
@@ -263,9 +263,9 @@ def test_shards(prepare_wallet_and_deposit, create_remote_connection, crate_cont
         get_object(wallet, cid, original_oid)
 
         for shard in shards:
-            node_shard_set_mode(create_remote_connection, node_name, shard, 'read-write')
+            node_shard_set_mode(node_name, shard, 'read-write')
 
-        shards = node_shard_list(create_remote_connection, node_name)
+        shards = node_shard_list(node_name)
         assert shards
 
         oid = put_object(wallet, file_path, cid)
@@ -285,11 +285,11 @@ def validate_object_copies(wallet: str, placement_rule: str, file_path: str, exp
 
 
 @allure.step('Wait for node {node_name} goes online')
-def wait_for_node_go_online(create_remote_connection, node_name: str):
+def wait_for_node_go_online(node_name: str):
     timeout, attempts = 5, 20
     for _ in range(attempts):
         try:
-            health_check = node_healthcheck(create_remote_connection, node_name)
+            health_check = node_healthcheck(node_name)
             assert health_check.health_status == 'READY' and health_check.network_status == 'ONLINE'
             return
         except Exception as err:

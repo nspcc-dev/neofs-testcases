@@ -86,11 +86,10 @@ STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
 S3_GATE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/s3_gate/wallet.json"
 S3_GATE_WALLET_PASS = 's3'
 
-WALLET_PASS = f"{os.getcwd()}/wallet_pass.yml"
-
 STORAGE_NODE_USER = os.getenv('STORAGE_NODE_USER', 'root')
 STORAGE_NODE_PWD = os.getenv('STORAGE_NODE_PWD')
 STORAGE_NODE_BIN_PATH = os.getenv('STORAGE_NODE_BIN_PATH', '/opt/dev-env/vendor/neofs-cli')
 STORAGE_NODE_CONFIG_PATH = os.getenv('STORAGE_NODE_CONFIG_PATH', '/opt/dev-env/services/storage/cli-cfg.yml')
+STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT = os.getenv('STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT', 'localhost:8091')
 
 FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"

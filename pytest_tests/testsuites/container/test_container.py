@@ -4,7 +4,7 @@ from time import sleep
 import allure
 import pytest
 
-from contract_keywords import tick_epoch
+from epoch import tick_epoch
 from python_keywords.container import create_container, get_container, list_containers, delete_container
 from utility import placement_policy_from_container
 
