@@ -10,29 +10,21 @@ Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    payment_operations.robot
 Resource    setup_teardown.robot
+Resource    verbs.robot
 
 *** Variables ***
-&{USER_HEADER} =        key1=1      key2=abc
-&{USER_HEADER_DEL} =    key1=del    key2=del
-${EACL_ERROR_MSG} =     *
+${EACL_ERROR_MSG} =     code = 2048 message = access to object operation denied
 
 *** Test cases ***
 BearerToken Operations with Filter Requst Equal
     [Documentation]         Testcase to validate NeoFS operations with BearerToken with Filter Requst Equal.
     [Tags]                  ACL   BearerToken
-    [Timeout]               20 min
+    [Timeout]               5 min
 
     [Setup]                 Setup
 
-    ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
-
-                            Log    Check Bearer token with simple object
-    ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter Requst Equal    ${WALLET}    ${FILE_S}
-
-                            Log    Check Bearer token with complex object
-    ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
-                            Check eACL Deny and Allow All Bearer Filter Requst Equal    ${WALLET}    ${FILE_S}
+    Check eACL Deny and Allow All Bearer Filter Requst Equal    Simple
+    Check eACL Deny and Allow All Bearer Filter Requst Equal    Complex
 
     [Teardown]              Teardown    acl_bearer_request_filter_xheader_equal
 
@@ -41,28 +33,31 @@ BearerToken Operations with Filter Requst Equal
 *** Keywords ***
 
 Check eACL Deny and Allow All Bearer Filter Requst Equal
-    [Arguments]    ${WALLET}    ${FILE_S}
+    [Arguments]    ${COMPLEXITY}
 
-    ${CID} =                Create Container           ${WALLET}    basic_acl=eacl-public-read-write
-                            Prepare eACL Role rules    ${CID}
-    ${S_OID_USER} =         Put object                 ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER}
-    ${S_OID_USER_2} =       Put object                 ${WALLET}     ${FILE_S}   ${CID}
-    ${D_OID_USER} =         Put object                 ${WALLET}     ${FILE_S}   ${CID}  user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    ${WALLET}
+    ...     ${_}
+    ...     ${_} =   Prepare Wallet And Deposit
+    ${CID} =        Create Container    ${WALLET}    basic_acl=eacl-public-read-write
 
-                        Put object         ${WALLET}    ${FILE_S}     ${CID}
-                        Get object         ${WALLET}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
-                        Search object      ${WALLET}    ${CID}        ${EMPTY}             ${EMPTY}      ${USER_HEADER}     ${S_OBJ_H}
-                        Head object        ${WALLET}    ${CID}        ${S_OID_USER}
-                        Get Range          ${WALLET}    ${CID}        ${S_OID_USER}        s_get_range    ${EMPTY}      0:256
-                        Delete object      ${WALLET}    ${CID}        ${D_OID_USER}
+    ${OID} =        Run All Verbs Except Delete And Expect Success
+                    ...     ${WALLET}   ${CID}      ${COMPLEXITY}
 
-                        Set eACL           ${WALLET}    ${CID}        ${EACL_DENY_ALL_USER}
+                    Delete Object And Validate Tombstone
+                    ...     ${WALLET}   ${CID}      ${OID}
+
+    # Generating empty file to test operations with it after EACL will be set;
+    # the size does not matter as we expect to get "operation is not allowed" error
+    ${FILE}
+    ...     ${_} =      Generate File   0
+    ${OID} =            Put object      ${WALLET}    ${FILE}    ${CID}
+
+                        Set eACL        ${WALLET}    ${CID}     ${EACL_DENY_ALL_USER}
 
                         # The current ACL cache lifetime is 30 sec
                         Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-    ${filters}=         Create Dictionary    headerType=REQUEST    matchType=STRING_EQUAL    key=a    value=256
+    ${filters}=         Create Dictionary    headerType=REQUEST        matchType=STRING_EQUAL    key=a    value=256
     ${rule1}=           Create Dictionary    Operation=GET             Access=ALLOW    Role=USER    Filters=${filters}
     ${rule2}=           Create Dictionary    Operation=HEAD            Access=ALLOW    Role=USER    Filters=${filters}
     ${rule3}=           Create Dictionary    Operation=PUT             Access=ALLOW    Role=USER    Filters=${filters}
@@ -74,23 +69,13 @@ Check eACL Deny and Allow All Bearer Filter Requst Equal
 
     ${EACL_TOKEN} =     Form BearerToken File      ${WALLET}    ${CID}   ${eACL_gen}
 
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Put object     ${WALLET}    ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Get object     ${WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}       local_file_eacl
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Search object  ${WALLET}    ${CID}       ${EMPTY}         ${EMPTY}       ${USER_HEADER}    ${S_OBJ_H}
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Head object    ${WALLET}    ${CID}       ${S_OID_USER}
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Get Range      ${WALLET}    ${CID}       ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                        Run Keyword And Expect Error    ${EACL_ERROR_MSG}
-                        ...  Delete object  ${WALLET}    ${CID}       ${S_OID_USER}
+                        Run All Verbs And Expect Failure
+                        ...     ${EACL_ERROR_MSG}   ${WALLET}   ${CID}  ${OID}
 
-                        Put object      ${WALLET}    ${FILE_S}    ${CID}           bearer=${EACL_TOKEN}    user_headers=${USER_HEADER}       options=--xhdr a=256
-                        Get object      ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl          ${EMPTY}       --xhdr a=256
-                        Search object   ${WALLET}    ${CID}       ${EMPTY}         ${EACL_TOKEN}    ${USER_HEADER}       ${EMPTY}       --xhdr a=256
-                        Head object     ${WALLET}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}    options=--xhdr a=256
-                        Get Range       ${WALLET}    ${CID}       ${S_OID_USER}    s_get_range      ${EACL_TOKEN}    0:256          --xhdr a=256
-                        Get Range Hash  ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    0:256            --xhdr a=256
-                        Delete object   ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    --xhdr a=256
+    ${OID} =            Run All Verbs Except Delete And Expect Success
+                        ...     ${WALLET}   ${CID}      ${COMPLEXITY}
+                        ...     ${EACL_TOKEN}       --xhdr a=256
+
+                        Delete Object And Validate Tombstone
+                        ...     ${WALLET}   ${CID}      ${OID}
+                        ...     ${EACL_TOKEN}       --xhdr a=256

@@ -21,7 +21,8 @@ def _cmd_run(cmd, timeout=30):
     try:
         logger.info(f"Executing command: {cmd}")
         compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    timeout=timeout,
                                     shell=True)
         output = compl_proc.stdout
         logger.info(f"Output: {output}")
@@ -29,6 +30,8 @@ def _cmd_run(cmd, timeout=30):
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(f"Error:\nreturn code: {exc.returncode} "
                            f"\nOutput: {exc.output}") from exc
+    except OSError as exc:
+        raise RuntimeError(f"Output: {exc.strerror}") from exc
     except Exception as exc:
         return_code, _ = subprocess.getstatusoutput(cmd)
         logger.info(f"Error:\nreturn code: {return_code}\nOutput: "

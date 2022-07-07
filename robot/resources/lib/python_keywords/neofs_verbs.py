@@ -10,13 +10,12 @@ import random
 import re
 import uuid
 
-from robot.api import logger
-from robot.api.deco import keyword
-
-from common import NEOFS_ENDPOINT, ASSETS_DIR, NEOFS_NETMAP, WALLET_CONFIG
 import json_transformers
 from cli_helpers import _cmd_run
+from common import ASSETS_DIR, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
 from data_formatters import dict_to_attrs
+from robot.api import logger
+from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -126,7 +125,7 @@ def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers:
 
 @keyword('Delete object')
 def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_config: str = WALLET_CONFIG,
-                    options: str = ""):
+                  options: str = ""):
     """
     DELETE an Object.
 
@@ -187,7 +186,7 @@ def get_range(wallet: str, cid: str, oid: str, file_path: str, bearer: str, rang
 
 @keyword('Search object')
 def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filters: dict = {},
-                  expected_objects_list=[], wallet_config: str = WALLET_CONFIG):
+                  expected_objects_list=[], wallet_config: str = WALLET_CONFIG, options: str = ""):
     """
     SEARCH an Object.
 
@@ -200,6 +199,7 @@ def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filte
         filters (optional, dict): key=value pairs to filter Objects
         expected_objects_list (optional, list): a list of ObjectIDs to compare found Objects with
         wallet_config(optional, str): path to the wallet config
+        options(optional, str): any other options which `neofs-cli object search` might accept
     Returns:
         (list): list of found ObjectIDs
     """
@@ -207,12 +207,13 @@ def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filte
     if filters:
         filters_result += "--filters "
         logger.info(filters)
-        filters_result += ','.join(map(lambda i: f"'{i} EQ {filters[i]}'", filters))
+        filters_result += ','.join(
+            map(lambda i: f"'{i} EQ {filters[i]}'", filters))
 
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
         f'object search {keys} --cid {cid} {filters_result} --config {wallet_config} '
-        f'{"--bearer " + bearer if bearer else ""}'
+        f'{"--bearer " + bearer if bearer else ""} {options}'
     )
     output = _cmd_run(cmd)
 
