@@ -2,18 +2,20 @@
 
 import json
 
+import neofs_verbs
 from neo3 import wallet
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
-
-import neofs_verbs
 
 ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Verify Head Tombstone')
-def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
-    header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
+def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str,
+                          bearer: str = "", options: str = ""):
+    header = neofs_verbs.head_object(wallet_path, cid, oid_ts,
+                                     bearer_token=bearer,
+                                     options=options)
     header = header['header']
 
     BuiltIn().should_be_equal(header["containerID"], cid,
@@ -32,18 +34,18 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
                               msg="Header Type isn't Tombstone")
 
     BuiltIn().should_be_equal(
-            header["sessionToken"]["body"]["object"]["verb"], 'DELETE',
-            msg="Header Session Type isn't DELETE"
-        )
+        header["sessionToken"]["body"]["object"]["verb"], 'DELETE',
+        msg="Header Session Type isn't DELETE"
+    )
 
     BuiltIn().should_be_equal(
-            header["sessionToken"]["body"]["object"]["address"]["containerID"],
-            cid,
-            msg="Header Session ID is wrong"
-        )
+        header["sessionToken"]["body"]["object"]["address"]["containerID"],
+        cid,
+        msg="Header Session ID is wrong"
+    )
 
     BuiltIn().should_be_equal(
-            header["sessionToken"]["body"]["object"]["address"]["objectID"],
-            oid,
-            msg="Header Session OID is wrong"
-        )
+        header["sessionToken"]["body"]["object"]["address"]["objectID"],
+        oid,
+        msg="Header Session OID is wrong"
+    )
