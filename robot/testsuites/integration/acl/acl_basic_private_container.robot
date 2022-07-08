@@ -10,6 +10,7 @@ Resource        setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT} =    ${30}
+${EACL_ERROR_MSG} =     code = 2048 message = access to object operation denied
 
 *** Test cases ***
 Basic ACL Operations for Private Container
@@ -53,7 +54,9 @@ Check Private Container
     ${S_OID_USER} =     Put Object         ${USER_WALLET}    ${FILE_S}    ${PRIV_CID}
                         Run Keyword And Expect Error        *
                         ...  Put object    ${WALLET_OTH}    ${FILE_S}    ${PRIV_CID}
-    ${S_OID_SYS_IR} =    Put Object        ${IR_WALLET_PATH}    ${FILE_S}    ${PRIV_CID}    wallet_config=${IR_WALLET_CONFIG}
+    ${ERR} =            Run Keyword And Expect Error    *
+                        ...  Put Object        ${IR_WALLET_PATH}    ${FILE_S}    ${PRIV_CID}    wallet_config=${IR_WALLET_CONFIG}
+                        Should Contain          ${ERR}    ${EACL_ERROR_MSG}
     ${S_OID_SYS_SN} =    Put Object        ${STORAGE_WALLET_PATH}    ${FILE_S}    ${PRIV_CID}
 
     # Get
@@ -81,7 +84,7 @@ Check Private Container
                         Get Range hash         ${STORAGE_WALLET_PATH}    ${PRIV_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_PRIV} =     Create List    ${S_OID_USER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
+    @{S_OBJ_PRIV} =     Create List    ${S_OID_USER}    ${S_OID_SYS_SN}
                         Search Object         ${USER_WALLET}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}
                         Run Keyword And Expect Error        *
                         ...  Search object    ${WALLET_OTH}    ${PRIV_CID}    keys=--root    expected_objects_list=${S_OBJ_PRIV}

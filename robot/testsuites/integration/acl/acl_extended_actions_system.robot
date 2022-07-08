@@ -16,6 +16,7 @@ Resource    eacl_tables.robot
 &{USER_HEADER_DEL} =    key1=del    key2=del
 &{ANOTHER_USER_HEADER} =        key1=oth    key2=oth
 ${DEPOSIT} =            ${30}
+${EACL_ERROR_MSG} =     code = 2048 message = access to object operation denied
 
 *** Test cases ***
 Extended ACL Operations
@@ -56,7 +57,10 @@ Check eACL Deny and Allow All System
 
     @{S_OBJ_H} =	Create List     ${S_OID_USER}
 
-                        Put object      ${IR_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
+    ${ERR} =            Run Keyword And Expect Error    *
+                        ...    Put object      ${IR_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
+                        Should Contain          ${ERR}    ${EACL_ERROR_MSG}
+
                         Put object      ${STORAGE_WALLET_PATH}    ${FILE_S}    ${CID}    user_headers=${ANOTHER_USER_HEADER}
 
                         Get object    ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl     wallet_config=${IR_WALLET_CONFIG}
@@ -135,9 +139,10 @@ Check eACL Deny and Allow All System
 
     ${D_OID_USER_S} =   Put object     ${WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
     ${D_OID_USER_SN} =  Put object     ${WALLET}     ${FILE_S}    ${CID}    user_headers=${USER_HEADER_DEL}
-
-                        Put object     ${IR_WALLET_PATH}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
                         Put object     ${STORAGE_WALLET_PATH}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}
+    ${ERR} =            Run Keyword And Expect Error        *
+                        ...    Put object     ${IR_WALLET_PATH}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_USER_HEADER}     wallet_config=${IR_WALLET_CONFIG}
+                        Should Contain          ${ERR}    ${EACL_ERROR_MSG}
 
                         Get object       ${IR_WALLET_PATH}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl     wallet_config=${IR_WALLET_CONFIG}
                         Get object       ${STORAGE_WALLET_PATH}    ${CID}        ${S_OID_USER}      ${EMPTY}    local_file_eacl
