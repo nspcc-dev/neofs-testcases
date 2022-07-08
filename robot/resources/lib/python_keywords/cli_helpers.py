@@ -23,6 +23,8 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
     Runs given shell command <cmd>, in case of success returns its stdout,
     in case of failure returns error message.
     """
+    compl_proc = None
+    start_time = datetime.now()
     try:
         logger.info(f"Executing command: {cmd}")
         start_time = datetime.utcnow()
@@ -38,12 +40,20 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
+        logger.info(f"Error:\nreturn code: {exc.returncode} "
+                    f"\nOutput: {exc.output}")
+        end_time = datetime.now()
+        return_code, cmd_output = subprocess.getstatusoutput(cmd)
+        _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
+
         raise RuntimeError(f"Error:\nreturn code: {exc.returncode} "
                            f"\nOutput: {exc.output}") from exc
     except OSError as exc:
         raise RuntimeError(f"Output: {exc.strerror}") from exc
     except Exception as exc:
-        return_code, _ = subprocess.getstatusoutput(cmd)
+        return_code, cmd_output = subprocess.getstatusoutput(cmd)
+        end_time = datetime.now()
+        _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
         logger.info(f"Error:\nreturn code: {return_code}\nOutput: "
                     f"{exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}")
         raise

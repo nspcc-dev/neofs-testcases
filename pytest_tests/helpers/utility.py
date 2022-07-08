@@ -22,9 +22,12 @@ def create_file_with_content(file_path: str = None, content: str = None) -> str:
     return file_path
 
 
-def get_file_content(file_path: str) -> str:
-    with open(file_path, 'r') as out_file:
-        content = out_file.read()
+def get_file_content(file_path: str, content_len: int = None, mode='r') -> str:
+    with open(file_path, mode) as out_file:
+        if content_len:
+            content = out_file.read(content_len)
+        else:
+            content = out_file.read()
 
     return content
 
@@ -46,3 +49,37 @@ def split_file(file_path: str, parts: int) -> list[str]:
         part_id += 1
 
     return files
+
+
+def robot_time_to_int(value: str) -> int:
+    if value.endswith('s'):
+        return int(value[:-1])
+
+    if value.endswith('m'):
+        return int(value[:-1]) * 60
+
+
+def placement_policy_from_container(container_info: str) -> str:
+    """
+    Get placement policy from container info:
+
+        container ID: j7k4auNHRmiPMSmnH2qENLECD2au2y675fvTX6csDwd
+        version: 2.12
+        owner ID: NQ8HUxE5qEj7UUvADj7z9Z7pcvJdjtPwuw
+        basic ACL: 0x0fbfbfff (eacl-public-read-write)
+        attribute: Timestamp=1656340345 (2022-06-27 17:32:25 +0300 MSK)
+        nonce: 1c511e88-efd7-4004-8dbf-14391a5d375a
+        placement policy:
+        REP 1 IN LOC_PLACE
+        CBF 1
+        SELECT 1 FROM LOC_SW AS LOC_PLACE
+        FILTER Country EQ Sweden AS LOC_SW
+
+    Args:
+        container_info: output from neofs-cli container get command
+
+    Returns:
+        placement policy as a string
+    """
+    assert ':' in container_info, f'Could not find placement rule in the output {container_info}'
+    return container_info.split(':')[-1].replace('\n', ' ').strip()

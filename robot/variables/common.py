@@ -37,21 +37,26 @@ STORAGE_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
 STORAGE_NODE_3 = os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080')
 STORAGE_NODE_4 = os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080')
 
+CONTROL_NODE_1 = os.getenv('NEOFS_CONTROL_NODE_1', 's01.neofs.devenv:8081')
+CONTROL_NODE_2 = os.getenv('NEOFS_CONTROL_NODE_2', 's02.neofs.devenv:8081')
+CONTROL_NODE_3 = os.getenv('NEOFS_CONTROL_NODE_3', 's03.neofs.devenv:8081')
+CONTROL_NODE_4 = os.getenv('NEOFS_CONTROL_NODE_4', 's04.neofs.devenv:8081')
+
 DEVENV_SERVICES_PATH = f"{os.getenv('DEVENV_PATH')}/services"
 NEOFS_NETMAP_DICT = {'s01': {'rpc': STORAGE_NODE_1,
-                             'control': 's01.neofs.devenv:8081',
+                             'control': CONTROL_NODE_1,
                              'wallet_path':f"{DEVENV_SERVICES_PATH}/storage/wallet01.json",
                              'UN-LOCODE': 'RU MOW'},
                      's02': {'rpc': STORAGE_NODE_2,
-                             'control': 's02.neofs.devenv:8081',
+                             'control': CONTROL_NODE_2,
                              'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet02.json",
                              'UN-LOCODE': 'RU LED'},
                      's03': {'rpc': STORAGE_NODE_3,
-                             'control': 's03.neofs.devenv:8081',
+                             'control': CONTROL_NODE_3,
                              'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet03.json",
                              'UN-LOCODE': 'SE STO'},
                      's04': {'rpc': STORAGE_NODE_4,
-                             'control': 's04.neofs.devenv:8081',
+                             'control': CONTROL_NODE_4,
                              'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet04.json",
                              'UN-LOCODE': 'FI HEL'}
                      }
@@ -73,5 +78,6 @@ S3_GATE_WALLET_PASS = 's3'
 
 CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
 CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
+DEPLOY_PATH = os.getenv('DEPLOY_PATH', '/opt/dev-env')
 
 FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
