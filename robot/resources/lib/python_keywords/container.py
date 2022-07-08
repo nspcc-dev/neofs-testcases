@@ -91,21 +91,24 @@ def list_containers(wallet: str) -> list[str]:
 
 
 @keyword('Get Container')
-def get_container(wallet: str, cid: str) -> dict:
+def get_container(wallet: str, cid: str, flag: str = '--json') -> dict:
     """
         A wrapper for `neofs-cli container get` call. It extracts container's
         attributes and rearranges them into a more compact view.
         Args:
             wallet (str): path to a wallet on whose behalf we get the container
             cid (str): ID of the container to get
+            flag (str): output as json or plain text
         Returns:
-            (dict): dict of container attributes
+            (dict, str): dict of container attributes
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
         f'--config {WALLET_CONFIG} --cid {cid} container get --json'
     )
     output = _cmd_run(cmd)
+    if flag != '--json':
+        return output
     container_info = json.loads(output)
     attributes = dict()
     for attr in container_info['attributes']:

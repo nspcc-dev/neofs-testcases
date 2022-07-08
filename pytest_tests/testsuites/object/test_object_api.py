@@ -4,13 +4,15 @@ from time import sleep
 import allure
 import pytest
 from container import create_container
-from epoch import tick_epoch
+from epoch import get_epoch, tick_epoch
 from tombstone import verify_head_tombstone
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
                                          get_range_hash, head_object,
                                          put_object, search_object)
 from python_keywords.storage_policy import get_simple_object_copies
 from python_keywords.utility_keywords import generate_file, get_file_hash
+from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
+from utility import get_file_content
 
 logger = logging.getLogger('NeoLogger')
 
@@ -20,16 +22,23 @@ CLEANUP_TIMEOUT = 10
 @allure.title('Test native object API')
 @pytest.mark.sanity
 @pytest.mark.grpc_api
-def test_object_api(prepare_wallet_and_deposit):
+@pytest.mark.parametrize('object_size', [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=['simple object', 'complex object'])
+def test_object_api(prepare_wallet_and_deposit, request, object_size):
+    """
+    Test common gRPC API for object (put/get/head/get_range_hash/get_range/search/delete).
+    """
     wallet = prepare_wallet_and_deposit
     cid = create_container(wallet)
     wallet_cid = {'wallet': wallet, 'cid': cid}
-    file_usr_header = {'key1': 1, 'key2': 'abc'}
-    file_usr_header_oth = {'key1': 2}
-    range_cut = '0:10'
+    file_usr_header = {'key1': 1, 'key2': 'abc', 'common_key': 'common_value'}
+    file_usr_header_oth = {'key1': 2, 'common_key': 'common_value'}
+    common_header = {'common_key': 'common_value'}
+    range_len = 10
+    range_cut = f'0:{range_len}'
     oids = []
 
-    file_path = generate_file()
+    allure.dynamic.title(f'Test native object API for {request.node.callspec.id}')
+    file_path = generate_file(object_size)
     file_hash = get_file_hash(file_path)
 
     search_object(**wallet_cid, expected_objects_list=oids)
@@ -50,14 +59,21 @@ def test_object_api(prepare_wallet_and_deposit):
             assert file_hash == got_file_hash
 
     with allure.step('Get range/range hash'):
-        get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
-        get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
-        get_range(**wallet_cid, oid=oids[1], bearer='', range_cut=range_cut)
+        range_hash = get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
+        assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
+
+        range_hash = get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
+        assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
+
+        _, got_content = get_range(**wallet_cid, oid=oids[1], bearer='', range_cut=range_cut)
+        assert get_file_content(file_path, content_len=range_len, mode='rb') == got_content, \
+            'Expected range content is correct'
 
     with allure.step('Search objects'):
         search_object(**wallet_cid, expected_objects_list=oids)
         search_object(**wallet_cid, filters=file_usr_header, expected_objects_list=oids[1:2])
         search_object(**wallet_cid, filters=file_usr_header_oth, expected_objects_list=oids[2:3])
+        search_object(**wallet_cid, filters=common_header, expected_objects_list=oids[1:3])
 
     with allure.step('Head object and validate'):
         head_object(**wallet_cid, oid=oids[0])
@@ -77,6 +93,35 @@ def test_object_api(prepare_wallet_and_deposit):
     with allure.step('Get objects and check errors'):
         get_object_and_check_error(**wallet_cid, oid=oids[0], err_msg='object already removed')
         get_object_and_check_error(**wallet_cid, oid=oids[1], err_msg='object already removed')
+
+
+@allure.title('Test object life time')
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+@pytest.mark.parametrize('object_size', [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=['simple object', 'complex object'])
+def test_object_life_time(prepare_container, request, object_size):
+    """
+    Test object deleted after expiration epoch.
+    """
+    cid, wallet = prepare_container
+
+    allure.dynamic.title(f'Test object life time for {request.node.callspec.id}')
+
+    file_path = generate_file(object_size)
+    file_hash = get_file_hash(file_path)
+    epoch = get_epoch()
+
+    oid = put_object(wallet, file_path, cid, options=f'--expires-on {epoch + 1}')
+    got_file = get_object(wallet, cid, oid)
+    assert get_file_hash(got_file) == file_hash
+
+    with allure.step('Tick two epochs'):
+        for _ in range(3):
+            tick_epoch()
+
+    with allure.step('Check object deleted because if expires-on epoch'):
+        with pytest.raises(Exception, match='.*object not found.*'):
+            get_object(wallet, cid, oid)
 
 
 def get_object_and_check_error(wallet: str, cid: str, oid: str, err_msg: str):

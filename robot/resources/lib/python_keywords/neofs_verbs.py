@@ -110,6 +110,8 @@ def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers:
     """
     if not endpoint:
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
+        if not endpoint:
+            logger.info(f'---DEB:\n{NEOFS_NETMAP}')
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
         f'object put --file {path} --cid {cid} {options} --config {wallet_config} '

@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
-'''
+"""
     This module contains keywords which are used for asserting
     that storage policies are kept.
-'''
+"""
 
 from robot.api import logger
 from robot.api.deco import keyword
@@ -57,8 +57,9 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str):
                                                endpoint=node,
                                                is_direct=True)
             if response:
+                logger.info(f"Found object {oid} on node {node}")
                 copies += 1
-        except Exception as exc:
+        except Exception:
             logger.info(f"No {oid} object copy found on {node}, continue")
             continue
     return copies
@@ -104,8 +105,9 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str):
                                           endpoint=node,
                                           is_direct=True)
             if res is not None:
+                logger.info(f"Found object {oid} on node {node}")
                 nodes_list.append(node)
-        except Exception as exc:
+        except Exception:
             logger.info(f"No {oid} object copy found on {node}, continue")
             continue
     return nodes_list

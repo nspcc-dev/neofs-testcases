@@ -52,7 +52,10 @@ def init_s3_credentials(wallet_path, s3_bearer_rules_file: str = None):
         # first five string are log output, cutting them off and parse
         # the rest of the output as JSON
         output = '\n'.join(output.split('\n')[5:])
-        output_dict = json.loads(output)
+        try:
+            output_dict = json.loads(output)
+        except json.JSONDecodeError:
+            raise AssertionError(f'Could not parse info from output\n{output}')
 
         return (output_dict['container_id'],
                 bucket,

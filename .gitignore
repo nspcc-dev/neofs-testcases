@@ -1,8 +1,10 @@
-# ignore test result files under any path
+# ignore test results
 **/log.html
 **/output.xml
 **/report.html
 **/dockerlogs*.tar.gz
+allure_results/*
+xunit_results.xml
 
 # ignore pycache under any path
 **/__pycache__

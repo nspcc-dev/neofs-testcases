@@ -221,7 +221,6 @@ class TestHttpGate:
     @staticmethod
     @allure.step('Verify object can be get using HTTP header attribute')
     def get_object_by_attr_and_verify_hashes(oid: str, file_name: str, cid: str, attrs: dict):
-
         got_file_path_http = get_via_http_gate(cid=cid, oid=oid)
         got_file_path_http_attr = get_via_http_gate_by_attribute(cid=cid, attribute=attrs)
 

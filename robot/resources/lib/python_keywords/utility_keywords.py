@@ -51,17 +51,21 @@ def generate_file_and_file_hash(size: int) -> Tuple[str, str]:
 
 
 @keyword('Get File Hash')
-def get_file_hash(filename: str):
+def get_file_hash(filename: str, len: int = None):
     """
     This function generates hash for the specified file.
     Args:
         filename (str): the path to the file to generate hash for
+        len (int): how many bytes to read
     Returns:
         (str): the hash of the file
     """
     file_hash = hashlib.sha256()
     with open(filename, "rb") as out:
-        file_hash.update(out.read())
+        if len:
+            file_hash.update(out.read(len))
+        else:
+            file_hash.update(out.read())
     return file_hash.hexdigest()
 
 
