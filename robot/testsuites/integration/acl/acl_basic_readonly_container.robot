@@ -10,6 +10,7 @@ Resource    setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT} =    ${30}
+${EACL_ERROR_MSG} =     code = 2048 message = access to object operation denied
 
 *** Test cases ***
 Basic ACL Operations for Read-Only Container
@@ -49,7 +50,9 @@ Check Read-Only Container
     ${S_OID_USER} =         Put Object         ${USER_WALLET}    ${FILE_S}    ${READONLY_CID}
                             Run Keyword And Expect Error        *
                             ...  Put object    ${WALLET_OTH}    ${FILE_S}    ${READONLY_CID}
-    ${S_OID_SYS_IR} =       Put Object         ${IR_WALLET_PATH}    ${FILE_S}    ${READONLY_CID}    wallet_config=${IR_WALLET_CONFIG}
+    ${ERR} =                Run Keyword And Expect Error        *
+                            ...  Put Object         ${IR_WALLET_PATH}    ${FILE_S}    ${READONLY_CID}    wallet_config=${IR_WALLET_CONFIG}
+                            Should Contain          ${ERR}    ${EACL_ERROR_MSG}
     ${S_OID_SYS_SN} =       Put object         ${STORAGE_WALLET_PATH}    ${FILE_S}    ${READONLY_CID}
 
     # Get
@@ -74,7 +77,7 @@ Check Read-Only Container
                         #Get Range hash    ${STORAGE_WALLET_PATH}    ${READONLY_CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     # Search
-    @{S_OBJ_RO} =       Create List       ${S_OID_USER}    ${S_OID_SYS_SN}    ${S_OID_SYS_IR}
+    @{S_OBJ_RO} =       Create List       ${S_OID_USER}    ${S_OID_SYS_SN}
                         Search Object     ${USER_WALLET}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
                         Search Object     ${WALLET_OTH}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}
                         Search Object     ${IR_WALLET_PATH}    ${READONLY_CID}    keys=--root    expected_objects_list=${S_OBJ_RO}    wallet_config=${IR_WALLET_CONFIG}
