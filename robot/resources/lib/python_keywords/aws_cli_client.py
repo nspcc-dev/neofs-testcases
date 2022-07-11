@@ -89,7 +89,7 @@ class AwsCliClient:
         version = f' --version-id {VersionId}' if VersionId else ''
         cmd = f' aws --no-verify-ssl s3api get-object --bucket {Bucket} ' \
               f'--key {Key} {version} {file_path} --endpoint {S3_GATE}'
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, timeout=90)
         return self._to_json(output)
 
     def delete_objects(self, Bucket: str, Delete: dict) -> dict:

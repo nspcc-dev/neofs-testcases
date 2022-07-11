@@ -49,6 +49,7 @@ def init_wallet_with_address():
 @allure.title('Prepare tmp directory')
 def prepare_tmp_dir():
     full_path = f'{os.getcwd()}/{ASSETS_DIR}'
+    shutil.rmtree(full_path, ignore_errors=True)
     os.mkdir(full_path)
     yield
     shutil.rmtree(full_path)
