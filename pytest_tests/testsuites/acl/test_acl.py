@@ -25,7 +25,7 @@ class TestACL:
     @pytest.fixture(autouse=True)
     def create_two_wallets(self, prepare_wallet_and_deposit):
         self.main_wallet = prepare_wallet_and_deposit
-        self.other_wallet = wallet.init_wallet(ASSETS_DIR)
+        self.other_wallet = wallet.init_wallet(ASSETS_DIR)[0] # We need wallet file path only
 
     @allure.title('Test basic ACL')
     def test_basic_acl(self):

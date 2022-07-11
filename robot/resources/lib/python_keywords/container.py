@@ -104,7 +104,7 @@ def get_container(wallet: str, cid: str, flag: str = '--json') -> dict:
     """
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_CONFIG} --cid {cid} container get --json'
+        f'--config {WALLET_CONFIG} --cid {cid} container get {flag}'
     )
     output = _cmd_run(cmd)
     if flag != '--json':
