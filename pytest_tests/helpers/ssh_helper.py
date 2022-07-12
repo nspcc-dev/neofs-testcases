@@ -7,12 +7,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
 from time import sleep
-from typing import ClassVar
-import os
+from typing import ClassVar, Optional
 
 import allure
-from paramiko import (AutoAddPolicy, SFTPClient, SSHClient, SSHException,
-                      ssh_exception, RSAKey)
+from paramiko import AutoAddPolicy, SFTPClient, SSHClient, SSHException, ssh_exception, RSAKey
 from paramiko.ssh_exception import AuthenticationException
 
 
@@ -36,9 +34,9 @@ def log_command(func):
         with allure.step(f'SSH: {short}'):
             logging.info(f'Execute command "{command}" on "{host.ip}"')
 
-            start_time = datetime.now()
+            start_time = datetime.utcnow()
             cmd_result = func(host, command, *args, **kwargs)
-            end_time = datetime.now()
+            end_time = datetime.utcnow()
 
             log_message = f'HOST: {host.ip}\n' \
                           f'COMMAND:\n{textwrap.indent(command, " ")}\n' \
@@ -67,11 +65,12 @@ class HostClient:
 
     TIMEOUT_RESTORE_CONNECTION = 10, 24
 
-    def __init__(self, ip: str, login: str, password: str, init_ssh_client=True):
+    def __init__(self, ip: str, login: str, password: Optional[str],
+                 private_key_path: Optional[str] = None, init_ssh_client=True) -> None:
         self.ip = ip
         self.login = login
         self.password = password
-        self.pk = os.getenv('SSH_PK_PATH')
+        self.private_key_path = private_key_path
         if init_ssh_client:
             self.create_connection(self.SSH_CONNECTION_ATTEMPTS)
 
@@ -145,17 +144,30 @@ class HostClient:
     def create_connection(self, attempts=SSH_CONNECTION_ATTEMPTS):
         exc_err = None
         for attempt in range(attempts):
-            logging.info(f'Try to establish connection {attempt + 1} time to Host: {self.ip} under {self.login} '
-                         f'user with {self.password} password..')
             self.ssh_client = SSHClient()
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy())
             try:
-                if self.password:
-                    self.ssh_client.connect(hostname=str(self.ip), username=self.login, password=str(self.password),
-                                            timeout=self.CONNECTION_TIMEOUT)
+                if self.private_key_path:
+                    logging.info(
+                        f"Trying to connect to host {self.ip} using SSH key "
+                        f"{self.private_key_path} (attempt {attempt})"
+                    )
+                    self.ssh_client.connect(
+                        hostname=self.ip,
+                        pkey=RSAKey.from_private_key_file(self.private_key_path, self.password),
+                        timeout=self.CONNECTION_TIMEOUT
+                    )
                 else:
-                    self.ssh_client.connect(hostname=str(self.ip), pkey=RSAKey.from_private_key_file(self.pk),
-                                            timeout=self.CONNECTION_TIMEOUT)
+                    logging.info(
+                        f"Trying to connect to host {self.ip} as {self.login} using password "
+                        f"{self.password[:2] + '***' if self.password else ''} (attempt {attempt})"
+                    )
+                    self.ssh_client.connect(
+                        hostname=self.ip,
+                        username=self.login,
+                        password=self.password,
+                        timeout=self.CONNECTION_TIMEOUT
+                    )
                 return True
 
             except AuthenticationException as auth_err:

@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.9
 
 import os
 import uuid
 from enum import Enum
-from typing import Optional, List
+from typing import Optional
 
 import urllib3
 from botocore.exceptions import ClientError
@@ -196,7 +196,7 @@ def create_multipart_upload_s3(s3_client, bucket_name: str, object_key: str) -> 
 
 
 @keyword('List multipart uploads S3')
-def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[List[dict]]:
+def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[list[dict]]:
     try:
         response = s3_client.list_multipart_uploads(Bucket=bucket_name)
         log_command_execution('S3 List multipart upload', response)
@@ -240,7 +240,7 @@ def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str,
 
 
 @keyword('List parts S3')
-def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) -> List[dict]:
+def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) -> list[dict]:
     try:
         response = s3_client.list_parts(UploadId=upload_id, Bucket=bucket_name, Key=object_key)
         log_command_execution('S3 List part', response)

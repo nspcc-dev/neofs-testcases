@@ -1,16 +1,15 @@
-#!/usr/bin/python3.8
+#!/usr/bin/python3.9
 
 """
-Helper functions to use with `neofs-cli`, `neo-go`
-and other CLIs.
+Helper functions to use with `neofs-cli`, `neo-go` and other CLIs.
 """
-from typing import Union
+import json
 import subprocess
 import sys
 from contextlib import suppress
 from datetime import datetime
-from json import dumps
 from textwrap import shorten
+from typing import Union
 
 import allure
 import pexpect
@@ -19,21 +18,21 @@ from robot.api import logger
 ROBOT_AUTO_KEYWORDS = False
 
 
-def _cmd_run(cmd, timeout=30):
+def _cmd_run(cmd: str, timeout: int = 30) -> str:
     """
     Runs given shell command <cmd>, in case of success returns its stdout,
     in case of failure returns error message.
     """
     try:
         logger.info(f"Executing command: {cmd}")
-        start_time = datetime.now()
+        start_time = datetime.utcnow()
         compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                     timeout=timeout,
                                     shell=True)
         output = compl_proc.stdout
         return_code = compl_proc.returncode
-        end_time = datetime.now()
+        end_time = datetime.utcnow()
         logger.info(f"Output: {output}")
         _attach_allure_log(cmd, output, return_code, start_time, end_time)
 
@@ -50,7 +49,7 @@ def _cmd_run(cmd, timeout=30):
         raise
 
 
-def _run_with_passwd(cmd):
+def _run_with_passwd(cmd: str) -> str:
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 1
     child.expect(".*")
@@ -64,7 +63,7 @@ def _run_with_passwd(cmd):
     return cmd.decode()
 
 
-def _configure_aws_cli(cmd, key_id, access_key, out_format='json'):
+def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str = "json") -> str:
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 1
 
@@ -87,7 +86,8 @@ def _configure_aws_cli(cmd, key_id, access_key, out_format='json'):
     return cmd.decode()
 
 
-def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime):
+def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime,
+                       end_time: datetime) -> None:
     if 'allure' in sys.modules:
         command_attachment = (
             f"COMMAND: '{cmd}'\n"
@@ -99,11 +99,11 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
             allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
 
 
-def log_command_execution(cmd: str, output: Union[str, dict]):
+def log_command_execution(cmd: str, output: Union[str, dict]) -> None:
     logger.info(f'{cmd}: {output}')
     if 'allure' in sys.modules:
         with suppress(Exception):
-            json_output = dumps(output, indent=4, sort_keys=True)
+            json_output = json.dumps(output, indent=4, sort_keys=True)
             output = json_output
         command_attachment = (
             f"COMMAND: '{cmd}'\n"

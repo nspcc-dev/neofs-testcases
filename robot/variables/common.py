@@ -28,8 +28,6 @@ GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
-COMMON_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
-
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
@@ -74,6 +72,5 @@ STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
 
 CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
 CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
-REMOTE_HOST = os.getenv('REMOTE_HOST')
 
 FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
