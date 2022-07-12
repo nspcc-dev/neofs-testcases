@@ -1,6 +1,5 @@
 import os
 import uuid
-from typing import List
 
 from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
 
@@ -30,7 +29,7 @@ def get_file_content(file_path: str) -> str:
     return content
 
 
-def split_file(file_path: str, parts: int) -> List[str]:
+def split_file(file_path: str, parts: int) -> list[str]:
     files = []
     with open(file_path, 'rb') as in_file:
         data = in_file.read()

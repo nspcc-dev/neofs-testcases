@@ -3,8 +3,9 @@ from time import sleep
 
 import allure
 import pytest
+from container import create_container
 from epoch import tick_epoch
-from python_keywords.neofs import verify_head_tombstone
+from tombstone import verify_head_tombstone
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
                                          get_range_hash, head_object,
                                          put_object, search_object)
@@ -19,8 +20,9 @@ CLEANUP_TIMEOUT = 10
 @allure.title('Test native object API')
 @pytest.mark.sanity
 @pytest.mark.grpc_api
-def test_object_api(prepare_container):
-    cid, wallet = prepare_container
+def test_object_api(prepare_wallet_and_deposit):
+    wallet = prepare_wallet_and_deposit
+    cid = create_container(wallet)
     wallet_cid = {'wallet': wallet, 'cid': cid}
     file_usr_header = {'key1': 1, 'key2': 'abc'}
     file_usr_header_oth = {'key1': 2}

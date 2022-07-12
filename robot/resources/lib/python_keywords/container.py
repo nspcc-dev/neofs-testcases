@@ -1,29 +1,28 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.9
 
 """
-    This module contains keywords which utilize `neofs-cli container`
-    commands.
+    This module contains keywords that utilize `neofs-cli container` commands.
 """
 
 import json
 import time
+from typing import Optional
 
-from common import NEOFS_ENDPOINT, COMMON_PLACEMENT_RULE, NEOFS_CLI_EXEC, WALLET_CONFIG
-from cli_helpers import _cmd_run
-from data_formatters import dict_to_attrs
 import json_transformers
+from data_formatters import dict_to_attrs
+from cli_helpers import _cmd_run
+from common import NEOFS_ENDPOINT, NEOFS_CLI_EXEC, WALLET_CONFIG
 
 from robot.api import logger
 from robot.api.deco import keyword
 
-
 ROBOT_AUTO_KEYWORDS = False
-
+DEFAULT_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
 @keyword('Create Container')
-def create_container(wallet: str, rule: str = COMMON_PLACEMENT_RULE, basic_acl: str = '',
-                     attributes: dict = {}, session_token: str = '', session_wallet: str = '',
-                     options: str = ''):
+def create_container(wallet: str, rule: str = DEFAULT_PLACEMENT_RULE, basic_acl: str = '',
+                     attributes: Optional[dict] = None, session_token: str = '',
+                     session_wallet: str = '', options: str = '') -> str:
     """
         A wrapper for `neofs-cli container create` call.
 
@@ -74,7 +73,7 @@ def create_container(wallet: str, rule: str = COMMON_PLACEMENT_RULE, basic_acl: 
 
 
 @keyword('List Containers')
-def list_containers(wallet: str):
+def list_containers(wallet: str) -> list[str]:
     """
         A wrapper for `neofs-cli container list` call. It returns all the
         available containers for the given wallet.
@@ -92,12 +91,12 @@ def list_containers(wallet: str):
 
 
 @keyword('Get Container')
-def get_container(wallet: str, cid: str):
+def get_container(wallet: str, cid: str) -> dict:
     """
-        A wrapper for `neofs-cli container get` call. It extracts
-        container attributes and rearranges them to more compact view.
+        A wrapper for `neofs-cli container get` call. It extracts container's
+        attributes and rearranges them into a more compact view.
         Args:
-            wallet (str): a wallet on whose behalf we get the container
+            wallet (str): path to a wallet on whose behalf we get the container
             cid (str): ID of the container to get
         Returns:
             (dict): dict of container attributes
@@ -112,19 +111,18 @@ def get_container(wallet: str, cid: str):
     for attr in container_info['attributes']:
         attributes[attr['key']] = attr['value']
     container_info['attributes'] = attributes
-    container_info['ownerID'] = json_transformers.json_reencode(
-        container_info['ownerID']['value'])
+    container_info['ownerID'] = json_transformers.json_reencode(container_info['ownerID']['value'])
     return container_info
 
 
 @keyword('Delete Container')
 # TODO: make the error message about a non-found container more user-friendly
 # https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(wallet: str, cid: str):
+def delete_container(wallet: str, cid: str) -> None:
     """
         A wrapper for `neofs-cli container delete` call.
         Args:
-            wallet (str): a wallet on whose behalf we delete the container
+            wallet (str): path to a wallet on whose behalf we delete the container
             cid (str): ID of the container to delete
         This function doesn't return anything.
     """
@@ -136,27 +134,26 @@ def delete_container(wallet: str, cid: str):
     _cmd_run(cmd)
 
 
-def _parse_cid(ouptut: str):
+def _parse_cid(output: str) -> str:
     """
-    This function parses CID from given CLI output. The input string we
-    expect:
+    Parses container ID from a given CLI output. The input string we expect:
             container ID: 2tz86kVTDpJxWHrhw3h6PbKMwkLtBEwoqhHQCKTre1FN
             awaiting...
             container has been persisted on sidechain
     We want to take 'container ID' value from the string.
 
     Args:
-        ouptut (str): a command run output
+        output (str): CLI output to parse
 
     Returns:
         (str): extracted CID
     """
     try:
-        # taking first string from command output
-        fst_str = ouptut.split('\n')[0]
+        # taking first line from command's output
+        first_line = output.split('\n')[0]
     except Exception:
-        logger.error(f"Got empty output: {ouptut}")
-    splitted = fst_str.split(": ")
+        logger.error(f"Got empty output: {output}")
+    splitted = first_line.split(": ")
     if len(splitted) != 2:
-        raise ValueError(f"no CID was parsed from command output: \t{fst_str}")
+        raise ValueError(f"no CID was parsed from command output: \t{first_line}")
     return splitted[1]

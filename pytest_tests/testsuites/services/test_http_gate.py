@@ -4,17 +4,17 @@ from random import choice
 from time import sleep
 
 import allure
-from common import COMPLEX_OBJ_SIZE
 import pytest
+from common import COMPLEX_OBJ_SIZE
+from container import create_container
 from epoch import get_epoch, tick_epoch
 from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
-                                       get_via_http_gate_by_attribute,
-                                       get_via_zip_http_gate,
-                                       upload_via_http_gate,
-                                       upload_via_http_gate_curl)
+                                       get_via_http_gate_by_attribute, get_via_zip_http_gate,
+                                       upload_via_http_gate, upload_via_http_gate_curl)
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.storage_policy import get_nodes_without_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
+from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')
 
@@ -26,9 +26,15 @@ CLEANUP_TIMEOUT = 10
 @allure.link('https://github.com/nspcc-dev/neofs-http-gw#downloading', name='downloading')
 @pytest.mark.http_gate
 class TestHttpGate:
+    PLACEMENT_RULE = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+
+    @pytest.fixture(scope="class", autouse=True)
+    @allure.title('[Class/Autouse]: Prepare wallet and deposit')
+    def prepare_wallet(self, prepare_wallet_and_deposit):
+        TestHttpGate.wallet = prepare_wallet_and_deposit
 
     @allure.title('Test Put over gRPC, Get over HTTP')
-    def test_put_grpc_get_http(self, prepare_public_container):
+    def test_put_grpc_get_http(self):
         """
         Test that object can be put using gRPC interface and get using HTTP.
 
@@ -43,21 +49,21 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet = prepare_public_container
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
         with allure.step('Put objects using gRPC'):
-            oid_simple = put_object(wallet=wallet, path=file_path_simple, cid=cid)
-            oid_large = put_object(wallet=wallet, path=file_path_large, cid=cid)
+            oid_simple = put_object(wallet=self.wallet, path=file_path_simple, cid=cid)
+            oid_large = put_object(wallet=self.wallet, path=file_path_large, cid=cid)
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
-            self.get_object_and_verify_hashes(oid, file_path, wallet, cid)
+            self.get_object_and_verify_hashes(oid, file_path, self.wallet, cid)
 
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#uploading', name='uploading')
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#downloading', name='downloading')
     @pytest.mark.sanity
     @allure.title('Test Put over HTTP, Get over HTTP')
-    def test_put_http_get_http(self, prepare_public_container):
+    def test_put_http_get_http(self):
         """
         Test that object can be put and get using HTTP interface.
 
@@ -70,7 +76,7 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet = prepare_public_container
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
         with allure.step('Put objects using HTTP'):
@@ -78,18 +84,20 @@ class TestHttpGate:
             oid_large = upload_via_http_gate(cid=cid, path=file_path_large)
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
-            self.get_object_and_verify_hashes(oid, file_path, wallet, cid)
+            self.get_object_and_verify_hashes(oid, file_path, self.wallet, cid)
 
     @allure.link('https://github.com/nspcc-dev/neofs-http-gw#by-attributes', name='download by attributes')
     @allure.title('Test Put over HTTP, Get over HTTP with headers')
-    @pytest.mark.parametrize('attributes',
-                             [
-                                 {'fileName': 'simple_obj_filename'},
-                                 {'file-Name': 'simple obj filename'},
-                                 {'cat%jpeg': 'cat%jpeg'}
-                             ], ids=['simple', 'hyphen', 'percent']
-                             )
-    def test_put_http_get_http_with_headers(self, prepare_public_container, attributes):
+    @pytest.mark.parametrize(
+        'attributes',
+        [
+            {'fileName': 'simple_obj_filename'},
+            {'file-Name': 'simple obj filename'},
+            {'cat%jpeg': 'cat%jpeg'}
+        ],
+        ids=['simple', 'hyphen', 'percent']
+    )
+    def test_put_http_get_http_with_headers(self, attributes: dict):
         """
         Test that object can be downloaded using different attributes in HTTP header.
 
@@ -102,17 +110,18 @@ class TestHttpGate:
         Expected result:
         Hashes must be the same.
         """
-        cid, wallet = prepare_public_container
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path = generate_file()
 
         with allure.step('Put objects using HTTP with attribute'):
-            oid_simple = upload_via_http_gate(cid=cid, path=file_path, headers=self._attr_into_header(attributes))
+            headers = self._attr_into_header(attributes)
+            oid = upload_via_http_gate(cid=cid, path=file_path, headers=headers)
 
-        self.get_object_by_attr_and_verify_hashes(oid_simple, file_path, cid, attributes)
+        self.get_object_by_attr_and_verify_hashes(oid, file_path, cid, attributes)
 
     @allure.title('Test Expiration-Epoch in HTTP header')
-    def test_expiration_epoch_in_http(self, prepare_public_container):
-        cid, wallet = prepare_public_container
+    def test_expiration_epoch_in_http(self):
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path = generate_file()
         object_not_found_err = 'object not found'
         oids = []
@@ -137,15 +146,19 @@ class TestHttpGate:
             sleep(CLEANUP_TIMEOUT)
 
             for oid in expired_objects:
-                self.try_to_get_object_and_expect_error(cid=cid, oid=oid, expected_err=object_not_found_err)
+                self.try_to_get_object_and_expect_error(
+                    cid=cid,
+                    oid=oid,
+                    expected_err=object_not_found_err
+                )
 
             with allure.step('Other objects can be get'):
                 for oid in not_expired_objects:
                     get_via_http_gate(cid=cid, oid=oid)
 
     @allure.title('Test Zip in HTTP header')
-    def test_zip_in_http(self, prepare_public_container):
-        cid, wallet = prepare_public_container
+    def test_zip_in_http(self):
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
         common_prefix = 'my_files'
 
@@ -164,29 +177,29 @@ class TestHttpGate:
     @pytest.mark.curl
     @pytest.mark.long
     @allure.title('Test Put over HTTP/Curl, Get over HTTP/Curl for large object')
-    def test_put_http_get_http_large_file(self, prepare_public_container):
+    def test_put_http_get_http_large_file(self):
         """
         This test checks upload and download using curl with 'large' object. Large is object with size up to 20Mb.
         """
-        cid, wallet = prepare_public_container
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
 
         obj_size = int(os.getenv('BIG_OBJ_SIZE', COMPLEX_OBJ_SIZE))
         file_path = generate_file(obj_size)
 
         with allure.step('Put objects using HTTP'):
-            oid_simple = upload_via_http_gate(cid=cid, path=file_path)
+            oid_gate = upload_via_http_gate(cid=cid, path=file_path)
             oid_curl = upload_via_http_gate_curl(cid=cid, filepath=file_path, large_object=True)
 
-        self.get_object_and_verify_hashes(oid_simple, file_path, wallet, cid)
-        self.get_object_and_verify_hashes(oid_curl, file_path, wallet, cid, object_getter=get_via_http_curl)
+        self.get_object_and_verify_hashes(oid_gate, file_path, self.wallet, cid)
+        self.get_object_and_verify_hashes(oid_curl, file_path, self.wallet, cid, get_via_http_curl)
 
     @pytest.mark.curl
     @allure.title('Test Put/Get over HTTP using Curl utility')
-    def test_put_http_get_http_curl(self, prepare_public_container):
+    def test_put_http_get_http_curl(self):
         """
         Test checks upload and download over HTTP using curl utility.
         """
-        cid, wallet = prepare_public_container
+        cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
         with allure.step('Put objects using curl utility'):
@@ -194,7 +207,7 @@ class TestHttpGate:
             oid_large = upload_via_http_gate_curl(cid=cid, filepath=file_path_large)
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
-            self.get_object_and_verify_hashes(oid, file_path, wallet, cid, object_getter=get_via_http_curl)
+            self.get_object_and_verify_hashes(oid, file_path, self.wallet, cid, get_via_http_curl)
 
     @staticmethod
     @allure.step('Try to get object and expect error')
