@@ -30,6 +30,7 @@ NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 DEVENV_PATH = os.getenv("DEVENV_PATH", "../neofs-dev-env")
+CLI_CONFIGS_PATH = os.getenv("CLI_CONFIGS_PATH", f"{os.getcwd()}/neofs_cli_configs")
 
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
 
@@ -79,16 +80,16 @@ NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
 NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
-WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/empty_passwd.yml"
+WALLET_CONFIG = f"{CLI_CONFIGS_PATH}/empty_passwd.yml"
 MAINNET_WALLET_PATH = os.getenv("MAINNET_WALLET_PATH", f"{DEVENV_PATH}/services/chain/node-wallet.json")
-MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
+MAINNET_WALLET_CONFIG = f"{CLI_CONFIGS_PATH}/one_wallet_password.yml"
 MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
-MAINNET_WALLET_PASS = 'one'
+MAINNET_WALLET_PASS = os.getenv("MAINNET_WALLET_PASS", "one")
 IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", f"{DEVENV_PATH}/services/ir/wallet01.json")
-IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
-IR_WALLET_PASS = 'one'
-S3_GATE_WALLET_PATH = f"{DEVENV_PATH}/services/s3_gate/wallet.json"
-S3_GATE_WALLET_PASS = 's3'
+IR_WALLET_CONFIG = os.getenv("IR_WALLET_CONFIG", f"{CLI_CONFIGS_PATH}/one_wallet_password.yml")
+IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
+S3_GATE_WALLET_PATH = os.getenv("S3_GATE_WALLET_PATH", f"{DEVENV_PATH}/services/s3_gate/wallet.json")
+S3_GATE_WALLET_PASS = os.getenv("S3_GATE_WALLET_PASS", "s3")
 
 STORAGE_NODE_USER = os.getenv('STORAGE_NODE_USER', 'root')
 STORAGE_NODE_PWD = os.getenv('STORAGE_NODE_PWD')

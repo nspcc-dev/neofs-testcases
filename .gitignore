@@ -1,3 +1,6 @@
+# ignore IDE files
+.vscode
+
 # ignore test results
 **/log.html
 **/output.xml
@@ -6,8 +9,13 @@
 allure_results/*
 xunit_results.xml
 
-# ignore pycache under any path
+# ignore caches under any path
 **/__pycache__
+**/.pytest_cache
+
+# ignore work directories and setup files
+.setup
+.env
 TemporaryDir/*
 artifacts/*
 docs/*
