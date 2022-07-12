@@ -38,21 +38,19 @@ def check_binary_versions(request):
 
 
 @pytest.fixture(scope='session')
-@allure.title('Init wallet with address')
-def init_wallet_with_address():
-    full_path = f'{os.getcwd()}/{ASSETS_DIR}'
-    os.mkdir(full_path)
-
-    yield wallet.init_wallet(ASSETS_DIR)
-
-
 @allure.title('Prepare tmp directory')
 def prepare_tmp_dir():
     full_path = f'{os.getcwd()}/{ASSETS_DIR}'
     shutil.rmtree(full_path, ignore_errors=True)
     os.mkdir(full_path)
-    yield
+    yield full_path
     shutil.rmtree(full_path)
+
+
+@pytest.fixture(scope='session')
+@allure.title('Init wallet with address')
+def init_wallet_with_address(prepare_tmp_dir):
+    yield wallet.init_wallet(ASSETS_DIR)
 
 
 @pytest.fixture(scope='session')
