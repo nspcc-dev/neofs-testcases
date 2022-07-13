@@ -7,7 +7,7 @@ import pytest
 from common import STORAGE_NODE_PWD, STORAGE_NODE_USER
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
-from python_keywords.utility_keywords import get_file_hash
+from python_keywords.utility_keywords import generate_file, get_file_hash
 from sbercloud_helper import SberCloud
 from ssh_helper import HostClient, HostIsNotAvailable
 from storage_policy import get_nodes_with_object
@@ -56,11 +56,12 @@ def wait_object_replication(wallet, cid, oid, expected_copies: int) -> [str]:
 
 @allure.title('Lost and return nodes')
 @pytest.mark.parametrize('hard_reboot', [True, False])
-def test_lost_storage_node(prepare_wallet_and_deposit, generate_file, sbercloud_client: SberCloud, hard_reboot: bool):
-    wallet, _ = prepare_wallet_and_deposit
+def test_lost_storage_node(prepare_wallet_and_deposit, sbercloud_client: SberCloud, hard_reboot: bool):
+    wallet = prepare_wallet_and_deposit
     placement_rule = 'REP 2 IN X CBF 2 SELECT 2 FROM * AS X'
+    source_file_path = generate_file()
     cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, generate_file, cid)
+    oid = put_object(wallet, source_file_path, cid)
     nodes = wait_object_replication(wallet, cid, oid, 2)
 
     new_nodes = []
@@ -71,7 +72,7 @@ def test_lost_storage_node(prepare_wallet_and_deposit, generate_file, sbercloud_
 
     assert not [node for node in nodes if node in new_nodes]
     got_file_path = get_object(wallet, cid, oid)
-    assert get_file_hash(generate_file) == get_file_hash(got_file_path)
+    assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     with allure.step(f'Return storage nodes'):
         return_all_storage_nodes(sbercloud_client)
@@ -79,16 +80,17 @@ def test_lost_storage_node(prepare_wallet_and_deposit, generate_file, sbercloud_
     wait_object_replication(wallet, cid, oid, 2)
 
     got_file_path = get_object(wallet, cid, oid)
-    assert get_file_hash(generate_file) == get_file_hash(got_file_path)
+    assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
 
 @allure.title('Panic storage node(s)')
 @pytest.mark.parametrize('sequence', [True, False])
-def test_panic_storage_node(prepare_wallet_and_deposit, generate_file, sequence: bool):
-    wallet, _ = prepare_wallet_and_deposit
+def test_panic_storage_node(prepare_wallet_and_deposit, sequence: bool):
+    wallet = prepare_wallet_and_deposit
     placement_rule = 'REP 2 IN X CBF 2 SELECT 2 FROM * AS X'
+    source_file_path = generate_file()
     cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, generate_file, cid)
+    oid = put_object(wallet, source_file_path, cid)
 
     with allure.step(f'Return storage nodes'):
         nodes = wait_object_replication(wallet, cid, oid, 2)
@@ -101,4 +103,4 @@ def test_panic_storage_node(prepare_wallet_and_deposit, generate_file, sequence:
             wait_object_replication(wallet, cid, oid, 2)
 
         got_file_path = get_object(wallet, cid, oid)
-        assert get_file_hash(generate_file) == get_file_hash(got_file_path)
+        assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
