@@ -61,10 +61,10 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     with allure.step('Get range/range hash'):
         range_hash = get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
         assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
-        
+
         range_hash = get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
         assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
-        
+
         _, got_content = get_range(**wallet_cid, oid=oids[1], file_path='s_get_range', bearer='', range_cut=range_cut)
         assert get_file_content(file_path, content_len=range_len, mode='rb') == got_content, \
             'Expected range content is correct'

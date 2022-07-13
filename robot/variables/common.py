@@ -80,21 +80,29 @@ NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
 NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 
+# Config of user's wallet that we use to run the tests
 WALLET_CONFIG = f"{CLI_CONFIGS_PATH}/empty_passwd.yml"
+
 MAINNET_WALLET_PATH = os.getenv("MAINNET_WALLET_PATH", f"{DEVENV_PATH}/services/chain/node-wallet.json")
-MAINNET_WALLET_CONFIG = f"{CLI_CONFIGS_PATH}/one_wallet_password.yml"
-MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
+MAINNET_WALLET_CONFIG = os.getenv("MAINNET_WALLET_CONFIG", f"{CLI_CONFIGS_PATH}/one_wallet_password.yml")
+MAINNET_SINGLE_ADDR = "NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP"
 MAINNET_WALLET_PASS = os.getenv("MAINNET_WALLET_PASS", "one")
+
 IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", f"{DEVENV_PATH}/services/ir/wallet01.json")
 IR_WALLET_CONFIG = os.getenv("IR_WALLET_CONFIG", f"{CLI_CONFIGS_PATH}/one_wallet_password.yml")
 IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
+
 S3_GATE_WALLET_PATH = os.getenv("S3_GATE_WALLET_PATH", f"{DEVENV_PATH}/services/s3_gate/wallet.json")
 S3_GATE_WALLET_PASS = os.getenv("S3_GATE_WALLET_PASS", "s3")
 
-STORAGE_NODE_USER = os.getenv('STORAGE_NODE_USER', 'root')
-STORAGE_NODE_PWD = os.getenv('STORAGE_NODE_PWD')
-STORAGE_NODE_BIN_PATH = os.getenv('STORAGE_NODE_BIN_PATH', '/opt/dev-env/vendor/neofs-cli')
-STORAGE_NODE_CONFIG_PATH = os.getenv('STORAGE_NODE_CONFIG_PATH', '/opt/dev-env/services/storage/cli-cfg.yml')
-STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT = os.getenv('STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT', 'localhost:8091')
+STORAGE_NODE_USER = os.getenv("STORAGE_NODE_USER", "root")
+STORAGE_NODE_PWD = os.getenv("STORAGE_NODE_PWD")
+STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor/neofs-cli")
+STORAGE_NODE_CONFIG_PATH = os.getenv("STORAGE_NODE_CONFIG_PATH", f"{DEVENV_PATH}/services/storage/cli-cfg.yml")
+STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT = os.getenv("STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT", "localhost:8091")
+
+# Path and config for neofs-adm utility. Optional if tests are running against devenv
+NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC")
+NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
 
 FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
