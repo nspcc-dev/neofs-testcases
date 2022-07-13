@@ -60,14 +60,16 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 
     with allure.step('Get range/range hash'):
         range_hash = get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
-        assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
+        assert get_file_hash(file_path, range_len) == range_hash, \
+            f'Expected range hash to match {range_cut} slice of file payload'
 
         range_hash = get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
-        assert get_file_hash(file_path, range_len) == range_hash, 'Expected range hash is correct'
+        assert get_file_hash(file_path, range_len) == range_hash, \
+            f'Expected range hash to match {range_cut} slice of file payload'
 
-        _, got_content = get_range(**wallet_cid, oid=oids[1], bearer='', range_cut=range_cut)
-        assert get_file_content(file_path, content_len=range_len, mode='rb') == got_content, \
-            'Expected range content is correct'
+        _, range_content = get_range(**wallet_cid, oid=oids[1], bearer='', range_cut=range_cut)
+        assert get_file_content(file_path, content_len=range_len, mode='rb') == range_content, \
+            f'Expected range content to match {range_cut} slice of file payload'
 
     with allure.step('Search objects'):
         search_object(**wallet_cid, expected_objects_list=oids)

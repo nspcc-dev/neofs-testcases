@@ -54,7 +54,6 @@ def crate_container_and_pick_node(prepare_wallet_and_deposit):
 
 
 @pytest.fixture
-@pytest.mark.skip(reason="docker API works only for devenv")
 def start_node_if_needed():
     yield
     try:
@@ -168,7 +167,6 @@ def test_placement_policy_negative(prepare_wallet_and_deposit, placement_rule, e
 
 
 @pytest.mark.node_mgmt
-@pytest.mark.skip(reason="docker API works only for devenv")
 @allure.title('NeoFS object replication on node failover')
 def test_replication(prepare_wallet_and_deposit, start_node_if_needed):
     """
