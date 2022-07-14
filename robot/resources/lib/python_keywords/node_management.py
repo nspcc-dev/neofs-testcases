@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.9
 
 """
     This module contains keywords for management test stand
@@ -9,14 +9,16 @@ import random
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import List
+from typing import Optional
+from cli_helpers import _cmd_run
 
 import docker
-from common import (NEOFS_NETMAP_DICT, STORAGE_NODE_BIN_PATH, STORAGE_NODE_CONFIG_PATH,
-                    STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT, STORAGE_NODE_PWD, STORAGE_NODE_USER)
+from common import (NEOFS_CLI_EXEC, NEOFS_NETMAP_DICT, STORAGE_CONTROL_ENDPOINT_PRIVATE,
+                    STORAGE_NODE_BIN_PATH, STORAGE_NODE_SSH_PASSWORD,
+                    STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER, WALLET_CONFIG)
 from robot.api import logger
 from robot.api.deco import keyword
-from ssh_helper import HostClient, HostIsNotAvailable
+from ssh_helper import HostClient
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -42,12 +44,16 @@ def create_ssh_client(node_name: str) -> HostClient:
     if node_name not in NEOFS_NETMAP_DICT:
         raise AssertionError(f'Node {node_name} is not found!')
 
+    # We use rpc endpoint to determine host address, because control endpoint
+    # (if it is private) will be a local address on the host machine
     node_config = NEOFS_NETMAP_DICT.get(node_name)
-    host = node_config.get('control').split(':')[0]
-    try:
-        ssh_client = HostClient(host, STORAGE_NODE_USER, STORAGE_NODE_PWD)
-    except HostIsNotAvailable:
-        ssh_client = HostClient(host)
+    host = node_config.get('rpc').split(':')[0]
+    ssh_client = HostClient(
+        host,
+        login=STORAGE_NODE_SSH_USER,
+        password=STORAGE_NODE_SSH_PASSWORD,
+        private_key_path=STORAGE_NODE_SSH_PRIVATE_KEY_PATH,
+    )
 
     try:
         yield ssh_client
@@ -111,9 +117,9 @@ def get_control_endpoint_and_wallet(endpoint_number: str = ''):
 
     endpoint_values = NEOFS_NETMAP_DICT[f'{endpoint_num}']
     endpoint_control = endpoint_values['control']
-    wlt = endpoint_values['wallet_path']
+    wallet = endpoint_values['wallet_path']
 
-    return endpoint_num, endpoint_control, wlt
+    return endpoint_num, endpoint_control, wallet
 
 
 @keyword('Get Locode')
@@ -166,16 +172,13 @@ def node_healthcheck(node_name: str) -> HealthStatus:
         Returns:
             health status as HealthStatus object.
     """
-    with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control healthcheck ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH}'
-        output = ssh_client.exec_with_confirmation(cmd, [''])
-        return HealthStatus.from_stdout(output.stdout)
+    command = "control healthcheck"
+    output = run_control_command(node_name, command)
+    return HealthStatus.from_stdout(output)
 
 
 @keyword('Set status for node')
-def node_set_status(node_name: str, status: str):
+def node_set_status(node_name: str, status: str) -> None:
     """
         The function sets particular status for given node.
         Args:
@@ -184,15 +187,12 @@ def node_set_status(node_name: str, status: str):
         Returns:
             (void)
     """
-    with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control set-status ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH} --status {status}'
-        ssh_client.exec_with_confirmation(cmd, [''])
+    command = f"control set-status --status {status}"
+    run_control_command(node_name, command)
 
 
 @keyword('Get netmap snapshot')
-def get_netmap_snapshot(node_name: str = None) -> str:
+def get_netmap_snapshot(node_name: Optional[str] = None) -> str:
     """
         The function returns string representation of netmap-snapshot.
         Args:
@@ -201,17 +201,12 @@ def get_netmap_snapshot(node_name: str = None) -> str:
             string representation of netmap-snapshot
     """
     node_name = node_name or list(NEOFS_NETMAP_DICT)[0]
-
-    with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control netmap-snapshot ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH}'
-        output = ssh_client.exec_with_confirmation(cmd, [''])
-        return output.stdout
+    command = "control netmap-snapshot"
+    return run_control_command(node_name, command)
 
 
 @keyword('Shard list for node')
-def node_shard_list(node_name: str) -> List[str]:
+def node_shard_list(node_name: str) -> list[str]:
     """
         The function returns list of shards for particular node.
         Args:
@@ -219,12 +214,9 @@ def node_shard_list(node_name: str) -> List[str]:
         Returns:
             list of shards.
     """
-    with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control shards list ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH}'
-        output = ssh_client.exec_with_confirmation(cmd, [''])
-        return re.findall(r'Shard (.*):', output.stdout)
+    command = "control shards list"
+    output = run_control_command(node_name, command)
+    return re.findall(r'Shard (.*):', output)
 
 
 @keyword('Shard list for node')
@@ -236,12 +228,8 @@ def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
         Returns:
             health status as HealthStatus object.
     """
-    with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control shards set-mode ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH} --id {shard} --mode {mode}'
-        output = ssh_client.exec_with_confirmation(cmd, [''])
-        return output.stdout
+    command = f"control shards set-mode  --id {shard} --mode {mode}"
+    return run_control_command(node_name, command)
 
 
 @keyword('Drop object from node {node_name}')
@@ -253,9 +241,40 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
         Returns:
             health status as HealthStatus object.
     """
+    command = f"control drop-objects  -o {cid}/{oid}"
+    return run_control_command(node_name, command)
+
+
+def run_control_command(node_name: str, command: str) -> str:
+    control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
+    wallet_path = NEOFS_NETMAP_DICT[node_name]["wallet_path"]
+
+    if not STORAGE_CONTROL_ENDPOINT_PRIVATE:
+        cmd = (
+            f'{NEOFS_CLI_EXEC} {command} --rpc-endpoint {control_endpoint} '
+            f'--wallet {wallet_path} --config {WALLET_CONFIG}'
+        )
+        output = _cmd_run(cmd)
+        return output
+
+    # Private control endpoint is accessible only from the host where storage node is running
+    # So, we connect to storage node host and run CLI command from there
     with create_ssh_client(node_name) as ssh_client:
-        cmd = f'{STORAGE_NODE_BIN_PATH}/neofs-cli control drop-objects ' \
-            f'--endpoint {STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT} ' \
-            f'--config {STORAGE_NODE_CONFIG_PATH} -o {cid}/{oid}'
-        output = ssh_client.exec_with_confirmation(cmd, [''])
+        # Copy wallet content on storage node host
+        with open(wallet_path, "r") as file:
+            wallet = file.read()
+        remote_wallet_path = "/tmp/{node_name}-wallet.json"
+        ssh_client.exec_with_confirmation(f"echo '{wallet}' > {remote_wallet_path}", [""])
+
+        # Put config on storage node host
+        remote_config_path = "/tmp/{node_name}-config.yaml"
+        remote_config = 'password: ""'
+        ssh_client.exec_with_confirmation(f"echo '{remote_config}' > {remote_config_path}", [""])
+
+        # Execute command
+        cmd = (
+            f'{STORAGE_NODE_BIN_PATH}/neofs-cli {command} --endpoint {control_endpoint} '
+            f'--wallet {remote_wallet_path} --config {remote_config_path}'
+        )
+        output = ssh_client.exec_with_confirmation(cmd, [""])
         return output.stdout

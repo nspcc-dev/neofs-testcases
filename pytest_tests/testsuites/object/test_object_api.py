@@ -3,15 +3,15 @@ from time import sleep
 
 import allure
 import pytest
+from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
-from tombstone import verify_head_tombstone
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
                                          get_range_hash, head_object,
                                          put_object, search_object)
 from python_keywords.storage_policy import get_simple_object_copies
 from python_keywords.utility_keywords import generate_file, get_file_hash
-from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
+from tombstone import verify_head_tombstone
 from utility import get_file_content
 
 logger = logging.getLogger('NeoLogger')
@@ -99,11 +99,12 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 @pytest.mark.sanity
 @pytest.mark.grpc_api
 @pytest.mark.parametrize('object_size', [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=['simple object', 'complex object'])
-def test_object_life_time(prepare_container, request, object_size):
+def test_object_api(prepare_wallet_and_deposit, request, object_size):
     """
     Test object deleted after expiration epoch.
     """
-    cid, wallet = prepare_container
+    wallet = prepare_wallet_and_deposit
+    cid = create_container(wallet)
 
     allure.dynamic.title(f'Test object life time for {request.node.callspec.id}')
 

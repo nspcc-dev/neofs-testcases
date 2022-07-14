@@ -43,6 +43,7 @@ STORAGE_CONTROL_ENDPOINT_1 = os.getenv("STORAGE_CONTROL_ENDPOINT_1", "s01.neofs.
 STORAGE_CONTROL_ENDPOINT_2 = os.getenv("STORAGE_CONTROL_ENDPOINT_2", "s02.neofs.devenv:8081")
 STORAGE_CONTROL_ENDPOINT_3 = os.getenv("STORAGE_CONTROL_ENDPOINT_3", "s03.neofs.devenv:8081")
 STORAGE_CONTROL_ENDPOINT_4 = os.getenv("STORAGE_CONTROL_ENDPOINT_4", "s04.neofs.devenv:8081")
+STORAGE_CONTROL_ENDPOINT_PRIVATE = os.getenv("STORAGE_CONTROL_ENDPOINT_PRIVATE", "false").lower() == "true"
 
 STORAGE_WALLET_PATH_1 = os.getenv("STORAGE_WALLET_PATH_1", f"{DEVENV_PATH}/services/storage/wallet01.json")
 STORAGE_WALLET_PATH_2 = os.getenv("STORAGE_WALLET_PATH_2", f"{DEVENV_PATH}/services/storage/wallet02.json")
@@ -95,14 +96,20 @@ IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
 S3_GATE_WALLET_PATH = os.getenv("S3_GATE_WALLET_PATH", f"{DEVENV_PATH}/services/s3_gate/wallet.json")
 S3_GATE_WALLET_PASS = os.getenv("S3_GATE_WALLET_PASS", "s3")
 
-STORAGE_NODE_USER = os.getenv("STORAGE_NODE_USER", "root")
-STORAGE_NODE_PWD = os.getenv("STORAGE_NODE_PWD")
-STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor/neofs-cli")
+# Parameters that control SSH connection to storage node
+STORAGE_NODE_SSH_USER = os.getenv("STORAGE_NODE_SSH_USER")
+STORAGE_NODE_SSH_PASSWORD = os.getenv("STORAGE_NODE_SSH_PASSWORD")
+STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH")
+
+# Parameters that control resources located on the storage node:
+# STORAGE_NODE_BIN_PATH - path to directory that contains CLI tools
+# STORAGE_NODE_CONFIG_PATH - configuration file for neofs-cli on the storage node
+STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor")
 STORAGE_NODE_CONFIG_PATH = os.getenv("STORAGE_NODE_CONFIG_PATH", f"{DEVENV_PATH}/services/storage/cli-cfg.yml")
-STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT = os.getenv("STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT", "localhost:8091")
+STORAGE_NODE_WALLET_PATH = os.getenv("STORAGE_NODE_WALLET_PATH")  # allows to override path to wallet that was given in STORAGE_NODE_CONFIG_PATH, this is temp parameter, should be fixed in environment setup
 
 # Path and config for neofs-adm utility. Optional if tests are running against devenv
 NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC")
 NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
 
-FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
+FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"

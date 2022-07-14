@@ -65,7 +65,7 @@ class HostClient:
 
     TIMEOUT_RESTORE_CONNECTION = 10, 24
 
-    def __init__(self, ip: str, login: Optional[str] = None, password: Optional[str] = None,
+    def __init__(self, ip: str, login: str, password: Optional[str] = None,
                  private_key_path: Optional[str] = None, init_ssh_client=True) -> None:
         self.ip = ip
         self.login = login
@@ -154,6 +154,7 @@ class HostClient:
                     )
                     self.ssh_client.connect(
                         hostname=self.ip,
+                        username=self.login,
                         pkey=RSAKey.from_private_key_file(self.private_key_path, self.password),
                         timeout=self.CONNECTION_TIMEOUT
                     )

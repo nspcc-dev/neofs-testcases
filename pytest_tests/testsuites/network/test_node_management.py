@@ -54,12 +54,22 @@ def crate_container_and_pick_node(prepare_wallet_and_deposit):
 
 
 @pytest.fixture
-def start_node_if_needed():
+def after_run_start_all_nodes():
     yield
     try:
         start_nodes_remote(list(NEOFS_NETMAP_DICT.keys()))
     except Exception as err:
         logger.error(f'Node start fails with error:\n{err}')
+
+
+@pytest.fixture
+def after_run_set_all_nodes_online():
+    yield
+    for node in list(NEOFS_NETMAP_DICT.keys()):
+        try:
+            node_set_status(node, status="online")
+        except Exception as err:
+            logger.error(f"Node status change fails with error:\n{err}")
 
 
 @allure.title('Control Operations with storage nodes')
@@ -86,7 +96,7 @@ def test_nodes_management(prepare_tmp_dir):
 
     with allure.step(f'Check node {random_node} went to offline'):
         health_check = node_healthcheck(random_node)
-        assert health_check.health_status == 'READY' and health_check.network_status == 'STATUS_UNDEFINED'
+        assert health_check.health_status == 'READY' and health_check.network_status == 'OFFLINE'
         snapshot = get_netmap_snapshot(node_name=alive_node)
         assert random_node not in snapshot, f'Expected node {random_node} not in netmap'
 
@@ -166,9 +176,10 @@ def test_placement_policy_negative(prepare_wallet_and_deposit, placement_rule, e
         validate_object_copies(wallet, placement_rule, file_path, expected_copies)
 
 
+@pytest.mark.skip(reason="We cover this scenario for Sbercloud in failover tests")
 @pytest.mark.node_mgmt
-@allure.title('NeoFS object replication on node failover')
-def test_replication(prepare_wallet_and_deposit, start_node_if_needed):
+@allure.title("NeoFS object replication on node failover")
+def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes):
     """
     Test checks object replication on storage not failover and come back.
     """

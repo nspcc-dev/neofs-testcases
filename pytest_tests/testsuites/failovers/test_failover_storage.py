@@ -34,14 +34,14 @@ def sbercloud_client():
             pytest.fail('SberCloud infrastructure not available')
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(autouse=True)
 def return_all_storage_nodes_fixture(sbercloud_client):
     yield
     return_all_storage_nodes(sbercloud_client)
 
 
 def panic_reboot_host(ip: str = None):
-    ssh = HostClient(ip=ip)
+    ssh = HostClient(ip=ip, login="root", private_key_path=f"{os.getcwd()}/configuration/id_rsa")
     ssh.exec('echo 1 > /proc/sys/kernel/sysrq')
     with pytest.raises(HostIsNotAvailable):
         ssh.exec('echo b > /proc/sysrq-trigger', timeout=1)
@@ -51,8 +51,8 @@ def return_all_storage_nodes(sbercloud_client: SberCloud):
     for host in stopped_hosts:
         with allure.step(f'Start storage node {host}'):
             sbercloud_client.start_node(node_ip=host.split(':')[-2])
-        stopped_hosts.remove(host)
     wait_all_storage_node_returned()
+    stopped_hosts.clear()
 
 
 def is_all_storage_node_returned() -> bool:
