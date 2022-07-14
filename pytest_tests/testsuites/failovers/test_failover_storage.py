@@ -69,6 +69,7 @@ def wait_object_replication(wallet, cid, oid, expected_copies: int) -> [str]:
 
 @allure.title('Lost and return nodes')
 @pytest.mark.parametrize('hard_reboot', [True, False])
+@pytest.mark.failover
 def test_lost_storage_node(prepare_wallet_and_deposit, sbercloud_client: SberCloud,
                            free_storage_check, hard_reboot: bool):
     wallet = prepare_wallet_and_deposit
@@ -99,6 +100,7 @@ def test_lost_storage_node(prepare_wallet_and_deposit, sbercloud_client: SberClo
 
 @allure.title('Panic storage node(s)')
 @pytest.mark.parametrize('sequence', [True, False])
+@pytest.mark.failover
 def test_panic_storage_node(prepare_wallet_and_deposit, free_storage_check, sequence: bool):
     wallet = prepare_wallet_and_deposit
     placement_rule = 'REP 2 IN X CBF 2 SELECT 2 FROM * AS X'
