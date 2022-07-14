@@ -99,14 +99,14 @@ class AwsCliClient:
 
         cmd = f'aws --no-verify-ssl s3api delete-objects --bucket {Bucket} --delete file://{file_path} ' \
               f'--endpoint {S3_GATE}'
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, timeout=90)
         return self._to_json(output)
 
     def delete_object(self, Bucket: str, Key: str, VersionId: str = None) -> dict:
         version = f' --version-id {VersionId}' if VersionId else ''
         cmd = f'aws --no-verify-ssl s3api delete-object --bucket {Bucket} --key {Key} {version}' \
               f' --endpoint {S3_GATE}'
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, timeout=90)
         return self._to_json(output)
 
     def get_object_attributes(self, bucket: str, key: str, *attributes: str, version_id: str = None,
@@ -122,7 +122,7 @@ class AwsCliClient:
 
     def delete_bucket(self, Bucket: str) -> dict:
         cmd = f'aws --no-verify-ssl s3api delete-bucket --bucket {Bucket} --endpoint {S3_GATE}'
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, timeout=90)
         return self._to_json(output)
 
     def get_bucket_tagging(self, Bucket: str) -> dict:
