@@ -12,10 +12,11 @@ from dataclasses import dataclass
 from typing import List
 
 import docker
-from common import NEOFS_NETMAP_DICT, STORAGE_NODE_BIN_PATH, STORAGE_NODE_CONFIG_PATH, STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT, STORAGE_NODE_PWD, STORAGE_NODE_USER
+from common import (NEOFS_NETMAP_DICT, STORAGE_NODE_BIN_PATH, STORAGE_NODE_CONFIG_PATH,
+                    STORAGE_NODE_PRIVATE_CONTROL_ENDPOINT, STORAGE_NODE_PWD, STORAGE_NODE_USER)
 from robot.api import logger
 from robot.api.deco import keyword
-from ssh_helper import HostClient
+from ssh_helper import HostClient, HostIsNotAvailable
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -43,7 +44,10 @@ def create_ssh_client(node_name: str) -> HostClient:
 
     node_config = NEOFS_NETMAP_DICT.get(node_name)
     host = node_config.get('control').split(':')[0]
-    ssh_client = HostClient(host, STORAGE_NODE_USER, STORAGE_NODE_PWD)
+    try:
+        ssh_client = HostClient(host, STORAGE_NODE_USER, STORAGE_NODE_PWD)
+    except HostIsNotAvailable:
+        ssh_client = HostClient(host)
 
     try:
         yield ssh_client
@@ -52,7 +56,7 @@ def create_ssh_client(node_name: str) -> HostClient:
 
 
 @keyword('Stop Nodes')
-def stop_nodes(number: int, nodes: list) -> None:
+def stop_nodes(number: int, nodes: list) -> list:
     """
         The function shuts down the given number of randomly
         selected nodes in docker.
@@ -122,7 +126,7 @@ def get_locode():
 
 
 @keyword('Stop Nodes Remote')
-def stop_nodes_remote(number: int, nodes: list) -> None:
+def stop_nodes_remote(number: int, nodes: list) -> list:
     """
         The function shuts down the given number of randomly
         selected nodes in docker.
