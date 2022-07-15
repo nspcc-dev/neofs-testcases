@@ -6,3 +6,13 @@ docker==4.4.0
 botocore==1.19.33
 urllib3==1.26.3
 base58==2.1.0
+robotframework==4.1.2
+requests==2.25.1
+pexpect==4.8.0
+boto3==1.16.33
+docker==4.4.0
+botocore==1.19.33
+urllib3==1.26.3
+base58==2.1.0
+allure-pytest==2.9.45
+pytest==7.1.2
