@@ -5,6 +5,7 @@ Library      acl.py
 Library      container.py
 Library      neofs_verbs.py
 Library      utility_keywords.py
+Library    Collections
 
 Resource     common_steps_acl_extended.robot
 Resource     payment_operations.robot
@@ -12,7 +13,6 @@ Resource     setup_teardown.robot
 Resource     eacl_tables.robot
 
 *** Variables ***
-${EACL_KEY} =   L1FGTLE6shum3EC7mNTPArUqSCKnmtEweRzyuawtYRZwGjpeRuw1
 &{USER_HEADER} =        key1=1      key2=abc
 &{USER_HEADER_DEL} =    key1=del    key2=del
 &{ANOTHER_HEADER} =     key1=oth    key2=oth
@@ -48,20 +48,24 @@ Check eACL Deny All Other and Allow All Pubkey
     ${CID} =                Create Container           ${USER_WALLET}     basic_acl=eacl-public-read-write
     ${S_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER}
     ${D_OID_USER} =         Put object                 ${USER_WALLET}     ${FILE_S}        ${CID}    user_headers=${USER_HEADER_DEL}
-    @{S_OBJ_H} =	    Create List	               ${S_OID_USER}
+    @{S_OBJ_H} =	        Create List	               ${S_OID_USER}
 
-    # TODO: should be deleted in the scope of https://github.com/nspcc-dev/neofs-testcases/issues/191
-    ${WALLET_EACL}    ${_} =    Prepare Wallet with WIF And Deposit    ${EACL_KEY}
+    ${WALLET_ALLOW}    ${_}    ${_} =    Prepare Wallet And Deposit 
 
-                            Put object                  ${WALLET_EACL}    ${FILE_S}     ${CID}       user_headers=${ANOTHER_HEADER}
-                            Get object                  ${WALLET_EACL}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
-                            Search object               ${WALLET_EACL}    ${CID}        ${EMPTY}                 ${EMPTY}            ${USER_HEADER}        ${S_OBJ_H}
-                            Head object                 ${WALLET_EACL}    ${CID}        ${S_OID_USER}
-                            Get Range                   ${WALLET_EACL}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
-                            Get Range Hash              ${WALLET_EACL}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
-                            Delete object               ${WALLET_EACL}    ${CID}        ${D_OID_USER}
+                            Put object                  ${WALLET_ALLOW}    ${FILE_S}     ${CID}       user_headers=${ANOTHER_HEADER}
+                            Get object                  ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
+                            Search object               ${WALLET_ALLOW}    ${CID}        ${EMPTY}                 ${EMPTY}            ${USER_HEADER}        ${S_OBJ_H}
+                            Head object                 ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}
+                            Get Range                   ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
+                            Get Range Hash              ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
+                            Delete object               ${WALLET_ALLOW}    ${CID}        ${D_OID_USER}
 
-                            Set eACL                    ${USER_WALLET}    ${CID}        ${EACL_ALLOW_ALL_Pubkey}
+    @{VERBS} =              Create List      get    head    put    delete    search    getrange    getrangehash
+    ${RULES_OTH} =          EACL Rules       deny     ${VERBS}    others
+    ${RULES_PUB} =          EACL Rules       allow    ${VERBS}    ${WALLET_ALLOW}
+    ${eACL_gen} =           Combine Lists    ${RULES_PUB}    ${RULES_OTH}
+    ${EACL_TABLE} =         Create eACL      ${CID}    ${eACL_gen}
+                            Set EACL         ${USER_WALLET}    ${CID}    ${EACL_TABLE}
 
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
@@ -83,10 +87,10 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Delete object                       ${WALLET_OTH}    ${CID}        ${S_OID_USER}
 
-                            Put object              ${WALLET_EACL}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_HEADER}
-                            Get object              ${WALLET_EACL}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
-                            Search object           ${WALLET_EACL}    ${CID}        ${EMPTY}                ${EMPTY}            ${USER_HEADER}     ${S_OBJ_H}
-                            Head object             ${WALLET_EACL}    ${CID}        ${S_OID_USER}
-                            Get Range               ${WALLET_EACL}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
-                            Get Range Hash          ${WALLET_EACL}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
-                            Delete object           ${WALLET_EACL}    ${CID}        ${S_OID_USER}
+                            Put object              ${WALLET_ALLOW}    ${FILE_S}     ${CID}    user_headers=${ANOTHER_HEADER}
+                            Get object              ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
+                            Search object           ${WALLET_ALLOW}    ${CID}        ${EMPTY}                ${EMPTY}            ${USER_HEADER}     ${S_OBJ_H}
+                            Head object             ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}
+                            Get Range               ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
+                            Get Range Hash          ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
+                            Delete object           ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}
