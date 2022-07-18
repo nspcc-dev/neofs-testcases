@@ -10,6 +10,7 @@ from enum import Enum, auto
 import base58
 from cli_helpers import _cmd_run
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
+from neo3 import wallet
 from robot.api import logger
 from robot.api.deco import keyword
 
@@ -36,9 +37,9 @@ class Role(AutoName):
 
 
 @keyword('Get eACL')
-def get_eacl(wallet: str, cid: str):
+def get_eacl(wallet_path: str, cid: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet_path} '
         f'container get-eacl --cid {cid} --config {WALLET_CONFIG}'
     )
     try:
@@ -53,9 +54,9 @@ def get_eacl(wallet: str, cid: str):
 
 
 @keyword('Set eACL')
-def set_eacl(wallet: str, cid: str, eacl_table_path: str):
+def set_eacl(wallet_path: str, cid: str, eacl_table_path: str):
     cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
+        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet_path} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --config {WALLET_CONFIG} --await'
     )
     _cmd_run(cmd)
@@ -159,10 +160,37 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
     sign_bearer_token(wif, file_path)
     return file_path
 
+@keyword('EACL Rules')
+def eacl_rules(access: str, verbs: list, user: str):
+    """
+        This function creates a list of eACL rules.
+        Args:
+            access (str): identifies if the following operation(s)
+                        is allowed or denied
+            verbs (list): a list of operations to set rules for
+            user (str): a group of users (user/others) or a wallet of
+                        a certain user for whom rules are set
+        Returns:
+            (list): a list of eACL rules
+    """
+    if user not in ('others', 'user'):
+        wallet_content = ''
+        with open(user) as out:
+            wallet_content = json.load(out)
+        wallet_from_json = wallet.Wallet.from_json(wallet_content, password="")
+        pub_key_64 = str(wallet_from_json.accounts[0].public_key)
+        user = f"pubkey:{pub_key_64}"
 
-def sign_bearer_token(wallet: str, eacl_rules_file: str):
+    rules = []
+    for verb in verbs:
+        elements = [access, verb, user]
+        rules.append(' '.join(elements))
+    return rules
+
+
+def sign_bearer_token(wallet_path: str, eacl_rules_file: str):
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} '
-        f'--to {eacl_rules_file} --wallet {wallet} --config {WALLET_CONFIG} --json'
+        f'--to {eacl_rules_file} --wallet {wallet_path} --config {WALLET_CONFIG} --json'
     )
     _cmd_run(cmd)

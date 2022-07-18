@@ -9,11 +9,10 @@ import uuid
 import docker
 import wallet
 from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
+from cli_helpers import _cmd_run
 from robot.api import logger
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
-
-from cli_helpers import _cmd_run
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -69,13 +68,6 @@ def get_file_hash(filename: str):
 @keyword('Generate Wallet')
 def generate_wallet():
     return wallet.init_wallet(ASSETS_DIR)
-
-
-# TODO: should be deleted in the scope
-# of https://github.com/nspcc-dev/neofs-testcases/issues/191
-@keyword('Init Wallet from WIF')
-def init_wallet_from_wif(dir_path: str, wif: str):
-    return wallet.init_wallet_from_wif(dir_path, wif)
 
 
 @keyword('Get Docker Logs')

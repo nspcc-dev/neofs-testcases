@@ -20,15 +20,3 @@ Prepare Wallet And Deposit
                         Sleep                       ${MORPH_BLOCK_TIME}
 
     [Return]    ${WALLET}    ${ADDR}    ${WIF}
-
-# TODO: should be deleted in the scope of https://github.com/nspcc-dev/neofs-testcases/issues/191
-Prepare Wallet with WIF And Deposit
-    [Arguments]    ${WIF}    ${DEPOSIT}=${30}
-
-    ${WALLET}
-    ...     ${ADDR} =   Init Wallet from WIF    ${ASSETS_DIR}    ${WIF}
-                        Transfer Mainnet Gas    ${WALLET}    ${DEPOSIT+1}
-                        NeoFS Deposit           ${WALLET}    ${DEPOSIT}
-                        Sleep                   ${MORPH_BLOCK_TIME}
-
-    [Return]    ${WALLET}    ${ADDR}
