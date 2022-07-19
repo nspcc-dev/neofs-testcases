@@ -40,25 +40,27 @@ libssl-dev
 As we use neofs-dev-env, you'll also need to install
 [prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
 
-6. Build virtual env
+## Robot Framework
 
-In the cloned neofs-testcases repo execute the following commands:
+### Run
+
+1. Prepare virtualenv
 
 ```
-make venv.localtest
-. venv.localtest/bin/activate
+$ make venv.localtest
+$ . venv.localtest/bin/activate
 ```
 
-Test cases are designed to run on Python 3.9.
+2. Run tests
+
+In the activated virtualenv, execute the following command(s) to run a singular testsuite or all the suites in the directory
+```
+$ robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>
+$ robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot
+```
 
 
-## Run
-
-To run an arbitrary UserScenario or testcase, you need to run the command:
-`robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>` or `robot --outputdir artifacts/ robot/testsuites/integration/<UserScenario>/<testcase>.robot`
-
-
-## Generation of documentation
+### Generation of documentation
 
 To generate Keywords documentation:
 ```
@@ -70,8 +72,6 @@ To generate testcases documentation:
 ```
 python3 -m robot.testdoc robot/testsuites/integration/ docs/testcases.html
 ```
-
-## Testcases implementation
 
 ### Source code overview
 
@@ -113,3 +113,51 @@ You should always complete the [Tags] and [Documentation] sections for Testcases
 ### Robot-framework User Guide
 
 http://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html
+
+## PyTest
+
+Tests written with PyTest framework are located under `pytest_tests/testsuites` directory.
+
+### Run and get report
+
+1. Prepare virtualenv
+
+```
+$ make venv.local-pytest
+$ . venv.local-pytest/bin/activate
+```
+
+2. Install Allure CLI
+
+Allure CLI installation is not an easy task. You may select one of the following ways. If none of the options would help you please complete the instruction with your approach:
+
+- Follow the [instruction](https://docs.qameta.io/allure/#_linux) from the official website
+- Consult [the thread](https://github.com/allure-framework/allure2/issues/989)
+- Download release from the Github
+```
+$ wget https://github.com/allure-framework/allure2/releases/download/2.18.1/allure_2.18.1-1_all.deb
+$ sudo apt install ./allure_2.18.1-1_all.deb
+```
+You also need the `default-jre` package installed.
+
+3. Run tests
+
+In the activated virtualenv, execute the following command(s) to run a singular testsuite or all the suites in the directory
+```
+$ pytest --alluredir my-allure-123 pytest_tests/testsuites/object/test_object_api.py
+$ pytest --alluredir my-allure-123 pytest_tests/testsuites/
+```
+
+4. Generate report
+
+To generate a report, execute the command `allure generate`. The report will be under the `allure-report` directory.
+```
+$ allure generate my-allure-123
+$ ls allure-report/
+app.js  data  export  favicon.ico  history  index.html  plugins  styles.css  widgets
+```
+
+To inspect the report in a browser, run
+```
+$ allure serve my-allure-123
+```
