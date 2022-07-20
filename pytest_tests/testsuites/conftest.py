@@ -9,11 +9,15 @@ from robot.api import deco
 
 import wallet
 from cli_helpers import _cmd_run
-from common import ASSETS_DIR, FREE_STORAGE, MAINNET_WALLET_PATH
+from common import ASSETS_DIR, FREE_STORAGE, MAINNET_WALLET_PATH, NEOFS_NETMAP_DICT
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
+from python_keywords.node_management import node_healthcheck
+
 
 def robot_keyword_adapter(name=None, tags=(), types=()):
     return allure.step(name)
+
+
 deco.keyword = robot_keyword_adapter
 
 logger = logging.getLogger('NeoLogger')
@@ -35,6 +39,19 @@ def check_binary_versions(request):
         with open(f'{environment_dir}/environment.properties', 'w') as out_file:
             for env, env_value in env_out.items():
                 out_file.write(f'{env}={env_value}\n')
+
+
+@pytest.fixture(scope='session', autouse=True)
+@allure.title('Run health check for all storage nodes')
+def run_health_check():
+    failed_nodes = []
+    for node_name in NEOFS_NETMAP_DICT.keys():
+        health_check = node_healthcheck(node_name)
+        if health_check.health_status != 'READY' or health_check.network_status != 'ONLINE':
+            failed_nodes.append(node_name)
+
+    if failed_nodes:
+        raise AssertionError(f'Nodes {failed_nodes} are not healthy')
 
 
 @pytest.fixture(scope='session')
