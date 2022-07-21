@@ -101,7 +101,7 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 @pytest.mark.sanity
 @pytest.mark.grpc_api
 @pytest.mark.parametrize('object_size', [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=['simple object', 'complex object'])
-def test_object_api(prepare_wallet_and_deposit, request, object_size):
+def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
     """
     Test object deleted after expiration epoch.
     """
@@ -124,7 +124,7 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 
     # Wait for GC, because object with expiration is counted as alive until GC removes it
     with allure.step('Wait until GC completes on storage nodes'):
-        sleep(robot_time_to_int(SHARD_0_GC_SLEEP))
+        sleep(1.5 * robot_time_to_int(SHARD_0_GC_SLEEP))
 
     with allure.step('Check object deleted because it expires-on epoch'):
         with pytest.raises(Exception, match='.*object not found.*'):
