@@ -5,7 +5,7 @@ from time import sleep
 
 import allure
 import pytest
-from common import COMPLEX_OBJ_SIZE
+from common import COMPLEX_OBJ_SIZE, SHARD_0_GC_SLEEP
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
@@ -14,12 +14,14 @@ from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.storage_policy import get_nodes_without_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
+from utility import robot_time_to_int
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')
 
-CLEANUP_TIMEOUT = 10
-
+# For some reason object uploaded via http gateway is not immediately available for downloading
+# Until this issue is resolved we are waiting for some time before attempting to read an object
+OBJECT_UPLOAD_DELAY = 10
 
 @allure.link('https://github.com/nspcc-dev/neofs-http-gw#neofs-http-gateway', name='neofs-http-gateway')
 @allure.link('https://github.com/nspcc-dev/neofs-http-gw#uploading', name='uploading')
@@ -117,6 +119,8 @@ class TestHttpGate:
             headers = self._attr_into_header(attributes)
             oid = upload_via_http_gate(cid=cid, path=file_path, headers=headers)
 
+        sleep(OBJECT_UPLOAD_DELAY)
+
         self.get_object_by_attr_and_verify_hashes(oid, file_path, cid, attributes)
 
     @allure.title('Test Expiration-Epoch in HTTP header')
@@ -135,7 +139,7 @@ class TestHttpGate:
             with allure.step('Put objects using HTTP with attribute Expiration-Epoch'):
                 oids.append(upload_via_http_gate(cid=cid, path=file_path, headers=headers))
 
-        assert len(oids) == len(epochs), 'Expected all objects has been put successfully'
+        assert len(oids) == len(epochs), 'Expected all objects have been put successfully'
 
         with allure.step('All objects can be get'):
             for oid in oids:
@@ -143,7 +147,10 @@ class TestHttpGate:
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
             tick_epoch()
-            sleep(CLEANUP_TIMEOUT)
+
+            # Wait for GC, because object with expiration is counted as alive until GC removes it
+            with allure.step('Wait until GC completes on storage nodes'):
+                sleep(robot_time_to_int(SHARD_0_GC_SLEEP))
 
             for oid in expired_objects:
                 self.try_to_get_object_and_expect_error(
@@ -167,6 +174,8 @@ class TestHttpGate:
 
         upload_via_http_gate(cid=cid, path=file_path_simple, headers=headers1)
         upload_via_http_gate(cid=cid, path=file_path_large, headers=headers2)
+
+        sleep(OBJECT_UPLOAD_DELAY)
 
         dir_path = get_via_zip_http_gate(cid=cid, prefix=common_prefix)
 
