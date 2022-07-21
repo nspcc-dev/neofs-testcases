@@ -3,7 +3,7 @@ from time import sleep
 
 import allure
 import pytest
-from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
+from common import SHARD_0_GC_SLEEP, SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
@@ -12,7 +12,7 @@ from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
 from python_keywords.storage_policy import get_simple_object_copies
 from python_keywords.utility_keywords import generate_file, get_file_hash
 from tombstone import verify_head_tombstone
-from utility import get_file_content
+from utility import get_file_content, robot_time_to_int
 
 logger = logging.getLogger('NeoLogger')
 
@@ -119,10 +119,14 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     assert get_file_hash(got_file) == file_hash
 
     with allure.step('Tick two epochs'):
-        for _ in range(3):
+        for _ in range(2):
             tick_epoch()
 
-    with allure.step('Check object deleted because if expires-on epoch'):
+    # Wait for GC, because object with expiration is counted as alive until GC removes it
+    with allure.step('Wait until GC completes on storage nodes'):
+        sleep(robot_time_to_int(SHARD_0_GC_SLEEP))
+
+    with allure.step('Check object deleted because it expires-on epoch'):
         with pytest.raises(Exception, match='.*object not found.*'):
             get_object(wallet, cid, oid)
 
