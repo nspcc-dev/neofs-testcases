@@ -3,11 +3,12 @@ from random import choice
 from time import sleep
 
 import allure
+import base58
 import pytest
+from cli_helpers import _cmd_run
 from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
-                    NEOFS_NETMAP_DICT, SHARD_0_GC_SLEEP)
+                    NEOFS_NETMAP_DICT, NEOGO_CLI_EXEC, SHARD_0_GC_SLEEP)
 from epoch import tick_epoch
-from utility_keywords import generate_file
 from python_keywords.container import create_container, get_container
 from python_keywords.neofs_verbs import (delete_object, get_object,
                                          head_object, put_object)
@@ -19,9 +20,9 @@ from python_keywords.node_management import (drop_object, get_netmap_snapshot,
                                              start_nodes_remote,
                                              stop_nodes_remote)
 from storage_policy import get_nodes_with_object, get_simple_object_copies
-from utility import robot_time_to_int
+from utility import placement_policy_from_container, robot_time_to_int
+from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
-from utility import placement_policy_from_container
 
 logger = logging.getLogger('NeoLogger')
 
@@ -81,10 +82,13 @@ def test_nodes_management(prepare_tmp_dir):
     random_node = choice(list(NEOFS_NETMAP_DICT))
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != random_node])
 
+    # Calculate public key that identifies node in netmap
+    random_node_wallet_path = NEOFS_NETMAP_DICT[random_node]['wallet_path']
+    random_node_netmap_key = get_netmap_public_key_from_wallet(random_node_wallet_path)
+
     with allure.step('Check node {random_node} is in netmap'):
-        random_node_host = NEOFS_NETMAP_DICT[random_node]['rpc'].split(':')[0]
         snapshot = get_netmap_snapshot(node_name=alive_node)
-        assert random_node_host in snapshot, f'Expected node {random_node} in netmap'
+        assert random_node_netmap_key in snapshot, f'Expected node {random_node} in netmap'
 
     with allure.step('Run health check for all storage nodes'):
         for node_name in NEOFS_NETMAP_DICT.keys():
@@ -101,7 +105,7 @@ def test_nodes_management(prepare_tmp_dir):
         health_check = node_healthcheck(random_node)
         assert health_check.health_status == 'READY' and health_check.network_status == 'OFFLINE'
         snapshot = get_netmap_snapshot(node_name=alive_node)
-        assert random_node not in snapshot, f'Expected node {random_node} not in netmap'
+        assert random_node_netmap_key not in snapshot, f'Expected node {random_node} not in netmap'
 
     with allure.step(f'Check node {random_node} went to online'):
         node_set_status(random_node, status='online')
@@ -113,7 +117,7 @@ def test_nodes_management(prepare_tmp_dir):
         health_check = node_healthcheck(random_node)
         assert health_check.health_status == 'READY' and health_check.network_status == 'ONLINE'
         snapshot = get_netmap_snapshot(node_name=alive_node)
-        assert random_node in snapshot, f'Expected node {random_node} in netmap'
+        assert random_node_netmap_key in snapshot, f'Expected node {random_node} in netmap'
 
 
 @pytest.mark.parametrize('placement_rule,expected_copies', [
@@ -331,3 +335,14 @@ def wait_for_obj_dropped(wallet: str, cid: str, oid: str, checker):
                 break
     else:
         raise AssertionError(f'Object {oid} is not dropped from node')
+
+
+def get_netmap_public_key_from_wallet(wallet_path: str) -> str:
+    # Get public key from wallet file (it is printed on 2nd line)
+    cmd = f"{NEOGO_CLI_EXEC} wallet dump-keys -w {wallet_path}"
+    output = _cmd_run(cmd)
+    public_key_hex = output.split("\n")[1].strip()
+
+    # Encode public key in base58 (this is how it is present in netmap)
+    public_key_base58 = base58.b58encode(bytes.fromhex(public_key_hex))
+    return public_key_base58.decode("utf-8")
