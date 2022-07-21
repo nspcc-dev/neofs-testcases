@@ -80,8 +80,11 @@ def test_nodes_management(prepare_tmp_dir):
     """
     random_node = choice(list(NEOFS_NETMAP_DICT))
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != random_node])
-    snapshot = get_netmap_snapshot(node_name=alive_node)
-    assert random_node in snapshot, f'Expected node {random_node} in netmap'
+
+    with allure.step('Check node {random_node} is in netmap'):
+        random_node_host = NEOFS_NETMAP_DICT[random_node]['rpc'].split(':')[0]
+        snapshot = get_netmap_snapshot(node_name=alive_node)
+        assert random_node_host in snapshot, f'Expected node {random_node} in netmap'
 
     with allure.step('Run health check for all storage nodes'):
         for node_name in NEOFS_NETMAP_DICT.keys():
@@ -242,9 +245,6 @@ def test_drop_object(prepare_wallet_and_deposit):
 @pytest.mark.skip(reason='Need to clarify scenario')
 @allure.title('Control Operations with storage nodes')
 def test_shards(prepare_wallet_and_deposit, crate_container_and_pick_node):
-    """
-    This test checks base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
-    """
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
 
