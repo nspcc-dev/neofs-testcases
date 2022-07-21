@@ -23,7 +23,7 @@ class AwsCliClient:
 
     def create_bucket(self, Bucket: str):
         cmd = f'aws --no-verify-ssl s3api create-bucket --bucket {Bucket} --endpoint-url {S3_GATE}'
-        _cmd_run(cmd)
+        _cmd_run(cmd, timeout=90)
 
     def list_buckets(self) -> dict:
         cmd = f'aws --no-verify-ssl s3api list-buckets --endpoint {S3_GATE}'
