@@ -137,6 +137,27 @@ def delete_objects_s3(s3_client, bucket: str, object_keys: list):
         raise Exception(f'Error Message: {err.response["Error"]["Message"]}\n'
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
+@keyword('Delete object versions S3')
+def delete_object_versions_s3(s3_client, bucket: str, object_versions: list):
+    try:
+        # Build deletion list in S3 format
+        delete_list = {
+            "Objects": [
+                {
+                    "Key": object_version["Key"],
+                    "VersionId": object_version["VersionId"],
+                }
+                for object_version in object_versions
+            ]
+        }
+        response = s3_client.delete_objects(Bucket=bucket, Delete=delete_list)
+        log_command_execution('S3 Delete objects result', response)
+        return response
+
+    except ClientError as err:
+        raise Exception(f'Error Message: {err.response["Error"]["Message"]}\n'
+                        f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
+
 
 @keyword('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):

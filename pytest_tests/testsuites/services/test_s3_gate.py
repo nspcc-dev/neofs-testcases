@@ -61,9 +61,21 @@ class TestS3Gate:
     def bucket(self):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
         yield bucket
-        objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
-        if objects:
-            s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
+
+        # Delete all objects from bucket
+        versioning_status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
+        if versioning_status == s3_gate_bucket.VersioningStatus.ENABLED.value:
+            # From versioned bucket we should delete all versions of all objects
+            objects_versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
+            if objects_versions:
+                s3_gate_object.delete_object_versions_s3(self.s3_client, bucket, objects_versions)
+        else:
+            # From non-versioned bucket it's sufficient to delete objects by key
+            objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
+            if objects:
+                s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
+
+        # Delete the bucket itself
         s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
     @allure.title('Test S3 Bucket API')
