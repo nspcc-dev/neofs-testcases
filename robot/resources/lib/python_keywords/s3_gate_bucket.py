@@ -6,13 +6,14 @@ import uuid
 from enum import Enum
 
 import boto3
+from data_formatters import pub_key_hex
 from botocore.exceptions import ClientError
 import urllib3
 from robot.api import logger
 from robot.api.deco import keyword
 
 from cli_helpers import _run_with_passwd, log_command_execution
-from common import GATE_PUB_KEY, NEOFS_ENDPOINT, S3_GATE
+from common import NEOFS_ENDPOINT, S3_GATE, S3_GATE_WALLET_PATH, S3_GATE_WALLET_PASS
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the
@@ -33,12 +34,13 @@ class VersioningStatus(Enum):
 
 
 @keyword('Init S3 Credentials')
-def init_s3_credentials(wallet, s3_bearer_rules_file: str = None):
+def init_s3_credentials(wallet_path, s3_bearer_rules_file: str = None):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or 'robot/resources/files/s3_bearer_rules.json'
+    gate_pub_key = pub_key_hex(S3_GATE_WALLET_PATH, S3_GATE_WALLET_PASS)
     cmd = (
         f'{NEOFS_EXEC} --debug --with-log --timeout {CREDENTIALS_CREATE_TIMEOUT} '
-        f'issue-secret --wallet {wallet} --gate-public-key={GATE_PUB_KEY} '
+        f'issue-secret --wallet {wallet_path} --gate-public-key={gate_pub_key} '
         f'--peer {NEOFS_ENDPOINT} --container-friendly-name {bucket} '
         f'--bearer-rules {s3_bearer_rules}'
     )

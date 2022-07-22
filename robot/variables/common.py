@@ -31,7 +31,6 @@ NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
-GATE_PUB_KEY = '0313b1ac3a8076e155a7e797b24f0b650cccad5941ea59d7cfd51a024a8b2a06bf'
 
 STORAGE_NODE_1 = os.getenv('DATA_NODE_1', 's01.neofs.devenv:8080')
 STORAGE_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
@@ -69,6 +68,8 @@ IR_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/ir/wallet01.json"
 IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
 IR_WALLET_PASS = 'one'
 STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
+S3_GATE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/s3_gate/wallet.json"
+S3_GATE_WALLET_PASS = 's3'
 
 CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
 CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
