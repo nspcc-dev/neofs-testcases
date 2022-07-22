@@ -10,7 +10,7 @@ from enum import Enum, auto
 import base58
 from cli_helpers import _cmd_run
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
-from neo3 import wallet
+from data_formatters import pub_key_hex
 from robot.api import logger
 from robot.api.deco import keyword
 
@@ -174,12 +174,8 @@ def eacl_rules(access: str, verbs: list, user: str):
             (list): a list of eACL rules
     """
     if user not in ('others', 'user'):
-        wallet_content = ''
-        with open(user) as out:
-            wallet_content = json.load(out)
-        wallet_from_json = wallet.Wallet.from_json(wallet_content, password="")
-        pub_key_64 = str(wallet_from_json.accounts[0].public_key)
-        user = f"pubkey:{pub_key_64}"
+        pubkey = pub_key_hex(user)
+        user = f"pubkey:{pubkey}"
 
     rules = []
     for verb in verbs:
