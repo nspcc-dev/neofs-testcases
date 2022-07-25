@@ -251,7 +251,7 @@ def run_control_command(node_name: str, command: str) -> str:
 
     if not STORAGE_CONTROL_ENDPOINT_PRIVATE:
         cmd = (
-            f'{NEOFS_CLI_EXEC} {command} --rpc-endpoint {control_endpoint} '
+            f'{NEOFS_CLI_EXEC} {command} --endpoint {control_endpoint} '
             f'--wallet {wallet_path} --config {WALLET_CONFIG}'
         )
         output = _cmd_run(cmd)
