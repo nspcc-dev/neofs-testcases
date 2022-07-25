@@ -3,6 +3,7 @@
 import os
 import uuid
 from enum import Enum
+from time import sleep
 from typing import Optional
 
 import urllib3
@@ -12,6 +13,7 @@ from robot.api.deco import keyword
 
 from cli_helpers import log_command_execution
 from python_keywords.aws_cli_client import AwsCliClient
+from python_keywords.s3_gate_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the
@@ -119,6 +121,7 @@ def delete_object_s3(s3_client, bucket, object_key, version_id: str = None):
             params['VersionId'] = version_id
         response = s3_client.delete_object(**params)
         log_command_execution('S3 Delete object result', response)
+        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:
@@ -131,6 +134,7 @@ def delete_objects_s3(s3_client, bucket: str, object_keys: list):
     try:
         response = s3_client.delete_objects(Bucket=bucket, Delete=_make_objs_dict(object_keys))
         log_command_execution('S3 Delete objects result', response)
+        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:
