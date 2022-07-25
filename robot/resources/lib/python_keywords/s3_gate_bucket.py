@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 from enum import Enum
+from time import sleep
 
 import boto3
 from data_formatters import pub_key_hex
@@ -23,10 +24,12 @@ urllib3.disable_warnings()
 
 ROBOT_AUTO_KEYWORDS = False
 CREDENTIALS_CREATE_TIMEOUT = '30s'
-
 NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
-ASSETS_DIR = os.getenv('ASSETS_DIR', 'TemporaryDir/')
 
+# Artificial delay that we add after object deletion and container creation
+# Delay is added because sometimes immediately after deletion object still appears
+# to be existing (probably because tombstone object takes some time to replicate)
+S3_SYNC_WAIT_TIME = 5
 
 class VersioningStatus(Enum):
     ENABLED = 'Enabled'
@@ -94,6 +97,7 @@ def create_bucket_s3(s3_client):
     try:
         s3_bucket = s3_client.create_bucket(Bucket=bucket_name)
         log_command_execution(f'Created S3 bucket {bucket_name}', s3_bucket)
+        sleep(S3_SYNC_WAIT_TIME)
         return bucket_name
 
     except ClientError as err:
@@ -123,7 +127,7 @@ def delete_bucket_s3(s3_client, bucket: str):
     try:
         response = s3_client.delete_bucket(Bucket=bucket)
         log_command_execution('S3 Delete bucket result', response)
-
+        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:
