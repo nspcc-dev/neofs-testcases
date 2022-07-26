@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import uuid
 from enum import Enum
 from time import sleep
@@ -52,19 +53,25 @@ def init_s3_credentials(wallet_path, s3_bearer_rules_file: str = None):
     try:
         output = _run_with_passwd(cmd)
         logger.info(f'Command completed with output: {output}')
-        # first five string are log output, cutting them off and parse
-        # the rest of the output as JSON
-        output = '\n'.join(output.split('\n')[5:])
-        try:
-            output_dict = json.loads(output)
-        except json.JSONDecodeError:
-            raise AssertionError(f'Could not parse info from output\n{output}')
 
-        return (output_dict['container_id'],
-                bucket,
-                output_dict['access_key_id'],
-                output_dict['secret_access_key'],
-                output_dict['owner_private_key'])
+        # output contains some debug info and then several JSON structures, so we find each
+        # JSON structure by curly brackets (naive approach, but works while JSON is not nested)
+        # and then we take JSON containing secret_access_key
+        json_blocks = re.findall(r'\{.*?\}', output, re.DOTALL)
+        for json_block in json_blocks:
+            try:
+                parsed_json_block = json.loads(json_block)
+                if 'secret_access_key' in parsed_json_block:
+                    return (
+                        parsed_json_block['container_id'],
+                        bucket,
+                        parsed_json_block['access_key_id'],
+                        parsed_json_block['secret_access_key'],
+                        parsed_json_block['owner_private_key']
+                    )
+            except json.JSONDecodeError:
+                raise AssertionError(f'Could not parse info from output\n{output}')
+        raise AssertionError(f'Could not find AWS credentials in output:\n{output}')
 
     except Exception as exc:
         raise RuntimeError(f'Failed to init s3 credentials because of error\n{exc}') from exc
