@@ -1,7 +1,7 @@
 import logging
 import os
+import re
 import shutil
-from re import search
 
 import allure
 import pytest
@@ -27,13 +27,19 @@ logger = logging.getLogger('NeoLogger')
 @allure.title('Check binary versions')
 def check_binary_versions(request):
     environment_dir = request.config.getoption('--alluredir')
-    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate', 'aws']
+
+    # Collect versions of neo binaries
+    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
     env_out = {}
     for binary in binaries:
         out = _cmd_run(f'{binary} --version')
-        version = search(r'(v?\d.*)\s+', out)
-        version = version.group(1) if version else 'Unknown'
-        env_out[binary.upper()] = version
+        version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
+        env_out[binary.upper()] = version.group(1) if version else 'Unknown'
+
+    # Get version of aws binary
+    out = _cmd_run('aws --version')
+    out_lines = out.split("\n")
+    env_out["AWS"] = out_lines[0] if out_lines else 'Unknown'
 
     if environment_dir:
         with open(f'{environment_dir}/environment.properties', 'w') as out_file:
