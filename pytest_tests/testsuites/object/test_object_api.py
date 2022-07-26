@@ -114,7 +114,7 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
     file_hash = get_file_hash(file_path)
     epoch = get_epoch()
 
-    oid = put_object(wallet, file_path, cid, options=f'--expires-on {epoch + 1}')
+    oid = put_object(wallet, file_path, cid, options=f'--expire-at {epoch + 1}')
     got_file = get_object(wallet, cid, oid)
     assert get_file_hash(got_file) == file_hash
 
