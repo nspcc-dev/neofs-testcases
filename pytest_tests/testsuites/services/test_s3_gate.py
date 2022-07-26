@@ -1,6 +1,7 @@
 import logging
 import os
 from random import choice, choices
+from time import sleep
 
 import allure
 import pytest
@@ -92,7 +93,16 @@ class TestS3Gate:
             bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
 
         with allure.step('Check buckets are presented in the system'):
-            buckets = s3_gate_bucket.list_buckets_s3(self.s3_client)
+            # We have an issue that sometimes bucket is not available in the list
+            # immediately after creation, so we take several attempts with sleep
+            buckets = []
+            for attempt in range(8):
+                with allure.step(f'Loading buckets list (attempt #{attempt})'):
+                    buckets = s3_gate_bucket.list_buckets_s3(self.s3_client)
+                    if bucket_1 in buckets and bucket_2 in buckets:
+                        break  # If both buckets are in the list, stop attempts
+                with allure.step(f'Buckets were not in the list, waiting before retry'):
+                    sleep(s3_gate_bucket.S3_SYNC_WAIT_TIME)
             assert bucket_1 in buckets, f'Expected bucket {bucket_1} is in the list'
             assert bucket_2 in buckets, f'Expected bucket {bucket_2} is in the list'
 
