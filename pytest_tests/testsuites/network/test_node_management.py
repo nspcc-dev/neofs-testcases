@@ -13,12 +13,12 @@ from python_keywords.failover_utils import wait_object_replication_on_nodes
 from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
 from python_keywords.node_management import (create_ssh_client, drop_object, get_netmap_snapshot,
                                              get_locode, node_healthcheck, node_set_status,
-                                             node_shard_list, node_shard_set_mode,
-                                             start_nodes_remote, stop_nodes_remote)
+                                             node_shard_list, node_shard_set_mode)
 from storage_policy import get_nodes_with_object, get_simple_object_copies
 from utility import placement_policy_from_container, robot_time_to_int, wait_for_gc_pass_on_storage_nodes
 from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
+
 
 logger = logging.getLogger('NeoLogger')
 check_nodes = []
@@ -55,7 +55,7 @@ def crate_container_and_pick_node(prepare_wallet_and_deposit):
 def after_run_start_all_nodes():
     yield
     try:
-        start_nodes_remote(list(NEOFS_NETMAP_DICT.keys()))
+        start_nodes(list(NEOFS_NETMAP_DICT.keys()))
     except Exception as err:
         logger.error(f'Node start fails with error:\n{err}')
 
@@ -334,11 +334,11 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes):
     assert len(nodes) == expected_nodes_count, f'Expected {expected_nodes_count} copies, got {len(nodes)}'
 
     node_names = [name for name, config in NEOFS_NETMAP_DICT.items() if config.get('rpc') in nodes]
-    stopped_nodes = stop_nodes_remote(1, node_names)
+    stopped_nodes = stop_nodes(1, node_names)
 
     wait_for_expected_object_copies(wallet, cid, oid)
 
-    start_nodes_remote(stopped_nodes)
+    start_nodes(stopped_nodes)
     tick_epoch()
 
     for node_name in node_names:

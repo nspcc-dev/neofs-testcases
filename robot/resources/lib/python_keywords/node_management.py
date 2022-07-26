@@ -1,24 +1,18 @@
 #!/usr/bin/python3.9
 
 """
-    This module contains keywords for management test stand
-    nodes. It assumes that nodes are docker containers.
+    This module contains keywords for tests that check management of storage nodes.
 """
 
 import random
 import re
-from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Optional
-from cli_helpers import _cmd_run
 
-import docker
-from common import (NEOFS_CLI_EXEC, NEOFS_NETMAP_DICT, STORAGE_CONTROL_ENDPOINT_PRIVATE,
-                    STORAGE_NODE_BIN_PATH, STORAGE_NODE_SSH_PASSWORD,
-                    STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER, WALLET_CONFIG)
+from common import NEOFS_NETMAP_DICT
 from robot.api import logger
 from robot.api.deco import keyword
-from ssh_helper import HostClient
+from service_helper import get_storage_service_helper
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -39,28 +33,6 @@ class HealthStatus:
         return HealthStatus(network, health)
 
 
-@contextmanager
-def create_ssh_client(node_name: str) -> HostClient:
-    if node_name not in NEOFS_NETMAP_DICT:
-        raise AssertionError(f'Node {node_name} is not found!')
-
-    # We use rpc endpoint to determine host address, because control endpoint
-    # (if it is private) will be a local address on the host machine
-    node_config = NEOFS_NETMAP_DICT.get(node_name)
-    host = node_config.get('rpc').split(':')[0]
-    ssh_client = HostClient(
-        host,
-        login=STORAGE_NODE_SSH_USER,
-        password=STORAGE_NODE_SSH_PASSWORD,
-        private_key_path=STORAGE_NODE_SSH_PRIVATE_KEY_PATH,
-    )
-
-    try:
-        yield ssh_client
-    finally:
-        ssh_client.drop()
-
-
 @keyword('Stop Nodes')
 def stop_nodes(number: int, nodes: list) -> list:
     """
@@ -72,12 +44,11 @@ def stop_nodes(number: int, nodes: list) -> list:
         Returns:
             (list): the list of nodes which have been shut down
     """
-    nodes = random.sample(nodes, number)
-    client = docker.APIClient()
-    for node in nodes:
-        node = node.split('.')[0]
-        client.stop(node)
-    return nodes
+    helper = get_storage_service_helper()
+    nodes_to_stop = random.sample(nodes, number)
+    for node in nodes_to_stop:
+        helper.stop_node(node)
+    return nodes_to_stop
 
 
 @keyword('Start Nodes')
@@ -89,10 +60,9 @@ def start_nodes(nodes: list) -> None:
         Returns:
             (void)
     """
-    client = docker.APIClient()
+    helper = get_storage_service_helper()
     for node in nodes:
-        node = node.split('.')[0]
-        client.start(node)
+        helper.start(node)
 
 
 @keyword('Get control endpoint and wallet')
@@ -131,38 +101,6 @@ def get_locode():
     return locode
 
 
-@keyword('Stop Nodes Remote')
-def stop_nodes_remote(number: int, nodes: list) -> list:
-    """
-        The function shuts down the given number of randomly
-        selected nodes in docker.
-        Args:
-            number (int): the number of nodes to shut down
-            nodes (list): the list of nodes for possible shut down
-        Returns:
-            (list): the list of nodes which have been shut down
-    """
-    nodes = random.sample(nodes, number)
-    for node in nodes:
-        node = node.split('.')[0]
-        with create_ssh_client(node) as ssh_client:
-            ssh_client.exec(f'docker stop {node}')
-    return nodes
-
-
-@keyword('Start Nodes Remote')
-def start_nodes_remote(nodes: list) -> None:
-    """
-        The function starts nodes in docker.
-        Args:
-           nodes (list): the list of nodes for possible shut down
-    """
-    for node in nodes:
-        node = node.split('.')[0]
-        with create_ssh_client(node) as ssh_client:
-            ssh_client.exec(f'docker start {node}')
-
-
 @keyword('Healthcheck for node')
 def node_healthcheck(node_name: str) -> HealthStatus:
     """
@@ -173,27 +111,23 @@ def node_healthcheck(node_name: str) -> HealthStatus:
             health status as HealthStatus object.
     """
     command = "control healthcheck"
-    output = run_control_command(node_name, command)
+    output = _run_control_command(node_name, command)
     return HealthStatus.from_stdout(output)
 
 
 @keyword('Set status for node')
-def node_set_status(node_name: str, status: str, retry=False) -> None:
+def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
     """
         The function sets particular status for given node.
         Args:
             node_name str: node name to use for netmap snapshot operation
             status str: online or offline.
+            retries (optional, int): number of retry attempts if it didn't work from the first time
         Returns:
             (void)
     """
     command = f"control set-status --status {status}"
-    try:
-        run_control_command(node_name, command)
-    except AssertionError as err:
-        if not retry:
-            raise AssertionError(f'Command control set-status failed with error {err}') from err
-        run_control_command(node_name, command)
+    _run_control_command(node_name, command, retries)
 
 
 @keyword('Get netmap snapshot')
@@ -207,7 +141,7 @@ def get_netmap_snapshot(node_name: Optional[str] = None) -> str:
     """
     node_name = node_name or list(NEOFS_NETMAP_DICT)[0]
     command = "control netmap-snapshot"
-    return run_control_command(node_name, command)
+    return _run_control_command(node_name, command)
 
 
 @keyword('Shard list for node')
@@ -220,7 +154,7 @@ def node_shard_list(node_name: str) -> list[str]:
             list of shards.
     """
     command = "control shards list"
-    output = run_control_command(node_name, command)
+    output = _run_control_command(node_name, command)
     return re.findall(r'Shard (.*):', output)
 
 
@@ -234,7 +168,7 @@ def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
             health status as HealthStatus object.
     """
     command = f"control shards set-mode  --id {shard} --mode {mode}"
-    return run_control_command(node_name, command)
+    return _run_control_command(node_name, command)
 
 
 @keyword('Drop object from node {node_name}')
@@ -247,39 +181,16 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
             health status as HealthStatus object.
     """
     command = f"control drop-objects  -o {cid}/{oid}"
-    return run_control_command(node_name, command)
+    return _run_control_command(node_name, command)
 
 
-def run_control_command(node_name: str, command: str) -> str:
-    control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
-    wallet_path = NEOFS_NETMAP_DICT[node_name]["wallet_path"]
-
-    if not STORAGE_CONTROL_ENDPOINT_PRIVATE:
-        cmd = (
-            f'{NEOFS_CLI_EXEC} {command} --endpoint {control_endpoint} '
-            f'--wallet {wallet_path} --config {WALLET_CONFIG}'
-        )
-        output = _cmd_run(cmd)
-        return output
-
-    # Private control endpoint is accessible only from the host where storage node is running
-    # So, we connect to storage node host and run CLI command from there
-    with create_ssh_client(node_name) as ssh_client:
-        # Copy wallet content on storage node host
-        with open(wallet_path, "r") as file:
-            wallet = file.read()
-        remote_wallet_path = "/tmp/{node_name}-wallet.json"
-        ssh_client.exec_with_confirmation(f"echo '{wallet}' > {remote_wallet_path}", [""])
-
-        # Put config on storage node host
-        remote_config_path = "/tmp/{node_name}-config.yaml"
-        remote_config = 'password: ""'
-        ssh_client.exec_with_confirmation(f"echo '{remote_config}' > {remote_config_path}", [""])
-
-        # Execute command
-        cmd = (
-            f'{STORAGE_NODE_BIN_PATH}/neofs-cli {command} --endpoint {control_endpoint} '
-            f'--wallet {remote_wallet_path} --config {remote_config_path}'
-        )
-        output = ssh_client.exec_with_confirmation(cmd, [""])
-        return output.stdout
+def _run_control_command(node_name: str, command: str, retries: int = 0) -> str:
+    helper = get_storage_service_helper()
+    for attempt in range(1 + retries):  # original attempt + specified retries
+        try:
+            return helper.run_control_command(node_name, command)
+        except AssertionError as err:
+            if attempt < retries:
+                logger.warn(f'Command {command} failed with error {err} and will be retried')
+                continue
+            raise AssertionError(f'Command {command} failed with error {err}') from err

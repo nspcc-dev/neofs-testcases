@@ -9,10 +9,10 @@ from robot.api import deco
 
 import wallet
 from cli_helpers import _cmd_run
-from common import ASSETS_DIR, FREE_STORAGE, MAINNET_WALLET_PATH, NEOFS_NETMAP_DICT
+from common import (ASSETS_DIR, FREE_STORAGE, INFRASTRUCTURE_TYPE, MAINNET_WALLET_PATH,
+                    NEOFS_NETMAP_DICT)
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck, create_ssh_client
-from sbercloud_helper import SberCloudConfig
 
 
 def robot_keyword_adapter(name=None, tags=(), types=()):
@@ -32,8 +32,7 @@ def cloud_infrastructure_check():
 
 
 def is_cloud_infrastructure():
-    cloud_config = SberCloudConfig.from_env()
-    return cloud_config.project_id is not None
+    return INFRASTRUCTURE_TYPE == "CLOUD_VM"
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -119,21 +118,15 @@ def prepare_tmp_dir():
 
 
 @pytest.fixture(scope='session')
-@allure.title('Init wallet with address')
-def init_wallet_with_address(prepare_tmp_dir):
-    yield wallet.init_wallet(ASSETS_DIR)
-
-
-@pytest.fixture(scope='session')
 @allure.title('Prepare wallet and deposit')
-def prepare_wallet_and_deposit(init_wallet_with_address):
-    wallet, addr, _ = init_wallet_with_address
-    logger.info(f'Init wallet: {wallet},\naddr: {addr}')
-    allure.attach.file(wallet, os.path.basename(wallet), allure.attachment_type.JSON)
+def prepare_wallet_and_deposit(prepare_tmp_dir):
+    wallet_path, addr, _ = wallet.init_wallet(ASSETS_DIR)
+    logger.info(f'Init wallet: {wallet_path},\naddr: {addr}')
+    allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
         deposit = 30
-        transfer_mainnet_gas(wallet, deposit + 1, wallet_path=MAINNET_WALLET_PATH)
-        neofs_deposit(wallet, deposit)
+        transfer_mainnet_gas(wallet_path, deposit + 1, wallet_path=MAINNET_WALLET_PATH)
+        neofs_deposit(wallet_path, deposit)
 
-    return wallet
+    return wallet_path
