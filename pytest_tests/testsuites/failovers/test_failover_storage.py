@@ -2,7 +2,6 @@ import logging
 
 import allure
 import pytest
-
 from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
                     STORAGE_NODE_SSH_PASSWORD)
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
