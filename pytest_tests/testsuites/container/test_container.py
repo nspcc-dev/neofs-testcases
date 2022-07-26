@@ -21,10 +21,10 @@ def test_container_creation(prepare_wallet_and_deposit, name):
         json_wallet = json.load(fp)
 
     placement_rule = 'REP 2 IN X CBF 1 SELECT 2 FROM * AS X'
-    info_to_check = {'basic ACL: 0x1c8c8ccc (private)',
+    info_to_check = {'basic ACL: 1c8c8ccc (private)',
                      f'owner ID: {json_wallet.get("accounts")[0].get("address")}'}
     if name:
-        info_to_check.add(f'attribute: Name={name}')
+        info_to_check.add(f'Name={name}')
         name = f' --name {name}'
 
     cid = create_container(wallet, rule=placement_rule, options=name)
