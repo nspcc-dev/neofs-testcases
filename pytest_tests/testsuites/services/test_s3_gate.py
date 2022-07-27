@@ -95,6 +95,7 @@ class TestS3Gate:
         with allure.step('Check buckets are presented in the system'):
             # We have an issue that sometimes bucket is not available in the list
             # immediately after creation, so we take several attempts with sleep
+            # TODO: remove after https://github.com/nspcc-dev/neofs-s3-gw/issues/628 is fixed
             buckets = []
             for attempt in range(8):
                 with allure.step(f'Loading buckets list (attempt #{attempt})'):

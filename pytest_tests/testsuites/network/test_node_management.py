@@ -7,7 +7,7 @@ import base58
 import pytest
 from cli_helpers import _cmd_run
 from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
-                    NEOFS_NETMAP_DICT, NEOGO_CLI_EXEC, SHARD_0_GC_SLEEP)
+                    NEOFS_NETMAP_DICT, NEOGO_CLI_EXEC)
 from epoch import tick_epoch
 from python_keywords.container import create_container, get_container
 from python_keywords.neofs_verbs import (delete_object, get_object,
@@ -20,7 +20,7 @@ from python_keywords.node_management import (drop_object, get_netmap_snapshot,
                                              start_nodes_remote,
                                              stop_nodes_remote)
 from storage_policy import get_nodes_with_object, get_simple_object_copies
-from utility import placement_policy_from_container, robot_time_to_int
+from utility import placement_policy_from_container, robot_time_to_int, wait_for_gc_pass_on_storage_nodes
 from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
 
@@ -329,7 +329,7 @@ def wait_for_obj_dropped(wallet: str, cid: str, oid: str, checker):
     for _ in range(3):
         try:
             checker(wallet, cid, oid)
-            sleep(robot_time_to_int(SHARD_0_GC_SLEEP))
+            wait_for_gc_pass_on_storage_nodes()
         except Exception as err:
             if 'object not found' in str(err):
                 break

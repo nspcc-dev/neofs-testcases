@@ -1,7 +1,10 @@
 import os
+import time
 import uuid
 
-from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
+import allure
+
+from common import ASSETS_DIR, SIMPLE_OBJ_SIZE, SHARD_0_GC_SLEEP
 
 
 def create_file_with_content(file_path: str = None, content: str = None) -> str:
@@ -83,3 +86,10 @@ def placement_policy_from_container(container_info: str) -> str:
     """
     assert ':' in container_info, f'Could not find placement rule in the output {container_info}'
     return container_info.split(':')[-1].replace('\n', ' ').strip()
+
+
+def wait_for_gc_pass_on_storage_nodes() -> None:
+    # We add 15 seconds to allow some time for GC process itself
+    wait_time = robot_time_to_int(SHARD_0_GC_SLEEP) + 15
+    with allure.step(f'Wait {wait_time}s until GC completes on storage nodes'):
+        time.sleep(wait_time)
