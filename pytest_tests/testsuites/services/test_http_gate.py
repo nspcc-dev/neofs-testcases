@@ -5,7 +5,7 @@ from time import sleep
 
 import allure
 import pytest
-from common import COMPLEX_OBJ_SIZE, SHARD_0_GC_SLEEP
+from common import COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
@@ -14,13 +14,14 @@ from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.storage_policy import get_nodes_without_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
-from utility import robot_time_to_int
+from utility import wait_for_gc_pass_on_storage_nodes
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')
 
 # For some reason object uploaded via http gateway is not immediately available for downloading
 # Until this issue is resolved we are waiting for some time before attempting to read an object
+# TODO: remove after https://github.com/nspcc-dev/neofs-http-gw/issues/176 is fixed
 OBJECT_UPLOAD_DELAY = 10
 
 @allure.link('https://github.com/nspcc-dev/neofs-http-gw#neofs-http-gateway', name='neofs-http-gateway')
@@ -149,8 +150,7 @@ class TestHttpGate:
             tick_epoch()
 
             # Wait for GC, because object with expiration is counted as alive until GC removes it
-            with allure.step('Wait until GC completes on storage nodes'):
-                sleep(robot_time_to_int(SHARD_0_GC_SLEEP))
+            wait_for_gc_pass_on_storage_nodes()
 
             for oid in expired_objects:
                 self.try_to_get_object_and_expect_error(

@@ -30,6 +30,7 @@ NEOFS_EXEC = os.getenv('NEOFS_EXEC', 'neofs-authmate')
 # Artificial delay that we add after object deletion and container creation
 # Delay is added because sometimes immediately after deletion object still appears
 # to be existing (probably because tombstone object takes some time to replicate)
+# TODO: remove after https://github.com/nspcc-dev/neofs-s3-gw/issues/610 is fixed
 S3_SYNC_WAIT_TIME = 5
 
 class VersioningStatus(Enum):
