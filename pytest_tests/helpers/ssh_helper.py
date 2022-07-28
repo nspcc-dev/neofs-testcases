@@ -61,7 +61,7 @@ class SSHCommand:
 class HostClient:
     ssh_client: SSHClient
     SSH_CONNECTION_ATTEMPTS: ClassVar[int] = 3
-    CONNECTION_TIMEOUT = 30
+    CONNECTION_TIMEOUT = 90
 
     TIMEOUT_RESTORE_CONNECTION = 10, 24
 
@@ -74,14 +74,16 @@ class HostClient:
         if init_ssh_client:
             self.create_connection(self.SSH_CONNECTION_ATTEMPTS)
 
-    def exec(self, cmd: str, verify=True, timeout=30) -> SSHCommand:
+    def exec(self, cmd: str, verify=True, timeout=90) -> SSHCommand:
         cmd_result = self._inner_exec(cmd, timeout)
         if verify:
             assert cmd_result.rc == 0, f'Non zero rc from command: "{cmd}"'
         return cmd_result
 
     @log_command
-    def exec_with_confirmation(self, cmd: str, confirmation: list, verify=True, timeout=10) -> SSHCommand:
+    def exec_with_confirmation(self, cmd: str, confirmation: list, verify=True, timeout=90) -> SSHCommand:
+        if self.login != "root":
+            cmd = f"sudo {cmd}"
         ssh_stdin, ssh_stdout, ssh_stderr = self.ssh_client.exec_command(cmd, timeout=timeout)
         for line in confirmation:
             if not line.endswith('\n'):
@@ -195,6 +197,8 @@ class HostClient:
     def _inner_exec(self, cmd: str, timeout: int) -> SSHCommand:
         if not self.ssh_client:
             self.create_connection()
+        if self.login != "root":
+            cmd = f"sudo {cmd}"
         for _ in range(self.SSH_CONNECTION_ATTEMPTS):
             try:
                 _, stdout, stderr = self.ssh_client.exec_command(cmd, timeout=timeout)
