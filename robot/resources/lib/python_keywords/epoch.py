@@ -28,8 +28,13 @@ def tick_epoch():
         # If neofs-adm is available, then we tick epoch with it (to be consistent with UAT tests)
         cmd = f"{NEOFS_ADM_EXEC} morph force-new-epoch -c {NEOFS_ADM_CONFIG_PATH}"
         logger.info(f"Executing shell command: {cmd}")
-        out = wrappers.run_sh(cmd)
-        logger.info(f"Command completed with output: {out}")
+        try:
+            out = wrappers.run_sh(cmd)
+            logger.info(f"Command completed with output: {out}")
+        except Exception as exc:
+            logger.error(exc)
+            raise RuntimeError("Failed to tick epoch") from exc
+
         return
 
     # Otherwise we tick epoch using transaction

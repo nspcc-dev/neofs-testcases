@@ -12,6 +12,7 @@ DEV_IMAGE_PY ?= registry.spb.yadro.com/tools/pytest-neofs-x86_64:7
 SETUP_DIR ?= $(CURDIR)/.setup
 DEV_ENV_DEPLOY_DIR ?= /opt/dev-env
 
+DOCKER_NETWORK = --network host
 ifeq ($(shell uname -s),Darwin)
 	DOCKER_NETWORK = --network bridge -p 389:389 -p 636:636
 endif

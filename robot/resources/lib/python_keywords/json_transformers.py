@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.9
 
 """
     When doing requests to NeoFS, we get JSON output as an automatically decoded
@@ -144,13 +144,15 @@ def decode_common_fields(data: dict):
     header contains several common fields.
     This function rearranges these fields.
     """
-    # reencoding binary IDs
     data["objectID"] = json_reencode(data["objectID"]["value"])
-    data["header"]["containerID"] = json_reencode(data["header"]["containerID"]["value"])
-    data["header"]["ownerID"] = json_reencode(data["header"]["ownerID"]["value"])
-    data["header"]["homomorphicHash"] = json_reencode(data["header"]["homomorphicHash"]["sum"])
-    data["header"]["payloadHash"] = json_reencode(data["header"]["payloadHash"]["sum"])
-    data["header"]["version"] = (
-        f"{data['header']['version']['major']}{data['header']['version']['minor']}"
-    )
+
+    header = data["header"]
+    header["containerID"] = json_reencode(header["containerID"]["value"])
+    header["ownerID"] = json_reencode(header["ownerID"]["value"])
+    header["payloadHash"] = json_reencode(header["payloadHash"]["sum"])
+    header["version"] = f"{header['version']['major']}{header['version']['minor']}"
+    # Homomorphic hash is optional and its calculation might be disabled in trusted network
+    if header.get("homomorphicHash"):
+        header["homomorphicHash"] = json_reencode(header["homomorphicHash"]["sum"])
+
     return data
