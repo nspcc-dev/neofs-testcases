@@ -1,41 +1,52 @@
 import json
+import os
 from dataclasses import dataclass
+from typing import Optional
 
 import requests
-from yaml import FullLoader
-from yaml import load as yaml_load
+import yaml
 
 
 @dataclass
-class SberCloudCtx:
-    sber_login: str = None
-    sber_password: str = None
-    sber_domain: str = None
-    sber_project_id: str = None
-    sber_iam_url: str = None
-    sber_ecss: list = None
+class SberCloudConfig:
+    login: Optional[str] = None
+    password: Optional[str] = None
+    domain: Optional[str] = None
+    project_id: Optional[str] = None
+    iam_url: Optional[str] = None
 
     @staticmethod
-    def from_dict(sbercloud_dict: dict) -> 'SberCloudCtx':
-        return SberCloudCtx(**sbercloud_dict)
+    def from_dict(config_dict: dict) -> 'SberCloudConfig':
+        return SberCloudConfig(**config_dict)
 
     @staticmethod
-    def from_yaml(config: str) -> 'SberCloudCtx':
-        with open(config) as yaml_file:
-            config_from_yaml = yaml_load(yaml_file, Loader=FullLoader)
-        return SberCloudCtx.from_dict(config_from_yaml)
+    def from_yaml(config_path: str) -> 'SberCloudConfig':
+        with open(config_path) as file:
+            config_dict = yaml.load(file, Loader=yaml.FullLoader)
+        return SberCloudConfig.from_dict(config_dict["sbercloud"])
+
+    @staticmethod
+    def from_env() -> 'SberCloudConfig':
+        config_dict = {
+            "domain": os.getenv("SBERCLOUD_DOMAIN"),
+            "login": os.getenv("SBERCLOUD_LOGIN"),
+            "password": os.getenv("SBERCLOUD_PASSWORD"),
+            "project_id": os.getenv("SBERCLOUD_PROJECT_ID"),
+            "iam_url": os.getenv("SBERCLOUD_IAM_URL"),
+        }
+        return SberCloudConfig.from_dict(config_dict)
 
 
 class SberCloud:
-    def __init__(self, config: str):
-        self.sbercloud_config = SberCloudCtx().from_yaml(config)
+    def __init__(self, config: SberCloudConfig) -> None:
+        self.config = config
         self.ecs_url = None
         self.project_id = None
         self.token = None
-        self.update_token()
-        self.ecss = self.get_ecss()
+        self._initialize()
+        self.ecs_nodes = self.get_ecs_nodes()
 
-    def update_token(self):
+    def _initialize(self) -> None:
         data = {
             'auth': {
                 'identity': {
@@ -43,68 +54,85 @@ class SberCloud:
                     'password': {
                         'user': {
                             'domain': {
-                                'name': self.sbercloud_config.sber_domain
+                                'name': self.config.domain
                             },
-                            'name': self.sbercloud_config.sber_login,
-                            'password': self.sbercloud_config.sber_password
+                            'name': self.config.login,
+                            'password': self.config.password
                         }
                     }
                 },
                 'scope': {
                     'project': {
-                        'id': self.sbercloud_config.sber_project_id
+                        'id': self.config.project_id
                     }
                 }
             }
         }
-        response = requests.post(f'{self.sbercloud_config.sber_iam_url}/v3/auth/tokens', data=json.dumps(data),
-                                 headers={'Content-Type': 'application/json'})
-        self.ecs_url = [catalog['endpoints'][0]['url']
-                        for catalog in response.json()['token']['catalog'] if catalog['type'] == 'ecs'][0]
+        response = requests.post(
+            f'{self.config.iam_url}/v3/auth/tokens',
+            data=json.dumps(data),
+            headers={'Content-Type': 'application/json'}
+        )
+        self.ecs_url = [
+            catalog['endpoints'][0]['url']
+            for catalog in response.json()['token']['catalog'] if catalog['type'] == 'ecs'
+        ][0]
         self.project_id = self.ecs_url.split('/')[-1]
         self.token = response.headers['X-Subject-Token']
 
-    def find_esc_by_ip(self, ip: str, update: bool = False) -> str:
-        if not self.ecss or update:
-            self.ecss = self.get_ecss()
-        ecss = [ecs for ecs in self.ecss if ip in [
-                ecs_ip['addr'] for ecs_ip in [ecs_ip for ecs_ips in ecs['addresses'].values() for ecs_ip in ecs_ips]]]
-        assert len(ecss) == 1
-        return ecss[0]['id']
+    def find_ecs_node_by_ip(self, ip: str, no_cache: bool = False) -> str:
+        if not self.ecs_nodes or no_cache:
+            self.ecs_nodes = self.get_ecs_nodes()
+        nodes_by_ip = [
+            node for node in self.ecs_nodes
+            if ip in [
+                node_ip['addr']
+                for node_ips in node['addresses'].values()
+                for node_ip in node_ips
+            ]
+        ]
+        assert len(nodes_by_ip) == 1
+        return nodes_by_ip[0]['id']
 
-    def get_ecss(self) -> [dict]:
+    def get_ecs_nodes(self) -> list[dict]:
         response = requests.get(f'{self.ecs_url}/cloudservers/detail',
                                 headers={'X-Auth-Token': self.token}).json()
         return response['servers']
 
-    def start_node(self, node_id: str = None, node_ip: str = None):
+    def start_node(self, node_id: Optional[str] = None, node_ip: Optional[str] = None) -> None:
         data = {
             'os-start': {
                 'servers': [
                     {
-                        'id': node_id or self.find_esc_by_ip(node_ip)
+                        'id': node_id or self.find_ecs_node_by_ip(node_ip)
                     }
                 ]
             }
         }
-        response = requests.post(f'{self.ecs_url}/cloudservers/action',
-                                 data=json.dumps(data),
-                                 headers={'Content-Type': 'application/json', 'X-Auth-Token': self.token})
-        assert response.status_code < 300, f'Status:{response.status_code}. Server not started: {response.json()}'
+        response = requests.post(
+            f'{self.ecs_url}/cloudservers/action',
+            data=json.dumps(data),
+            headers={'Content-Type': 'application/json', 'X-Auth-Token': self.token}
+        )
+        assert response.status_code < 300, \
+            f'Status:{response.status_code}. Server not started: {response.json()}'
 
-    def stop_node(self, node_id: str = None, node_ip: str = None, hard: bool = False):
+    def stop_node(self, node_id: Optional[str] = None, node_ip: Optional[str] = None,
+                  hard: bool = False) -> None:
         data = {
             'os-stop': {
                 'type': 'HARD' if hard else 'SOFT',
                 'servers': [
                     {
-                        'id': node_id or self.find_esc_by_ip(node_ip)
+                        'id': node_id or self.find_ecs_node_by_ip(node_ip)
                     }
-
                 ]
             }
         }
-        response = requests.post(f'{self.ecs_url}/cloudservers/action',
-                                 data=json.dumps(data),
-                                 headers={'Content-Type': 'application/json', 'X-Auth-Token': self.token})
-        assert response.status_code < 300, f'Status:{response.status_code}. Server not stopped: {response.json()}'
+        response = requests.post(
+            f'{self.ecs_url}/cloudservers/action',
+            data=json.dumps(data),
+            headers={'Content-Type': 'application/json', 'X-Auth-Token': self.token}
+        )
+        assert response.status_code < 300, \
+            f'Status:{response.status_code}. Server not stopped: {response.json()}'
