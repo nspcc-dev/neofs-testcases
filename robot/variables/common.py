@@ -18,7 +18,6 @@ NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
 SHARD_0_GC_SLEEP = os.getenv("NEOFS_STORAGE_SHARD_0_GC_REMOVER_SLEEP_INTERVAL", "1m")
 
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
-NEOGO_CLI_EXEC = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 
 NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main-chain.neofs.devenv:30333')
 MORPH_ENDPOINT = os.getenv("MORPH_ENDPOINT", 'http://morph-chain.neofs.devenv:30333')
@@ -50,6 +49,7 @@ STORAGE_WALLET_PATH_2 = os.getenv("STORAGE_WALLET_PATH_2", f"{DEVENV_PATH}/servi
 STORAGE_WALLET_PATH_3 = os.getenv("STORAGE_WALLET_PATH_3", f"{DEVENV_PATH}/services/storage/wallet03.json")
 STORAGE_WALLET_PATH_4 = os.getenv("STORAGE_WALLET_PATH_4", f"{DEVENV_PATH}/services/storage/wallet04.json")
 STORAGE_WALLET_PATH = STORAGE_WALLET_PATH_1
+STORAGE_WALLET_PASS = os.getenv("STORAGE_WALLET_PASS", "")
 
 NEOFS_NETMAP_DICT = {
     's01': {

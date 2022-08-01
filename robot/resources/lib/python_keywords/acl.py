@@ -1,4 +1,4 @@
-#!/usr/bin/python3.8
+#!/usr/bin/python3.9
 
 import base64
 import json
@@ -6,11 +6,12 @@ import os
 import re
 import uuid
 from enum import Enum, auto
+from typing import Optional
 
 import base58
 from cli_helpers import _cmd_run
-from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
-from data_formatters import pub_key_hex
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from data_formatters import get_wallet_public_key
 from robot.api import logger
 from robot.api.deco import keyword
 
@@ -19,9 +20,6 @@ Robot Keywords and helper functions for work with NeoFS ACL.
 """
 
 ROBOT_AUTO_KEYWORDS = False
-
-# path to neofs-cli executable
-NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
 EACL_LIFETIME = 100500
 
 
@@ -37,7 +35,7 @@ class Role(AutoName):
 
 
 @keyword('Get eACL')
-def get_eacl(wallet_path: str, cid: str):
+def get_eacl(wallet_path: str, cid: str) -> Optional[str]:
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet_path} '
         f'container get-eacl --cid {cid} --config {WALLET_CONFIG}'
@@ -54,7 +52,7 @@ def get_eacl(wallet_path: str, cid: str):
 
 
 @keyword('Set eACL')
-def set_eacl(wallet_path: str, cid: str, eacl_table_path: str):
+def set_eacl(wallet_path: str, cid: str, eacl_table_path: str) -> None:
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet_path} '
         f'container set-eacl --cid {cid} --table {eacl_table_path} --config {WALLET_CONFIG} --await'
@@ -68,23 +66,19 @@ def _encode_cid_for_eacl(cid: str) -> str:
 
 
 @keyword('Create eACL')
-def create_eacl(cid: str, rules_list: list):
-    table = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
-    rules = ""
-    for rule in rules_list:
-        # TODO: check if $Object: is still necessary for filtering in the newest releases
-        rules += f"--rule '{rule}' "
-    cmd = (
-        f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} "
-        f"{rules}--out {table}"
-    )
+def create_eacl(cid: str, rules_list: list) -> str:
+    table_file_path = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
+    # TODO: check if $Object: is still necessary for filtering in the newest releases
+    rules = " ".join(f"--rule '{rule}'" for rule in rules_list)
+
+    cmd = f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} {rules} --out {table_file_path}"
     _cmd_run(cmd)
 
-    with open(table, 'r') as fout:
-        table_data = fout.read()
+    with open(table_file_path, 'r') as file:
+        table_data = file.read()
         logger.info(f"Generated eACL:\n{table_data}")
 
-    return table
+    return table_file_path
 
 
 @keyword('Form BearerToken File')
@@ -164,8 +158,9 @@ def form_bearertoken_file(wif: str, cid: str, eacl_records: list) -> str:
     sign_bearer_token(wif, file_path)
     return file_path
 
+
 @keyword('EACL Rules')
-def eacl_rules(access: str, verbs: list, user: str):
+def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     """
         This function creates a list of eACL rules.
         Args:
@@ -178,17 +173,17 @@ def eacl_rules(access: str, verbs: list, user: str):
             (list): a list of eACL rules
     """
     if user not in ('others', 'user'):
-        pubkey = pub_key_hex(user)
+        pubkey = get_wallet_public_key(user, wallet_password="")
         user = f"pubkey:{pubkey}"
 
     rules = []
     for verb in verbs:
-        elements = [access, verb, user]
-        rules.append(' '.join(elements))
+        rule = f"{access} {verb} {user}"
+        rules.append(rule)
     return rules
 
 
-def sign_bearer_token(wallet_path: str, eacl_rules_file: str):
+def sign_bearer_token(wallet_path: str, eacl_rules_file: str) -> None:
     cmd = (
         f'{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} '
         f'--to {eacl_rules_file} --wallet {wallet_path} --config {WALLET_CONFIG} --json'

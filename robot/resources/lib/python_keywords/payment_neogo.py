@@ -10,9 +10,8 @@ from robot.api.deco import keyword
 import contract
 import converters
 import rpc_client
-from common import (GAS_HASH, MAINNET_SINGLE_ADDR, MAINNET_WALLET_PATH,
-                    MORPH_ENDPOINT, NEO_MAINNET_ENDPOINT, NEOFS_CONTRACT,
-                    NEOGO_CLI_EXEC)
+from common import (GAS_HASH, MAINNET_SINGLE_ADDR, MAINNET_WALLET_PATH, MAINNET_WALLET_PASS,
+                    MORPH_ENDPOINT, NEO_MAINNET_ENDPOINT, NEOFS_CONTRACT, NEOGO_EXECUTABLE)
 from converters import load_wallet
 from wallet import nep17_transfer
 from wrappers import run_sh_with_passwd_contract
@@ -20,7 +19,6 @@ from wrappers import run_sh_with_passwd_contract
 ROBOT_AUTO_KEYWORDS = False
 
 EMPTY_PASSWORD = ''
-MAINNET_WALLET_PASS = 'one'
 TX_PERSIST_TIMEOUT = 15     # seconds
 ASSET_POWER_MAINCHAIN = 10 ** 8
 ASSET_POWER_SIDECHAIN = 10 ** 12
@@ -35,7 +33,7 @@ def withdraw_mainnet_gas(wlt: str, amount: int):
     scripthash = wallet.Account.address_to_script_hash(address)
 
     cmd = (
-        f"{NEOGO_CLI_EXEC} contract invokefunction -w {wlt} -a {address} "
+        f"{NEOGO_EXECUTABLE} contract invokefunction -w {wlt} -a {address} "
         f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
         f"int:{amount}  -- {scripthash}:Global"
     )
