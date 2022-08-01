@@ -1,14 +1,14 @@
 import logging
-import os
 
 import allure
 import pytest
 
-from common import STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER, STORAGE_NODE_SSH_PASSWORD
+from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
+                    STORAGE_NODE_SSH_PASSWORD)
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
-from sbercloud_helper import SberCloud
+from sbercloud_helper import SberCloud, SberCloudConfig
 from ssh_helper import HostClient, HostIsNotAvailable
 from wellknown_acl import PUBLIC_ACL
 from .failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
@@ -21,7 +21,8 @@ stopped_hosts = []
 def sbercloud_client():
     with allure.step('Connect to SberCloud'):
         try:
-            yield SberCloud(f'{os.getcwd()}/configuration/sbercloud.yaml')
+            config = SberCloudConfig.from_env()
+            yield SberCloud(config)
         except Exception as err:
             pytest.fail(f'SberCloud infrastructure not available. Error\n{err}')
 
@@ -42,7 +43,7 @@ def panic_reboot_host(ip: str = None):
         ssh.exec('sudo sh -c "echo b > /proc/sysrq-trigger"', timeout=1)
 
 
-def return_all_storage_nodes(sbercloud_client: SberCloud):
+def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
     for host in list(stopped_hosts):
         with allure.step(f'Start storage node {host}'):
             sbercloud_client.start_node(node_ip=host.split(':')[-2])
