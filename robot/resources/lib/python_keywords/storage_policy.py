@@ -5,6 +5,8 @@
     that storage policies are kept.
 """
 
+from typing import Optional
+
 from robot.api import logger
 from robot.api.deco import keyword
 
@@ -86,7 +88,7 @@ def get_complex_object_copies(wallet: str, cid: str, oid: str):
 
 
 @keyword('Get Nodes With Object')
-def get_nodes_with_object(wallet: str, cid: str, oid: str):
+def get_nodes_with_object(wallet: str, cid: str, oid: str, skip_nodes: Optional[list[str]] = None) -> list[str]:
     """
        The function returns list of nodes which store
        the given object.
@@ -95,11 +97,16 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str):
                         we request the nodes
             cid (str): ID of the container which store the object
             oid (str): object ID
+            skip_nodes (list): list of nodes that should be excluded from check
        Returns:
             (list): nodes which store the object
     """
+    nodes_to_search = NEOFS_NETMAP
+    if skip_nodes:
+        nodes_to_search = [node for node in NEOFS_NETMAP if node not in skip_nodes]
+
     nodes_list = []
-    for node in NEOFS_NETMAP:
+    for node in nodes_to_search:
         try:
             res = neofs_verbs.head_object(wallet, cid, oid,
                                           endpoint=node,

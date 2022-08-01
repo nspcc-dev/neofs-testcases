@@ -23,6 +23,13 @@ deco.keyword = robot_keyword_adapter
 logger = logging.getLogger('NeoLogger')
 
 
+@pytest.fixture(scope='session')
+def free_storage_check():
+    if os.getenv('FREE_STORAGE', default='False').lower() not in ('true', '1'):
+        pytest.skip('Test only works on SberCloud infrastructure')
+    yield
+
+
 @pytest.fixture(scope='session', autouse=True)
 @allure.title('Check binary versions')
 def check_binary_versions(request):
@@ -81,6 +88,7 @@ def init_wallet_with_address(prepare_tmp_dir):
 def prepare_wallet_and_deposit(init_wallet_with_address):
     wallet, addr, _ = init_wallet_with_address
     logger.info(f'Init wallet: {wallet},\naddr: {addr}')
+    allure.attach.file(wallet, os.path.basename(wallet), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
         deposit = 30
