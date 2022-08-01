@@ -50,7 +50,6 @@ neofs_netmap:
 
 # Paths to binaries
 
-neogo_cli_exec: 'neo-go'
 neogo_executable: 'neo-go'
 neofs_cli_exec: 'neofs-cli'
 
