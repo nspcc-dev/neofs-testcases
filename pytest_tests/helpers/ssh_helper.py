@@ -66,15 +66,19 @@ class HostClient:
     TIMEOUT_RESTORE_CONNECTION = 10, 24
 
     def __init__(self, ip: str, login: str, password: Optional[str] = None,
-                 private_key_path: Optional[str] = None, init_ssh_client=True) -> None:
+                 private_key_path: Optional[str] = None, private_key_passphrase: Optional[str] = None,
+                 init_ssh_client=True) -> None:
         self.ip = ip
         self.login = login
         self.password = password
         self.private_key_path = private_key_path
+        self.private_key_passphrase = private_key_passphrase
         if init_ssh_client:
             self.create_connection(self.SSH_CONNECTION_ATTEMPTS)
 
     def exec(self, cmd: str, verify=True, timeout=90) -> SSHCommand:
+        if self.login != 'root':
+            cmd = f'sudo {cmd}'
         cmd_result = self._inner_exec(cmd, timeout)
         if verify:
             assert cmd_result.rc == 0, f'Non zero rc from command: "{cmd}"'
@@ -109,6 +113,15 @@ class HostClient:
         yield
         self.login, self.password = keep_user, keep_password
         self.create_connection()
+
+    @contextmanager
+    def create_ssh_connection(self) -> 'SSHClient':
+        if not self.ssh_client:
+            self.create_connection()
+        try:
+            yield self.ssh_client
+        finally:
+            self.drop()
 
     @allure.step('Restore connection')
     def restore_ssh_connection(self):
@@ -151,13 +164,13 @@ class HostClient:
             try:
                 if self.private_key_path:
                     logging.info(
-                        f"Trying to connect to host {self.ip} using SSH key "
+                        f"Trying to connect to host {self.ip} as {self.login} using SSH key "
                         f"{self.private_key_path} (attempt {attempt})"
                     )
                     self.ssh_client.connect(
                         hostname=self.ip,
                         username=self.login,
-                        pkey=RSAKey.from_private_key_file(self.private_key_path, self.password),
+                        pkey=RSAKey.from_private_key_file(self.private_key_path, self.private_key_passphrase),
                         timeout=self.CONNECTION_TIMEOUT
                     )
                 else:
@@ -175,7 +188,7 @@ class HostClient:
 
             except AuthenticationException as auth_err:
                 logging.error(f'Host: {self.ip}. {auth_err}')
-
+                self.drop()
                 raise auth_err
 
             except (
@@ -186,6 +199,7 @@ class HostClient:
                     OSError
             ) as ssh_err:
                 exc_err = ssh_err
+                self.drop()
                 logging.error(f'Host: {self.ip}, connection error. {exc_err}')
 
         raise HostIsNotAvailable(self.ip, exc_err)
@@ -197,8 +211,6 @@ class HostClient:
     def _inner_exec(self, cmd: str, timeout: int) -> SSHCommand:
         if not self.ssh_client:
             self.create_connection()
-        if self.login != "root":
-            cmd = f"sudo {cmd}"
         for _ in range(self.SSH_CONNECTION_ATTEMPTS):
             try:
                 _, stdout, stderr = self.ssh_client.exec_command(cmd, timeout=timeout)
