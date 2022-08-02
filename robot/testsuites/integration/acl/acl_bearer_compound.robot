@@ -85,9 +85,9 @@ Check Bearer Сompound Get
                         Get Object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      local_file_eacl
                         IF    "${WALLET}" == "${IR_WALLET_PATH}"
                             Run Keyword And Expect Error    *
-                            ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
+                            ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}
                         ELSE
-                            Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range        ${EACL_TOKEN}       0:256
+                            Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}
                         END
                         Get Range Hash    ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}      0:256
 
@@ -148,7 +148,7 @@ Check Bearer Сompound Get Range Hash
     ${EACL_TOKEN} =     Form BearerToken File      ${USER_WALLET}    ${CID}    ${eACL_gen}
 
                         Run Keyword And Expect Error    *
-                        ...  Get Range      ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EACL_TOKEN}    0:256
+                        ...  Get Range      ${WALLET}    ${CID}    ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}
                         Run Keyword And Expect Error    *
                         ...  Get object     ${WALLET}    ${CID}    ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl
 

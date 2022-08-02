@@ -150,11 +150,9 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_conf
     return tombstone.strip()
 
 
-# TODO: remove `file_path` parameter as it is a boilerplate
-# TODO: make `bearer` an optional parameter
 @keyword('Get Range')
-def get_range(wallet: str, cid: str, oid: str, file_path: str, bearer: str, range_cut: str,
-              wallet_config: str = WALLET_CONFIG, options: str = ""):
+def get_range(wallet: str, cid: str, oid: str, range_cut: str,
+              wallet_config: str = WALLET_CONFIG, bearer: str = "", options: str = ""):
     """
     GETRANGE an Object.
 
@@ -162,7 +160,6 @@ def get_range(wallet: str, cid: str, oid: str, file_path: str, bearer: str, rang
         wallet (str): wallet on whose behalf GETRANGE is done
         cid (str): ID of Container where we get the Object from
         oid (str): ID of Object we are going to request
-        file_path (str): file path
         range_cut (str): range to take data from in the form offset:length
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         wallet_config(optional, str): path to the wallet config

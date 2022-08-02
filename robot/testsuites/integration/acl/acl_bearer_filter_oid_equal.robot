@@ -56,7 +56,7 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
                             Get object         ${WALLET}    ${CID}        ${S_OID_USER}        ${EMPTY}      local_file_eacl
                             Search object      ${WALLET}    ${CID}        ${EMPTY}             ${EMPTY}      ${USER_HEADER}    ${S_OBJ_H}
                             Head object        ${WALLET}    ${CID}        ${S_OID_USER}
-                            Get Range          ${WALLET}    ${CID}        ${S_OID_USER}        s_get_range       ${EMPTY}          0:256
+                            Get Range          ${WALLET}    ${CID}        ${S_OID_USER}        0:256
                             Delete object      ${WALLET}    ${CID}        ${D_OID_USER}
 
                             Set eACL           ${WALLET}    ${CID}        ${EACL_DENY_ALL_USER}
@@ -87,7 +87,7 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
                         Run Keyword And Expect Error        *
                         ...  Head object    ${WALLET}    ${CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
-                        ...  Get Range      ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
+                        ...  Get Range      ${WALLET}    ${CID}    ${S_OID_USER}      0:256
                         Run Keyword And Expect Error        *
                         ...  Delete object  ${WALLET}    ${CID}    ${S_OID_USER}
                         Run Keyword And Expect Error        *
@@ -98,7 +98,7 @@ Check eACL Deny and Allow All Bearer Filter OID Equal
                         ...  Get object     ${WALLET}    ${CID}      ${S_OID_USER_2}    ${EACL_TOKEN}       local_file_eacl
 
                         Get object       ${WALLET}    ${CID}      ${S_OID_USER}      ${EACL_TOKEN}       local_file_eacl
-                        Get Range        ${WALLET}    ${CID}      ${S_OID_USER}      s_get_range     ${EACL_TOKEN}   0:256
+                        Get Range        ${WALLET}    ${CID}      ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}
 
                         Head object      ${WALLET}    ${CID}      ${S_OID_USER}      bearer_token=${EACL_TOKEN}
                         Delete object    ${WALLET}    ${CID}      ${S_OID_USER}      bearer=${EACL_TOKEN}

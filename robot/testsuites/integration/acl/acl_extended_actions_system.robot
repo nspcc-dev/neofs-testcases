@@ -73,9 +73,9 @@ Check eACL Deny and Allow All System
                         Head object          ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error    *
-                        ...    Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
+                        ...    Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error    *
-                        ...    Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...    Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256
 
                         #Get Range Hash       ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         #Get Range Hash       ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
@@ -112,9 +112,9 @@ Check eACL Deny and Allow All System
                         ...  Head object                ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
-                        ...  Get Range                  ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
+                        ...  Get Range                  ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Get Range                  ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        ...  Get Range                  ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256
 
 
                         Run Keyword And Expect Error        *
@@ -154,9 +154,9 @@ Check eACL Deny and Allow All System
                         Head object          ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}
 
                         Run Keyword And Expect Error        *
-                        ...  Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
+                        ...  Get Range            ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         Run Keyword And Expect Error        *
-                        ...  Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    s_get_range      ${EMPTY}    0:256
+                        ...  Get Range            ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    0:256
 
                         #Get Range Hash       ${IR_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256     wallet_config=${IR_WALLET_CONFIG}
                         #Get Range Hash       ${STORAGE_WALLET_PATH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256

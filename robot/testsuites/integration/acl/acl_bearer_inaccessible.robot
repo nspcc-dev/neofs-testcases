@@ -49,7 +49,7 @@ Check Container Inaccessible and Allow All Bearer
                 Run Keyword And Expect Error        *
                 ...  Head object       ${WALLET}    ${CID}        ${S_OID_USER}
                 Run Keyword And Expect Error        *
-                ...  Get Range         ${WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}      0:256
+                ...  Get Range         ${WALLET}    ${CID}        ${S_OID_USER}    0:256
                 Run Keyword And Expect Error        *
                 ...  Delete object     ${WALLET}    ${CID}        ${S_OID_USER}
 

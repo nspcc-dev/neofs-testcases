@@ -59,12 +59,12 @@ Check Public Container
                             Get Object    ${STORAGE_WALLET_PATH}    ${PUBLIC_CID}    ${S_OID_USER}    ${EMPTY}    s_file_read
 
     # Get Range
-                            Get Range           ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
-                            Get Range           ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            Get Range           ${USER_WALLET}    ${PUBLIC_CID}    ${S_OID_USER}    0:256
+                            Get Range           ${WALLET_OTH}    ${PUBLIC_CID}    ${S_OID_USER}    0:256
                             Run Keyword And Expect Error        *
-                            ...    Get Range    ${IR_WALLET_PATH}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256    wallet_config=${IR_WALLET_CONFIG}
+                            ...    Get Range    ${IR_WALLET_PATH}    ${PUBLIC_CID}    ${S_OID_USER}    0:256    wallet_config=${IR_WALLET_CONFIG}
                             Run Keyword And Expect Error        *
-                            ...    Get Range    ${STORAGE_WALLET_PATH}    ${PUBLIC_CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...    Get Range    ${STORAGE_WALLET_PATH}    ${PUBLIC_CID}    ${S_OID_USER}    0:256
 
 
     # Get Range Hash

@@ -74,7 +74,7 @@ Check eACL MatchType String Equal Request Deny
                             Run Keyword And Expect Error    *
                             ...  Head object                ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    options=--xhdr a=2
                             Run Keyword And Expect Error    *
-                            ...  Get Range                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256         --xhdr a="2"
+                            ...  Get Range                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    0:256         options=--xhdr a="2"
                             Run Keyword And Expect Error    *
                             ...  Get Range Hash             ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256                 --xhdr a=2
                             Run Keyword And Expect Error    *
@@ -84,7 +84,7 @@ Check eACL MatchType String Equal Request Deny
                             Get object                      ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${PATH}       ${EMPTY}        --xhdr a=*
                             Search object                   ${OTHER_WALLET}    ${CID}        ${EMPTY}         ${EMPTY}       ${USER_HEADER}    ${EMPTY}        --xhdr a=
                             Head object                     ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    options=--xhdr a=.*
-                            Get Range                       ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a="2 2"
+                            Get Range                       ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    0:256           options=--xhdr a="2 2"
                             Get Range Hash                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256                 --xhdr a=256
                             Delete object                   ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    options=--xhdr a=22
 
@@ -114,7 +114,7 @@ Check eACL MatchType String Equal Request Allow
                             Run Keyword And Expect Error    *
                             ...  Head object                ${OTHER_WALLET}    ${CID}        ${S_OID_USER}
                             Run Keyword And Expect Error    *
-                            ...  Get Range                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256
+                            ...  Get Range                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    0:256
                             Run Keyword And Expect Error    *
                             ...  Get Range Hash             ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256
                             Run Keyword And Expect Error    *
@@ -124,7 +124,7 @@ Check eACL MatchType String Equal Request Allow
                             Get object                      ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       ${PATH}       ${EMPTY}        --xhdr a=2
                             Search object                   ${OTHER_WALLET}    ${CID}        ${EMPTY}         ${EMPTY}       ${USER_HEADER}    ${EMPTY}        --xhdr a=2
                             Head object                     ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    options=--xhdr a=2
-                            Get Range                       ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    s_get_range    ${EMPTY}              0:256           --xhdr a=2
+                            Get Range                       ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    0:256           options=--xhdr a=2
                             Get Range Hash                  ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    ${EMPTY}       0:256                 --xhdr a=2
                             Delete object                   ${OTHER_WALLET}    ${CID}        ${S_OID_USER}    options=--xhdr a=2
 
