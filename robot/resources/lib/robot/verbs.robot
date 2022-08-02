@@ -33,17 +33,15 @@ Run All Verbs Except Delete And Expect Success
         ...             Get file hash       ${OBJ_PATH}
                         Should Be Equal     ${DOWNLOADED_FILE_HASH}   ${FILE_HASH}
 
-    # TODO: get rid of ${EMPTY}
     ${RANGE_FILE}
     ...     ${DATA_RANGE} =
-    ...                 Get Range           ${WALLET}    ${CID}    ${OID}   file_path=${EMPTY}
+    ...                 Get Range           ${WALLET}    ${CID}    ${OID}
                                             ...     bearer=${BEARER_TOKEN}
                                             ...     range_cut=0:10
                                             ...     options=${REQUEST_HEADERS}
     ${FILE_CONTENT} =   Get Binary File     ${FILE}
                         Should Contain      ${FILE_CONTENT}     ${DATA_RANGE}
 
-    # TODO: get rid of ${EMPTY}
     ${RANGE_HASH} =     Get Range Hash      ${WALLET}    ${CID}    ${OID}
                                             ...     bearer_token=${BEARER_TOKEN}
                                             ...     range_cut=0:10
@@ -97,9 +95,8 @@ Run All Verbs And Expect Failure
                 ...     Get object      ${WALLET}   ${CID}       ${OID}
                 Should Contain          ${ERR}    ${ERROR}
 
-    # TODO: get rid of ${EMPTY}
     ${ERR} =    Run Keyword And Expect Error       *
-                ...     Get Range       ${WALLET}   ${CID}    ${OID}   ${EMPTY}    ${EMPTY}   0:10
+                ...     Get Range       ${WALLET}   ${CID}    ${OID}   0:10
                 Should Contain          ${ERR}    ${ERROR}
 
     # TODO: get rid of ${EMPTY}

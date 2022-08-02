@@ -56,7 +56,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get object                  ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            ${EMPTY}            local_file_eacl
                             Search object               ${WALLET_ALLOW}    ${CID}        ${EMPTY}                 ${EMPTY}            ${USER_HEADER}        ${S_OBJ_H}
                             Head object                 ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}
-                            Get Range                   ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            s_get_range         ${EMPTY}            0:256
+                            Get Range                   ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            0:256
                             Get Range Hash              ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}            ${EMPTY}            0:256
                             Delete object               ${WALLET_ALLOW}    ${CID}        ${D_OID_USER}
 
@@ -81,7 +81,7 @@ Check eACL Deny All Other and Allow All Pubkey
                             Run Keyword And Expect Error        *
                             ...  Head object                         ${WALLET_OTH}    ${CID}        ${S_OID_USER}
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${WALLET_OTH}    ${CID}        ${S_OID_USER}     s_get_range     ${EMPTY}            0:256
+                            ...  Get Range                           ${WALLET_OTH}    ${CID}        ${S_OID_USER}     0:256
                             Run Keyword And Expect Error        *
                             ...  Get Range Hash                      ${WALLET_OTH}    ${CID}        ${S_OID_USER}     ${EMPTY}        0:256
                             Run Keyword And Expect Error        *
@@ -91,6 +91,6 @@ Check eACL Deny All Other and Allow All Pubkey
                             Get object              ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           ${EMPTY}            local_file_eacl
                             Search object           ${WALLET_ALLOW}    ${CID}        ${EMPTY}                ${EMPTY}            ${USER_HEADER}     ${S_OBJ_H}
                             Head object             ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}
-                            Get Range               ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           s_get_range         ${EMPTY}            0:256
+                            Get Range               ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           0:256
                             Get Range Hash          ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}           ${EMPTY}            0:256
                             Delete object           ${WALLET_ALLOW}    ${CID}        ${S_OID_USER}

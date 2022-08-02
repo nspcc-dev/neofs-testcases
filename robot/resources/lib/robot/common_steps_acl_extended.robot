@@ -35,7 +35,7 @@ Check eACL Deny and Allow All
                             Search object       ${WALLET}    ${CID}         ${EMPTY}         ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
                             Head object         ${WALLET}    ${CID}         ${S_OID_USER}
 
-                            Get Range           ${WALLET}    ${CID}         ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            Get Range           ${WALLET}    ${CID}         ${S_OID_USER}    0:256
                             Get Range Hash      ${WALLET}    ${CID}         ${S_OID_USER}    ${EMPTY}    0:256
                             Delete object       ${WALLET}    ${CID}         ${D_OID_USER}
 
@@ -53,7 +53,7 @@ Check eACL Deny and Allow All
                             Run Keyword And Expect Error        *
                             ...  Head object                         ${WALLET}    ${CID}       ${S_OID_USER}
                             Run Keyword And Expect Error        *
-                            ...  Get Range                           ${WALLET}    ${CID}       ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...  Get Range                           ${WALLET}    ${CID}       ${S_OID_USER}    0:256
                             Run Keyword And Expect Error        *
                             ...  Get Range Hash                      ${WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    0:256
                             Run Keyword And Expect Error        *
@@ -68,7 +68,7 @@ Check eACL Deny and Allow All
                             Get object        ${WALLET}    ${CID}        ${S_OID_USER}     ${EMPTY}    local_file_eacl
                             Search object     ${WALLET}    ${CID}        ${EMPTY}          ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
                             Head object       ${WALLET}    ${CID}        ${S_OID_USER}
-                            Get Range         ${WALLET}    ${CID}        ${S_OID_USER}     s_get_range    ${EMPTY}    0:256
+                            Get Range         ${WALLET}    ${CID}        ${S_OID_USER}     0:256
                             Get Range Hash    ${WALLET}    ${CID}        ${S_OID_USER}     ${EMPTY}    0:256
                             Delete object     ${WALLET}    ${CID}        ${S_OID_USER}
 
@@ -107,7 +107,7 @@ Check eACL Filters with MatchType String Equal
                         Get Object          ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
                         Search Object       ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
     &{HEADER} =         Head Object         ${WALLET_OTH}    ${CID}    ${S_OID_USER}
-                        Get Range           ${WALLET_OTH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range           ${WALLET_OTH}    ${CID}    ${S_OID_USER}    0:256
                         Get Range Hash      ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
                         Delete Object       ${WALLET_OTH}    ${CID}    ${D_OID_USER}
 
@@ -135,7 +135,7 @@ Check eACL Filters with MatchType String Equal
     END
     IF    'RANGE' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
-        ...  Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+        ...  Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    0:256
     END
     IF    'SEARCH' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect Error   ${EACL_ERR_MSG}
@@ -167,7 +167,7 @@ Check eACL Filters with MatchType String Not Equal
                         Get Object      ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
     &{HEADER} =         Head Object     ${WALLET}    ${CID}    ${S_OID_USER}
                         Search Object   ${WALLET}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
-                        Get Range       ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                        Get Range       ${WALLET}    ${CID}    ${S_OID_USER}    0:256
                         Get Range Hash  ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
     ${K}    ${V} =      Split String            ${FILTER}    :
@@ -201,8 +201,8 @@ Check eACL Filters with MatchType String Not Equal
     END
     IF    'RANGE' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
-        ...  Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_OTH}    s_get_range    ${EMPTY}    0:256
-        Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+        ...  Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_OTH}    0:256
+        Get Range    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    0:256
     END
     IF    'RANGEHASH' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}

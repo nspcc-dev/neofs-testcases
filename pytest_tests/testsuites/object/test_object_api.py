@@ -52,7 +52,7 @@ def test_object_api(prepare_wallet_and_deposit):
     with allure.step('Get range/range hash'):
         get_range_hash(**wallet_cid, oid=oids[0], bearer_token='', range_cut=range_cut)
         get_range_hash(**wallet_cid, oid=oids[1], bearer_token='', range_cut=range_cut)
-        get_range(**wallet_cid, oid=oids[1], file_path='s_get_range', bearer='', range_cut=range_cut)
+        get_range(**wallet_cid, oid=oids[1], bearer='', range_cut=range_cut)
 
     with allure.step('Search objects'):
         search_object(**wallet_cid, expected_objects_list=oids)

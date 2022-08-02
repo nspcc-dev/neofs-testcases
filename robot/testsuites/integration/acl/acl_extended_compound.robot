@@ -79,9 +79,9 @@ Check eACL Сompound Get
                             Get object        ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
                             IF    "${WALLET}" == "${IR_WALLET_PATH}"
                                 Run Keyword And Expect Error    *
-                                ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                                ...    Get Range    ${WALLET}    ${CID}    ${S_OID_USER}    0:256
                             ELSE
-                                Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                                Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    0:256
                             END
                             Get Range Hash    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}       0:256
 
@@ -133,7 +133,7 @@ Check eACL Сompound Get Range Hash
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
                             Run Keyword And Expect Error    *
-                            ...  Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    s_get_range    ${EMPTY}    0:256
+                            ...  Get Range     ${WALLET}    ${CID}    ${S_OID_USER}    0:256
                             Run Keyword And Expect Error    *
                             ...  Get object    ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
 
