@@ -39,8 +39,8 @@ def panic_reboot_host(ip: str = None):
                      password=STORAGE_NODE_SSH_PASSWORD,
                      private_key_path=STORAGE_NODE_SSH_PRIVATE_KEY_PATH)
     ssh.exec('sudo sh -c "echo 1 > /proc/sys/kernel/sysrq"')
-    with pytest.raises(HostIsNotAvailable):
-        ssh.exec('sudo sh -c "echo b > /proc/sysrq-trigger"', timeout=1)
+    ssh_stdin, _, _ = ssh.ssh_client.exec_command('sudo sh -c "echo b > /proc/sysrq-trigger"', timeout=1)
+    ssh_stdin.close()
 
 
 def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
