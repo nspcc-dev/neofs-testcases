@@ -6,7 +6,6 @@ Library     storage_policy.py
 Library     utility_keywords.py
 
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 Resource    verbs.robot
 
 *** Test cases ***

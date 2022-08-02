@@ -12,7 +12,6 @@ Library     utility_keywords.py
 Library     Collections
 
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 
 *** Variables ***
 ${EXPECTED_COPIES} =    ${2}

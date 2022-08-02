@@ -1,6 +1,5 @@
 *** Settings ***
 Resource        common_steps_acl_extended.robot
-Resource        setup_teardown.robot
 
 *** Test cases ***
 Object Type Object Filter for Extended ACL

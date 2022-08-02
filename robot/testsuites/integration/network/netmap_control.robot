@@ -7,7 +7,6 @@ Library         node_management.py
 Library         String
 Library         acl.py
 
-Resource        setup_teardown.robot
 Resource        payment_operations.robot
 
 *** Test Cases ***

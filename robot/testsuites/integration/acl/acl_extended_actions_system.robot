@@ -8,7 +8,6 @@ Library     utility_keywords.py
 
 Resource    common_steps_acl_extended.robot
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 Resource    eacl_tables.robot
 
 *** Variables ***

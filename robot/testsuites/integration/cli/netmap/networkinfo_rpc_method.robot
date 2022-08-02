@@ -7,7 +7,6 @@ Library    String
 Library    epoch.py
 
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 
 *** Variables ***
 ${SN_01_ADDR} =     s01.neofs.devenv:8080

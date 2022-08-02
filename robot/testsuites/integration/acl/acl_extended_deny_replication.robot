@@ -12,7 +12,6 @@ Library     utility_keywords.py
 Resource    eacl_tables.robot
 Resource    common_steps_acl_bearer.robot
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 Resource    storage.robot
 
 *** Variables ***

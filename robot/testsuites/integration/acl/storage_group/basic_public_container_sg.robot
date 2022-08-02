@@ -6,7 +6,6 @@ Library     neofs_verbs.py
 Library     utility_keywords.py
 
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 Resource    storage_group.robot
 
 

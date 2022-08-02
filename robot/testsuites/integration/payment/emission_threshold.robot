@@ -5,7 +5,6 @@ Library     payment_neogo.py
 Library     utility_keywords.py
 Library     Process
 
-Resource    setup_teardown.robot
 
 *** Variables ***
 
