@@ -62,7 +62,7 @@ def restore_network():
 @allure.title('Block Storage node traffic')
 @pytest.mark.failover
 @pytest.mark.failover_net
-def test_block_storage_node_traffic(prepare_wallet_and_deposit, free_storage_check):
+def test_block_storage_node_traffic(prepare_wallet_and_deposit, cloud_infrastructure_check):
     """
     Block storage nodes traffic using iptables and wait for replication for objects.
     """

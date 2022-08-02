@@ -12,6 +12,7 @@ from cli_helpers import _cmd_run
 from common import ASSETS_DIR, FREE_STORAGE, MAINNET_WALLET_PATH, NEOFS_NETMAP_DICT
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
+from sbercloud_helper import SberCloudConfig
 
 
 def robot_keyword_adapter(name=None, tags=(), types=()):
@@ -24,8 +25,9 @@ logger = logging.getLogger('NeoLogger')
 
 
 @pytest.fixture(scope='session')
-def free_storage_check():
-    if os.getenv('FREE_STORAGE', default='False').lower() not in ('true', '1'):
+def cloud_infrastructure_check():
+    cloud_config = SberCloudConfig.from_env()
+    if not cloud_config.project_id:
         pytest.skip('Test only works on SberCloud infrastructure')
     yield
 
