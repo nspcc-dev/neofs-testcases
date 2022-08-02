@@ -21,7 +21,6 @@ NeoFS Complex Object Operations
     [Tags]              Object
     [Timeout]           20 min
 
-    [Setup]             Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
@@ -44,7 +43,6 @@ NeoFS Complex Object Operations
                         Delete Object And Validate Tombstone
                         ...     ${WALLET}   ${CID}  ${OID}
 
-    [Teardown]          Teardown    object_complex
 
 
 *** Keywords ***

@@ -15,7 +15,6 @@ NeoFS Simple Object Operations
     [Tags]              Object
     [Timeout]           10 min
 
-    [Setup]             Setup
 
     ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
@@ -31,4 +30,3 @@ NeoFS Simple Object Operations
                         ...     ${WALLET}   ${CID}  ${OID}
 
 
-    [Teardown]          Teardown    object_simple

@@ -20,7 +20,6 @@ NeoFS Complex Storagegroup
     [Tags]              Object
     [Timeout]           20 min
 
-    [Setup]             Setup
 
     ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
@@ -44,4 +43,3 @@ NeoFS Complex Storagegroup
                         Run Keyword And Expect Error    *
                         ...  Delete Storagegroup    ${WALLET}    ${CID}    ${UNEXIST_OID}
 
-    [Teardown]          Teardown    object_storage_group_complex

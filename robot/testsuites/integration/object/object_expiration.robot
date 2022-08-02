@@ -18,7 +18,6 @@ NeoFS Simple Object Operations
     [Tags]              Object  NeoFS  NeoCLI
     [Timeout]           20 min
 
-    [Setup]             Setup
 
     ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
     ${CID} =            Create container    ${WALLET}
@@ -65,4 +64,3 @@ NeoFS Simple Object Operations
                         # Check that correct object with expiration in the distant future is existed
                         Get object    ${WALLET}    ${CID}    ${OID_PST}    ${EMPTY}    file_read_pst
 
-    [Teardown]          Teardown    object_expiration

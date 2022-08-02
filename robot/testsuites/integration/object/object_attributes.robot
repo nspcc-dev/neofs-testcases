@@ -20,12 +20,10 @@ ${ATTR_DUPLICATE} =     FileType=jpg,FileType=png
 
 Object Attrubutes
     [Timeout]           10 min
-    [Setup]             Setup
 
                         Check Various Object Attributes     Simple
                         Check Various Object Attributes     Complex
 
-    [Teardown]          Teardown    object_attributes
 
 
 *** Keywords ***
