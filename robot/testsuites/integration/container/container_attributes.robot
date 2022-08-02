@@ -5,7 +5,6 @@ Library     container.py
 Library     String
 Library     Collections
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    common_steps_acl_bearer.robot
 

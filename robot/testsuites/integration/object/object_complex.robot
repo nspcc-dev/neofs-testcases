@@ -10,7 +10,6 @@ Library     utility_keywords.py
 
 Library     Collections
 
-Resource    setup_teardown.robot
 Resource    verbs.robot
 Resource    payment_operations.robot
 

@@ -7,7 +7,6 @@ Library     node_management.py
 Library     neofs_verbs.py
 Library     utility_keywords.py
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    storage.robot
 Resource    complex_object_operations.robot

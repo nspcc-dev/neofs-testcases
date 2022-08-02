@@ -1,6 +1,5 @@
 *** Settings ***
 Resource    common_steps_acl_extended.robot
-Resource    setup_teardown.robot
 
 *** Test cases ***
 Payload Hash Object Filter for Extended ACL 

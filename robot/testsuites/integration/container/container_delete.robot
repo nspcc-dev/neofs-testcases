@@ -4,7 +4,6 @@ Variables   common.py
 Library     container.py
 Library     Collections
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
 *** Variables ***

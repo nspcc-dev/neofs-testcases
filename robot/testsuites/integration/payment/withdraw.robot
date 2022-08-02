@@ -4,7 +4,6 @@ Variables   common.py
 Library     payment_neogo.py
 Library     utility_keywords.py
 
-Resource    setup_teardown.robot
 
 *** Variables ***
 ${DEPOSIT_AMOUNT} =     ${10}

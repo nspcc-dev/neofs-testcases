@@ -1,6 +1,5 @@
 *** Settings ***
 Resource        common_steps_acl_extended.robot
-Resource        setup_teardown.robot
 
 *** Test cases ***
 Container ID Object Filter for Extended ACL

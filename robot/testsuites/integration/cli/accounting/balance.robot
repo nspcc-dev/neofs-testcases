@@ -6,7 +6,6 @@ Library    Process
 Library    String
 Library    utility_keywords.py
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
 *** Variables ***

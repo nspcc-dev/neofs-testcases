@@ -10,7 +10,6 @@ Library     utility_keywords.py
 Resource    common_steps_acl_bearer.robot
 Resource    eacl_tables.robot
 Resource    payment_operations.robot
-Resource    setup_teardown.robot
 Resource    storage_group.robot
 
 

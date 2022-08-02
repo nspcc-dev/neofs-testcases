@@ -6,7 +6,6 @@ Library     container.py
 Library     storage_group.py
 Library     utility_keywords.py
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 Resource    storage_group.robot
 

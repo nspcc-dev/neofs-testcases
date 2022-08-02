@@ -1,7 +1,6 @@
 *** Settings ***
 Variables    common.py
 
-Resource    setup_teardown.robot
 Resource    payment_operations.robot
 
 Library     container.py
