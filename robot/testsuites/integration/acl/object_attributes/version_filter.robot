@@ -8,9 +8,7 @@ Version Object Filter for Extended ACL
     [Tags]             ACL  eACL  NeoFS  NeoCLI
     [Timeout]          20 min
 
-    [Setup]            Setup
 
     Log    Check eACL version Filter with MatchType String Equal 
     Check eACL Filters with MatchType String Equal    $Object:version  
 
-    [Teardown]         Teardown    version_filter

@@ -20,12 +20,10 @@ Payload Length Object Filter for Extended ACL
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     Check eACL Filters with MatchType String Equal    $Object:payloadLength
     Check $Object:payloadLength Filter with MatchType String Not Equal    $Object:payloadLength
 
-    [Teardown]          Teardown    payload_length_filter
 
 *** Keywords ***
 

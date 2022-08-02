@@ -8,9 +8,7 @@ Container ID Object Filter for Extended ACL
     [Tags]             ACL  eACL
     [Timeout]          20 min
 
-    [Setup]            Setup
 
     Log    Check eACL containerID Filter with MatchType String Equal
     Check eACL Filters with MatchType String Equal    $Object:containerID
 
-    [Teardown]          Teardown    container_id_filter

@@ -14,7 +14,6 @@ Extended ACL Operations
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -26,7 +25,6 @@ Extended ACL Operations
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All User    ${WALLET}
 
-    [Teardown]              Teardown    acl_extended_action_user
 
 
 *** Keywords ***

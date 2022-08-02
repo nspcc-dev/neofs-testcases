@@ -24,7 +24,6 @@ Extended ACL Operations
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
 
     ${FILE_S}    ${_} =     Generate file    ${SIMPLE_OBJ_SIZE}
@@ -34,7 +33,6 @@ Extended ACL Operations
                             Check eACL Deny All Other and Allow All Pubkey    ${FILE_S}
 
 
-    [Teardown]              Teardown    acl_extended_actions_pubkey
 
 
 *** Keywords ***

@@ -17,7 +17,6 @@ BearerToken Operations for Inaccessible Container
     [Tags]                  ACL   BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -29,7 +28,6 @@ BearerToken Operations for Inaccessible Container
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Container Inaccessible and Allow All Bearer    ${WALLET}    ${FILE_S}
 
-    [Teardown]              Teardown    acl_bearer_inaccessible
 
 *** Keywords ***
 

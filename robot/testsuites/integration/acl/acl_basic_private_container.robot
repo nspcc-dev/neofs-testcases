@@ -18,13 +18,11 @@ Basic ACL Operations for Private Container
     [Tags]                  ACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
 
                             Check Private Container    Simple
                             Check Private Container    Complex
 
-    [Teardown]              Teardown    acl_basic_private_container
 
 
 *** Keywords ***

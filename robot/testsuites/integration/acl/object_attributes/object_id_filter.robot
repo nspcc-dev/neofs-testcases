@@ -20,7 +20,6 @@ Object ID Object Filter for Extended ACL
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     Check eACL Filters with MatchType String Equal    $Object:objectID
     Check eACL Filters with MatchType String Not Equal   $Object:objectID
@@ -35,7 +34,6 @@ Object ID Object Filter for Extended ACL
     ###########################################################################################################################
     Check eACL Filters, two matchTypes    $Object:objectID
 
-    [Teardown]          Teardown    object_id
 
 
 *** Keywords ***

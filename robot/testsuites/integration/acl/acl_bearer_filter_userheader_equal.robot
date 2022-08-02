@@ -22,7 +22,6 @@ BearerToken Operations with Filter UserHeader Equal
     [Tags]                  ACL   BearerToken
     [Timeout]               10 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -35,7 +34,6 @@ BearerToken Operations with Filter UserHeader Equal
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter UserHeader Equal    ${WALLET}    ${FILE_S}
 
-    [Teardown]              Teardown    acl_bearer_filter_userheader_equal
 
 *** Keywords ***
 Check eACL Deny and Allow All Bearer Filter UserHeader Equal

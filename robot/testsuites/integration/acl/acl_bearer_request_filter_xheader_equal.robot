@@ -21,12 +21,10 @@ BearerToken Operations with Filter Requst Equal
     [Tags]                  ACL   BearerToken
     [Timeout]               5 min
 
-    [Setup]                 Setup
 
     Check eACL Deny and Allow All Bearer Filter Requst Equal    Simple
     Check eACL Deny and Allow All Bearer Filter Requst Equal    Complex
 
-    [Teardown]              Teardown    acl_bearer_request_filter_xheader_equal
 
 
 

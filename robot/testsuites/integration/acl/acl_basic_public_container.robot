@@ -19,7 +19,6 @@ Basic ACL Operations for Public Container
     [Tags]                  ACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
@@ -32,7 +31,6 @@ Basic ACL Operations for Public Container
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Public Container    ${WALLET}    ${FILE_S}    ${PUBLIC_CID}    ${WALLET_OTH}
 
-    [Teardown]              Teardown    acl_basic_public_container
 
 
 *** Keywords ***

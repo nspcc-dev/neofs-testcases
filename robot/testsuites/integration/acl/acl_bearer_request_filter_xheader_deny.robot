@@ -22,7 +22,6 @@ BearerToken Operations
     [Tags]                  ACL   BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -34,7 +33,6 @@ BearerToken Operations
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Allow All Bearer Filter Requst Equal Deny    ${WALLET}    ${FILE_S}
 
-    [Teardown]              Teardown    acl_bearer_request_filter_xheader_deny
 
 
 

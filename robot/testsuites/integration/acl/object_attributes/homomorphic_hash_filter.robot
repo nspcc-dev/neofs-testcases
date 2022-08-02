@@ -8,9 +8,7 @@ Homomorphic Hash Object Filter for Extended ACL
     [Tags]             ACL  eACL  NeoFS  NeoCLI
     [Timeout]          20 min
 
-    [Setup]            Setup
 
     Log    Check eACL homomorphicHash Filter with MatchType String Equal
     Check eACL Filters with MatchType String Equal    $Object:homomorphicHash
     
-    [Teardown]         Teardown    homomorphic_hash_filter

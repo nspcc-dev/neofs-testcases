@@ -23,7 +23,6 @@ Extended ACL Operations
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
     ${WALLET_OTH}   ${_}     ${_} =   Prepare Wallet And Deposit
@@ -36,7 +35,6 @@ Extended ACL Operations
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check Сompound Operations    ${WALLET}    ${WALLET_OTH}    ${FILE_S}
 
-    [Teardown]      Teardown    acl_extended_compound
 
 
 *** Keywords ***
