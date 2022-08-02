@@ -25,7 +25,6 @@ eACL Deny Replication Operations
     [Tags]                  ACL   Replication
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${_}    ${NODE}    ${STORAGE_WALLET} =    Get control endpoint and wallet
 
@@ -58,4 +57,3 @@ eACL Deny Replication Operations
                         Should Be Equal As Numbers      ${EXPECTED_COPIES}  ${COPIES}
                         ...     msg="Dropped object should be replicated in one epoch"
 
-    [Teardown]          Teardown    acl_deny_replication

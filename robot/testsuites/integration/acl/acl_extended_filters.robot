@@ -24,12 +24,10 @@ Extended ACL Operations
     [Tags]                  ACL  eACL
     [Timeout]               2 min
 
-    [Setup]                 Setup
 
     Check Filters    Simple
     Check Filters    Complex
 
-    [Teardown]              Teardown    acl_extended_filters
 
 
 *** Keywords ***

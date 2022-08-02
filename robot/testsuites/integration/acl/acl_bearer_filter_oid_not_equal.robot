@@ -21,7 +21,6 @@ BearerToken Operations with Filter OID NotEqual
     [Tags]                  ACL     BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -33,7 +32,6 @@ BearerToken Operations with Filter OID NotEqual
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter OID NotEqual    ${WALLET}    ${FILE_S}
 
-    [Teardown]              Teardown    acl_bearer_filter_oid_not_equal
 
 
 

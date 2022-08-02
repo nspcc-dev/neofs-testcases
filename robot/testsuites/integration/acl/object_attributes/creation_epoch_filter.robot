@@ -20,12 +20,10 @@ Creation Epoch Object Filter for Extended ACL
     [Tags]                  ACL  eACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     Check eACL Filters with MatchType String Equal    $Object:creationEpoch
     Check $Object:creationEpoch Filter with MatchType String Not Equal    $Object:creationEpoch
 
-    [Teardown]          Teardown    creation_epoch_filter
 
 *** Keywords ***
 

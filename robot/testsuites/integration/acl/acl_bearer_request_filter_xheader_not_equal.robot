@@ -22,7 +22,6 @@ BearerToken Operations with Filter Requst NotEqual
     [Tags]                  ACL  NeoFSCLI BearerToken
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
     ${WALLET}    ${_}    ${_} =   Prepare Wallet And Deposit
 
@@ -34,7 +33,6 @@ BearerToken Operations with Filter Requst NotEqual
     ${FILE_S}    ${_} =     Generate file    ${COMPLEX_OBJ_SIZE}
                             Check eACL Deny and Allow All Bearer Filter Requst NotEqual    ${WALLET}    ${FILE_S}
 
-    [Teardown]              Teardown    acl_bearer_request_filter_xheader_not_equal
 
 
 *** Keywords ***
