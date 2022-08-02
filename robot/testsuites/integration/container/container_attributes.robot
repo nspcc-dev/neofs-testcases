@@ -21,7 +21,6 @@ Duplicated Container Attributes
     [Tags]                      Container
     [Timeout]                   5 min
 
-    [Setup]                     Setup
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
 
@@ -58,4 +57,3 @@ Duplicated Container Attributes
                                 ...     ${ATTR_SINGLE}
                                 ...     msg="No expected container attributes found"
 
-    [Teardown]              Teardown    container_attributes

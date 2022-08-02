@@ -20,7 +20,6 @@ NetworkInfo RPC Method
     [Tags]                    RPC  NetworkInfo
     [Timeout]                 10 min
 
-    [Setup]                   Setup
 
     ######################################################################
     # Checking if the command returns equal results for two storage nodes
@@ -75,7 +74,6 @@ NetworkInfo RPC Method
                             Should Be Equal    ${EPOCH2_S01}    ${NEW_EPOCH}
 
 
-    [Teardown]             Teardown    network_rpc_method
 
 *** Keywords ***
 

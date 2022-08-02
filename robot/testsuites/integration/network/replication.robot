@@ -23,14 +23,12 @@ NeoFS Object Replication
     [Tags]                  Migration  Replication
     [Timeout]               25 min
 
-    [Setup]                 Setup
 
     Log    Check replication mechanism
     Check Replication
     Log    Check Sticky Bit with SYSTEM Group via replication mechanism
     Check Replication    ${STICKYBIT_PUB_ACL}
 
-    [Teardown]      Teardown    replication
 
 *** Keywords ***
 Check Replication

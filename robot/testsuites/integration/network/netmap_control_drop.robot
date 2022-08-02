@@ -17,7 +17,6 @@ Drop command in control group
     [Documentation]         Testcase to check drop-objects command from control group.
     [Timeout]               10 min
 
-    [Setup]                 Setup
 
     ${_}    ${NODE}    ${STORAGE_WALLET}=     Get control endpoint and wallet
     ${LOCODE} =         Get Locode
@@ -76,4 +75,3 @@ Drop command in control group
                         ...  Head object    ${WALLET}    ${PRIV_CID}    ${C_OID}    options=--ttl 1
 
 
-    [Teardown]    Teardown    netmap_control_drop

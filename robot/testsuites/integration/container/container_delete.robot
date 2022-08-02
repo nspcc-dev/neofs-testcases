@@ -20,7 +20,6 @@ Delete Containers
     [Tags]              Container
     [Timeout]           3 min
 
-    [Setup]             Setup
 
     ${WALLET}
     ...     ${_}
@@ -55,4 +54,3 @@ Delete Containers
     ###################################################################################
                         Delete Container    ${WALLET}     ${CID}
 
-    [Teardown]          Teardown    container_delete
