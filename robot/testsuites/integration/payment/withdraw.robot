@@ -16,7 +16,6 @@ NeoFS Deposit and Withdraw
     [Documentation]         Testcase to validate NeoFS Withdraw operation.
     [Timeout]               10 min
 
-    [Setup]                 Setup
 
     ${WALLET}   ${ADDR}    ${_} =   Generate Wallet
 
@@ -55,4 +54,3 @@ NeoFS Deposit and Withdraw
     ${MAINNET_BALANCE_DIFF} =       Evaluate               ${MAINNET_BALANCE_AFTER} - ${MAINNET_BALANCE}
                                     Should Be True         ${MAINNET_BALANCE_DIFF} < ${WITHDRAW_AMOUNT}
 
-    [Teardown]              Teardown    withdraw

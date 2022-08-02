@@ -17,7 +17,6 @@ CLI Accounting Balance Test
     [Documentation]           neofs-cli accounting balance test
     [Timeout]                 10 min
 
-    [Setup]                   Setup
 
     ${WALLET}   ${ADDR}     ${_} =   Prepare Wallet And Deposit   ${DEPOSIT_AMOUNT}
 
@@ -44,7 +43,6 @@ CLI Accounting Balance Test
                         ...    shell=True
     Should Be Equal As Numbers          ${OUTPUT.stdout}   ${DEPOSIT_AMOUNT}
 
-    [Teardown]      Teardown    cli_accounting_balance
 
 *** Keywords ***
 

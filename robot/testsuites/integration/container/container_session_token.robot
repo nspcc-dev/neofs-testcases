@@ -14,7 +14,6 @@ Session Token for Container
     [Tags]             Container    SessionToken
     [Timeout]          5 min
 
-    [Setup]            Setup
 
     ${OWNER_WALLET}    ${OWNER}    ${_} =   Prepare Wallet And Deposit
     ${SESSION_WALLET}    ${_}    ${_} =    Prepare Wallet And Deposit
@@ -32,4 +31,3 @@ Session Token for Container
     &{ATTRS} =      Get Container                 ${SESSION_WALLET}  ${CID}
                     Should Be Equal As Strings    ${OWNER}    ${ATTRS}[ownerID]
 
-    [Teardown]        Teardown    container_session_token

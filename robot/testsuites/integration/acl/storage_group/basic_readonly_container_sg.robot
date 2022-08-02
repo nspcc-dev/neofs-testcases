@@ -16,12 +16,10 @@ Basic ACL Operations for Read-Only Container
     [Tags]                  ACL
     [Timeout]               20 min
 
-    [Setup]                 Setup
 
                             Check Read-Only Container    Simple
                             Check Read-Only Container    Complex
 
-    [Teardown]              Teardown    acl_basic_readonly_container_storagegroup
 
 
 *** Keywords ***

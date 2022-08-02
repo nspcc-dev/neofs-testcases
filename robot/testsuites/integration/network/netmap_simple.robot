@@ -15,7 +15,6 @@ NeoFS Simple Netmap
     [Tags]              Netmap
     [Timeout]           20 min
 
-    [Setup]             Setup
 
     ${WALLET}   ${_}    ${_} =    Prepare Wallet And Deposit
 
@@ -69,7 +68,6 @@ NeoFS Simple Netmap
                        ...  Validate Selected Nodes    ${WALLET}    REP 2 IN X CBF 2 SELECT 6 FROM * AS X    2
                        Should Contain  ${ERR}      code = 1024 message = netmap: not enough nodes to SELECT from
 
-    [Teardown]         Teardown     netmap_simple
 
 *** Keywords ***
 

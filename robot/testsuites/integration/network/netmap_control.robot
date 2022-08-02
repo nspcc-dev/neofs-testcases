@@ -15,7 +15,6 @@ Control Operations with storage nodes
     [Documentation]         Testcase to check NetworkInfo control command.
     [Timeout]               5 min
 
-    [Setup]                 Setup
 
     ${NODE_NUM}    ${NODE}    ${STORAGE_WALLET} =    Get control endpoint and wallet
     ${empty_list} =         Create List
@@ -50,4 +49,3 @@ Control Operations with storage nodes
                             Should Be Equal As Integers    ${HEALTHCHECK_ONLINE.rc}    0
                             Should Be Equal    ${HEALTHCHECK.stdout}    ${HEALTHCHECK_ONLINE.stdout}
 
-    [Teardown]    Teardown    netmap_control

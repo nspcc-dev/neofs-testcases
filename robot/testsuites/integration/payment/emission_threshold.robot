@@ -20,7 +20,6 @@ IR GAS emission threshold value
     [Tags]             GAS    Sidechain
     [Timeout]          5 min
 
-    [Setup]             Setup
 
     ${WALLET}    ${ADDR}    ${_} =    Generate Wallet
 
@@ -50,4 +49,3 @@ IR GAS emission threshold value
     ${BALANCE_UNCHANGED} =    Get Sidechain Balance    ${ADDR}
     Should Be Equal     ${BALANCE_UNCHANGED}    ${BALANCE_CHANGED}
 
-    [Teardown]    Teardown    emission_threshold
