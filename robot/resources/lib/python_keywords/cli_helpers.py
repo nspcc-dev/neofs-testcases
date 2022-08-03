@@ -88,7 +88,7 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
 
 def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime,
                        end_time: datetime) -> None:
-    if 'allure' in sys.modules:
+    if 'robot' not in sys.modules:
         command_attachment = (
             f"COMMAND: '{cmd}'\n"
             f'OUTPUT:\n {output}\n'
@@ -101,7 +101,7 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
 
 def log_command_execution(cmd: str, output: Union[str, dict]) -> None:
     logger.info(f'{cmd}: {output}')
-    if 'allure' in sys.modules:
+    if 'robot' not in sys.modules:
         with suppress(Exception):
             json_output = json.dumps(output, indent=4, sort_keys=True)
             output = json_output
