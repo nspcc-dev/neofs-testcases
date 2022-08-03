@@ -91,7 +91,7 @@ class TestACL:
             head_object(wallet, cid, oid)
 
         with pytest.raises(Exception, match=err_pattern):
-            get_range(wallet, cid, oid, file_path='s_get_range', bearer='', range_cut='0:10')
+            get_range(wallet, cid, oid, bearer='', range_cut='0:10')
 
         with pytest.raises(Exception, match=err_pattern):
             get_range_hash(wallet, cid, oid, bearer_token='', range_cut='0:10')
@@ -110,7 +110,7 @@ class TestACL:
                 assert get_file_hash(got_file) == get_file_hash(file_name), 'Expected hashes are the same'
 
                 head_object(current_wallet, cid, oid)
-                get_range(current_wallet, cid, oid, file_path='s_get_range', bearer='', range_cut='0:10')
+                get_range(current_wallet, cid, oid, bearer='', range_cut='0:10')
                 get_range_hash(current_wallet, cid, oid, bearer_token='', range_cut='0:10')
                 search_object(current_wallet, cid)
 

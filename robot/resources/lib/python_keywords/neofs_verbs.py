@@ -153,8 +153,8 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_conf
 
 
 @keyword('Get Range')
-def get_range(wallet: str, cid: str, oid: str, range_cut: str,
-              wallet_config: str = WALLET_CONFIG, bearer: str = "", options: str = ""):
+def get_range(wallet: str, cid: str, oid: str, range_cut: str, wallet_config: str = WALLET_CONFIG,
+              bearer: str = "", options: str = ""):
     """
     GETRANGE an Object.
 
@@ -167,7 +167,7 @@ def get_range(wallet: str, cid: str, oid: str, range_cut: str,
         wallet_config(optional, str): path to the wallet config
         options (optional, str): any options which `neofs-cli object range` accepts
     Returns:
-        (void)
+        (str, bytes) - path to the file with range content and content of this file as bytes
     """
     range_file = f"{ASSETS_DIR}/{uuid.uuid4()}"
     cmd = (
