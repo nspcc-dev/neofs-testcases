@@ -11,7 +11,7 @@ import wallet
 from cli_helpers import _cmd_run
 from common import ASSETS_DIR, FREE_STORAGE, MAINNET_WALLET_PATH, NEOFS_NETMAP_DICT
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
-from python_keywords.node_management import node_healthcheck
+from python_keywords.node_management import node_healthcheck, create_ssh_client
 from sbercloud_helper import SberCloudConfig
 
 
@@ -26,24 +26,37 @@ logger = logging.getLogger('NeoLogger')
 
 @pytest.fixture(scope='session')
 def cloud_infrastructure_check():
-    cloud_config = SberCloudConfig.from_env()
-    if not cloud_config.project_id:
+    if not is_cloud_infrastructure():
         pytest.skip('Test only works on SberCloud infrastructure')
     yield
+
+
+def is_cloud_infrastructure():
+    cloud_config = SberCloudConfig.from_env()
+    return cloud_config.project_id is not None
 
 
 @pytest.fixture(scope='session', autouse=True)
 @allure.title('Check binary versions')
 def check_binary_versions(request):
     environment_dir = request.config.getoption('--alluredir')
-
+    is_cloud = is_cloud_infrastructure()
     # Collect versions of neo binaries
     binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
-    env_out = {}
-    for binary in binaries:
-        out = _cmd_run(f'{binary} --version')
-        version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
-        env_out[binary.upper()] = version.group(1) if version else 'Unknown'
+    env_out = _get_binaries_version_local(binaries)
+
+    if is_cloud:
+        binaries = ['neo-go',
+                    'neofs-adm',
+                    'neofs-cli',
+                    'neofs-http-gw',
+                    'neofs-ir',
+                    'neofs-lens',
+                    'neofs-node',
+                    'neofs-s3-authmate',
+                    'neofs-s3-gw',
+                    'neogo-morph-cn']
+        env_out = _get_binaries_version_remote(binaries)
 
     # Get version of aws binary
     out = _cmd_run('aws --version')
@@ -54,6 +67,32 @@ def check_binary_versions(request):
         with open(f'{environment_dir}/environment.properties', 'w') as out_file:
             for env, env_value in env_out.items():
                 out_file.write(f'{env}={env_value}\n')
+
+
+def _get_binaries_version_local(binaries: list) -> dict:
+    env_out = {}
+    for binary in binaries:
+        out = _cmd_run(f'{binary} --version')
+        version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
+        env_out[binary.upper()] = version.group(1) if version else 'Unknown'
+    return env_out
+
+
+def _get_binaries_version_remote(binaries: list) -> dict:
+    env_out = {}
+
+    for node_name in NEOFS_NETMAP_DICT:
+        with create_ssh_client(node_name) as ssh_client:
+            for binary in binaries:
+                out = ssh_client.exec(f'{binary} --version').stdout
+                version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
+                version = version.group(1) if version else 'Unknown'
+                if not env_out.get(binary.upper()):
+                    env_out[binary.upper()] = version
+                else:
+                    msg = f'Expected binary {binary} versions on node s1 and {node_name} are the same'
+                    assert env_out[binary.upper()] == version, msg
+    return env_out
 
 
 @pytest.fixture(scope='session', autouse=True)

@@ -6,24 +6,22 @@ import allure
 import pytest
 from data_formatters import get_wallet_public_key
 from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
-                    NEOFS_NETMAP_DICT, STORAGE_WALLET_PASS)
+                    NEOFS_NETMAP_DICT, STORAGE_RPC_ENDPOINT_1, STORAGE_WALLET_PASS)
 from epoch import tick_epoch
 from python_keywords.container import create_container, get_container
-from python_keywords.neofs_verbs import (delete_object, get_object,
-                                         head_object, put_object)
-from python_keywords.node_management import (drop_object, get_netmap_snapshot,
-                                             get_locode,
-                                             node_healthcheck,
-                                             node_set_status, node_shard_list,
-                                             node_shard_set_mode,
-                                             start_nodes_remote,
-                                             stop_nodes_remote)
+from python_keywords.failover_utils import wait_object_replication_on_nodes
+from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
+from python_keywords.node_management import (create_ssh_client, drop_object, get_netmap_snapshot,
+                                             get_locode, node_healthcheck, node_set_status,
+                                             node_shard_list, node_shard_set_mode,
+                                             start_nodes_remote, stop_nodes_remote)
 from storage_policy import get_nodes_with_object, get_simple_object_copies
 from utility import placement_policy_from_container, robot_time_to_int, wait_for_gc_pass_on_storage_nodes
 from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger('NeoLogger')
+check_nodes = []
 
 
 @pytest.fixture
@@ -70,6 +68,137 @@ def after_run_set_all_nodes_online():
             node_set_status(node, status="online")
         except Exception as err:
             logger.error(f"Node status change fails with error:\n{err}")
+
+
+def wait_for_service_started(ssh_client, service_name: str):
+    expected_state = 'active (running)'
+    for __attempt in range(10):
+        output = ssh_client.exec(f'systemctl status {service_name}')
+        if expected_state in output.stdout:
+            return
+        sleep(3)
+    raise AssertionError(f'Service {service_name} is not in {expected_state} state')
+
+
+@pytest.fixture
+def return_nodes_after_test_run():
+    yield
+    return_nodes()
+
+
+def cleanup_node(node_to_cleanup, alive_node):
+    exclude_node_from_network_map(node_to_cleanup, alive_node)
+
+    with create_ssh_client(node_to_cleanup) as ssh_client:
+        ssh_client.exec(f'systemctl stop neofs-storage.service')
+        ssh_client.exec('rm -rf /srv/neofs/*')
+        sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+
+
+@allure.step('Return node to cluster')
+def return_nodes(alive_node: str = None):
+    for node in list(check_nodes):
+        with create_ssh_client(node) as ssh_client:
+            ssh_client.exec(f'systemctl start neofs-storage.service')
+            wait_for_service_started(ssh_client, 'neofs-storage.service')
+            sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+
+        with allure.step(f'Move node {node} to online state'):
+            node_set_status(node, status='online', retry=True)
+
+        check_nodes.remove(node)
+        sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+        for __attempt in range(3):
+            try:
+                tick_epoch()
+                break
+            except RuntimeError:
+                sleep(3)
+
+        check_node_in_map(node, alive_node)
+
+
+def exclude_node_from_network_map(node_to_exclude, alive_node):
+    node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]['wallet_path']
+    node_netmap_key = get_wallet_public_key(
+        node_wallet_path,
+        STORAGE_WALLET_PASS,
+        format="base58"
+    )
+
+    with allure.step(f'Move node {node_to_exclude} to offline state'):
+        node_set_status(node_to_exclude, status='offline')
+
+    sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    tick_epoch()
+
+    snapshot = get_netmap_snapshot(node_name=alive_node)
+    assert node_netmap_key not in snapshot, f'Expected node with key {node_netmap_key} not in network map'
+
+
+def include_node_to_network_map(node_to_include, alive_node):
+    with allure.step(f'Move node {node_to_include} to online state'):
+        node_set_status(node_to_include, status='online')
+
+    sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    tick_epoch()
+
+    check_node_in_map(node_to_include, alive_node)
+
+
+@allure.step('Check node {node_name} in network map')
+def check_node_in_map(node_name: str, alive_node: str = None):
+    alive_node = alive_node or node_name
+    node_wallet_path = NEOFS_NETMAP_DICT[node_name]['wallet_path']
+    node_netmap_key = get_wallet_public_key(
+        node_wallet_path,
+        STORAGE_WALLET_PASS,
+        format="base58"
+    )
+
+    logger.info(f'Node {node_name} netmap key: {node_netmap_key}')
+
+    snapshot = get_netmap_snapshot(node_name=alive_node)
+    assert node_netmap_key in snapshot, f'Expected node with key {node_netmap_key} in network map'
+
+
+@allure.title('Add one node to cluster')
+@pytest.mark.add_nodes
+@pytest.mark.node_mgmt
+def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_after_test_run):
+    wallet = prepare_wallet_and_deposit
+    placement_rule_3 = 'REP 3 IN X CBF 1 SELECT 3 FROM * AS X'
+    placement_rule_4 = 'REP 4 IN X CBF 1 SELECT 4 FROM * AS X'
+    source_file_path = generate_file()
+
+    additional_node = choice(list(
+        node for node, node_config in NEOFS_NETMAP_DICT.items() if node_config.get('rpc') != STORAGE_RPC_ENDPOINT_1))
+    alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != additional_node])
+
+    check_node_in_map(additional_node, alive_node)
+
+    with allure.step(f'Exclude node {additional_node} from map and clean it up'):
+        cleanup_node(additional_node, alive_node)
+        check_nodes.append(additional_node)
+
+    cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL)
+    oid = put_object(wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
+    wait_object_replication_on_nodes(wallet, cid, oid, 3)
+
+    return_nodes(alive_node)
+
+    with allure.step('Check data could be replicated to new node'):
+        random_node = choice([node for node in NEOFS_NETMAP_DICT if node not in (additional_node, alive_node)])
+        exclude_node_from_network_map(random_node, alive_node)
+
+        wait_object_replication_on_nodes(wallet, cid, oid, 3, excluded_nodes=[random_node])
+        include_node_to_network_map(random_node, alive_node)
+        wait_object_replication_on_nodes(wallet, cid, oid, 3)
+
+    with allure.step('Check container could be created with new node'):
+        cid = create_container(wallet, rule=placement_rule_4, basic_acl=PUBLIC_ACL)
+        oid = put_object(wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
+        wait_object_replication_on_nodes(wallet, cid, oid, 4)
 
 
 @allure.title('Control Operations with storage nodes')

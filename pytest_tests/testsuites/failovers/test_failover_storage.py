@@ -5,13 +5,14 @@ import pytest
 
 from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
                     STORAGE_NODE_SSH_PASSWORD)
+from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
 from sbercloud_helper import SberCloud, SberCloudConfig
-from ssh_helper import HostClient, HostIsNotAvailable
+from ssh_helper import HostClient
 from wellknown_acl import PUBLIC_ACL
-from .failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
+
 
 logger = logging.getLogger('NeoLogger')
 stopped_hosts = []

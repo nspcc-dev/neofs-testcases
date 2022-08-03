@@ -178,7 +178,7 @@ def node_healthcheck(node_name: str) -> HealthStatus:
 
 
 @keyword('Set status for node')
-def node_set_status(node_name: str, status: str) -> None:
+def node_set_status(node_name: str, status: str, retry=False) -> None:
     """
         The function sets particular status for given node.
         Args:
@@ -188,7 +188,12 @@ def node_set_status(node_name: str, status: str) -> None:
             (void)
     """
     command = f"control set-status --status {status}"
-    run_control_command(node_name, command)
+    try:
+        run_control_command(node_name, command)
+    except AssertionError as err:
+        if not retry:
+            raise AssertionError(f'Command control set-status failed with error {err}') from err
+        run_control_command(node_name, command)
 
 
 @keyword('Get netmap snapshot')
