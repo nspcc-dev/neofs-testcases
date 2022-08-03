@@ -16,6 +16,8 @@ import pexpect
 from robot.api import logger
 
 ROBOT_AUTO_KEYWORDS = False
+COLOR_GREEN = "\033[92m"
+COLOR_OFF = "\033[0m"
 
 
 def _cmd_run(cmd: str, timeout: int = 30) -> str:
@@ -26,7 +28,7 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
     compl_proc = None
     start_time = datetime.now()
     try:
-        logger.info(f"Executing command: {cmd}")
+        logger.info(f"{COLOR_GREEN}Executing command: {cmd}{COLOR_OFF}")
         start_time = datetime.utcnow()
         compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -35,7 +37,7 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
         output = compl_proc.stdout
         return_code = compl_proc.returncode
         end_time = datetime.utcnow()
-        logger.info(f"Output: {output}")
+        logger.info(f"{COLOR_GREEN}Output: {output}{COLOR_OFF}")
         _attach_allure_log(cmd, output, return_code, start_time, end_time)
 
         return output

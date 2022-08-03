@@ -5,15 +5,15 @@ from time import sleep
 import allure
 import pytest
 
-from common import STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER, STORAGE_NODE_SSH_PASSWORD, \
-    NEOFS_NETMAP_DICT
+from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
+                    STORAGE_NODE_SSH_PASSWORD, NEOFS_NETMAP_DICT)
+from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from iptables_helper import IpTablesHelper
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.utility_keywords import generate_file, get_file_hash
 from ssh_helper import HostClient
 from wellknown_acl import PUBLIC_ACL
-from .failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 
 logger = logging.getLogger('NeoLogger')
 STORAGE_NODE_COMMUNICATION_PORT = '8080'
