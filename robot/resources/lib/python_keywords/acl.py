@@ -80,6 +80,10 @@ def create_eacl(cid: str, rules_list: list):
     )
     _cmd_run(cmd)
 
+    with open(table, 'r') as fout:
+        table_data = fout.read()
+        logger.info(f"Generated eACL:\n{table_data}")
+
     return table
 
 

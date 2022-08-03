@@ -14,12 +14,13 @@ Resource    payment_operations.robot
 &{USER_HEADER} =        key1=1      key2=abc
 &{USER_HEADER_DEL} =    key1=del    key2=del
 &{ANOTHER_HEADER} =     key1=oth    key2=oth
+${ERROR} =              code = 2048 message = access to object operation denied
 
 *** Test cases ***
 BearerToken Operations
     [Documentation]         Testcase to validate NeoFS operations with BearerToken.
     [Tags]                  ACL   BearerToken
-    [Timeout]               20 min
+    [Timeout]               1 min
 
 
     ${WALLET}   ${_}     ${_} =   Prepare Wallet And Deposit
@@ -62,23 +63,31 @@ Check eACL Allow All Bearer Filter Requst Equal Deny
 
                         Put object      ${WALLET}    ${FILE_S}     ${CID}           bearer=${EACL_TOKEN}    user_headers=${ANOTHER_HEADER}   options=--xhdr a=2
                         Get object      ${WALLET}    ${CID}        ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}      --xhdr a=2
-                        Search object   ${WALLET}    ${CID}        ${EMPTY}         ${EACL_TOKEN}    ${USER_HEADER}   ${S_OBJ_H}    options=--xhdr a=2
+                        Search object   ${WALLET}    ${CID}        bearer=${EACL_TOKEN}     filters=${USER_HEADER}
+                                        ...         expected_objects_list=${S_OBJ_H}        options=--xhdr a=2
                         Head object     ${WALLET}    ${CID}        ${S_OID_USER}    bearer_token=${EACL_TOKEN}    options=--xhdr a=2
-                        Get Range       ${WALLET}    ${CID}        ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}    options=--xhdr a=2
+                        Get Range       ${WALLET}    ${CID}        ${S_OID_USER}    0:256   bearer=${EACL_TOKEN}         options=--xhdr a=2
                         Get Range Hash  ${WALLET}    ${CID}        ${S_OID_USER}    ${EACL_TOKEN}    0:256            options=--xhdr a=2
                         Delete object   ${WALLET}    ${CID}        ${D_OID_USER}    bearer=${EACL_TOKEN}    options=--xhdr a=2
 
-                        Run Keyword And Expect Error    *
+    ${ERR} =            Run Keyword And Expect Error    *
                         ...  Put object     ${WALLET}    ${FILE_S}    ${CID}    bearer=${EACL_TOKEN}    user_headers=${USER_HEADER}    options=--xhdr a=256
-                        Run Keyword And Expect Error    *
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
                         ...  Get object     ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    local_file_eacl      ${EMPTY}   --xhdr a=256
-                        Run Keyword And Expect Error    *
-                        ...  Search object   ${WALLET}    ${CID}       ${EMPTY}     ${EACL_TOKEN}    ${USER_HEADER}   ${EMPTY}   --xhdr a=256
-                        Run Keyword And Expect Error    *
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
+                        ...  Search object   ${WALLET}    ${CID}       bearer=${EACL_TOKEN}    filters=${USER_HEADER}   options=--xhdr a=256
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
                         ...  Head object     ${WALLET}    ${CID}       ${S_OID_USER}    bearer_token=${EACL_TOKEN}    options=--xhdr a=256
-                        Run Keyword And Expect Error    *
-                        ...  Get Range       ${WALLET}    ${CID}       ${S_OID_USER}    0:256    bearer=${EACL_TOKEN}      options=--xhdr a=256
-                        Run Keyword And Expect Error    *
-                        ...  Get Range Hash  ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    0:256    --xhdr a=256
-                        Run Keyword And Expect Error    *
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
+                        ...  Get Range       ${WALLET}    ${CID}       ${S_OID_USER}    0:256      bearer=${EACL_TOKEN}    options=--xhdr a=256
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
+                        ...  Get Range Hash  ${WALLET}    ${CID}       ${S_OID_USER}    ${EACL_TOKEN}    0:256    options=--xhdr a=256
+                        Should Contain      ${ERR}      ${ERROR}
+    ${ERR} =            Run Keyword And Expect Error    *
                         ...  Delete object   ${WALLET}    ${CID}       ${S_OID_USER}    bearer=${EACL_TOKEN}    options=--xhdr a=256
+                        Should Contain      ${ERR}      ${ERROR}
