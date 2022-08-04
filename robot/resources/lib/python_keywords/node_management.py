@@ -6,13 +6,17 @@
 
 import random
 import re
+import time
 from dataclasses import dataclass
 from typing import Optional
 
-from common import NEOFS_NETMAP_DICT
+from common import MAINNET_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_PASS
+from data_formatters import get_wallet_public_key
+from epoch import tick_epoch
 from robot.api import logger
 from robot.api.deco import keyword
 from service_helper import get_storage_service_helper
+from utility import robot_time_to_int
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -182,6 +186,58 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
     """
     command = f"control drop-objects  -o {cid}/{oid}"
     return _run_control_command(node_name, command)
+
+
+def delete_node(node_name: str, alive_node: str) -> None:
+    exclude_node_from_network_map(node_name, alive_node)
+
+    helper = get_storage_service_helper()
+    helper.destroy_node(node_name)
+    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+
+
+@keyword('Exclude node {node_to_include} from network map')
+def exclude_node_from_network_map(node_to_exclude, alive_node):
+    node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]['wallet_path']
+    node_netmap_key = get_wallet_public_key(
+        node_wallet_path,
+        STORAGE_WALLET_PASS,
+        format="base58"
+    )
+
+    node_set_status(node_to_exclude, status='offline')
+
+    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    tick_epoch()
+
+    snapshot = get_netmap_snapshot(node_name=alive_node)
+    assert node_netmap_key not in snapshot, f'Expected node with key {node_netmap_key} not in network map'
+
+
+@keyword('Include node {node_to_include} into network map')
+def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
+    node_set_status(node_to_include, status='online')
+
+    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    tick_epoch()
+
+    check_node_in_map(node_to_include, alive_node)
+
+
+@keyword('Check node {node_name} in network map')
+def check_node_in_map(node_name: str, alive_node: str = None):
+    alive_node = alive_node or node_name
+    node_wallet_path = NEOFS_NETMAP_DICT[node_name]['wallet_path']
+    node_netmap_key = get_wallet_public_key(
+        node_wallet_path,
+        STORAGE_WALLET_PASS,
+        format="base58"
+    )
+
+    logger.info(f'Node {node_name} netmap key: {node_netmap_key}')
+
+    snapshot = get_netmap_snapshot(node_name=alive_node)
+    assert node_netmap_key in snapshot, f'Expected node with key {node_netmap_key} in network map'
 
 
 def _run_control_command(node_name: str, command: str, retries: int = 0) -> str:

@@ -1,5 +1,8 @@
-from contextlib import contextmanager
+import json
 import logging
+import re
+import time
+from contextlib import contextmanager
 
 import docker
 
@@ -18,14 +21,24 @@ class LocalDevEnvStorageServiceHelper:
     Manages storage services running on local devenv.
     """
     def stop_node(self, node_name: str) -> None:
-        container_name = node_name.split('.')[0]
+        container_name = _get_storage_container_name(node_name)
         client = docker.APIClient()
         client.stop(container_name)
 
     def start_node(self, node_name: str) -> None:
-        container_name = node_name.split('.')[0]
+        container_name = _get_storage_container_name(node_name)
         client = docker.APIClient()
         client.start(container_name)
+
+    def wait_for_node_to_start(self, node_name: str) -> None:
+        container_name = _get_storage_container_name(node_name)
+        expected_state = "running"
+        for __attempt in range(10):
+            container = self._get_container_by_name(container_name)
+            if container and container["State"] == expected_state:
+                return
+            time.sleep(3)
+        raise AssertionError(f'Container {container_name} is not in {expected_state} state')
 
     def run_control_command(self, node_name: str, command: str) -> str:
         control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
@@ -38,19 +51,49 @@ class LocalDevEnvStorageServiceHelper:
         output = _cmd_run(cmd)
         return output
 
+    def destroy_node(self, node_name: str) -> None:
+        container_name = _get_storage_container_name(node_name)
+        client = docker.APIClient()
+        client.remove_container(container_name, force=True)
+    
+    def get_binaries_version(self) -> dict:
+        return {}
+
+    def _get_container_by_name(self, container_name: str) -> dict:
+        client = docker.APIClient()
+        containers = client.containers()
+        for container in containers:
+            if container_name in container["Names"]:
+                return container
+        return None
+
 
 class CloudVmStorageServiceHelper:
+    STORAGE_SERVICE = "neofs-storage.service"
+
     def stop_node(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            cmd = "systemctl stop neofs-storage"
+            cmd = f"systemctl stop {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Stop command output: {output.stdout}")
 
     def start_node(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            cmd = "systemctl start neofs-storage"
+            cmd = f"systemctl start {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Start command output: {output.stdout}")
+
+    def wait_for_node_to_start(self, node_name: str) -> None:
+        expected_state = 'active (running)'
+        with _create_ssh_client(node_name) as ssh_client:
+            for __attempt in range(10):
+                output = ssh_client.exec(f'systemctl status {self.STORAGE_SERVICE}')
+                if expected_state in output.stdout:
+                    return
+                time.sleep(3)
+            raise AssertionError(
+                f'Service {self.STORAGE_SERVICE} is not in {expected_state} state'
+            )
 
     def run_control_command(self, node_name: str, command: str) -> str:
         control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
@@ -78,24 +121,86 @@ class CloudVmStorageServiceHelper:
             output = ssh_client.exec_with_confirmation(cmd, [""])
             return output.stdout
 
+    def destroy_node(self, node_name: str) -> None:
+        with _create_ssh_client(node_name) as ssh_client:
+            ssh_client.exec(f'systemctl stop {self.STORAGE_SERVICE}')
+            ssh_client.exec('rm -rf /srv/neofs/*')
+
+    def get_binaries_version(self) -> dict:
+        binaries = [
+            'neo-go',
+            'neofs-adm',
+            'neofs-cli',
+            'neofs-http-gw',
+            'neofs-ir',
+            'neofs-lens',
+            'neofs-node',
+            'neofs-s3-authmate',
+            'neofs-s3-gw',
+            'neogo-morph-cn',
+        ]
+
+        version_map = {}
+        for node_name in NEOFS_NETMAP_DICT:
+            with _create_ssh_client(node_name) as ssh_client:
+                for binary in binaries:
+                    out = ssh_client.exec(f'{binary} --version').stdout
+                    version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
+                    version = version.group(1) if version else 'Unknown'
+                    if not version_map.get(binary.upper()):
+                        version_map[binary.upper()] = version
+                    else:
+                        assert version_map[binary.upper()] == version, \
+                            f'Expected binary {binary} to have identical version on all nodes ' \
+                            f'(mismatch on node {node_name})'
+        return version_map
 
 class RemoteDevEnvStorageServiceHelper:
     """
     Manages storage services running on remote devenv.
     """
     def stop_node(self, node_name: str) -> None:
-        container_name = node_name.split('.')[0]
+        container_name = _get_storage_container_name(node_name)
         with _create_ssh_client(node_name) as ssh_client:
             ssh_client.exec(f'docker stop {container_name}')
 
     def start_node(self, node_name: str) -> None:
-        container_name = node_name.split('.')[0]
+        container_name = _get_storage_container_name(node_name)
         with _create_ssh_client(node_name) as ssh_client:
             ssh_client.exec(f'docker start {container_name}')
+
+    def wait_for_node_to_start(self, node_name: str) -> None:
+        container_name = _get_storage_container_name(node_name)
+        expected_state = 'running'
+        for __attempt in range(10):
+            container = self._get_container_by_name(container_name)
+            if container and container["State"] == expected_state:
+                return
+            time.sleep(3)
+        raise AssertionError(f'Container {container_name} is not in {expected_state} state')
 
     def run_control_command(self, node_name: str, command: str) -> str:
         # On remote devenv it works same way as in cloud
         return CloudVmStorageServiceHelper().run_control_command(node_name, command)
+
+    def destroy_node(self, node_name: str) -> None:
+        container_name = _get_storage_container_name(node_name)
+        with _create_ssh_client(node_name) as ssh_client:
+            ssh_client.exec(f'docker rm {container_name} --force')
+
+    def get_binaries_version(self) -> dict:
+        return {}
+
+    def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
+        with _create_ssh_client(node_name) as ssh_client:
+            output = ssh_client.exec('docker ps -a --format "{{json .}}"')
+            containers = json.loads(output)
+
+        for container in containers:
+            # unlike docker.API in docker ps output Names seems to be a string, so we check by equality
+            if container["Names"] == container_name:
+                return container
+        return None
 
 
 def get_storage_service_helper():
@@ -129,3 +234,11 @@ def _create_ssh_client(node_name: str) -> HostClient:
         yield ssh_client
     finally:
         ssh_client.drop()
+
+
+def _get_storage_container_name(node_name: str) -> str:
+    """
+    Converts name of storage name (as it is listed in netmap) into the name of docker container
+    that runs instance of this storage node.
+    """
+    return node_name.split('.')[0]
