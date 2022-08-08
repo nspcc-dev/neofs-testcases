@@ -51,11 +51,15 @@ class LocalDevEnvStorageServiceHelper:
         output = _cmd_run(cmd)
         return output
 
-    def destroy_node(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
+    def delete_node_data(self, node_name: str) -> None:
+        volume_name = _get_storage_volume_name(node_name)
+
         client = docker.APIClient()
-        client.remove_container(container_name, force=True)
-    
+        volume_info = client.inspect_volume(volume_name)
+        volume_path = volume_info["Mountpoint"]
+
+        _cmd_run(f"rm -rf {volume_path}/*")
+
     def get_binaries_version(self) -> dict:
         return {}
 
@@ -121,9 +125,8 @@ class CloudVmStorageServiceHelper:
             output = ssh_client.exec_with_confirmation(cmd, [""])
             return output.stdout
 
-    def destroy_node(self, node_name: str) -> None:
+    def delete_node_data(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec(f'systemctl stop {self.STORAGE_SERVICE}')
             ssh_client.exec('rm -rf /srv/neofs/*')
 
     def get_binaries_version(self, binaries: list = None) -> dict:
@@ -161,6 +164,7 @@ class CloudVmStorageServiceHelper:
                             f'(mismatch on node {node_name})'
         return version_map
 
+
 class RemoteDevEnvStorageServiceHelper:
     """
     Manages storage services running on remote devenv.
@@ -189,17 +193,21 @@ class RemoteDevEnvStorageServiceHelper:
         # On remote devenv it works same way as in cloud
         return CloudVmStorageServiceHelper().run_control_command(node_name, command)
 
-    def destroy_node(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
+    def delete_node_data(self, node_name: str) -> None:
+        volume_name = _get_storage_volume_name(node_name)
         with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec(f'docker rm {container_name} --force')
+            volume_info_raw = ssh_client.exec(f'docker volume inspect {volume_name}').stdout
+            volume_info = json.loads(volume_info_raw)
+            volume_path = volume_info[0]["Mountpoint"]
+
+            ssh_client.exec(f'rm -rf {volume_path}/*')
 
     def get_binaries_version(self) -> dict:
         return {}
 
     def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
         with _create_ssh_client(node_name) as ssh_client:
-            output = ssh_client.exec('docker ps -a --format "{{json .}}"')
+            output = ssh_client.exec('docker ps -a --format "{{json .}}"').stdout
             containers = json.loads(output)
 
         for container in containers:
@@ -244,7 +252,16 @@ def _create_ssh_client(node_name: str) -> HostClient:
 
 def _get_storage_container_name(node_name: str) -> str:
     """
-    Converts name of storage name (as it is listed in netmap) into the name of docker container
+    Converts name of storage node (as it is listed in netmap) into the name of docker container
     that runs instance of this storage node.
     """
     return node_name.split('.')[0]
+
+
+def _get_storage_volume_name(node_name: str) -> str:
+    """
+    Converts name of storage node (as it is listed in netmap) into the name of docker volume
+    that contains data of this storage node.
+    """
+    container_name = _get_storage_container_name(node_name)
+    return f"storage_storage_{container_name}"
