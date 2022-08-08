@@ -183,7 +183,7 @@ class RemoteDevEnvStorageServiceHelper:
         container_name = _get_storage_container_name(node_name)
         expected_state = 'running'
         for __attempt in range(10):
-            container = self._get_container_by_name(container_name)
+            container = self._get_container_by_name(node_name, container_name)
             if container and container["State"] == expected_state:
                 return
             time.sleep(3)
