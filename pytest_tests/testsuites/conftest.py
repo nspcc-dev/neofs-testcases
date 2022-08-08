@@ -61,7 +61,7 @@ def _get_binaries_version_local(binaries: list) -> dict:
     for binary in binaries:
         out = _cmd_run(f'{binary} --version')
         version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
-        env_out[binary.upper()] = version.group(1) if version else 'Unknown'
+        env_out[binary] = version.group(1).strip() if version else 'Unknown'
     return env_out
 
 

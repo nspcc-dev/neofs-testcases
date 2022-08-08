@@ -126,8 +126,8 @@ class CloudVmStorageServiceHelper:
             ssh_client.exec(f'systemctl stop {self.STORAGE_SERVICE}')
             ssh_client.exec('rm -rf /srv/neofs/*')
 
-    def get_binaries_version(self) -> dict:
-        binaries = [
+    def get_binaries_version(self, binaries: list = None) -> dict:
+        default_binaries = [
             'neo-go',
             'neofs-adm',
             'neofs-cli',
@@ -139,18 +139,24 @@ class CloudVmStorageServiceHelper:
             'neofs-s3-gw',
             'neogo-morph-cn',
         ]
+        binaries = binaries or default_binaries
 
         version_map = {}
         for node_name in NEOFS_NETMAP_DICT:
             with _create_ssh_client(node_name) as ssh_client:
                 for binary in binaries:
-                    out = ssh_client.exec(f'{binary} --version').stdout
-                    version = re.search(r'version[:\s]*(.+)', out, re.IGNORECASE)
-                    version = version.group(1) if version else 'Unknown'
-                    if not version_map.get(binary.upper()):
-                        version_map[binary.upper()] = version
+                    try:
+                        out = ssh_client.exec(f'{binary} --version').stdout
+                    except AssertionError as err:
+                        logger.error(f'Can not get version for {binary} because of\n{err}')
+                        version_map[binary] = 'Can not get version'
+                        continue
+                    version = re.search(r'version[:\s]*v?(.+)', out, re.IGNORECASE)
+                    version = version.group(1).strip() if version else 'Unknown'
+                    if not version_map.get(binary):
+                        version_map[binary] = version
                     else:
-                        assert version_map[binary.upper()] == version, \
+                        assert version_map[binary] == version, \
                             f'Expected binary {binary} to have identical version on all nodes ' \
                             f'(mismatch on node {node_name})'
         return version_map
