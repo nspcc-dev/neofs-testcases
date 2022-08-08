@@ -10,7 +10,6 @@ Resource        common_steps_acl_extended.robot
 Resource        payment_operations.robot
 
 *** Variables ***
-${OBJECT_PATH} =   testfile
 ${EACL_ERR_MSG} =    *
 
 *** Test cases ***
@@ -46,9 +45,9 @@ Check eACL Filters with MatchType String Equal with two contradicting filters
     ${CID} =            Create Container         ${WALLET}      basic_acl=eacl-public-read-write
     ${FILE_S_USER}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_USER} =     Put Object    ${WALLET}     ${FILE_S_USER}    ${CID}    ${EMPTY}
+    ${S_OID_USER} =     Put Object    ${WALLET}     ${FILE_S_USER}    ${CID}
 
-                        Get Object    ${WALLET_OTH}    ${CID}       ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        Get Object    ${WALLET_OTH}    ${CID}       ${S_OID_USER}
 
     &{HEADER} =         Head Object    ${WALLET}    ${CID}    ${S_OID_USER}
     ${filter_value} =    Get From Dictionary    ${HEADER}    ${EACL_OBJ_FILTERS}[${FILTER}]
@@ -60,7 +59,7 @@ Check eACL Filters with MatchType String Equal with two contradicting filters
     ${EACL_CUSTOM} =    Create eACL    ${CID}      ${eACL_gen}
 
                         Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
-                        Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
 
 
 Check eACL Filters, two matchTypes
@@ -72,12 +71,12 @@ Check eACL Filters, two matchTypes
     ${CID} =            Create Container    ${WALLET}       basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}    ${EMPTY}
-    ${S_OID_OTHER} =    Put Object    ${WALLET_OTH}    ${FILE_S}    ${CID}    ${EMPTY}
+    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}
+    ${S_OID_OTHER} =    Put Object    ${WALLET_OTH}    ${FILE_S}    ${CID}
     &{HEADER} =         Head Object   ${WALLET}    ${CID}    ${S_OID_USER}
 
-                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${OBJECT_PATH}
-                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
+                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
+                        Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}
 
     ${filter_value} =    Get From Dictionary    ${HEADER}    ${EACL_OBJ_FILTERS}[${FILTER}]
     ${noneq_filters} =    Set Variable    obj:${FILTER}!=${filter_value}
@@ -89,6 +88,6 @@ Check eACL Filters, two matchTypes
 
                         Set eACL    ${WALLET}    ${CID}    ${EACL_CUSTOM}
                         Run Keyword And Expect Error    *
-                        ...  Get object      ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}    ${EMPTY}    ${OBJECT_PATH}
+                        ...  Get object      ${WALLET_OTH}    ${CID}    ${S_OID_OTHER}
                         Run Keyword And Expect Error    *
-                        ...  Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+                        ...  Get Object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
