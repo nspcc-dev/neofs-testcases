@@ -208,9 +208,12 @@ class RemoteDevEnvStorageServiceHelper:
     def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
         with _create_ssh_client(node_name) as ssh_client:
             output = ssh_client.exec('docker ps -a --format "{{json .}}"').stdout
-            containers = json.loads(output)
 
-        for container in containers:
+        # output contains each container as separate JSON structure, so we find each JSON structure
+        # by curly brackets (works because JSON is not nested), parse it and find container by name
+        json_blocks = re.findall(r'\{.*?\}', output, re.DOTALL)
+        for json_block in json_blocks:
+            container = json.loads(json_block)
             # unlike docker.API in docker ps output Names seems to be a string, so we check by equality
             if container["Names"] == container_name:
                 return container
