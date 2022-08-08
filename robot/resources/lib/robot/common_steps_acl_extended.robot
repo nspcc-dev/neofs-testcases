@@ -13,9 +13,6 @@ Resource    payment_operations.robot
 
 *** Variables ***
 &{USER_HEADER} =        key1=1          key2=abc
-&{USER_HEADER_DEL} =    key1=del        key2=del
-&{ANOTHER_HEADER} =     key1=oth        key2=oth
-${OBJECT_PATH} =        testfile
 ${EACL_ERR_MSG} =       *
 
 *** Keywords ***
@@ -26,13 +23,13 @@ Check eACL Deny and Allow All
     ${CID} =                Create Container    ${USER_WALLET}      basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =     Generate file       ${SIMPLE_OBJ_SIZE}
     ${S_OID_USER} =         Put object          ${USER_WALLET}      ${FILE_S}    ${CID}      user_headers=${USER_HEADER}
-    ${D_OID_USER} =         Put object          ${USER_WALLET}      ${FILE_S}    ${CID}      user_headers=${USER_HEADER_DEL}
+    ${D_OID_USER} =         Put object          ${USER_WALLET}      ${FILE_S}    ${CID}
     @{S_OBJ_H} =	    Create List	        ${S_OID_USER}
 
-                            Put object          ${WALLET}    ${FILE_S}      ${CID}          user_headers=${ANOTHER_HEADER}
+                            Put object          ${WALLET}    ${FILE_S}      ${CID}
 
-                            Get object          ${WALLET}    ${CID}         ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                            Search object       ${WALLET}    ${CID}         ${EMPTY}         ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                            Get object          ${WALLET}    ${CID}         ${S_OID_USER}
+                            Search object       ${WALLET}    ${CID}         filters=${USER_HEADER}    expected_objects_list=${S_OBJ_H}
                             Head object         ${WALLET}    ${CID}         ${S_OID_USER}
 
                             Get Range           ${WALLET}    ${CID}         ${S_OID_USER}    0:256
@@ -47,9 +44,9 @@ Check eACL Deny and Allow All
                             Run Keyword And Expect Error        *
                             ...  Put object                          ${WALLET}    ${FILE_S}    ${CID}           user_headers=${USER_HEADER}
                             Run Keyword And Expect Error        *
-                            ...  Get object                          ${WALLET}    ${CID}       ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                            ...  Get object                          ${WALLET}    ${CID}       ${S_OID_USER}
                             Run Keyword And Expect Error        *
-                            ...  Search object                       ${WALLET}    ${CID}       ${EMPTY}         ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                            ...  Search object                       ${WALLET}    ${CID}       filters=${USER_HEADER}    expected_objects_list=${S_OBJ_H}
                             Run Keyword And Expect Error        *
                             ...  Head object                         ${WALLET}    ${CID}       ${S_OID_USER}
                             Run Keyword And Expect Error        *
@@ -64,9 +61,9 @@ Check eACL Deny and Allow All
                             # The current ACL cache lifetime is 30 sec
                             Sleep    ${NEOFS_CONTRACT_CACHE_TIMEOUT}
 
-                            Put object        ${WALLET}    ${FILE_S}     ${CID}            user_headers=${ANOTHER_HEADER}
-                            Get object        ${WALLET}    ${CID}        ${S_OID_USER}     ${EMPTY}    local_file_eacl
-                            Search object     ${WALLET}    ${CID}        ${EMPTY}          ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                            Put object        ${WALLET}    ${FILE_S}     ${CID}
+                            Get object        ${WALLET}    ${CID}        ${S_OID_USER}
+                            Search object     ${WALLET}    ${CID}        filters=${USER_HEADER}    expected_objects_list=${S_OBJ_H}
                             Head object       ${WALLET}    ${CID}        ${S_OID_USER}
                             Get Range         ${WALLET}    ${CID}        ${S_OID_USER}     0:256
                             Get Range Hash    ${WALLET}    ${CID}        ${S_OID_USER}     ${EMPTY}    0:256
@@ -100,12 +97,12 @@ Check eACL Filters with MatchType String Equal
     ${CID} =                Create Container        ${WALLET}       basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =     Generate file           ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}  user_headers=${USER_HEADER}
+    ${S_OID_USER} =     Put Object    ${WALLET}    ${FILE_S}    ${CID}
     ${D_OID_USER} =     Put object    ${WALLET}    ${FILE_S}    ${CID}
     @{S_OBJ_H} =	Create List    ${S_OID_USER}
 
-                        Get Object          ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
-                        Search Object       ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        Get Object          ${WALLET_OTH}    ${CID}    ${S_OID_USER}
+                        Search Object       ${WALLET_OTH}    ${CID}    keys=--oid ${S_OID_USER}    expected_objects_list=${S_OBJ_H}
     &{HEADER} =         Head Object         ${WALLET_OTH}    ${CID}    ${S_OID_USER}
                         Get Range           ${WALLET_OTH}    ${CID}    ${S_OID_USER}    0:256
                         Get Range Hash      ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
@@ -127,7 +124,7 @@ Check eACL Filters with MatchType String Equal
 
     IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect Error   ${EACL_ERR_MSG}
-        ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}    ${EMPTY}    ${OBJECT_PATH}
+        ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
     END
     IF    'HEAD' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
@@ -139,7 +136,7 @@ Check eACL Filters with MatchType String Equal
     END
     IF    'SEARCH' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect Error   ${EACL_ERR_MSG}
-        ...  Search Object    ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+        ...  Search Object    ${WALLET_OTH}    ${CID}   keys=--oid ${S_OID_USER}    expected_objects_list=${S_OBJ_H}
     END
     IF    'RANGEHASH' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
@@ -159,14 +156,14 @@ Check eACL Filters with MatchType String Not Equal
     ${CID} =            Create Container    ${WALLET}   basic_acl=eacl-public-read-write
     ${FILE_S}    ${_} =    Generate file    ${SIMPLE_OBJ_SIZE}
 
-    ${S_OID_OTH} =      Put Object    ${WALLET_OTH}     ${FILE_S}    ${CID}    user_headers=${ANOTHER_HEADER}
-    ${S_OID_USER} =     Put Object    ${WALLET}         ${FILE_S}    ${CID}    user_headers=${USER_HEADER}
+    ${S_OID_OTH} =      Put Object    ${WALLET_OTH}     ${FILE_S}    ${CID}
+    ${S_OID_USER} =     Put Object    ${WALLET}         ${FILE_S}    ${CID}
     ${D_OID_USER} =     Put object    ${WALLET}         ${FILE_S}    ${CID}
     @{S_OBJ_H} =	Create List   ${S_OID_USER}
 
-                        Get Object      ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    local_file_eacl
+                        Get Object      ${WALLET}    ${CID}    ${S_OID_USER}
     &{HEADER} =         Head Object     ${WALLET}    ${CID}    ${S_OID_USER}
-                        Search Object   ${WALLET}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+                        Search Object   ${WALLET}    ${CID}    keys=--oid ${S_OID_USER}    expected_objects_list=${S_OBJ_H}
                         Get Range       ${WALLET}    ${CID}    ${S_OID_USER}    0:256
                         Get Range Hash  ${WALLET}    ${CID}    ${S_OID_USER}    ${EMPTY}    0:256
 
@@ -186,8 +183,8 @@ Check eACL Filters with MatchType String Not Equal
 
     IF    'GET' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect Error   ${EACL_ERR_MSG}
-        ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID_OTH}    ${EMPTY}    ${OBJECT_PATH}
-        Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}     ${EMPTY}    ${OBJECT_PATH}
+        ...  Get object    ${WALLET_OTH}    ${CID}    ${S_OID_OTH}
+        Get object    ${WALLET_OTH}    ${CID}    ${S_OID_USER}
     END
     IF    'HEAD' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
@@ -196,8 +193,8 @@ Check eACL Filters with MatchType String Not Equal
     END
     IF    'SEARCH' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
-        ...  Search object    ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${ANOTHER_HEADER}    ${S_OBJ_H}
-        Search object    ${WALLET_OTH}    ${CID}    ${EMPTY}    ${EMPTY}    ${USER_HEADER}    ${S_OBJ_H}
+        ...  Search object    ${WALLET_OTH}    ${CID}   keys=--oid ${S_OID_OTH}    expected_objects_list=${S_OBJ_H}
+        Search object    ${WALLET_OTH}    ${CID}    keys=--oid ${S_OID_USER}    expected_objects_list=${S_OBJ_H}
     END
     IF    'RANGE' in ${VERB_FILTER_DEP}[${FILTER}]
         Run Keyword And Expect error    ${EACL_ERR_MSG}
