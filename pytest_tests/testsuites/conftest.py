@@ -11,6 +11,7 @@ import wallet
 from cli_helpers import _cmd_run
 from common import (ASSETS_DIR, FREE_STORAGE, INFRASTRUCTURE_TYPE, MAINNET_WALLET_PATH,
                     NEOFS_NETMAP_DICT)
+from env_properties import save_env_properties
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
 from service_helper import get_storage_service_helper
@@ -37,23 +38,19 @@ def cloud_infrastructure_check():
 def check_binary_versions(request):
     # Collect versions of local binaries
     binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
-    env_out = _get_binaries_version_local(binaries)
+    local_binaries = _get_binaries_version_local(binaries)
 
     # Collect versions of remote binaries
     helper = get_storage_service_helper()
     remote_binaries = helper.get_binaries_version()
-    env_out = {**env_out, **remote_binaries}
+    all_binaries = {**local_binaries, **remote_binaries}
 
     # Get version of aws binary
     out = _cmd_run('aws --version')
     out_lines = out.split("\n")
-    env_out["AWS"] = out_lines[0] if out_lines else 'Unknown'
+    all_binaries["AWS"] = out_lines[0] if out_lines else 'Unknown'
 
-    environment_dir = request.config.getoption('--alluredir')
-    if environment_dir:
-        with open(f'{environment_dir}/environment.properties', 'w') as out_file:
-            for env, env_value in env_out.items():
-                out_file.write(f'{env}={env_value}\n')
+    save_env_properties(request.config, all_binaries)
 
 
 def _get_binaries_version_local(binaries: list) -> dict:
