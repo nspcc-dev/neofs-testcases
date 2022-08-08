@@ -11,9 +11,12 @@ from epoch import tick_epoch
 from python_keywords.container import create_container, get_container
 from python_keywords.failover_utils import wait_object_replication_on_nodes
 from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
-from python_keywords.node_management import (check_node_in_map, delete_node, drop_object, exclude_node_from_network_map, get_netmap_snapshot, get_locode, include_node_to_network_map,
+from python_keywords.node_management import (check_node_in_map, delete_node_data, drop_object,
+                                             exclude_node_from_network_map, get_netmap_snapshot,
+                                             get_locode, include_node_to_network_map,
                                              node_healthcheck, node_set_status,
-                                             node_shard_list, node_shard_set_mode, start_nodes, stop_nodes)
+                                             node_shard_list, node_shard_set_mode,
+                                             start_nodes, stop_nodes)
 from service_helper import get_storage_service_helper
 from storage_policy import get_nodes_with_object, get_simple_object_copies
 from utility import (placement_policy_from_container, robot_time_to_int,
@@ -77,7 +80,7 @@ def return_nodes(alive_node: str = None):
             helper.wait_for_node_to_start(node)
 
         with allure.step(f'Move node {node} to online state'):
-            node_set_status(node, status='online', retry=True)
+            node_set_status(node, status='online', retries=2)
 
         check_nodes.remove(node)
         sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
@@ -108,9 +111,10 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
 
     check_node_in_map(additional_node, alive_node)
 
-    with allure.step(f'Exclude node {additional_node} from map and clean it up'):
-        delete_node(additional_node, alive_node)
-        check_nodes.append(additional_node)
+    # Add node to recovery list before messing with it
+    check_nodes.append(additional_node)
+    exclude_node_from_network_map(additional_node, alive_node)
+    delete_node_data(additional_node)
 
     cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL)
     oid = put_object(wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))

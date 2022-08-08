@@ -188,11 +188,10 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
     return _run_control_command(node_name, command)
 
 
-def delete_node(node_name: str, alive_node: str) -> None:
-    exclude_node_from_network_map(node_name, alive_node)
-
+@keyword('Delete data of node {node_name}')
+def delete_node_data(node_name: str) -> None:
     helper = get_storage_service_helper()
-    helper.destroy_node(node_name)
+    helper.delete_node_data(node_name)
     time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
 
 
