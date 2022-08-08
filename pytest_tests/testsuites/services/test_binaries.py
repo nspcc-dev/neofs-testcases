@@ -7,6 +7,7 @@ import pytest
 import requests
 
 from common import BIN_VERSIONS_FILE
+from env_properties import read_env_properties, save_env_properties
 from service_helper import get_storage_service_helper
 
 logger = logging.getLogger('NeoLogger')
@@ -21,34 +22,28 @@ def test_binaries_versions(request):
     if not BIN_VERSIONS_FILE:
         pytest.skip('File with binaries and versions was not provided')
 
-    failed_versions = {}
-    environment_dir = request.config.getoption('--alluredir')
-    env_data = None
-    data_for_env = {}
-
     binaries_to_check = download_versions_info(BIN_VERSIONS_FILE)
-
     with allure.step('Get binaries versions from servers'):
         helper = get_storage_service_helper()
         got_versions = helper.get_binaries_version(binaries=list(binaries_to_check.keys()))
 
-    if environment_dir:
-        with open(f'{environment_dir}/environment.properties', 'r') as env_file:
-            env_data = env_file.read()
+    env_properties = read_env_properties(request.config)
 
     # compare versions from servers and file
+    failed_versions = {}
+    additional_env_properties = {}
     for binary, version in binaries_to_check.items():
-        if binary not in got_versions:
-            failed_versions[binary] = 'Can not find binary'
-        if got_versions[binary] != version:
-            failed_versions[binary] = f'Expected version {version}, found version {got_versions[binary]}'
+        actual_version = got_versions.get(binary)
+        if actual_version != version:
+            failed_versions[binary] = f'Expected version {version}, found version {actual_version}'
 
-        # if something missed in environment.properties file, let's add
-        if env_data and binary not in env_data:
-            data_for_env[binary] = got_versions[binary]
+        # If some binary was not listed in the env properties file, let's add it
+        # so that we have full information about versions in allure report
+        if env_properties and binary not in env_properties:
+            additional_env_properties[binary] = actual_version
 
-    if environment_dir and data_for_env:
-        add_to_environment_properties(f'{environment_dir}/environment.properties', data_for_env)
+    if env_properties and additional_env_properties:
+        save_env_properties(request.config, additional_env_properties)
 
     # create clear beautiful error with aggregation info
     if failed_versions:
@@ -56,7 +51,7 @@ def test_binaries_versions(request):
         raise AssertionError(f'Found binaries with unexpected versions:\n{msg}')
 
 
-@allure.step('Download info from {url}')
+@allure.step('Download versions info from {url}')
 def download_versions_info(url: str) -> dict:
     binaries_to_version = {}
 
@@ -77,10 +72,3 @@ def download_versions_info(url: str) -> dict:
         binaries_to_version[bin_name] = bin_version
 
     return binaries_to_version
-
-
-@allure.step('Update data in environment.properties')
-def add_to_environment_properties(file_path: str, env_data: dict):
-    with open(file_path, 'a+') as env_file:
-        for env, env_value in env_data.items():
-            env_file.write(f'{env}={env_value}\n')
