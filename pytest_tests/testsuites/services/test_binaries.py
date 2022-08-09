@@ -15,7 +15,7 @@ logger = logging.getLogger('NeoLogger')
 
 @allure.title('Check binaries versions')
 @pytest.mark.check_binaries
-@pytest.skip('Skipped due to https://j.yadro.com/browse/OBJECT-628')
+@pytest.mark.skip('Skipped due to https://j.yadro.com/browse/OBJECT-628')
 def test_binaries_versions(request):
     """
     Compare binaries versions from external source (url) and deployed on servers.
