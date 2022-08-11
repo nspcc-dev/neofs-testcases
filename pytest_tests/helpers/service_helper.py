@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 import time
@@ -22,19 +21,19 @@ class LocalDevEnvStorageServiceHelper:
     """
     def stop_node(self, node_name: str) -> None:
         container_name = _get_storage_container_name(node_name)
-        client = docker.APIClient()
+        client = self._get_docker_client(node_name)
         client.stop(container_name)
 
     def start_node(self, node_name: str) -> None:
         container_name = _get_storage_container_name(node_name)
-        client = docker.APIClient()
+        client = self._get_docker_client(node_name)
         client.start(container_name)
 
     def wait_for_node_to_start(self, node_name: str) -> None:
         container_name = _get_storage_container_name(node_name)
         expected_state = "running"
         for __attempt in range(10):
-            container = self._get_container_by_name(container_name)
+            container = self._get_container_by_name(node_name, container_name)
             if container and container["State"] == expected_state:
                 return
             time.sleep(3)
@@ -54,7 +53,7 @@ class LocalDevEnvStorageServiceHelper:
     def delete_node_data(self, node_name: str) -> None:
         volume_name = _get_storage_volume_name(node_name)
 
-        client = docker.APIClient()
+        client = self._get_docker_client(node_name)
         volume_info = client.inspect_volume(volume_name)
         volume_path = volume_info["Mountpoint"]
 
@@ -63,13 +62,18 @@ class LocalDevEnvStorageServiceHelper:
     def get_binaries_version(self) -> dict:
         return {}
 
-    def _get_container_by_name(self, container_name: str) -> dict:
-        client = docker.APIClient()
+    def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
+        client = self._get_docker_client(node_name)
         containers = client.containers()
         for container in containers:
             if container_name in container["Names"]:
                 return container
         return None
+
+    def _get_docker_client(self, node_name: str) -> docker.APIClient:
+        # For local devenv we use default docker client that talks to unix socket
+        client = docker.APIClient()
+        return client
 
 
 class CloudVmStorageServiceHelper:
@@ -165,29 +169,19 @@ class CloudVmStorageServiceHelper:
         return version_map
 
 
-class RemoteDevEnvStorageServiceHelper:
+class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):
     """
     Manages storage services running on remote devenv.
+
+    Most of operations are identical to local devenv, however, any interactions
+    with host resources (files, etc.) require ssh into the devenv host machine.
     """
-    def stop_node(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
-        with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec(f'docker stop {container_name}')
-
-    def start_node(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
-        with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec(f'docker start {container_name}')
-
-    def wait_for_node_to_start(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
-        expected_state = 'running'
-        for __attempt in range(10):
-            container = self._get_container_by_name(node_name, container_name)
-            if container and container["State"] == expected_state:
-                return
-            time.sleep(3)
-        raise AssertionError(f'Container {container_name} is not in {expected_state} state')
+    def _get_docker_client(self, node_name: str) -> docker.APIClient:
+        # For remote devenv we use docker client that talks to tcp socket 2375:
+        # https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option
+        host = _get_node_host(node_name)
+        client = docker.APIClient(base_url=f"tcp://{host}:2375")
+        return client
 
     def run_control_command(self, node_name: str, command: str) -> str:
         # On remote devenv it works same way as in cloud
@@ -195,29 +189,14 @@ class RemoteDevEnvStorageServiceHelper:
 
     def delete_node_data(self, node_name: str) -> None:
         volume_name = _get_storage_volume_name(node_name)
-        with _create_ssh_client(node_name) as ssh_client:
-            volume_info_raw = ssh_client.exec(f'docker volume inspect {volume_name}').stdout
-            volume_info = json.loads(volume_info_raw)
-            volume_path = volume_info[0]["Mountpoint"]
 
+        client = self._get_docker_client(node_name)
+        volume_info = client.inspect_volume(volume_name)
+        volume_path = volume_info["Mountpoint"]
+
+        # SSH into remote machine and delete files in host directory that is mounted as docker volume
+        with _create_ssh_client(node_name) as ssh_client:
             ssh_client.exec(f'rm -rf {volume_path}/*')
-
-    def get_binaries_version(self) -> dict:
-        return {}
-
-    def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
-        with _create_ssh_client(node_name) as ssh_client:
-            output = ssh_client.exec('docker ps -a --format "{{json .}}"').stdout
-
-        # output contains each container as separate JSON structure, so we find each JSON structure
-        # by curly brackets (works because JSON is not nested), parse it and find container by name
-        json_blocks = re.findall(r'\{.*?\}', output, re.DOTALL)
-        for json_block in json_blocks:
-            container = json.loads(json_block)
-            # unlike docker.API in docker ps output Names seems to be a string, so we check by equality
-            if container["Names"] == container_name:
-                return container
-        return None
 
 
 def get_storage_service_helper():
@@ -233,13 +212,7 @@ def get_storage_service_helper():
 
 @contextmanager
 def _create_ssh_client(node_name: str) -> HostClient:
-    if node_name not in NEOFS_NETMAP_DICT:
-        raise AssertionError(f'Node {node_name} is not found!')
-
-    # We use rpc endpoint to determine host address, because control endpoint
-    # (if it is private) will be a local address on the host machine
-    node_config = NEOFS_NETMAP_DICT.get(node_name)
-    host = node_config.get('rpc').split(':')[0]
+    host = _get_node_host(node_name)
     ssh_client = HostClient(
         host,
         login=STORAGE_NODE_SSH_USER,
@@ -251,6 +224,17 @@ def _create_ssh_client(node_name: str) -> HostClient:
         yield ssh_client
     finally:
         ssh_client.drop()
+
+
+def _get_node_host(node_name: str) -> str:
+    if node_name not in NEOFS_NETMAP_DICT:
+        raise AssertionError(f'Node {node_name} is not found!')
+
+    # We use rpc endpoint to determine host address, because control endpoint
+    # (if it is private) will be a local address on the host machine
+    node_config = NEOFS_NETMAP_DICT.get(node_name)
+    host = node_config.get('rpc').split(':')[0]
+    return host
 
 
 def _get_storage_container_name(node_name: str) -> str:
