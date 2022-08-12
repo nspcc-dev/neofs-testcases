@@ -3,9 +3,11 @@ from time import sleep
 
 import allure
 import pytest
+
 from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
+from grpc_responses import OBJECT_ALREADY_REMOVED, OBJECT_NOT_FOUND, error_matches_status
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
                                          get_range_hash, head_object,
                                          put_object, search_object)
@@ -93,8 +95,8 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step('Get objects and check errors'):
-        get_object_and_check_error(**wallet_cid, oid=oids[0], err_msg='object already removed')
-        get_object_and_check_error(**wallet_cid, oid=oids[1], err_msg='object already removed')
+        get_object_and_check_error(**wallet_cid, oid=oids[0], error_pattern=OBJECT_ALREADY_REMOVED)
+        get_object_and_check_error(**wallet_cid, oid=oids[1], error_pattern=OBJECT_ALREADY_REMOVED)
 
 
 @allure.title('Test object life time')
@@ -126,17 +128,17 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
     wait_for_gc_pass_on_storage_nodes()
 
     with allure.step('Check object deleted because it expires-on epoch'):
-        with pytest.raises(Exception, match='.*object not found.*'):
+        with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
             get_object(wallet, cid, oid)
 
 
-def get_object_and_check_error(wallet: str, cid: str, oid: str, err_msg: str):
+def get_object_and_check_error(wallet: str, cid: str, oid: str, error_pattern: str) -> None:
     try:
         get_object(wallet=wallet, cid=cid, oid=oid)
         raise AssertionError(f'Expected object {oid} removed, but it is not')
     except Exception as err:
         logger.info(f'Error is {err}')
-        assert err_msg in str(err), f'Expected message {err_msg} in error: {err}'
+        assert error_matches_status(err, error_pattern), f'Expected {err} to match {error_pattern}'
 
 
 def check_header_is_presented(head_info: dict, object_header: dict):

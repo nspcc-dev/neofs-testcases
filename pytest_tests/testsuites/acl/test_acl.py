@@ -6,6 +6,7 @@ import pytest
 
 import wallet
 from common import ASSETS_DIR
+from grpc_responses import OBJECT_ACCESS_DENIED
 from python_keywords.acl import set_eacl
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
@@ -77,26 +78,25 @@ class TestACL:
 
     @staticmethod
     def check_no_access_to_container(wallet: str, cid: str, oid: str, file_name: str):
-        err_pattern = '.*access to object operation denied.*'
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             get_object(wallet, cid, oid)
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_object(wallet, file_name, cid)
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             delete_object(wallet, cid, oid)
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             head_object(wallet, cid, oid)
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             get_range(wallet, cid, oid, bearer='', range_cut='0:10')
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             get_range_hash(wallet, cid, oid, bearer_token='', range_cut='0:10')
 
-        with pytest.raises(Exception, match=err_pattern):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             search_object(wallet, cid)
 
     def check_full_access(self, cid: str, file_name: str, wallet_to_check: Tuple = None) -> str:

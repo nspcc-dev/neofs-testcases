@@ -2,7 +2,7 @@
 
 """
     This module contains keywords which are used for asserting
-    that storage policies are kept.
+    that storage policies are respected.
 """
 
 from typing import Optional
@@ -13,6 +13,8 @@ from robot.api.deco import keyword
 import complex_object_actions
 import neofs_verbs
 from common import NEOFS_NETMAP
+from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
+
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -142,7 +144,7 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str):
             if res is None:
                 nodes_list.append(node)
         except Exception as err:
-            if 'object not found' in str(err):
+            if error_matches_status(err, OBJECT_NOT_FOUND):
                 nodes_list.append(node)
             else:
                 raise Exception(f'Got error {err} on head object command') from err

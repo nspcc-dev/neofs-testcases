@@ -8,6 +8,7 @@ from data_formatters import get_wallet_public_key
 from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
                     NEOFS_NETMAP_DICT, STORAGE_RPC_ENDPOINT_1, STORAGE_WALLET_PASS)
 from epoch import tick_epoch
+from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from python_keywords.container import create_container, get_container
 from python_keywords.failover_utils import wait_object_replication_on_nodes
 from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
@@ -400,7 +401,8 @@ def wait_for_obj_dropped(wallet: str, cid: str, oid: str, checker) -> None:
             checker(wallet, cid, oid)
             wait_for_gc_pass_on_storage_nodes()
         except Exception as err:
-            if 'object not found' in str(err):
-                break
-    else:
-        raise AssertionError(f'Object {oid} is not dropped from node')
+            if error_matches_status(err, OBJECT_NOT_FOUND):
+                return
+            raise AssertionError(f'Expected "{OBJECT_NOT_FOUND}" error, got\n{err}')
+
+    raise AssertionError(f'Object {oid} was not dropped from node')

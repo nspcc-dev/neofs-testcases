@@ -5,9 +5,11 @@ from time import sleep
 
 import allure
 import pytest
+
 from common import COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
+from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from python_keywords.http_gate import (get_via_http_curl, get_via_http_gate,
                                        get_via_http_gate_by_attribute, get_via_zip_http_gate,
                                        upload_via_http_gate, upload_via_http_gate_curl)
@@ -128,7 +130,6 @@ class TestHttpGate:
     def test_expiration_epoch_in_http(self):
         cid = create_container(self.wallet, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL)
         file_path = generate_file()
-        object_not_found_err = 'object not found'
         oids = []
 
         curr_epoch = get_epoch()
@@ -156,7 +157,7 @@ class TestHttpGate:
                 self.try_to_get_object_and_expect_error(
                     cid=cid,
                     oid=oid,
-                    expected_err=object_not_found_err
+                    error_pattern=OBJECT_NOT_FOUND
                 )
 
             with allure.step('Other objects can be get'):
@@ -220,12 +221,13 @@ class TestHttpGate:
 
     @staticmethod
     @allure.step('Try to get object and expect error')
-    def try_to_get_object_and_expect_error(cid: str, oid: str, expected_err: str):
+    def try_to_get_object_and_expect_error(cid: str, oid: str, error_pattern: str) -> None:
         try:
             get_via_http_gate(cid=cid, oid=oid)
             raise AssertionError(f'Expected error on getting object with cid: {cid}')
         except Exception as err:
-            assert expected_err in str(err), f'Expected error {expected_err} in {err}'
+            assert error_matches_status(err, error_pattern), \
+                f'Expected {err} to match {error_pattern}'
 
     @staticmethod
     @allure.step('Verify object can be get using HTTP header attribute')
