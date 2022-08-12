@@ -81,13 +81,13 @@ class CloudVmStorageServiceHelper:
 
     def stop_node(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            cmd = f"systemctl stop {self.STORAGE_SERVICE}"
+            cmd = f"sudo systemctl stop {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Stop command output: {output.stdout}")
 
     def start_node(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            cmd = f"systemctl start {self.STORAGE_SERVICE}"
+            cmd = f"sudo systemctl start {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Start command output: {output.stdout}")
 
@@ -95,7 +95,7 @@ class CloudVmStorageServiceHelper:
         expected_state = 'active (running)'
         with _create_ssh_client(node_name) as ssh_client:
             for __attempt in range(10):
-                output = ssh_client.exec(f'systemctl status {self.STORAGE_SERVICE}')
+                output = ssh_client.exec(f'sudo systemctl status {self.STORAGE_SERVICE}')
                 if expected_state in output.stdout:
                     return
                 time.sleep(3)
@@ -113,17 +113,17 @@ class CloudVmStorageServiceHelper:
             # Copy wallet content on storage node host
             with open(wallet_path, "r") as file:
                 wallet = file.read()
-            remote_wallet_path = "/tmp/{node_name}-wallet.json"
+            remote_wallet_path = f"/tmp/{node_name}-wallet.json"
             ssh_client.exec_with_confirmation(f"echo '{wallet}' > {remote_wallet_path}", [""])
 
             # Put config on storage node host
-            remote_config_path = "/tmp/{node_name}-config.yaml"
+            remote_config_path = f"/tmp/{node_name}-config.yaml"
             remote_config = 'password: ""'
             ssh_client.exec_with_confirmation(f"echo '{remote_config}' > {remote_config_path}", [""])
 
             # Execute command
             cmd = (
-                f'{STORAGE_NODE_BIN_PATH}/neofs-cli {command} --endpoint {control_endpoint} '
+                f'sudo {STORAGE_NODE_BIN_PATH}/neofs-cli {command} --endpoint {control_endpoint} '
                 f'--wallet {remote_wallet_path} --config {remote_config_path}'
             )
             output = ssh_client.exec_with_confirmation(cmd, [""])
@@ -131,7 +131,7 @@ class CloudVmStorageServiceHelper:
 
     def delete_node_data(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec('rm -rf /srv/neofs/*')
+            ssh_client.exec("sudo rm -rf /srv/neofs/*")
 
     def get_binaries_version(self, binaries: list = None) -> dict:
         default_binaries = [
@@ -153,7 +153,7 @@ class CloudVmStorageServiceHelper:
             with _create_ssh_client(node_name) as ssh_client:
                 for binary in binaries:
                     try:
-                        out = ssh_client.exec(f'{binary} --version').stdout
+                        out = ssh_client.exec(f'sudo {binary} --version').stdout
                     except AssertionError as err:
                         logger.error(f'Can not get version for {binary} because of\n{err}')
                         version_map[binary] = 'Can not get version'
@@ -192,7 +192,8 @@ class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):
 
         # SSH into remote machine and delete files in host directory that is mounted as docker volume
         with _create_ssh_client(node_name) as ssh_client:
-            ssh_client.exec(f'rm -rf {volume_path}/*')
+            # TODO: add sudo prefix after we change a user
+            ssh_client.exec(f"rm -rf {volume_path}/*")
 
 
 def get_storage_service_helper():

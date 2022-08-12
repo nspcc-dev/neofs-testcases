@@ -77,8 +77,6 @@ class HostClient:
             self.create_connection(self.SSH_CONNECTION_ATTEMPTS)
 
     def exec(self, cmd: str, verify=True, timeout=90) -> SSHCommand:
-        if self.login != 'root':
-            cmd = f'sudo {cmd}'
         cmd_result = self._inner_exec(cmd, timeout)
         if verify:
             assert cmd_result.rc == 0, f'Non zero rc from command: "{cmd}"'
@@ -86,8 +84,6 @@ class HostClient:
 
     @log_command
     def exec_with_confirmation(self, cmd: str, confirmation: list, verify=True, timeout=90) -> SSHCommand:
-        if self.login != "root":
-            cmd = f"sudo {cmd}"
         ssh_stdin, ssh_stdout, ssh_stderr = self.ssh_client.exec_command(cmd, timeout=timeout)
         for line in confirmation:
             if not line.endswith('\n'):
@@ -176,7 +172,7 @@ class HostClient:
                 else:
                     logging.info(
                         f"Trying to connect to host {self.ip} as {self.login} using password "
-                        f"{self.password[:2] + '***' if self.password else ''} (attempt {attempt})"
+                        f"(attempt {attempt})"
                     )
                     self.ssh_client.connect(
                         hostname=self.ip,

@@ -25,8 +25,8 @@ blocked_hosts = []
 @pytest.fixture(autouse=True)
 @allure.step('Install iptables if needed')
 def install_iptables_if_needed():
-    check_command = 'iptables --version'
-    install_command = 'apt-get --yes install iptables'
+    check_command = 'sudo iptables --version'
+    install_command = 'sudo apt-get --yes install iptables'
     for node_config in NEOFS_NETMAP_DICT.values():
         host = node_config.get('rpc').split(':')[0]
         client = HostClient(ip=host, login=STORAGE_NODE_SSH_USER,
