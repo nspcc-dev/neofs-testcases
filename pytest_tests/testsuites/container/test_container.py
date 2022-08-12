@@ -5,43 +5,51 @@ import allure
 import pytest
 
 from epoch import tick_epoch
-from python_keywords.container import create_container, get_container, list_containers, delete_container
+from python_keywords.container import (create_container, delete_container, get_container,
+                                       list_containers)
 from utility import placement_policy_from_container
+from wellknown_acl import PRIVATE_ACL_F
 
 
 @pytest.mark.parametrize('name', ['', 'test-container'], ids=['No name', 'Set particular name'])
 @pytest.mark.sanity
 @pytest.mark.container
 def test_container_creation(prepare_wallet_and_deposit, name):
-    wallet = prepare_wallet_and_deposit
-    msg = f'with name {name}' if name else 'without name'
-    allure.dynamic.title(f'User can create container {msg}')
+    scenario_title = f'with name {name}' if name else 'without name'
+    allure.dynamic.title(f'User can create container {scenario_title}')
 
-    with open(wallet) as fp:
-        json_wallet = json.load(fp)
+    wallet = prepare_wallet_and_deposit
+    with open(wallet) as file:
+        json_wallet = json.load(file)
 
     placement_rule = 'REP 2 IN X CBF 1 SELECT 2 FROM * AS X'
-    info_to_check = {'basic ACL: 1c8c8ccc (private)',
-                     f'owner ID: {json_wallet.get("accounts")[0].get("address")}'}
-    if name:
-        info_to_check.add(f'Name={name}')
-        name = f' --name {name}'
-
-    cid = create_container(wallet, rule=placement_rule, options=name)
-    info_to_check.add(f'container ID: {cid}')
+    options = f" --name {name}" if name else ""
+    cid = create_container(wallet, rule=placement_rule, options=options)
 
     containers = list_containers(wallet)
     assert cid in containers, f'Expected container {cid} in containers: {containers}'
 
-    get_output = get_container(wallet, cid, flag='')
+    container_info = get_container(wallet, cid, flag='')
+    container_info = container_info.lower() # To ignore case when comparing with expected values
+
+    info_to_check = {
+        f'basic ACL: {PRIVATE_ACL_F} (private)',
+        f'owner ID: {json_wallet.get("accounts")[0].get("address")}',
+        f'container ID: {cid}',
+    }
+    if name:
+        info_to_check.add(f'Name={name}')
 
     with allure.step('Check container has correct information'):
-        got_policy = placement_policy_from_container(get_output)
-        assert got_policy == placement_rule.replace('\'', ''), \
-            f'Expected \n{placement_rule} and got policy \n{got_policy} are the same'
+        expected_policy = placement_rule.lower()
+        actual_policy = placement_policy_from_container(container_info)
+        assert actual_policy == expected_policy, \
+            f'Expected policy\n{expected_policy} but got policy\n{actual_policy}'
 
         for info in info_to_check:
-            assert info in get_output, f'Expected info {info} in output:\n{get_output}'
+            expected_info = info.lower()
+            assert expected_info in container_info, \
+                f'Expected {expected_info} in container info:\n{container_info}'
 
     with allure.step('Delete container and check it was deleted'):
         delete_container(wallet, cid)
@@ -50,7 +58,7 @@ def test_container_creation(prepare_wallet_and_deposit, name):
 
 
 @allure.step('Wait for container deletion')
-def wait_for_container_deletion(wallet: str, cid: str):
+def wait_for_container_deletion(wallet: str, cid: str) -> None:
     attempts, sleep_interval = 10, 5
     for _ in range(attempts):
         try:
@@ -61,4 +69,4 @@ def wait_for_container_deletion(wallet: str, cid: str):
             if 'container not found' not in str(err):
                 raise AssertionError(f'Expected "container not found" in error, got\n{err}')
             return
-    raise AssertionError(f'Expected container deleted during {attempts * sleep_interval} sec.')
+    raise AssertionError(f'Container was not deleted within {attempts * sleep_interval} sec')

@@ -68,7 +68,6 @@ def _encode_cid_for_eacl(cid: str) -> str:
 @keyword('Create eACL')
 def create_eacl(cid: str, rules_list: list) -> str:
     table_file_path = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
-    # TODO: check if $Object: is still necessary for filtering in the newest releases
     rules = " ".join(f"--rule '{rule}'" for rule in rules_list)
 
     cmd = f"{NEOFS_CLI_EXEC} acl extended create --cid {cid} {rules} --out {table_file_path}"

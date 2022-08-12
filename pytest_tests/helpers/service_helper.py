@@ -183,10 +183,6 @@ class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):
         client = docker.APIClient(base_url=f"tcp://{host}:2375")
         return client
 
-    def run_control_command(self, node_name: str, command: str) -> str:
-        # On remote devenv it works same way as in cloud
-        return CloudVmStorageServiceHelper().run_control_command(node_name, command)
-
     def delete_node_data(self, node_name: str) -> None:
         volume_name = _get_storage_volume_name(node_name)
 

@@ -69,7 +69,7 @@ def placement_policy_from_container(container_info: str) -> str:
         container ID: j7k4auNHRmiPMSmnH2qENLECD2au2y675fvTX6csDwd
         version: 2.12
         owner ID: NQ8HUxE5qEj7UUvADj7z9Z7pcvJdjtPwuw
-        basic ACL: 0x0fbfbfff (eacl-public-read-write)
+        basic ACL: 0fbfbfff (eacl-public-read-write)
         attribute: Timestamp=1656340345 (2022-06-27 17:32:25 +0300 MSK)
         nonce: 1c511e88-efd7-4004-8dbf-14391a5d375a
         placement policy:
