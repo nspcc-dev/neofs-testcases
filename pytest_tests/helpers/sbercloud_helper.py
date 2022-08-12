@@ -38,6 +38,13 @@ class SberCloudConfig:
 
 
 class SberCloud:
+    """
+    Manages resources in Sbercloud via API.
+
+    API reference:
+    https://docs.sbercloud.ru/terraform/ug/topics/quickstart.html
+    https://support.hc.sbercloud.ru/en-us/api/ecs/en-us_topic_0020212668.html
+    """
     def __init__(self, config: SberCloudConfig) -> None:
         self.config = config
         self.ecs_url = None
