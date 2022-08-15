@@ -79,9 +79,9 @@ def return_nodes(alive_node: str = None):
         with allure.step(f'Start node {node}'):
             helper.start_node(node)
 
-        # Wait for node to receive notifications from morph-chain
+        # We need to wait for node to establish notifications from morph-chain
+        # Otherwise it will hang up when we will try to set status
         sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
-        tick_epoch()
 
         with allure.step(f'Move node {node} to online state'):
             node_set_status(node, status='online', retries=2)
