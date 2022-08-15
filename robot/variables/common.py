@@ -13,9 +13,9 @@ MAINNET_TIMEOUT = os.getenv('MAINNET_TIMEOUT', "1min")
 MORPH_BLOCK_TIME = os.getenv("MORPH_BLOCK_TIME", '1s')
 NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
 
-# TODO: change to NEOFS_STORAGE_DEFAULT_GC_REMOVER_SLEEP_INTERVAL
-
-SHARD_0_GC_SLEEP = os.getenv("NEOFS_STORAGE_SHARD_0_GC_REMOVER_SLEEP_INTERVAL", "1m")
+# Time interval that allows a GC pass on storage node (this includes GC sleep interval
+# of 1min plus 15 seconds for GC pass itself)
+STORAGE_GC_TIME = os.getenv("STORAGE_GC_TIME", "75s")
 
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
 

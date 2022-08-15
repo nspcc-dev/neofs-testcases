@@ -4,7 +4,7 @@ import uuid
 
 import allure
 
-from common import ASSETS_DIR, SIMPLE_OBJ_SIZE, SHARD_0_GC_SLEEP
+from common import ASSETS_DIR, SIMPLE_OBJ_SIZE, STORAGE_GC_TIME
 
 
 def create_file_with_content(file_path: str = None, content: str = None) -> str:
@@ -90,6 +90,6 @@ def placement_policy_from_container(container_info: str) -> str:
 
 def wait_for_gc_pass_on_storage_nodes() -> None:
     # We add 15 seconds to allow some time for GC process itself
-    wait_time = robot_time_to_int(SHARD_0_GC_SLEEP) + 15
+    wait_time = robot_time_to_int(STORAGE_GC_TIME)
     with allure.step(f'Wait {wait_time}s until GC completes on storage nodes'):
         time.sleep(wait_time)
