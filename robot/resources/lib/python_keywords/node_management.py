@@ -191,6 +191,7 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
 @keyword('Delete data of node {node_name}')
 def delete_node_data(node_name: str) -> None:
     helper = get_storage_service_helper()
+    helper.stop_node(node_name)
     helper.delete_node_data(node_name)
     time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
 
