@@ -78,7 +78,10 @@ def return_nodes(alive_node: str = None):
     for node in list(check_nodes):
         with allure.step(f'Start node {node}'):
             helper.start_node(node)
-            helper.wait_for_node_to_start(node)
+
+        # Wait for node to receive notifications from morph-chain
+        sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+        tick_epoch()
 
         with allure.step(f'Move node {node} to online state'):
             node_set_status(node, status='online', retries=2)

@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import time
@@ -19,25 +20,21 @@ class LocalDevEnvStorageServiceHelper:
     """
     Manages storage services running on local devenv.
     """
-    def stop_node(self, node_name: str) -> None:
+    def stop_node(self, node_name: str, wait: bool = True) -> None:
         container_name = _get_storage_container_name(node_name)
         client = self._get_docker_client(node_name)
         client.stop(container_name)
 
-    def start_node(self, node_name: str) -> None:
+        if wait:
+            self._wait_for_container_to_be_in_state(node_name, container_name, "exited")
+
+    def start_node(self, node_name: str, wait: bool = True) -> None:
         container_name = _get_storage_container_name(node_name)
         client = self._get_docker_client(node_name)
         client.start(container_name)
 
-    def wait_for_node_to_start(self, node_name: str) -> None:
-        container_name = _get_storage_container_name(node_name)
-        expected_state = "running"
-        for __attempt in range(10):
-            container = self._get_container_by_name(node_name, container_name)
-            if container and container["State"] == expected_state:
-                return
-            time.sleep(3)
-        raise AssertionError(f'Container {container_name} is not in {expected_state} state')
+        if wait:
+            self._wait_for_container_to_be_in_state(node_name, container_name, "running")
 
     def run_control_command(self, node_name: str, command: str) -> str:
         control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
@@ -64,14 +61,30 @@ class LocalDevEnvStorageServiceHelper:
 
     def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
         client = self._get_docker_client(node_name)
-        containers = client.containers()
+        containers = client.containers(all=True)
+
+        logger.info(f"Current containers state\n:{json.dumps(containers, indent=2)}")
+
         for container in containers:
-            if container_name in container["Names"]:
+            # Names in local docker environment are prefixed with /
+            clean_names = set(name.strip("/") for name in container["Names"])
+            if container_name in clean_names:
                 return container
         return None
 
+    def _wait_for_container_to_be_in_state(self, node_name: str, container_name: str,
+                                           expected_state: str) -> None:
+        for __attempt in range(10):
+            container = self._get_container_by_name(node_name, container_name)
+            logger.info(f"Container info:\n{json.dumps(container, indent=2)}")
+            if container and container["State"] == expected_state:
+                return
+            time.sleep(5)
+
+        raise AssertionError(f'Container {container_name} is not in {expected_state} state.')
+
     def _get_docker_client(self, node_name: str) -> docker.APIClient:
-        # For local devenv we use default docker client that talks to unix socket
+        # For local docker we use default docker client that talks to unix socket
         client = docker.APIClient()
         return client
 
@@ -79,29 +92,23 @@ class LocalDevEnvStorageServiceHelper:
 class CloudVmStorageServiceHelper:
     STORAGE_SERVICE = "neofs-storage.service"
 
-    def stop_node(self, node_name: str) -> None:
+    def stop_node(self, node_name: str, wait: bool = True) -> None:
         with _create_ssh_client(node_name) as ssh_client:
             cmd = f"sudo systemctl stop {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Stop command output: {output.stdout}")
 
-    def start_node(self, node_name: str) -> None:
+        if wait:
+            self._wait_for_service_to_be_in_state(node_name, self.STORAGE_SERVICE, "inactive")
+
+    def start_node(self, node_name: str, wait: bool = True) -> None:
         with _create_ssh_client(node_name) as ssh_client:
             cmd = f"sudo systemctl start {self.STORAGE_SERVICE}"
             output = ssh_client.exec_with_confirmation(cmd, [""])
             logger.info(f"Start command output: {output.stdout}")
 
-    def wait_for_node_to_start(self, node_name: str) -> None:
-        expected_state = 'active (running)'
-        with _create_ssh_client(node_name) as ssh_client:
-            for __attempt in range(10):
-                output = ssh_client.exec(f'sudo systemctl status {self.STORAGE_SERVICE}')
-                if expected_state in output.stdout:
-                    return
-                time.sleep(3)
-            raise AssertionError(
-                f'Service {self.STORAGE_SERVICE} is not in {expected_state} state'
-            )
+        if wait:
+            self._wait_for_service_to_be_in_state(node_name, self.STORAGE_SERVICE, "active (running)")
 
     def run_control_command(self, node_name: str, command: str) -> str:
         control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]
@@ -128,6 +135,19 @@ class CloudVmStorageServiceHelper:
             )
             output = ssh_client.exec_with_confirmation(cmd, [""])
             return output.stdout
+
+    def _wait_for_service_to_be_in_state(self, node_name: str, service_name: str,
+                                         expected_state: str) -> None:
+        with _create_ssh_client(node_name) as ssh_client:
+            for __attempt in range(10):
+                # Run command to get service status (set --lines=0 to suppress logs output)
+                # Also we don't verify return code, because for an inactive service return code will be 3
+                command = f'sudo systemctl status {service_name} --lines=0'
+                output = ssh_client.exec(command, verify=False)
+                if expected_state in output.stdout:
+                    return
+                time.sleep(3)
+        raise AssertionError(f'Service {service_name} is not in {expected_state} state')
 
     def delete_node_data(self, node_name: str) -> None:
         with _create_ssh_client(node_name) as ssh_client:
@@ -174,7 +194,7 @@ class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):
     Manages storage services running on remote devenv.
 
     Most of operations are identical to local devenv, however, any interactions
-    with host resources (files, etc.) require ssh into the devenv host machine.
+    with host resources (files, etc.) require ssh into the remote host machine.
     """
     def _get_docker_client(self, node_name: str) -> docker.APIClient:
         # For remote devenv we use docker client that talks to tcp socket 2375:
