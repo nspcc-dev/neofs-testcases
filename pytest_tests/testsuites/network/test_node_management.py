@@ -31,7 +31,7 @@ check_nodes = []
 
 @pytest.fixture
 @allure.title('Create container and pick the node with data')
-def crate_container_and_pick_node(prepare_wallet_and_deposit):
+def create_container_and_pick_node(prepare_wallet_and_deposit):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     placement_rule = 'REP 1 IN X CBF 1 SELECT 1 FROM * AS X'
@@ -316,11 +316,11 @@ def test_drop_object(prepare_wallet_and_deposit):
 @pytest.mark.node_mgmt
 @pytest.mark.skip(reason='Need to clarify scenario')
 @allure.title('Control Operations with storage nodes')
-def test_shards(prepare_wallet_and_deposit, crate_container_and_pick_node):
+def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
 
-    cid, node_name = crate_container_and_pick_node
+    cid, node_name = create_container_and_pick_node
     original_oid = put_object(wallet, file_path, cid)
 
     # for mode in ('read-only', 'degraded'):
