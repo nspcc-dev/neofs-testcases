@@ -43,6 +43,6 @@ Check Public Container
                         Run Storage Group Operations And Expect Success
                         ...     ${WALLET_OTH}       ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
 
-                        # System isn't allowed to DELETE in Public Container
+                        # System isn't allowed to PUT and DELETE in Public Container
                         Run Storage Group Operations On System's Behalf In RO Container
-                        ...     ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}
+                        ...     ${USER_WALLET}      ${PUBLIC_CID}   ${OBJECTS}  ${RUN_TYPE}

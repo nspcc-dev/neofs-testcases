@@ -32,7 +32,7 @@ def put_storagegroup(wallet: str, cid: str, objects: list, bearer_token: str = "
     cmd = (
         f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} '
         f'--wallet {wallet} --config {wallet_config} '
-        f'storagegroup put --cid {cid} '
+        f'storagegroup put --cid {cid} --lifetime 5 '
         f'--members {",".join(objects)} '
         f'{"--bearer " + bearer_token if bearer_token else ""}'
     )

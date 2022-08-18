@@ -76,21 +76,26 @@ Run Storage Group Operations On Other's Behalf In RO Container
 
 
 Run Storage Group Operations On System's Behalf In RO Container
-    [Arguments]         ${CID}  ${OBJECTS}    ${OBJ_COMPLEXITY}
-    [Documentation]     ${CID}:             ID of read-only container
+    [Arguments]         ${OWNER_WALLET}     ${CID}  ${OBJECTS}    ${OBJ_COMPLEXITY}
+    [Documentation]     ${OWNER_WALLET}     wallet of container owner
+            ...         ${CID}:             ID of read-only container
             ...         ${OBJECTS}:         list of Object IDs to include into the Storage Group
             ...         ${OBJ_COMPLEXITY}:  [Complex|Simple]
             ...
-            ...         In this keyword we create Storage Group on Inner Ring's key behalf
-            ...         and include an Object created on behalf of some user. We expect
-            ...         that System key is granted to make all operations except DELETE.
+            ...         We expect that System key is granted to make GET and LIST.
 
                 Transfer Mainnet Gas        ${IR_WALLET_PATH}    ${DEPOSIT + 1}  wallet_password=${IR_WALLET_PASS}
                 NeoFS Deposit               ${IR_WALLET_PATH}    ${DEPOSIT}      wallet_password=${IR_WALLET_PASS}
 
-    ${SG} =     Put Storagegroup            ${IR_WALLET_PATH}    ${CID}  ${OBJECTS}     wallet_config=${IR_WALLET_CONFIG}
+    ${SG} =     Put Storagegroup            ${OWNER_WALLET}     ${CID}  ${OBJECTS}
+
+    ${ERR} =    Run Keyword And Expect Error    *
+                ...     Put Storagegroup            ${IR_WALLET_PATH}    ${CID}  ${OBJECTS}     wallet_config=${IR_WALLET_CONFIG}
+                Should Contain      ${ERR}      ${PERMISSION_ERROR}
+
                 Verify List Storage Group   ${IR_WALLET_PATH}    ${CID}  ${SG}          WALLET_CFG=${IR_WALLET_CONFIG}
                 Verify Get Storage Group    ${IR_WALLET_PATH}    ${CID}  ${SG}   ${OBJECTS}  ${OBJ_COMPLEXITY}      WALLET_CFG=${IR_WALLET_CONFIG}
+
     ${ERR} =    Run Keyword And Expect Error    *
                 ...     Delete Storagegroup    ${IR_WALLET_PATH}    ${CID}    ${SG}     wallet_config=${IR_WALLET_CONFIG}
                 Should Contain      ${ERR}      ${PERMISSION_ERROR}
