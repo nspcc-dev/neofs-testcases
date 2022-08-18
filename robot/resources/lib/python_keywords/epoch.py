@@ -1,6 +1,4 @@
 #!/usr/bin/python3.9
-import sys
-
 import allure
 from robot.api import logger
 from robot.api.deco import keyword
@@ -40,12 +38,11 @@ def tick_epoch():
             err = str(exc)
             raise RuntimeError("Failed to tick epoch") from exc
         finally:
-            if 'allure' in sys.modules:
-                allure.attach((
-                    f'COMMAND: {cmd}\n'
-                    f'OUTPUT:\n {out}\n'
-                    f'ERROR: {err}\n'
-                ), 'Tick Epoch', allure.attachment_type.TEXT)
+            allure.attach((
+                f'COMMAND: {cmd}\n'
+                f'OUTPUT:\n {out}\n'
+                f'ERROR: {err}\n'
+            ), 'Tick Epoch', allure.attachment_type.TEXT)
         return
 
     # Otherwise we tick epoch using transaction
