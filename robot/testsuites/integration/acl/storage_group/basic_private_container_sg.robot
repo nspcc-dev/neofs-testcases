@@ -48,4 +48,4 @@ Check Private Container
     # In private container, Inner Ring is allowed to read (Storage Group List and Get),
     # so using here keyword for read-only container.
                         Run Storage Group Operations On System's Behalf In RO Container
-                        ...                         ${PRIV_CID}   ${OBJECTS}    ${COMPLEXITY}
+                        ...     ${USER_WALLET}      ${PRIV_CID}   ${OBJECTS}    ${COMPLEXITY}

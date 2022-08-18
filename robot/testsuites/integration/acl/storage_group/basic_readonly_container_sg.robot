@@ -52,4 +52,4 @@ Check Read-Only Container
     ...     ${USER_WALLET}  ${READONLY_CID}     ${OBJECTS}  ${COMPLEXITY}
 
     Run Storage Group Operations On System's Behalf in RO Container
-    ...                     ${READONLY_CID}     ${OBJECTS}  ${COMPLEXITY}
+    ...     ${USER_WALLET}  ${READONLY_CID}     ${OBJECTS}  ${COMPLEXITY}
