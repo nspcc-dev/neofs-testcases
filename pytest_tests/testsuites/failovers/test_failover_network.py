@@ -6,7 +6,7 @@ import allure
 import pytest
 
 from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
-                    STORAGE_NODE_SSH_PASSWORD, NEOFS_NETMAP_DICT)
+                    STORAGE_NODE_SSH_PASSWORD)
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from iptables_helper import IpTablesHelper
 from python_keywords.container import create_container
@@ -20,25 +20,6 @@ STORAGE_NODE_COMMUNICATION_PORT = '8080'
 STORAGE_NODE_COMMUNICATION_PORT_TLS = '8082'
 PORTS_TO_BLOCK = [STORAGE_NODE_COMMUNICATION_PORT, STORAGE_NODE_COMMUNICATION_PORT_TLS]
 blocked_hosts = []
-
-
-@pytest.fixture(autouse=True)
-@allure.step('Install iptables if needed')
-def install_iptables_if_needed():
-    check_command = 'sudo iptables --version'
-    install_command = 'sudo apt-get --yes install iptables'
-    for node_config in NEOFS_NETMAP_DICT.values():
-        host = node_config.get('rpc').split(':')[0]
-        client = HostClient(ip=host, login=STORAGE_NODE_SSH_USER,
-                            password=STORAGE_NODE_SSH_PASSWORD,
-                            private_key_path=STORAGE_NODE_SSH_PRIVATE_KEY_PATH)
-        with client.create_ssh_connection():
-            try:
-                client.exec(check_command)
-            except AssertionError as err:
-                logger.info(f'Command {check_command} fails with error {err}')
-                client.exec(install_command)
-                client.exec(check_command)
 
 
 @pytest.fixture(autouse=True)
