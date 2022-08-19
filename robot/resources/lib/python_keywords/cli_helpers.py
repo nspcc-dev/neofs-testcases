@@ -42,22 +42,26 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
-        logger.info(f"Error:\nreturn code: {exc.returncode} "
+        logger.info(f"Command: {cmd}\n"
+                    f"Error:\nreturn code: {exc.returncode} "
                     f"\nOutput: {exc.output}")
         end_time = datetime.now()
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
 
-        raise RuntimeError(f"Error:\nreturn code: {exc.returncode} "
-                           f"\nOutput: {exc.output}") from exc
+        raise RuntimeError(f"Command: {cmd}\n"
+                           f"Error:\nreturn code: {exc.returncode}\n"
+                           f"Output: {exc.output}") from exc
     except OSError as exc:
-        raise RuntimeError(f"Output: {exc.strerror}") from exc
+        raise RuntimeError(f"Command: {cmd}\n"
+                           f"Output: {exc.strerror}") from exc
     except Exception as exc:
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         end_time = datetime.now()
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
-        logger.info(f"Error:\nreturn code: {return_code}\nOutput: "
-                    f"{exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}")
+        logger.info(f"Command: {cmd}\n"
+                    f"Error:\nreturn code: {return_code}\n"
+                    f"Output: {exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}")
         raise
 
 

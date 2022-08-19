@@ -3,14 +3,12 @@ from time import sleep
 
 import allure
 import pytest
-
-from common import SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE
+from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from grpc_responses import OBJECT_ALREADY_REMOVED, OBJECT_NOT_FOUND, error_matches_status
-from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
-                                         get_range_hash, head_object,
-                                         put_object, search_object)
+from python_keywords.neofs_verbs import (delete_object, get_object, get_range, get_range_hash, head_object, put_object,
+                                         search_object)
 from python_keywords.storage_policy import get_simple_object_copies
 from python_keywords.utility_keywords import generate_file, get_file_hash
 from tombstone import verify_head_tombstone
@@ -116,7 +114,7 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
     file_hash = get_file_hash(file_path)
     epoch = get_epoch()
 
-    oid = put_object(wallet, file_path, cid, options=f'--expire-at {epoch + 1}')
+    oid = put_object(wallet, file_path, cid, expire_at=epoch + 1)
     got_file = get_object(wallet, cid, oid)
     assert get_file_hash(got_file) == file_hash
 

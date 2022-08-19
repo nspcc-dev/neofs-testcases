@@ -1,32 +1,28 @@
 #!/usr/bin/python3
 
-'''
+"""
     This module contains wrappers for NeoFS verbs executed via neofs-cli.
-'''
+"""
 
 import json
-import os
 import random
 import re
 import uuid
+from typing import Optional
 
 import json_transformers
-from cli_helpers import _cmd_run
+from cli import NeofsCli
 from common import ASSETS_DIR, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
-from data_formatters import dict_to_attrs
 from robot.api import logger
 from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
-# path to neofs-cli executable
-NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
-
 
 @keyword('Get object')
-def get_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
-               write_object: str = "", endpoint: str = "", options: str = "",
-               wallet_config: str = WALLET_CONFIG):
+def get_object(wallet: str, cid: str, oid: str, bearer_token: Optional[str] = None, write_object: str = "",
+               endpoint: str = "", options: Optional[dict] = None, wallet_config: str = WALLET_CONFIG,
+               no_progress: bool = True):
     """
     GET from NeoFS.
 
@@ -38,6 +34,7 @@ def get_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
         write_object (optional, str): path to downloaded file, appends to `--file` key
         endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         wallet_config(optional, str): path to the wallet config
+        no_progress(optional, bool): do not show progress bar
         options (optional, str): any options which `neofs-cli object get` accepts
     Returns:
         (str): path to downloaded file
@@ -50,20 +47,17 @@ def get_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
     if not endpoint:
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
 
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
-        f'object get --cid {cid} --oid {oid} --file {file_path} --config {wallet_config} '
-        f'{"--bearer " + bearer_token if bearer_token else ""} '
-        f'{options}'
-    )
-    _cmd_run(cmd)
+    cli = NeofsCli(config=wallet_config)
+    cli.object.get(rpc_endpoint=endpoint, wallet=wallet, cid=cid, oid=oid, file=file_path,
+                   bearer=bearer_token, no_progress=no_progress, **options or {})
+
     return file_path
 
 
 # TODO: make `bearer_token` optional
 @keyword('Get Range Hash')
 def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str, range_cut: str,
-                   wallet_config: str = WALLET_CONFIG, options: str = ""):
+                   wallet_config: str = WALLET_CONFIG, options: Optional[dict] = None):
     """
     GETRANGEHASH of given Object.
 
@@ -79,20 +73,19 @@ def get_range_hash(wallet: str, cid: str, oid: str, bearer_token: str, range_cut
     Returns:
         None
     """
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'object hash --cid {cid} --oid {oid} --range {range_cut} --config {wallet_config} '
-        f'{"--bearer " + bearer_token if bearer_token else ""} '
-        f'{options}'
-    )
-    output = _cmd_run(cmd)
+
+    cli = NeofsCli(config=wallet_config)
+    output = cli.object.hash(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, oid=oid, range=range_cut,
+                             bearer=bearer_token, **options or {})
+
     # cutting off output about range offset and length
     return output.split(':')[1].strip()
 
 
 @keyword('Put object')
-def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers: dict = {},
-               endpoint: str = "", wallet_config: str = WALLET_CONFIG, options: str = ""):
+def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers: Optional[dict] = None,
+               endpoint: str = "", wallet_config: str = WALLET_CONFIG, expire_at: Optional[int] = None,
+               no_progress: bool = True, options: Optional[dict] = None):
     """
     PUT of given file.
 
@@ -104,7 +97,9 @@ def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers:
         user_headers (optional, dict): Object attributes, append to `--attributes` key
         endpoint(optional, str): NeoFS endpoint to send request to
         wallet_config(optional, str): path to the wallet config
+        no_progress(optional, bool): do not show progress bar
         options (optional, str): any options which `neofs-cli object put` accepts
+        expire_at (optional, int): Last epoch in the life of the object
     Returns:
         (str): ID of uploaded Object
     """
@@ -112,13 +107,12 @@ def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers:
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
         if not endpoint:
             logger.info(f'---DEB:\n{NEOFS_NETMAP}')
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint} --wallet {wallet} '
-        f'object put --file {path} --cid {cid} {options} --config {wallet_config} '
-        f'{"--bearer " + bearer if bearer else ""} '
-        f'{"--attributes " + dict_to_attrs(user_headers) if user_headers else ""}'
-    )
-    output = _cmd_run(cmd)
+
+    cli = NeofsCli(config=wallet_config)
+    output = cli.object.put(rpc_endpoint=endpoint, wallet=wallet, file=path, cid=cid, bearer=bearer,
+                            expire_at=expire_at, no_progress=no_progress,
+                            attributes=user_headers or {}, **options or {})
+
     # splitting CLI output to lines and taking the penultimate line
     id_str = output.strip().split('\n')[-2]
     oid = id_str.split(':')[1]
@@ -127,7 +121,7 @@ def put_object(wallet: str, path: str, cid: str, bearer: str = "", user_headers:
 
 @keyword('Delete object')
 def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_config: str = WALLET_CONFIG,
-                  options: str = ""):
+                  options: Optional[dict] = None):
     """
     DELETE an Object.
 
@@ -137,16 +131,15 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_conf
         oid (str): ID of Object we are going to delete
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         wallet_config(optional, str): path to the wallet config
-        options (optional, str): any options which `neofs-cli object delete` accepts
+        options (optional, dict): any options which `neofs-cli object delete` accepts
     Returns:
         (str): Tombstone ID
     """
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'object delete --cid {cid} --oid {oid} {options} --config {wallet_config} '
-        f'{"--bearer " + bearer if bearer else ""}'
-    )
-    output = _cmd_run(cmd)
+
+    cli = NeofsCli(config=wallet_config)
+    output = cli.object.delete(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, oid=oid, bearer=bearer,
+                               **options or {})
+
     id_str = output.split('\n')[1]
     tombstone = id_str.split(':')[1]
     return tombstone.strip()
@@ -154,7 +147,7 @@ def delete_object(wallet: str, cid: str, oid: str, bearer: str = "", wallet_conf
 
 @keyword('Get Range')
 def get_range(wallet: str, cid: str, oid: str, range_cut: str, wallet_config: str = WALLET_CONFIG,
-              bearer: str = "", options: str = ""):
+              bearer: str = "", options: Optional[dict] = None):
     """
     GETRANGE an Object.
 
@@ -165,35 +158,31 @@ def get_range(wallet: str, cid: str, oid: str, range_cut: str, wallet_config: st
         range_cut (str): range to take data from in the form offset:length
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         wallet_config(optional, str): path to the wallet config
-        options (optional, str): any options which `neofs-cli object range` accepts
+        options (optional, dict): any options which `neofs-cli object range` accepts
     Returns:
         (str, bytes) - path to the file with range content and content of this file as bytes
     """
     range_file = f"{ASSETS_DIR}/{uuid.uuid4()}"
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'object range --cid {cid} --oid {oid} --range {range_cut} --config {wallet_config} '
-        f'{options} --file {range_file} '
-        f'{"--bearer " + bearer if bearer else ""} '
-    )
-    _cmd_run(cmd)
-    content = ''
+
+    cli = NeofsCli(config=wallet_config)
+    cli.object.range(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, oid=oid, range=range_cut, file=range_file,
+                     bearer=bearer, **options or {})
+
     with open(range_file, 'rb') as fout:
         content = fout.read()
     return range_file, content
 
 
 @keyword('Search object')
-def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filters: dict = {},
-                  expected_objects_list=[], wallet_config: str = WALLET_CONFIG, options: str = ""):
+def search_object(wallet: str, cid: str, bearer: str = "", filters: Optional[dict] = None,
+                  expected_objects_list: Optional[list] = None, wallet_config: str = WALLET_CONFIG,
+                  options: Optional[dict] = None):
     """
     SEARCH an Object.
 
     Args:
         wallet (str): wallet on whose behalf SEARCH is done
         cid (str): ID of Container where we get the Object from
-        keys(optional, str): any keys for Object SEARCH which `neofs-cli object search`
-                            accepts, e.g. `--oid`
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         filters (optional, dict): key=value pairs to filter Objects
         expected_objects_list (optional, list): a list of ObjectIDs to compare found Objects with
@@ -202,19 +191,12 @@ def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filte
     Returns:
         (list): list of found ObjectIDs
     """
-    filters_result = ""
-    if filters:
-        filters_result += "--filters "
-        logger.info(filters)
-        filters_result += ','.join(
-            map(lambda i: f"'{i} EQ {filters[i]}'", filters))
 
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'object search {keys} --cid {cid} {filters_result} --config {wallet_config} '
-        f'{"--bearer " + bearer if bearer else ""} {options}'
-    )
-    output = _cmd_run(cmd)
+    cli = NeofsCli(config=wallet_config)
+    output = cli.object.search(
+        rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, bearer=bearer,
+        filters=[f'{filter_key} EQ {filter_val}' for filter_key, filter_val in filters.items()] if filters else None,
+        **options or {})
 
     found_objects = re.findall(r'(\w{43,44})', output)
 
@@ -231,7 +213,7 @@ def search_object(wallet: str, cid: str, keys: str = "", bearer: str = "", filte
 
 @keyword('Head object')
 def head_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
-                options: str = "", endpoint: str = "", json_output: bool = True,
+                options: Optional[dict] = None, endpoint: str = None, json_output: bool = True,
                 is_raw: bool = False, is_direct: bool = False, wallet_config: str = WALLET_CONFIG):
     """
     HEAD an Object.
@@ -256,20 +238,15 @@ def head_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
         or
         (str): HEAD response as a plain text
     """
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {endpoint if endpoint else NEOFS_ENDPOINT} '
-        f'--wallet {wallet} --config {wallet_config} '
-        f'object head --cid {cid} --oid {oid} {options} '
-        f'{"--bearer " + bearer_token if bearer_token else ""} '
-        f'{"--json" if json_output else ""} '
-        f'{"--raw" if is_raw else ""} '
-        f'{"--ttl 1" if is_direct else ""}'
-    )
-    output = _cmd_run(cmd)
+
+    cli = NeofsCli(config=wallet_config)
+    output = cli.object.head(rpc_endpoint=endpoint or NEOFS_ENDPOINT, wallet=wallet, cid=cid, oid=oid,
+                             bearer=bearer_token, json_mode=json_output, raw=is_raw,
+                             ttl=1 if is_direct else None, **options or {})
+
     if not json_output:
         return output
 
-    decoded = ""
     try:
         decoded = json.loads(output)
     except Exception as exc:

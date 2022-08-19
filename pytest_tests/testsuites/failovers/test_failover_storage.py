@@ -2,8 +2,7 @@ import logging
 
 import allure
 import pytest
-from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
-                    STORAGE_NODE_SSH_PASSWORD)
+from common import STORAGE_NODE_SSH_PASSWORD, STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
@@ -11,7 +10,6 @@ from python_keywords.utility_keywords import generate_file, get_file_hash
 from sbercloud_helper import SberCloud, SberCloudConfig
 from ssh_helper import HostClient
 from wellknown_acl import PUBLIC_ACL
-
 
 logger = logging.getLogger('NeoLogger')
 stopped_hosts = []
@@ -52,11 +50,11 @@ def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
     wait_all_storage_node_returned()
 
 
-@allure.title('Lost and return nodes')
+@allure.title('Lost and returned nodes')
 @pytest.mark.parametrize('hard_reboot', [True, False])
 @pytest.mark.failover
-def test_lost_storage_node(prepare_wallet_and_deposit, sbercloud_client: SberCloud,
-                           cloud_infrastructure_check, hard_reboot: bool):
+def test_lost_storage_node(prepare_wallet_and_deposit, sbercloud_client: SberCloud, cloud_infrastructure_check,
+                           hard_reboot: bool):
     wallet = prepare_wallet_and_deposit
     placement_rule = 'REP 2 IN X CBF 2 SELECT 2 FROM * AS X'
     source_file_path = generate_file()
@@ -97,6 +95,7 @@ def test_panic_storage_node(prepare_wallet_and_deposit, cloud_infrastructure_che
     oid = put_object(wallet, source_file_path, cid)
 
     nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    new_nodes: list[str] = []
     allure.attach('\n'.join(nodes), 'Current nodes with object', allure.attachment_type.TEXT)
     for node in nodes:
         with allure.step(f'Hard reboot host {node} via magic SysRq option'):
