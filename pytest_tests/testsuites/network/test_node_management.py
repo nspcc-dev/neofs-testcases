@@ -360,7 +360,7 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node):
 @allure.step('Validate object has {expected_copies} copies')
 def validate_object_copies(wallet: str, placement_rule: str, file_path: str, expected_copies: int):
     cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    got_policy = placement_policy_from_container(get_container(wallet, cid, flag=''))
+    got_policy = placement_policy_from_container(get_container(wallet, cid, json_mode=False))
     assert got_policy == placement_rule.replace('\'', ''), \
         f'Expected \n{placement_rule} and got policy \n{got_policy} are the same'
     oid = put_object(wallet, file_path, cid)

@@ -1,13 +1,11 @@
 import json
-from time import sleep
 
 import allure
 import pytest
-
 from epoch import tick_epoch
 from grpc_responses import CONTAINER_NOT_FOUND, error_matches_status
-from python_keywords.container import (create_container, delete_container, get_container,
-                                       list_containers)
+from python_keywords.container import (create_container, delete_container, get_container, list_containers,
+                                       wait_for_container_creation, wait_for_container_deletion)
 from utility import placement_policy_from_container
 from wellknown_acl import PRIVATE_ACL_F
 
@@ -24,13 +22,12 @@ def test_container_creation(prepare_wallet_and_deposit, name):
         json_wallet = json.load(file)
 
     placement_rule = 'REP 2 IN X CBF 1 SELECT 2 FROM * AS X'
-    options = f"--name {name}" if name else ""
-    cid = create_container(wallet, rule=placement_rule, options=options)
+    cid = create_container(wallet, rule=placement_rule, name=name)
 
     containers = list_containers(wallet)
     assert cid in containers, f'Expected container {cid} in containers: {containers}'
 
-    container_info: str = get_container(wallet, cid, flag='')
+    container_info: str = get_container(wallet, cid, json_mode=False)
     container_info = container_info.casefold() # To ignore case when comparing with expected values
 
     info_to_check = {
@@ -58,17 +55,25 @@ def test_container_creation(prepare_wallet_and_deposit, name):
         wait_for_container_deletion(wallet, cid)
 
 
-@allure.step('Wait for container deletion')
-def wait_for_container_deletion(wallet: str, cid: str) -> None:
-    attempts, sleep_interval = 10, 5
-    for _ in range(attempts):
-        try:
-            get_container(wallet, cid)
-            sleep(sleep_interval)
-            continue
-        except Exception as err:
-            if error_matches_status(err, CONTAINER_NOT_FOUND):
-                return
-            raise AssertionError(f'Expected "{CONTAINER_NOT_FOUND}" error, got\n{err}')
+@allure.title('Parallel container creation and deletion')
+@pytest.mark.sanity
+@pytest.mark.container
+def test_container_creation_deletion_parallel(prepare_wallet_and_deposit):
+    containers_count = 3
+    wallet = prepare_wallet_and_deposit
+    placement_rule = 'REP 2 IN X CBF 1 SELECT 2 FROM * AS X'
 
-    raise AssertionError(f'Container was not deleted within {attempts * sleep_interval} sec')
+    cids: list[str] = []
+    with allure.step(f'Create {containers_count} containers'):
+        for _ in range(containers_count):
+            cids.append(create_container(wallet, rule=placement_rule, await_mode=False, wait_for_creation=False))
+
+    with allure.step(f'Wait for containers occur in container list'):
+        for cid in cids:
+            wait_for_container_creation(wallet, cid, sleep_interval=containers_count)
+
+    with allure.step('Delete containers and check they were deleted'):
+        for cid in cids:
+            delete_container(wallet, cid)
+        tick_epoch()
+        wait_for_container_deletion(wallet, cid)

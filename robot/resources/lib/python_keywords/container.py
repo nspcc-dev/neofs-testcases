@@ -5,24 +5,24 @@
 """
 
 import json
-import time
-from typing import Optional
+from time import sleep
+from typing import Optional, Union
 
 import json_transformers
-from data_formatters import dict_to_attrs
-from cli_helpers import _cmd_run
-from common import NEOFS_ENDPOINT, NEOFS_CLI_EXEC, WALLET_CONFIG
-
+from cli import NeofsCli
+from common import NEOFS_ENDPOINT, WALLET_CONFIG
 from robot.api import logger
 from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 DEFAULT_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
+
 @keyword('Create Container')
 def create_container(wallet: str, rule: str = DEFAULT_PLACEMENT_RULE, basic_acl: str = '',
                      attributes: Optional[dict] = None, session_token: str = '',
-                     session_wallet: str = '', options: str = '') -> str:
+                     session_wallet: str = '', name: str = None, options: dict = None,
+                     await_mode: bool = True, wait_for_creation: bool = True) -> str:
     """
         A wrapper for `neofs-cli container create` call.
 
@@ -37,39 +37,51 @@ def create_container(wallet: str, rule: str = DEFAULT_PLACEMENT_RULE, basic_acl:
             session_wallet(optional, str): a path to the wallet which signed
                                 the session token; this parameter makes sense
                                 when paired with `session_token`
-            options (optional, str): any other options to pass to the call
+            options (optional, dict): any other options to pass to the call
+            name (optional, str): container name attribute
+            await_mode (bool): block execution until container is persisted
+            wait_for_creation (): Wait for container shows in container list
 
         Returns:
             (str): CID of the created container
     """
 
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} container create '
-        f'--wallet {session_wallet if session_wallet else wallet} '
-        f'--config {WALLET_CONFIG} --policy "{rule}" '
-        f'{"--basic-acl " + basic_acl if basic_acl else ""} '
-        f'{"--attributes " + dict_to_attrs(attributes) if attributes else ""} '
-        f'{"--session " + session_token if session_token else ""} '
-        f'{options} --await'
-    )
-    output = _cmd_run(cmd, timeout=60)
+    cli = NeofsCli(config=WALLET_CONFIG, timeout=60)
+    output = cli.container.create(rpc_endpoint=NEOFS_ENDPOINT, wallet=session_wallet if session_wallet else wallet,
+                                  policy=rule, basic_acl=basic_acl, attributes=attributes, name=name,
+                                  session=session_token, await_mode=await_mode, **options or {})
+
     cid = _parse_cid(output)
 
-    logger.info("Container created; waiting until it is persisted in sidechain")
+    logger.info("Container created; waiting until it is persisted in the sidechain")
 
-    deadline_to_persist = 15  # seconds
-    for i in range(0, deadline_to_persist):
-        time.sleep(1)
+    if wait_for_creation:
+        wait_for_container_creation(wallet, cid)
+
+    return cid
+
+
+def wait_for_container_creation(wallet: str, cid: str, attempts: int = 15, sleep_interval: int = 1):
+    for _ in range(attempts):
         containers = list_containers(wallet)
         if cid in containers:
-            break
-        logger.info(f"There is no {cid} in {containers} yet; continue")
-        if i + 1 == deadline_to_persist:
-            raise RuntimeError(
-                f"After {deadline_to_persist} seconds the container "
-                f"{cid} hasn't been persisted; exiting"
-            )
-    return cid
+            return
+        logger.info(f"There is no {cid} in {containers} yet; sleep {sleep_interval} and continue")
+        sleep(sleep_interval)
+    raise RuntimeError(f"After {attempts * sleep_interval} seconds container {cid} hasn't been persisted; exiting")
+
+
+def wait_for_container_deletion(wallet: str, cid: str, attempts: int = 30, sleep_interval: int = 1):
+    for _ in range(attempts):
+        try:
+            get_container(wallet, cid)
+            sleep(sleep_interval)
+            continue
+        except Exception as err:
+            if 'container not found' not in str(err):
+                raise AssertionError(f'Expected "container not found" in error, got\n{err}')
+            return
+    raise AssertionError(f'Expected container deleted during {attempts * sleep_interval} sec.')
 
 
 @keyword('List Containers')
@@ -82,33 +94,30 @@ def list_containers(wallet: str) -> list[str]:
         Returns:
             (list): list of containers
     """
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_CONFIG} container list'
-    )
-    output = _cmd_run(cmd)
+    cli = NeofsCli(config=WALLET_CONFIG)
+    output = cli.container.list(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet)
+    logger.info(f"Containers: \n{output}")
     return output.split()
 
 
 @keyword('Get Container')
-def get_container(wallet: str, cid: str, flag: str = '--json') -> dict:
+def get_container(wallet: str, cid: str, json_mode: bool = True) -> Union[dict, str]:
     """
         A wrapper for `neofs-cli container get` call. It extracts container's
         attributes and rearranges them into a more compact view.
         Args:
             wallet (str): path to a wallet on whose behalf we get the container
             cid (str): ID of the container to get
-            flag (str): output as json or plain text
+            json_mode (bool): return container in JSON format
         Returns:
             (dict, str): dict of container attributes
     """
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_CONFIG} --cid {cid} container get {flag}'
-    )
-    output = _cmd_run(cmd)
-    if flag != '--json':
+    cli = NeofsCli(config=WALLET_CONFIG)
+    output = cli.container.get(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, json_mode=json_mode)
+
+    if not json_mode:
         return output
+
     container_info = json.loads(output)
     attributes = dict()
     for attr in container_info['attributes']:
@@ -130,11 +139,8 @@ def delete_container(wallet: str, cid: str) -> None:
         This function doesn't return anything.
     """
 
-    cmd = (
-        f'{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} --wallet {wallet} '
-        f'--config {WALLET_CONFIG} container delete --cid {cid}'
-    )
-    _cmd_run(cmd)
+    cli = NeofsCli(config=WALLET_CONFIG)
+    cli.container.delete(wallet=wallet, cid=cid, rpc_endpoint=NEOFS_ENDPOINT)
 
 
 def _parse_cid(output: str) -> str:

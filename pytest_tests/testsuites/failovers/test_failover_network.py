@@ -4,9 +4,8 @@ from time import sleep
 
 import allure
 import pytest
-
-from common import (STORAGE_NODE_SSH_PRIVATE_KEY_PATH, STORAGE_NODE_SSH_USER,
-                    STORAGE_NODE_SSH_PASSWORD)
+from common import (STORAGE_NODE_SSH_PASSWORD, STORAGE_NODE_SSH_PRIVATE_KEY_PATH,
+                    STORAGE_NODE_SSH_USER)
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from iptables_helper import IpTablesHelper
 from python_keywords.container import create_container
