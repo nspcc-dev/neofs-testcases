@@ -60,21 +60,26 @@ class SberCloudAuthRequests:
         self.secret_key = secret_key
 
     def get(self, path: str, query: Optional[dict] = None) -> requests.Response:
-        return self._send_request("GET", path, query, content="")
+        return self._send_request("GET", path, query, data=None)
 
     def post(self, path: str, query: Optional[dict] = None,
              data: Optional[dict] = None) -> requests.Response:
-        content = json.dumps(data) if data else ""
-        return self._send_request("POST", path, query, content)
+        return self._send_request("POST", path, query, data)
 
     def _send_request(self, method: str, path: str, query: Optional[dict],
-                      content: str) -> requests.Response:
-        body = content.encode(self.ENCODING)
+                      data: Optional[dict]) -> requests.Response:
         if self.base_path:
             path = self.base_path + path
 
         timestamp = datetime.strftime(datetime.utcnow(), self.TIMESTAMP_FORMAT)
-        headers = self._build_original_headers(timestamp, body)
+        headers = self._build_original_headers(timestamp)
+
+        content = ""
+        if data:
+            # At the moment we support json content only
+            content = json.dumps(data)
+            headers["Content-Type"] = "application/json"
+        body = content.encode(self.ENCODING)
 
         signed_headers = self._build_signed_headers(headers)
         canonical_request = self._build_canonical_request(method, path, query, body, headers,
@@ -91,16 +96,11 @@ class SberCloudAuthRequests:
                                  f"response={response.text})")
         return response
 
-    def _build_original_headers(self, timestamp: str, body: bytes) -> dict[str, str]:
-        headers = {}
-        headers["X-Sdk-Date"] = timestamp
-        headers["host"] = self.endpoint
-
-        if body:
-            headers["Content-Type"] = "application/json"
-            headers["content-length"] = str(len(body))
-
-        return headers
+    def _build_original_headers(self, timestamp: str) -> dict[str, str]:
+        return {
+            "X-Sdk-Date": timestamp,
+            "host": self.endpoint,
+        }
 
     def _build_signed_headers(self, headers: dict[str, str]) -> list[str]:
         return sorted(header_name.lower() for header_name in headers)
@@ -127,7 +127,7 @@ class SberCloudAuthRequests:
             normalized_key = key.lower()
             normalized_value = value.strip()
             normalized_headers[normalized_key] = normalized_value
-            # Re-encode header in request itself
+            # Re-encode header in request itself (iso-8859-1 comes from HTTP 1.1 standard)
             headers[key] = normalized_value.encode(self.ENCODING).decode("iso-8859-1")
 
         # Join headers in the same order as they are sorted in signed_headers list
