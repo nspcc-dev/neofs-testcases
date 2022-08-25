@@ -1,117 +1,102 @@
-import os
-from typing import Tuple
-
 import allure
 import pytest
 
-import wallet
-from common import ASSETS_DIR
-from grpc_responses import OBJECT_ACCESS_DENIED
-from python_keywords.acl import set_eacl
+from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
-from python_keywords.neofs_verbs import (delete_object, get_object, get_range,
-                                         get_range_hash, head_object,
-                                         put_object, search_object)
-from python_keywords.utility_keywords import generate_file, get_file_hash
-
-RESOURCE_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    '../../../robot/resources/files/',
-)
+from python_keywords.container_access import (check_full_access_to_container, check_no_access_to_container,
+                                              check_read_only_container)
+from python_keywords.neofs_verbs import put_object
+from wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL_F, READONLY_ACL_F
 
 
 @pytest.mark.sanity
 @pytest.mark.acl
-class TestACL:
-    @pytest.fixture(autouse=True)
-    def create_two_wallets(self, prepare_wallet_and_deposit):
-        self.main_wallet = prepare_wallet_and_deposit
-        self.other_wallet = wallet.init_wallet(ASSETS_DIR)[0] # We need wallet file path only
+@pytest.mark.acl_container
+class TestACLBasic:
 
-    @allure.title('Test basic ACL')
-    def test_basic_acl(self):
+    @pytest.fixture(scope='function')
+    def public_container(self, wallets):
+        user_wallet = wallets.get_wallet()
+        with allure.step('Create public container'):
+            cid_public = create_container(user_wallet.wallet_path, basic_acl=PUBLIC_ACL_F)
+
+        yield cid_public
+
+        # with allure.step('Delete public container'):
+        #     delete_container(user_wallet.wallet_path, cid_public)
+
+    @pytest.fixture(scope='function')
+    def private_container(self, wallets):
+        user_wallet = wallets.get_wallet()
+        with allure.step('Create private container'):
+            cid_private = create_container(user_wallet.wallet_path, basic_acl=PRIVATE_ACL_F)
+
+        yield cid_private
+
+        # with allure.step('Delete private container'):
+        #     delete_container(user_wallet.wallet_path, cid_private)
+
+    @pytest.fixture(scope='function')
+    def read_only_container(self, wallets):
+        user_wallet = wallets.get_wallet()
+        with allure.step('Create public readonly container'):
+            cid_read_only = create_container(user_wallet.wallet_path, basic_acl=READONLY_ACL_F)
+
+        yield cid_read_only
+
+        # with allure.step('Delete public readonly container'):
+        #     delete_container(user_wallet.wallet_path, cid_read_only)
+
+    @allure.title('Test basic ACL on public container')
+    def test_basic_acl_public(self, wallets, public_container, file_path):
         """
-        Test basic ACL set during container creation.
+        Test basic ACL set during public container creation.
         """
-        file_name = generate_file()
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(role=EACLRole.OTHERS)
+        cid = public_container
+        for wallet, desc in ((user_wallet, 'owner'), (other_wallet, 'other users')):
+            with allure.step('Add test objects to container'):
+                # We create new objects for each wallet because check_full_access_to_container deletes the object
+                owner_object_oid = put_object(user_wallet.wallet_path, file_path, cid, attributes={'created': 'owner'})
+                other_object_oid = put_object(other_wallet.wallet_path, file_path, cid, attributes={'created': 'other'})
+            with allure.step(f'Check {desc} has full access to public container'):
+                check_full_access_to_container(wallet.wallet_path, cid, owner_object_oid, file_path)
+                check_full_access_to_container(wallet.wallet_path, cid, other_object_oid, file_path)
 
-        with allure.step('Create public container and check access'):
-            cid_public = create_container(self.main_wallet, basic_acl='public-read-write')
-            self.check_full_access(cid_public, file_name)
+    @allure.title('Test basic ACL on private container')
+    def test_basic_acl_private(self, wallets, private_container, file_path):
+        """
+        Test basic ACL set during private container creation.
+        """
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(role=EACLRole.OTHERS)
+        cid = private_container
+        with allure.step('Add test objects to container'):
+            owner_object_oid = put_object(user_wallet.wallet_path, file_path, cid)
 
-        with allure.step('Create private container and check only owner has access'):
-            cid_private = create_container(self.main_wallet, basic_acl='private')
-
-            with allure.step('Check owner can put/get object into private container'):
-                oid = put_object(wallet=self.main_wallet, path=file_name, cid=cid_private)
-
-                got_file = get_object(self.main_wallet, cid_private, oid)
-                assert get_file_hash(got_file) == get_file_hash(file_name)
-
+        with allure.step('Check only owner has full access to private container'):
             with allure.step('Check no one except owner has access to operations with container'):
-                self.check_no_access_to_container(self.other_wallet, cid_private, oid, file_name)
+                check_no_access_to_container(other_wallet.wallet_path, cid, owner_object_oid, file_path)
 
-            delete_object(self.main_wallet, cid_private, oid)
+            with allure.step('Check owner has full access to private container'):
+                check_full_access_to_container(
+                    user_wallet.wallet_path, cid, owner_object_oid, file_path)
 
-    @allure.title('Test extended ACL')
-    def test_extended_acl(self):
+    @allure.title('Test basic ACL on readonly container')
+    def test_basic_acl_readonly(self, wallets, read_only_container, file_path):
         """
-        Test basic extended ACL applied after container creation.
+        Test basic ACL Operations for Read-Only Container.
         """
-        file_name = generate_file()
-        deny_all_eacl = os.path.join(RESOURCE_DIR, 'eacl_tables/gen_eacl_deny_all_OTHERS')
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(role=EACLRole.OTHERS)
+        cid = read_only_container
 
-        with allure.step('Create public container and check access'):
-            cid_public = create_container(self.main_wallet, basic_acl='eacl-public-read-write')
-            oid = self.check_full_access(cid_public, file_name)
+        with allure.step('Add test objects to container'):
+            object_oid = put_object(user_wallet.wallet_path, file_path, cid)
 
-        with allure.step('Set "deny all operations for other" for created container'):
-            set_eacl(self.main_wallet, cid_public, deny_all_eacl)
+        with allure.step('Check other has read-only access to operations with container'):
+            check_read_only_container(other_wallet.wallet_path, cid, object_oid, file_path)
 
-        with allure.step('Check no one except owner has access to operations with container'):
-            self.check_no_access_to_container(self.other_wallet, cid_public, oid, file_name)
-
-        with allure.step('Check owner has access to operations with container'):
-            self.check_full_access(cid_public, file_name, wallet_to_check=((self.main_wallet, 'owner'),))
-
-            delete_object(self.main_wallet, cid_public, oid)
-
-    @staticmethod
-    def check_no_access_to_container(wallet: str, cid: str, oid: str, file_name: str):
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            get_object(wallet, cid, oid)
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_object(wallet, file_name, cid)
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            delete_object(wallet, cid, oid)
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            head_object(wallet, cid, oid)
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            get_range(wallet, cid, oid, bearer='', range_cut='0:10')
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            get_range_hash(wallet, cid, oid, bearer_token='', range_cut='0:10')
-
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            search_object(wallet, cid)
-
-    def check_full_access(self, cid: str, file_name: str, wallet_to_check: Tuple = None) -> str:
-        wallets = wallet_to_check or ((self.main_wallet, 'owner'), (self.other_wallet, 'not owner'))
-        for current_wallet, desc in wallets:
-            with allure.step(f'Check {desc} can put object into public container'):
-                oid = put_object(current_wallet, file_name, cid)
-
-            with allure.step(f'Check {desc} can execute operations on object from public container'):
-                got_file = get_object(current_wallet, cid, oid)
-                assert get_file_hash(got_file) == get_file_hash(file_name), 'Expected hashes are the same'
-
-                head_object(current_wallet, cid, oid)
-                get_range(current_wallet, cid, oid, bearer='', range_cut='0:10')
-                get_range_hash(current_wallet, cid, oid, bearer_token='', range_cut='0:10')
-                search_object(current_wallet, cid)
-
-        return oid
+        with allure.step('Check owner has full access to public container'):
+            check_full_access_to_container(user_wallet.wallet_path, cid, object_oid, file_path)

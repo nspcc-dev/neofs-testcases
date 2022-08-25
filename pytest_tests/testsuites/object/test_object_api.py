@@ -45,8 +45,8 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 
     with allure.step('Put objects'):
         oids.append(put_object(wallet=wallet, path=file_path, cid=cid))
-        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, user_headers=file_usr_header))
-        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, user_headers=file_usr_header_oth))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, attributes=file_usr_header))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, attributes=file_usr_header_oth))
 
     with allure.step('Validate storage policy for objects'):
         for oid_to_check in oids:

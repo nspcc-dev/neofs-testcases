@@ -11,11 +11,8 @@ ROBOT_AUTO_KEYWORDS = False
 
 
 @keyword('Verify Head Tombstone')
-def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str,
-                          bearer: str = "", options: str = ""):
-    header = neofs_verbs.head_object(wallet_path, cid, oid_ts,
-                                     bearer_token=bearer,
-                                     options=options)
+def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
+    header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
     header = header['header']
 
     BuiltIn().should_be_equal(header["containerID"], cid,

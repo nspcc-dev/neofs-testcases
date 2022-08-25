@@ -6,7 +6,7 @@ from .cli_command import NeofsCliCommandBase
 class NeofsCliObject(NeofsCliCommandBase):
     def delete(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, address: Optional[str] = None,
                bearer: Optional[str] = None, session: Optional[str] = None, ttl: Optional[int] = None,
-               xhdr: Optional[list] = None, **params) -> str:
+               xhdr: Optional[dict] = None) -> str:
         """Delete object from NeoFS
 
         Args:
@@ -26,13 +26,13 @@ class NeofsCliObject(NeofsCliCommandBase):
         """
         return self._execute(
             'object delete',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def get(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, address: Optional[str] = None,
             bearer: Optional[str] = None, file: Optional[str] = None,
             header: Optional[str] = None, no_progress: bool = False, raw: bool = False,
-            session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[list] = None, **params) -> str:
+            session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
         """Get object from NeoFS
 
         Args:
@@ -56,13 +56,12 @@ class NeofsCliObject(NeofsCliCommandBase):
         """
         return self._execute(
             'object get',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def hash(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, address: Optional[str] = None,
              bearer: Optional[str] = None, range: Optional[str] = None, salt: Optional[str] = None,
-             ttl: Optional[int] = None, hash_type: Optional[str] = None, xhdr: Optional[list] = None,
-             **params) -> str:
+             ttl: Optional[int] = None, hash_type: Optional[str] = None, xhdr: Optional[dict] = None) -> str:
         """Get object hash
 
         Args:
@@ -90,7 +89,7 @@ class NeofsCliObject(NeofsCliCommandBase):
     def head(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, address: Optional[str] = None,
              bearer: Optional[str] = None, file: Optional[str] = None,
              json_mode: bool = False, main_only: bool = False, proto: bool = False, raw: bool = False,
-             session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[list] = None, **params) -> str:
+             session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
         """Get object header
 
                 Args:
@@ -116,12 +115,12 @@ class NeofsCliObject(NeofsCliCommandBase):
                 """
         return self._execute(
             'object head',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def lock(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, lifetime: int, address: Optional[str] = None,
-             bearer: Optional[str] = None, session: Optional[str] = None,
-             ttl: Optional[int] = None, xhdr: Optional[list] = None, **params) -> str:
+             bearer: Optional[str] = None, session: Optional[str] = None, ttl: Optional[int] = None,
+             xhdr: Optional[dict] = None) -> str:
         """Lock object in container
 
                 Args:
@@ -143,14 +142,14 @@ class NeofsCliObject(NeofsCliCommandBase):
                 """
         return self._execute(
             'object lock',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def put(self, rpc_endpoint: str, wallet: str, cid: str, file: str, address: Optional[str] = None,
             attributes: Optional[dict] = None, bearer: Optional[str] = None, disable_filename: bool = False,
             disable_timestamp: bool = False, expire_at: Optional[int] = None, no_progress: bool = False,
             notify: Optional[str] = None, session: Optional[str] = None, ttl: Optional[int] = None,
-            xhdr: Optional[list] = None, **params) -> str:
+            xhdr: Optional[dict] = None) -> str:
         """Put object to NeoFS
 
         Args:
@@ -176,12 +175,12 @@ class NeofsCliObject(NeofsCliCommandBase):
         """
         return self._execute(
             'object put',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def range(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, range: str, address: Optional[str] = None,
               bearer: Optional[str] = None, file: Optional[str] = None, json_mode: bool = False, raw: bool = False,
-              session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[list] = None, **params) -> str:
+              session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
         """Get payload range data of an object
 
                 Args:
@@ -206,13 +205,13 @@ class NeofsCliObject(NeofsCliCommandBase):
                 """
         return self._execute(
             'object range',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )
 
     def search(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None,
                bearer: Optional[str] = None,  filters: Optional[list] = None, oid: Optional[str] = None,
                phy: bool = False, root: bool = False, session: Optional[str] = None, ttl: Optional[int] = None,
-               xhdr: Optional[list] = None, **params) -> str:
+               xhdr: Optional[dict] = None) -> str:
         """Search object
 
                 Args:
@@ -236,5 +235,5 @@ class NeofsCliObject(NeofsCliCommandBase):
                 """
         return self._execute(
             'object search',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'params']}
+            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
         )

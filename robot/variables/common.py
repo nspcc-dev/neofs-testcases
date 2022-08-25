@@ -27,7 +27,7 @@ GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
 
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
-ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
+ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", "../neofs-dev-env")
 CLI_CONFIGS_PATH = os.getenv("CLI_CONFIGS_PATH", f"{os.getcwd()}/neofs_cli_configs")
 

@@ -3,7 +3,6 @@ import json
 import allure
 import pytest
 from epoch import tick_epoch
-from grpc_responses import CONTAINER_NOT_FOUND, error_matches_status
 from python_keywords.container import (create_container, delete_container, get_container, list_containers,
                                        wait_for_container_creation, wait_for_container_deletion)
 from utility import placement_policy_from_container
@@ -28,7 +27,7 @@ def test_container_creation(prepare_wallet_and_deposit, name):
     assert cid in containers, f'Expected container {cid} in containers: {containers}'
 
     container_info: str = get_container(wallet, cid, json_mode=False)
-    container_info = container_info.casefold() # To ignore case when comparing with expected values
+    container_info = container_info.casefold()  # To ignore case when comparing with expected values
 
     info_to_check = {
         f'basic ACL: {PRIVATE_ACL_F} (private)',

@@ -130,17 +130,18 @@ def get_container(wallet: str, cid: str, json_mode: bool = True) -> Union[dict, 
 @keyword('Delete Container')
 # TODO: make the error message about a non-found container more user-friendly
 # https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(wallet: str, cid: str) -> None:
+def delete_container(wallet: str, cid: str, force: bool = False) -> None:
     """
         A wrapper for `neofs-cli container delete` call.
         Args:
             wallet (str): path to a wallet on whose behalf we delete the container
             cid (str): ID of the container to delete
+            force (bool): do not check whether container contains locks and remove immediately
         This function doesn't return anything.
     """
 
     cli = NeofsCli(config=WALLET_CONFIG)
-    cli.container.delete(wallet=wallet, cid=cid, rpc_endpoint=NEOFS_ENDPOINT)
+    cli.container.delete(wallet=wallet, cid=cid, rpc_endpoint=NEOFS_ENDPOINT, force=force)
 
 
 def _parse_cid(output: str) -> str:
