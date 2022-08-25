@@ -8,7 +8,7 @@ class NeofsCliContainer(NeofsCliCommandBase):
                basic_acl: Optional[str] = None, await_mode: bool = False, disable_timestamp: bool = False,
                name: Optional[str] = None, nonce: Optional[str] = None, policy: Optional[str] = None,
                session: Optional[str] = None, subnet: Optional[str] = None, ttl: Optional[int] = None,
-               xhdr: Optional[list] = None) -> str:
+               xhdr: Optional[dict] = None) -> str:
         """Create a new container and register it in the NeoFS.
         It will be stored in the sidechain when the Inner Ring accepts it.
 
@@ -39,7 +39,8 @@ class NeofsCliContainer(NeofsCliCommandBase):
         )
 
     def delete(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None, await_mode: bool = False,
-               session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[list] = None) -> str:
+               session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None,
+               force: bool = False) -> str:
         """Delete an existing container.
         Only the owner of the container has permission to remove the container.
 
@@ -47,6 +48,7 @@ class NeofsCliContainer(NeofsCliCommandBase):
             address:           address of wallet account
             await_mode:        block execution until container is removed
             cid:               container ID
+            force:             do not check whether container contains locks and remove immediately
             rpc_endpoint:      remote node address (as 'multiaddr' or '<host>:<port>')
             session:           path to a JSON-encoded container session token
             ttl:               TTL value in request meta header (default 2)

@@ -24,13 +24,21 @@ class NeofsCliCommandBase:
                 continue
             if isinstance(value, bool):
                 param_str.append(f'--{param}')
+            elif isinstance(value, int):
+                param_str.append(f'--{param} {value}')
             elif isinstance(value, list):
-                param_str.append(f'--{param} \'{",".join(value)}\'')
+                for value_item in value:
+                    val_str = str(value_item).replace("'", "\\'")
+                    param_str.append(f"--{param} '{val_str}'")
             elif isinstance(value, dict):
                 param_str.append(f'--{param} \'{",".join(f"{key}={val}" for key, val in value.items())}\'')
             else:
-                value_str = str(value).replace("'", "\\'")
-                param_str.append(f"--{param} '{value_str}'")
+                if "'" in str(value):
+                    value_str = str(value).replace('"', '\\"')
+                    param_str.append(f'--{param} "{value_str}"')
+                else:
+                    param_str.append(f"--{param} '{value}'")
+
         param_str = ' '.join(param_str)
 
         return f'{self.neofs_cli_exec} {self.__base_params} {command or ""} {param_str}'
