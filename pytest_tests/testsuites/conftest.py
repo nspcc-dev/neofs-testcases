@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import shutil
+from datetime import datetime
 
 import allure
 import pytest
@@ -63,8 +64,21 @@ def _get_binaries_version_local(binaries: list) -> dict:
 
 
 @pytest.fixture(scope='session', autouse=True)
+@allure.title('Collect logs')
+def collect_logs():
+    start_time = datetime.utcnow()
+    yield
+    end_time = datetime.utcnow()
+
+    helper = get_storage_service_helper()
+    logs_by_service_id = helper.logs(since=start_time, until=end_time)
+    for service_id, logs in logs_by_service_id.items():
+        allure.attach(logs, f"logs_{service_id}", allure.attachment_type.TEXT)
+
+
+@pytest.fixture(scope='session', autouse=True)
 @allure.title('Run health check for all storage nodes')
-def run_health_check():
+def run_health_check(collect_logs):
     failed_nodes = []
     for node_name in NEOFS_NETMAP_DICT.keys():
         health_check = node_healthcheck(node_name)

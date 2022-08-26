@@ -3,6 +3,8 @@ import logging
 import re
 import time
 from contextlib import contextmanager
+from datetime import datetime
+from typing import Optional
 
 import docker
 
@@ -20,6 +22,20 @@ class LocalDevEnvStorageServiceHelper:
     """
     Manages storage services running on local devenv.
     """
+
+    # Names of all containers that are running neofs code
+    ALL_CONTAINERS = [
+        "s3_gate",
+        "http_gate",
+        "s03",
+        "s01",
+        "s02",
+        "s04",
+        "ir01",
+        "morph_chain",
+        "main_chain",
+    ]
+
     def stop_node(self, node_name: str, wait: bool = True) -> None:
         container_name = _get_storage_container_name(node_name)
         client = self._get_docker_client(node_name)
@@ -59,6 +75,17 @@ class LocalDevEnvStorageServiceHelper:
     def get_binaries_version(self) -> dict:
         return {}
 
+    def logs(self, since: Optional[datetime], until: Optional[datetime]) -> dict[str, str]:
+        # All containers are running on the same host, so we can use 1st node to collect all logs
+        first_node_name = next(iter(NEOFS_NETMAP_DICT))
+        client = self._get_docker_client(first_node_name)
+
+        logs_by_container = {}
+        for container_name in self.ALL_CONTAINERS:
+            logs = client.logs(container_name, since=since, until=until)
+            logs_by_container[container_name] = logs
+        return logs_by_container
+
     def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
         client = self._get_docker_client(node_name)
         containers = client.containers(all=True)
@@ -91,6 +118,14 @@ class LocalDevEnvStorageServiceHelper:
 
 class CloudVmStorageServiceHelper:
     STORAGE_SERVICE = "neofs-storage.service"
+
+    ALL_SERVICES = [
+        "neofs-http.service",
+        "neofs-s3.service",
+        "neofs-storage.service",
+        "neofs-ir.service",
+        "neofs-morph-cn.service",
+    ]
 
     def stop_node(self, node_name: str, wait: bool = True) -> None:
         with _create_ssh_client(node_name) as ssh_client:
@@ -187,6 +222,22 @@ class CloudVmStorageServiceHelper:
                             f'Expected binary {binary} to have identical version on all nodes ' \
                             f'(mismatch on node {node_name})'
         return version_map
+
+    def logs(self, since: Optional[datetime], until: Optional[datetime]) -> dict[str, str]:
+        logs_by_service_id = {}
+        for node_name in NEOFS_NETMAP_DICT:
+            with _create_ssh_client(node_name) as ssh_client:
+                for service_name in self.ALL_SERVICES:
+                    filters = " ".join([
+                        f"--since '{since:%Y-%m-%d %H:%M:%S}'" if since else "",
+                        f"--until '{until:%Y-%m-%d %H:%M:%S}'" if until else "",
+                    ])
+                    result = ssh_client.exec(f"journalctl -u {service_name} --no-pager {filters}")
+                    logs = result.stdout
+
+                    service_id = f"{node_name}_{service_name}"
+                    logs_by_service_id[service_id] = logs
+        return logs_by_service_id
 
 
 class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):
