@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 """
-    This module contains functions which are used for Large Object assemling:
+    This module contains functions which are used for Large Object assembling:
     getting Last Object and split and getting Link Object. It is not enough to
     simply perform a "raw" HEAD request, as noted in the issue:
     https://github.com/nspcc-dev/neofs-node/issues/1304. Therefore, the reliable
-    retrival of the aforementioned objects must be done this way: send direct
+    retrieval of the aforementioned objects must be done this way: send direct
     "raw" HEAD request to the every Storage Node and return the desired OID on
     first non-null response.
 """
