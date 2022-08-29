@@ -1,9 +1,9 @@
 from typing import Optional
 
-from .cli_command import NeofsCliCommandBase
+from cli_utils.cli_command import NeofsCliCommand
 
 
-class NeofsCliObject(NeofsCliCommandBase):
+class NeofsCliObject(NeofsCliCommand):
     def delete(self, rpc_endpoint: str, wallet: str, cid: str, oid: str, address: Optional[str] = None,
                bearer: Optional[str] = None, session: Optional[str] = None, ttl: Optional[int] = None,
                xhdr: Optional[dict] = None) -> str:

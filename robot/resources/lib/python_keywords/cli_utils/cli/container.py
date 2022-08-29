@@ -1,9 +1,9 @@
 from typing import Optional
 
-from .cli_command import NeofsCliCommandBase
+from cli_utils.cli_command import NeofsCliCommand
 
 
-class NeofsCliContainer(NeofsCliCommandBase):
+class NeofsCliContainer(NeofsCliCommand):
     def create(self, rpc_endpoint: str, wallet: str, address: Optional[str] = None, attributes: Optional[dict] = None,
                basic_acl: Optional[str] = None, await_mode: bool = False, disable_timestamp: bool = False,
                name: Optional[str] = None, nonce: Optional[str] = None, policy: Optional[str] = None,

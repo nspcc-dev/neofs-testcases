@@ -5,15 +5,15 @@ import shutil
 
 import allure
 import pytest
-from robot.api import deco
-
 import wallet
 from cli_helpers import _cmd_run
+from cli_utils import NeofsAdm, NeofsCli
 from common import (ASSETS_DIR, FREE_STORAGE, INFRASTRUCTURE_TYPE, MAINNET_WALLET_PATH,
                     NEOFS_NETMAP_DICT)
 from env_properties import save_env_properties
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
+from robot.api import deco
 from service_helper import get_storage_service_helper
 
 
@@ -37,8 +37,14 @@ def cloud_infrastructure_check():
 @allure.title('Check binary versions')
 def check_binary_versions(request):
     # Collect versions of local binaries
-    binaries = ['neo-go', 'neofs-cli', 'neofs-authmate']
+    binaries = ['neo-go', 'neofs-authmate']
     local_binaries = _get_binaries_version_local(binaries)
+
+    try:
+        local_binaries['neofs-adm'] = NeofsAdm().version.get()
+    except RuntimeError:
+        logger.info(f'neofs-adm not installed')
+    local_binaries['neofs-cli'] = NeofsCli().version.get()
 
     # Collect versions of remote binaries
     helper = get_storage_service_helper()

@@ -1,9 +1,9 @@
 from typing import Optional
 
-from .cli_command import NeofsCliCommandBase
+from cli_utils.cli_command import NeofsCliCommand
 
 
-class NeofsCliACL(NeofsCliCommandBase):
+class NeofsCliACL(NeofsCliCommand):
     def extended_create(self, cid: str, out: str, file: Optional[str] = None, rule: Optional[list] = None) -> str:
 
         """Create extended ACL from the text representation.

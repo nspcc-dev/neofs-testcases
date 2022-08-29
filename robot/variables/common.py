@@ -107,7 +107,8 @@ STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH
 STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor")
 
 # Path and config for neofs-adm utility. Optional if tests are running against devenv
-NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC")
+NEOFS_ADM_EXEC = os.getenv('NEOFS_ADM_EXEC', 'neofs-adm')
+
 NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
 
 INFRASTRUCTURE_TYPE = os.getenv("INFRASTRUCTURE_TYPE", "LOCAL_DEVENV")

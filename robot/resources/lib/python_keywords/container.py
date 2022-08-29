@@ -9,7 +9,7 @@ from time import sleep
 from typing import Optional, Union
 
 import json_transformers
-from cli import NeofsCli
+from cli_utils import NeofsCli
 from common import NEOFS_ENDPOINT, WALLET_CONFIG
 from robot.api import logger
 from robot.api.deco import keyword
