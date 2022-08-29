@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import time
 from contextlib import contextmanager
@@ -75,16 +76,19 @@ class LocalDevEnvStorageServiceHelper:
     def get_binaries_version(self) -> dict:
         return {}
 
-    def logs(self, since: Optional[datetime], until: Optional[datetime]) -> dict[str, str]:
+    def dump_logs(self, directory_path: str, since: Optional[datetime],
+                  until: Optional[datetime]) -> None:
         # All containers are running on the same host, so we can use 1st node to collect all logs
         first_node_name = next(iter(NEOFS_NETMAP_DICT))
         client = self._get_docker_client(first_node_name)
 
-        logs_by_container = {}
         for container_name in self.ALL_CONTAINERS:
             logs = client.logs(container_name, since=since, until=until)
-            logs_by_container[container_name] = logs
-        return logs_by_container
+
+            # Dump logs to the directory
+            file_path = os.path.join(directory_path, f"{container_name}-log.txt")
+            with open(file_path, "wb") as file:
+                file.write(logs)
 
     def _get_container_by_name(self, node_name: str, container_name: str) -> dict:
         client = self._get_docker_client(node_name)
@@ -118,14 +122,6 @@ class LocalDevEnvStorageServiceHelper:
 
 class CloudVmStorageServiceHelper:
     STORAGE_SERVICE = "neofs-storage.service"
-
-    ALL_SERVICES = [
-        "neofs-http.service",
-        "neofs-s3.service",
-        "neofs-storage.service",
-        "neofs-ir.service",
-        "neofs-morph-cn.service",
-    ]
 
     def stop_node(self, node_name: str, wait: bool = True) -> None:
         with _create_ssh_client(node_name) as ssh_client:
@@ -223,21 +219,24 @@ class CloudVmStorageServiceHelper:
                             f'(mismatch on node {node_name})'
         return version_map
 
-    def logs(self, since: Optional[datetime], until: Optional[datetime]) -> dict[str, str]:
-        logs_by_service_id = {}
-        for node_name in NEOFS_NETMAP_DICT:
+    def dump_logs(self, directory_path: str, since: Optional[datetime],
+                  until: Optional[datetime]) -> None:
+        for node_name, node_info in NEOFS_NETMAP_DICT.items():
             with _create_ssh_client(node_name) as ssh_client:
-                for service_name in self.ALL_SERVICES:
-                    filters = " ".join([
-                        f"--since '{since:%Y-%m-%d %H:%M:%S}'" if since else "",
-                        f"--until '{until:%Y-%m-%d %H:%M:%S}'" if until else "",
-                    ])
-                    result = ssh_client.exec(f"journalctl -u {service_name} --no-pager {filters}")
-                    logs = result.stdout
+                # We do not filter out logs of neofs services, because system logs might contain
+                # information that is useful for troubleshooting
+                filters = " ".join([
+                    f"--since '{since:%Y-%m-%d %H:%M:%S}'" if since else "",
+                    f"--until '{until:%Y-%m-%d %H:%M:%S}'" if until else "",
+                ])
+                result = ssh_client.exec(f"journalctl --no-pager {filters}")
+                logs = result.stdout
 
-                    service_id = f"{node_name}_{service_name}"
-                    logs_by_service_id[service_id] = logs
-        return logs_by_service_id
+                # Dump logs to the directory. We include node endpoint in file name, because almost
+                # everywhere in Allure report we are logging endpoints rather than node names
+                file_path = os.path.join(directory_path, f"{node_name}-{node_info['rpc']}-log.txt")
+                with open(file_path, "w") as file:
+                    file.write(logs)
 
 
 class RemoteDevEnvStorageServiceHelper(LocalDevEnvStorageServiceHelper):

@@ -63,17 +63,34 @@ def _get_binaries_version_local(binaries: list) -> dict:
     return env_out
 
 
-@pytest.fixture(scope='session', autouse=True)
-@allure.title('Collect logs')
-def collect_logs():
+@pytest.fixture(scope='session')
+@allure.title('Prepare tmp directory')
+def prepare_tmp_dir():
+    full_path = f'{os.getcwd()}/{ASSETS_DIR}'
+    shutil.rmtree(full_path, ignore_errors=True)
+    os.mkdir(full_path)
+    yield full_path
+    shutil.rmtree(full_path)
+
+
+@pytest.fixture(scope="session", autouse=True)
+@allure.title("Collect logs")
+def collect_logs(prepare_tmp_dir):
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
 
+    # Dump logs to temp directory (because they might be too large to keep in RAM)
+    logs_dir = os.path.join(prepare_tmp_dir, "logs")
+    os.makedirs(logs_dir)
+
     helper = get_storage_service_helper()
-    logs_by_service_id = helper.logs(since=start_time, until=end_time)
-    for service_id, logs in logs_by_service_id.items():
-        allure.attach(logs, f"logs_{service_id}", allure.attachment_type.TEXT)
+    helper.dump_logs(logs_dir, since=start_time, until=end_time)
+
+    # Zip all files and attach to Allure because it is more convenient to download a single
+    # zip with all logs rather than mess with individual logs files per service or node
+    logs_zip_file_path = shutil.make_archive(logs_dir, "zip", logs_dir)
+    allure.attach.file(logs_zip_file_path, name="logs.zip", extension="zip")
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -87,16 +104,6 @@ def run_health_check(collect_logs):
 
     if failed_nodes:
         raise AssertionError(f'Nodes {failed_nodes} are not healthy')
-
-
-@pytest.fixture(scope='session')
-@allure.title('Prepare tmp directory')
-def prepare_tmp_dir():
-    full_path = f'{os.getcwd()}/{ASSETS_DIR}'
-    shutil.rmtree(full_path, ignore_errors=True)
-    os.mkdir(full_path)
-    yield full_path
-    shutil.rmtree(full_path)
 
 
 @pytest.fixture(scope='session')
