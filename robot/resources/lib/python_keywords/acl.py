@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from cli import NeofsCli
 from cli_helpers import _cmd_run
+from cli_utils import NeofsCli
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 

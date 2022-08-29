@@ -1,9 +1,9 @@
 from typing import Optional
 
-from .cli_command import NeofsCliCommandBase
+from cli_utils.cli_command import NeofsCliCommand
 
 
-class NeofsCliAccounting(NeofsCliCommandBase):
+class NeofsCliAccounting(NeofsCliCommand):
     def balance(self, wallet: str, rpc_endpoint: str, address: Optional[str] = None,
                 owner: Optional[str] = None) -> str:
         """Get internal balance of NeoFS account

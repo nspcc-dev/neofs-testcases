@@ -3,13 +3,13 @@ from typing import Optional
 from cli_helpers import _cmd_run
 
 
-class NeofsCliCommandBase:
+class NeofsCliCommand:
     neofs_cli_exec: Optional[str] = None
     timeout: Optional[int] = None
     __base_params: Optional[str] = None
-    map_params = {'json_mode': 'json', 'await_mode': 'await', 'hash_type': 'hash'}
+    map_params = {'json_mode': 'json', 'await_mode': 'await', 'hash_type': 'hash', 'doc_type': 'type'}
 
-    def __init__(self, neofs_cli_exec: str, timeout: int = 30, **base_params):
+    def __init__(self, neofs_cli_exec: str, timeout: int, **base_params):
         self.neofs_cli_exec = neofs_cli_exec
         self.timeout = timeout
         self.__base_params = ' '.join([f'--{param} {value}' for param, value in base_params.items() if value])
