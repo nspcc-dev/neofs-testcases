@@ -91,7 +91,7 @@ MAINNET_WALLET_CONFIG = os.getenv("MAINNET_WALLET_CONFIG", f"{CLI_CONFIGS_PATH}/
 MAINNET_SINGLE_ADDR = os.getenv("MAINNET_SINGLE_ADDR", "NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP")
 MAINNET_WALLET_PASS = os.getenv("MAINNET_WALLET_PASS", "one")
 
-IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", f"{DEVENV_PATH}/services/ir/wallet01.json")
+IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", f"{DEVENV_PATH}/services/ir/az.json")
 IR_WALLET_CONFIG = os.getenv("IR_WALLET_CONFIG", f"{CLI_CONFIGS_PATH}/one_wallet_password.yml")
 IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
 
