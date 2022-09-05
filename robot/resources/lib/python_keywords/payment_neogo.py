@@ -73,7 +73,7 @@ def transaction_accepted(tx_id: str):
 
 
 @keyword('Get NeoFS Balance')
-def get_balance(wallet_path: str):
+def get_neofs_balance(wallet_path: str):
     """
     This function returns NeoFS balance for given wallet.
     """

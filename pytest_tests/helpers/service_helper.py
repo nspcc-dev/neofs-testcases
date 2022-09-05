@@ -53,6 +53,39 @@ class LocalDevEnvStorageServiceHelper:
 
         if wait:
             self._wait_for_container_to_be_in_state(node_name, container_name, "running")
+    
+    def stop_ir(self, ir_names: list, wait: bool = True) -> None:
+        for ir_name in ir_names:
+            container_name = _get_storage_container_name(ir_name)
+            client = self._get_docker_client(ir_name)
+            test_path = os.getcwd()
+            dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
+            os.chdir(dev_path)
+            with open(f"{dev_path}/.int_test.env", "w"):
+                pass
+            os.chdir(test_path)
+            client.stop(container_name)
+
+            if wait:
+                self._wait_for_container_to_be_in_state(ir_name, container_name, "exited")
+
+    def start_ir(self, ir_names: list, config_dict: dict, wait: bool = True) -> None:
+        
+        for ir_name in ir_names:
+            container_name = _get_storage_container_name(ir_name)
+            client = self._get_docker_client(ir_name)
+            test_path = os.getcwd()
+            dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
+            os.chdir(dev_path)
+            if config_dict != {}:
+                with open(f"{dev_path}/.int_test.env", "a") as out:
+                    for key, value in config_dict.items():
+                        out.write(f'{key}={value}')
+            os.chdir(test_path)
+            client.start(container_name)
+
+            if wait:
+                self._wait_for_container_to_be_in_state(ir_name, container_name, "running")
 
     def run_control_command(self, node_name: str, command: str) -> str:
         control_endpoint = NEOFS_NETMAP_DICT[node_name]["control"]

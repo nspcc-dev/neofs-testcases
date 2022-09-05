@@ -137,3 +137,10 @@ def prepare_wallet_and_deposit(prepare_tmp_dir):
         neofs_deposit(wallet_path, deposit)
 
     return wallet_path
+
+
+@pytest.fixture(scope="session")
+@allure.title("Public network check")
+def public_network_only():
+    if FREE_STORAGE:
+        pytest.skip("Test only works on public network with paid storage")
