@@ -34,27 +34,26 @@ class Wallets:
 
 @pytest.fixture(scope="module")
 def wallets(prepare_wallet_and_deposit):
-    yield Wallets(wallets={
-        EACLRole.USER: [
-            Wallet(
-                wallet_path=prepare_wallet_and_deposit,
-                config_path=WALLET_CONFIG
-            )],
-        EACLRole.OTHERS: [
-            Wallet(
-                wallet_path=init_wallet(ASSETS_DIR)[0],
-                config_path=WALLET_CONFIG
-            ),
-            Wallet(
-                wallet_path=init_wallet(ASSETS_DIR)[0],
-                config_path=WALLET_CONFIG
-            )],
-        EACLRole.SYSTEM: [
-            Wallet(
-                wallet_path=IR_WALLET_PATH,
-                config_path=IR_WALLET_CONFIG
-            )],
-    })
+    yield Wallets(
+        wallets={
+            EACLRole.USER: [
+                Wallet(
+                    wallet_path=prepare_wallet_and_deposit, config_path=WALLET_CONFIG
+                )
+            ],
+            EACLRole.OTHERS: [
+                Wallet(
+                    wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG
+                ),
+                Wallet(
+                    wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG
+                ),
+            ],
+            EACLRole.SYSTEM: [
+                Wallet(wallet_path=IR_WALLET_PATH, config_path=IR_WALLET_CONFIG)
+            ],
+        }
+    )
 
 
 @pytest.fixture(scope="module")
@@ -62,17 +61,22 @@ def file_path():
     yield generate_file()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def eacl_container_with_objects(wallets, file_path):
     user_wallet = wallets.get_wallet()
-    with allure.step('Create eACL public container'):
+    with allure.step("Create eACL public container"):
         cid = create_container(user_wallet.wallet_path, basic_acl=PUBLIC_ACL)
 
-    with allure.step('Add test objects to container'):
+    with allure.step("Add test objects to container"):
         objects_oids = [
             put_object(
-                user_wallet.wallet_path, file_path, cid,
-                attributes={'key1': 'val1', 'key': val, 'key2': 'abc'}) for val in range(OBJECT_COUNT)]
+                user_wallet.wallet_path,
+                file_path,
+                cid,
+                attributes={"key1": "val1", "key": val, "key2": "abc"},
+            )
+            for val in range(OBJECT_COUNT)
+        ]
 
     yield cid, objects_oids, file_path
 
