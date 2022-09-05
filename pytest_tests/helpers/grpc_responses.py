@@ -9,6 +9,7 @@ CONTAINER_NOT_FOUND = "code = 3072.*message = container not found"
 OBJECT_ACCESS_DENIED = "code = 2048.*message = access to object operation denied"
 OBJECT_NOT_FOUND = "code = 2049.*message = object not found"
 OBJECT_ALREADY_REMOVED = "code = 2052.*message = object already removed"
+SESSION_NOT_FOUND = "code = 4096.*message = session token not found"
 
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
