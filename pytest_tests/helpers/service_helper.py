@@ -6,6 +6,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional
+from requests import HTTPError
 
 import docker
 
@@ -83,8 +84,11 @@ class LocalDevEnvStorageServiceHelper:
         client = self._get_docker_client(first_node_name)
 
         for container_name in self.ALL_CONTAINERS:
-            logs = client.logs(container_name, since=since, until=until)
-
+            try:
+                logs = client.logs(container_name, since=since, until=until)
+            except HTTPError as exc:
+                logger.info(f"Got exception while dumping container '{container_name}' logs: {exc}")
+                continue
             # Dump logs to the directory
             file_path = os.path.join(directory_path, f"{container_name}-log.txt")
             with open(file_path, "wb") as file:
