@@ -7,6 +7,8 @@ from common import (
     IR_WALLET_PASS,
     IR_WALLET_PATH,
     SIMPLE_OBJ_SIZE,
+    ASSETS_DIR,
+    FREE_STORAGE
 )
 from epoch import tick_epoch
 from typing import Optional
@@ -48,11 +50,12 @@ deposit = 30
 @pytest.mark.storage_group
 class TestStorageGroup:
     @pytest.fixture(autouse=True)
-    def prepare_two_wallets(self, prepare_wallet_and_deposit, tmp_path):
+    def prepare_two_wallets(self, prepare_wallet_and_deposit):
         self.main_wallet = prepare_wallet_and_deposit
-        self.other_wallet, _, _ = init_wallet(tmp_path)
-        transfer_mainnet_gas(self.other_wallet, 31)
-        neofs_deposit(self.other_wallet, 30)
+        self.other_wallet, _, _ = init_wallet(ASSETS_DIR)
+        if not FREE_STORAGE:
+            transfer_mainnet_gas(self.other_wallet, 31)
+            neofs_deposit(self.other_wallet, 30)
 
     @allure.title("Test Storage Group in Private Container")
     def test_storagegroup_basic_private_container(self, object_size):
@@ -204,10 +207,11 @@ class TestStorageGroup:
         and include an Object created on behalf of some user. We expect
         that System key is granted to make all operations except PUT and DELETE.
         """
-        transfer_mainnet_gas(
-            IR_WALLET_PATH, deposit + 1, wallet_password=IR_WALLET_PASS
-        )
-        neofs_deposit(IR_WALLET_PATH, deposit, wallet_password=IR_WALLET_PASS)
+        if not FREE_STORAGE:
+            transfer_mainnet_gas(
+                IR_WALLET_PATH, deposit + 1, wallet_password=IR_WALLET_PASS
+            )
+            neofs_deposit(IR_WALLET_PATH, deposit, wallet_password=IR_WALLET_PASS)
         storage_group = put_storagegroup(wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_storagegroup(
