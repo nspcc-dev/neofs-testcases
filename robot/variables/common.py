@@ -5,8 +5,9 @@ import os
 
 CONTAINER_WAIT_INTERVAL = "1m"
 
-SIMPLE_OBJ_SIZE = 1000
-COMPLEX_OBJ_SIZE = 2000
+# TODO: Get object size data from a node config
+SIMPLE_OBJ_SIZE = int(os.getenv("SIMPLE_OBJ_SIZE", "1000"))
+COMPLEX_OBJ_SIZE = int(os.getenv("COMPLEX_OBJ_SIZE", "2000"))
 
 MAINNET_BLOCK_TIME = os.getenv('MAINNET_BLOCK_TIME', "1s")
 MAINNET_TIMEOUT = os.getenv('MAINNET_TIMEOUT', "1min")
