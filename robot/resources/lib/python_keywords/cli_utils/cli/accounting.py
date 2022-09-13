@@ -6,8 +6,8 @@ from cli_utils.cli_command import NeofsCliCommand
 class NeofsCliAccounting(NeofsCliCommand):
     def balance(
         self,
-        wallet: Optional[str] = None,
-        rpc_endpoint: Optional[str] = None,
+        wallet: str,
+        rpc_endpoint: str,
         address: Optional[str] = None,
         owner: Optional[str] = None,
     ) -> str:

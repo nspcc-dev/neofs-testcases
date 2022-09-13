@@ -15,6 +15,10 @@ class NeofsAdmStorageConfig(NeofsCliCommand):
 
         """
         return self._execute(
-            'storage-config',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "storage-config",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
