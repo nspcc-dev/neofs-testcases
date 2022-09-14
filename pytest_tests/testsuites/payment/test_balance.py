@@ -14,7 +14,9 @@ DEPOSIT_AMOUNT = 30
 
 
 @pytest.mark.payments
-class TestBalanceAccounting:
+class TestBalanceAccounting():
+    @pytest.mark.usefixtures("public_network_only")
+
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, prepare_wallet_and_deposit):
         self.user_wallet = prepare_wallet_and_deposit
