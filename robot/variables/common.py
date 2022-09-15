@@ -80,6 +80,7 @@ NEOFS_NETMAP_DICT = {
 NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
 NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
 NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
+NEOFS_AUTHMATE_EXEC = os.getenv('NEOFS_AUTHMATE_EXEC', 'neofs-authmate')
 
 # Config of wallet with empty password. We use it for:
 # - for wallet of user on behalf of whom we are running tests
