@@ -1,9 +1,9 @@
 from cli_utils.cli_command import NeofsCliCommand
 
 
-class NeofsCliVersion(NeofsCliCommand):
+class NeoGoVersion(NeofsCliCommand):
     def get(self) -> str:
-        """Application version and NeoFS API compatibility
+        """Application version
 
         Returns:
             str: Command string

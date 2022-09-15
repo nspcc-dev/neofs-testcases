@@ -19,8 +19,12 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet create',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet create",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
     def get(self, rpc_endpoint: str, subnet: str) -> str:
@@ -36,11 +40,17 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet get',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet get",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
-    def remove(self, rpc_endpoint: str, wallet: str, subnet: str, address: Optional[str] = None) -> str:
+    def remove(
+        self, rpc_endpoint: str, wallet: str, subnet: str, address: Optional[str] = None
+    ) -> str:
         """Remove NeoFS subnet.
 
         Args:
@@ -55,12 +65,24 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet remove',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet remove",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
-    def admin_add(self, rpc_endpoint: str, wallet: str, admin: str, subnet: str, client: Optional[str] = None,
-                  group: Optional[str] = None, address: Optional[str] = None) -> str:
+    def admin_add(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        admin: str,
+        subnet: str,
+        client: Optional[str] = None,
+        group: Optional[str] = None,
+        address: Optional[str] = None,
+    ) -> str:
         """Add admin to the NeoFS subnet.
 
         Args:
@@ -78,12 +100,23 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet admin add',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet admin add",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
-    def admin_remove(self, rpc_endpoint: str, wallet: str, admin: str, subnet: str, client: Optional[str] = None,
-                     address: Optional[str] = None) -> str:
+    def admin_remove(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        admin: str,
+        subnet: str,
+        client: Optional[str] = None,
+        address: Optional[str] = None,
+    ) -> str:
         """Remove admin of the NeoFS subnet.
 
         Args:
@@ -100,12 +133,23 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet admin remove',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet admin remove",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
-    def client_add(self, rpc_endpoint: str, wallet: str, subnet: str, client: Optional[str] = None,
-                  group: Optional[str] = None, address: Optional[str] = None) -> str:
+    def client_add(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        subnet: str,
+        client: Optional[str] = None,
+        group: Optional[str] = None,
+        address: Optional[str] = None,
+    ) -> str:
         """Add client to the NeoFS subnet.
 
         Args:
@@ -122,12 +166,23 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet client add',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet client add",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
-    def client_remove(self, rpc_endpoint: str, wallet: str, client: str, group: str, subnet: str,
-                      address: Optional[str] = None) -> str:
+    def client_remove(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        client: str,
+        group: str,
+        subnet: str,
+        address: Optional[str] = None,
+    ) -> str:
         """Remove client of the NeoFS subnet.
 
         Args:
@@ -144,8 +199,12 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet client remove',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet client remove",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
     def node_add(self, rpc_endpoint: str, wallet: str, node: str, subnet: str) -> str:
@@ -163,8 +222,12 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet node add',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet node add",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
 
     def node_remove(self, rpc_endpoint: str, wallet: str, node: str, subnet: str) -> str:
@@ -182,6 +245,10 @@ class NeofsAdmMorphSubnet(NeofsCliCommand):
 
         """
         return self._execute(
-            'morph subnet node remove',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "morph subnet node remove",
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self"]
+            }
         )
