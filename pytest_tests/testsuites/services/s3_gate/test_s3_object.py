@@ -558,9 +558,7 @@ class TestS3GateObject(TestS3GateBase):
         tag_value_2 = uuid.uuid4()
         tag_2 = f"{tag_key_2}={tag_value_2}"
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        set_bucket_versioning(
-            self.s3_client, bucket, s3_gate_bucket.VersioningStatus.SUSPENDED.value
-        )
+        set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.SUSPENDED)
 
         with allure.step("Put first object into bucket"):
             s3_gate_object.put_object_s3(
