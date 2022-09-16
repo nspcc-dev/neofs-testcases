@@ -5,7 +5,8 @@ from time import sleep
 import allure
 import pytest
 from data_formatters import get_wallet_public_key
-from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, MORPH_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
+from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, MORPH_BLOCK_TIME,
+                    NEOFS_CONTRACT_CACHE_TIMEOUT,
                     NEOFS_NETMAP_DICT, STORAGE_RPC_ENDPOINT_1, STORAGE_WALLET_PASS)
 from epoch import tick_epoch
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
@@ -25,7 +26,6 @@ from utility import (placement_policy_from_container, robot_time_to_int,
 from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
 
-
 logger = logging.getLogger('NeoLogger')
 check_nodes = []
 
@@ -44,7 +44,8 @@ def create_container_and_pick_node(prepare_wallet_and_deposit):
     assert len(nodes) == 1
     node = nodes[0]
 
-    node_name = choice([node_name for node_name, params in NEOFS_NETMAP_DICT.items() if params.get('rpc') == node])
+    node_name = choice(
+        [node_name for node_name, params in NEOFS_NETMAP_DICT.items() if params.get('rpc') == node])
 
     yield cid, node_name
 
@@ -78,6 +79,8 @@ def return_nodes(alive_node: str = None):
     for node in list(check_nodes):
         with allure.step(f'Start node {node}'):
             helper.start_node(node)
+        with allure.step(f'Waiting status ready for node {node}'):
+            wait_for_node_to_be_ready(node)
 
         # We need to wait for node to establish notifications from morph-chain
         # Otherwise it will hang up when we will try to set status
@@ -121,13 +124,15 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
     delete_node_data(additional_node)
 
     cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
+    oid = put_object(wallet, source_file_path, cid,
+                     endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
     wait_object_replication_on_nodes(wallet, cid, oid, 3)
 
     return_nodes(alive_node)
 
     with allure.step('Check data could be replicated to new node'):
-        random_node = choice([node for node in NEOFS_NETMAP_DICT if node not in (additional_node, alive_node)])
+        random_node = choice(
+            [node for node in NEOFS_NETMAP_DICT if node not in (additional_node, alive_node)])
         exclude_node_from_network_map(random_node, alive_node)
 
         wait_object_replication_on_nodes(wallet, cid, oid, 3, excluded_nodes=[random_node])
@@ -136,7 +141,8 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
 
     with allure.step('Check container could be created with new node'):
         cid = create_container(wallet, rule=placement_rule_4, basic_acl=PUBLIC_ACL)
-        oid = put_object(wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
+        oid = put_object(wallet, source_file_path, cid,
+                         endpoint=NEOFS_NETMAP_DICT[alive_node].get('rpc'))
         wait_object_replication_on_nodes(wallet, cid, oid, 4)
 
 
@@ -214,30 +220,39 @@ def test_placement_policy(prepare_wallet_and_deposit, placement_rule, expected_c
 
 @pytest.mark.parametrize('placement_rule,expected_copies,nodes', [
     ('REP 4 IN X CBF 1 SELECT 4 FROM * AS X', 4, ['s01', 's02', 's03', 's04']),
-    ('REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW', 1, ['s03']),
+    (
+    'REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW',
+    1, ['s03']),
     ("REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB", 1, ['s02']),
     ("REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE "
      "SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE "
-     "FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB FILTER 'UN-LOCODE' EQ 'RU MOW' AS LOC_MSK", 2, ['s01', 's02']),
-    ('REP 4 CBF 1 SELECT 4 FROM LOC_EU FILTER Continent EQ Europe AS LOC_EU', 4, ['s01', 's02', 's03', 's04']),
+     "FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB FILTER 'UN-LOCODE' EQ 'RU MOW' AS LOC_MSK", 2,
+     ['s01', 's02']),
+    ('REP 4 CBF 1 SELECT 4 FROM LOC_EU FILTER Continent EQ Europe AS LOC_EU', 4,
+     ['s01', 's02', 's03', 's04']),
     ("REP 1 CBF 1 SELECT 1 FROM LOC_SPB "
-     "FILTER 'UN-LOCODE' NE 'RU MOW' AND 'UN-LOCODE' NE 'SE STO' AND 'UN-LOCODE' NE 'FI HEL' AS LOC_SPB", 1, ['s02']),
-    ("REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER SubDivCode NE 'AB' AND SubDivCode NE '18' AS LOC_RU", 2, ['s01', 's02']),
+     "FILTER 'UN-LOCODE' NE 'RU MOW' AND 'UN-LOCODE' NE 'SE STO' AND 'UN-LOCODE' NE 'FI HEL' AS LOC_SPB",
+     1, ['s02']),
+    ("REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER SubDivCode NE 'AB' AND SubDivCode NE '18' AS LOC_RU",
+     2, ['s01', 's02']),
     ("REP 2 CBF 1 SELECT 2 FROM LOC_RU FILTER Country EQ 'Russia' AS LOC_RU", 2, ['s01', 's02']),
     ("REP 2 CBF 1 SELECT 2 FROM LOC_EU FILTER Country NE 'Russia' AS LOC_EU", 2, ['s03', 's04']),
 ])
 @pytest.mark.node_mgmt
 @allure.title('Test object copies and storage nodes based on placement policy')
-def test_placement_policy_with_nodes(prepare_wallet_and_deposit, placement_rule, expected_copies, nodes):
+def test_placement_policy_with_nodes(prepare_wallet_and_deposit, placement_rule, expected_copies,
+                                     nodes):
     """
     Based on container's placement policy check that storage nodes are piked correctly and object has
     correct copies amount.
     """
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
-    cid, oid, found_nodes = validate_object_copies(wallet, placement_rule, file_path, expected_copies)
+    cid, oid, found_nodes = validate_object_copies(wallet, placement_rule, file_path,
+                                                   expected_copies)
     expected_nodes = [NEOFS_NETMAP_DICT[node_name].get('rpc') for node_name in nodes]
-    assert set(found_nodes) == set(expected_nodes), f'Expected nodes {expected_nodes}, got {found_nodes}'
+    assert set(found_nodes) == set(
+        expected_nodes), f'Expected nodes {expected_nodes}, got {found_nodes}'
 
 
 @pytest.mark.parametrize('placement_rule,expected_copies', [
@@ -270,7 +285,8 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes):
     oid = put_object(wallet, file_path, cid)
 
     nodes = get_nodes_with_object(wallet, cid, oid)
-    assert len(nodes) == expected_nodes_count, f'Expected {expected_nodes_count} copies, got {len(nodes)}'
+    assert len(
+        nodes) == expected_nodes_count, f'Expected {expected_nodes_count} copies, got {len(nodes)}'
 
     node_names = [name for name, config in NEOFS_NETMAP_DICT.items() if config.get('rpc') in nodes]
     stopped_nodes = stop_nodes(1, node_names)
@@ -306,7 +322,8 @@ def test_drop_object(prepare_wallet_and_deposit):
         head_object(wallet, cid, oid)
 
     nodes = get_nodes_with_object(wallet, cid, oid_simple)
-    node_name = choice([name for name, config in NEOFS_NETMAP_DICT.items() if config.get('rpc') in nodes])
+    node_name = choice(
+        [name for name, config in NEOFS_NETMAP_DICT.items() if config.get('rpc') in nodes])
 
     for oid in (oid_simple, oid_complex):
         with allure.step(f'Drop object {oid}'):
@@ -379,9 +396,24 @@ def wait_for_node_go_online(node_name: str) -> None:
             return
         except Exception as err:
             logger.warning(f'Node {node_name} is not online:\n{err}')
-            sleep(timeout)
-            continue
-    raise AssertionError(f'Node {node_name} does not go online during timeout {timeout * attempts}')
+        sleep(timeout)
+    raise AssertionError(
+        f"Node {node_name} hasn't gone to the READY and ONLINE state after {timeout * attempts} second")
+
+
+@allure.step('Wait for node {node_name} is ready')
+def wait_for_node_to_be_ready(node_name: str) -> None:
+    timeout, attempts = 30, 6
+    for _ in range(attempts):
+        try:
+            health_check = node_healthcheck(node_name)
+            if health_check.health_status == 'READY':
+                return
+        except Exception as err:
+            logger.warning(f'Node {node_name} is not ready:\n{err}')
+        sleep(timeout)
+    raise AssertionError(
+        f"Node {node_name} hasn't gone to the READY state after {timeout * attempts} seconds")
 
 
 @allure.step('Wait for {expected_copies} object copies in the wallet')
