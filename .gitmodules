@@ -2,3 +2,7 @@
 	path = neofs-keywords
 	url = ssh://git@github.com/nspcc-dev/neofs-keywords.git
         ignore = all
+[submodule "neofs-testlib"]
+	path = neofs-testlib
+	url = https://github.com/nspcc-dev/neofs-testlib.git
+	branch = master
