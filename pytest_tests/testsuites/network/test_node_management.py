@@ -5,7 +5,7 @@ from time import sleep
 import allure
 import pytest
 from data_formatters import get_wallet_public_key
-from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
+from common import (COMPLEX_OBJ_SIZE, MAINNET_BLOCK_TIME, MORPH_BLOCK_TIME, NEOFS_CONTRACT_CACHE_TIMEOUT,
                     NEOFS_NETMAP_DICT, STORAGE_RPC_ENDPOINT_1, STORAGE_WALLET_PASS)
 from epoch import tick_epoch
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
@@ -81,13 +81,13 @@ def return_nodes(alive_node: str = None):
 
         # We need to wait for node to establish notifications from morph-chain
         # Otherwise it will hang up when we will try to set status
-        sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+        sleep(robot_time_to_int(MORPH_BLOCK_TIME))
 
         with allure.step(f'Move node {node} to online state'):
             node_set_status(node, status='online', retries=2)
 
         check_nodes.remove(node)
-        sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+        sleep(robot_time_to_int(MORPH_BLOCK_TIME))
         for __attempt in range(3):
             try:
                 tick_epoch()
@@ -170,7 +170,7 @@ def test_nodes_management(prepare_tmp_dir):
     with allure.step(f'Move node {random_node} to offline state'):
         node_set_status(random_node, status='offline')
 
-    sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    sleep(robot_time_to_int(MORPH_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f'Check node {random_node} went to offline'):
@@ -182,7 +182,7 @@ def test_nodes_management(prepare_tmp_dir):
     with allure.step(f'Check node {random_node} went to online'):
         node_set_status(random_node, status='online')
 
-    sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    sleep(robot_time_to_int(MORPH_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f'Check node {random_node} went to online'):

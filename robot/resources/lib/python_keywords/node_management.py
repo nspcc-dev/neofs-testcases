@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-from common import MAINNET_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_PASS
+from common import MAINNET_BLOCK_TIME, MORPH_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_PASS
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from robot.api import logger
@@ -193,7 +193,7 @@ def delete_node_data(node_name: str) -> None:
     helper = get_storage_service_helper()
     helper.stop_node(node_name)
     helper.delete_node_data(node_name)
-    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    time.sleep(robot_time_to_int(MORPH_BLOCK_TIME))
 
 
 @keyword('Exclude node {node_to_include} from network map')
@@ -207,7 +207,7 @@ def exclude_node_from_network_map(node_to_exclude, alive_node):
 
     node_set_status(node_to_exclude, status='offline')
 
-    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    time.sleep(robot_time_to_int(MORPH_BLOCK_TIME))
     tick_epoch()
 
     snapshot = get_netmap_snapshot(node_name=alive_node)
@@ -218,7 +218,7 @@ def exclude_node_from_network_map(node_to_exclude, alive_node):
 def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
     node_set_status(node_to_include, status='online')
 
-    time.sleep(robot_time_to_int(MAINNET_BLOCK_TIME))
+    time.sleep(robot_time_to_int(MORPH_BLOCK_TIME))
     tick_epoch()
 
     check_node_in_map(node_to_include, alive_node)
