@@ -1,12 +1,11 @@
 #!/usr/bin/python3.8
 
-import allure
 import hashlib
 import logging
 import os
 import tarfile
 import uuid
-from typing import Tuple
+from typing import Optional, Tuple
 
 import allure
 import docker
@@ -15,7 +14,6 @@ from cli_helpers import _cmd_run
 from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 
 def generate_file(size: int = SIMPLE_OBJ_SIZE) -> str:
@@ -52,7 +50,7 @@ def generate_file_and_file_hash(size: int) -> Tuple[str, str]:
 
 
 @allure.step("Get File Hash")
-def get_file_hash(filename: str, len: int = None):
+def get_file_hash(filename: str, len: Optional[int] = None):
     """
     This function generates hash for the specified file.
     Args:
@@ -108,7 +106,7 @@ def make_up(services: list = [], config_dict: dict = {}):
             cmd = f"make up/{service}"
             _cmd_run(cmd)
     else:
-        cmd = f"make up/basic;" f"make update.max_object_size val={SIMPLE_OBJ_SIZE}"
+        cmd = f"make up/basic; make update.max_object_size val={SIMPLE_OBJ_SIZE}"
         _cmd_run(cmd, timeout=120)
 
     os.chdir(test_path)
@@ -131,3 +129,22 @@ def make_down(services: list = []):
         _cmd_run(cmd, timeout=60)
 
     os.chdir(test_path)
+
+
+@allure.step("Concatenation set of files to one file")
+def concat_files(list_of_parts: list, new_file_name: Optional[str] = None) -> str:
+    """
+    Concatenates a set of files into a single file.
+    Args:
+        list_of_parts (list): list with files to concratination
+        new_file_name (str): file name to the generated file
+    Returns:
+        (str): the path to the generated file
+    """
+    if not new_file_name:
+        new_file_name = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
+    with open(new_file_name, "wb") as f:
+        for file in list_of_parts:
+            with open(file, "rb") as part_file:
+                f.write(part_file.read())
+    return new_file_name
