@@ -6,16 +6,18 @@
 
 import allure
 import json
+import logging
 import random
 import re
 import uuid
 from typing import Optional
 
+import allure
 import json_transformers
 from cli_utils import NeofsCli
 from common import ASSETS_DIR, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
-from robot.api import logger
 
+logger = logging.getLogger("NeoLogger")
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -307,10 +309,7 @@ def search_object(
         cid=cid,
         bearer=bearer,
         xhdr=xhdr,
-        filters=[
-            f"{filter_key} EQ {filter_val}"
-            for filter_key, filter_val in filters.items()
-        ]
+        filters=[f"{filter_key} EQ {filter_val}" for filter_key, filter_val in filters.items()]
         if filters
         else None,
         session=session,
@@ -325,7 +324,7 @@ def search_object(
                 f"is equal for expected list '{expected_objects_list}'",
             )
         else:
-            logger.warn(
+            logger.warning(
                 f"Found object list {found_objects} ",
                 f"is not equal to expected list '{expected_objects_list}'",
             )

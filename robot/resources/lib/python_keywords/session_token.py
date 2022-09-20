@@ -7,15 +7,17 @@
 import allure
 import base64
 import json
+import logging
 import os
 import uuid
 
+import allure
 import json_transformers
 from cli_helpers import _cmd_run, _run_with_passwd
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
 from neo3 import wallet
-from robot.api import logger
 
+logger = logging.getLogger("NeoLogger")
 ROBOT_AUTO_KEYWORDS = False
 
 # path to neofs-cli executable
@@ -45,9 +47,9 @@ def generate_session_token(owner: str, session_wallet: str, cid: str = "") -> st
     with open(session_wallet) as fout:
         session_wlt_content = json.load(fout)
     session_wlt = wallet.Wallet.from_json(session_wlt_content, password="")
-    pub_key_64 = base64.b64encode(
-        bytes.fromhex(str(session_wlt.accounts[0].public_key))
-    ).decode("utf-8")
+    pub_key_64 = base64.b64encode(bytes.fromhex(str(session_wlt.accounts[0].public_key))).decode(
+        "utf-8"
+    )
 
     session_token = {
         "body": {

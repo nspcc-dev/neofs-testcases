@@ -4,6 +4,7 @@
 Helper functions to use with `neofs-cli`, `neo-go` and other CLIs.
 """
 import json
+import logging
 import subprocess
 import sys
 from contextlib import suppress
@@ -13,7 +14,8 @@ from typing import Union
 
 import allure
 import pexpect
-from robot.api import logger
+
+logger = logging.getLogger("NeoLogger")
 
 ROBOT_AUTO_KEYWORDS = False
 COLOR_GREEN = "\033[92m"
@@ -30,10 +32,15 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
     try:
         logger.info(f"{COLOR_GREEN}Executing command: {cmd}{COLOR_OFF}")
         start_time = datetime.utcnow()
-        compl_proc = subprocess.run(cmd, check=True, universal_newlines=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                    timeout=timeout,
-                                    shell=True)
+        compl_proc = subprocess.run(
+            cmd,
+            check=True,
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=timeout,
+            shell=True,
+        )
         output = compl_proc.stdout
         return_code = compl_proc.returncode
         end_time = datetime.utcnow()
@@ -42,26 +49,27 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
-        logger.info(f"Command: {cmd}\n"
-                    f"Error:\nreturn code: {exc.returncode} "
-                    f"\nOutput: {exc.output}")
+        logger.info(
+            f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode} " f"\nOutput: {exc.output}"
+        )
         end_time = datetime.now()
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
 
-        raise RuntimeError(f"Command: {cmd}\n"
-                           f"Error:\nreturn code: {exc.returncode}\n"
-                           f"Output: {exc.output}") from exc
+        raise RuntimeError(
+            f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode}\n" f"Output: {exc.output}"
+        ) from exc
     except OSError as exc:
-        raise RuntimeError(f"Command: {cmd}\n"
-                           f"Output: {exc.strerror}") from exc
+        raise RuntimeError(f"Command: {cmd}\n" f"Output: {exc.strerror}") from exc
     except Exception as exc:
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         end_time = datetime.now()
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
-        logger.info(f"Command: {cmd}\n"
-                    f"Error:\nreturn code: {return_code}\n"
-                    f"Output: {exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}")
+        logger.info(
+            f"Command: {cmd}\n"
+            f"Error:\nreturn code: {return_code}\n"
+            f"Output: {exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}"
+        )
         raise
 
 
@@ -69,7 +77,7 @@ def _run_with_passwd(cmd: str) -> str:
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 1
     child.expect(".*")
-    child.sendline('\r')
+    child.sendline("\r")
     if sys.platform == "darwin":
         child.expect(pexpect.EOF)
         cmd = child.before
@@ -90,7 +98,7 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
     child.sendline(access_key)
 
     child.expect("Default region name.*")
-    child.sendline('')
+    child.sendline("")
 
     child.expect("Default output format.*")
     child.sendline(out_format)
@@ -102,26 +110,24 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
     return cmd.decode()
 
 
-def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime,
-                       end_time: datetime) -> None:
+def _attach_allure_log(
+    cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime
+) -> None:
     command_attachment = (
         f"COMMAND: '{cmd}'\n"
-        f'OUTPUT:\n {output}\n'
-        f'RC: {return_code}\n'
-        f'Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}'
+        f"OUTPUT:\n {output}\n"
+        f"RC: {return_code}\n"
+        f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}"
     )
     with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
-        allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
+        allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)
 
 
 def log_command_execution(cmd: str, output: Union[str, dict]) -> None:
-    logger.info(f'{cmd}: {output}')
+    logger.info(f"{cmd}: {output}")
     with suppress(Exception):
         json_output = json.dumps(output, indent=4, sort_keys=True)
         output = json_output
-    command_attachment = (
-        f"COMMAND: '{cmd}'\n"
-        f'OUTPUT:\n {output}\n'
-    )
+    command_attachment = f"COMMAND: '{cmd}'\n" f"OUTPUT:\n {output}\n"
     with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
-        allure.attach(command_attachment, 'Command execution', allure.attachment_type.TEXT)
+        allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)
