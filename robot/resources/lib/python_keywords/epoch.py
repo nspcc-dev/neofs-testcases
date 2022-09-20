@@ -1,7 +1,6 @@
 #!/usr/bin/python3.9
 import allure
 from robot.api import logger
-from robot.api.deco import keyword
 
 import contract
 import wrappers
@@ -11,7 +10,7 @@ from common import (IR_WALLET_PATH, IR_WALLET_PASS, MORPH_ENDPOINT, NEOFS_ADM_EX
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword('Get Epoch')
+@allure.step('Get Epoch')
 def get_epoch():
     epoch = int(contract.testinvoke_contract(
         contract.get_netmap_contract_hash(MORPH_ENDPOINT),
@@ -22,7 +21,7 @@ def get_epoch():
     return epoch
 
 
-@keyword('Tick Epoch')
+@allure.step('Tick Epoch')
 def tick_epoch():
     if NEOFS_ADM_EXEC and NEOFS_ADM_CONFIG_PATH:
         # If neofs-adm is available, then we tick epoch with it (to be consistent with UAT tests)

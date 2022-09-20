@@ -5,10 +5,10 @@
     that storage policies are respected.
 """
 
+import allure
 from typing import Optional
 
 from robot.api import logger
-from robot.api.deco import keyword
 
 import complex_object_actions
 import neofs_verbs
@@ -19,7 +19,7 @@ from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword('Get Object Copies')
+@allure.step('Get Object Copies')
 def get_object_copies(complexity: str, wallet: str, cid: str, oid: str):
     """
         The function performs requests to all nodes of the container and
@@ -40,7 +40,7 @@ def get_object_copies(complexity: str, wallet: str, cid: str, oid: str):
             else get_complex_object_copies(wallet, cid, oid))
 
 
-@keyword('Get Simple Object Copies')
+@allure.step('Get Simple Object Copies')
 def get_simple_object_copies(wallet: str, cid: str, oid: str):
     """
         To figure out the number of a simple object copies, only direct
@@ -69,7 +69,7 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str):
     return copies
 
 
-@keyword('Get Complex Object Copies')
+@allure.step('Get Complex Object Copies')
 def get_complex_object_copies(wallet: str, cid: str, oid: str):
     """
         To figure out the number of a complex object copies, we firstly
@@ -89,7 +89,7 @@ def get_complex_object_copies(wallet: str, cid: str, oid: str):
     return get_simple_object_copies(wallet, cid, last_oid)
 
 
-@keyword('Get Nodes With Object')
+@allure.step('Get Nodes With Object')
 def get_nodes_with_object(wallet: str, cid: str, oid: str, skip_nodes: Optional[list[str]] = None) -> list[str]:
     """
        The function returns list of nodes which store
@@ -122,7 +122,7 @@ def get_nodes_with_object(wallet: str, cid: str, oid: str, skip_nodes: Optional[
     return nodes_list
 
 
-@keyword('Get Nodes Without Object')
+@allure.step('Get Nodes Without Object')
 def get_nodes_without_object(wallet: str, cid: str, oid: str):
     """
        The function returns list of nodes which do not store

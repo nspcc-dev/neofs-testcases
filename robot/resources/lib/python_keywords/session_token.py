@@ -4,6 +4,7 @@
     This module contains keywords for work with session token.
 """
 
+import allure
 import base64
 import json
 import os
@@ -14,7 +15,6 @@ from cli_helpers import _cmd_run, _run_with_passwd
 from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
 from neo3 import wallet
 from robot.api import logger
-from robot.api.deco import keyword
 
 ROBOT_AUTO_KEYWORDS = False
 
@@ -22,7 +22,7 @@ ROBOT_AUTO_KEYWORDS = False
 NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
 
 
-@keyword("Generate Session Token")
+@allure.step("Generate Session Token")
 def generate_session_token(owner: str, session_wallet: str, cid: str = "") -> str:
     """
     This function generates session token for ContainerSessionContext
@@ -78,7 +78,7 @@ def generate_session_token(owner: str, session_wallet: str, cid: str = "") -> st
     return file_path
 
 
-@keyword("Create Session Token")
+@allure.step("Create Session Token")
 def create_session_token(owner: str, wallet_path: str, rpc: str = NEOFS_ENDPOINT):
     """
     Create session token for an object.
@@ -98,7 +98,7 @@ def create_session_token(owner: str, wallet_path: str, rpc: str = NEOFS_ENDPOINT
     return session_token
 
 
-@keyword("Sign Session Token")
+@allure.step("Sign Session Token")
 def sign_session_token(session_token: str, wlt: str):
     """
     This function signs the session token by the given wallet.

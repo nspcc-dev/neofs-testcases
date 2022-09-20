@@ -1,5 +1,6 @@
 #!/usr/bin/python3.9
 
+import allure
 import os
 import uuid
 from enum import Enum
@@ -9,8 +10,6 @@ from typing import Optional
 import urllib3
 from botocore.exceptions import ClientError
 from robot.api import logger
-from robot.api.deco import keyword
-
 from cli_helpers import log_command_execution
 from python_keywords.aws_cli_client import AwsCliClient
 from python_keywords.s3_gate_bucket import S3_SYNC_WAIT_TIME
@@ -32,7 +31,7 @@ class VersioningStatus(Enum):
     SUSPENDED = 'Suspended'
 
 
-@keyword('List objects S3 v2')
+@allure.step('List objects S3 v2')
 def list_objects_s3_v2(s3_client, bucket: str) -> list:
     try:
         response = s3_client.list_objects_v2(Bucket=bucket)
@@ -49,7 +48,7 @@ def list_objects_s3_v2(s3_client, bucket: str) -> list:
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('List objects S3')
+@allure.step('List objects S3')
 def list_objects_s3(s3_client, bucket: str) -> list:
     try:
         response = s3_client.list_objects(Bucket=bucket)
@@ -66,7 +65,7 @@ def list_objects_s3(s3_client, bucket: str) -> list:
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('List objects versions S3')
+@allure.step('List objects versions S3')
 def list_objects_versions_s3(s3_client, bucket: str) -> list:
     try:
         response = s3_client.list_object_versions(Bucket=bucket)
@@ -79,7 +78,7 @@ def list_objects_versions_s3(s3_client, bucket: str) -> list:
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Put object S3')
+@allure.step('Put object S3')
 def put_object_s3(s3_client, bucket: str, filepath: str):
     filename = os.path.basename(filepath)
 
@@ -98,7 +97,7 @@ def put_object_s3(s3_client, bucket: str, filepath: str):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Head object S3')
+@allure.step('Head object S3')
 def head_object_s3(s3_client, bucket: str, object_key: str, version_id: str = None):
     try:
         params = {'Bucket': bucket, 'Key': object_key}
@@ -113,7 +112,7 @@ def head_object_s3(s3_client, bucket: str, object_key: str, version_id: str = No
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Delete object S3')
+@allure.step('Delete object S3')
 def delete_object_s3(s3_client, bucket, object_key, version_id: str = None):
     try:
         params = {'Bucket': bucket, 'Key': object_key}
@@ -129,7 +128,7 @@ def delete_object_s3(s3_client, bucket, object_key, version_id: str = None):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Delete objects S3')
+@allure.step('Delete objects S3')
 def delete_objects_s3(s3_client, bucket: str, object_keys: list):
     try:
         response = s3_client.delete_objects(Bucket=bucket, Delete=_make_objs_dict(object_keys))
@@ -141,7 +140,7 @@ def delete_objects_s3(s3_client, bucket: str, object_keys: list):
         raise Exception(f'Error Message: {err.response["Error"]["Message"]}\n'
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
-@keyword('Delete object versions S3')
+@allure.step('Delete object versions S3')
 def delete_object_versions_s3(s3_client, bucket: str, object_versions: list):
     try:
         # Build deletion list in S3 format
@@ -163,7 +162,7 @@ def delete_object_versions_s3(s3_client, bucket: str, object_versions: list):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Copy object S3')
+@allure.step('Copy object S3')
 def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):
     filename = f'{os.getcwd()}/{uuid.uuid4()}'
     try:
@@ -178,7 +177,7 @@ def copy_object_s3(s3_client, bucket, object_key, bucket_dst=None):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Get object S3')
+@allure.step('Get object S3')
 def get_object_s3(s3_client, bucket: str, object_key: str, version_id: str = None):
     filename = f'{ASSETS_DIR}/{uuid.uuid4()}'
     try:
@@ -206,7 +205,7 @@ def get_object_s3(s3_client, bucket: str, object_key: str, version_id: str = Non
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Create multipart upload S3')
+@allure.step('Create multipart upload S3')
 def create_multipart_upload_s3(s3_client, bucket_name: str, object_key: str) -> str:
     try:
         response = s3_client.create_multipart_upload(Bucket=bucket_name, Key=object_key)
@@ -220,7 +219,7 @@ def create_multipart_upload_s3(s3_client, bucket_name: str, object_key: str) -> 
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('List multipart uploads S3')
+@allure.step('List multipart uploads S3')
 def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[list[dict]]:
     try:
         response = s3_client.list_multipart_uploads(Bucket=bucket_name)
@@ -233,7 +232,7 @@ def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[list[dict
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Abort multipart upload S3')
+@allure.step('Abort multipart upload S3')
 def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upload_id: str):
     try:
         response = s3_client.abort_multipart_upload(Bucket=bucket_name, Key=object_key, UploadId=upload_id)
@@ -244,7 +243,7 @@ def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upl
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Upload part S3')
+@allure.step('Upload part S3')
 def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, filepath: str) -> str:
     if isinstance(s3_client, AwsCliClient):
         file_content = filepath
@@ -264,7 +263,7 @@ def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str,
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('List parts S3')
+@allure.step('List parts S3')
 def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) -> list[dict]:
     try:
         response = s3_client.list_parts(UploadId=upload_id, Bucket=bucket_name, Key=object_key)
@@ -277,7 +276,7 @@ def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) 
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Complete multipart upload S3')
+@allure.step('Complete multipart upload S3')
 def complete_multipart_upload_s3(s3_client, bucket_name: str, object_key: str, upload_id: str,
                                  parts: list):
     try:
@@ -291,7 +290,7 @@ def complete_multipart_upload_s3(s3_client, bucket_name: str, object_key: str, u
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Put object tagging')
+@allure.step('Put object tagging')
 def put_object_tagging(s3_client, bucket_name: str, object_key: str, tags: list):
     try:
         tags = [{'Key': tag_key, 'Value': tag_value} for tag_key, tag_value in tags]
@@ -303,7 +302,7 @@ def put_object_tagging(s3_client, bucket_name: str, object_key: str, tags: list)
         raise Exception(f'Got error during put object tagging: {err}') from err
 
 
-@keyword('Get object tagging')
+@allure.step('Get object tagging')
 def get_object_tagging(s3_client, bucket_name: str, object_key: str) -> list:
     try:
         response = s3_client.get_object_tagging(Bucket=bucket_name, Key=object_key)
@@ -314,7 +313,7 @@ def get_object_tagging(s3_client, bucket_name: str, object_key: str) -> list:
         raise Exception(f'Got error during get object tagging: {err}') from err
 
 
-@keyword('Delete object tagging')
+@allure.step('Delete object tagging')
 def delete_object_tagging(s3_client, bucket_name: str, object_key: str):
     try:
         response = s3_client.delete_object_tagging(Bucket=bucket_name, Key=object_key)
@@ -324,7 +323,7 @@ def delete_object_tagging(s3_client, bucket_name: str, object_key: str):
         raise Exception(f'Got error during delete object tagging: {err}') from err
 
 
-@keyword('Get object tagging')
+@allure.step('Get object tagging')
 def get_object_attributes(s3_client, bucket_name: str, object_key: str, *attributes: str, version_id: str = None,
                           max_parts: int = None, part_number: int = None, get_full_resp=True) -> dict:
     try:

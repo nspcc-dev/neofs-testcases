@@ -10,11 +10,11 @@
     first non-null response.
 """
 
+import allure
 from common import NEOFS_NETMAP, WALLET_CONFIG
 import neofs_verbs
 
 from robot.api import logger
-from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
 
 import neofs_verbs
@@ -23,7 +23,7 @@ from common import NEOFS_NETMAP
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword('Get Link Object')
+@allure.step('Get Link Object')
 def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
         wallet_config: str = WALLET_CONFIG):
     """
@@ -55,7 +55,7 @@ def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
     return None
 
 
-@keyword('Get Last Object')
+@allure.step('Get Last Object')
 def get_last_object(wallet: str, cid: str, oid: str):
     """
         Args:

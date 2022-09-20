@@ -1,16 +1,16 @@
 #!/usr/bin/python3
 
+import allure
 import json
 
 import neofs_verbs
 from neo3 import wallet
-from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword('Verify Head Tombstone')
+@allure.step('Verify Head Tombstone')
 def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
     header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
     header = header['header']
