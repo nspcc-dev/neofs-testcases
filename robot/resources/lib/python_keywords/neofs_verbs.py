@@ -4,6 +4,7 @@
     This module contains wrappers for NeoFS verbs executed via neofs-cli.
 """
 
+import allure
 import json
 import random
 import re
@@ -14,12 +15,12 @@ import json_transformers
 from cli_utils import NeofsCli
 from common import ASSETS_DIR, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
 from robot.api import logger
-from robot.api.deco import keyword
+
 
 ROBOT_AUTO_KEYWORDS = False
 
 
-@keyword("Get object")
+@allure.step("Get object")
 def get_object(
     wallet: str,
     cid: str,
@@ -75,7 +76,7 @@ def get_object(
 
 
 # TODO: make `bearer_token` optional
-@keyword("Get Range Hash")
+@allure.step("Get Range Hash")
 def get_range_hash(
     wallet: str,
     cid: str,
@@ -119,7 +120,7 @@ def get_range_hash(
     return output.split(":")[1].strip()
 
 
-@keyword("Put object")
+@allure.step("Put object")
 def put_object(
     wallet: str,
     path: str,
@@ -177,7 +178,7 @@ def put_object(
     return oid.strip()
 
 
-@keyword("Delete object")
+@allure.step("Delete object")
 def delete_object(
     wallet: str,
     cid: str,
@@ -220,7 +221,7 @@ def delete_object(
     return tombstone.strip()
 
 
-@keyword("Get Range")
+@allure.step("Get Range")
 def get_range(
     wallet: str,
     cid: str,
@@ -269,7 +270,7 @@ def get_range(
     return range_file, content
 
 
-@keyword("Search object")
+@allure.step("Search object")
 def search_object(
     wallet: str,
     cid: str,
@@ -332,7 +333,7 @@ def search_object(
     return found_objects
 
 
-@keyword("Head object")
+@allure.step("Head object")
 def head_object(
     wallet: str,
     cid: str,

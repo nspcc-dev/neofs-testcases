@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import allure
 import json
 import os
 import re
@@ -12,8 +13,6 @@ import boto3
 import urllib3
 from botocore.exceptions import ClientError
 from robot.api import logger
-from robot.api.deco import keyword
-
 from cli_helpers import _run_with_passwd, log_command_execution
 from common import NEOFS_ENDPOINT, S3_GATE, S3_GATE_WALLET_PATH, S3_GATE_WALLET_PASS
 from data_formatters import get_wallet_public_key
@@ -39,7 +38,7 @@ class VersioningStatus(Enum):
     SUSPENDED = 'Suspended'
 
 
-@keyword('Init S3 Credentials')
+@allure.step('Init S3 Credentials')
 def init_s3_credentials(wallet_path, s3_bearer_rules_file: Optional[str] = None):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or 'robot/resources/files/s3_bearer_rules.json'
@@ -79,7 +78,7 @@ def init_s3_credentials(wallet_path, s3_bearer_rules_file: Optional[str] = None)
         raise RuntimeError(f'Failed to init s3 credentials because of error\n{exc}') from exc
 
 
-@keyword('Config S3 client')
+@allure.step('Config S3 client')
 def config_s3_client(access_key_id: str, secret_access_key: str):
     try:
 
@@ -99,7 +98,7 @@ def config_s3_client(access_key_id: str, secret_access_key: str):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Create bucket S3')
+@allure.step('Create bucket S3')
 def create_bucket_s3(s3_client):
     bucket_name = str(uuid.uuid4())
 
@@ -114,7 +113,7 @@ def create_bucket_s3(s3_client):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('List buckets S3')
+@allure.step('List buckets S3')
 def list_buckets_s3(s3_client):
     found_buckets = []
     try:
@@ -131,7 +130,7 @@ def list_buckets_s3(s3_client):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Delete bucket S3')
+@allure.step('Delete bucket S3')
 def delete_bucket_s3(s3_client, bucket: str):
     try:
         response = s3_client.delete_bucket(Bucket=bucket)
@@ -145,7 +144,7 @@ def delete_bucket_s3(s3_client, bucket: str):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Head bucket S3')
+@allure.step('Head bucket S3')
 def head_bucket(s3_client, bucket: str):
     try:
         response = s3_client.head_bucket(Bucket=bucket)
@@ -158,7 +157,7 @@ def head_bucket(s3_client, bucket: str):
                         f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}') from err
 
 
-@keyword('Set bucket versioning status')
+@allure.step('Set bucket versioning status')
 def set_bucket_versioning(s3_client, bucket_name: str, status: VersioningStatus) -> None:
     try:
         response = s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': status.value})
@@ -168,7 +167,7 @@ def set_bucket_versioning(s3_client, bucket_name: str, status: VersioningStatus)
         raise Exception(f'Got error during set bucket versioning: {err}') from err
 
 
-@keyword('Get bucket versioning status')
+@allure.step('Get bucket versioning status')
 def get_bucket_versioning_status(s3_client, bucket_name: str) -> str:
     try:
         response = s3_client.get_bucket_versioning(Bucket=bucket_name)
@@ -179,7 +178,7 @@ def get_bucket_versioning_status(s3_client, bucket_name: str) -> str:
         raise Exception(f'Got error during get bucket versioning status: {err}') from err
 
 
-@keyword('Put bucket tagging')
+@allure.step('Put bucket tagging')
 def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
     try:
         tags = [{'Key': tag_key, 'Value': tag_value} for tag_key, tag_value in tags]
@@ -191,7 +190,7 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
         raise Exception(f'Got error during put bucket tagging: {err}') from err
 
 
-@keyword('Get bucket tagging')
+@allure.step('Get bucket tagging')
 def get_bucket_tagging(s3_client, bucket_name: str) -> list:
     try:
         response = s3_client.get_bucket_tagging(Bucket=bucket_name)
@@ -202,7 +201,7 @@ def get_bucket_tagging(s3_client, bucket_name: str) -> list:
         raise Exception(f'Got error during get bucket tagging: {err}') from err
 
 
-@keyword('Delete bucket tagging')
+@allure.step('Delete bucket tagging')
 def delete_bucket_tagging(s3_client, bucket_name: str) -> None:
     try:
         response = s3_client.delete_bucket_tagging(Bucket=bucket_name)

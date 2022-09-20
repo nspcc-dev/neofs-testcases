@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
+import allure
 import re
 import time
 
 from neo3 import wallet
 from robot.api import logger
-from robot.api.deco import keyword
 
 import contract
 import converters
@@ -27,7 +27,7 @@ morph_rpc_cli = rpc_client.RPCClient(MORPH_ENDPOINT)
 mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
 
 
-@keyword('Withdraw Mainnet Gas')
+@allure.step('Withdraw Mainnet Gas')
 def withdraw_mainnet_gas(wlt: str, amount: int):
     address = _address_from_wallet(wlt, EMPTY_PASSWORD)
     scripthash = wallet.Account.address_to_script_hash(address)
@@ -72,7 +72,7 @@ def transaction_accepted(tx_id: str):
     return False
 
 
-@keyword('Get NeoFS Balance')
+@allure.step('Get NeoFS Balance')
 def get_balance(wallet_path: str):
     """
     This function returns NeoFS balance for given wallet.
@@ -99,7 +99,7 @@ def get_balance(wallet_path: str):
         raise out
 
 
-@keyword('Transfer Mainnet Gas')
+@allure.step('Transfer Mainnet Gas')
 def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASSWORD,
                          wallet_path: str = MAINNET_WALLET_PATH):
     """
@@ -123,7 +123,7 @@ def transfer_mainnet_gas(wallet_to: str, amount: int, wallet_password: str = EMP
         raise AssertionError(f"TX {txid} hasn't been processed")
 
 
-@keyword('NeoFS Deposit')
+@allure.step('NeoFS Deposit')
 def neofs_deposit(wallet_to: str, amount: int,
                   wallet_password: str = EMPTY_PASSWORD):
     """
@@ -156,7 +156,7 @@ def _address_from_wallet(wlt: str, wallet_password: str):
     return address
 
 
-@keyword('Get Mainnet Balance')
+@allure.step('Get Mainnet Balance')
 def get_mainnet_balance(address: str):
     resp = mainnet_rpc_cli.get_nep17_balances(address=address)
     logger.info(f"Got getnep17balances response: {resp}")
@@ -166,7 +166,7 @@ def get_mainnet_balance(address: str):
     return float(0)
 
 
-@keyword('Get Sidechain Balance')
+@allure.step('Get Sidechain Balance')
 def get_sidechain_balance(address: str):
     resp = morph_rpc_cli.get_nep17_balances(address=address)
     logger.info(f"Got getnep17balances response: {resp}")

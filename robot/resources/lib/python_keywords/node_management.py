@@ -4,6 +4,7 @@
     This module contains keywords for tests that check management of storage nodes.
 """
 
+import allure
 import random
 import re
 import time
@@ -14,7 +15,6 @@ from common import MAINNET_BLOCK_TIME, MORPH_BLOCK_TIME, NEOFS_NETMAP_DICT, STOR
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from robot.api import logger
-from robot.api.deco import keyword
 from service_helper import get_storage_service_helper
 from utility import robot_time_to_int
 
@@ -37,7 +37,7 @@ class HealthStatus:
         return HealthStatus(network, health)
 
 
-@keyword('Stop Nodes')
+@allure.step('Stop Nodes')
 def stop_nodes(number: int, nodes: list) -> list:
     """
         The function shuts down the given number of randomly
@@ -55,7 +55,7 @@ def stop_nodes(number: int, nodes: list) -> list:
     return nodes_to_stop
 
 
-@keyword('Start Nodes')
+@allure.step('Start Nodes')
 def start_nodes(nodes: list) -> None:
     """
         The function raises the given nodes.
@@ -69,7 +69,7 @@ def start_nodes(nodes: list) -> None:
         helper.start(node)
 
 
-@keyword('Get control endpoint and wallet')
+@allure.step('Get control endpoint and wallet')
 def get_control_endpoint_and_wallet(endpoint_number: str = ''):
     """
         Gets control endpoint for a random or given node
@@ -96,7 +96,7 @@ def get_control_endpoint_and_wallet(endpoint_number: str = ''):
     return endpoint_num, endpoint_control, wallet
 
 
-@keyword('Get Locode')
+@allure.step('Get Locode')
 def get_locode():
     endpoint_values = random.choice(list(NEOFS_NETMAP_DICT.values()))
     locode = endpoint_values['UN-LOCODE']
@@ -105,7 +105,7 @@ def get_locode():
     return locode
 
 
-@keyword('Healthcheck for node')
+@allure.step('Healthcheck for node')
 def node_healthcheck(node_name: str) -> HealthStatus:
     """
         The function returns node's health status.
@@ -119,7 +119,7 @@ def node_healthcheck(node_name: str) -> HealthStatus:
     return HealthStatus.from_stdout(output)
 
 
-@keyword('Set status for node')
+@allure.step('Set status for node')
 def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
     """
         The function sets particular status for given node.
@@ -134,7 +134,7 @@ def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
     _run_control_command(node_name, command, retries)
 
 
-@keyword('Get netmap snapshot')
+@allure.step('Get netmap snapshot')
 def get_netmap_snapshot(node_name: Optional[str] = None) -> str:
     """
         The function returns string representation of netmap-snapshot.
@@ -148,7 +148,7 @@ def get_netmap_snapshot(node_name: Optional[str] = None) -> str:
     return _run_control_command(node_name, command)
 
 
-@keyword('Shard list for node')
+@allure.step('Shard list for node')
 def node_shard_list(node_name: str) -> list[str]:
     """
         The function returns list of shards for particular node.
@@ -162,7 +162,7 @@ def node_shard_list(node_name: str) -> list[str]:
     return re.findall(r'Shard (.*):', output)
 
 
-@keyword('Shard list for node')
+@allure.step('Shard list for node')
 def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
     """
         The function sets mode for node's particular shard.
@@ -175,7 +175,7 @@ def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
     return _run_control_command(node_name, command)
 
 
-@keyword('Drop object from node {node_name}')
+@allure.step('Drop object from node {node_name}')
 def drop_object(node_name: str, cid: str, oid: str) -> str:
     """
         The function drops object from particular node.
@@ -188,7 +188,7 @@ def drop_object(node_name: str, cid: str, oid: str) -> str:
     return _run_control_command(node_name, command)
 
 
-@keyword('Delete data of node {node_name}')
+@allure.step('Delete data of node {node_name}')
 def delete_node_data(node_name: str) -> None:
     helper = get_storage_service_helper()
     helper.stop_node(node_name)
@@ -196,7 +196,7 @@ def delete_node_data(node_name: str) -> None:
     time.sleep(robot_time_to_int(MORPH_BLOCK_TIME))
 
 
-@keyword('Exclude node {node_to_include} from network map')
+@allure.step('Exclude node {node_to_include} from network map')
 def exclude_node_from_network_map(node_to_exclude, alive_node):
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]['wallet_path']
     node_netmap_key = get_wallet_public_key(
@@ -214,7 +214,7 @@ def exclude_node_from_network_map(node_to_exclude, alive_node):
     assert node_netmap_key not in snapshot, f'Expected node with key {node_netmap_key} not in network map'
 
 
-@keyword('Include node {node_to_include} into network map')
+@allure.step('Include node {node_to_include} into network map')
 def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
     node_set_status(node_to_include, status='online')
 
@@ -224,7 +224,7 @@ def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
     check_node_in_map(node_to_include, alive_node)
 
 
-@keyword('Check node {node_name} in network map')
+@allure.step('Check node {node_name} in network map')
 def check_node_in_map(node_name: str, alive_node: str = None):
     alive_node = alive_node or node_name
     node_wallet_path = NEOFS_NETMAP_DICT[node_name]['wallet_path']

@@ -25,12 +25,6 @@ from wallet import init_wallet
 import allure
 
 
-def robot_keyword_adapter(name=None, tags=(), types=()):
-    return allure.step(name)
-
-
-deco.keyword = robot_keyword_adapter
-
 logger = logging.getLogger("NeoLogger")
 
 

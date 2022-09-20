@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import allure
 import re
 import shutil
 import sys
@@ -12,7 +13,6 @@ import requests
 from cli_helpers import _cmd_run
 from common import HTTP_GATE
 from robot.api import logger
-from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
@@ -25,7 +25,7 @@ else:
     ASSETS_DIR = BuiltIn().get_variable_value("${ASSETS_DIR}")
 
 
-@keyword('Get via HTTP Gate')
+@allure.step('Get via HTTP Gate')
 def get_via_http_gate(cid: str, oid: str):
     """
     This function gets given object from HTTP gate
@@ -50,7 +50,7 @@ def get_via_http_gate(cid: str, oid: str):
     return filename
 
 
-@keyword('Get via Zip HTTP Gate')
+@allure.step('Get via Zip HTTP Gate')
 def get_via_zip_http_gate(cid: str, prefix: str):
     """
     This function gets given object from HTTP gate
@@ -79,7 +79,7 @@ def get_via_zip_http_gate(cid: str, prefix: str):
     return f'{ASSETS_DIR}/{prefix}'
 
 
-@keyword('Get via HTTP Gate by attribute')
+@allure.step('Get via HTTP Gate by attribute')
 def get_via_http_gate_by_attribute(cid: str, attribute: dict):
     """
     This function gets given object from HTTP gate
@@ -106,7 +106,7 @@ def get_via_http_gate_by_attribute(cid: str, attribute: dict):
     return filename
 
 
-@keyword('Upload via HTTP Gate')
+@allure.step('Upload via HTTP Gate')
 def upload_via_http_gate(cid: str, path: str, headers: dict = None) -> str:
     """
     This function upload given object through HTTP gate
@@ -135,7 +135,7 @@ def upload_via_http_gate(cid: str, path: str, headers: dict = None) -> str:
     return resp.json().get('object_id')
 
 
-@keyword('Upload via HTTP Gate using Curl')
+@allure.step('Upload via HTTP Gate using Curl')
 def upload_via_http_gate_curl(cid: str, filepath: str, large_object=False, headers: dict = None) -> str:
     """
     This function upload given object through HTTP gate using curl utility.
@@ -156,7 +156,7 @@ def upload_via_http_gate_curl(cid: str, filepath: str, large_object=False, heade
     return oid_re.group(1)
 
 
-@keyword('Get via HTTP Gate using Curl')
+@allure.step('Get via HTTP Gate using Curl')
 def get_via_http_curl(cid: str, oid: str) -> str:
     """
     This function gets given object from HTTP gate using curl utility.

@@ -1,5 +1,6 @@
 #!/usr/bin/python3.8
 
+import allure
 import hashlib
 import os
 import tarfile
@@ -11,7 +12,6 @@ import wallet
 from common import ASSETS_DIR, SIMPLE_OBJ_SIZE
 from cli_helpers import _cmd_run
 from robot.api import logger
-from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
 
 ROBOT_AUTO_KEYWORDS = False
@@ -33,7 +33,7 @@ def generate_file(size: int = SIMPLE_OBJ_SIZE) -> str:
     return file_path
 
 
-@keyword('Generate file')
+@allure.step('Generate file')
 def generate_file_and_file_hash(size: int) -> Tuple[str, str]:
     """
     Function generates a binary file with the specified size in bytes
@@ -50,7 +50,7 @@ def generate_file_and_file_hash(size: int) -> Tuple[str, str]:
     return file_path, file_hash
 
 
-@keyword('Get File Hash')
+@allure.step('Get File Hash')
 def get_file_hash(filename: str, len: int = None):
     """
     This function generates hash for the specified file.
@@ -69,12 +69,12 @@ def get_file_hash(filename: str, len: int = None):
     return file_hash.hexdigest()
 
 
-@keyword('Generate Wallet')
+@allure.step('Generate Wallet')
 def generate_wallet():
     return wallet.init_wallet(ASSETS_DIR)
 
 
-@keyword('Get Docker Logs')
+@allure.step('Get Docker Logs')
 def get_container_logs(testcase_name: str) -> None:
     client = docker.APIClient(base_url='unix://var/run/docker.sock')
     logs_dir = BuiltIn().get_variable_value("${OUTPUT_DIR}")
@@ -93,7 +93,7 @@ def get_container_logs(testcase_name: str) -> None:
     tar.close()
 
 
-@keyword('Make Up')
+@allure.step('Make Up')
 def make_up(services: list = [], config_dict: dict = {}):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
@@ -117,7 +117,7 @@ def make_up(services: list = [], config_dict: dict = {}):
     os.chdir(test_path)
 
 
-@keyword('Make Down')
+@allure.step('Make Down')
 def make_down(services: list = []):
     test_path = os.getcwd()
     dev_path = os.getenv('DEVENV_PATH', '../neofs-dev-env')
