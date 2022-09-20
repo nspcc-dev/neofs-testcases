@@ -4,6 +4,7 @@ import re
 import shutil
 from datetime import datetime
 
+import allure
 import pytest
 import wallet
 from cli_helpers import _cmd_run
@@ -13,17 +14,13 @@ from common import (
     FREE_STORAGE,
     INFRASTRUCTURE_TYPE,
     MAINNET_WALLET_PATH,
-    NEOFS_NETMAP_DICT
+    NEOFS_NETMAP_DICT,
 )
 from env_properties import save_env_properties
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
-from robot.api import deco
 from service_helper import get_storage_service_helper
 from wallet import init_wallet
-
-import allure
-
 
 logger = logging.getLogger("NeoLogger")
 
@@ -106,10 +103,7 @@ def run_health_check(collect_logs):
     failed_nodes = []
     for node_name in NEOFS_NETMAP_DICT.keys():
         health_check = node_healthcheck(node_name)
-        if (
-            health_check.health_status != "READY"
-            or health_check.network_status != "ONLINE"
-        ):
+        if health_check.health_status != "READY" or health_check.network_status != "ONLINE":
             failed_nodes.append(node_name)
 
     if failed_nodes:
@@ -121,9 +115,7 @@ def run_health_check(collect_logs):
 def prepare_wallet_and_deposit(prepare_tmp_dir):
     wallet_path, addr, _ = wallet.init_wallet(ASSETS_DIR)
     logger.info(f"Init wallet: {wallet_path},\naddr: {addr}")
-    allure.attach.file(
-        wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON
-    )
+    allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
         deposit = 30

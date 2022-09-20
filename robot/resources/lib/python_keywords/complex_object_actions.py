@@ -10,73 +10,74 @@
     first non-null response.
 """
 
+import logging
+
 import allure
+import neofs_verbs
 from common import NEOFS_NETMAP, WALLET_CONFIG
-import neofs_verbs
 
-from robot.api import logger
-from robot.libraries.BuiltIn import BuiltIn
-
-import neofs_verbs
-from common import NEOFS_NETMAP
-
+logger = logging.getLogger("NeoLogger")
 ROBOT_AUTO_KEYWORDS = False
 
 
-@allure.step('Get Link Object')
-def get_link_object(wallet: str, cid: str, oid: str, bearer_token: str = "",
-        wallet_config: str = WALLET_CONFIG):
+@allure.step("Get Link Object")
+def get_link_object(
+    wallet: str, cid: str, oid: str, bearer_token: str = "", wallet_config: str = WALLET_CONFIG
+):
     """
-        Args:
-            wallet (str): path to the wallet on whose behalf the Storage Nodes
-                            are requested
-            cid (str): Container ID which stores the Large Object
-            oid (str): Large Object ID
-            bearer_token (optional, str): path to Bearer token file
-            wallet_config (optional, str): path to the neofs-cli config file
-        Returns:
-            (str): Link Object ID
-            When no Link Object ID is found after all Storage Nodes polling,
-            the function throws a native robot error.
+    Args:
+        wallet (str): path to the wallet on whose behalf the Storage Nodes
+                        are requested
+        cid (str): Container ID which stores the Large Object
+        oid (str): Large Object ID
+        bearer_token (optional, str): path to Bearer token file
+        wallet_config (optional, str): path to the neofs-cli config file
+    Returns:
+        (str): Link Object ID
+        When no Link Object ID is found after all Storage Nodes polling,
+        the function throws a native robot error.
     """
     for node in NEOFS_NETMAP:
         try:
-            resp = neofs_verbs.head_object(wallet, cid, oid,
-                                           endpoint=node,
-                                           is_raw=True,
-                                           is_direct=True,
-                                           bearer_token=bearer_token,
-                                           wallet_config=wallet_config)
-            if resp['link']:
-                return resp['link']
+            resp = neofs_verbs.head_object(
+                wallet,
+                cid,
+                oid,
+                endpoint=node,
+                is_raw=True,
+                is_direct=True,
+                bearer_token=bearer_token,
+                wallet_config=wallet_config,
+            )
+            if resp["link"]:
+                return resp["link"]
         except Exception:
             logger.info(f"No Link Object found on {node}; continue")
-    BuiltIn().fail(f"No Link Object for {cid}/{oid} found among all Storage Nodes")
+    logger.error(f"No Link Object for {cid}/{oid} found among all Storage Nodes")
     return None
 
 
-@allure.step('Get Last Object')
+@allure.step("Get Last Object")
 def get_last_object(wallet: str, cid: str, oid: str):
     """
-        Args:
-            wallet (str): path to the wallet on whose behalf the Storage Nodes
-                            are requested
-            cid (str): Container ID which stores the Large Object
-            oid (str): Large Object ID
-        Returns:
-            (str): Last Object ID
-            When no Last Object ID is found after all Storage Nodes polling,
-            the function throws a native robot error.
+    Args:
+        wallet (str): path to the wallet on whose behalf the Storage Nodes
+                        are requested
+        cid (str): Container ID which stores the Large Object
+        oid (str): Large Object ID
+    Returns:
+        (str): Last Object ID
+        When no Last Object ID is found after all Storage Nodes polling,
+        the function throws a native robot error.
     """
     for node in NEOFS_NETMAP:
         try:
-            resp = neofs_verbs.head_object(wallet, cid, oid,
-                                           endpoint=node,
-                                           is_raw=True,
-                                           is_direct=True)
-            if resp['lastPart']:
-                return resp['lastPart']
+            resp = neofs_verbs.head_object(
+                wallet, cid, oid, endpoint=node, is_raw=True, is_direct=True
+            )
+            if resp["lastPart"]:
+                return resp["lastPart"]
         except Exception:
             logger.info(f"No Last Object found on {node}; continue")
-    BuiltIn().fail(f"No Last Object for {cid}/{oid} found among all Storage Nodes")
+    logger.error(f"No Last Object for {cid}/{oid} found among all Storage Nodes")
     return None
