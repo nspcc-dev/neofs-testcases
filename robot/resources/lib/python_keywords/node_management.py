@@ -196,7 +196,7 @@ def delete_node_data(node_name: str) -> None:
     time.sleep(robot_time_to_int(MORPH_BLOCK_TIME))
 
 
-@keyword('Exclude node {node_to_include} from network map')
+@keyword('Exclude node {node_to_exclude} from network map')
 def exclude_node_from_network_map(node_to_exclude, alive_node):
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]['wallet_path']
     node_netmap_key = get_wallet_public_key(
