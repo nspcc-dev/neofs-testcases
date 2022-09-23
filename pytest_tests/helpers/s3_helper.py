@@ -43,3 +43,7 @@ def set_bucket_versioning(s3_client, bucket: str, status: s3_gate_bucket.Version
     s3_gate_bucket.set_bucket_versioning(s3_client, bucket, status=status)
     bucket_status = s3_gate_bucket.get_bucket_versioning_status(s3_client, bucket)
     assert bucket_status == status.value, f"Expected {bucket_status} status. Got {status.value}"
+
+
+def object_key_from_file_path(full_path: str) -> str:
+    return os.path.basename(full_path)

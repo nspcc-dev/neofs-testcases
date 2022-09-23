@@ -28,7 +28,12 @@ class AwsCliClient:
         logger.info(f"Executing command: {cmd}")
         _configure_aws_cli(cmd, self.access_key_id, self.secret_access_key)
 
-    def create_bucket(self, Bucket: str, ObjectLockEnabledForBucket: bool = None):
+    def create_bucket(
+        self,
+        Bucket: str,
+        ObjectLockEnabledForBucket: Optional[bool] = None,
+        ACL: Optional[str] = None,
+    ):
         if ObjectLockEnabledForBucket is None:
             object_lock = ""
         elif ObjectLockEnabledForBucket:
@@ -39,11 +44,21 @@ class AwsCliClient:
             f"aws {self.common_flags} s3api create-bucket --bucket {Bucket} "
             f"{object_lock} --endpoint {S3_GATE}"
         )
+        if ACL:
+            cmd += f" --acl {ACL}"
         _cmd_run(cmd, REGULAR_TIMEOUT)
 
     def list_buckets(self) -> dict:
         cmd = f"aws {self.common_flags} s3api list-buckets --endpoint {S3_GATE}"
         output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def get_bucket_acl(self, Bucket: str) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api get-bucket-acl --bucket {Bucket} "
+            f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
 
     def get_bucket_versioning(self, Bucket: str) -> dict:
@@ -193,6 +208,47 @@ class AwsCliClient:
             f"aws {self.common_flags} s3api get-object-acl --bucket {Bucket} --key {Key} "
             f"{version} --endpoint {S3_GATE}"
         )
+        output = _cmd_run(cmd, REGULAR_TIMEOUT)
+        return self._to_json(output)
+
+    def put_object_acl(
+        self,
+        Bucket: str,
+        Key: str,
+        ACL: Optional[str] = None,
+        GrantWrite: Optional[str] = None,
+        GrantRead: Optional[str] = None,
+    ) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api put-object-acl --bucket {Bucket} --key {Key} "
+            f" --endpoint {S3_GATE}"
+        )
+        if ACL:
+            cmd += f" --acl {ACL}"
+        if GrantWrite:
+            cmd += f" --grant-write {GrantWrite}"
+        if GrantRead:
+            cmd += f" --grant-read {GrantRead}"
+        output = _cmd_run(cmd, REGULAR_TIMEOUT)
+        return self._to_json(output)
+
+    def put_bucket_acl(
+        self,
+        Bucket: str,
+        ACL: Optional[str] = None,
+        GrantWrite: Optional[str] = None,
+        GrantRead: Optional[str] = None,
+    ) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api put-bucket-acl --bucket {Bucket} "
+            f" --endpoint {S3_GATE}"
+        )
+        if ACL:
+            cmd += f" --acl {ACL}"
+        if GrantWrite:
+            cmd += f" --grant-write {GrantWrite}"
+        if GrantRead:
+            cmd += f" --grant-read {GrantRead}"
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
 

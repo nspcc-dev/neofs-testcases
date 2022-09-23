@@ -8,6 +8,7 @@ from time import sleep
 from typing import Optional
 
 import allure
+import pytest
 import urllib3
 from botocore.exceptions import ClientError
 from cli_helpers import log_command_execution
@@ -188,8 +189,41 @@ def delete_object_versions_s3(s3_client, bucket: str, object_versions: list):
         ) from err
 
 
+@allure.step("Put object ACL")
+def put_object_acl_s3(
+    s3_client,
+    bucket: str,
+    object_key: str,
+    acl: Optional[str] = None,
+    grant_write: Optional[str] = None,
+    grant_read: Optional[str] = None,
+) -> list:
+    if not isinstance(s3_client, AwsCliClient):
+        pytest.skip("Method put_object_acl is not supported by boto3 client")
+    params = {"Bucket": bucket, "Key": object_key}
+    if acl:
+        params.update({"ACL": acl})
+    elif grant_write or grant_read:
+        if grant_write:
+            params.update({"GrantWrite": grant_write})
+        elif grant_read:
+            params.update({"GrantRead": grant_read})
+    try:
+        response = s3_client.put_object_acl(**params)
+        log_command_execution("S3 ACL objects result", response)
+        return response.get("Grants")
+
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
+
+
 @allure.step("Get object ACL")
-def get_object_acl_s3(s3_client, bucket: str, object_key: str, version_id: Optional[str] = None):
+def get_object_acl_s3(
+    s3_client, bucket: str, object_key: str, version_id: Optional[str] = None
+) -> list:
     params = {"Bucket": bucket, "Key": object_key}
     try:
         if version_id:
@@ -208,7 +242,7 @@ def get_object_acl_s3(s3_client, bucket: str, object_key: str, version_id: Optio
 @allure.step("Copy object S3")
 def copy_object_s3(
     s3_client, bucket: str, object_key: str, bucket_dst: Optional[str] = None, **kwargs
-):
+) -> str:
     filename = f"{os.getcwd()}/{uuid.uuid4()}"
     try:
         params = {
