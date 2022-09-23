@@ -4,7 +4,6 @@
     This module contains keywords that utilize `neofs-cli container` commands.
 """
 
-import allure
 import json
 import logging
 from time import sleep
@@ -17,7 +16,6 @@ from common import NEOFS_ENDPOINT, WALLET_CONFIG
 
 logger = logging.getLogger("NeoLogger")
 
-ROBOT_AUTO_KEYWORDS = False
 DEFAULT_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
 
@@ -105,7 +103,7 @@ def wait_for_container_deletion(wallet: str, cid: str, attempts: int = 30, sleep
     raise AssertionError(f"Expected container deleted during {attempts * sleep_interval} sec.")
 
 
-@allure.step('List Containers')
+@allure.step("List Containers")
 def list_containers(wallet: str) -> list[str]:
     """
     A wrapper for `neofs-cli container list` call. It returns all the
@@ -121,7 +119,7 @@ def list_containers(wallet: str) -> list[str]:
     return output.split()
 
 
-@allure.step('Get Container')
+@allure.step("Get Container")
 def get_container(wallet: str, cid: str, json_mode: bool = True) -> Union[dict, str]:
     """
     A wrapper for `neofs-cli container get` call. It extracts container's
@@ -150,7 +148,7 @@ def get_container(wallet: str, cid: str, json_mode: bool = True) -> Union[dict, 
     return container_info
 
 
-@allure.step('Delete Container')
+@allure.step("Delete Container")
 # TODO: make the error message about a non-found container more user-friendly
 # https://github.com/nspcc-dev/neofs-contract/issues/121
 def delete_container(wallet: str, cid: str, force: bool = False) -> None:

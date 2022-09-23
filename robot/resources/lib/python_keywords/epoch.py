@@ -13,7 +13,6 @@ from common import (
 )
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 
 @allure.step("Get Epoch")

@@ -20,7 +20,6 @@ from env_properties import save_env_properties
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
 from service_helper import get_storage_service_helper
-from wallet import init_wallet
 
 logger = logging.getLogger("NeoLogger")
 

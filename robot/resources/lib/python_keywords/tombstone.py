@@ -1,13 +1,10 @@
 #!/usr/bin/python3
 
-import allure
 import json
 
 import allure
 import neofs_verbs
 from neo3 import wallet
-
-ROBOT_AUTO_KEYWORDS = False
 
 
 @allure.step("Verify Head Tombstone")

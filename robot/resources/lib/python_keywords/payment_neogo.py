@@ -24,7 +24,6 @@ from wallet import nep17_transfer
 from wrappers import run_sh_with_passwd_contract
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 EMPTY_PASSWORD = ""
 TX_PERSIST_TIMEOUT = 15  # seconds

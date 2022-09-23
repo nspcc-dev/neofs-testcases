@@ -16,8 +16,6 @@ import allure
 import pexpect
 
 logger = logging.getLogger("NeoLogger")
-
-ROBOT_AUTO_KEYWORDS = False
 COLOR_GREEN = "\033[92m"
 COLOR_OFF = "\033[0m"
 

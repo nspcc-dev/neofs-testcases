@@ -4,7 +4,6 @@
     This module contains keywords for work with session token.
 """
 
-import allure
 import base64
 import json
 import logging
@@ -18,7 +17,6 @@ from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
 from neo3 import wallet
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 # path to neofs-cli executable
 NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
