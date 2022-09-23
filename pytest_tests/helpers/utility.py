@@ -3,15 +3,14 @@ import time
 import uuid
 
 import allure
-
 from common import ASSETS_DIR, SIMPLE_OBJ_SIZE, STORAGE_GC_TIME
 
 
 def create_file_with_content(file_path: str = None, content: str = None) -> str:
-    mode = 'w+'
+    mode = "w+"
     if not content:
         content = os.urandom(SIMPLE_OBJ_SIZE)
-        mode = 'wb'
+        mode = "wb"
 
     if not file_path:
         file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
@@ -25,7 +24,7 @@ def create_file_with_content(file_path: str = None, content: str = None) -> str:
     return file_path
 
 
-def get_file_content(file_path: str, content_len: int = None, mode='r') -> str:
+def get_file_content(file_path: str, content_len: int = None, mode="r") -> str:
     with open(file_path, mode) as out_file:
         if content_len:
             content = out_file.read(content_len)
@@ -37,7 +36,7 @@ def get_file_content(file_path: str, content_len: int = None, mode='r') -> str:
 
 def split_file(file_path: str, parts: int) -> list[str]:
     files = []
-    with open(file_path, 'rb') as in_file:
+    with open(file_path, "rb") as in_file:
         data = in_file.read()
 
     content_size = len(data)
@@ -45,20 +44,20 @@ def split_file(file_path: str, parts: int) -> list[str]:
     chunk_size = int((content_size + parts) / parts)
     part_id = 1
     for start_position in range(0, content_size + 1, chunk_size):
-        part_file_name = f'{file_path}_part_{part_id}'
+        part_file_name = f"{file_path}_part_{part_id}"
         files.append(part_file_name)
-        with open(part_file_name, 'wb') as out_file:
-            out_file.write(data[start_position:start_position + chunk_size])
+        with open(part_file_name, "wb") as out_file:
+            out_file.write(data[start_position : start_position + chunk_size])
         part_id += 1
 
     return files
 
 
-def robot_time_to_int(value: str) -> int:
-    if value.endswith('s'):
+def parse_time(value: str) -> int:
+    if value.endswith("s"):
         return int(value[:-1])
 
-    if value.endswith('m'):
+    if value.endswith("m"):
         return int(value[:-1]) * 60
 
 
@@ -84,12 +83,12 @@ def placement_policy_from_container(container_info: str) -> str:
     Returns:
         placement policy as a string
     """
-    assert ':' in container_info, f'Could not find placement rule in the output {container_info}'
-    return container_info.split(':')[-1].replace('\n', ' ').strip()
+    assert ":" in container_info, f"Could not find placement rule in the output {container_info}"
+    return container_info.split(":")[-1].replace("\n", " ").strip()
 
 
 def wait_for_gc_pass_on_storage_nodes() -> None:
     # We add 15 seconds to allow some time for GC process itself
-    wait_time = robot_time_to_int(STORAGE_GC_TIME)
-    with allure.step(f'Wait {wait_time}s until GC completes on storage nodes'):
+    wait_time = parse_time(STORAGE_GC_TIME)
+    with allure.step(f"Wait {wait_time}s until GC completes on storage nodes"):
         time.sleep(wait_time)

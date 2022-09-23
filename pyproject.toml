@@ -1,6 +1,6 @@
 [tool.isort]
 profile = "black"
-src_paths = ["reporter", "shell", "tests"]
+src_paths = ["pytest_tests", "robot"]
 line_length = 100
 
 [tool.black]

@@ -4,7 +4,6 @@
     This module contains wrappers for NeoFS verbs executed via neofs-cli.
 """
 
-import allure
 import json
 import logging
 import random
@@ -18,8 +17,6 @@ from cli_utils import NeofsCli
 from common import ASSETS_DIR, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
 
 logger = logging.getLogger("NeoLogger")
-
-ROBOT_AUTO_KEYWORDS = False
 
 
 @allure.step("Get object")
@@ -320,13 +317,13 @@ def search_object(
     if expected_objects_list:
         if sorted(found_objects) == sorted(expected_objects_list):
             logger.info(
-                f"Found objects list '{found_objects}' ",
-                f"is equal for expected list '{expected_objects_list}'",
+                f"Found objects list '{found_objects}' "
+                f"is equal for expected list '{expected_objects_list}'"
             )
         else:
             logger.warning(
-                f"Found object list {found_objects} ",
-                f"is not equal to expected list '{expected_objects_list}'",
+                f"Found object list {found_objects} "
+                f"is not equal to expected list '{expected_objects_list}'"
             )
 
     return found_objects

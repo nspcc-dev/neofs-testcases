@@ -16,8 +16,6 @@ from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 
 logger = logging.getLogger("NeoLogger")
 
-ROBOT_AUTO_KEYWORDS = False
-
 
 @allure.step("Get Object Copies")
 def get_object_copies(complexity: str, wallet: str, cid: str, oid: str):

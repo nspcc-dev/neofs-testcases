@@ -17,7 +17,6 @@ import neofs_verbs
 from common import NEOFS_NETMAP, WALLET_CONFIG
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 
 @allure.step("Get Link Object")
@@ -35,7 +34,7 @@ def get_link_object(
     Returns:
         (str): Link Object ID
         When no Link Object ID is found after all Storage Nodes polling,
-        the function throws a native robot error.
+        the function throws an error.
     """
     for node in NEOFS_NETMAP:
         try:
@@ -68,7 +67,7 @@ def get_last_object(wallet: str, cid: str, oid: str):
     Returns:
         (str): Last Object ID
         When no Last Object ID is found after all Storage Nodes polling,
-        the function throws a native robot error.
+        the function throws an error.
     """
     for node in NEOFS_NETMAP:
         try:

@@ -14,7 +14,6 @@ from cli_helpers import _cmd_run
 from common import HTTP_GATE
 
 logger = logging.getLogger("NeoLogger")
-ROBOT_AUTO_KEYWORDS = False
 
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
