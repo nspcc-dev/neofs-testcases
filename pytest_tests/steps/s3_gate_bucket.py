@@ -17,6 +17,8 @@ from cli_helpers import _run_with_passwd, log_command_execution
 from common import NEOFS_ENDPOINT, S3_GATE, S3_GATE_WALLET_PASS, S3_GATE_WALLET_PATH
 from data_formatters import get_wallet_public_key
 
+from steps.aws_cli_client import AwsCliClient
+
 ##########################################################
 # Disabling warnings on self-signed certificate which the
 # boto library produces on requests to S3-gate in dev-env.
@@ -102,13 +104,17 @@ def config_s3_client(access_key_id: str, secret_access_key: str):
 
 
 @allure.step("Create bucket S3")
-def create_bucket_s3(s3_client, object_lock_enabled_for_bucket: Optional[bool] = None):
+def create_bucket_s3(
+    s3_client, object_lock_enabled_for_bucket: Optional[bool] = None, acl: Optional[str] = None
+) -> str:
     bucket_name = str(uuid.uuid4())
 
     try:
         params = {"Bucket": bucket_name}
         if object_lock_enabled_for_bucket is not None:
             params.update({"ObjectLockEnabledForBucket": object_lock_enabled_for_bucket})
+        if acl is not None:
+            params.update({"ACL": acl})
         s3_bucket = s3_client.create_bucket(**params)
         log_command_execution(f"Created S3 bucket {bucket_name}", s3_bucket)
         sleep(S3_SYNC_WAIT_TIME)
@@ -206,6 +212,17 @@ def put_bucket_tagging(s3_client, bucket_name: str, tags: list):
         raise Exception(f"Got error during put bucket tagging: {err}") from err
 
 
+@allure.step("Get bucket acl")
+def get_bucket_acl(s3_client, bucket_name: str) -> list:
+    try:
+        response = s3_client.get_bucket_acl(Bucket=bucket_name)
+        log_command_execution("S3 Get bucket acl", response)
+        return response.get("Grants")
+
+    except ClientError as err:
+        raise Exception(f"Got error during get bucket tagging: {err}") from err
+
+
 @allure.step("Get bucket tagging")
 def get_bucket_tagging(s3_client, bucket_name: str) -> list:
     try:
@@ -225,3 +242,31 @@ def delete_bucket_tagging(s3_client, bucket_name: str) -> None:
 
     except ClientError as err:
         raise Exception(f"Got error during delete bucket tagging: {err}") from err
+
+
+@allure.step("Put bucket ACL")
+def put_bucket_acl_s3(
+    s3_client,
+    bucket: str,
+    acl: Optional[str] = None,
+    grant_write: Optional[str] = None,
+    grant_read: Optional[str] = None,
+) -> list:
+    params = {"Bucket": bucket}
+    if acl:
+        params.update({"ACL": acl})
+    elif grant_write or grant_read:
+        if grant_write:
+            params.update({"GrantWrite": grant_write})
+        elif grant_read:
+            params.update({"GrantRead": grant_read})
+    try:
+        response = s3_client.put_bucket_acl(**params)
+        log_command_execution("S3 ACL bucket result", response)
+        return response.get("Grants")
+
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
