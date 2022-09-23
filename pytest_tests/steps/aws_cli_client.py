@@ -282,7 +282,7 @@ class AwsCliClient:
             f"aws {self.common_flags} s3api get-object-tagging --bucket {Bucket} --key {Key} "
             f"{version}  --endpoint {S3_GATE}"
         )
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
 
     def delete_object_tagging(self, Bucket: str, Key: str) -> dict:
@@ -365,7 +365,7 @@ class AwsCliClient:
             f"--upload-id {UploadId} --part-number {PartNumber} --body {Body} "
             f"--endpoint-url {S3_GATE}"
         )
-        output = _cmd_run(cmd)
+        output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
 
     def list_parts(self, UploadId: str, Bucket: str, Key: str) -> dict:

@@ -18,10 +18,11 @@ from s3_helper import (
     set_bucket_versioning,
     try_to_get_objects_and_expect_error,
 )
+from utility import create_file_with_content, get_file_content, split_file
+
 from steps import s3_gate_bucket, s3_gate_object
 from steps.aws_cli_client import AwsCliClient
 from steps.s3_gate_base import TestS3GateBase
-from utility import create_file_with_content, get_file_content, split_file
 
 logger = logging.getLogger("NeoLogger")
 
@@ -426,7 +427,7 @@ class TestS3Gate(TestS3GateBase):
             assert set(put_objects).difference(set(objects_to_delete_b1)) == set(
                 bucket_objects
             ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
-            try_to_get_objects_and_expect_error(bucket_1, objects_to_delete_b1)
+            try_to_get_objects_and_expect_error(self.s3_client, bucket_1, objects_to_delete_b1)
 
         with allure.step("Delete some objects from bucket_2 at once"):
             objects_to_delete_b2 = choices(put_objects, k=max_delete_objects)
@@ -437,7 +438,7 @@ class TestS3Gate(TestS3GateBase):
             assert set(put_objects).difference(set(objects_to_delete_b2)) == set(
                 objects_list
             ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
-            try_to_get_objects_and_expect_error(bucket_2, objects_to_delete_b2)
+            try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
     @allure.title("Test S3: Copy object to the same bucket")
     def test_s3_copy_same_bucket(self):
@@ -464,7 +465,7 @@ class TestS3Gate(TestS3GateBase):
             copy_obj_path = s3_gate_object.copy_object_s3(self.s3_client, bucket, file_name_simple)
             bucket_objects.append(copy_obj_path)
 
-        check_objects_in_bucket(bucket, bucket_objects)
+        check_objects_in_bucket(self.s3_client, bucket, bucket_objects)
 
         with allure.step("Check copied object has the same content"):
             got_copied_file = s3_gate_object.get_object_s3(self.s3_client, bucket, copy_obj_path)
@@ -477,7 +478,10 @@ class TestS3Gate(TestS3GateBase):
             bucket_objects.remove(file_name_simple)
 
         check_objects_in_bucket(
-            bucket, expected_objects=bucket_objects, unexpected_objects=[file_name_simple]
+            self.s3_client,
+            bucket,
+            expected_objects=bucket_objects,
+            unexpected_objects=[file_name_simple],
         )
 
     @allure.title("Test S3: Copy object to another bucket")
@@ -507,8 +511,8 @@ class TestS3Gate(TestS3GateBase):
             copy_obj_path_b2 = s3_gate_object.copy_object_s3(
                 self.s3_client, bucket_1, file_name_large, bucket_dst=bucket_2
             )
-        check_objects_in_bucket(bucket_1, expected_objects=bucket_1_objects)
-        check_objects_in_bucket(bucket_2, expected_objects=[copy_obj_path_b2])
+        check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
+        check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
         with allure.step("Check copied object has the same content"):
             got_copied_file_b2 = s3_gate_object.get_object_s3(
@@ -522,12 +526,12 @@ class TestS3Gate(TestS3GateBase):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_1, file_name_simple)
             bucket_1_objects.remove(file_name_simple)
 
-        check_objects_in_bucket(bucket_1, expected_objects=bucket_1_objects)
-        check_objects_in_bucket(bucket_2, expected_objects=[copy_obj_path_b2])
+        check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
+        check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
         with allure.step("Delete one object from second bucket and check it is empty"):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
-            check_objects_in_bucket(bucket_2, expected_objects=[])
+            check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[])
 
     def check_object_attributes(self, bucket: str, object_key: str, parts_count: int):
         if not isinstance(self.s3_client, AwsCliClient):

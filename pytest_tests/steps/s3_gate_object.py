@@ -11,6 +11,7 @@ import allure
 import urllib3
 from botocore.exceptions import ClientError
 from cli_helpers import log_command_execution
+
 from steps.aws_cli_client import AwsCliClient
 from steps.s3_gate_bucket import S3_SYNC_WAIT_TIME
 
@@ -441,7 +442,7 @@ def get_object_attributes(
             bucket_name,
             object_key,
             *attributes,
-            VersionId=version_id,
+            version_id=version_id,
             max_parts=max_parts,
             part_number=part_number,
         )
