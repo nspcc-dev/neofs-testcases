@@ -209,7 +209,7 @@ class SberCloud:
         return nodes_by_ip[0]['id']
 
     def get_ecs_nodes(self) -> list[dict]:
-        response = self.ecs_requests.get("/detail").json()
+        response = self.ecs_requests.get("/detail", {"limit": "1000"}).json()
         return response["servers"]
 
     def start_node(self, node_id: Optional[str] = None, node_ip: Optional[str] = None) -> None:
