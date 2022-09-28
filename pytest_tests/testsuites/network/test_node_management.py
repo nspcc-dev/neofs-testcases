@@ -176,12 +176,9 @@ def test_nodes_management(prepare_tmp_dir):
     random_node = choice(list(NEOFS_NETMAP_DICT))
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != random_node])
 
-    # Calculate public key that identifies node in netmap (we need base58-formatted key
-    # because keys of storage nodes are base58-encoded in netmap)
+    # Calculate public key that identifies node in netmap
     random_node_wallet_path = NEOFS_NETMAP_DICT[random_node]["wallet_path"]
-    random_node_netmap_key = get_wallet_public_key(
-        random_node_wallet_path, STORAGE_WALLET_PASS, format="base58"
-    )
+    random_node_netmap_key = get_wallet_public_key(random_node_wallet_path, STORAGE_WALLET_PASS)
 
     with allure.step("Check node {random_node} is in netmap"):
         snapshot = get_netmap_snapshot(node_name=alive_node)
