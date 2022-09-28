@@ -1,6 +1,5 @@
 import allure
 import pytest
-
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.container_access import (
@@ -31,9 +30,7 @@ class TestACLBasic:
     def private_container(self, wallets):
         user_wallet = wallets.get_wallet()
         with allure.step("Create private container"):
-            cid_private = create_container(
-                user_wallet.wallet_path, basic_acl=PRIVATE_ACL_F
-            )
+            cid_private = create_container(user_wallet.wallet_path, basic_acl=PRIVATE_ACL_F)
 
         yield cid_private
 
@@ -44,9 +41,7 @@ class TestACLBasic:
     def read_only_container(self, wallets):
         user_wallet = wallets.get_wallet()
         with allure.step("Create public readonly container"):
-            cid_read_only = create_container(
-                user_wallet.wallet_path, basic_acl=READONLY_ACL_F
-            )
+            cid_read_only = create_container(user_wallet.wallet_path, basic_acl=READONLY_ACL_F)
 
         yield cid_read_only
 
@@ -78,12 +73,8 @@ class TestACLBasic:
                     attributes={"created": "other"},
                 )
             with allure.step(f"Check {desc} has full access to public container"):
-                check_full_access_to_container(
-                    wallet.wallet_path, cid, owner_object_oid, file_path
-                )
-                check_full_access_to_container(
-                    wallet.wallet_path, cid, other_object_oid, file_path
-                )
+                check_full_access_to_container(wallet.wallet_path, cid, owner_object_oid, file_path)
+                check_full_access_to_container(wallet.wallet_path, cid, other_object_oid, file_path)
 
     @allure.title("Test basic ACL on private container")
     def test_basic_acl_private(self, wallets, private_container, file_path):
@@ -97,9 +88,7 @@ class TestACLBasic:
             owner_object_oid = put_object(user_wallet.wallet_path, file_path, cid)
 
         with allure.step("Check only owner has full access to private container"):
-            with allure.step(
-                "Check no one except owner has access to operations with container"
-            ):
+            with allure.step("Check no one except owner has access to operations with container"):
                 check_no_access_to_container(
                     other_wallet.wallet_path, cid, owner_object_oid, file_path
                 )
@@ -121,14 +110,8 @@ class TestACLBasic:
         with allure.step("Add test objects to container"):
             object_oid = put_object(user_wallet.wallet_path, file_path, cid)
 
-        with allure.step(
-            "Check other has read-only access to operations with container"
-        ):
-            check_read_only_container(
-                other_wallet.wallet_path, cid, object_oid, file_path
-            )
+        with allure.step("Check other has read-only access to operations with container"):
+            check_read_only_container(other_wallet.wallet_path, cid, object_oid, file_path)
 
         with allure.step("Check owner has full access to public container"):
-            check_full_access_to_container(
-                user_wallet.wallet_path, cid, object_oid, file_path
-            )
+            check_full_access_to_container(user_wallet.wallet_path, cid, object_oid, file_path)

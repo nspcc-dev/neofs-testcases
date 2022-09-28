@@ -1,6 +1,5 @@
 import allure
 import pytest
-
 from python_keywords.acl import (
     EACLAccess,
     EACLFilter,
@@ -21,11 +20,7 @@ from python_keywords.container_access import (
     check_no_access_to_container,
 )
 from python_keywords.neofs_verbs import put_object
-from python_keywords.object_access import (
-    can_get_head_object,
-    can_get_object,
-    can_put_object,
-)
+from python_keywords.object_access import can_get_head_object, can_get_object, can_put_object
 from wellknown_acl import PUBLIC_ACL
 
 
@@ -112,12 +107,8 @@ class TestEACLFilters:
     @pytest.mark.parametrize(
         "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
     )
-    def test_extended_acl_filters_request(
-        self, wallets, eacl_container_with_objects, match_type
-    ):
-        allure.dynamic.title(
-            f"Validate NeoFS operations with request filter: {match_type.name}"
-        )
+    def test_extended_acl_filters_request(self, wallets, eacl_container_with_objects, match_type):
+        allure.dynamic.title(f"Validate NeoFS operations with request filter: {match_type.name}")
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
         (
@@ -147,14 +138,10 @@ class TestEACLFilters:
         # is STRING_EQUAL, then requests with "check_key=OTHER_ATTRIBUTE" will be allowed while
         # requests with "check_key=ATTRIBUTE" will be denied, and vice versa
         allow_headers = (
-            self.OTHER_ATTRIBUTE
-            if match_type == EACLMatchType.STRING_EQUAL
-            else self.ATTRIBUTE
+            self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
         )
         deny_headers = (
-            self.ATTRIBUTE
-            if match_type == EACLMatchType.STRING_EQUAL
-            else self.OTHER_ATTRIBUTE
+            self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
         )
         # We test on 3 groups of objects with various headers,
         # but eACL rule should ignore object headers and
@@ -164,12 +151,8 @@ class TestEACLFilters:
             objects_with_other_header,
             objects_without_header,
         ):
-            with allure.step(
-                "Check other has full access when sending request without headers"
-            ):
-                check_full_access_to_container(
-                    other_wallet.wallet_path, cid, oid.pop(), file_path
-                )
+            with allure.step("Check other has full access when sending request without headers"):
+                check_full_access_to_container(other_wallet.wallet_path, cid, oid.pop(), file_path)
 
             with allure.step(
                 "Check other has full access when sending request with allowed headers"
@@ -182,9 +165,7 @@ class TestEACLFilters:
                     xhdr=allow_headers,
                 )
 
-            with allure.step(
-                "Check other has no access when sending request with denied headers"
-            ):
+            with allure.step("Check other has no access when sending request with denied headers"):
                 check_no_access_to_container(
                     other_wallet.wallet_path,
                     cid,
@@ -201,9 +182,7 @@ class TestEACLFilters:
                     user_wallet.wallet_path,
                     cid,
                     [
-                        EACLRule(
-                            operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS
-                        )
+                        EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
                         for op in EACLOperation
                     ],
                 )
@@ -265,9 +244,7 @@ class TestEACLFilters:
         # but eACL rule should ignore request headers and validate
         # only object headers
         for xhdr in (self.ATTRIBUTE, self.OTHER_ATTRIBUTE, None):
-            with allure.step(
-                "Check other have full access to objects without attributes"
-            ):
+            with allure.step("Check other have full access to objects without attributes"):
                 check_full_access_to_container(
                     other_wallet.wallet_path,
                     cid,
@@ -276,9 +253,7 @@ class TestEACLFilters:
                     xhdr=xhdr,
                 )
 
-            with allure.step(
-                "Check other have full access to objects without deny attribute"
-            ):
+            with allure.step("Check other have full access to objects without deny attribute"):
                 check_full_access_to_container(
                     other_wallet.wallet_path,
                     cid,
@@ -287,9 +262,7 @@ class TestEACLFilters:
                     xhdr=xhdr,
                 )
 
-            with allure.step(
-                "Check other have no access to objects with deny attribute"
-            ):
+            with allure.step("Check other have no access to objects with deny attribute"):
                 with pytest.raises(AssertionError):
                     assert can_get_head_object(
                         other_wallet.wallet_path, cid, deny_objects[0], xhdr=xhdr
@@ -328,9 +301,7 @@ class TestEACLFilters:
                 )
 
         allow_attribute = (
-            self.OTHER_ATTRIBUTE
-            if match_type == EACLMatchType.STRING_EQUAL
-            else self.ATTRIBUTE
+            self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
         )
         with allure.step("Check other can PUT objects without denied attribute"):
             assert can_put_object(
@@ -339,9 +310,7 @@ class TestEACLFilters:
             assert can_put_object(other_wallet.wallet_path, cid, file_path)
 
         deny_attribute = (
-            self.ATTRIBUTE
-            if match_type == EACLMatchType.STRING_EQUAL
-            else self.OTHER_ATTRIBUTE
+            self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
         )
         with allure.step("Check other can not PUT objects with denied attribute"):
             with pytest.raises(AssertionError):
@@ -432,8 +401,7 @@ class TestEACLFilters:
                 assert can_put_object(other_wallet.wallet_path, cid, file_path)
 
         with allure.step(
-            "Check other can get and put objects without attributes "
-            "and using bearer token"
+            "Check other can get and put objects without attributes and using bearer token"
         ):
             bearer_token_other = form_bearertoken_file(
                 user_wallet.wallet_path,
@@ -464,9 +432,7 @@ class TestEACLFilters:
                 other_wallet.wallet_path, cid, file_path, bearer=bearer_token_other
             )
 
-        with allure.step(
-            f"Check other can get objects with attributes matching the filter"
-        ):
+        with allure.step(f"Check other can get objects with attributes matching the filter"):
             oid = allow_objects.pop()
             assert can_get_head_object(other_wallet.wallet_path, cid, oid)
             assert can_get_object(other_wallet.wallet_path, cid, oid, file_path)
@@ -474,17 +440,11 @@ class TestEACLFilters:
                 other_wallet.wallet_path, cid, file_path, attributes=allow_attribute
             )
 
-        with allure.step(
-            "Check other cannot get objects without attributes matching the filter"
-        ):
+        with allure.step("Check other cannot get objects without attributes matching the filter"):
             with pytest.raises(AssertionError):
-                assert can_get_head_object(
-                    other_wallet.wallet_path, cid, deny_objects[0]
-                )
+                assert can_get_head_object(other_wallet.wallet_path, cid, deny_objects[0])
             with pytest.raises(AssertionError):
-                assert can_get_object(
-                    other_wallet.wallet_path, cid, deny_objects[0], file_path
-                )
+                assert can_get_object(other_wallet.wallet_path, cid, deny_objects[0], file_path)
             with pytest.raises(AssertionError):
                 assert can_put_object(
                     other_wallet.wallet_path, cid, file_path, attributes=deny_attribute

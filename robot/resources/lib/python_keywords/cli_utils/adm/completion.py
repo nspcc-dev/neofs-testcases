@@ -27,4 +27,4 @@ class NeofsAdmCompletion(NeofsCliCommand):
             str: Command string
 
         """
-        return self._execute('completion ' + completion_type.value)
+        return self._execute("completion " + completion_type.value)

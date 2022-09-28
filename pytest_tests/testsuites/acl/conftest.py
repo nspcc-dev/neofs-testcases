@@ -3,9 +3,14 @@ from typing import Dict, List, Optional
 
 import allure
 import pytest
-
-from common import ASSETS_DIR, IR_WALLET_CONFIG, IR_WALLET_PATH, WALLET_CONFIG
-from common import STORAGE_WALLET_PATH, STORAGE_WALLET_CONFIG
+from common import (
+    ASSETS_DIR,
+    IR_WALLET_CONFIG,
+    IR_WALLET_PATH,
+    STORAGE_WALLET_CONFIG,
+    STORAGE_WALLET_PATH,
+    WALLET_CONFIG,
+)
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import put_object
@@ -38,21 +43,15 @@ def wallets(prepare_wallet_and_deposit):
     yield Wallets(
         wallets={
             EACLRole.USER: [
-                Wallet(
-                    wallet_path=prepare_wallet_and_deposit, config_path=WALLET_CONFIG
-                )
+                Wallet(wallet_path=prepare_wallet_and_deposit, config_path=WALLET_CONFIG)
             ],
             EACLRole.OTHERS: [
-                Wallet(
-                    wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG
-                ),
-                Wallet(
-                    wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG
-                ),
+                Wallet(wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG),
+                Wallet(wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG),
             ],
             EACLRole.SYSTEM: [
                 Wallet(wallet_path=IR_WALLET_PATH, config_path=IR_WALLET_CONFIG),
-                Wallet(wallet_path=STORAGE_WALLET_PATH, config_path=STORAGE_WALLET_CONFIG)
+                Wallet(wallet_path=STORAGE_WALLET_PATH, config_path=STORAGE_WALLET_CONFIG),
             ],
         }
     )

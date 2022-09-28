@@ -1,7 +1,7 @@
 from typing import Optional
 
 import allure
-import pytest
+
 from steps import s3_gate_bucket, s3_gate_object
 
 

@@ -4,7 +4,9 @@ from cli_utils.cli_command import NeofsCliCommand
 
 
 class NeofsAdmGenDoc(NeofsCliCommand):
-    def get(self, doc_file: str, depth: int = 1, doc_type: str = 'md', extension: Optional[str] = None) -> str:
+    def get(
+        self, doc_file: str, depth: int = 1, doc_type: str = "md", extension: Optional[str] = None
+    ) -> str:
         """Generate documentation for this command. If the template is not provided,
             builtin cobra generator is used and each subcommand is placed in
             a separate file in the same directory.
@@ -29,6 +31,10 @@ class NeofsAdmGenDoc(NeofsCliCommand):
 
         """
         return self._execute(
-            f'gendoc {doc_file}',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self', 'doc_file']}
+            f"gendoc {doc_file}",
+            **{
+                param: value
+                for param, value in locals().items()
+                if param not in ["self", "doc_file"]
+            },
         )

@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import uuid
+from typing import Optional
+
 import allure
 from tenacity import retry, stop_after_attempt, wait_fixed
-from typing import Optional
+
 from pytest_tests.helpers.ssh_helper import HostClient
 
 
@@ -179,8 +182,6 @@ class RemoteProcess:
             f"echo $? > {self.process_dir}/rc"
         )
 
-        self.host_client.exec(
-            f'echo "{script}" > {self.process_dir}/command.sh'
-        )
+        self.host_client.exec(f'echo "{script}" > {self.process_dir}/command.sh')
         self.host_client.exec(f"cat {self.process_dir}/command.sh")
         self.host_client.exec(f"chmod +x {self.process_dir}/command.sh")

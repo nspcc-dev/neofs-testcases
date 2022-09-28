@@ -1,17 +1,18 @@
 import logging
+from typing import Optional
 
+import allure
 import pytest
 from common import (
+    ASSETS_DIR,
     COMPLEX_OBJ_SIZE,
+    FREE_STORAGE,
     IR_WALLET_CONFIG,
     IR_WALLET_PASS,
     IR_WALLET_PATH,
     SIMPLE_OBJ_SIZE,
-    ASSETS_DIR,
-    FREE_STORAGE
 )
 from epoch import tick_epoch
-from typing import Optional
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from python_keywords.acl import (
     EACLAccess,
@@ -35,8 +36,6 @@ from python_keywords.storage_group import (
 )
 from python_keywords.utility_keywords import generate_file
 from wallet import init_wallet
-
-import allure
 
 logger = logging.getLogger("NeoLogger")
 deposit = 30
@@ -65,9 +64,7 @@ class TestStorageGroup:
         objects = [oid]
         storage_group = put_storagegroup(self.main_wallet, cid, objects)
 
-        self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size
-        )
+        self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         self.expect_failure_for_storagegroup_operations(
             self.other_wallet, cid, objects, storage_group
         )
@@ -81,9 +78,7 @@ class TestStorageGroup:
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid)
         objects = [oid]
-        self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size
-        )
+        self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         self.expect_success_for_storagegroup_operations(
             self.other_wallet, cid, objects, object_size
         )
@@ -97,9 +92,7 @@ class TestStorageGroup:
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid)
         objects = [oid]
-        self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size
-        )
+        self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         self.storagegroup_operations_by_other_ro_container(
             self.main_wallet, self.other_wallet, cid, objects, object_size
         )
@@ -113,14 +106,12 @@ class TestStorageGroup:
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid)
         objects = [oid]
-        self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size
-        )
+        self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         storage_group = put_storagegroup(self.main_wallet, cid, objects)
         eacl_deny = [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op)
-                for op in EACLOperation
-                for role in EACLRole
+            EACLRule(access=EACLAccess.DENY, role=role, operation=op)
+            for op in EACLOperation
+            for role in EACLRole
         ]
         set_eacl(self.main_wallet, cid, create_eacl(cid, eacl_deny))
         self.expect_failure_for_storagegroup_operations(
@@ -208,15 +199,11 @@ class TestStorageGroup:
         that System key is granted to make all operations except PUT and DELETE.
         """
         if not FREE_STORAGE:
-            transfer_mainnet_gas(
-                IR_WALLET_PATH, deposit + 1, wallet_password=IR_WALLET_PASS
-            )
+            transfer_mainnet_gas(IR_WALLET_PATH, deposit + 1, wallet_password=IR_WALLET_PASS)
             neofs_deposit(IR_WALLET_PATH, deposit, wallet_password=IR_WALLET_PASS)
         storage_group = put_storagegroup(wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_storagegroup(
-                IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG
-            )
+            put_storagegroup(IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG)
         verify_list_storage_group(
             IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG
         )
@@ -229,6 +216,4 @@ class TestStorageGroup:
             wallet_config=IR_WALLET_CONFIG,
         )
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            delete_storagegroup(
-                IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG
-            )
+            delete_storagegroup(IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG)

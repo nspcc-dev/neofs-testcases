@@ -1,6 +1,5 @@
 import allure
 import pytest
-
 from common import NEOFS_NETMAP_DICT
 from failover_utils import wait_object_replication_on_nodes
 from python_keywords.acl import (
@@ -20,12 +19,12 @@ from python_keywords.container_access import (
 from python_keywords.neofs_verbs import put_object
 from python_keywords.node_management import drop_object
 from python_keywords.object_access import (
-    can_get_object,
-    can_put_object,
     can_delete_object,
     can_get_head_object,
+    can_get_object,
     can_get_range_hash_of_object,
     can_get_range_of_object,
+    can_put_object,
     can_search_object,
 )
 from wellknown_acl import PUBLIC_ACL

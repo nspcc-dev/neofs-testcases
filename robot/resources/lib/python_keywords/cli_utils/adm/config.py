@@ -2,7 +2,7 @@ from cli_utils.cli_command import NeofsCliCommand
 
 
 class NeofsAdmConfig(NeofsCliCommand):
-    def init(self, path: str = '~/.neofs/adm/config.yml') -> str:
+    def init(self, path: str = "~/.neofs/adm/config.yml") -> str:
         """Initialize basic neofs-adm configuration file.
 
         Args:
@@ -14,6 +14,6 @@ class NeofsAdmConfig(NeofsCliCommand):
 
         """
         return self._execute(
-            'config init',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "config init",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )

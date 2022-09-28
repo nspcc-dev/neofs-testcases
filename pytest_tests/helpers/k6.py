@@ -1,9 +1,11 @@
-from dataclasses import dataclass
-import allure
 from contextlib import contextmanager
+from dataclasses import dataclass
 from time import sleep
-from pytest_tests.helpers.ssh_helper import HostClient
+
+import allure
+
 from pytest_tests.helpers.remote_process import RemoteProcess
+from pytest_tests.helpers.ssh_helper import HostClient
 
 EXIT_RESULT_CODE = 0
 
@@ -22,11 +24,7 @@ class LoadParams:
 
 
 class K6:
-    def __init__(
-        self,
-        load_params: LoadParams,
-        host_client: HostClient
-    ):
+    def __init__(self, load_params: LoadParams, host_client: HostClient):
 
         self.load_params = load_params
         self.host_client = host_client
@@ -51,10 +49,7 @@ class K6:
     @allure.step("Prepare containers and objects")
     def prepare(self) -> str:
         self._k6_dir = self.k6_dir
-        if (
-            self.load_params.load_type == "http"
-            or self.load_params.load_type == "grpc"
-        ):
+        if self.load_params.load_type == "http" or self.load_params.load_type == "grpc":
             command = (
                 f"{self.k6_dir}/scenarios/preset/preset_grpc.py "
                 f"--size {self.load_params.obj_size}  "

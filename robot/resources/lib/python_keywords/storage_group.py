@@ -6,22 +6,16 @@
 """
 import logging
 
+import allure
 from cli_helpers import _cmd_run
-from common import (
-    COMPLEX_OBJ_SIZE,
-    NEOFS_CLI_EXEC,
-    NEOFS_ENDPOINT,
-    SIMPLE_OBJ_SIZE,
-    WALLET_CONFIG,
-)
+from common import COMPLEX_OBJ_SIZE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, SIMPLE_OBJ_SIZE, WALLET_CONFIG
 from complex_object_actions import get_link_object
 from neofs_verbs import head_object
 
-import allure
-
 logger = logging.getLogger("NeoLogger")
 
-@allure.step('Put Storagegroup')
+
+@allure.step("Put Storagegroup")
 def put_storagegroup(
     wallet: str,
     cid: str,
@@ -55,7 +49,7 @@ def put_storagegroup(
     return oid
 
 
-@allure.step('List Storagegroup')
+@allure.step("List Storagegroup")
 def list_storagegroup(
     wallet: str, cid: str, bearer_token: str = "", wallet_config: str = WALLET_CONFIG
 ):
@@ -82,7 +76,7 @@ def list_storagegroup(
     return found_objects
 
 
-@allure.step('Get Storagegroup')
+@allure.step("Get Storagegroup")
 def get_storagegroup(
     wallet: str,
     cid: str,
@@ -128,7 +122,7 @@ def get_storagegroup(
     return sg_dict
 
 
-@allure.step('Delete Storagegroup')
+@allure.step("Delete Storagegroup")
 def delete_storagegroup(
     wallet: str,
     cid: str,
@@ -159,7 +153,7 @@ def delete_storagegroup(
     return tombstone_id
 
 
-@allure.step('Verify list operation over Storagegroup')
+@allure.step("Verify list operation over Storagegroup")
 def verify_list_storage_group(
     wallet: str,
     cid: str,
@@ -173,7 +167,7 @@ def verify_list_storage_group(
     assert storagegroup in storage_groups
 
 
-@allure.step('Verify get operation over Storagegroup')
+@allure.step("Verify get operation over Storagegroup")
 def verify_get_storage_group(
     wallet: str,
     cid: str,

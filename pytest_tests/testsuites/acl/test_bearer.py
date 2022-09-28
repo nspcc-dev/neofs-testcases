@@ -1,6 +1,5 @@
 import allure
 import pytest
-
 from python_keywords.acl import (
     EACLAccess,
     EACLOperation,
@@ -24,16 +23,12 @@ from python_keywords.container_access import (
 class TestACLBearer:
     @pytest.mark.parametrize("role", [EACLRole.USER, EACLRole.OTHERS])
     def test_bearer_token_operations(self, wallets, eacl_container_with_objects, role):
-        allure.dynamic.title(
-            f"Testcase to validate NeoFS operations with {role.value} BearerToken"
-        )
+        allure.dynamic.title(f"Testcase to validate NeoFS operations with {role.value} BearerToken")
         cid, objects_oids, file_path = eacl_container_with_objects
         user_wallet = wallets.get_wallet()
         deny_wallet = wallets.get_wallet(role)
 
-        with allure.step(
-            f"Check {role.value} has full access to container without bearer token"
-        ):
+        with allure.step(f"Check {role.value} has full access to container without bearer token"):
             check_full_access_to_container(
                 deny_wallet.wallet_path,
                 cid,
@@ -44,16 +39,13 @@ class TestACLBearer:
 
         with allure.step(f"Set deny all operations for {role.value} via eACL"):
             eacl = [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op)
-                for op in EACLOperation
+                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation
             ]
             eacl_file = create_eacl(cid, eacl)
             set_eacl(user_wallet.wallet_path, cid, eacl_file)
             wait_for_cache_expired()
 
-        with allure.step(
-            f"Create bearer token for {role.value} with all operations allowed"
-        ):
+        with allure.step(f"Create bearer token for {role.value} with all operations allowed"):
             bearer_token = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
@@ -88,8 +80,7 @@ class TestACLBearer:
 
         with allure.step(f"Set allow all operations for {role.value} via eACL"):
             eacl = [
-                EACLRule(access=EACLAccess.ALLOW, role=role, operation=op)
-                for op in EACLOperation
+                EACLRule(access=EACLAccess.ALLOW, role=role, operation=op) for op in EACLOperation
             ]
             eacl_file = create_eacl(cid, eacl)
             set_eacl(user_wallet.wallet_path, cid, eacl_file)
@@ -107,9 +98,7 @@ class TestACLBearer:
             )
 
     @allure.title("BearerToken Operations for compound Operations")
-    def test_bearer_token_compound_operations(
-        self, wallets, eacl_container_with_objects
-    ):
+    def test_bearer_token_compound_operations(self, wallets, eacl_container_with_objects):
         cid, objects_oids, file_path = eacl_container_with_objects
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(role=EACLRole.OTHERS)
@@ -140,26 +129,19 @@ class TestACLBearer:
 
         deny_map_with_bearer = {
             EACLRole.USER: [
-                op
-                for op in deny_map[EACLRole.USER]
-                if op not in bearer_map[EACLRole.USER]
+                op for op in deny_map[EACLRole.USER] if op not in bearer_map[EACLRole.USER]
             ],
             EACLRole.OTHERS: [
-                op
-                for op in deny_map[EACLRole.OTHERS]
-                if op not in bearer_map[EACLRole.OTHERS]
+                op for op in deny_map[EACLRole.OTHERS] if op not in bearer_map[EACLRole.OTHERS]
             ],
         }
 
         eacl_deny = []
         for role, operations in deny_map.items():
             eacl_deny += [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op)
-                for op in operations
+                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in operations
             ]
-        set_eacl(
-            user_wallet.wallet_path, cid, eacl_table_path=create_eacl(cid, eacl_deny)
-        )
+        set_eacl(user_wallet.wallet_path, cid, eacl_table_path=create_eacl(cid, eacl_deny))
         wait_for_cache_expired()
 
         with allure.step("Check rule consistency without bearer"):
@@ -194,9 +176,7 @@ class TestACLBearer:
                 user_wallet.wallet_path,
                 cid,
                 [
-                    EACLRule(
-                        operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS
-                    )
+                    EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
                     for op in bearer_map[EACLRole.OTHERS]
                 ],
             )

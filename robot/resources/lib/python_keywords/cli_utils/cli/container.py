@@ -4,12 +4,25 @@ from cli_utils.cli_command import NeofsCliCommand
 
 
 class NeofsCliContainer(NeofsCliCommand):
-    def create(self, rpc_endpoint: str, wallet: str, address: Optional[str] = None, attributes: Optional[dict] = None,
-               basic_acl: Optional[str] = None, await_mode: bool = False, disable_timestamp: bool = False,
-               name: Optional[str] = None, nonce: Optional[str] = None, policy: Optional[str] = None,
-               session: Optional[str] = None, subnet: Optional[str] = None, ttl: Optional[int] = None,
-               xhdr: Optional[dict] = None) -> str:
-        """Create a new container and register it in the NeoFS.
+    def create(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        address: Optional[str] = None,
+        attributes: Optional[dict] = None,
+        basic_acl: Optional[str] = None,
+        await_mode: bool = False,
+        disable_timestamp: bool = False,
+        name: Optional[str] = None,
+        nonce: Optional[str] = None,
+        policy: Optional[str] = None,
+        session: Optional[str] = None,
+        subnet: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+    ) -> str:
+        """
+        Create a new container and register it in the NeoFS.
         It will be stored in the sidechain when the Inner Ring accepts it.
 
         Args:
@@ -31,17 +44,26 @@ class NeofsCliContainer(NeofsCliCommand):
 
         Returns:
             str: Command string
-
         """
         return self._execute(
-            'container create',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container create",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def delete(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None, await_mode: bool = False,
-               session: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None,
-               force: bool = False) -> str:
-        """Delete an existing container.
+    def delete(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        address: Optional[str] = None,
+        await_mode: bool = False,
+        session: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+        force: bool = False,
+    ) -> str:
+        """
+        Delete an existing container.
         Only the owner of the container has permission to remove the container.
 
         Args:
@@ -55,20 +77,29 @@ class NeofsCliContainer(NeofsCliCommand):
             wallet:            WIF (NEP-2) string or path to the wallet or binary key
             xhdr:              Request X-Headers in form of Key=Value
 
-
         Returns:
             str: Command string
         """
 
         return self._execute(
-            'container delete',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container delete",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def get(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None, await_mode: bool = False,
-            to: Optional[str] = None, json_mode: bool = False, ttl: Optional[int] = None,
-            xhdr: Optional[dict] = None) -> str:
-        """Get container field info
+    def get(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        address: Optional[str] = None,
+        await_mode: bool = False,
+        to: Optional[str] = None,
+        json_mode: bool = False,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+    ) -> str:
+        """
+        Get container field info.
 
         Args:
             address:           address of wallet account
@@ -83,18 +114,26 @@ class NeofsCliContainer(NeofsCliCommand):
 
         Returns:
             str: Command string
-
         """
-
         return self._execute(
-            'container get',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container get",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def get_eacl(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None,
-                 await_mode: bool = False,  to: Optional[str] = None, session: Optional[str] = None,
-                 ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
-        """Get extended ACL talbe of container
+    def get_eacl(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        address: Optional[str] = None,
+        await_mode: bool = False,
+        to: Optional[str] = None,
+        session: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+    ) -> str:
+        """
+        Get extended ACL table of container.
 
         Args:
             address:           address of wallet account
@@ -112,13 +151,22 @@ class NeofsCliContainer(NeofsCliCommand):
 
         """
         return self._execute(
-            'container get-eacl',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container get-eacl",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def list(self, rpc_endpoint: str, wallet: str, address: Optional[str] = None,
-             owner: Optional[str] = None, ttl: Optional[int] = None, xhdr: Optional[dict] = None, **params) -> str:
-        """List all created containers
+    def list(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        address: Optional[str] = None,
+        owner: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+        **params,
+    ) -> str:
+        """
+        List all created containers.
 
         Args:
             address:           address of wallet account
@@ -130,16 +178,23 @@ class NeofsCliContainer(NeofsCliCommand):
 
         Returns:
             str: Command string
-
         """
         return self._execute(
-            'container list',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container list",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def list_objects(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None,
-                     ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
-        """List existing objects in container
+    def list_objects(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        address: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+    ) -> str:
+        """
+        List existing objects in container.
 
         Args:
             address:           address of wallet account
@@ -151,18 +206,26 @@ class NeofsCliContainer(NeofsCliCommand):
 
         Returns:
             str: Command string
-
         """
-
         return self._execute(
-            'container list-objects',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container list-objects",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def set_eacl(self, rpc_endpoint: str, wallet: str, cid: str, address: Optional[str] = None,
-                 await_mode: bool = False, table: Optional[str] = None, session: Optional[str] = None,
-                 ttl: Optional[int] = None, xhdr: Optional[dict] = None) -> str:
-        """Set a new extended ACL table for the container.
+    def set_eacl(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        address: Optional[str] = None,
+        await_mode: bool = False,
+        table: Optional[str] = None,
+        session: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+    ) -> str:
+        """
+        Set a new extended ACL table for the container.
         Container ID in the EACL table will be substituted with the ID from the CLI.
 
         Args:
@@ -178,9 +241,8 @@ class NeofsCliContainer(NeofsCliCommand):
 
         Returns:
             str: Command string
-
         """
         return self._execute(
-            'container set-eacl',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "container set-eacl",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
