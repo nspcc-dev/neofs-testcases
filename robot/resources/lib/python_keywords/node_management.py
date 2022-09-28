@@ -1,9 +1,5 @@
 #!/usr/bin/python3.9
 
-"""
-    This module contains keywords for tests that check management of storage nodes.
-"""
-
 import logging
 import random
 import re
@@ -12,7 +8,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 import allure
-from common import MORPH_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_PASS
+from cli_utils.cli.cli import NeofsCli
+from common import MORPH_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_CONFIG, STORAGE_WALLET_PASS
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from service_helper import get_storage_service_helper
@@ -23,8 +20,8 @@ logger = logging.getLogger("NeoLogger")
 
 @dataclass
 class HealthStatus:
-    network_status: str = None
-    health_status: str = None
+    network_status: Optional[str] = None
+    health_status: Optional[str] = None
 
     @staticmethod
     def from_stdout(output: str) -> "HealthStatus":
@@ -37,16 +34,15 @@ class HealthStatus:
         return HealthStatus(network, health)
 
 
-@allure.step("Stop Nodes")
-def stop_nodes(number: int, nodes: list) -> list:
+@allure.step("Stop storage nodes")
+def stop_nodes(number: int, nodes: list[str]) -> list[str]:
     """
-    The function shuts down the given number of randomly
-    selected nodes in docker.
+    Shuts down the given number of randomly selected storage nodes.
     Args:
        number (int): the number of nodes to shut down
        nodes (list): the list of nodes for possible shut down
     Returns:
-        (list): the list of nodes which have been shut down
+        (list): the list of nodes that were shut down
     """
     helper = get_storage_service_helper()
     nodes_to_stop = random.sample(nodes, number)
@@ -55,62 +51,32 @@ def stop_nodes(number: int, nodes: list) -> list:
     return nodes_to_stop
 
 
-@allure.step("Start Nodes")
-def start_nodes(nodes: list) -> None:
+@allure.step("Start storage nodes")
+def start_nodes(nodes: list[str]) -> None:
     """
-    The function raises the given nodes.
+    The function starts specified storage nodes.
     Args:
-       nodes (list): the list of nodes to raise
-    Returns:
-        (void)
+       nodes (list): the list of nodes to start
     """
     helper = get_storage_service_helper()
     for node in nodes:
         helper.start(node)
 
 
-@allure.step("Get control endpoint and wallet")
-def get_control_endpoint_and_wallet(endpoint_number: str = ""):
-    """
-    Gets control endpoint for a random or given node
-
-    Args:
-        endpoint_number (optional, str): the number of the node
-                                    in the form of 's01', 's02', etc.
-                                    given in NEOFS_NETMAP_DICT as keys
-    Returns:
-        (str): the number of the node
-        (str): endpoint control for the node
-        (str): the wallet of the respective node
-    """
-    if endpoint_number == "":
-        endpoint_num = random.choice(list(NEOFS_NETMAP_DICT.keys()))
-        logger.info(f"Random node chosen: {endpoint_num}")
-    else:
-        endpoint_num = endpoint_number
-
-    endpoint_values = NEOFS_NETMAP_DICT[f"{endpoint_num}"]
-    endpoint_control = endpoint_values["control"]
-    wallet = endpoint_values["wallet_path"]
-
-    return endpoint_num, endpoint_control, wallet
-
-
 @allure.step("Get Locode")
-def get_locode():
+def get_locode() -> str:
     endpoint_values = random.choice(list(NEOFS_NETMAP_DICT.values()))
     locode = endpoint_values["UN-LOCODE"]
     logger.info(f"Random locode chosen: {locode}")
-
     return locode
 
 
-@allure.step("Healthcheck for node")
+@allure.step("Healthcheck for node {node_name}")
 def node_healthcheck(node_name: str) -> HealthStatus:
     """
     The function returns node's health status.
     Args:
-        node_name str: node name to use for netmap snapshot operation
+        node_name str: node name for which health status should be retrieved.
     Returns:
         health status as HealthStatus object.
     """
@@ -119,41 +85,42 @@ def node_healthcheck(node_name: str) -> HealthStatus:
     return HealthStatus.from_stdout(output)
 
 
-@allure.step("Set status for node")
+@allure.step("Set status for node {node_name}")
 def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
     """
     The function sets particular status for given node.
     Args:
-        node_name str: node name to use for netmap snapshot operation
+        node_name str: node name for which status should be set.
         status str: online or offline.
         retries (optional, int): number of retry attempts if it didn't work from the first time
-    Returns:
-        (void)
     """
     command = f"control set-status --status {status}"
     _run_control_command(node_name, command, retries)
 
 
 @allure.step("Get netmap snapshot")
-def get_netmap_snapshot(node_name: Optional[str] = None) -> str:
+def get_netmap_snapshot(node_name: str) -> str:
     """
-    The function returns string representation of netmap-snapshot.
+    The function returns string representation of netmap snapshot.
     Args:
-        node_name str: node name to use for netmap snapshot operation
+        node_name str: node name from which netmap snapshot should be requested.
     Returns:
-        string representation of netmap-snapshot
+        string representation of netmap
     """
-    node_name = node_name or list(NEOFS_NETMAP_DICT)[0]
-    command = "control netmap-snapshot"
-    return _run_control_command(node_name, command)
+    node_info = NEOFS_NETMAP_DICT[node_name]
+    cli = NeofsCli(config=STORAGE_WALLET_CONFIG)
+    return cli.netmap.snapshot(
+        rpc_endpoint=node_info["rpc"],
+        wallet=node_info["wallet_path"],
+    )
 
 
-@allure.step("Shard list for node")
+@allure.step("Get shard list for node {node_name}")
 def node_shard_list(node_name: str) -> list[str]:
     """
-    The function returns list of shards for particular node.
+    The function returns list of shards for specified node.
     Args:
-        node_name str: node name to use for netmap snapshot operation
+        node_name str: node name for which shards should be returned.
     Returns:
         list of shards.
     """
@@ -162,27 +129,23 @@ def node_shard_list(node_name: str) -> list[str]:
     return re.findall(r"Shard (.*):", output)
 
 
-@allure.step("Shard list for node")
+@allure.step("Shard set for node {node_name}")
 def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
     """
-    The function sets mode for node's particular shard.
+    The function sets mode for specified shard.
     Args:
-        node_name str: node name to use for netmap snapshot operation
-    Returns:
-        health status as HealthStatus object.
+        node_name str: node name on which shard mode should be set.
     """
-    command = f"control shards set-mode  --id {shard} --mode {mode}"
+    command = f"control shards set-mode --id {shard} --mode {mode}"
     return _run_control_command(node_name, command)
 
 
 @allure.step("Drop object from node {node_name}")
 def drop_object(node_name: str, cid: str, oid: str) -> str:
     """
-    The function drops object from particular node.
+    The function drops object from specified node.
     Args:
-        node_name str: node name to use for netmap snapshot operation
-    Returns:
-        health status as HealthStatus object.
+        node_name str: node name from which object should be dropped.
     """
     command = f"control drop-objects  -o {cid}/{oid}"
     return _run_control_command(node_name, command)
@@ -197,9 +160,9 @@ def delete_node_data(node_name: str) -> None:
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
-def exclude_node_from_network_map(node_to_exclude, alive_node):
+def exclude_node_from_network_map(node_to_exclude: str, alive_node: str) -> None:
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]["wallet_path"]
-    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS, format="base58")
+    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
     node_set_status(node_to_exclude, status="offline")
 
@@ -223,10 +186,10 @@ def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
 
 
 @allure.step("Check node {node_name} in network map")
-def check_node_in_map(node_name: str, alive_node: str = None):
+def check_node_in_map(node_name: str, alive_node: Optional[str] = None) -> None:
     alive_node = alive_node or node_name
     node_wallet_path = NEOFS_NETMAP_DICT[node_name]["wallet_path"]
-    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS, format="base58")
+    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
     logger.info(f"Node {node_name} netmap key: {node_netmap_key}")
 
