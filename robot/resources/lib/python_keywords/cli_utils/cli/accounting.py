@@ -25,9 +25,5 @@ class NeofsCliAccounting(NeofsCliCommand):
         """
         return self._execute(
             "accounting balance",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            }
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )

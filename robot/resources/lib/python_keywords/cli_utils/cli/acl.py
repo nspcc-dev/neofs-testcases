@@ -4,7 +4,9 @@ from cli_utils.cli_command import NeofsCliCommand
 
 
 class NeofsCliACL(NeofsCliCommand):
-    def extended_create(self, cid: str, out: str, file: Optional[str] = None, rule: Optional[list] = None) -> str:
+    def extended_create(
+        self, cid: str, out: str, file: Optional[str] = None, rule: Optional[list] = None
+    ) -> str:
 
         """Create extended ACL from the text representation.
 
@@ -42,6 +44,6 @@ class NeofsCliACL(NeofsCliCommand):
 
         """
         return self._execute(
-            'acl extended create',
-            **{param: param_value for param, param_value in locals().items() if param not in ['self']}
+            "acl extended create",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )

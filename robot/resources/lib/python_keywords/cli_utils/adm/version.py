@@ -9,4 +9,4 @@ class NeofsAdmVersion(NeofsCliCommand):
             str: Command string
 
         """
-        return self._execute('', version=True)
+        return self._execute("", version=True)

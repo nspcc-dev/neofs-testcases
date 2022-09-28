@@ -11,11 +11,12 @@ from python_keywords.container import list_containers
 from python_keywords.payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.utility_keywords import concat_files, generate_file, get_file_hash
 from s3_helper import check_objects_in_bucket, set_bucket_versioning
+from utility import create_file_with_content
+from wallet import init_wallet
+
 from steps import s3_gate_bucket, s3_gate_object
 from steps.aws_cli_client import AwsCliClient
 from steps.s3_gate_base import TestS3GateBase
-from utility import create_file_with_content
-from wallet import init_wallet
 
 
 def pytest_generate_tests(metafunc):

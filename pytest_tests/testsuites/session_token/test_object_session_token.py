@@ -1,5 +1,6 @@
 import random
 
+import allure
 import pytest
 from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE
 from grpc_responses import SESSION_NOT_FOUND
@@ -15,8 +16,6 @@ from python_keywords.neofs_verbs import (
 )
 from python_keywords.session_token import create_session_token
 from python_keywords.utility_keywords import generate_file
-
-import allure
 
 
 @allure.title("Test Object Operations with Session Token")

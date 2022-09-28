@@ -1,6 +1,5 @@
 import re
 
-
 # Regex patterns of status codes of Container service (https://github.com/nspcc-dev/neofs-spec/blob/98b154848116223e486ce8b43eaa35fec08b4a99/20-api-v2/container.md)
 CONTAINER_NOT_FOUND = "code = 3072.*message = container not found"
 
