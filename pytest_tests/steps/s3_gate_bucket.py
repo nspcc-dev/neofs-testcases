@@ -23,7 +23,7 @@ from data_formatters import get_wallet_public_key
 urllib3.disable_warnings()
 ##########################################################
 logger = logging.getLogger("NeoLogger")
-CREDENTIALS_CREATE_TIMEOUT = "30s"
+CREDENTIALS_CREATE_TIMEOUT = "1m"
 NEOFS_EXEC = os.getenv("NEOFS_EXEC", "neofs-authmate")
 
 # Artificial delay that we add after object deletion and container creation
