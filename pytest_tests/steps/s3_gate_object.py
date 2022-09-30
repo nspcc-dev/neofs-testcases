@@ -22,7 +22,6 @@ urllib3.disable_warnings()
 ##########################################################
 logger = logging.getLogger("NeoLogger")
 
-CREDENTIALS_CREATE_TIMEOUT = "30s"
 ACL_COPY = [
     "private",
     "public-read",
