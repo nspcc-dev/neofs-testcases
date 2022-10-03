@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import allure
-from cli_helpers import _cmd_run, _configure_aws_cli
+from cli_helpers import _cmd_run
 from common import ASSETS_DIR, S3_GATE
 
 logger = logging.getLogger("NeoLogger")
@@ -17,16 +17,6 @@ class AwsCliClient:
     # Flags that we use for all S3 commands: disable SSL verification (as we use self-signed
     # certificate in devenv) and disable automatic pagination in CLI output
     common_flags = "--no-verify-ssl --no-paginate"
-
-    def __init__(self, access_key_id: str, secret_access_key: str):
-        self.access_key_id = access_key_id
-        self.secret_access_key = secret_access_key
-        self.config_aws_client()
-
-    def config_aws_client(self):
-        cmd = "aws configure"
-        logger.info(f"Executing command: {cmd}")
-        _configure_aws_cli(cmd, self.access_key_id, self.secret_access_key)
 
     def create_bucket(
         self,

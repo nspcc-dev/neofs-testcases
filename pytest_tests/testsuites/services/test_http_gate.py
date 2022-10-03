@@ -233,11 +233,13 @@ class TestHttpGate:
             get_via_http_gate(cid=cid, oid=oid)
             raise AssertionError(f"Expected error on getting object with cid: {cid}")
         except Exception as err:
-            assert error_pattern in err, f"Expected {err} to match {error_pattern}"
+            assert error_pattern in str(err), f"Expected {err} to match {error_pattern}"
 
     @staticmethod
     @allure.step("Verify object can be get using HTTP header attribute")
-    def get_object_by_attr_and_verify_hashes(oid: str, file_name: str, cid: str, attrs: dict):
+    def get_object_by_attr_and_verify_hashes(
+        oid: str, file_name: str, cid: str, attrs: dict
+    ) -> None:
         got_file_path_http = get_via_http_gate(cid=cid, oid=oid)
         got_file_path_http_attr = get_via_http_gate_by_attribute(cid=cid, attribute=attrs)
 
@@ -249,7 +251,7 @@ class TestHttpGate:
     @allure.step("Verify object can be get using HTTP")
     def get_object_and_verify_hashes(
         oid: str, file_name: str, wallet: str, cid: str, object_getter=None
-    ):
+    ) -> None:
         nodes = get_nodes_without_object(wallet=wallet, cid=cid, oid=oid)
         random_node = choice(nodes)
         object_getter = object_getter or get_via_http_gate
@@ -260,7 +262,7 @@ class TestHttpGate:
         TestHttpGate._assert_hashes_are_equal(file_name, got_file_path, got_file_path_http)
 
     @staticmethod
-    def _assert_hashes_are_equal(orig_file_name: str, got_file_1: str, got_file_2: str):
+    def _assert_hashes_are_equal(orig_file_name: str, got_file_1: str, got_file_2: str) -> None:
         msg = "Expected hashes are equal for files {f1} and {f2}"
         got_file_hash_http = get_file_hash(got_file_1)
         assert get_file_hash(got_file_2) == got_file_hash_http, msg.format(
