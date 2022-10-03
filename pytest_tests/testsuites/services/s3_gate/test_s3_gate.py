@@ -15,6 +15,8 @@ from python_keywords.utility_keywords import (
 )
 from s3_helper import (
     check_objects_in_bucket,
+    check_tags_by_bucket,
+    check_tags_by_object,
     set_bucket_versioning,
     try_to_get_objects_and_expect_error,
 )
@@ -344,17 +346,10 @@ class TestS3Gate(TestS3GateBase):
         key_value_pair = [("some-key", "some-value"), ("some-key-2", "some-value-2")]
 
         s3_gate_bucket.put_bucket_tagging(self.s3_client, bucket, key_value_pair)
-        got_tags = s3_gate_bucket.get_bucket_tagging(self.s3_client, bucket)
-
-        with allure.step("Check all tags are presented"):
-            assert got_tags, f"Expected tags, got {got_tags}"
-            expected_tags = [{"Key": key, "Value": value} for key, value in key_value_pair]
-            for tag in expected_tags:
-                assert tag in got_tags
+        check_tags_by_bucket(self.s3_client, bucket, key_value_pair)
 
         s3_gate_bucket.delete_bucket_tagging(self.s3_client, bucket)
-        tags = s3_gate_bucket.get_bucket_tagging(self.s3_client, bucket)
-        assert not tags, f"Expected there is no tags for bucket {bucket}, got {tags}"
+        check_tags_by_bucket(self.s3_client, bucket, [])
 
     @allure.title("Test S3 Object tagging API")
     def test_s3_api_object_tagging(self, bucket):
@@ -376,16 +371,15 @@ class TestS3Gate(TestS3GateBase):
 
         for tags in (key_value_pair_obj, key_value_pair_obj_new):
             s3_gate_object.put_object_tagging(self.s3_client, bucket, obj_key, tags)
-
-            got_tags = s3_gate_object.get_object_tagging(self.s3_client, bucket, obj_key)
-            assert got_tags, f"Expected tags, got {got_tags}"
-            expected_tags = [{"Key": key, "Value": value} for key, value in tags]
-            for tag in expected_tags:
-                assert tag in got_tags
+            check_tags_by_object(
+                self.s3_client,
+                bucket,
+                obj_key,
+                tags,
+            )
 
         s3_gate_object.delete_object_tagging(self.s3_client, bucket, obj_key)
-        got_tags = s3_gate_object.get_object_tagging(self.s3_client, bucket, obj_key)
-        assert not got_tags, f"Expected there is no tags for bucket {bucket}, got {got_tags}"
+        check_tags_by_object(self.s3_client, bucket, obj_key, [])
 
     @allure.title("Test S3: Delete object & delete objects S3 API")
     def test_s3_api_delete(self, create_buckets):

@@ -772,16 +772,6 @@ class TestS3GateObject(TestS3GateBase):
         file_name = self.object_key_from_file_path(file_path_1)
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
-        with allure.step("Put object with lock-mode"):
-            with pytest.raises(
-                Exception,
-                match=r".*fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future.*",
-            ):
-                # An error occurred (InternalError) when calling the PutObject operation (reached max retries: 2):
-                # fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future (after 2022-09-15T08:59:30Z)
-                s3_gate_object.put_object_s3(
-                    self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE"
-                )
 
         with allure.step(
             "Put object with lock-mode GOVERNANCE lock-retain-until-date +1day, lock-legal-hold-status"
@@ -824,8 +814,8 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client, bucket, file_name, full_output=True
             )
             assert (
-                object_4.get("ObjectLockMode") == "GOVERNANCE"
-            ), "Expected Object Lock Mode is GOVERNANCE"
+                object_4.get("ObjectLockMode") == "COMPLIANCE"
+            ), "Expected Object Lock Mode is COMPLIANCE"
             assert str(date_obj.strftime("%Y-%m-%dT%H:%M:%S")) in object_4.get(
                 "ObjectLockRetainUntilDate"
             ), f'Expected Object Lock Retain Until Date is {str(date_obj.strftime("%Y-%m-%dT%H:%M:%S"))}'
@@ -850,14 +840,25 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client, bucket, file_name, full_output=True
             )
             assert (
-                object_4.get("ObjectLockMode") == "GOVERNANCE"
-            ), "Expected Object Lock Mode is GOVERNANCE"
+                object_4.get("ObjectLockMode") == "COMPLIANCE"
+            ), "Expected Object Lock Mode is COMPLIANCE"
             assert str(date_obj.strftime("%Y-%m-%dT%H:%M:%S")) in object_4.get(
                 "ObjectLockRetainUntilDate"
             ), f'Expected Object Lock Retain Until Date is {str(date_obj.strftime("%Y-%m-%dT%H:%M:%S"))}'
             assert (
                 object_4.get("ObjectLockLegalHoldStatus") == "ON"
             ), "Expected Object Lock Legal Hold Status is ON"
+
+        with allure.step("Put object with lock-mode"):
+            with pytest.raises(
+                Exception,
+                match=r".*fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future.*",
+            ):
+                # An error occurred (InternalError) when calling the PutObject operation (reached max retries: 2):
+                # fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future (after 2022-09-15T08:59:30Z)
+                s3_gate_object.put_object_s3(
+                    self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE"
+                )
 
     @allure.title("Test S3 Sync directory")
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
