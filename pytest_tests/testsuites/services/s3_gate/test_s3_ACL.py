@@ -1,5 +1,3 @@
-import os
-
 import allure
 import pytest
 from python_keywords.utility_keywords import generate_file
