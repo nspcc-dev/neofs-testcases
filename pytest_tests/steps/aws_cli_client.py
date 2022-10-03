@@ -149,7 +149,7 @@ class AwsCliClient:
             for key, value in Metadata.items():
                 cmd += f" {key}={value}"
         if Tagging:
-            cmd += f" --tagging {Tagging}"
+            cmd += f" --tagging '{Tagging}'"
         if ACL:
             cmd += f" --acl {ACL}"
         if ObjectLockMode:
