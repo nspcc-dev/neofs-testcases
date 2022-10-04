@@ -179,32 +179,83 @@ class TestEACLContainer:
         cid, object_oids, file_path = eacl_container_with_objects
 
         with allure.step("Check IR and STORAGE rules compliance"):
-            assert not can_put_object(ir_wallet.wallet_path, cid, file_path)
-            assert can_put_object(storage_wallet.wallet_path, cid, file_path)
+            assert not can_put_object(
+                ir_wallet.wallet_path, cid, file_path, wallet_config=ir_wallet.config_path
+            )
+            assert can_put_object(
+                storage_wallet.wallet_path, cid, file_path, wallet_config=storage_wallet.config_path
+            )
 
-            assert can_get_object(ir_wallet.wallet_path, cid, object_oids[0], file_path)
-            assert can_get_object(storage_wallet.wallet_path, cid, object_oids[0], file_path)
+            assert can_get_object(
+                ir_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                file_path,
+                wallet_config=ir_wallet.config_path,
+            )
+            assert can_get_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                file_path,
+                wallet_config=storage_wallet.config_path,
+            )
 
-            assert can_get_head_object(ir_wallet.wallet_path, cid, object_oids[0])
-            assert can_get_head_object(storage_wallet.wallet_path, cid, object_oids[0])
+            assert can_get_head_object(
+                ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+            )
+            assert can_get_head_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                wallet_config=storage_wallet.config_path,
+            )
 
-            assert can_search_object(ir_wallet.wallet_path, cid, object_oids[0])
-            assert can_search_object(storage_wallet.wallet_path, cid, object_oids[0])
+            assert can_search_object(
+                ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+            )
+            assert can_search_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                wallet_config=storage_wallet.config_path,
+            )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_delete_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_delete_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
         with allure.step("Deny all operations for SYSTEM via eACL"):
             set_eacl(
@@ -221,38 +272,89 @@ class TestEACLContainer:
             wait_for_cache_expired()
 
         with allure.step("Check IR and STORAGE rules compliance with deny eACL"):
-            assert not can_put_object(ir_wallet.wallet_path, cid, file_path)
-            assert not can_put_object(storage_wallet.wallet_path, cid, file_path)
+            assert not can_put_object(
+                ir_wallet.wallet_path, cid, file_path, wallet_config=ir_wallet.config_path
+            )
+            assert not can_put_object(
+                storage_wallet.wallet_path, cid, file_path, wallet_config=storage_wallet.config_path
+            )
 
             with pytest.raises(AssertionError):
-                assert can_get_object(ir_wallet.wallet_path, cid, object_oids[0], file_path)
+                assert can_get_object(
+                    ir_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    file_path,
+                    wallet_config=ir_wallet.config_path,
+                )
             with pytest.raises(AssertionError):
-                assert can_get_object(storage_wallet.wallet_path, cid, object_oids[0], file_path)
+                assert can_get_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    file_path,
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_get_head_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_head_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_head_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_head_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_search_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_search_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_search_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_search_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_delete_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_delete_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
         with allure.step("Allow all operations for SYSTEM via eACL"):
             set_eacl(
@@ -269,29 +371,80 @@ class TestEACLContainer:
             wait_for_cache_expired()
 
         with allure.step("Check IR and STORAGE rules compliance with allow eACL"):
-            assert not can_put_object(ir_wallet.wallet_path, cid, file_path)
-            assert can_put_object(storage_wallet.wallet_path, cid, file_path)
+            assert not can_put_object(
+                ir_wallet.wallet_path, cid, file_path, wallet_config=ir_wallet.config_path
+            )
+            assert can_put_object(
+                storage_wallet.wallet_path, cid, file_path, wallet_config=storage_wallet.config_path
+            )
 
-            assert can_get_object(ir_wallet.wallet_path, cid, object_oids[0], file_path)
-            assert can_get_object(storage_wallet.wallet_path, cid, object_oids[0], file_path)
+            assert can_get_object(
+                ir_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                file_path,
+                wallet_config=ir_wallet.config_path,
+            )
+            assert can_get_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                file_path,
+                wallet_config=storage_wallet.config_path,
+            )
 
-            assert can_get_head_object(ir_wallet.wallet_path, cid, object_oids[0])
-            assert can_get_head_object(storage_wallet.wallet_path, cid, object_oids[0])
+            assert can_get_head_object(
+                ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+            )
+            assert can_get_head_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                wallet_config=storage_wallet.config_path,
+            )
 
-            assert can_search_object(ir_wallet.wallet_path, cid, object_oids[0])
-            assert can_search_object(storage_wallet.wallet_path, cid, object_oids[0])
+            assert can_search_object(
+                ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+            )
+            assert can_search_object(
+                storage_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                wallet_config=storage_wallet.config_path,
+            )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_get_range_hash_of_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
 
             with pytest.raises(AssertionError):
-                assert can_delete_object(ir_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    ir_wallet.wallet_path, cid, object_oids[0], wallet_config=ir_wallet.config_path
+                )
             with pytest.raises(AssertionError):
-                assert can_delete_object(storage_wallet.wallet_path, cid, object_oids[0])
+                assert can_delete_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    object_oids[0],
+                    wallet_config=storage_wallet.config_path,
+                )
