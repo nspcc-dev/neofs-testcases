@@ -20,3 +20,4 @@ TemporaryDir/*
 artifacts/*
 docs/*
 venv.*/*
+/*wallet_config.yml
