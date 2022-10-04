@@ -1,9 +1,3 @@
-#!/usr/bin/python3
-
-"""
-    This module contains keywords for work with session token.
-"""
-
 import base64
 import json
 import logging
@@ -13,13 +7,10 @@ import uuid
 import allure
 import json_transformers
 from cli_helpers import _cmd_run, _run_with_passwd
-from common import ASSETS_DIR, NEOFS_ENDPOINT, WALLET_CONFIG
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
 from neo3 import wallet
 
 logger = logging.getLogger("NeoLogger")
-
-# path to neofs-cli executable
-NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
 
 
 @allure.step("Generate Session Token")
