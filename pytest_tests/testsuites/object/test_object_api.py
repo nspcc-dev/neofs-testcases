@@ -16,7 +16,7 @@ from python_keywords.neofs_verbs import (
     put_object,
     search_object,
 )
-from python_keywords.storage_policy import get_simple_object_copies
+from python_keywords.storage_policy import get_complex_object_copies, get_simple_object_copies
 from python_keywords.utility_keywords import generate_file, get_file_hash
 from tombstone import verify_head_tombstone
 from utility import get_file_content, wait_for_gc_pass_on_storage_nodes
@@ -36,6 +36,8 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     """
     Test common gRPC API for object (put/get/head/get_range_hash/get_range/search/delete).
     """
+    allure.dynamic.title(f"Test native object API for {request.node.callspec.id}")
+
     wallet = prepare_wallet_and_deposit
     cid = create_container(wallet)
     wallet_cid = {"wallet": wallet, "cid": cid}
@@ -44,14 +46,13 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     common_header = {"common_key": "common_value"}
     range_len = 10
     range_cut = f"0:{range_len}"
-    oids = []
-
-    allure.dynamic.title(f"Test native object API for {request.node.callspec.id}")
     file_path = generate_file(object_size)
     file_hash = get_file_hash(file_path)
 
-    search_object(**wallet_cid, expected_objects_list=oids)
+    with allure.step("Check container is empty"):
+        search_object(**wallet_cid, expected_objects_list=[])
 
+    oids = []
     with allure.step("Put objects"):
         oids.append(put_object(wallet=wallet, path=file_path, cid=cid))
         oids.append(put_object(wallet=wallet, path=file_path, cid=cid, attributes=file_usr_header))
@@ -61,9 +62,11 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 
     with allure.step("Validate storage policy for objects"):
         for oid_to_check in oids:
-            assert (
-                get_simple_object_copies(wallet=wallet, cid=cid, oid=oid_to_check) == 2
-            ), "Expected 2 copies"
+            if object_size == SIMPLE_OBJ_SIZE:
+                copies = get_simple_object_copies(wallet=wallet, cid=cid, oid=oid_to_check)
+            else:
+                copies = get_complex_object_copies(wallet=wallet, cid=cid, oid=oid_to_check)
+            assert copies == 2, "Expected 2 copies"
 
     with allure.step("Get objects and compare hashes"):
         for oid_to_check in oids:
