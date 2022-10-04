@@ -24,7 +24,13 @@ class VersioningStatus(Enum):
 
 @allure.step("Create bucket S3")
 def create_bucket_s3(
-    s3_client, object_lock_enabled_for_bucket: Optional[bool] = None, acl: Optional[str] = None
+    s3_client,
+    object_lock_enabled_for_bucket: Optional[bool] = None,
+    acl: Optional[str] = None,
+    grant_write: Optional[str] = None,
+    grant_read: Optional[str] = None,
+    grant_full_control: Optional[str] = None,
+    bucket_configuration: Optional[str] = None,
 ) -> str:
     bucket_name = str(uuid.uuid4())
 
@@ -34,6 +40,18 @@ def create_bucket_s3(
             params.update({"ObjectLockEnabledForBucket": object_lock_enabled_for_bucket})
         if acl is not None:
             params.update({"ACL": acl})
+        elif grant_write or grant_read or grant_full_control:
+            if grant_write:
+                params.update({"GrantWrite": grant_write})
+            elif grant_read:
+                params.update({"GrantRead": grant_read})
+            elif grant_full_control:
+                params.update({"GrantFullControl": grant_full_control})
+        if bucket_configuration:
+            params.update(
+                {"CreateBucketConfiguration": {"LocationConstraint": bucket_configuration}}
+            )
+
         s3_bucket = s3_client.create_bucket(**params)
         log_command_execution(f"Created S3 bucket {bucket_name}", s3_bucket)
         sleep(S3_SYNC_WAIT_TIME)
