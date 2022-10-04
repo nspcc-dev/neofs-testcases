@@ -209,23 +209,17 @@ class SberCloud:
             access_key_id=config.access_key_id,
             secret_key=config.secret_key,
         )
-        self.ecs_nodes = []  # Cached list of ecs servers
+        self.ecs_node_by_ip = {}  # Cached list of ecs servers
 
-    def find_ecs_node_by_ip(self, ip: str, no_cache: bool = False) -> str:
-        if not self.ecs_nodes or no_cache:
-            self.ecs_nodes = self.get_ecs_nodes()
-        nodes_by_ip = [
-            node
-            for node in self.ecs_nodes
-            if ip
-            in [node_ip["addr"] for node_ips in node["addresses"].values() for node_ip in node_ips]
-        ]
-        assert len(nodes_by_ip) == 1
-        return nodes_by_ip[0]["id"]
+    def find_ecs_node_by_ip(self, ip: str) -> str:
+        if ip not in self.ecs_node_by_ip:
+            self.ecs_node_by_ip[ip] = self.get_ecs_node_id(ip)
+        assert ip in self.ecs_node_by_ip
+        return self.ecs_node_by_ip[ip]
 
-    def get_ecs_nodes(self) -> list[dict]:
-        response = self.ecs_requests.get("/detail", {"limit": "1000"}).json()
-        return response["servers"]
+    def get_ecs_node_id(self, ip: str) -> str:
+        response = self.ecs_requests.get("/detail", {"ip": ip}).json()
+        return response["servers"][0]["id"]
 
     def start_node(self, node_id: Optional[str] = None, node_ip: Optional[str] = None) -> None:
         data = {"os-start": {"servers": [{"id": node_id or self.find_ecs_node_by_ip(node_ip)}]}}
