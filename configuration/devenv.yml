@@ -56,7 +56,7 @@ neofs_cli_exec: 'neofs-cli'
 # Neo Blockchain configuration
 
 gas_hash: '0xd2a4cff31913016155e38e474a2c06d08be276cf'
-neofs_contract: 'd07ec2a43d2f8638934d340bfb60b6c23afce106'
+neofs_contract: '913c08e0faa2b94516ac7effaea7a9363e492228' 
 morph_magic: '15405'
 
 # NeoFS common parameters
