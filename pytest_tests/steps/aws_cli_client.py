@@ -23,6 +23,10 @@ class AwsCliClient:
         Bucket: str,
         ObjectLockEnabledForBucket: Optional[bool] = None,
         ACL: Optional[str] = None,
+        GrantFullControl: Optional[str] = None,
+        GrantRead: Optional[str] = None,
+        GrantWrite: Optional[str] = None,
+        CreateBucketConfiguration: Optional[dict] = None,
     ):
         if ObjectLockEnabledForBucket is None:
             object_lock = ""
@@ -36,6 +40,14 @@ class AwsCliClient:
         )
         if ACL:
             cmd += f" --acl {ACL}"
+        if GrantFullControl:
+            cmd += f" --grant-full-control {GrantFullControl}"
+        if GrantWrite:
+            cmd += f" --grant-write {GrantWrite}"
+        if GrantRead:
+            cmd += f" --grant-read {GrantRead}"
+        if CreateBucketConfiguration:
+            cmd += f" --create-bucket-configuration LocationConstraint={CreateBucketConfiguration['LocationConstraint']}"
         _cmd_run(cmd, REGULAR_TIMEOUT)
 
     def list_buckets(self) -> dict:
