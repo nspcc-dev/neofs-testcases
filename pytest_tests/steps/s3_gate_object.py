@@ -385,6 +385,30 @@ def upload_part_s3(
         ) from err
 
 
+@allure.step("Upload copy part S3")
+def upload_part_copy_s3(
+    s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, copy_source: str
+) -> str:
+
+    try:
+        response = s3_client.upload_part_copy(
+            UploadId=upload_id,
+            Bucket=bucket_name,
+            Key=object_key,
+            PartNumber=part_num,
+            CopySource=copy_source,
+        )
+        log_command_execution("S3 Upload copy part", response)
+        assert response.get("CopyPartResult").get("ETag"), f"Expected ETag in response:\n{response}"
+
+        return response.get("CopyPartResult").get("ETag")
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
+
+
 @allure.step("List parts S3")
 def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) -> list[dict]:
     try:

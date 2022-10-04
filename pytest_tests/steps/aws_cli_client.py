@@ -426,6 +426,17 @@ class AwsCliClient:
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
 
+    def upload_part_copy(
+        self, UploadId: str, Bucket: str, Key: str, PartNumber: int, CopySource: str
+    ) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api upload-part-copy --bucket {Bucket} --key {Key} "
+            f"--upload-id {UploadId} --part-number {PartNumber} --copy-source {CopySource} "
+            f"--endpoint-url {S3_GATE}"
+        )
+        output = _cmd_run(cmd, LONG_TIMEOUT)
+        return self._to_json(output)
+
     def list_parts(self, UploadId: str, Bucket: str, Key: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api list-parts --bucket {Bucket} --key {Key} "
