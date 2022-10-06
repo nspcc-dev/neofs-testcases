@@ -1,12 +1,23 @@
-# ignore test result files under any path
+# ignore IDE files
+.vscode
+
+# ignore test results
 **/log.html
 **/output.xml
 **/report.html
 **/dockerlogs*.tar.gz
+allure_results/*
+xunit_results.xml
 
-# ignore pycache under any path
+# ignore caches under any path
 **/__pycache__
+**/.pytest_cache
+
+# ignore work directories and setup files
+.setup
+.env
 TemporaryDir/*
 artifacts/*
 docs/*
 venv.*/*
+/*wallet_config.yml

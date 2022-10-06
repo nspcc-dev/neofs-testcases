@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - master
+      # TODO: remove develope when the branch is deleted
+      - develop
 
 jobs:
   commits_check_job:

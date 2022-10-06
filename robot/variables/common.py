@@ -1,77 +1,143 @@
 import os
 
-# Common NeoFS variables can be declared from neofs-dev-env env variables.
-# High priority is accepted for those envs.
+import yaml
 
 CONTAINER_WAIT_INTERVAL = "1m"
 
-SIMPLE_OBJ_SIZE = 1000
-COMPLEX_OBJ_SIZE = 2000
+# TODO: Get object size data from a node config
+SIMPLE_OBJ_SIZE = int(os.getenv("SIMPLE_OBJ_SIZE", "1000"))
+COMPLEX_OBJ_SIZE = int(os.getenv("COMPLEX_OBJ_SIZE", "2000"))
 
-MAINNET_BLOCK_TIME = os.getenv('MAINNET_BLOCK_TIME', "1s")
-MAINNET_TIMEOUT = os.getenv('MAINNET_TIMEOUT', "1min")
-MORPH_BLOCK_TIME = os.getenv("MORPH_BLOCK_TIME", '1s')
+MAINNET_BLOCK_TIME = os.getenv("MAINNET_BLOCK_TIME", "1s")
+MAINNET_TIMEOUT = os.getenv("MAINNET_TIMEOUT", "1min")
+MORPH_BLOCK_TIME = os.getenv("MORPH_BLOCK_TIME", "1s")
 NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
 
-# TODO: change to NEOFS_STORAGE_DEFAULT_GC_REMOVER_SLEEP_INTERVAL
-
-SHARD_0_GC_SLEEP = os.getenv("NEOFS_STORAGE_SHARD_0_GC_REMOVER_SLEEP_INTERVAL", "1m")
+# Time interval that allows a GC pass on storage node (this includes GC sleep interval
+# of 1min plus 15 seconds for GC pass itself)
+STORAGE_GC_TIME = os.getenv("STORAGE_GC_TIME", "75s")
 
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
-NEOGO_CLI_EXEC = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 
-NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", 'http://main-chain.neofs.devenv:30333')
-MORPH_ENDPOINT = os.getenv("MORPH_ENDPOINT", 'http://morph-chain.neofs.devenv:30333')
-HTTP_GATE = os.getenv("HTTP_GATE", 'http://http.neofs.devenv')
-S3_GATE = os.getenv("S3_GATE", 'https://s3.neofs.devenv:8080')
-GAS_HASH = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
+NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", "http://main-chain.neofs.devenv:30333")
+MORPH_ENDPOINT = os.getenv("MORPH_ENDPOINT", "http://morph-chain.neofs.devenv:30333")
+HTTP_GATE = os.getenv("HTTP_GATE", "http://http.neofs.devenv")
+S3_GATE = os.getenv("S3_GATE", "https://s3.neofs.devenv:8080")
+GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
-ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
+ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
+DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
 
 MORPH_MAGIC = os.getenv("MORPH_MAGIC")
 
-STORAGE_NODE_1 = os.getenv('DATA_NODE_1', 's01.neofs.devenv:8080')
-STORAGE_NODE_2 = os.getenv('DATA_NODE_2', 's02.neofs.devenv:8080')
-STORAGE_NODE_3 = os.getenv('DATA_NODE_3', 's03.neofs.devenv:8080')
-STORAGE_NODE_4 = os.getenv('DATA_NODE_4', 's04.neofs.devenv:8080')
+# Password of wallet owned by user on behalf of whom we are running tests
+WALLET_PASS = os.getenv("WALLET_PASS", "")
 
-DEVENV_SERVICES_PATH = f"{os.getenv('DEVENV_PATH')}/services"
-NEOFS_NETMAP_DICT = {'s01': {'rpc': STORAGE_NODE_1,
-                             'control': 's01.neofs.devenv:8081',
-                             'wallet_path':f"{DEVENV_SERVICES_PATH}/storage/wallet01.json",
-                             'UN-LOCODE': 'RU MOW'},
-                     's02': {'rpc': STORAGE_NODE_2,
-                             'control': 's02.neofs.devenv:8081',
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet02.json",
-                             'UN-LOCODE': 'RU LED'},
-                     's03': {'rpc': STORAGE_NODE_3,
-                             'control': 's03.neofs.devenv:8081',
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet03.json",
-                             'UN-LOCODE': 'SE STO'},
-                     's04': {'rpc': STORAGE_NODE_4,
-                             'control': 's04.neofs.devenv:8081',
-                             'wallet_path': f"{DEVENV_SERVICES_PATH}/storage/wallet04.json",
-                             'UN-LOCODE': 'FI HEL'}
-                     }
-NEOFS_NETMAP = [i['rpc'] for i in NEOFS_NETMAP_DICT.values()]
-NEOGO_EXECUTABLE = os.getenv('NEOGO_EXECUTABLE', 'neo-go')
-NEOFS_CLI_EXEC = os.getenv('NEOFS_CLI_EXEC', 'neofs-cli')
+# Configuration of storage nodes
+STORAGE_RPC_ENDPOINT_1 = os.getenv("STORAGE_RPC_ENDPOINT_1", "s01.neofs.devenv:8080")
+STORAGE_RPC_ENDPOINT_2 = os.getenv("STORAGE_RPC_ENDPOINT_2", "s02.neofs.devenv:8080")
+STORAGE_RPC_ENDPOINT_3 = os.getenv("STORAGE_RPC_ENDPOINT_3", "s03.neofs.devenv:8080")
+STORAGE_RPC_ENDPOINT_4 = os.getenv("STORAGE_RPC_ENDPOINT_4", "s04.neofs.devenv:8080")
 
-WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/empty_passwd.yml"
-MAINNET_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/chain/node-wallet.json"
-MAINNET_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
-MAINNET_SINGLE_ADDR = 'NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP'
-MAINNET_WALLET_PASS = 'one'
-IR_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/ir/wallet01.json"
-IR_WALLET_CONFIG = f"{os.getcwd()}/neofs_cli_configs/one_wallet_password.yml"
-IR_WALLET_PASS = 'one'
-STORAGE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/storage/wallet01.json"
-S3_GATE_WALLET_PATH = f"{DEVENV_SERVICES_PATH}/s3_gate/wallet.json"
-S3_GATE_WALLET_PASS = 's3'
+STORAGE_CONTROL_ENDPOINT_1 = os.getenv("STORAGE_CONTROL_ENDPOINT_1", "s01.neofs.devenv:8081")
+STORAGE_CONTROL_ENDPOINT_2 = os.getenv("STORAGE_CONTROL_ENDPOINT_2", "s02.neofs.devenv:8081")
+STORAGE_CONTROL_ENDPOINT_3 = os.getenv("STORAGE_CONTROL_ENDPOINT_3", "s03.neofs.devenv:8081")
+STORAGE_CONTROL_ENDPOINT_4 = os.getenv("STORAGE_CONTROL_ENDPOINT_4", "s04.neofs.devenv:8081")
 
-CONTROL_NODE_USER = os.getenv('CONTROL_NODE_USER', 'root')
-CONTROL_NODE_PWD = os.getenv('CONTROL_NODE_PWD')
+STORAGE_WALLET_PATH_1 = os.getenv(
+    "STORAGE_WALLET_PATH_1", os.path.join(DEVENV_PATH, "services", "storage", "wallet01.json")
+)
+STORAGE_WALLET_PATH_2 = os.getenv(
+    "STORAGE_WALLET_PATH_2", os.path.join(DEVENV_PATH, "services", "storage", "wallet02.json")
+)
+STORAGE_WALLET_PATH_3 = os.getenv(
+    "STORAGE_WALLET_PATH_3", os.path.join(DEVENV_PATH, "services", "storage", "wallet03.json")
+)
+STORAGE_WALLET_PATH_4 = os.getenv(
+    "STORAGE_WALLET_PATH_4", os.path.join(DEVENV_PATH, "services", "storage", "wallet04.json")
+)
+STORAGE_WALLET_PATH = STORAGE_WALLET_PATH_1
+STORAGE_WALLET_PASS = os.getenv("STORAGE_WALLET_PASS", "")
 
-FREE_STORAGE = os.getenv('FREE_STORAGE', "false").lower() == "true"
+NEOFS_NETMAP_DICT = {
+    "s01": {
+        "rpc": STORAGE_RPC_ENDPOINT_1,
+        "control": STORAGE_CONTROL_ENDPOINT_1,
+        "wallet_path": STORAGE_WALLET_PATH_1,
+        "UN-LOCODE": "RU MOW",
+    },
+    "s02": {
+        "rpc": STORAGE_RPC_ENDPOINT_2,
+        "control": STORAGE_CONTROL_ENDPOINT_2,
+        "wallet_path": STORAGE_WALLET_PATH_2,
+        "UN-LOCODE": "RU LED",
+    },
+    "s03": {
+        "rpc": STORAGE_RPC_ENDPOINT_3,
+        "control": STORAGE_CONTROL_ENDPOINT_3,
+        "wallet_path": STORAGE_WALLET_PATH_3,
+        "UN-LOCODE": "SE STO",
+    },
+    "s04": {
+        "rpc": STORAGE_RPC_ENDPOINT_4,
+        "control": STORAGE_CONTROL_ENDPOINT_4,
+        "wallet_path": STORAGE_WALLET_PATH_4,
+        "UN-LOCODE": "FI HEL",
+    },
+}
+NEOFS_NETMAP = [node["rpc"] for node in NEOFS_NETMAP_DICT.values()]
+
+# Paths to CLI executables
+NEOGO_EXECUTABLE = os.getenv("NEOGO_EXECUTABLE", "neo-go")
+NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
+NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "neofs-authmate")
+NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC", "neofs-adm")
+
+MAINNET_WALLET_PATH = os.getenv(
+    "MAINNET_WALLET_PATH", os.path.join(DEVENV_PATH, "services", "chain", "node-wallet.json")
+)
+MAINNET_SINGLE_ADDR = os.getenv("MAINNET_SINGLE_ADDR", "NfgHwwTi3wHAS8aFAN243C5vGbkYDpqLHP")
+MAINNET_WALLET_PASS = os.getenv("MAINNET_WALLET_PASS", "one")
+
+IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", os.path.join(DEVENV_PATH, "services", "ir", "az.json"))
+IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
+
+S3_GATE_WALLET_PATH = os.getenv(
+    "S3_GATE_WALLET_PATH", os.path.join(DEVENV_PATH, "services", "s3_gate", "wallet.json")
+)
+S3_GATE_WALLET_PASS = os.getenv("S3_GATE_WALLET_PASS", "s3")
+
+# Parameters that control SSH connection to storage node
+STORAGE_NODE_SSH_USER = os.getenv("STORAGE_NODE_SSH_USER")
+STORAGE_NODE_SSH_PASSWORD = os.getenv("STORAGE_NODE_SSH_PASSWORD")
+STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH")
+
+# Path to directory with CLI binaries on storage node (currently we need only neofs-cli)
+STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor")
+
+# Config for neofs-adm utility. Optional if tests are running against devenv
+NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
+
+INFRASTRUCTURE_TYPE = os.getenv("INFRASTRUCTURE_TYPE", "LOCAL_DEVENV")
+FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
+BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
+
+# Generate wallet configs
+# TODO: we should move all info about wallet configs to fixtures
+WALLET_CONFIG = os.path.join(os.getcwd(), "wallet_config.yml")
+with open(WALLET_CONFIG, "w") as file:
+    yaml.dump({"password": WALLET_PASS}, file)
+
+STORAGE_WALLET_CONFIG = os.path.join(os.getcwd(), "storage_wallet_config.yml")
+with open(STORAGE_WALLET_CONFIG, "w") as file:
+    yaml.dump({"password": STORAGE_WALLET_PASS}, file)
+
+MAINNET_WALLET_CONFIG = os.path.join(os.getcwd(), "mainnet_wallet_config.yml")
+with open(MAINNET_WALLET_CONFIG, "w") as file:
+    yaml.dump({"password": MAINNET_WALLET_PASS}, file)
+
+IR_WALLET_CONFIG = os.path.join(os.getcwd(), "ir_wallet_config.yml")
+with open(IR_WALLET_CONFIG, "w") as file:
+    yaml.dump({"password": IR_WALLET_PASS}, file)
