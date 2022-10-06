@@ -23,7 +23,7 @@ from utility import wait_for_gc_pass_on_storage_nodes
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger("NeoLogger")
-OBJECT_NOT_FOUND_ERROR = "object not found"
+OBJECT_NOT_FOUND_ERROR = "not found"
 
 # For some reason object uploaded via http gateway is not immediately available for downloading
 # Until this issue is resolved we are waiting for some time before attempting to read an object
@@ -233,7 +233,8 @@ class TestHttpGate:
             get_via_http_gate(cid=cid, oid=oid)
             raise AssertionError(f"Expected error on getting object with cid: {cid}")
         except Exception as err:
-            assert error_pattern in str(err), f"Expected {err} to match {error_pattern}"
+            match = error_pattern.casefold() in str(err).casefold()
+            assert match, f"Expected {err} to match {error_pattern}"
 
     @staticmethod
     @allure.step("Verify object can be get using HTTP header attribute")
