@@ -74,7 +74,8 @@ class TestS3Gate(TestS3GateBase):
         file_name = self.object_key_from_file_path(file_path)
 
         with allure.step("Create buckets"):
-            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, True)
+            set_bucket_versioning(self.s3_client, bucket_1, s3_gate_bucket.VersioningStatus.ENABLED)
             bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
 
         with allure.step("Check buckets are presented in the system"):
@@ -102,7 +103,7 @@ class TestS3Gate(TestS3GateBase):
             s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
 
         with allure.step("Check we can put/list object with S3 commands"):
-            s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path)
+            version_id = s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path)
             s3_gate_object.head_object_s3(self.s3_client, bucket_1, file_name)
 
             bucket_objects = s3_gate_object.list_objects_s3(self.s3_client, bucket_1)
@@ -127,6 +128,18 @@ class TestS3Gate(TestS3GateBase):
             buckets = s3_gate_bucket.list_buckets_s3(self.s3_client)
             assert bucket_1 in buckets, f"Expected bucket {bucket_1} is in the list"
             assert bucket_2 not in buckets, f"Expected bucket {bucket_2} is not in the list"
+
+        with allure.step(f"Delete object from {bucket_1}"):
+            s3_gate_object.delete_object_s3(self.s3_client, bucket_1, file_name, version_id)
+            check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=[])
+
+        with allure.step(f"Delete bucket {bucket_1}"):
+            s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_1)
+            tick_epoch()
+
+        with allure.step(f"Check bucket {bucket_1} deleted"):
+            with pytest.raises(Exception, match=r".*Not Found.*"):
+                s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
 
     @allure.title("Test S3 Object API")
     @pytest.mark.sanity
