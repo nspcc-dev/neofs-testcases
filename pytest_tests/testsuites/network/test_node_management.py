@@ -1,6 +1,7 @@
 import logging
 from random import choice
 from time import sleep
+from typing import Optional
 
 import allure
 import pytest
@@ -17,6 +18,7 @@ from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from file_helper import generate_file
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
+from neofs_testlib.hosting import Hosting
 from python_keywords.container import create_container, get_container
 from python_keywords.failover_utils import wait_object_replication_on_nodes
 from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
@@ -35,7 +37,6 @@ from python_keywords.node_management import (
     start_nodes,
     stop_nodes,
 )
-from service_helper import get_storage_service_helper
 from storage_policy import get_nodes_with_object, get_simple_object_copies
 from utility import parse_time, placement_policy_from_container, wait_for_gc_pass_on_storage_nodes
 from wellknown_acl import PUBLIC_ACL
@@ -46,7 +47,7 @@ check_nodes = []
 
 @pytest.fixture
 @allure.title("Create container and pick the node with data")
-def create_container_and_pick_node(prepare_wallet_and_deposit, client_shell):
+def create_container_and_pick_node(prepare_wallet_and_deposit, client_shell, hosting: Hosting):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
@@ -64,45 +65,45 @@ def create_container_and_pick_node(prepare_wallet_and_deposit, client_shell):
 
     yield cid, node_name
 
-    shards = node_shard_list(node_name)
+    shards = node_shard_list(hosting, node_name)
     assert shards
 
     for shard in shards:
-        node_shard_set_mode(node_name, shard, "read-write")
+        node_shard_set_mode(hosting, node_name, shard, "read-write")
 
-    node_shard_list(node_name)
+    node_shard_list(hosting, node_name)
 
 
 @pytest.fixture
-def after_run_start_all_nodes():
+def after_run_start_all_nodes(hosting: Hosting):
     yield
     try:
-        start_nodes(list(NEOFS_NETMAP_DICT.keys()))
+        start_nodes(hosting, list(NEOFS_NETMAP_DICT.keys()))
     except Exception as err:
         logger.error(f"Node start fails with error:\n{err}")
 
 
 @pytest.fixture
-def return_nodes_after_test_run(client_shell):
+def return_nodes_after_test_run(client_shell: Shell, hosting: Hosting):
     yield
-    return_nodes(shell=client_shell)
+    return_nodes(client_shell, hosting)
 
 
 @allure.step("Return node to cluster")
-def return_nodes(shell: Shell, alive_node: str = None):
-    helper = get_storage_service_helper()
+def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = None) -> None:
     for node in list(check_nodes):
         with allure.step(f"Start node {node}"):
-            helper.start_node(node)
+            host = hosting.get_host_by_service(node)
+            host.start_service(node)
         with allure.step(f"Waiting status ready for node {node}"):
-            wait_for_node_to_be_ready(node)
+            wait_for_node_to_be_ready(hosting, node)
 
         # We need to wait for node to establish notifications from morph-chain
         # Otherwise it will hang up when we will try to set status
         sleep(parse_time(MORPH_BLOCK_TIME))
 
         with allure.step(f"Move node {node} to online state"):
-            node_set_status(node, status="online", retries=2)
+            node_set_status(hosting, node, status="online", retries=2)
 
         check_nodes.remove(node)
         sleep(parse_time(MORPH_BLOCK_TIME))
@@ -120,7 +121,7 @@ def return_nodes(shell: Shell, alive_node: str = None):
 @pytest.mark.add_nodes
 @pytest.mark.node_mgmt
 def test_add_nodes(
-    prepare_tmp_dir, client_shell, prepare_wallet_and_deposit, return_nodes_after_test_run
+    prepare_tmp_dir, client_shell, prepare_wallet_and_deposit, return_nodes_after_test_run, hosting: Hosting
 ):
     wallet = prepare_wallet_and_deposit
     placement_rule_3 = "REP 3 IN X CBF 1 SELECT 3 FROM * AS X"
@@ -140,8 +141,8 @@ def test_add_nodes(
 
     # Add node to recovery list before messing with it
     check_nodes.append(additional_node)
-    exclude_node_from_network_map(additional_node, alive_node)
-    delete_node_data(additional_node)
+    exclude_node_from_network_map(hosting, additional_node, alive_node)
+    delete_node_data(hosting, additional_node)
 
     cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL)
     oid = put_object(
@@ -149,16 +150,16 @@ def test_add_nodes(
     )
     wait_object_replication_on_nodes(wallet, cid, oid, 3)
 
-    return_nodes(shell=client_shell, alive_node=alive_node)
+    return_nodes(shell=client_shell, hosting=hosting, alive_node=alive_node)
 
     with allure.step("Check data could be replicated to new node"):
         random_node = choice(
             [node for node in NEOFS_NETMAP_DICT if node not in (additional_node, alive_node)]
         )
-        exclude_node_from_network_map(random_node, alive_node)
+        exclude_node_from_network_map(hosting, random_node, alive_node)
 
         wait_object_replication_on_nodes(wallet, cid, oid, 3, excluded_nodes=[random_node])
-        include_node_to_network_map(random_node, alive_node, shell=client_shell)
+        include_node_to_network_map(hosting, random_node, alive_node, shell=client_shell)
         wait_object_replication_on_nodes(wallet, cid, oid, 3)
 
     with allure.step("Check container could be created with new node"):
@@ -171,7 +172,7 @@ def test_add_nodes(
 
 @allure.title("Control Operations with storage nodes")
 @pytest.mark.node_mgmt
-def test_nodes_management(prepare_tmp_dir, client_shell):
+def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
     """
     This test checks base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
     """
@@ -188,29 +189,29 @@ def test_nodes_management(prepare_tmp_dir, client_shell):
 
     with allure.step("Run health check for all storage nodes"):
         for node_name in NEOFS_NETMAP_DICT.keys():
-            health_check = node_healthcheck(node_name)
+            health_check = node_healthcheck(hosting, node_name)
             assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
 
     with allure.step(f"Move node {random_node} to offline state"):
-        node_set_status(random_node, status="offline")
+        node_set_status(hosting, random_node, status="offline")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f"Check node {random_node} went to offline"):
-        health_check = node_healthcheck(random_node)
+        health_check = node_healthcheck(hosting, random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "OFFLINE"
         snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
         assert random_node_netmap_key not in snapshot, f"Expected node {random_node} not in netmap"
 
     with allure.step(f"Check node {random_node} went to online"):
-        node_set_status(random_node, status="online")
+        node_set_status(hosting, random_node, status="online")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
 
     with allure.step(f"Check node {random_node} went to online"):
-        health_check = node_healthcheck(random_node)
+        health_check = node_healthcheck(hosting, random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
         snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
         assert random_node_netmap_key in snapshot, f"Expected node {random_node} in netmap"
@@ -325,7 +326,7 @@ def test_placement_policy_negative(prepare_wallet_and_deposit, placement_rule, e
 @pytest.mark.skip(reason="We cover this scenario for Sbercloud in failover tests")
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object replication on node failover")
-def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes):
+def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, hosting: Hosting):
     """
     Test checks object replication on storage not failover and come back.
     """
@@ -342,22 +343,22 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes):
     ), f"Expected {expected_nodes_count} copies, got {len(nodes)}"
 
     node_names = [name for name, config in NEOFS_NETMAP_DICT.items() if config.get("rpc") in nodes]
-    stopped_nodes = stop_nodes(1, node_names)
+    stopped_nodes = stop_nodes(hosting, 1, node_names)
 
     wait_for_expected_object_copies(wallet, cid, oid)
 
-    start_nodes(stopped_nodes)
+    start_nodes(hosting, stopped_nodes)
     tick_epoch()
 
     for node_name in node_names:
-        wait_for_node_go_online(node_name)
+        wait_for_node_go_online(hosting, node_name)
 
     wait_for_expected_object_copies(wallet, cid, oid)
 
 
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object could be dropped using control command")
-def test_drop_object(prepare_wallet_and_deposit):
+def test_drop_object(prepare_wallet_and_deposit, hosting: Hosting):
     """
     Test checks object could be dropped using `neofs-cli control drop-objects` command.
     """
@@ -383,7 +384,7 @@ def test_drop_object(prepare_wallet_and_deposit):
         with allure.step(f"Drop object {oid}"):
             get_object(wallet, cid, oid)
             head_object(wallet, cid, oid)
-            drop_object(node_name, cid, oid)
+            drop_object(hosting, node_name, cid, oid)
             wait_for_obj_dropped(wallet, cid, oid, get_object)
             wait_for_obj_dropped(wallet, cid, oid, head_object)
 
@@ -391,7 +392,7 @@ def test_drop_object(prepare_wallet_and_deposit):
 @pytest.mark.node_mgmt
 @pytest.mark.skip(reason="Need to clarify scenario")
 @allure.title("Control Operations with storage nodes")
-def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node):
+def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node, hosting: Hosting):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
 
@@ -400,13 +401,13 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node):
 
     # for mode in ('read-only', 'degraded'):
     for mode in ("degraded",):
-        shards = node_shard_list(node_name)
+        shards = node_shard_list(hosting, node_name)
         assert shards
 
         for shard in shards:
-            node_shard_set_mode(node_name, shard, mode)
+            node_shard_set_mode(hosting, node_name, shard, mode)
 
-        shards = node_shard_list(node_name)
+        shards = node_shard_list(hosting, node_name)
         assert shards
 
         with pytest.raises(RuntimeError):
@@ -419,9 +420,9 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node):
         get_object(wallet, cid, original_oid)
 
         for shard in shards:
-            node_shard_set_mode(node_name, shard, "read-write")
+            node_shard_set_mode(hosting, node_name, shard, "read-write")
 
-        shards = node_shard_list(node_name)
+        shards = node_shard_list(hosting, node_name)
         assert shards
 
         oid = put_object(wallet, file_path, cid)
@@ -442,11 +443,11 @@ def validate_object_copies(wallet: str, placement_rule: str, file_path: str, exp
 
 
 @allure.step("Wait for node {node_name} goes online")
-def wait_for_node_go_online(node_name: str) -> None:
+def wait_for_node_go_online(hosting: Hosting, node_name: str) -> None:
     timeout, attempts = 5, 20
     for _ in range(attempts):
         try:
-            health_check = node_healthcheck(node_name)
+            health_check = node_healthcheck(hosting, node_name)
             assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
             return
         except Exception as err:
@@ -458,11 +459,11 @@ def wait_for_node_go_online(node_name: str) -> None:
 
 
 @allure.step("Wait for node {node_name} is ready")
-def wait_for_node_to_be_ready(node_name: str) -> None:
+def wait_for_node_to_be_ready(hosting: Hosting, node_name: str) -> None:
     timeout, attempts = 30, 6
     for _ in range(attempts):
         try:
-            health_check = node_healthcheck(node_name)
+            health_check = node_healthcheck(hosting, node_name)
             if health_check.health_status == "READY":
                 return
         except Exception as err:

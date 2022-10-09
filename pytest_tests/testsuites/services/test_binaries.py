@@ -5,9 +5,10 @@ from re import match
 import allure
 import pytest
 import requests
+from binary_version_helper import get_remote_binaries_versions
 from common import BIN_VERSIONS_FILE
 from env_properties import read_env_properties, save_env_properties
-from service_helper import get_storage_service_helper
+from neofs_testlib.hosting import Hosting
 
 logger = logging.getLogger("NeoLogger")
 
@@ -15,7 +16,7 @@ logger = logging.getLogger("NeoLogger")
 @allure.title("Check binaries versions")
 @pytest.mark.check_binaries
 @pytest.mark.skip("Skipped due to https://j.yadro.com/browse/OBJECT-628")
-def test_binaries_versions(request):
+def test_binaries_versions(request, hosting: Hosting):
     """
     Compare binaries versions from external source (url) and deployed on servers.
     """
@@ -24,8 +25,7 @@ def test_binaries_versions(request):
 
     binaries_to_check = download_versions_info(BIN_VERSIONS_FILE)
     with allure.step("Get binaries versions from servers"):
-        helper = get_storage_service_helper()
-        got_versions = helper.get_binaries_version(binaries=list(binaries_to_check.keys()))
+        got_versions = get_remote_binaries_versions(hosting)
 
     env_properties = read_env_properties(request.config)
 

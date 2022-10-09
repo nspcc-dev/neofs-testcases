@@ -2,6 +2,7 @@ import allure
 import pytest
 from common import NEOFS_NETMAP_DICT
 from failover_utils import wait_object_replication_on_nodes
+from neofs_testlib.hosting import Hosting
 from python_keywords.acl import (
     EACLAccess,
     EACLOperation,
@@ -194,7 +195,7 @@ class TestEACLContainer:
 
     @allure.title("Testcase to validate NeoFS replication with eACL deny rules.")
     def test_extended_acl_deny_replication(
-        self, wallets, client_shell, eacl_full_placement_container_with_object, file_path
+        self, wallets, client_shell, hosting: Hosting, eacl_full_placement_container_with_object, file_path
     ):
         user_wallet = wallets.get_wallet()
         cid, oid, file_path = eacl_full_placement_container_with_object
@@ -217,7 +218,7 @@ class TestEACLContainer:
             wait_for_cache_expired()
 
         with allure.step("Drop object to check replication"):
-            drop_object(node_name=[*NEOFS_NETMAP_DICT][0], cid=cid, oid=oid)
+            drop_object(hosting, node_name=[*NEOFS_NETMAP_DICT][0], cid=cid, oid=oid)
 
         storage_wallet_path = NEOFS_NETMAP_DICT[[*NEOFS_NETMAP_DICT][0]]["wallet_path"]
         with allure.step("Wait for dropped object replicated"):

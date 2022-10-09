@@ -12,6 +12,7 @@ from common import (
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from file_helper import generate_file, get_file_hash
 from iptables_helper import IpTablesHelper
+from neofs_testlib.hosting import Hosting
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
 from ssh_helper import HostClient
@@ -26,7 +27,7 @@ blocked_hosts = []
 
 @pytest.fixture(autouse=True)
 @allure.step("Restore network")
-def restore_network():
+def restore_network(hosting: Hosting):
     yield
 
     not_empty = len(blocked_hosts) != 0
@@ -42,7 +43,7 @@ def restore_network():
                 IpTablesHelper.restore_input_traffic_to_port(client, PORTS_TO_BLOCK)
         blocked_hosts.remove(host)
     if not_empty:
-        wait_all_storage_node_returned()
+        wait_all_storage_node_returned(hosting)
 
 
 @allure.title("Block Storage node traffic")

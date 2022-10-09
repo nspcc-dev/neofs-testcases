@@ -1,5 +1,3 @@
-#!/usr/bin/python3.9
-
 import logging
 import random
 import re
@@ -19,7 +17,7 @@ from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
-from service_helper import get_storage_service_helper
+from neofs_testlib.hosting import Hosting
 from utility import parse_time
 
 logger = logging.getLogger("NeoLogger")
@@ -42,7 +40,7 @@ class HealthStatus:
 
 
 @allure.step("Stop storage nodes")
-def stop_nodes(number: int, nodes: list[str]) -> list[str]:
+def stop_nodes(hosting: Hosting, number: int, nodes: list[str]) -> list[str]:
     """
     Shuts down the given number of randomly selected storage nodes.
     Args:
@@ -51,23 +49,23 @@ def stop_nodes(number: int, nodes: list[str]) -> list[str]:
     Returns:
         (list): the list of nodes that were shut down
     """
-    helper = get_storage_service_helper()
     nodes_to_stop = random.sample(nodes, number)
     for node in nodes_to_stop:
-        helper.stop_node(node)
+        host = hosting.get_host_by_service(node)
+        host.stop_service(node)
     return nodes_to_stop
 
 
 @allure.step("Start storage nodes")
-def start_nodes(nodes: list[str]) -> None:
+def start_nodes(hosting: Hosting, nodes: list[str]) -> None:
     """
     The function starts specified storage nodes.
     Args:
        nodes (list): the list of nodes to start
     """
-    helper = get_storage_service_helper()
     for node in nodes:
-        helper.start(node)
+        host = hosting.get_host_by_service(node)
+        host.start_service(node)
 
 
 @allure.step("Get Locode")
@@ -79,7 +77,7 @@ def get_locode() -> str:
 
 
 @allure.step("Healthcheck for node {node_name}")
-def node_healthcheck(node_name: str) -> HealthStatus:
+def node_healthcheck(hosting: Hosting, node_name: str) -> HealthStatus:
     """
     The function returns node's health status.
     Args:
@@ -88,12 +86,12 @@ def node_healthcheck(node_name: str) -> HealthStatus:
         health status as HealthStatus object.
     """
     command = "control healthcheck"
-    output = _run_control_command(node_name, command)
+    output = _run_control_command_with_retries(hosting, node_name, command)
     return HealthStatus.from_stdout(output)
 
 
 @allure.step("Set status for node {node_name}")
-def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
+def node_set_status(hosting: Hosting, node_name: str, status: str, retries: int = 0) -> None:
     """
     The function sets particular status for given node.
     Args:
@@ -102,7 +100,7 @@ def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
         retries (optional, int): number of retry attempts if it didn't work from the first time
     """
     command = f"control set-status --status {status}"
-    _run_control_command(node_name, command, retries)
+    _run_control_command_with_retries(hosting, node_name, command, retries)
 
 
 @allure.step("Get netmap snapshot")
@@ -123,7 +121,7 @@ def get_netmap_snapshot(node_name: str, shell: Shell) -> str:
 
 
 @allure.step("Get shard list for node {node_name}")
-def node_shard_list(node_name: str) -> list[str]:
+def node_shard_list(hosting: Hosting, node_name: str) -> list[str]:
     """
     The function returns list of shards for specified node.
     Args:
@@ -132,46 +130,46 @@ def node_shard_list(node_name: str) -> list[str]:
         list of shards.
     """
     command = "control shards list"
-    output = _run_control_command(node_name, command)
+    output = _run_control_command_with_retries(hosting, node_name, command)
     return re.findall(r"Shard (.*):", output)
 
 
 @allure.step("Shard set for node {node_name}")
-def node_shard_set_mode(node_name: str, shard: str, mode: str) -> str:
+def node_shard_set_mode(hosting: Hosting, node_name: str, shard: str, mode: str) -> str:
     """
     The function sets mode for specified shard.
     Args:
         node_name str: node name on which shard mode should be set.
     """
     command = f"control shards set-mode --id {shard} --mode {mode}"
-    return _run_control_command(node_name, command)
+    return _run_control_command_with_retries(hosting, node_name, command)
 
 
 @allure.step("Drop object from node {node_name}")
-def drop_object(node_name: str, cid: str, oid: str) -> str:
+def drop_object(hosting: Hosting, node_name: str, cid: str, oid: str) -> str:
     """
     The function drops object from specified node.
     Args:
         node_name str: node name from which object should be dropped.
     """
     command = f"control drop-objects  -o {cid}/{oid}"
-    return _run_control_command(node_name, command)
+    return _run_control_command_with_retries(hosting, node_name, command)
 
 
 @allure.step("Delete data of node {node_name}")
-def delete_node_data(node_name: str) -> None:
-    helper = get_storage_service_helper()
-    helper.stop_node(node_name)
-    helper.delete_node_data(node_name)
+def delete_node_data(hosting: Hosting, node_name: str) -> None:
+    host = hosting.get_host_by_service(node_name)
+    host.stop_service(node_name)
+    host.delete_storage_node_data(node_name)
     time.sleep(parse_time(MORPH_BLOCK_TIME))
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
-def exclude_node_from_network_map(node_to_exclude: str, alive_node: str, shell: Shell) -> None:
+def exclude_node_from_network_map(hosting: Hosting, node_to_exclude: str, alive_node: str, shell: Shell) -> None:
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]["wallet_path"]
     node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
-    node_set_status(node_to_exclude, status="offline")
+    node_set_status(hosting, node_to_exclude, status="offline")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
@@ -183,8 +181,8 @@ def exclude_node_from_network_map(node_to_exclude: str, alive_node: str, shell: 
 
 
 @allure.step("Include node {node_to_include} into network map")
-def include_node_to_network_map(node_to_include: str, alive_node: str, shell: Shell) -> None:
-    node_set_status(node_to_include, status="online")
+def include_node_to_network_map(hosting: Hosting, node_to_include: str, alive_node: str, shell: Shell) -> None:
+    node_set_status(hosting, node_to_include, status="online")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
@@ -204,13 +202,38 @@ def check_node_in_map(node_name: str, shell: Shell, alive_node: Optional[str] = 
     assert node_netmap_key in snapshot, f"Expected node with key {node_netmap_key} in network map"
 
 
-def _run_control_command(node_name: str, command: str, retries: int = 0) -> str:
-    helper = get_storage_service_helper()
+def _run_control_command_with_retries(
+    hosting: Hosting, node_name: str, command: str, retries: int = 0
+) -> str:
     for attempt in range(1 + retries):  # original attempt + specified retries
         try:
-            return helper.run_control_command(node_name, command)
+            return _run_control_command(hosting, node_name, command)
         except AssertionError as err:
             if attempt < retries:
                 logger.warning(f"Command {command} failed with error {err} and will be retried")
                 continue
             raise AssertionError(f"Command {command} failed with error {err}") from err
+
+
+def _run_control_command(hosting: Hosting, service_name: str, command: str) -> None:
+    host = hosting.get_host_by_service(service_name)
+
+    service_config = host.get_service_config(service_name)
+    wallet_path = service_config.attributes["wallet_path"]
+    wallet_password = service_config.attributes["wallet_password"]
+    control_endpoint = service_config.attributes["control_endpoint"]
+
+    shell = host.get_shell()
+    wallet_config_path = f"/tmp/{service_name}-config.yaml"
+    wallet_config = f'password: "{wallet_password}"'
+    shell.exec(f"echo '{wallet_config}' > {wallet_config_path}")
+
+    cli_config = host.get_cli_config("neofs-cli")
+
+    # TODO: implement cli.control
+    # cli = NeofsCli(shell, cli_config.exec_path, wallet_config_path)
+    result = shell.exec(
+        f"{cli_config.exec_path} {command} --endpoint {control_endpoint} "
+        f"--wallet {wallet_path} --config {wallet_config_path}"
+    )
+    return result.stdout

@@ -9,9 +9,9 @@ from common import (
 )
 from failover_utils import wait_all_storage_node_returned, wait_object_replication_on_nodes
 from file_helper import generate_file, get_file_hash
+from neofs_testlib.hosting import Hosting
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import get_object, put_object
-from sbercloud_helper import SberCloud, SberCloudConfig
 from ssh_helper import HostClient
 from wellknown_acl import PUBLIC_ACL
 
@@ -19,21 +19,11 @@ logger = logging.getLogger("NeoLogger")
 stopped_hosts = []
 
 
-@pytest.fixture(scope="session")
-def sbercloud_client():
-    with allure.step("Connect to SberCloud"):
-        try:
-            config = SberCloudConfig.from_env()
-            yield SberCloud(config)
-        except Exception as err:
-            pytest.fail(f"SberCloud infrastructure not available. Error\n{err}")
-
-
 @pytest.fixture(autouse=True)
 @allure.step("Return all storage nodes")
-def return_all_storage_nodes_fixture(sbercloud_client):
+def return_all_storage_nodes_fixture(hosting: Hosting):
     yield
-    return_all_storage_nodes(sbercloud_client)
+    return_all_storage_nodes(hosting)
 
 
 def panic_reboot_host(ip: str = None):
@@ -50,13 +40,14 @@ def panic_reboot_host(ip: str = None):
     ssh_stdin.close()
 
 
-def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
-    for host in list(stopped_hosts):
-        with allure.step(f"Start storage node {host}"):
-            sbercloud_client.start_node(node_ip=host.split(":")[-2])
-        stopped_hosts.remove(host)
+def return_all_storage_nodes(hosting: Hosting) -> None:
+    for host_address in list(stopped_hosts):
+        with allure.step(f"Start host {host_address}"):
+            host = hosting.get_host_by_address(host_address)
+            host.start_host()
+        stopped_hosts.remove(host_address)
 
-    wait_all_storage_node_returned()
+    wait_all_storage_node_returned(hosting)
 
 
 @allure.title("Lost and returned nodes")
@@ -65,8 +56,7 @@ def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
 def test_lost_storage_node(
     prepare_wallet_and_deposit,
     client_shell,
-    sbercloud_client: SberCloud,
-    cloud_infrastructure_check,
+    hosting: Hosting,
     hard_reboot: bool,
 ):
     wallet = prepare_wallet_and_deposit
@@ -78,19 +68,18 @@ def test_lost_storage_node(
 
     new_nodes = []
     for node in nodes:
-        stopped_hosts.append(node)
+        host = hosting.get_host_by_service(node)
+        stopped_hosts.append(host.config.address)
         with allure.step(f"Stop storage node {node}"):
-            sbercloud_client.stop_node(node_ip=node.split(":")[-2], hard=hard_reboot)
-        new_nodes = wait_object_replication_on_nodes(
-            wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node]
-        )
+            host.stop_host("hard" if hard_reboot else "soft")
+        new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node])
 
     assert not [node for node in nodes if node in new_nodes]
     got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
     assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     with allure.step(f"Return storage nodes"):
-        return_all_storage_nodes(sbercloud_client)
+        return_all_storage_nodes(hosting)
 
     new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
 

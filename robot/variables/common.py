@@ -17,12 +17,13 @@ NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
 # of 1min plus 15 seconds for GC pass itself)
 STORAGE_GC_TIME = os.getenv("STORAGE_GC_TIME", "75s")
 
+# TODO: we should use hosting instead of these endpoints
 NEOFS_ENDPOINT = os.getenv("NEOFS_ENDPOINT", "s01.neofs.devenv:8080")
-
 NEO_MAINNET_ENDPOINT = os.getenv("NEO_MAINNET_ENDPOINT", "http://main-chain.neofs.devenv:30333")
 MORPH_ENDPOINT = os.getenv("MORPH_ENDPOINT", "http://morph-chain.neofs.devenv:30333")
 HTTP_GATE = os.getenv("HTTP_GATE", "http://http.neofs.devenv")
 S3_GATE = os.getenv("S3_GATE", "https://s3.neofs.devenv:8080")
+
 GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
@@ -30,12 +31,11 @@ NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
 
-MORPH_MAGIC = os.getenv("MORPH_MAGIC")
-
 # Password of wallet owned by user on behalf of whom we are running tests
 WALLET_PASS = os.getenv("WALLET_PASS", "")
 
 # Configuration of storage nodes
+# TODO: we should use hosting instead of all these variables
 STORAGE_RPC_ENDPOINT_1 = os.getenv("STORAGE_RPC_ENDPOINT_1", "s01.neofs.devenv:8080")
 STORAGE_RPC_ENDPOINT_2 = os.getenv("STORAGE_RPC_ENDPOINT_2", "s02.neofs.devenv:8080")
 STORAGE_RPC_ENDPOINT_3 = os.getenv("STORAGE_RPC_ENDPOINT_3", "s03.neofs.devenv:8080")
@@ -89,7 +89,13 @@ NEOFS_NETMAP_DICT = {
 }
 NEOFS_NETMAP = [node["rpc"] for node in NEOFS_NETMAP_DICT.values()]
 
-# Paths to CLI executables
+# Parameters that control SSH connection to storage node
+# TODO: we should use hosting instead
+STORAGE_NODE_SSH_USER = os.getenv("STORAGE_NODE_SSH_USER")
+STORAGE_NODE_SSH_PASSWORD = os.getenv("STORAGE_NODE_SSH_PASSWORD")
+STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH")
+
+# Paths to CLI executables on machine that runs tests
 NEOGO_EXECUTABLE = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
 NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "neofs-authmate")
@@ -109,20 +115,16 @@ S3_GATE_WALLET_PATH = os.getenv(
 )
 S3_GATE_WALLET_PASS = os.getenv("S3_GATE_WALLET_PASS", "s3")
 
-# Parameters that control SSH connection to storage node
-STORAGE_NODE_SSH_USER = os.getenv("STORAGE_NODE_SSH_USER")
-STORAGE_NODE_SSH_PASSWORD = os.getenv("STORAGE_NODE_SSH_PASSWORD")
-STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH")
-
-# Path to directory with CLI binaries on storage node (currently we need only neofs-cli)
-STORAGE_NODE_BIN_PATH = os.getenv("STORAGE_NODE_BIN_PATH", f"{DEVENV_PATH}/vendor")
-
 # Config for neofs-adm utility. Optional if tests are running against devenv
 NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
 
-INFRASTRUCTURE_TYPE = os.getenv("INFRASTRUCTURE_TYPE", "LOCAL_DEVENV")
 FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
 BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
+
+# TODO: instead of specifying infrastructure type we should use attributes of hosts
+INFRASTRUCTURE_TYPE = os.getenv("INFRASTRUCTURE_TYPE", "LOCAL_DEVENV")
+
+HOSTING_CONFIG_FILE = os.getenv("HOSTING_CONFIG_FILE", ".devenv.hosting.yaml")
 
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures

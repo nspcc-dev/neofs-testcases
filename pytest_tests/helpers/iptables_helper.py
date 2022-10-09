@@ -1,6 +1,7 @@
 from ssh_helper import HostClient
 
 
+# TODO: convert to shell from hosting
 class IpTablesHelper:
     @staticmethod
     def drop_input_traffic_to_port(client: HostClient, ports: list[str]):
