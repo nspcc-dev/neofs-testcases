@@ -5,6 +5,7 @@ from typing import Optional
 import allure
 from common import NEOFS_NETMAP_DICT
 from neofs_testlib.shell import Shell
+from neofs_testlib.hosting import Hosting
 from python_keywords.node_management import node_healthcheck
 from storage_policy import get_nodes_with_object
 
@@ -35,20 +36,20 @@ def wait_object_replication_on_nodes(
 
 
 @allure.step("Wait for storage node returned to cluster")
-def wait_all_storage_node_returned():
+def wait_all_storage_node_returned(hosting: Hosting) -> None:
     sleep_interval, attempts = 15, 20
     for __attempt in range(attempts):
-        if is_all_storage_node_returned():
+        if is_all_storage_node_returned(hosting):
             return
         sleep(sleep_interval)
     raise AssertionError("Storage node(s) is broken")
 
 
-def is_all_storage_node_returned() -> bool:
+def is_all_storage_node_returned(hosting: Hosting) -> bool:
     with allure.step("Run health check for all storage nodes"):
         for node_name in NEOFS_NETMAP_DICT.keys():
             try:
-                health_check = node_healthcheck(node_name)
+                health_check = node_healthcheck(hosting, node_name)
             except Exception as err:
                 logger.warning(f"Node healthcheck fails with error {err}")
                 return False

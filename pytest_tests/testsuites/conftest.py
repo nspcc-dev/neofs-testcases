@@ -1,30 +1,26 @@
 import logging
 import os
-import re
 import shutil
 from datetime import datetime
 
 import allure
 import pytest
 import wallet
-from cli_helpers import _cmd_run
+import yaml
+from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
 from common import (
     ASSETS_DIR,
     FREE_STORAGE,
+    HOSTING_CONFIG_FILE,
     INFRASTRUCTURE_TYPE,
     MAINNET_WALLET_PATH,
-    NEOFS_ADM_EXEC,
-    NEOFS_CLI_EXEC,
     NEOFS_NETMAP_DICT,
-    WALLET_CONFIG,
 )
-from neofs_testlib.cli import NeofsAdm, NeofsCli
-
 from env_properties import save_env_properties
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import LocalShell, Shell
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
-from service_helper import get_storage_service_helper
 
 logger = logging.getLogger("NeoLogger")
 
@@ -41,41 +37,24 @@ def cloud_infrastructure_check():
     yield
 
 
+@pytest.fixture(scope="session")
+def hosting() -> Hosting:
+    with open(HOSTING_CONFIG_FILE, "r") as file:
+        hosting_config = yaml.full_load(file)
+
+    hosting_instance = Hosting()
+    hosting_instance.configure(hosting_config)
+    yield hosting_instance
+
+
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Check binary versions")
-def check_binary_versions(request, client_shell):
-    # Collect versions of local binaries
-    binaries = ["neo-go", "neofs-authmate"]
-    local_binaries = _get_binaries_version_local(binaries)
+def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
+    local_versions = get_local_binaries_versions(client_shell)
+    remote_versions = get_remote_binaries_versions(hosting)
 
-    try:
-        local_binaries["neofs-adm"] = NeofsAdm(client_shell, NEOFS_ADM_EXEC).version.get()
-    except RuntimeError:
-        logger.info(f"neofs-adm not installed")
-    local_binaries["neofs-cli"] = NeofsCli(
-        client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG
-    ).version.get()
-    # Collect versions of remote binaries
-
-    helper = get_storage_service_helper()
-    remote_binaries = helper.get_binaries_version()
-    all_binaries = {**local_binaries, **remote_binaries}
-
-    # Get version of aws binary
-    out = _cmd_run("aws --version")
-    out_lines = out.split("\n")
-    all_binaries["AWS"] = out_lines[0] if out_lines else "Unknown"
-
-    save_env_properties(request.config, all_binaries)
-
-
-def _get_binaries_version_local(binaries: list) -> dict:
-    env_out = {}
-    for binary in binaries:
-        out = _cmd_run(f"{binary} --version")
-        version = re.search(r"version[:\s]*(.+)", out, re.IGNORECASE)
-        env_out[binary] = version.group(1).strip() if version else "Unknown"
-    return env_out
+    all_versions = {**local_versions, **remote_versions}
+    save_env_properties(request.config, all_versions)
 
 
 @pytest.fixture(scope="session")
@@ -90,7 +69,7 @@ def prepare_tmp_dir():
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Collect logs")
-def collect_logs(prepare_tmp_dir):
+def collect_logs(prepare_tmp_dir, hosting: Hosting):
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
@@ -99,8 +78,8 @@ def collect_logs(prepare_tmp_dir):
     logs_dir = os.path.join(prepare_tmp_dir, "logs")
     os.makedirs(logs_dir)
 
-    helper = get_storage_service_helper()
-    helper.dump_logs(logs_dir, since=start_time, until=end_time)
+    for host in hosting.hosts:
+        host.dump_logs(logs_dir, since=start_time, until=end_time)
 
     # Zip all files and attach to Allure because it is more convenient to download a single
     # zip with all logs rather than mess with individual logs files per service or node
@@ -110,10 +89,10 @@ def collect_logs(prepare_tmp_dir):
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Run health check for all storage nodes")
-def run_health_check(collect_logs):
+def run_health_check(collect_logs, hosting: Hosting):
     failed_nodes = []
     for node_name in NEOFS_NETMAP_DICT.keys():
-        health_check = node_healthcheck(node_name)
+        health_check = node_healthcheck(hosting, node_name)
         if health_check.health_status != "READY" or health_check.network_status != "ONLINE":
             failed_nodes.append(node_name)
 
