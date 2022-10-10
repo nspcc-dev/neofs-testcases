@@ -1,3 +1,4 @@
+import re
 from contextlib import contextmanager
 from dataclasses import dataclass
 from time import sleep
@@ -16,11 +17,26 @@ class LoadParams:
     containers_count: int
     out_file: str
     obj_count: int
-    writers_percent: int
+    writers: int
+    readers: int
+    deleters: int
     load_time: int
-    clients_count: int
     load_type: str
     endpoint: str
+
+
+@dataclass
+class LoadResults:
+    latency_write_min: float = 0.0
+    latency_write_max: float = 0.0
+    latency_write_med: float = 0.0
+    latency_write_avg: float = 0.0
+    latency_read_min: float = 0.0
+    latency_read_max: float = 0.0
+    latency_read_med: float = 0.0
+    latency_read_avg: float = 0.0
+    read_ops: float = 0.0
+    write_ops: float = 0.0
 
 
 class K6:
@@ -54,8 +70,8 @@ class K6:
                 f"{self.k6_dir}/scenarios/preset/preset_grpc.py "
                 f"--size {self.load_params.obj_size}  "
                 f"--containers {self.load_params.containers_count} "
-                f"--out {self.load_params.load_type}_{self.load_params.out_file} "
-                f"--endpoint {self.load_params.endpoint} "
+                f"--out {self.k6_dir}/{self.load_params.load_type}_{self.load_params.out_file} "
+                f"--endpoint {self.load_params.endpoint.split(',')[0]} "
                 f"--preload_obj {self.load_params.obj_count} "
             )
             terminal = self.host_client.exec(command)
@@ -64,25 +80,29 @@ class K6:
             command = (
                 f"{self.k6_dir}/scenarios/preset/preset_s3.py --size {self.load_params.obj_size} "
                 f"--buckets {self.load_params.containers_count} "
-                f"--out {self.load_params.load_type}_{self.load_params.out_file} "
-                f"--endpoint {self.load_params.endpoint} "
+                f"--out {self.k6_dir}/{self.load_params.load_type}_{self.load_params.out_file} "
+                f"--endpoint {self.load_params.endpoint.split(',')[0]} "
                 f"--preload_obj {self.load_params.obj_count} "
                 f"--location load-1-1"
             )
             terminal = self.host_client.exec(command)
             return terminal.stdout.strip("\n")
-        raise AssertionError("Wrong K6 load type")
+        else:
+            raise AssertionError("Wrong K6 load type")
 
     @allure.step("Start K6 on initiator")
     def start(self) -> None:
 
         self._k6_dir = self.k6_dir
         command = (
-            f"{self.k6_dir}/k6 run -e "
-            f"PROFILE={self.load_params.writers_percent}:{self.load_params.load_time} "
+            f"{self.k6_dir}/k6 run "
+            f"-e DURATION={self.load_params.load_time} "
             f"-e WRITE_OBJ_SIZE={self.load_params.obj_size} "
-            f"-e CLIENTS={self.load_params.clients_count} -e NODES={self.load_params.endpoint} "
-            f"-e PREGEN_JSON={self.k6_dir}/{self.load_params.load_type}_{self.load_params.out_file} "
+            f"-e WRITERS={self.load_params.writers} -e READERS={self.load_params.readers} "
+            f"-e DELETERS={self.load_params.deleters} "
+            f"-e {self.load_params.load_type.upper()}_ENDPOINTS={self.load_params.endpoint} "
+            f"-e PREGEN_JSON={self.k6_dir}/"
+            f"{self.load_params.load_type}_{self.load_params.out_file} "
             f"{self.k6_dir}/scenarios/{self.load_params.load_type}.js"
         )
         self._k6_process = RemoteProcess.create(command, self.host_client)
@@ -152,6 +172,30 @@ class K6:
     @property
     def is_finished(self) -> bool:
         return not self._k6_process.running()
+
+    def parsing_results(self) -> LoadResults:
+        output = self._k6_process.stdout(full=True).replace("\n", "")
+        metric_regex_map = {
+            "latency_write_min": r"neofs_obj_put_duration.*?min=(?P<latency_write_min>\d*\.\d*)",
+            "latency_write_max": r"neofs_obj_put_duration.*?max=(?P<latency_write_max>\d*\.\d*)",
+            "latency_write_med": r"neofs_obj_put_duration.*?med=(?P<latency_write_med>\d*\.\d*)",
+            "latency_write_avg": r"neofs_obj_put_duration.*?avg=(?P<latency_write_avg>\d*\.\d*)",
+            "write_ops": r"neofs_obj_put_total\W*\d*\W*(?P<write_ops>\d*\.\d*)",
+            "latency_read_min": r"neofs_obj_get_duration.*?min=(?P<latency_read_min>\d*\.\d*)",
+            "latency_read_max": r"neofs_obj_get_duration.*?max=(?P<latency_read_max>\d*\.\d*)",
+            "latency_read_med": r"neofs_obj_get_duration.*?med=(?P<latency_read_med>\d*\.\d*)",
+            "latency_read_avg": r"neofs_obj_get_duration.*?avg=(?P<latency_read_avg>\d*\.\d*)",
+            "read_ops": r"neofs_obj_get_total\W*\d*\W*(?P<read_ops>\d*\.\d*)",
+        }
+        metric_values = {}
+        for metric_name, metric_regex in metric_regex_map.items():
+            match = re.search(metric_regex, output)
+            if match:
+                metric_values[metric_name] = float(match.group(metric_name))
+                continue
+            metric_values[metric_name] = 0.0
+        load_result = LoadResults(**metric_values)
+        return load_result
 
     @allure.step("Try to stop K6 with SIGTERM")
     def _stop_k6(self) -> None:
