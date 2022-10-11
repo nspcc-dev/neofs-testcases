@@ -7,9 +7,8 @@ import allure
 import pytest
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE
 from data_formatters import get_wallet_public_key
-from python_keywords.container import list_containers
+from file_helper import concat_files, generate_file, get_file_hash
 from python_keywords.payment_neogo import neofs_deposit, transfer_mainnet_gas
-from python_keywords.utility_keywords import concat_files, generate_file, get_file_hash
 from s3_helper import check_objects_in_bucket, set_bucket_versioning
 from utility import create_file_with_content
 from wallet import init_wallet

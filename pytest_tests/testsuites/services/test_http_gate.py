@@ -8,6 +8,7 @@ import pytest
 from common import COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
+from file_helper import generate_file, get_file_hash
 from python_keywords.http_gate import (
     get_via_http_curl,
     get_via_http_gate,
@@ -18,7 +19,6 @@ from python_keywords.http_gate import (
 )
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.storage_policy import get_nodes_without_object
-from python_keywords.utility_keywords import generate_file, get_file_hash
 from utility import wait_for_gc_pass_on_storage_nodes
 from wellknown_acl import PUBLIC_ACL
 

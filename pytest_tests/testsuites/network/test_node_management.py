@@ -15,6 +15,7 @@ from common import (
 )
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
+from file_helper import generate_file
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from python_keywords.container import create_container, get_container
 from python_keywords.failover_utils import wait_object_replication_on_nodes
@@ -37,7 +38,6 @@ from python_keywords.node_management import (
 from service_helper import get_storage_service_helper
 from storage_policy import get_nodes_with_object, get_simple_object_copies
 from utility import parse_time, placement_policy_from_container, wait_for_gc_pass_on_storage_nodes
-from utility_keywords import generate_file
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger("NeoLogger")

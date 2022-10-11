@@ -1,18 +1,12 @@
 import logging
 import os
-from random import choice, choices, randrange
-from time import sleep
+from random import choice, choices
 
 import allure
 import pytest
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from epoch import tick_epoch
-from python_keywords.container import list_containers
-from python_keywords.utility_keywords import (
-    generate_file,
-    generate_file_and_file_hash,
-    get_file_hash,
-)
+from file_helper import generate_file, get_file_hash
 from s3_helper import (
     check_objects_in_bucket,
     check_tags_by_bucket,
@@ -281,10 +275,7 @@ class TestS3Gate(TestS3GateBase):
         Upload part/List parts/Complete multipart upload).
         """
         parts_count = 3
-        file_name_large, _ = generate_file_and_file_hash(
-            SIMPLE_OBJ_SIZE * 1024 * 6 * parts_count
-        )  # 5Mb - min part
-        # file_name_large, _ = generate_file_and_file_hash(SIMPLE_OBJ_SIZE * 1024 * 30 * parts_count)  # 5Mb - min part
+        file_name_large = generate_file(SIMPLE_OBJ_SIZE * 1024 * 6 * parts_count)  # 5Mb - min part
         object_key = self.object_key_from_file_path(file_name_large)
         part_files = split_file(file_name_large, parts_count)
         parts = []
@@ -362,7 +353,7 @@ class TestS3Gate(TestS3GateBase):
             ("some-key--obj2", "some-value--obj2"),
         ]
         key_value_pair_obj_new = [("some-key-obj-new", "some-value-obj-new")]
-        file_name_simple, _ = generate_file_and_file_hash(SIMPLE_OBJ_SIZE)
+        file_name_simple = generate_file(SIMPLE_OBJ_SIZE)
         obj_key = self.object_key_from_file_path(file_name_simple)
 
         s3_gate_bucket.put_bucket_tagging(self.s3_client, bucket, key_value_pair_bucket)
@@ -397,7 +388,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Generate {max_obj_count} files"):
             for _ in range(max_obj_count):
-                file_paths.append(generate_file_and_file_hash(choice(obj_sizes))[0])
+                file_paths.append(generate_file(choice(obj_sizes)))
 
         for bucket in (bucket_1, bucket_2):
             with allure.step(f"Bucket {bucket} must be empty as it just created"):

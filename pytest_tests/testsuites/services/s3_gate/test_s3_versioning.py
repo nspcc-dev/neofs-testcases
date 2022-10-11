@@ -2,12 +2,12 @@ import os
 
 import allure
 import pytest
-from python_keywords.utility_keywords import generate_file
+from file_helper import generate_file
 from s3_helper import set_bucket_versioning
-from steps import s3_gate_bucket, s3_gate_object
-from steps.aws_cli_client import AwsCliClient
-from steps.s3_gate_base import TestS3GateBase
 from utility import create_file_with_content
+
+from steps import s3_gate_bucket, s3_gate_object
+from steps.s3_gate_base import TestS3GateBase
 
 
 def pytest_generate_tests(metafunc):
