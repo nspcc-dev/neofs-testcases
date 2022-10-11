@@ -2,9 +2,8 @@ import os
 
 import allure
 import pytest
-from file_helper import generate_file
+from file_helper import generate_file, generate_file_with_content
 from s3_helper import set_bucket_versioning
-from utility import create_file_with_content
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
@@ -54,7 +53,7 @@ class TestS3GateVersioning(TestS3GateBase):
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
-            file_name_1 = create_file_with_content(file_path=file_path)
+            file_name_1 = generate_file_with_content(file_path=file_path)
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
         with allure.step("Check bucket shows all versions"):
