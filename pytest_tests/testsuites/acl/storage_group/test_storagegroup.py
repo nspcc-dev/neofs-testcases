@@ -13,6 +13,7 @@ from common import (
     SIMPLE_OBJ_SIZE,
 )
 from epoch import tick_epoch
+from file_helper import generate_file
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from python_keywords.acl import (
     EACLAccess,
@@ -34,7 +35,6 @@ from python_keywords.storage_group import (
     verify_get_storage_group,
     verify_list_storage_group,
 )
-from python_keywords.utility_keywords import generate_file
 from wallet import init_wallet
 
 logger = logging.getLogger("NeoLogger")

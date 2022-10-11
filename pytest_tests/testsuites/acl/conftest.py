@@ -11,10 +11,10 @@ from common import (
     STORAGE_WALLET_PATH,
     WALLET_CONFIG,
 )
+from file_helper import generate_file
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import put_object
-from python_keywords.utility_keywords import generate_file
 from wallet import init_wallet
 from wellknown_acl import PUBLIC_ACL
 

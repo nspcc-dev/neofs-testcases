@@ -1,6 +1,6 @@
 import allure
 import pytest
-from python_keywords.utility_keywords import generate_file
+from file_helper import generate_file
 from s3_helper import object_key_from_file_path
 
 from steps import s3_gate_bucket, s3_gate_object

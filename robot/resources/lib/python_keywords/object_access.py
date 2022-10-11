@@ -1,6 +1,7 @@
 from typing import Optional
 
 import allure
+from file_helper import get_file_hash
 from grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
 from python_keywords.neofs_verbs import (
     delete_object,
@@ -11,7 +12,6 @@ from python_keywords.neofs_verbs import (
     put_object,
     search_object,
 )
-from python_keywords.utility_keywords import get_file_hash
 
 OPERATION_ERROR_TYPE = RuntimeError
 

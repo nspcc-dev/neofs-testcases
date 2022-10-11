@@ -1,11 +1,9 @@
-import os
 from datetime import datetime, timedelta
 
 import allure
 import pytest
-from python_keywords.storage_policy import get_simple_object_copies
-from python_keywords.utility_keywords import generate_file
-from s3_helper import check_objects_in_bucket, object_key_from_file_path, set_bucket_versioning
+from file_helper import generate_file
+from s3_helper import check_objects_in_bucket, object_key_from_file_path
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
