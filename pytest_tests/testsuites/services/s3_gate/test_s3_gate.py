@@ -6,7 +6,13 @@ import allure
 import pytest
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from epoch import tick_epoch
-from file_helper import generate_file, get_file_hash
+from file_helper import (
+    generate_file,
+    generate_file_with_content,
+    get_file_content,
+    get_file_hash,
+    split_file,
+)
 from s3_helper import (
     check_objects_in_bucket,
     check_tags_by_bucket,
@@ -14,7 +20,6 @@ from s3_helper import (
     set_bucket_versioning,
     try_to_get_objects_and_expect_error,
 )
-from utility import create_file_with_content, get_file_content, split_file
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.aws_cli_client import AwsCliClient
@@ -171,8 +176,8 @@ class TestS3Gate(TestS3GateBase):
         if not isinstance(self.s3_client, AwsCliClient):
             pytest.skip("This test is not supported with boto3 client")
 
-        create_file_with_content(file_path=file_path_1)
-        create_file_with_content(file_path=file_path_2)
+        generate_file_with_content(file_path=file_path_1)
+        generate_file_with_content(file_path=file_path_2)
 
         self.s3_client.sync(bucket_name=bucket, dir_path=os.path.dirname(file_path_1))
 
@@ -182,7 +187,7 @@ class TestS3Gate(TestS3GateBase):
         with allure.step("Check these are the same objects"):
             assert set(key_to_path.keys()) == set(
                 objects
-            ), f"Expected all abjects saved. Got {objects}"
+            ), f"Expected all objects saved. Got {objects}"
             for obj_key in objects:
                 got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key)
                 assert get_file_hash(got_object) == get_file_hash(
@@ -196,13 +201,13 @@ class TestS3Gate(TestS3GateBase):
         """
         version_1_content = "Version 1"
         version_2_content = "Version 2"
-        file_name_simple = create_file_with_content(content=version_1_content)
+        file_name_simple = generate_file_with_content(content=version_1_content)
         obj_key = os.path.basename(file_name_simple)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
-            create_file_with_content(file_path=file_name_simple, content=version_2_content)
+            generate_file_with_content(file_path=file_name_simple, content=version_2_content)
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 
         with allure.step("Check bucket shows all versions"):
