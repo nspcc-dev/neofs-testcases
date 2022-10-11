@@ -851,12 +851,26 @@ class TestS3GateObject(TestS3GateBase):
         with allure.step("Put object with lock-mode"):
             with pytest.raises(
                 Exception,
-                match=r".*fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future.*",
+                match=r".*must both be supplied*",
             ):
-                # An error occurred (InternalError) when calling the PutObject operation (reached max retries: 2):
-                # fetch time to epoch: time '0001-01-01T00:00:00Z' must be in the future (after 2022-09-15T08:59:30Z)
+                # x-amz-object-lock-retain-until-date and x-amz-object-lock-mode must both be supplied
                 s3_gate_object.put_object_s3(
                     self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE"
+                )
+
+        with allure.step("Put object with lock-mode and past date"):
+            date_obj = datetime.utcnow() - timedelta(days=3)
+            with pytest.raises(
+                Exception,
+                match=r".*until date must be in the future*",
+            ):
+                # The retain until date must be in the future
+                s3_gate_object.put_object_s3(
+                    self.s3_client,
+                    bucket,
+                    file_path_1,
+                    ObjectLockMode="COMPLIANCE",
+                    ObjectLockRetainUntilDate=date_obj,
                 )
 
     @allure.title("Test S3 Sync directory")
