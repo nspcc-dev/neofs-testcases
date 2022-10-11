@@ -106,12 +106,10 @@ def decode_session_token(data: dict):
     This function reencodes a fragment of header which contains
     information about session token.
     """
-    data["body"]["object"]["address"]["containerID"] = json_reencode(
-        data["body"]["object"]["address"]["containerID"]["value"]
+    data["body"]["object"]["target"]["container"] = json_reencode(
+        data["body"]["object"]["target"]["container"]["value"]
     )
-    data["body"]["object"]["address"]["objectID"] = json_reencode(
-        data["body"]["object"]["address"]["objectID"]["value"]
-    )
+    data["body"]["object"]["target"]["objects"] = [json_reencode(obj["value"]) for obj in data["body"]["object"]["target"]["objects"]]
     return data
 
 

@@ -6,7 +6,6 @@ import allure
 import neofs_verbs
 from neo3 import wallet
 
-
 @allure.step("Verify Head Tombstone")
 def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
     header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
@@ -25,8 +24,8 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
         header["sessionToken"]["body"]["object"]["verb"] == "DELETE"
     ), "Header Session Type isn't DELETE"
     assert (
-        header["sessionToken"]["body"]["object"]["address"]["containerID"] == cid
+        header["sessionToken"]["body"]["object"]["target"]["container"] == cid
     ), "Header Session ID is wrong"
     assert (
-        header["sessionToken"]["body"]["object"]["address"]["objectID"] == oid
+        header["sessionToken"]["body"]["object"]["target"]["objects"][0] == oid
     ), "Header Session OID is wrong"
