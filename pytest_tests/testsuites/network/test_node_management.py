@@ -5,7 +5,6 @@ from typing import Optional
 
 import allure
 import pytest
-from neofs_testlib.shell import Shell
 from common import (
     COMPLEX_OBJ_SIZE,
     MORPH_BLOCK_TIME,
@@ -19,6 +18,7 @@ from epoch import tick_epoch
 from file_helper import generate_file
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from neofs_testlib.hosting import Hosting
+from neofs_testlib.shell import Shell
 from python_keywords.container import create_container, get_container
 from python_keywords.failover_utils import wait_object_replication_on_nodes
 from python_keywords.neofs_verbs import delete_object, get_object, head_object, put_object
@@ -121,7 +121,11 @@ def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = Non
 @pytest.mark.add_nodes
 @pytest.mark.node_mgmt
 def test_add_nodes(
-    prepare_tmp_dir, client_shell, prepare_wallet_and_deposit, return_nodes_after_test_run, hosting: Hosting
+    prepare_tmp_dir,
+    client_shell,
+    prepare_wallet_and_deposit,
+    return_nodes_after_test_run,
+    hosting: Hosting,
 ):
     wallet = prepare_wallet_and_deposit
     placement_rule_3 = "REP 3 IN X CBF 1 SELECT 3 FROM * AS X"
@@ -141,14 +145,18 @@ def test_add_nodes(
 
     # Add node to recovery list before messing with it
     check_nodes.append(additional_node)
-    exclude_node_from_network_map(hosting, additional_node, alive_node)
+    exclude_node_from_network_map(hosting, additional_node, alive_node, shell=client_shell)
     delete_node_data(hosting, additional_node)
 
-    cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL)
+    cid = create_container(wallet, rule=placement_rule_3, basic_acl=PUBLIC_ACL, shell=client_shell)
     oid = put_object(
-        wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get("rpc")
+        wallet,
+        source_file_path,
+        cid,
+        endpoint=NEOFS_NETMAP_DICT[alive_node].get("rpc"),
+        shell=client_shell,
     )
-    wait_object_replication_on_nodes(wallet, cid, oid, 3)
+    wait_object_replication_on_nodes(wallet, cid, oid, 3, shell=client_shell)
 
     return_nodes(shell=client_shell, hosting=hosting, alive_node=alive_node)
 
@@ -156,16 +164,24 @@ def test_add_nodes(
         random_node = choice(
             [node for node in NEOFS_NETMAP_DICT if node not in (additional_node, alive_node)]
         )
-        exclude_node_from_network_map(hosting, random_node, alive_node)
+        exclude_node_from_network_map(hosting, random_node, alive_node, shell=client_shell)
 
-        wait_object_replication_on_nodes(wallet, cid, oid, 3, excluded_nodes=[random_node])
+        wait_object_replication_on_nodes(
+            wallet, cid, oid, 3, excluded_nodes=[random_node], shell=client_shell
+        )
         include_node_to_network_map(hosting, random_node, alive_node, shell=client_shell)
-        wait_object_replication_on_nodes(wallet, cid, oid, 3)
+        wait_object_replication_on_nodes(wallet, cid, oid, 3, shell=client_shell)
 
     with allure.step("Check container could be created with new node"):
-        cid = create_container(wallet, rule=placement_rule_4, basic_acl=PUBLIC_ACL)
+        cid = create_container(
+            wallet, rule=placement_rule_4, basic_acl=PUBLIC_ACL, shell=client_shell
+        )
         oid = put_object(
-            wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get("rpc")
+            wallet,
+            source_file_path,
+            cid,
+            endpoint=NEOFS_NETMAP_DICT[alive_node].get("rpc"),
+            shell=client_shell,
         )
         wait_object_replication_on_nodes(wallet, cid, oid, 4, shell=client_shell)
 
@@ -231,13 +247,15 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
 )
 @pytest.mark.node_mgmt
 @allure.title("Test object copies based on placement policy")
-def test_placement_policy(prepare_wallet_and_deposit, placement_rule, expected_copies):
+def test_placement_policy(
+    prepare_wallet_and_deposit, placement_rule, expected_copies, client_shell: Shell
+):
     """
     This test checks object's copies based on container's placement policy.
     """
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
-    validate_object_copies(wallet, placement_rule, file_path, expected_copies)
+    validate_object_copies(wallet, placement_rule, file_path, expected_copies, shell=client_shell)
 
 
 @pytest.mark.parametrize(
@@ -288,7 +306,7 @@ def test_placement_policy(prepare_wallet_and_deposit, placement_rule, expected_c
 @pytest.mark.node_mgmt
 @allure.title("Test object copies and storage nodes based on placement policy")
 def test_placement_policy_with_nodes(
-    prepare_wallet_and_deposit, placement_rule, expected_copies, nodes
+    prepare_wallet_and_deposit, placement_rule, expected_copies, nodes, client_shell: Shell
 ):
     """
     Based on container's placement policy check that storage nodes are piked correctly and object has
@@ -297,7 +315,7 @@ def test_placement_policy_with_nodes(
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     cid, oid, found_nodes = validate_object_copies(
-        wallet, placement_rule, file_path, expected_copies
+        wallet, placement_rule, file_path, expected_copies, shell=client_shell
     )
     expected_nodes = [NEOFS_NETMAP_DICT[node_name].get("rpc") for node_name in nodes]
     assert set(found_nodes) == set(
@@ -313,17 +331,21 @@ def test_placement_policy_with_nodes(
 )
 @pytest.mark.node_mgmt
 @allure.title("Negative cases for placement policy")
-def test_placement_policy_negative(prepare_wallet_and_deposit, placement_rule, expected_copies):
+def test_placement_policy_negative(
+    prepare_wallet_and_deposit, placement_rule, expected_copies, client_shell: Shell
+):
     """
     Negative test for placement policy.
     """
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     with pytest.raises(RuntimeError, match=".*not enough nodes to SELECT from.*"):
-        validate_object_copies(wallet, placement_rule, file_path, expected_copies)
+        validate_object_copies(
+            wallet, placement_rule, file_path, expected_copies, shell=client_shell
+        )
 
 
-@pytest.mark.skip(reason="We cover this scenario for Sbercloud in failover tests")
+@pytest.mark.skip(reason="We cover this scenario in failover tests")
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object replication on node failover")
 def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, hosting: Hosting):
@@ -430,14 +452,18 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node, host
 
 
 @allure.step("Validate object has {expected_copies} copies")
-def validate_object_copies(wallet: str, placement_rule: str, file_path: str, expected_copies: int):
-    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    got_policy = placement_policy_from_container(get_container(wallet, cid, json_mode=False))
+def validate_object_copies(
+    wallet: str, placement_rule: str, file_path: str, expected_copies: int, shell: Shell
+):
+    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL, shell=shell)
+    got_policy = placement_policy_from_container(
+        get_container(wallet, cid, json_mode=False, shell=shell)
+    )
     assert got_policy == placement_rule.replace(
         "'", ""
     ), f"Expected \n{placement_rule} and got policy \n{got_policy} are the same"
-    oid = put_object(wallet, file_path, cid)
-    nodes = get_nodes_with_object(wallet, cid, oid)
+    oid = put_object(wallet, file_path, cid, shell=shell)
+    nodes = get_nodes_with_object(wallet, cid, oid, shell=shell)
     assert len(nodes) == expected_copies, f"Expected {expected_copies} copies, got {len(nodes)}"
     return cid, oid, nodes
 

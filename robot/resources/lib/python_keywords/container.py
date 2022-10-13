@@ -129,7 +129,10 @@ def list_containers(wallet: str, shell: Shell) -> list[str]:
 
 @allure.step("Get Container")
 def get_container(
-    wallet: str, cid: str, shell: Shell, json_mode: bool = True,
+    wallet: str,
+    cid: str,
+    shell: Shell,
+    json_mode: bool = True,
 ) -> Union[dict, str]:
     """
     A wrapper for `neofs-cli container get` call. It extracts container's
@@ -162,9 +165,7 @@ def get_container(
 @allure.step("Delete Container")
 # TODO: make the error message about a non-found container more user-friendly
 # https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(
-    wallet: str, cid: str, shell: Shell, force: bool = False
-) -> None:
+def delete_container(wallet: str, cid: str, shell: Shell, force: bool = False) -> None:
     """
     A wrapper for `neofs-cli container delete` call.
     Args:

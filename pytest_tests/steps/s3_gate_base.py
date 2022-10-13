@@ -20,6 +20,7 @@ from common import (
     S3_GATE_WALLET_PATH,
 )
 from data_formatters import get_wallet_public_key
+from neofs_testlib.shell import Shell
 from python_keywords.container import list_containers
 
 from steps.aws_cli_client import AwsCliClient
@@ -42,7 +43,7 @@ class TestS3GateBase:
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
-    def s3_client(self, prepare_wallet_and_deposit, request):
+    def s3_client(self, prepare_wallet_and_deposit, client_shell: Shell, request):
         wallet = prepare_wallet_and_deposit
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
 
@@ -53,7 +54,7 @@ class TestS3GateBase:
             secret_access_key,
             owner_private_key,
         ) = init_s3_credentials(wallet, s3_bearer_rules_file=s3_bearer_rules_file)
-        containers_list = list_containers(wallet)
+        containers_list = list_containers(wallet, shell=client_shell)
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
         if request.param == "aws cli":

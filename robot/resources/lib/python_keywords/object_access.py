@@ -30,7 +30,13 @@ def can_get_object(
     with allure.step("Try get object from container"):
         try:
             got_file_path = get_object(
-                wallet, cid, oid, bearer_token=bearer, wallet_config=wallet_config, xhdr=xhdr, shell=shell,
+                wallet,
+                cid,
+                oid,
+                bearer_token=bearer,
+                wallet_config=wallet_config,
+                xhdr=xhdr,
+                shell=shell,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(

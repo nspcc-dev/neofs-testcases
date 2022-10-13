@@ -4,8 +4,8 @@ from typing import Optional
 
 import allure
 from common import NEOFS_NETMAP_DICT
-from neofs_testlib.shell import Shell
 from neofs_testlib.hosting import Hosting
+from neofs_testlib.shell import Shell
 from python_keywords.node_management import node_healthcheck
 from storage_policy import get_nodes_with_object
 
@@ -22,7 +22,7 @@ def wait_object_replication_on_nodes(
     excluded_nodes: Optional[list[str]] = None,
 ) -> list[str]:
     excluded_nodes = excluded_nodes or []
-    sleep_interval, attempts = 10, 18
+    sleep_interval, attempts = 15, 20
     nodes = []
     for __attempt in range(attempts):
         nodes = get_nodes_with_object(wallet, cid, oid, shell=shell, skip_nodes=excluded_nodes)

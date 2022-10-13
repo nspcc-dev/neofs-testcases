@@ -3,6 +3,7 @@ import pytest
 from common import NEOFS_NETMAP_DICT
 from failover_utils import wait_object_replication_on_nodes
 from neofs_testlib.hosting import Hosting
+from neofs_testlib.shell import Shell
 from python_keywords.acl import (
     EACLAccess,
     EACLOperation,
@@ -28,7 +29,6 @@ from python_keywords.object_access import (
     can_put_object,
     can_search_object,
 )
-from neofs_testlib.shell import Shell
 from wellknown_acl import PUBLIC_ACL
 
 
@@ -195,7 +195,12 @@ class TestEACLContainer:
 
     @allure.title("Testcase to validate NeoFS replication with eACL deny rules.")
     def test_extended_acl_deny_replication(
-        self, wallets, client_shell, hosting: Hosting, eacl_full_placement_container_with_object, file_path
+        self,
+        wallets,
+        client_shell,
+        hosting: Hosting,
+        eacl_full_placement_container_with_object,
+        file_path,
     ):
         user_wallet = wallets.get_wallet()
         cid, oid, file_path = eacl_full_placement_container_with_object

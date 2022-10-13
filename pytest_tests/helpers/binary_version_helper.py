@@ -17,11 +17,11 @@ def get_local_binaries_versions(shell: Shell) -> dict[str, str]:
         versions[binary] = _parse_version(out)
 
     neofs_cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-    versions["neofs-cli"] = _parse_version(neofs_cli.version.get())
+    versions["neofs-cli"] = _parse_version(neofs_cli.version.get().stdout)
 
     try:
         neofs_adm = NeofsAdm(shell, NEOFS_ADM_EXEC)
-        versions["neofs-adm"] = _parse_version(neofs_adm.version.get())
+        versions["neofs-adm"] = _parse_version(neofs_adm.version.get().stdout)
     except RuntimeError:
         logger.info(f"neofs-adm not installed")
 
@@ -35,24 +35,23 @@ def get_local_binaries_versions(shell: Shell) -> dict[str, str]:
 def get_remote_binaries_versions(hosting: Hosting) -> dict[str, str]:
     versions_by_host = {}
     for host in hosting.hosts:
-        binaries = []
+        binary_path_by_name = {}  # Maps binary name to executable path
         for service_config in host.config.services:
             exec_path = service_config.attributes.get("exec_path")
             if exec_path:
-                binaries.append(exec_path)
+                binary_path_by_name[service_config.name] = exec_path
         for cli_config in host.config.clis:
-            binaries.append(cli_config.exec_path)
+            binary_path_by_name[cli_config.name] = cli_config.exec_path
 
         shell = host.get_shell()
         versions_at_host = {}
-        for binary in binaries:
+        for binary_name, binary_path in binary_path_by_name.items():
             try:
-                result = shell.exec(f"{binary} --version")
-                versions_at_host[service_config.name] = _parse_version(result.stdout)
+                result = shell.exec(f"{binary_path} --version")
+                versions_at_host[binary_name] = _parse_version(result.stdout)
             except Exception as exc:
-                logger.error(f"Cannot get version for {exec_path} because of\n{exc}")
-                versions_at_host[service_config.name] = "Unknown"
-                continue
+                logger.error(f"Cannot get version for {binary_path} because of\n{exc}")
+                versions_at_host[binary_name] = "Unknown"
         versions_by_host[host.config.address] = versions_at_host
 
     # Consolidate versions across all hosts
@@ -61,7 +60,9 @@ def get_remote_binaries_versions(hosting: Hosting) -> dict[str, str]:
         for name, version in binary_versions.items():
             captured_version = versions.get(name)
             if captured_version:
-                assert captured_version == version, f"Binary {name} has inconsistent version on host {host}"
+                assert (
+                    captured_version == version
+                ), f"Binary {name} has inconsistent version on host {host}"
             else:
                 versions[name] = version
     return versions
