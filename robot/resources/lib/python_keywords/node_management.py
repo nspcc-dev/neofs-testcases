@@ -8,10 +8,17 @@ from dataclasses import dataclass
 from typing import Optional
 
 import allure
-from cli_utils.cli.cli import NeofsCli
-from common import MORPH_BLOCK_TIME, NEOFS_NETMAP_DICT, STORAGE_WALLET_CONFIG, STORAGE_WALLET_PASS
+from common import (
+    MORPH_BLOCK_TIME,
+    NEOFS_CLI_EXEC,
+    NEOFS_NETMAP_DICT,
+    STORAGE_WALLET_CONFIG,
+    STORAGE_WALLET_PASS,
+)
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
+from neofs_testlib.cli import NeofsCli
+from neofs_testlib.shell import Shell
 from service_helper import get_storage_service_helper
 from utility import parse_time
 
@@ -90,8 +97,8 @@ def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
     """
     The function sets particular status for given node.
     Args:
-        node_name str: node name for which status should be set.
-        status str: online or offline.
+        node_name: node name for which status should be set.
+        status: online or offline.
         retries (optional, int): number of retry attempts if it didn't work from the first time
     """
     command = f"control set-status --status {status}"
@@ -99,7 +106,7 @@ def node_set_status(node_name: str, status: str, retries: int = 0) -> None:
 
 
 @allure.step("Get netmap snapshot")
-def get_netmap_snapshot(node_name: str) -> str:
+def get_netmap_snapshot(node_name: str, shell: Shell) -> str:
     """
     The function returns string representation of netmap snapshot.
     Args:
@@ -108,11 +115,11 @@ def get_netmap_snapshot(node_name: str) -> str:
         string representation of netmap
     """
     node_info = NEOFS_NETMAP_DICT[node_name]
-    cli = NeofsCli(config=STORAGE_WALLET_CONFIG)
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, config_file=STORAGE_WALLET_CONFIG)
     return cli.netmap.snapshot(
         rpc_endpoint=node_info["rpc"],
         wallet=node_info["wallet_path"],
-    )
+    ).stdout
 
 
 @allure.step("Get shard list for node {node_name}")
@@ -160,7 +167,7 @@ def delete_node_data(node_name: str) -> None:
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
-def exclude_node_from_network_map(node_to_exclude: str, alive_node: str) -> None:
+def exclude_node_from_network_map(node_to_exclude: str, alive_node: str, shell: Shell) -> None:
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]["wallet_path"]
     node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
@@ -169,31 +176,31 @@ def exclude_node_from_network_map(node_to_exclude: str, alive_node: str) -> None
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
 
-    snapshot = get_netmap_snapshot(node_name=alive_node)
+    snapshot = get_netmap_snapshot(node_name=alive_node, shell=shell)
     assert (
         node_netmap_key not in snapshot
     ), f"Expected node with key {node_netmap_key} not in network map"
 
 
 @allure.step("Include node {node_to_include} into network map")
-def include_node_to_network_map(node_to_include: str, alive_node: str) -> None:
+def include_node_to_network_map(node_to_include: str, alive_node: str, shell: Shell) -> None:
     node_set_status(node_to_include, status="online")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
 
-    check_node_in_map(node_to_include, alive_node)
+    check_node_in_map(node_to_include, alive_node, shell=shell)
 
 
 @allure.step("Check node {node_name} in network map")
-def check_node_in_map(node_name: str, alive_node: Optional[str] = None) -> None:
+def check_node_in_map(node_name: str, shell: Shell, alive_node: Optional[str] = None) -> None:
     alive_node = alive_node or node_name
     node_wallet_path = NEOFS_NETMAP_DICT[node_name]["wallet_path"]
     node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
     logger.info(f"Node {node_name} netmap key: {node_netmap_key}")
 
-    snapshot = get_netmap_snapshot(node_name=alive_node)
+    snapshot = get_netmap_snapshot(node_name=alive_node, shell=shell)
     assert node_netmap_key in snapshot, f"Expected node with key {node_netmap_key} in network map"
 
 

@@ -11,9 +11,10 @@ from typing import Any, Dict, List, Optional, Union
 import allure
 import base58
 from cli_helpers import _cmd_run
-from cli_utils import NeofsCli
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
+from neofs_testlib.cli import NeofsCli
+from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 EACL_LIFETIME = 100500
@@ -76,7 +77,8 @@ class EACLFilters:
         return (
             ",".join(
                 [
-                    f"{filter.header_type.value}:{filter.key}{filter.match_type.value}{filter.value}"
+                    f"{filter.header_type.value}:"
+                    f"{filter.key}{filter.match_type.value}{filter.value}"
                     for filter in self.filters
                 ]
             )
@@ -115,22 +117,22 @@ class EACLRule:
 
 
 @allure.title("Get extended ACL")
-def get_eacl(wallet_path: str, cid: str) -> Optional[str]:
-    cli = NeofsCli(config=WALLET_CONFIG)
+def get_eacl(wallet_path: str, cid: str, shell: Shell) -> Optional[str]:
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     try:
         output = cli.container.get_eacl(wallet=wallet_path, rpc_endpoint=NEOFS_ENDPOINT, cid=cid)
     except RuntimeError as exc:
         logger.info("Extended ACL table is not set for this container")
         logger.info(f"Got exception while getting eacl: {exc}")
         return None
-    if "extended ACL table is not set for this container" in output:
+    if "extended ACL table is not set for this container" in output.stdout:
         return None
-    return output
+    return output.stdout
 
 
 @allure.title("Set extended ACL")
-def set_eacl(wallet_path: str, cid: str, eacl_table_path: str) -> None:
-    cli = NeofsCli(config=WALLET_CONFIG, timeout=60)
+def set_eacl(wallet_path: str, cid: str, eacl_table_path: str, shell: Shell) -> None:
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.container.set_eacl(
         wallet=wallet_path,
         rpc_endpoint=NEOFS_ENDPOINT,
@@ -145,9 +147,10 @@ def _encode_cid_for_eacl(cid: str) -> str:
     return base64.b64encode(cid_base58).decode("utf-8")
 
 
-def create_eacl(cid: str, rules_list: List[EACLRule]) -> str:
+def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell) -> str:
     table_file_path = f"{os.getcwd()}/{ASSETS_DIR}/eacl_table_{str(uuid.uuid4())}.json"
-    NeofsCli().acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
+    cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
     with open(table_file_path, "r") as file:
         table_data = file.read()
@@ -157,7 +160,7 @@ def create_eacl(cid: str, rules_list: List[EACLRule]) -> str:
 
 
 def form_bearertoken_file(
-    wif: str, cid: str, eacl_rule_list: List[Union[EACLRule, EACLPubKey]]
+    wif: str, cid: str, eacl_rule_list: List[Union[EACLRule, EACLPubKey]], shell: Shell
 ) -> str:
     """
     This function fetches eACL for given <cid> on behalf of <wif>,
@@ -167,7 +170,7 @@ def form_bearertoken_file(
     enc_cid = _encode_cid_for_eacl(cid)
     file_path = f"{os.getcwd()}/{ASSETS_DIR}/{str(uuid.uuid4())}"
 
-    eacl = get_eacl(wif, cid)
+    eacl = get_eacl(wif, cid, shell=shell)
     json_eacl = dict()
     if eacl:
         eacl = eacl.replace("eACL: ", "").split("Signature")[0]

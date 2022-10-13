@@ -18,6 +18,7 @@ from python_keywords.neofs_verbs import (
     search_object,
 )
 from python_keywords.storage_policy import get_complex_object_copies, get_simple_object_copies
+from neofs_testlib.shell import Shell
 from tombstone import verify_head_tombstone
 from utility import wait_for_gc_pass_on_storage_nodes
 
@@ -32,14 +33,14 @@ CLEANUP_TIMEOUT = 10
 @pytest.mark.parametrize(
     "object_size", [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=["simple object", "complex object"]
 )
-def test_object_api(prepare_wallet_and_deposit, request, object_size):
+def test_object_api(prepare_wallet_and_deposit, client_shell, request, object_size):
     """
     Test common gRPC API for object (put/get/head/get_range_hash/get_range/search/delete).
     """
     allure.dynamic.title(f"Test native object API for {request.node.callspec.id}")
 
     wallet = prepare_wallet_and_deposit
-    cid = create_container(wallet)
+    cid = create_container(wallet, shell=client_shell)
     wallet_cid = {"wallet": wallet, "cid": cid}
     file_usr_header = {"key1": 1, "key2": "abc", "common_key": "common_value"}
     file_usr_header_oth = {"key1": 2, "common_key": "common_value"}
@@ -50,70 +51,114 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
     file_hash = get_file_hash(file_path)
 
     with allure.step("Check container is empty"):
-        search_object(**wallet_cid, expected_objects_list=[])
+        search_object(**wallet_cid, expected_objects_list=[], shell=client_shell)
 
     oids = []
     with allure.step("Put objects"):
-        oids.append(put_object(wallet=wallet, path=file_path, cid=cid))
-        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, attributes=file_usr_header))
+        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, shell=client_shell))
         oids.append(
-            put_object(wallet=wallet, path=file_path, cid=cid, attributes=file_usr_header_oth)
+            put_object(
+                wallet=wallet,
+                path=file_path,
+                cid=cid,
+                shell=client_shell,
+                attributes=file_usr_header,
+            )
+        )
+        oids.append(
+            put_object(
+                wallet=wallet,
+                path=file_path,
+                cid=cid,
+                shell=client_shell,
+                attributes=file_usr_header_oth,
+            )
         )
 
     with allure.step("Validate storage policy for objects"):
         for oid_to_check in oids:
             if object_size == SIMPLE_OBJ_SIZE:
-                copies = get_simple_object_copies(wallet=wallet, cid=cid, oid=oid_to_check)
+                copies = get_simple_object_copies(
+                    wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell
+                )
             else:
-                copies = get_complex_object_copies(wallet=wallet, cid=cid, oid=oid_to_check)
+                copies = get_complex_object_copies(
+                    wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell
+                )
             assert copies == 2, "Expected 2 copies"
 
     with allure.step("Get objects and compare hashes"):
         for oid_to_check in oids:
-            got_file_path = get_object(wallet=wallet, cid=cid, oid=oid_to_check)
+            got_file_path = get_object(wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell)
             got_file_hash = get_file_hash(got_file_path)
             assert file_hash == got_file_hash
 
     with allure.step("Get range/range hash"):
-        range_hash = get_range_hash(**wallet_cid, oid=oids[0], bearer_token="", range_cut=range_cut)
+        range_hash = get_range_hash(
+            **wallet_cid, oid=oids[0], shell=client_shell, range_cut=range_cut
+        )
         assert (
             get_file_hash(file_path, range_len) == range_hash
         ), f"Expected range hash to match {range_cut} slice of file payload"
 
-        range_hash = get_range_hash(**wallet_cid, oid=oids[1], bearer_token="", range_cut=range_cut)
+        range_hash = get_range_hash(
+            **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
+        )
         assert (
             get_file_hash(file_path, range_len) == range_hash
         ), f"Expected range hash to match {range_cut} slice of file payload"
 
-        _, range_content = get_range(**wallet_cid, oid=oids[1], bearer="", range_cut=range_cut)
+        _, range_content = get_range(
+            **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
+        )
         assert (
             get_file_content(file_path, content_len=range_len, mode="rb") == range_content
         ), f"Expected range content to match {range_cut} slice of file payload"
 
     with allure.step("Search objects"):
-        search_object(**wallet_cid, expected_objects_list=oids)
-        search_object(**wallet_cid, filters=file_usr_header, expected_objects_list=oids[1:2])
-        search_object(**wallet_cid, filters=file_usr_header_oth, expected_objects_list=oids[2:3])
-        search_object(**wallet_cid, filters=common_header, expected_objects_list=oids[1:3])
+        search_object(**wallet_cid, shell=client_shell, expected_objects_list=oids)
+        search_object(
+            **wallet_cid,
+            shell=client_shell,
+            filters=file_usr_header,
+            expected_objects_list=oids[1:2],
+        )
+        search_object(
+            **wallet_cid,
+            shell=client_shell,
+            filters=file_usr_header_oth,
+            expected_objects_list=oids[2:3],
+        )
+        search_object(
+            **wallet_cid, shell=client_shell, filters=common_header, expected_objects_list=oids[1:3]
+        )
 
     with allure.step("Head object and validate"):
-        head_object(**wallet_cid, oid=oids[0])
-        head_info = head_object(**wallet_cid, oid=oids[1])
+        head_object(**wallet_cid, oid=oids[0], shell=client_shell)
+        head_info = head_object(**wallet_cid, oid=oids[1], shell=client_shell)
         check_header_is_presented(head_info, file_usr_header)
 
     with allure.step("Delete objects"):
-        tombstone_s = delete_object(**wallet_cid, oid=oids[0])
-        tombstone_h = delete_object(**wallet_cid, oid=oids[1])
+        tombstone_s = delete_object(**wallet_cid, oid=oids[0], shell=client_shell)
+        tombstone_h = delete_object(**wallet_cid, oid=oids[1], shell=client_shell)
 
-    verify_head_tombstone(wallet_path=wallet, cid=cid, oid_ts=tombstone_s, oid=oids[0])
-    verify_head_tombstone(wallet_path=wallet, cid=cid, oid_ts=tombstone_h, oid=oids[1])
+    verify_head_tombstone(
+        wallet_path=wallet, cid=cid, oid_ts=tombstone_s, oid=oids[0], shell=client_shell
+    )
+    verify_head_tombstone(
+        wallet_path=wallet, cid=cid, oid_ts=tombstone_h, oid=oids[1], shell=client_shell
+    )
 
     tick_epoch()
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step("Get objects and check errors"):
-        get_object_and_check_error(**wallet_cid, oid=oids[0], error_pattern=OBJECT_ALREADY_REMOVED)
-        get_object_and_check_error(**wallet_cid, oid=oids[1], error_pattern=OBJECT_ALREADY_REMOVED)
+        get_object_and_check_error(
+            **wallet_cid, oid=oids[0], error_pattern=OBJECT_ALREADY_REMOVED, shell=client_shell
+        )
+        get_object_and_check_error(
+            **wallet_cid, oid=oids[1], error_pattern=OBJECT_ALREADY_REMOVED, shell=client_shell
+        )
 
 
 @allure.title("Test object life time")
@@ -122,12 +167,12 @@ def test_object_api(prepare_wallet_and_deposit, request, object_size):
 @pytest.mark.parametrize(
     "object_size", [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=["simple object", "complex object"]
 )
-def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
+def test_object_api_lifetime(prepare_wallet_and_deposit, client_shell, request, object_size):
     """
     Test object deleted after expiration epoch.
     """
     wallet = prepare_wallet_and_deposit
-    cid = create_container(wallet)
+    cid = create_container(wallet, shell=client_shell)
 
     allure.dynamic.title(f"Test object life time for {request.node.callspec.id}")
 
@@ -135,8 +180,8 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
     file_hash = get_file_hash(file_path)
     epoch = get_epoch()
 
-    oid = put_object(wallet, file_path, cid, expire_at=epoch + 1)
-    got_file = get_object(wallet, cid, oid)
+    oid = put_object(wallet, file_path, cid, shell=client_shell, expire_at=epoch + 1)
+    got_file = get_object(wallet, cid, oid, shell=client_shell)
     assert get_file_hash(got_file) == file_hash
 
     with allure.step("Tick two epochs"):
@@ -148,12 +193,14 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, request, object_size):
 
     with allure.step("Check object deleted because it expires-on epoch"):
         with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
-            get_object(wallet, cid, oid)
+            get_object(wallet, cid, oid, shell=client_shell)
 
 
-def get_object_and_check_error(wallet: str, cid: str, oid: str, error_pattern: str) -> None:
+def get_object_and_check_error(
+    wallet: str, cid: str, oid: str, error_pattern: str, shell: Shell
+) -> None:
     try:
-        get_object(wallet=wallet, cid=cid, oid=oid)
+        get_object(wallet=wallet, cid=cid, oid=oid, shell=shell)
         raise AssertionError(f"Expected object {oid} removed, but it is not")
     except Exception as err:
         logger.info(f"Error is {err}")

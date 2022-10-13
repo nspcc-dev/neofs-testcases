@@ -11,17 +11,24 @@
 """
 
 import logging
+from typing import Optional
 
 import allure
 import neofs_verbs
 from common import NEOFS_NETMAP, WALLET_CONFIG
+from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 
 
 @allure.step("Get Link Object")
 def get_link_object(
-    wallet: str, cid: str, oid: str, bearer_token: str = "", wallet_config: str = WALLET_CONFIG
+    wallet: str,
+    cid: str,
+    oid: str,
+    shell: Shell,
+    bearer_token: str = "",
+    wallet_config: str = WALLET_CONFIG,
 ):
     """
     Args:
@@ -29,6 +36,7 @@ def get_link_object(
                         are requested
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
+        shell: executor for cli command
         bearer_token (optional, str): path to Bearer token file
         wallet_config (optional, str): path to the neofs-cli config file
     Returns:
@@ -42,6 +50,7 @@ def get_link_object(
                 wallet,
                 cid,
                 oid,
+                shell=shell,
                 endpoint=node,
                 is_raw=True,
                 is_direct=True,
@@ -57,13 +66,14 @@ def get_link_object(
 
 
 @allure.step("Get Last Object")
-def get_last_object(wallet: str, cid: str, oid: str):
+def get_last_object(wallet: str, cid: str, oid: str, shell: Shell) -> Optional[str]:
     """
     Args:
         wallet (str): path to the wallet on whose behalf the Storage Nodes
                         are requested
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
+        shell: executor for cli command
     Returns:
         (str): Last Object ID
         When no Last Object ID is found after all Storage Nodes polling,
@@ -72,7 +82,7 @@ def get_last_object(wallet: str, cid: str, oid: str):
     for node in NEOFS_NETMAP:
         try:
             resp = neofs_verbs.head_object(
-                wallet, cid, oid, endpoint=node, is_raw=True, is_direct=True
+                wallet, cid, oid, shell=shell, endpoint=node, is_raw=True, is_direct=True
             )
             if resp["lastPart"]:
                 return resp["lastPart"]

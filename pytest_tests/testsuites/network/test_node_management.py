@@ -4,9 +4,9 @@ from time import sleep
 
 import allure
 import pytest
+from neofs_testlib.shell import Shell
 from common import (
     COMPLEX_OBJ_SIZE,
-    MAINNET_BLOCK_TIME,
     MORPH_BLOCK_TIME,
     NEOFS_CONTRACT_CACHE_TIMEOUT,
     NEOFS_NETMAP_DICT,
@@ -46,15 +46,15 @@ check_nodes = []
 
 @pytest.fixture
 @allure.title("Create container and pick the node with data")
-def create_container_and_pick_node(prepare_wallet_and_deposit):
+def create_container_and_pick_node(prepare_wallet_and_deposit, client_shell):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
     placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
 
-    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, file_path, cid)
+    cid = create_container(wallet, shell=client_shell, rule=placement_rule, basic_acl=PUBLIC_ACL)
+    oid = put_object(wallet, file_path, cid, shell=client_shell)
 
-    nodes = get_nodes_with_object(wallet, cid, oid)
+    nodes = get_nodes_with_object(wallet, cid, oid, shell=client_shell)
     assert len(nodes) == 1
     node = nodes[0]
 
@@ -83,13 +83,13 @@ def after_run_start_all_nodes():
 
 
 @pytest.fixture
-def return_nodes_after_test_run():
+def return_nodes_after_test_run(client_shell):
     yield
-    return_nodes()
+    return_nodes(shell=client_shell)
 
 
 @allure.step("Return node to cluster")
-def return_nodes(alive_node: str = None):
+def return_nodes(shell: Shell, alive_node: str = None):
     helper = get_storage_service_helper()
     for node in list(check_nodes):
         with allure.step(f"Start node {node}"):
@@ -113,13 +113,15 @@ def return_nodes(alive_node: str = None):
             except RuntimeError:
                 sleep(3)
 
-        check_node_in_map(node, alive_node)
+        check_node_in_map(node, shell=shell, alive_node=alive_node)
 
 
 @allure.title("Add one node to cluster")
 @pytest.mark.add_nodes
 @pytest.mark.node_mgmt
-def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_after_test_run):
+def test_add_nodes(
+    prepare_tmp_dir, client_shell, prepare_wallet_and_deposit, return_nodes_after_test_run
+):
     wallet = prepare_wallet_and_deposit
     placement_rule_3 = "REP 3 IN X CBF 1 SELECT 3 FROM * AS X"
     placement_rule_4 = "REP 4 IN X CBF 1 SELECT 4 FROM * AS X"
@@ -134,7 +136,7 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
     )
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != additional_node])
 
-    check_node_in_map(additional_node, alive_node)
+    check_node_in_map(additional_node, shell=client_shell, alive_node=alive_node)
 
     # Add node to recovery list before messing with it
     check_nodes.append(additional_node)
@@ -147,7 +149,7 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
     )
     wait_object_replication_on_nodes(wallet, cid, oid, 3)
 
-    return_nodes(alive_node)
+    return_nodes(shell=client_shell, alive_node=alive_node)
 
     with allure.step("Check data could be replicated to new node"):
         random_node = choice(
@@ -156,7 +158,7 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
         exclude_node_from_network_map(random_node, alive_node)
 
         wait_object_replication_on_nodes(wallet, cid, oid, 3, excluded_nodes=[random_node])
-        include_node_to_network_map(random_node, alive_node)
+        include_node_to_network_map(random_node, alive_node, shell=client_shell)
         wait_object_replication_on_nodes(wallet, cid, oid, 3)
 
     with allure.step("Check container could be created with new node"):
@@ -164,12 +166,12 @@ def test_add_nodes(prepare_tmp_dir, prepare_wallet_and_deposit, return_nodes_aft
         oid = put_object(
             wallet, source_file_path, cid, endpoint=NEOFS_NETMAP_DICT[alive_node].get("rpc")
         )
-        wait_object_replication_on_nodes(wallet, cid, oid, 4)
+        wait_object_replication_on_nodes(wallet, cid, oid, 4, shell=client_shell)
 
 
 @allure.title("Control Operations with storage nodes")
 @pytest.mark.node_mgmt
-def test_nodes_management(prepare_tmp_dir):
+def test_nodes_management(prepare_tmp_dir, client_shell):
     """
     This test checks base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
     """
@@ -181,7 +183,7 @@ def test_nodes_management(prepare_tmp_dir):
     random_node_netmap_key = get_wallet_public_key(random_node_wallet_path, STORAGE_WALLET_PASS)
 
     with allure.step("Check node {random_node} is in netmap"):
-        snapshot = get_netmap_snapshot(node_name=alive_node)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
         assert random_node_netmap_key in snapshot, f"Expected node {random_node} in netmap"
 
     with allure.step("Run health check for all storage nodes"):
@@ -198,7 +200,7 @@ def test_nodes_management(prepare_tmp_dir):
     with allure.step(f"Check node {random_node} went to offline"):
         health_check = node_healthcheck(random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "OFFLINE"
-        snapshot = get_netmap_snapshot(node_name=alive_node)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
         assert random_node_netmap_key not in snapshot, f"Expected node {random_node} not in netmap"
 
     with allure.step(f"Check node {random_node} went to online"):
@@ -210,7 +212,7 @@ def test_nodes_management(prepare_tmp_dir):
     with allure.step(f"Check node {random_node} went to online"):
         health_check = node_healthcheck(random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
-        snapshot = get_netmap_snapshot(node_name=alive_node)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
         assert random_node_netmap_key in snapshot, f"Expected node {random_node} in netmap"
 
 

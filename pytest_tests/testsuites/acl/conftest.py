@@ -63,10 +63,10 @@ def file_path():
 
 
 @pytest.fixture(scope="function")
-def eacl_container_with_objects(wallets, file_path):
+def eacl_container_with_objects(wallets, client_shell, file_path):
     user_wallet = wallets.get_wallet()
     with allure.step("Create eACL public container"):
-        cid = create_container(user_wallet.wallet_path, basic_acl=PUBLIC_ACL)
+        cid = create_container(user_wallet.wallet_path, basic_acl=PUBLIC_ACL, shell=client_shell)
 
     with allure.step("Add test objects to container"):
         objects_oids = [
@@ -75,6 +75,7 @@ def eacl_container_with_objects(wallets, file_path):
                 file_path,
                 cid,
                 attributes={"key1": "val1", "key": val, "key2": "abc"},
+                shell=client_shell,
             )
             for val in range(OBJECT_COUNT)
         ]

@@ -2,6 +2,7 @@ import random
 
 import allure
 import pytest
+from neofs_testlib.shell import Shell
 from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE
 from file_helper import generate_file
 from grpc_responses import SESSION_NOT_FOUND
@@ -25,7 +26,7 @@ from python_keywords.session_token import create_session_token
     [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE],
     ids=["simple object", "complex object"],
 )
-def test_object_session_token(prepare_wallet_and_deposit, object_size):
+def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, object_size):
     """
     Test how operations over objects are executed with a session token
 
@@ -61,18 +62,19 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             f'AS LOC_{locode}_PLACE FILTER "UN-LOCODE" '
             f'EQ "{un_locode}" AS LOC_{locode}'
         )
-        cid = create_container(wallet, rule=placement_policy)
+        cid = create_container(wallet, shell=client_shell, rule=placement_policy)
 
     with allure.step("Put Objects"):
         file_path = generate_file(object_size)
-        oid = put_object(wallet=wallet, path=file_path, cid=cid)
-        oid_delete = put_object(wallet=wallet, path=file_path, cid=cid)
+        oid = put_object(wallet=wallet, path=file_path, cid=cid, shell=client_shell)
+        oid_delete = put_object(wallet=wallet, path=file_path, cid=cid, shell=client_shell)
 
     with allure.step("Node not in container but granted a session token"):
         put_object(
             wallet=wallet,
             path=file_path,
             cid=cid,
+            shell=client_shell,
             endpoint=session_token_node,
             session=session_token,
         )
@@ -80,12 +82,14 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=session_token_node,
             session=session_token,
         )
         search_object(
             wallet=wallet,
             cid=cid,
+            shell=client_shell,
             endpoint=session_token_node,
             expected_objects_list=[oid],
             session=session_token,
@@ -94,6 +98,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=session_token_node,
             session=session_token,
         )
@@ -101,6 +106,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             range_cut="0:256",
             endpoint=session_token_node,
             session=session_token,
@@ -109,6 +115,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid_delete,
+            shell=client_shell,
             endpoint=session_token_node,
             session=session_token,
         )
@@ -119,6 +126,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
                 wallet=wallet,
                 path=file_path,
                 cid=cid,
+                shell=client_shell,
                 endpoint=container_node,
                 session=session_token,
             )
@@ -126,12 +134,14 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=container_node,
             session=session_token,
         )
         search_object(
             wallet=wallet,
             cid=cid,
+            shell=client_shell,
             endpoint=container_node,
             expected_objects_list=[oid],
             session=session_token,
@@ -140,6 +150,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=container_node,
             session=session_token,
         )
@@ -148,6 +159,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             cid=cid,
             oid=oid,
             range_cut="0:256",
+            shell=client_shell,
             endpoint=container_node,
             session=session_token,
         )
@@ -156,6 +168,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
                 wallet=wallet,
                 cid=cid,
                 oid=oid,
+                shell=client_shell,
                 endpoint=container_node,
                 session=session_token,
             )
@@ -166,6 +179,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
                 wallet=wallet,
                 path=file_path,
                 cid=cid,
+                shell=client_shell,
                 endpoint=noncontainer_node,
                 session=session_token,
             )
@@ -173,12 +187,14 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=noncontainer_node,
             session=session_token,
         )
         search_object(
             wallet=wallet,
             cid=cid,
+            shell=client_shell,
             endpoint=noncontainer_node,
             expected_objects_list=[oid],
             session=session_token,
@@ -187,6 +203,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             wallet=wallet,
             cid=cid,
             oid=oid,
+            shell=client_shell,
             endpoint=noncontainer_node,
             session=session_token,
         )
@@ -195,6 +212,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
             cid=cid,
             oid=oid,
             range_cut="0:256",
+            shell=client_shell,
             endpoint=noncontainer_node,
             session=session_token,
         )
@@ -203,6 +221,7 @@ def test_object_session_token(prepare_wallet_and_deposit, object_size):
                 wallet=wallet,
                 cid=cid,
                 oid=oid,
+                shell=client_shell,
                 endpoint=noncontainer_node,
                 session=session_token,
             )
