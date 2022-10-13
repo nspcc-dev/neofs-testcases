@@ -9,6 +9,7 @@ from common import COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from file_helper import generate_file, get_file_hash
+from neofs_testlib.shell import Shell
 from python_keywords.http_gate import (
     get_via_http_curl,
     get_via_http_gate,
@@ -17,7 +18,6 @@ from python_keywords.http_gate import (
     upload_via_http_gate,
     upload_via_http_gate_curl,
 )
-from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import get_object, put_object
 from python_keywords.storage_policy import get_nodes_without_object
 from utility import wait_for_gc_pass_on_storage_nodes
@@ -225,7 +225,14 @@ class TestHttpGate:
             oid_curl = upload_via_http_gate_curl(cid=cid, filepath=file_path, large_object=True)
 
         self.get_object_and_verify_hashes(oid_gate, file_path, self.wallet, cid, shell=client_shell)
-        self.get_object_and_verify_hashes(oid_curl, file_path, self.wallet, cid, shell=client_shell, object_getter=get_via_http_curl)
+        self.get_object_and_verify_hashes(
+            oid_curl,
+            file_path,
+            self.wallet,
+            cid,
+            shell=client_shell,
+            object_getter=get_via_http_curl,
+        )
 
     @pytest.mark.curl
     @allure.title("Test Put/Get over HTTP using Curl utility")
@@ -243,7 +250,14 @@ class TestHttpGate:
             oid_large = upload_via_http_gate_curl(cid=cid, filepath=file_path_large)
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
-            self.get_object_and_verify_hashes(oid, file_path, self.wallet, cid, shell=client_shell, object_getter=get_via_http_curl)
+            self.get_object_and_verify_hashes(
+                oid,
+                file_path,
+                self.wallet,
+                cid,
+                shell=client_shell,
+                object_getter=get_via_http_curl,
+            )
 
     @staticmethod
     @allure.step("Try to get object and expect error")

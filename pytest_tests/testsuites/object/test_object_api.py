@@ -8,6 +8,7 @@ from container import create_container
 from epoch import get_epoch, tick_epoch
 from file_helper import generate_file, get_file_content, get_file_hash
 from grpc_responses import OBJECT_ALREADY_REMOVED, OBJECT_NOT_FOUND, error_matches_status
+from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import (
     delete_object,
     get_object,
@@ -18,7 +19,6 @@ from python_keywords.neofs_verbs import (
     search_object,
 )
 from python_keywords.storage_policy import get_complex_object_copies, get_simple_object_copies
-from neofs_testlib.shell import Shell
 from tombstone import verify_head_tombstone
 from utility import wait_for_gc_pass_on_storage_nodes
 

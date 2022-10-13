@@ -2,10 +2,10 @@ import random
 
 import allure
 import pytest
-from neofs_testlib.shell import Shell
 from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE
 from file_helper import generate_file
 from grpc_responses import SESSION_NOT_FOUND
+from neofs_testlib.shell import Shell
 from payment_neogo import _address_from_wallet
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import (

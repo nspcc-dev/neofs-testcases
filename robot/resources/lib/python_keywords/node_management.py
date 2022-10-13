@@ -16,8 +16,8 @@ from common import (
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
 from neofs_testlib.cli import NeofsCli
-from neofs_testlib.shell import Shell
 from neofs_testlib.hosting import Hosting
+from neofs_testlib.shell import Shell
 from utility import parse_time
 
 logger = logging.getLogger("NeoLogger")
@@ -165,7 +165,9 @@ def delete_node_data(hosting: Hosting, node_name: str) -> None:
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
-def exclude_node_from_network_map(hosting: Hosting, node_to_exclude: str, alive_node: str, shell: Shell) -> None:
+def exclude_node_from_network_map(
+    hosting: Hosting, node_to_exclude: str, alive_node: str, shell: Shell
+) -> None:
     node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]["wallet_path"]
     node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
 
@@ -181,13 +183,15 @@ def exclude_node_from_network_map(hosting: Hosting, node_to_exclude: str, alive_
 
 
 @allure.step("Include node {node_to_include} into network map")
-def include_node_to_network_map(hosting: Hosting, node_to_include: str, alive_node: str, shell: Shell) -> None:
+def include_node_to_network_map(
+    hosting: Hosting, node_to_include: str, alive_node: str, shell: Shell
+) -> None:
     node_set_status(hosting, node_to_include, status="online")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     tick_epoch()
 
-    check_node_in_map(node_to_include, alive_node, shell=shell)
+    check_node_in_map(node_to_include, shell, alive_node)
 
 
 @allure.step("Check node {node_name} in network map")

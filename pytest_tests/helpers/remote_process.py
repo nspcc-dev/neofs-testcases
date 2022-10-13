@@ -4,6 +4,10 @@ import uuid
 from typing import Optional
 
 import allure
+
+# This file is broken, because tenacity is not registered in requirements.txt
+# So, the file won't be fixed in scope of this PR, alipay will fix himself by
+# switching RemoteProcess and K6 classes from HostClient to shell from hosting
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from pytest_tests.helpers.ssh_helper import HostClient

@@ -17,6 +17,7 @@ from common import (
 )
 from env_properties import save_env_properties
 from neofs_testlib.hosting import Hosting
+from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
@@ -25,8 +26,24 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.fixture(scope="session")
-def client_shell() -> Shell:
+def configure_testlib():
+    get_reporter().register_handler(AllureHandler())
+    yield
+
+
+@pytest.fixture(scope="session")
+def client_shell(configure_testlib) -> Shell:
     yield LocalShell()
+
+
+@pytest.fixture(scope="session")
+def hosting(configure_testlib) -> Hosting:
+    with open(HOSTING_CONFIG_FILE, "r") as file:
+        hosting_config = yaml.full_load(file)
+
+    hosting_instance = Hosting()
+    hosting_instance.configure(hosting_config)
+    yield hosting_instance
 
 
 @pytest.fixture(scope="session")
@@ -35,16 +52,6 @@ def require_multiple_hosts(hosting: Hosting):
     if len(hosting.hosts) <= 1:
         pytest.skip("Test only works with multiple hosts")
     yield
-
-
-@pytest.fixture(scope="session")
-def hosting() -> Hosting:
-    with open(HOSTING_CONFIG_FILE, "r") as file:
-        hosting_config = yaml.full_load(file)
-
-    hosting_instance = Hosting()
-    hosting_instance.configure(hosting_config)
-    yield hosting_instance
 
 
 @pytest.fixture(scope="session", autouse=True)

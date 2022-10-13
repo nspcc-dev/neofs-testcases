@@ -89,12 +89,6 @@ NEOFS_NETMAP_DICT = {
 }
 NEOFS_NETMAP = [node["rpc"] for node in NEOFS_NETMAP_DICT.values()]
 
-# Parameters that control SSH connection to storage node
-# TODO: we should use hosting instead
-STORAGE_NODE_SSH_USER = os.getenv("STORAGE_NODE_SSH_USER")
-STORAGE_NODE_SSH_PASSWORD = os.getenv("STORAGE_NODE_SSH_PASSWORD")
-STORAGE_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("STORAGE_NODE_SSH_PRIVATE_KEY_PATH")
-
 # Paths to CLI executables on machine that runs tests
 NEOGO_EXECUTABLE = os.getenv("NEOGO_EXECUTABLE", "neo-go")
 NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
