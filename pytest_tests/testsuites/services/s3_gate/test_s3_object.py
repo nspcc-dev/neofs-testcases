@@ -9,7 +9,7 @@ from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE
 from data_formatters import get_wallet_public_key
 from file_helper import concat_files, generate_file, generate_file_with_content, get_file_hash
 from python_keywords.payment_neogo import neofs_deposit, transfer_mainnet_gas
-from s3_helper import check_objects_in_bucket, set_bucket_versioning
+from s3_helper import assert_object_lock_mode, check_objects_in_bucket, set_bucket_versioning
 from wallet import init_wallet
 
 from steps import s3_gate_bucket, s3_gate_object
@@ -789,18 +789,9 @@ class TestS3GateObject(TestS3GateBase):
                 ObjectLockRetainUntilDate=date_obj.strftime("%Y-%m-%dT%H:%M:%S"),
                 ObjectLockLegalHoldStatus="OFF",
             )
-            object_4 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name, full_output=True
+            assert_object_lock_mode(
+                self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF"
             )
-            assert (
-                object_4.get("ObjectLockMode") == "GOVERNANCE"
-            ), "Expected Object Lock Mode is GOVERNANCE"
-            assert str(date_obj.strftime("%Y-%m-%dT%H:%M:%S")) in object_4.get(
-                "ObjectLockRetainUntilDate"
-            ), f'Expected Object Lock Retain Until Date is {str(date_obj.strftime("%Y-%m-%dT%H:%M:%S"))}'
-            assert (
-                object_4.get("ObjectLockLegalHoldStatus") == "OFF"
-            ), "Expected Object Lock Legal Hold Status is OFF"
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
@@ -814,18 +805,9 @@ class TestS3GateObject(TestS3GateBase):
                 ObjectLockMode="COMPLIANCE",
                 ObjectLockRetainUntilDate=date_obj,
             )
-            object_4 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name, full_output=True
+            assert_object_lock_mode(
+                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF"
             )
-            assert (
-                object_4.get("ObjectLockMode") == "COMPLIANCE"
-            ), "Expected Object Lock Mode is COMPLIANCE"
-            assert str(date_obj.strftime("%Y-%m-%dT%H:%M:%S")) in object_4.get(
-                "ObjectLockRetainUntilDate"
-            ), f'Expected Object Lock Retain Until Date is {str(date_obj.strftime("%Y-%m-%dT%H:%M:%S"))}'
-            assert (
-                object_4.get("ObjectLockLegalHoldStatus") == "OFF"
-            ), "Expected Object Lock Legal Hold Status is OFF"
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
@@ -840,18 +822,7 @@ class TestS3GateObject(TestS3GateBase):
                 ObjectLockRetainUntilDate=date_obj,
                 ObjectLockLegalHoldStatus="ON",
             )
-            object_4 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name, full_output=True
-            )
-            assert (
-                object_4.get("ObjectLockMode") == "COMPLIANCE"
-            ), "Expected Object Lock Mode is COMPLIANCE"
-            assert str(date_obj.strftime("%Y-%m-%dT%H:%M:%S")) in object_4.get(
-                "ObjectLockRetainUntilDate"
-            ), f'Expected Object Lock Retain Until Date is {str(date_obj.strftime("%Y-%m-%dT%H:%M:%S"))}'
-            assert (
-                object_4.get("ObjectLockLegalHoldStatus") == "ON"
-            ), "Expected Object Lock Legal Hold Status is ON"
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
 
         with allure.step("Put object with lock-mode"):
             with pytest.raises(
@@ -893,18 +864,19 @@ class TestS3GateObject(TestS3GateBase):
         generate_file_with_content(file_path=file_path_2)
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
+        # TODO: return ACL, when https://github.com/nspcc-dev/neofs-s3-gw/issues/685 will be closed
         if sync_type == "sync":
             self.s3_client.sync(
                 bucket_name=bucket,
                 dir_path=os.path.dirname(file_path_1),
-                ACL="public-read-write",
+                # ACL="public-read-write",
                 Metadata=object_metadata,
             )
         elif sync_type == "cp":
             self.s3_client.cp(
                 bucket_name=bucket,
                 dir_path=os.path.dirname(file_path_1),
-                ACL="public-read-write",
+                # ACL="public-read-write",
                 Metadata=object_metadata,
             )
 
