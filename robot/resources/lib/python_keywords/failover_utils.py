@@ -34,7 +34,7 @@ def wait_object_replication_on_nodes(
 
 @allure.step("Wait for storage node returned to cluster")
 def wait_all_storage_node_returned():
-    sleep_interval, attempts = 10, 12
+    sleep_interval, attempts = 15, 20
     for __attempt in range(attempts):
         if is_all_storage_node_returned():
             return
