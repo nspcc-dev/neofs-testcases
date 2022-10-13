@@ -90,3 +90,29 @@ def check_tags_by_bucket(
     assert_tags(
         expected_tags=expected_tags, unexpected_tags=unexpected_tags, actual_tags=actual_tags
     )
+
+
+def assert_object_lock_mode(
+    s3_client,
+    bucket: str,
+    file_name: str,
+    object_lock_mode: str,
+    retain_untile_date,
+    legal_hold_status: str,
+):
+    object_dict = s3_gate_object.get_object_s3(s3_client, bucket, file_name, full_output=True)
+    assert (
+        object_dict.get("ObjectLockMode") == object_lock_mode
+    ), f"Expected Object Lock Mode is {object_lock_mode}"
+    assert (
+        object_dict.get("ObjectLockLegalHoldStatus") == legal_hold_status
+    ), f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
+    object_retain_date = object_dict.get("ObjectLockRetainUntilDate")
+    retain_date = (
+        object_retain_date
+        if isinstance(object_retain_date, str)
+        else object_retain_date.strftime("%Y-%m-%dT%H:%M:%S")
+    )
+    assert str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S")) in str(
+        retain_date
+    ), f'Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"))}'
