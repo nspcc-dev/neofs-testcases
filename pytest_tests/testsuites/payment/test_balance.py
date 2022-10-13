@@ -3,8 +3,8 @@ import logging
 import allure
 import pytest
 import yaml
-from cli_utils import NeofsCli
-from common import ASSETS_DIR, FREE_STORAGE, NEOFS_ENDPOINT, WALLET_CONFIG
+from common import ASSETS_DIR, FREE_STORAGE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from neofs_testlib.cli import NeofsCli
 from python_keywords.payment_neogo import _address_from_wallet
 from wallet import init_wallet
 
@@ -22,27 +22,27 @@ class TestBalanceAccounting:
         _, self.another_address, _ = init_wallet(ASSETS_DIR)
 
     @allure.title("Test balance request with wallet and address")
-    def test_balance_wallet_address(self):
-        cli = NeofsCli(config=WALLET_CONFIG)
+    def test_balance_wallet_address(self, client_shell):
+        cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
         output = cli.accounting.balance(
             wallet=self.user_wallet,
             rpc_endpoint=NEOFS_ENDPOINT,
             address=self.address,
         )
         logger.info(f"Out wallet+address: {output}")
-        assert int(output.rstrip()) == DEPOSIT_AMOUNT
+        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet only")
-    def test_balance_wallet(self):
-        cli = NeofsCli(config=WALLET_CONFIG)
+    def test_balance_wallet(self, client_shell):
+        cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
         output = cli.accounting.balance(wallet=self.user_wallet, rpc_endpoint=NEOFS_ENDPOINT)
         logger.info(f"Out wallet: {output}")
-        assert int(output.rstrip()) == DEPOSIT_AMOUNT
+        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet and wrong address")
-    def test_balance_wrong_address(self):
+    def test_balance_wrong_address(self, client_shell):
         with pytest.raises(Exception, match="address option must be specified and valid"):
-            cli = NeofsCli(config=WALLET_CONFIG)
+            cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
             cli.accounting.balance(
                 wallet=self.user_wallet,
                 rpc_endpoint=NEOFS_ENDPOINT,
@@ -50,13 +50,13 @@ class TestBalanceAccounting:
             )
 
     @allure.title("Test balance request with config file")
-    def test_balance_api(self):
+    def test_balance_api(self, client_shell):
         config_file = self.write_api_config(endpoint=NEOFS_ENDPOINT, wallet=self.user_wallet)
         logger.info(f"YAML: {config_file}")
-        cli = NeofsCli(config=config_file)
+        cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
         output = cli.accounting.balance()
-        logger.info(f"Out api: {output}")
-        assert int(output.rstrip()) == DEPOSIT_AMOUNT
+        logger.info(f"Out api: {output.stdout}")
+        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @staticmethod
     @allure.step("Write YAML config")

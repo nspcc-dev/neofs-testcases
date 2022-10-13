@@ -57,10 +57,10 @@ class TestStorageGroup:
             neofs_deposit(self.other_wallet, 30)
 
     @allure.title("Test Storage Group in Private Container")
-    def test_storagegroup_basic_private_container(self, object_size):
-        cid = create_container(self.main_wallet)
+    def test_storagegroup_basic_private_container(self, client_shell, object_size):
+        cid = create_container(self.main_wallet, shell=client_shell)
         file_path = generate_file(object_size)
-        oid = put_object(self.main_wallet, file_path, cid)
+        oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         storage_group = put_storagegroup(self.main_wallet, cid, objects)
 
@@ -73,10 +73,10 @@ class TestStorageGroup:
         )
 
     @allure.title("Test Storage Group in Public Container")
-    def test_storagegroup_basic_public_container(self, object_size):
-        cid = create_container(self.main_wallet, basic_acl="public-read-write")
+    def test_storagegroup_basic_public_container(self, client_shell, object_size):
+        cid = create_container(self.main_wallet, basic_acl="public-read-write", shell=client_shell)
         file_path = generate_file(object_size)
-        oid = put_object(self.main_wallet, file_path, cid)
+        oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         self.expect_success_for_storagegroup_operations(
@@ -87,10 +87,10 @@ class TestStorageGroup:
         )
 
     @allure.title("Test Storage Group in Read-Only Container")
-    def test_storagegroup_basic_ro_container(self, object_size):
-        cid = create_container(self.main_wallet, basic_acl="public-read")
+    def test_storagegroup_basic_ro_container(self, client_shell, object_size):
+        cid = create_container(self.main_wallet, basic_acl="public-read", shell=client_shell)
         file_path = generate_file(object_size)
-        oid = put_object(self.main_wallet, file_path, cid)
+        oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         self.storagegroup_operations_by_other_ro_container(
@@ -101,10 +101,12 @@ class TestStorageGroup:
         )
 
     @allure.title("Test Storage Group with Bearer Allow")
-    def test_storagegroup_bearer_allow(self, object_size):
-        cid = create_container(self.main_wallet, basic_acl="eacl-public-read-write")
+    def test_storagegroup_bearer_allow(self, client_shell, object_size):
+        cid = create_container(
+            self.main_wallet, basic_acl="eacl-public-read-write", shell=client_shell
+        )
         file_path = generate_file(object_size)
-        oid = put_object(self.main_wallet, file_path, cid)
+        oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(self.main_wallet, cid, objects, object_size)
         storage_group = put_storagegroup(self.main_wallet, cid, objects)
@@ -130,10 +132,10 @@ class TestStorageGroup:
         )
 
     @allure.title("Test to check Storage Group lifetime")
-    def test_storagegroup_lifetime(self, object_size):
-        cid = create_container(self.main_wallet)
+    def test_storagegroup_lifetime(self, client_shell, object_size):
+        cid = create_container(self.main_wallet, shell=client_shell)
         file_path = generate_file(object_size)
-        oid = put_object(self.main_wallet, file_path, cid)
+        oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         storage_group = put_storagegroup(self.main_wallet, cid, objects, lifetime="1")
         tick_epoch()

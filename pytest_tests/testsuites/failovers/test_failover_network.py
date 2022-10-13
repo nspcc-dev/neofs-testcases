@@ -48,7 +48,7 @@ def restore_network():
 @allure.title("Block Storage node traffic")
 @pytest.mark.failover
 @pytest.mark.failover_net
-def test_block_storage_node_traffic(prepare_wallet_and_deposit, cloud_infrastructure_check):
+def test_block_storage_node_traffic(prepare_wallet_and_deposit, client_shell, cloud_infrastructure_check):
     """
     Block storage nodes traffic using iptables and wait for replication for objects.
     """
@@ -59,9 +59,9 @@ def test_block_storage_node_traffic(prepare_wallet_and_deposit, cloud_infrastruc
     nodes_to_block_count = 2
 
     source_file_path = generate_file()
-    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, source_file_path, cid)
-    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    cid = create_container(wallet, shell=client_shell, rule=placement_rule, basic_acl=PUBLIC_ACL)
+    oid = put_object(wallet, source_file_path, cid, shell=client_shell)
+    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
 
     logger.info(f"Nodes are {nodes}")
     random_nodes = [(node, node.split(":")[0]) for node in nodes]
@@ -89,7 +89,7 @@ def test_block_storage_node_traffic(prepare_wallet_and_deposit, cloud_infrastruc
 
         assert random_node not in new_nodes
 
-        got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+        got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
         assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     for random_node, random_node_ip in random_nodes:
@@ -108,7 +108,7 @@ def test_block_storage_node_traffic(prepare_wallet_and_deposit, cloud_infrastruc
             blocked_hosts.remove(random_node_ip)
         sleep(wakeup_node_timeout)
 
-    new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
 
-    got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+    got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
     assert get_file_hash(source_file_path) == get_file_hash(got_file_path)

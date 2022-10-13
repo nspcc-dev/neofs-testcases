@@ -64,6 +64,7 @@ def return_all_storage_nodes(sbercloud_client: SberCloud) -> None:
 @pytest.mark.failover
 def test_lost_storage_node(
     prepare_wallet_and_deposit,
+    client_shell,
     sbercloud_client: SberCloud,
     cloud_infrastructure_check,
     hard_reboot: bool,
@@ -71,27 +72,29 @@ def test_lost_storage_node(
     wallet = prepare_wallet_and_deposit
     placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
     source_file_path = generate_file()
-    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, source_file_path, cid)
-    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    cid = create_container(wallet, shell=client_shell, rule=placement_rule, basic_acl=PUBLIC_ACL)
+    oid = put_object(wallet, source_file_path, cid, shell=client_shell)
+    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
 
     new_nodes = []
     for node in nodes:
         stopped_hosts.append(node)
         with allure.step(f"Stop storage node {node}"):
             sbercloud_client.stop_node(node_ip=node.split(":")[-2], hard=hard_reboot)
-        new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, excluded_nodes=[node])
+        new_nodes = wait_object_replication_on_nodes(
+            wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node]
+        )
 
     assert not [node for node in nodes if node in new_nodes]
-    got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+    got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
     assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     with allure.step(f"Return storage nodes"):
         return_all_storage_nodes(sbercloud_client)
 
-    new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
 
-    got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+    got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
     assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
 
@@ -99,14 +102,16 @@ def test_lost_storage_node(
 @pytest.mark.parametrize("sequence", [True, False])
 @pytest.mark.failover_panic
 @pytest.mark.failover
-def test_panic_storage_node(prepare_wallet_and_deposit, cloud_infrastructure_check, sequence: bool):
+def test_panic_storage_node(
+    prepare_wallet_and_deposit, client_shell, cloud_infrastructure_check, sequence: bool
+):
     wallet = prepare_wallet_and_deposit
     placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
     source_file_path = generate_file()
-    cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL)
-    oid = put_object(wallet, source_file_path, cid)
+    cid = create_container(wallet, shell=client_shell, rule=placement_rule, basic_acl=PUBLIC_ACL)
+    oid = put_object(wallet, source_file_path, cid, shell=client_shell)
 
-    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+    nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
     new_nodes: list[str] = []
     allure.attach("\n".join(nodes), "Current nodes with object", allure.attachment_type.TEXT)
     for node in nodes:
@@ -115,10 +120,12 @@ def test_panic_storage_node(prepare_wallet_and_deposit, cloud_infrastructure_che
             if sequence:
                 try:
                     new_nodes = wait_object_replication_on_nodes(
-                        wallet, cid, oid, 2, excluded_nodes=[node]
+                        wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node]
                     )
                 except AssertionError:
-                    new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+                    new_nodes = wait_object_replication_on_nodes(
+                        wallet, cid, oid, 2, shell=client_shell
+                    )
 
                 allure.attach(
                     "\n".join(new_nodes),
@@ -127,10 +134,10 @@ def test_panic_storage_node(prepare_wallet_and_deposit, cloud_infrastructure_che
                 )
 
     if not sequence:
-        new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2)
+        new_nodes = wait_object_replication_on_nodes(wallet, cid, oid, 2, shell=client_shell)
         allure.attach(
             "\n".join(new_nodes), "Nodes with object after nodes fail", allure.attachment_type.TEXT
         )
 
-    got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+    got_file_path = get_object(wallet, cid, oid, shell=client_shell, endpoint=new_nodes[0])
     assert get_file_hash(source_file_path) == get_file_hash(got_file_path)

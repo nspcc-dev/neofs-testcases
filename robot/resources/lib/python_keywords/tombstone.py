@@ -1,18 +1,16 @@
-#!/usr/bin/python3
-
 import json
 
 import allure
-import neofs_verbs
 from neo3 import wallet
+from neofs_testlib.shell import Shell
+from neofs_verbs import head_object
+
 
 @allure.step("Verify Head Tombstone")
-def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str):
-    header = neofs_verbs.head_object(wallet_path, cid, oid_ts)
-    header = header["header"]
+def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell):
+    header = head_object(wallet_path, cid, oid_ts, shell=shell)["header"]
     assert header["containerID"] == cid, "Tombstone Header CID is wrong"
 
-    wlt_data = dict()
     with open(wallet_path, "r") as fout:
         wlt_data = json.loads(fout.read())
     wlt = wallet.Wallet.from_json(wlt_data, password="")

@@ -8,20 +8,30 @@ import allure
 import pytest
 import wallet
 from cli_helpers import _cmd_run
-from cli_utils import NeofsAdm, NeofsCli
 from common import (
     ASSETS_DIR,
     FREE_STORAGE,
     INFRASTRUCTURE_TYPE,
     MAINNET_WALLET_PATH,
+    NEOFS_ADM_EXEC,
+    NEOFS_CLI_EXEC,
     NEOFS_NETMAP_DICT,
+    WALLET_CONFIG,
 )
+from neofs_testlib.cli import NeofsAdm, NeofsCli
+
 from env_properties import save_env_properties
+from neofs_testlib.shell import LocalShell, Shell
 from payment_neogo import neofs_deposit, transfer_mainnet_gas
 from python_keywords.node_management import node_healthcheck
 from service_helper import get_storage_service_helper
 
 logger = logging.getLogger("NeoLogger")
+
+
+@pytest.fixture(scope="session")
+def client_shell() -> Shell:
+    yield LocalShell()
 
 
 @pytest.fixture(scope="session")
@@ -33,18 +43,20 @@ def cloud_infrastructure_check():
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Check binary versions")
-def check_binary_versions(request):
+def check_binary_versions(request, client_shell):
     # Collect versions of local binaries
     binaries = ["neo-go", "neofs-authmate"]
     local_binaries = _get_binaries_version_local(binaries)
 
     try:
-        local_binaries["neofs-adm"] = NeofsAdm().version.get()
+        local_binaries["neofs-adm"] = NeofsAdm(client_shell, NEOFS_ADM_EXEC).version.get()
     except RuntimeError:
         logger.info(f"neofs-adm not installed")
-    local_binaries["neofs-cli"] = NeofsCli().version.get()
-
+    local_binaries["neofs-cli"] = NeofsCli(
+        client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG
+    ).version.get()
     # Collect versions of remote binaries
+
     helper = get_storage_service_helper()
     remote_binaries = helper.get_binaries_version()
     all_binaries = {**local_binaries, **remote_binaries}

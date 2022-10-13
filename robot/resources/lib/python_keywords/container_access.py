@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from acl import EACLOperation
+from neofs_testlib.shell import Shell
 from python_keywords.object_access import (
     can_delete_object,
     can_get_head_object,
@@ -17,17 +18,18 @@ def check_full_access_to_container(
     cid: str,
     oid: str,
     file_name: str,
+    shell: Shell,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ):
-    assert can_put_object(wallet, cid, file_name, bearer, wallet_config, xhdr)
-    assert can_get_head_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert can_get_range_of_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert can_get_range_hash_of_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert can_search_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert can_get_object(wallet, cid, oid, file_name, bearer, wallet_config, xhdr)
-    assert can_delete_object(wallet, cid, oid, bearer, wallet_config, xhdr)
+    assert can_put_object(wallet, cid, file_name, shell, bearer, wallet_config, xhdr)
+    assert can_get_head_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert can_get_range_of_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert can_get_range_hash_of_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert can_search_object(wallet, cid, shell, oid, bearer, wallet_config, xhdr)
+    assert can_get_object(wallet, cid, oid, file_name, shell, bearer, wallet_config, xhdr)
+    assert can_delete_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
 
 
 def check_no_access_to_container(
@@ -35,17 +37,18 @@ def check_no_access_to_container(
     cid: str,
     oid: str,
     file_name: str,
+    shell: Shell,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ):
-    assert not can_put_object(wallet, cid, file_name, bearer, wallet_config, xhdr)
-    assert not can_get_head_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert not can_get_range_of_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert not can_get_range_hash_of_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert not can_search_object(wallet, cid, oid, bearer, wallet_config, xhdr)
-    assert not can_get_object(wallet, cid, oid, file_name, bearer, wallet_config, xhdr)
-    assert not can_delete_object(wallet, cid, oid, bearer, wallet_config, xhdr)
+    assert not can_put_object(wallet, cid, file_name, shell, bearer, wallet_config, xhdr)
+    assert not can_get_head_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert not can_get_range_of_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert not can_get_range_hash_of_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
+    assert not can_search_object(wallet, cid, shell, oid, bearer, wallet_config, xhdr)
+    assert not can_get_object(wallet, cid, oid, file_name, shell, bearer, wallet_config, xhdr)
+    assert not can_delete_object(wallet, cid, oid, shell, bearer, wallet_config, xhdr)
 
 
 def check_custom_access_to_container(
@@ -53,6 +56,7 @@ def check_custom_access_to_container(
     cid: str,
     oid: str,
     file_name: str,
+    shell: Shell,
     deny_operations: Optional[List[EACLOperation]] = None,
     ignore_operations: Optional[List[EACLOperation]] = None,
     bearer: Optional[str] = None,
@@ -64,31 +68,31 @@ def check_custom_access_to_container(
     checks: dict = {}
     if EACLOperation.PUT.value not in ignore_operations:
         checks[EACLOperation.PUT.value] = can_put_object(
-            wallet, cid, file_name, bearer, wallet_config, xhdr
+            wallet, cid, file_name, shell, bearer, wallet_config, xhdr
         )
     if EACLOperation.HEAD.value not in ignore_operations:
         checks[EACLOperation.HEAD.value] = can_get_head_object(
-            wallet, cid, oid, bearer, wallet_config, xhdr
+            wallet, cid, oid, shell, bearer, wallet_config, xhdr
         )
     if EACLOperation.GET_RANGE.value not in ignore_operations:
         checks[EACLOperation.GET_RANGE.value] = can_get_range_of_object(
-            wallet, cid, oid, bearer, wallet_config, xhdr
+            wallet, cid, oid, shell, bearer, wallet_config, xhdr
         )
     if EACLOperation.GET_RANGE_HASH.value not in ignore_operations:
         checks[EACLOperation.GET_RANGE_HASH.value] = can_get_range_hash_of_object(
-            wallet, cid, oid, bearer, wallet_config, xhdr
+            wallet, cid, oid, shell, bearer, wallet_config, xhdr
         )
     if EACLOperation.SEARCH.value not in ignore_operations:
         checks[EACLOperation.SEARCH.value] = can_search_object(
-            wallet, cid, oid, bearer, wallet_config, xhdr
+            wallet, cid, shell, oid, bearer, wallet_config, xhdr
         )
     if EACLOperation.GET.value not in ignore_operations:
         checks[EACLOperation.GET.value] = can_get_object(
-            wallet, cid, oid, file_name, bearer, wallet_config, xhdr
+            wallet, cid, oid, file_name, shell, bearer, wallet_config, xhdr
         )
     if EACLOperation.DELETE.value not in ignore_operations:
         checks[EACLOperation.DELETE.value] = can_delete_object(
-            wallet, cid, oid, bearer, wallet_config, xhdr
+            wallet, cid, oid, shell, bearer, wallet_config, xhdr
         )
 
     failed_checks = [
@@ -109,6 +113,7 @@ def check_read_only_container(
     cid: str,
     oid: str,
     file_name: str,
+    shell: Shell,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -122,4 +127,5 @@ def check_read_only_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        shell=shell,
     )
