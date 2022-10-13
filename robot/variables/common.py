@@ -121,9 +121,6 @@ NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
 FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
 BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
 
-# TODO: instead of specifying infrastructure type we should use attributes of hosts
-INFRASTRUCTURE_TYPE = os.getenv("INFRASTRUCTURE_TYPE", "LOCAL_DEVENV")
-
 HOSTING_CONFIG_FILE = os.getenv("HOSTING_CONFIG_FILE", ".devenv.hosting.yaml")
 
 # Generate wallet configs

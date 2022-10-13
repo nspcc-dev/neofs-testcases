@@ -12,7 +12,6 @@ from common import (
     ASSETS_DIR,
     FREE_STORAGE,
     HOSTING_CONFIG_FILE,
-    INFRASTRUCTURE_TYPE,
     MAINNET_WALLET_PATH,
     NEOFS_NETMAP_DICT,
 )
@@ -31,9 +30,10 @@ def client_shell() -> Shell:
 
 
 @pytest.fixture(scope="session")
-def cloud_infrastructure_check():
-    if INFRASTRUCTURE_TYPE != "CLOUD_VM":
-        pytest.skip("Test only works on SberCloud infrastructure")
+def require_multiple_hosts(hosting: Hosting):
+    """Fixture that is applied to tests that require that environment has multiple hosts."""
+    if len(hosting.hosts) <= 1:
+        pytest.skip("Test only works with multiple hosts")
     yield
 
 
@@ -103,8 +103,8 @@ def run_health_check(collect_logs, hosting: Hosting):
 @pytest.fixture(scope="session")
 @allure.title("Prepare wallet and deposit")
 def prepare_wallet_and_deposit(prepare_tmp_dir):
-    wallet_path, addr, _ = wallet.init_wallet(ASSETS_DIR)
-    logger.info(f"Init wallet: {wallet_path},\naddr: {addr}")
+    wallet_path, address, _ = wallet.init_wallet(ASSETS_DIR)
+    logger.info(f"Init wallet: {wallet_path}, address: {address}")
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
