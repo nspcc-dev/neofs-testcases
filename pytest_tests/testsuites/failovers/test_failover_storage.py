@@ -58,6 +58,7 @@ def test_lost_storage_node(
     client_shell,
     hosting: Hosting,
     hard_reboot: bool,
+    require_multiple_hosts,
 ):
     wallet = prepare_wallet_and_deposit
     placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
@@ -92,7 +93,7 @@ def test_lost_storage_node(
 @pytest.mark.failover_panic
 @pytest.mark.failover
 def test_panic_storage_node(
-    prepare_wallet_and_deposit, client_shell, cloud_infrastructure_check, sequence: bool
+    prepare_wallet_and_deposit, client_shell, require_multiple_hosts, sequence: bool
 ):
     wallet = prepare_wallet_and_deposit
     placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
