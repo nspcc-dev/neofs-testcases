@@ -48,7 +48,10 @@ def hosting(configure_testlib) -> Hosting:
 
 @pytest.fixture(scope="session")
 def require_multiple_hosts(hosting: Hosting):
-    """Fixture that is applied to tests that require that environment has multiple hosts."""
+    """Designates tests that require environment with multiple hosts.
+
+    These tests will be skipped on an environment that has only 1 host.
+    """
     if len(hosting.hosts) <= 1:
         pytest.skip("Test only works with multiple hosts")
     yield

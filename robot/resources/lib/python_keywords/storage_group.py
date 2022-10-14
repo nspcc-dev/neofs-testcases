@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """
     This module contains keywords for work with Storage Groups.
     It contains wrappers for `neofs-cli storagegroup` verbs.
@@ -10,6 +8,7 @@ import allure
 from cli_helpers import _cmd_run
 from common import COMPLEX_OBJ_SIZE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, SIMPLE_OBJ_SIZE, WALLET_CONFIG
 from complex_object_actions import get_link_object
+from neofs_testlib.shell import Shell
 from neofs_verbs import head_object
 
 logger = logging.getLogger("NeoLogger")
@@ -174,6 +173,7 @@ def verify_get_storage_group(
     storagegroup: str,
     obj_list: list,
     object_size: int,
+    shell: Shell,
     bearer: str = None,
     wallet_config: str = WALLET_CONFIG,
 ):
@@ -181,7 +181,7 @@ def verify_get_storage_group(
     if object_size == COMPLEX_OBJ_SIZE:
         for obj in obj_list:
             link_oid = get_link_object(
-                wallet, cid, obj, bearer_token=bearer, wallet_config=wallet_config
+                wallet, cid, obj, shell=shell, bearer_token=bearer, wallet_config=wallet_config
             )
             obj_head = head_object(
                 wallet,
