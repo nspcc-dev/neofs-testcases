@@ -47,7 +47,13 @@ class TestS3GateVersioning(TestS3GateBase):
                 for version in object_version
                 if version.get("Key") == file_name
             ]
-            assert actual_version == ["null"], f"Expected version is null, got {object_version}"
+            assert actual_version == [
+                "null"
+            ], f"Expected version is null in list-object-versions, got {object_version}"
+            object_0 = s3_gate_object.head_object_s3(self.s3_client, bucket, file_name)
+            assert (
+                object_0.get("VersionId") == "null"
+            ), f"Expected version is null in head-object, got {object_0.get('VersionId')}"
 
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
