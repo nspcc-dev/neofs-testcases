@@ -1,4 +1,5 @@
 import logging
+import os
 
 import allure
 import pytest
@@ -29,14 +30,12 @@ class TestBalanceAccounting:
             rpc_endpoint=NEOFS_ENDPOINT,
             address=self.address,
         )
-        logger.info(f"Out wallet+address: {output}")
         assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet only")
     def test_balance_wallet(self, client_shell):
         cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
         output = cli.accounting.balance(wallet=self.user_wallet, rpc_endpoint=NEOFS_ENDPOINT)
-        logger.info(f"Out wallet: {output}")
         assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet and wrong address")
@@ -50,25 +49,28 @@ class TestBalanceAccounting:
             )
 
     @allure.title("Test balance request with config file")
-    def test_balance_api(self, client_shell):
-        config_file = self.write_api_config(endpoint=NEOFS_ENDPOINT, wallet=self.user_wallet)
-        logger.info(f"YAML: {config_file}")
-        cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-        output = cli.accounting.balance()
-        logger.info(f"Out api: {output.stdout}")
-        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
+    def test_balance_api(self, prepare_tmp_dir, client_shell):
+        config_file = self.write_api_config(
+            config_dir=prepare_tmp_dir, endpoint=NEOFS_ENDPOINT, wallet=self.user_wallet
+        )
+        logger.info(f"Config with API endpoint: {config_file}")
+
+        cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, config_file=config_file)
+        result = cli.accounting.balance()
+
+        assert int(result.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @staticmethod
-    @allure.step("Write YAML config")
-    def write_api_config(endpoint: str, wallet: str) -> str:
-        with open(WALLET_CONFIG) as file:
-            wallet_config = yaml.load(file, Loader=yaml.FullLoader)
+    @allure.step("Write config with API endpoint")
+    def write_api_config(config_dir: str, endpoint: str, wallet: str) -> str:
+        with open(WALLET_CONFIG, "r") as file:
+            wallet_config = yaml.full_load(file)
         api_config = {
             **wallet_config,
             "rpc-endpoint": endpoint,
             "wallet": wallet,
         }
-        api_config_file = f"{ASSETS_DIR}/config.yaml"
+        api_config_file = os.path.join(config_dir, "neofs-cli-api-config.yaml")
         with open(api_config_file, "w") as file:
             yaml.dump(api_config, file)
         return api_config_file
