@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import allure
 import pytest
 from file_helper import generate_file
-from s3_helper import check_objects_in_bucket, object_key_from_file_path
+from s3_helper import assert_object_lock_mode, check_objects_in_bucket, object_key_from_file_path
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
@@ -131,18 +131,9 @@ class TestS3GateBucket(TestS3GateBase):
                 ObjectLockRetainUntilDate=date_obj_1.strftime("%Y-%m-%dT%H:%M:%S"),
                 ObjectLockLegalHoldStatus="ON",
             )
-            object_1 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket_1, file_name, full_output=True
+            assert_object_lock_mode(
+                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj_1, "ON"
             )
-            assert (
-                object_1.get("ObjectLockMode") == "COMPLIANCE"
-            ), "Expected Object Lock Mode is COMPLIANCE"
-            assert str(date_obj_1.strftime("%Y-%m-%dT%H:%M:%S")) in object_1.get(
-                "ObjectLockRetainUntilDate"
-            ), f'Expected Object Lock Retain Until Date is {str(date_obj_1.strftime("%Y-%m-%dT%H:%M:%S"))}'
-            assert (
-                object_1.get("ObjectLockLegalHoldStatus") == "ON"
-            ), "Expected Object Lock Legal Hold Status is ON"
 
     @allure.title("Test S3: delete bucket")
     def test_s3_delete_bucket(self):

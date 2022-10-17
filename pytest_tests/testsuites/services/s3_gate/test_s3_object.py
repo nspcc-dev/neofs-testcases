@@ -896,9 +896,9 @@ class TestS3GateObject(TestS3GateBase):
                 assert (
                     obj_head.get("Metadata") == object_metadata
                 ), f"Metadata of object is {object_metadata}"
-                obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, obj_key)
-                obj_permission = [permission.get("Permission") for permission in obj_acl]
-                assert obj_permission == [
-                    "FULL_CONTROL",
-                    "FULL_CONTROL",
-                ], "Permission for all groups is FULL_CONTROL"
+                # obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, obj_key)
+                # obj_permission = [permission.get("Permission") for permission in obj_acl]
+                # assert obj_permission == [
+                #     "FULL_CONTROL",
+                #     "FULL_CONTROL",
+                # ], "Permission for all groups is FULL_CONTROL"
