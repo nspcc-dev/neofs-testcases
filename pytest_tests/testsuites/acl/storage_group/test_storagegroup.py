@@ -165,19 +165,19 @@ class TestStorageGroup:
         obj_list: list,
         object_size: int,
         shell: Shell,
-        bearer_token: Optional[str] = None,
+        bearer: Optional[str] = None,
     ):
         """
         This func verifies if the Object's owner is allowed to
         Put, List, Get and Delete the Storage Group which contains
         the Object.
         """
-        storage_group = put_storagegroup(wallet, cid, obj_list, bearer_token)
-        verify_list_storage_group(wallet, cid, storage_group, bearer_token)
+        storage_group = put_storagegroup(wallet, cid, obj_list, bearer)
+        verify_list_storage_group(wallet, cid, storage_group, bearer)
         verify_get_storage_group(
-            wallet, cid, storage_group, obj_list, object_size, shell, bearer_token
+            wallet, cid, storage_group, obj_list, object_size, shell, bearer
         )
-        delete_storagegroup(wallet, cid, storage_group, bearer_token)
+        delete_storagegroup(wallet, cid, storage_group, bearer)
 
     @staticmethod
     @allure.step("Run Storage Group Operations And Expect Failure")

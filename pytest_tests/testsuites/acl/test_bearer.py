@@ -49,7 +49,7 @@ class TestACLBearer:
             wait_for_cache_expired()
 
         with allure.step(f"Create bearer token for {role.value} with all operations allowed"):
-            bearer_token = form_bearertoken_file(
+            bearer = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
                 [
@@ -79,7 +79,7 @@ class TestACLBearer:
                 cid,
                 objects_oids.pop(),
                 file_path,
-                bearer=bearer_token,
+                bearer=bearer,
                 wallet_config=deny_wallet.config_path,
                 shell=client_shell,
             )
@@ -179,7 +179,7 @@ class TestACLBearer:
             )
 
         with allure.step("Check rule consistency using bearer token"):
-            bearer_token_user = form_bearertoken_file(
+            bearer_user = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
                 [
@@ -189,7 +189,7 @@ class TestACLBearer:
                 shell=client_shell,
             )
 
-            bearer_token_other = form_bearertoken_file(
+            bearer_other = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
                 [
@@ -205,7 +205,7 @@ class TestACLBearer:
                 objects_oids.pop(),
                 file_path,
                 deny_operations=deny_map_with_bearer[EACLRole.USER],
-                bearer=bearer_token_user,
+                bearer=bearer_user,
                 wallet_config=user_wallet.config_path,
                 shell=client_shell,
             )
@@ -215,7 +215,7 @@ class TestACLBearer:
                 objects_oids.pop(),
                 file_path,
                 deny_operations=deny_map_with_bearer[EACLRole.OTHERS],
-                bearer=bearer_token_other,
+                bearer=bearer_other,
                 wallet_config=other_wallet.config_path,
                 shell=client_shell,
             )

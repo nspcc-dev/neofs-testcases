@@ -26,7 +26,7 @@ def get_object(
     cid: str,
     oid: str,
     shell: Shell,
-    bearer_token: Optional[str] = None,
+    bearer: Optional[str] = None,
     write_object: str = "",
     endpoint: str = "",
     xhdr: Optional[dict] = None,
@@ -42,7 +42,7 @@ def get_object(
         cid (str): ID of Container where we get the Object from
         oid (str): Object ID
         shell: executor for cli command
-        bearer_token (optional, str): path to Bearer Token file, appends to `--bearer` key
+        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         write_object (optional, str): path to downloaded file, appends to `--file` key
         endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         wallet_config(optional, str): path to the wallet config
@@ -67,7 +67,7 @@ def get_object(
         cid=cid,
         oid=oid,
         file=file_path,
-        bearer=bearer_token,
+        bearer=bearer,
         no_progress=no_progress,
         xhdr=xhdr,
         session=session,
@@ -83,7 +83,7 @@ def get_range_hash(
     oid: str,
     range_cut: str,
     shell: Shell,
-    bearer_token: Optional[str] = None,
+    bearer: Optional[str] = None,
     endpoint: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -96,7 +96,7 @@ def get_range_hash(
         cid (str): ID of Container where we get the Object from
         oid (str): Object ID
         shell: executor for cli command
-        bearer_token (optional, str): path to Bearer Token file, appends to `--bearer` key
+        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         range_cut (str): Range to take hash from in the form offset1:length1,...,
                         value to pass to the `--range` parameter
         endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
@@ -113,7 +113,7 @@ def get_range_hash(
         cid=cid,
         oid=oid,
         range=range_cut,
-        bearer=bearer_token,
+        bearer=bearer,
         xhdr=xhdr,
     )
 

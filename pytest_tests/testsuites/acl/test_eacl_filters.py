@@ -193,7 +193,7 @@ class TestEACLFilters:
                 "Check other has full access when sending request "
                 "with denied headers and using bearer token"
             ):
-                bearer_token_other = form_bearertoken_file(
+                bearer_other = form_bearertoken_file(
                     user_wallet.wallet_path,
                     cid,
                     [
@@ -209,7 +209,7 @@ class TestEACLFilters:
                     file_path,
                     shell=client_shell,
                     xhdr=deny_headers,
-                    bearer=bearer_token_other,
+                    bearer=bearer_other,
                 )
 
     @pytest.mark.parametrize(
@@ -308,7 +308,7 @@ class TestEACLFilters:
             with allure.step(
                 "Check other have access to objects with deny attribute and using bearer token"
             ):
-                bearer_token_other = form_bearertoken_file(
+                bearer_other = form_bearertoken_file(
                     user_wallet.wallet_path,
                     cid,
                     [
@@ -328,7 +328,7 @@ class TestEACLFilters:
                     file_path,
                     shell=client_shell,
                     xhdr=xhdr,
-                    bearer=bearer_token_other,
+                    bearer=bearer_other,
                 )
 
         allow_attribute = (
@@ -360,7 +360,7 @@ class TestEACLFilters:
         with allure.step(
             "Check other can PUT objects with denied attribute and using bearer token"
         ):
-            bearer_token_other_for_put = form_bearertoken_file(
+            bearer_other_for_put = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
                 [
@@ -378,7 +378,7 @@ class TestEACLFilters:
                 file_path,
                 shell=client_shell,
                 attributes=deny_attribute,
-                bearer=bearer_token_other_for_put,
+                bearer=bearer_other_for_put,
             )
 
     @pytest.mark.parametrize(
@@ -451,7 +451,7 @@ class TestEACLFilters:
         with allure.step(
             "Check other can get and put objects without attributes and using bearer token"
         ):
-            bearer_token_other = form_bearertoken_file(
+            bearer_other = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
                 [
@@ -469,7 +469,7 @@ class TestEACLFilters:
                 cid,
                 objects_without_header[0],
                 shell=client_shell,
-                bearer=bearer_token_other,
+                bearer=bearer_other,
             )
             assert can_get_object(
                 other_wallet.wallet_path,
@@ -477,14 +477,14 @@ class TestEACLFilters:
                 objects_without_header[0],
                 file_path,
                 shell=client_shell,
-                bearer=bearer_token_other,
+                bearer=bearer_other,
             )
             assert can_put_object(
                 other_wallet.wallet_path,
                 cid,
                 file_path,
                 shell=client_shell,
-                bearer=bearer_token_other,
+                bearer=bearer_other,
             )
 
         with allure.step(f"Check other can get objects with attributes matching the filter"):
@@ -523,7 +523,7 @@ class TestEACLFilters:
         ):
             oid = deny_objects.pop()
             assert can_get_head_object(
-                other_wallet.wallet_path, cid, oid, shell=client_shell, bearer=bearer_token_other
+                other_wallet.wallet_path, cid, oid, shell=client_shell, bearer=bearer_other
             )
             assert can_get_object(
                 other_wallet.wallet_path,
@@ -531,7 +531,7 @@ class TestEACLFilters:
                 oid,
                 file_path,
                 shell=client_shell,
-                bearer=bearer_token_other,
+                bearer=bearer_other,
             )
             assert can_put_object(
                 other_wallet.wallet_path,
@@ -539,5 +539,5 @@ class TestEACLFilters:
                 file_path,
                 shell=client_shell,
                 attributes=deny_attribute,
-                bearer=bearer_token_other,
+                bearer=bearer_other,
             )

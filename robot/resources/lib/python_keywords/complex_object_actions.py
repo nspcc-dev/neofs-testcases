@@ -27,7 +27,7 @@ def get_link_object(
     cid: str,
     oid: str,
     shell: Shell,
-    bearer_token: str = "",
+    bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
 ):
     """
@@ -37,7 +37,7 @@ def get_link_object(
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
         shell: executor for cli command
-        bearer_token (optional, str): path to Bearer token file
+        bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to the neofs-cli config file
     Returns:
         (str): Link Object ID
@@ -54,7 +54,7 @@ def get_link_object(
                 endpoint=node,
                 is_raw=True,
                 is_direct=True,
-                bearer_token=bearer_token,
+                bearer=bearer,
                 wallet_config=wallet_config,
             )
             if resp["link"]:
