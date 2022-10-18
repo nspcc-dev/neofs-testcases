@@ -4,17 +4,13 @@ import uuid
 from typing import Optional
 
 import allure
-
-# This file is broken, because tenacity is not registered in requirements.txt
-# So, the file won't be fixed in scope of this PR, alipay will fix himself by
-# switching RemoteProcess and K6 classes from HostClient to shell from hosting
+from neofs_testlib.shell.interfaces import CommandOptions
+from neofs_testlib.shell import Shell
 from tenacity import retry, stop_after_attempt, wait_fixed
-
-from pytest_tests.helpers.ssh_helper import HostClient
 
 
 class RemoteProcess:
-    def __init__(self, cmd: str, process_dir: str, host_client: HostClient):
+    def __init__(self, cmd: str, process_dir: str, shell: Shell):
         self.process_dir = process_dir
         self.cmd = cmd
         self.stdout_last_line_number = 0
@@ -23,11 +19,11 @@ class RemoteProcess:
         self.proc_rc: Optional[int] = None
         self.saved_stdout: Optional[str] = None
         self.saved_stderr: Optional[str] = None
-        self.host_client = host_client
+        self.shell = shell
 
     @classmethod
     @allure.step("Create remote process")
-    def create(cls, command: str, host_client: HostClient) -> RemoteProcess:
+    def create(cls, command: str, shell: Shell) -> RemoteProcess:
         """
         Create a process on a remote host.
 
@@ -39,14 +35,14 @@ class RemoteProcess:
             stdout: contains script output
 
         Args:
-            host_client: Host client instance
+            shell: Shell instance
             command: command to be run on a remote host
 
         Returns:
             RemoteProcess instance for further examination
         """
         remote_process = cls(
-            cmd=command, process_dir=f"/tmp/proc_{uuid.uuid4()}", host_client=host_client
+            cmd=command, process_dir=f"/tmp/proc_{uuid.uuid4()}", shell=shell
         )
         remote_process._create_process_dir()
         remote_process._generate_command_script(command)
@@ -69,7 +65,7 @@ class RemoteProcess:
         if self.saved_stdout is not None:
             cur_stdout = self.saved_stdout
         else:
-            terminal = self.host_client.exec(f"cat {self.process_dir}/stdout")
+            terminal = self.shell.exec(f"cat {self.process_dir}/stdout")
             if self.proc_rc is not None:
                 self.saved_stdout = terminal.stdout
             cur_stdout = terminal.stdout
@@ -98,7 +94,7 @@ class RemoteProcess:
         if self.saved_stderr is not None:
             cur_stderr = self.saved_stderr
         else:
-            terminal = self.host_client.exec(f"cat {self.process_dir}/stderr")
+            terminal = self.shell.exec(f"cat {self.process_dir}/stderr")
             if self.proc_rc is not None:
                 self.saved_stderr = terminal.stdout
             cur_stderr = terminal.stdout
@@ -116,10 +112,10 @@ class RemoteProcess:
         if self.proc_rc is not None:
             return self.proc_rc
 
-        terminal = self.host_client.exec(f"cat {self.process_dir}/rc", verify=False)
+        terminal = self.shell.exec(f"cat {self.process_dir}/rc", CommandOptions(check=False))
         if "No such file or directory" in terminal.stderr:
             return None
-        elif terminal.stderr or terminal.rc != 0:
+        elif terminal.stderr or terminal.return_code != 0:
             raise AssertionError(f"cat process rc was not successfull: {terminal.stderr}")
 
         self.proc_rc = int(terminal.stdout)
@@ -131,11 +127,13 @@ class RemoteProcess:
 
     @allure.step("Send signal to process")
     def send_signal(self, signal: int) -> None:
-        kill_res = self.host_client.exec(f"kill -{signal} {self.pid}", verify=False)
+        kill_res = self.shell.exec(f"kill -{signal} {self.pid}", CommandOptions(check=False))
         if "No such process" in kill_res.stderr:
             return
-        if kill_res.rc:
-            raise AssertionError(f"Signal {signal} not sent. Return code of kill: {kill_res.rc}")
+        if kill_res.return_code:
+            raise AssertionError(
+                f"Signal {signal} not sent. Return code of kill: {kill_res.return_code}"
+            )
 
     @allure.step("Stop process")
     def stop(self) -> None:
@@ -149,11 +147,11 @@ class RemoteProcess:
     def clear(self) -> None:
         if self.process_dir == "/":
             raise AssertionError(f"Invalid path to delete: {self.process_dir}")
-        self.host_client.exec(f"rm -rf {self.process_dir}")
+        self.shell.exec(f"rm -rf {self.process_dir}")
 
     @allure.step("Start remote process")
     def _start_process(self) -> None:
-        self.host_client.exec(
+        self.shell.exec(
             f"nohup {self.process_dir}/command.sh </dev/null "
             f">{self.process_dir}/stdout "
             f"2>{self.process_dir}/stderr &"
@@ -161,14 +159,14 @@ class RemoteProcess:
 
     @allure.step("Create process directory")
     def _create_process_dir(self) -> None:
-        self.host_client.exec(f"mkdir {self.process_dir}; chmod 777 {self.process_dir}")
-        terminal = self.host_client.exec(f"realpath {self.process_dir}")
+        self.shell.exec(f"mkdir {self.process_dir}; chmod 777 {self.process_dir}")
+        terminal = self.shell.exec(f"realpath {self.process_dir}")
         self.process_dir = terminal.stdout.strip()
 
     @allure.step("Get pid")
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(5), reraise=True)
     def _get_pid(self) -> str:
-        terminal = self.host_client.exec(f"cat {self.process_dir}/pid")
+        terminal = self.shell.exec(f"cat {self.process_dir}/pid")
         assert terminal.stdout, f"invalid pid: {terminal.stdout}"
         return terminal.stdout.strip()
 
@@ -186,6 +184,6 @@ class RemoteProcess:
             f"echo $? > {self.process_dir}/rc"
         )
 
-        self.host_client.exec(f'echo "{script}" > {self.process_dir}/command.sh')
-        self.host_client.exec(f"cat {self.process_dir}/command.sh")
-        self.host_client.exec(f"chmod +x {self.process_dir}/command.sh")
+        self.shell.exec(f'echo "{script}" > {self.process_dir}/command.sh')
+        self.shell.exec(f"cat {self.process_dir}/command.sh")
+        self.shell.exec(f"chmod +x {self.process_dir}/command.sh")

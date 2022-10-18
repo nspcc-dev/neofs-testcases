@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from time import sleep
 
 import allure
+from neofs_testlib.shell import Shell
 
 from pytest_tests.helpers.remote_process import RemoteProcess
-from pytest_tests.helpers.ssh_helper import HostClient
 
 EXIT_RESULT_CODE = 0
 
@@ -40,10 +40,10 @@ class LoadResults:
 
 
 class K6:
-    def __init__(self, load_params: LoadParams, host_client: HostClient):
+    def __init__(self, load_params: LoadParams, shell: Shell):
 
         self.load_params = load_params
-        self.host_client = host_client
+        self.shell = shell
 
         self._k6_dir = None
         self._k6_result = None
@@ -59,7 +59,7 @@ class K6:
     @property
     def k6_dir(self) -> str:
         if not self._k6_dir:
-            self._k6_dir = self.host_client.exec("locate -l 1 'k6'").stdout.strip("\n")
+            self._k6_dir = self.shell.exec("locate -l 1 'k6'").stdout.strip("\n")
         return self._k6_dir
 
     @allure.step("Prepare containers and objects")
@@ -74,7 +74,7 @@ class K6:
                 f"--endpoint {self.load_params.endpoint.split(',')[0]} "
                 f"--preload_obj {self.load_params.obj_count} "
             )
-            terminal = self.host_client.exec(command)
+            terminal = self.shell.exec(command)
             return terminal.stdout.strip("\n")
         elif self.load_params.load_type == "s3":
             command = (
@@ -85,7 +85,7 @@ class K6:
                 f"--preload_obj {self.load_params.obj_count} "
                 f"--location load-1-1"
             )
-            terminal = self.host_client.exec(command)
+            terminal = self.shell.exec(command)
             return terminal.stdout.strip("\n")
         else:
             raise AssertionError("Wrong K6 load type")
@@ -105,7 +105,7 @@ class K6:
             f"{self.load_params.load_type}_{self.load_params.out_file} "
             f"{self.k6_dir}/scenarios/{self.load_params.load_type}.js"
         )
-        self._k6_process = RemoteProcess.create(command, self.host_client)
+        self._k6_process = RemoteProcess.create(command, self.shell)
 
     @allure.step("Wait until K6 is finished")
     def wait_until_finished(self, timeout: int = 0, k6_should_be_running: bool = False) -> None:
