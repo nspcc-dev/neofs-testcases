@@ -34,6 +34,11 @@ DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
 # Password of wallet owned by user on behalf of whom we are running tests
 WALLET_PASS = os.getenv("WALLET_PASS", "")
 
+# Load node parameters
+LOAD_NODES = os.getenv("LOAD_NODES")
+LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER")
+LOAD_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("LOAD_NODE_SSH_PRIVATE_KEY_PATH")
+
 # Configuration of storage nodes
 # TODO: we should use hosting instead of all these variables
 STORAGE_RPC_ENDPOINT_1 = os.getenv("STORAGE_RPC_ENDPOINT_1", "s01.neofs.devenv:8080")
@@ -116,6 +121,7 @@ FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
 BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
 
 HOSTING_CONFIG_FILE = os.getenv("HOSTING_CONFIG_FILE", ".devenv.hosting.yaml")
+STORAGE_NODE_SERVICE_NAME_REGEX = r"s\d\d"
 
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures
