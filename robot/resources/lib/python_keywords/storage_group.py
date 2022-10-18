@@ -19,7 +19,7 @@ def put_storagegroup(
     wallet: str,
     cid: str,
     objects: list,
-    bearer_token: str = "",
+    bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
     lifetime: str = "10",
 ):
@@ -31,7 +31,7 @@ def put_storagegroup(
         wallet (str): path to wallet on whose behalf the SG is created
         cid (str): ID of Container to put SG to
         objects (list): list of Object IDs to include into the SG
-        bearer_token (optional, str): path to Bearer token file
+        bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to neofs-cli config file
     Returns:
         (str): Object ID of created Storage Group
@@ -41,7 +41,7 @@ def put_storagegroup(
         f"--wallet {wallet} --config {wallet_config} "
         f"storagegroup put --cid {cid} --lifetime {lifetime} "
         f'--members {",".join(objects)} '
-        f'{"--bearer " + bearer_token if bearer_token else ""}'
+        f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
     oid = output.split("\n")[1].split(": ")[1]
@@ -50,7 +50,7 @@ def put_storagegroup(
 
 @allure.step("List Storagegroup")
 def list_storagegroup(
-    wallet: str, cid: str, bearer_token: str = "", wallet_config: str = WALLET_CONFIG
+    wallet: str, cid: str, bearer: str = "", wallet_config: str = WALLET_CONFIG
 ):
     """
     Wrapper for `neofs-cli storagegroup list`.  This operation
@@ -59,7 +59,7 @@ def list_storagegroup(
         wallet (str): path to wallet on whose behalf the SGs are
                     listed in the container
         cid (str): ID of Container to list
-        bearer_token (optional, str): path to Bearer token file
+        bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to neofs-cli config file
     Returns:
         (list): Object IDs of found Storage Groups
@@ -67,7 +67,7 @@ def list_storagegroup(
     cmd = (
         f"{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} "
         f"--wallet {wallet} --config {wallet_config} storagegroup list "
-        f'--cid {cid} {"--bearer " + bearer_token if bearer_token else ""}'
+        f'--cid {cid} {"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
     # throwing off the first string of output
@@ -80,7 +80,7 @@ def get_storagegroup(
     wallet: str,
     cid: str,
     oid: str,
-    bearer_token: str = "",
+    bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
 ):
     """
@@ -89,7 +89,7 @@ def get_storagegroup(
         wallet (str): path to wallet on whose behalf the SG is got
         cid (str): ID of Container where SG is stored
         oid (str): ID of the Storage Group
-        bearer_token (optional, str): path to Bearer token file
+        bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to neofs-cli config file
     Returns:
         (dict): detailed information on the Storage Group
@@ -99,7 +99,7 @@ def get_storagegroup(
         f"{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} "
         f"--wallet {wallet} --config {wallet_config} "
         f"storagegroup get --cid {cid} --id {oid} "
-        f'{"--bearer " + bearer_token if bearer_token else ""}'
+        f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
 
@@ -126,7 +126,7 @@ def delete_storagegroup(
     wallet: str,
     cid: str,
     oid: str,
-    bearer_token: str = "",
+    bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
 ):
     """
@@ -135,7 +135,7 @@ def delete_storagegroup(
         wallet (str): path to wallet on whose behalf the SG is deleted
         cid (str): ID of Container where SG is stored
         oid (str): ID of the Storage Group
-        bearer_token (optional, str): path to Bearer token file
+        bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to neofs-cli config file
     Returns:
         (str): Tombstone ID of the deleted Storage Group
@@ -145,7 +145,7 @@ def delete_storagegroup(
         f"{NEOFS_CLI_EXEC} --rpc-endpoint {NEOFS_ENDPOINT} "
         f"--wallet {wallet} --config {wallet_config} "
         f"storagegroup delete --cid {cid} --id {oid} "
-        f'{"--bearer " + bearer_token if bearer_token else ""}'
+        f'{"--bearer " + bearer if bearer else ""}'
     )
     output = _cmd_run(cmd)
     tombstone_id = output.strip().split("\n")[1].split(": ")[1]
@@ -161,7 +161,7 @@ def verify_list_storage_group(
     wallet_config: str = WALLET_CONFIG,
 ):
     storage_groups = list_storagegroup(
-        wallet, cid, bearer_token=bearer, wallet_config=wallet_config
+        wallet, cid, bearer=bearer, wallet_config=wallet_config
     )
     assert storagegroup in storage_groups
 
@@ -181,21 +181,21 @@ def verify_get_storage_group(
     if object_size == COMPLEX_OBJ_SIZE:
         for obj in obj_list:
             link_oid = get_link_object(
-                wallet, cid, obj, shell=shell, bearer_token=bearer, wallet_config=wallet_config
+                wallet, cid, obj, shell=shell, bearer=bearer, wallet_config=wallet_config
             )
             obj_head = head_object(
                 wallet,
                 cid,
                 link_oid,
                 is_raw=True,
-                bearer_token=bearer,
+                bearer=bearer,
                 wallet_config=wallet_config,
             )
             obj_parts = obj_head["header"]["split"]["children"]
 
     obj_num = len(obj_list)
     storagegroup_data = get_storagegroup(
-        wallet, cid, storagegroup, bearer_token=bearer, wallet_config=wallet_config
+        wallet, cid, storagegroup, bearer=bearer, wallet_config=wallet_config
     )
     if object_size == SIMPLE_OBJ_SIZE:
         exp_size = SIMPLE_OBJ_SIZE * obj_num

@@ -208,7 +208,7 @@ def form_bearertoken_file(
         json.dump(eacl_result, eacl_file, ensure_ascii=False, indent=4)
 
     logger.info(f"Got these extended ACL records: {eacl_result}")
-    sign_bearer_token(wif, file_path)
+    sign_bearer(wif, file_path)
     return file_path
 
 
@@ -235,7 +235,7 @@ def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     return rules
 
 
-def sign_bearer_token(wallet_path: str, eacl_rules_file: str) -> None:
+def sign_bearer(wallet_path: str, eacl_rules_file: str) -> None:
     cmd = (
         f"{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} "
         f"--to {eacl_rules_file} --wallet {wallet_path} --config {WALLET_CONFIG} --json"
