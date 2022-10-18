@@ -1,11 +1,6 @@
-#!/usr/bin/python3
-
-"""
-    This module contains wrappers for NeoFS verbs executed via neofs-cli.
-"""
-
 import json
 import logging
+import os
 import random
 import re
 import uuid
@@ -55,7 +50,7 @@ def get_object(
 
     if not write_object:
         write_object = str(uuid.uuid4())
-    file_path = f"{ASSETS_DIR}/{write_object}"
+    file_path = os.path.join(ASSETS_DIR, write_object)
 
     if not endpoint:
         endpoint = random.sample(NEOFS_NETMAP, 1)[0]
@@ -254,7 +249,7 @@ def get_range(
     Returns:
         (str, bytes) - path to the file with range content and content of this file as bytes
     """
-    range_file = f"{ASSETS_DIR}/{uuid.uuid4()}"
+    range_file_path = os.path.join(ASSETS_DIR, str(uuid.uuid4()))
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     cli.object.range(
@@ -263,15 +258,15 @@ def get_range(
         cid=cid,
         oid=oid,
         range=range_cut,
-        file=range_file,
+        file=range_file_path,
         bearer=bearer,
         xhdr=xhdr,
         session=session,
     )
 
-    with open(range_file, "rb") as fout:
-        content = fout.read()
-    return range_file, content
+    with open(range_file_path, "rb") as file:
+        content = file.read()
+    return range_file_path, content
 
 
 @allure.step("Search object")

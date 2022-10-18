@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import logging
 import os
 import re
@@ -39,10 +37,10 @@ def get_via_http_gate(cid: str, oid: str):
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    filename = f"{ASSETS_DIR}/{cid}_{oid}"
-    with open(filename, "wb") as get_file:
-        shutil.copyfileobj(resp.raw, get_file)
-    return filename
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}")
+    with open(file_path, "wb") as file:
+        shutil.copyfileobj(resp.raw, file)
+    return file_path
 
 
 @allure.step("Get via Zip HTTP Gate")
@@ -66,14 +64,14 @@ def get_via_zip_http_gate(cid: str, prefix: str):
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    filename = f"{ASSETS_DIR}/{cid}_archive.zip"
-    with open(filename, "wb") as get_file:
-        shutil.copyfileobj(resp.raw, get_file)
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_archive.zip")
+    with open(file_path, "wb") as file:
+        shutil.copyfileobj(resp.raw, file)
 
-    with zipfile.ZipFile(filename, "r") as zip_ref:
+    with zipfile.ZipFile(file_path, "r") as zip_ref:
         zip_ref.extractall(ASSETS_DIR)
 
-    return f"{ASSETS_DIR}/{prefix}"
+    return os.path.join(os.getcwd(), ASSETS_DIR, prefix)
 
 
 @allure.step("Get via HTTP Gate by attribute")
@@ -99,10 +97,10 @@ def get_via_http_gate_by_attribute(cid: str, attribute: dict):
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    filename = f"{ASSETS_DIR}/{cid}_{str(uuid.uuid4())}"
-    with open(filename, "wb") as get_file:
-        shutil.copyfileobj(resp.raw, get_file)
-    return filename
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{str(uuid.uuid4())}")
+    with open(file_path, "wb") as file:
+        shutil.copyfileobj(resp.raw, file)
+    return file_path
 
 
 @allure.step("Upload via HTTP Gate")
@@ -165,12 +163,12 @@ def get_via_http_curl(cid: str, oid: str) -> str:
     :param oid:      object OID
     """
     request = f"{HTTP_GATE}/get/{cid}/{oid}"
-    filename = f"{ASSETS_DIR}/{cid}_{oid}_{str(uuid.uuid4())}"
-    cmd = f"curl {request} > {filename}"
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}_{str(uuid.uuid4())}")
 
+    cmd = f"curl {request} > {file_path}"
     _cmd_run(cmd)
 
-    return filename
+    return file_path
 
 
 def _attach_allure_step(request: str, status_code: int, req_type="GET"):

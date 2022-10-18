@@ -30,7 +30,7 @@ def generate_session_token(owner: str, session_wallet: str, cid: str = "") -> st
     Returns:
         (str): the path to the generated session token file
     """
-    file_path = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
 
     session_wlt_content = ""
     with open(session_wallet) as fout:
@@ -80,7 +80,7 @@ def create_session_token(owner: str, wallet_path: str, rpc: str = NEOFS_ENDPOINT
     Returns:
         (str): the path to the generated session token file
     """
-    session_token = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
+    session_token = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
     cmd = (
         f"{NEOFS_CLI_EXEC} session create --address {owner} -w {wallet_path} "
         f"--out {session_token} --rpc-endpoint {rpc}"
@@ -99,7 +99,7 @@ def sign_session_token(session_token: str, wlt: str):
     Returns:
         (str): the path to the signed token
     """
-    signed_token = f"{os.getcwd()}/{ASSETS_DIR}/{uuid.uuid4()}"
+    signed_token = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
     cmd = (
         f"{NEOFS_CLI_EXEC} util sign session-token --from {session_token} "
         f"-w {wlt} --to {signed_token} --config {WALLET_CONFIG}"

@@ -169,8 +169,8 @@ class TestS3Gate(TestS3GateBase):
         """
         Test checks sync directory with AWS CLI utility.
         """
-        file_path_1 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_1"
-        file_path_2 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_2"
+        file_path_1 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_1")
+        file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
         if not isinstance(self.s3_client, AwsCliClient):

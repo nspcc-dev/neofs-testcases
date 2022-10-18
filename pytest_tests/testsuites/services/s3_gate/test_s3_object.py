@@ -852,8 +852,8 @@ class TestS3GateObject(TestS3GateBase):
     @allure.title("Test S3 Sync directory")
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
     def test_s3_sync_dir(self, sync_type):
-        file_path_1 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_1"
-        file_path_2 = f"{os.getcwd()}/{ASSETS_DIR}/test_sync/test_file_2"
+        file_path_1 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_1")
+        file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
