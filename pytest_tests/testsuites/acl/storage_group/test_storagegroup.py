@@ -124,7 +124,12 @@ class TestStorageGroup:
             for op in EACLOperation
             for role in EACLRole
         ]
-        set_eacl(self.main_wallet, cid, create_eacl(cid, eacl_deny))
+        set_eacl(
+            self.main_wallet,
+            cid,
+            create_eacl(cid, eacl_deny, shell=client_shell),
+            shell=client_shell,
+        )
         self.expect_failure_for_storagegroup_operations(
             self.main_wallet, cid, objects, storage_group
         )
