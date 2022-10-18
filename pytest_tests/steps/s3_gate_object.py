@@ -1,5 +1,3 @@
-#!/usr/bin/python3.9
-
 import logging
 import os
 import uuid
@@ -243,7 +241,7 @@ def get_object_acl_s3(
 def copy_object_s3(
     s3_client, bucket: str, object_key: str, bucket_dst: Optional[str] = None, **kwargs
 ) -> str:
-    filename = f"{os.getcwd()}/{uuid.uuid4()}"
+    filename = os.path.join(os.getcwd(), str(uuid.uuid4()))
     try:
         params = {
             "Bucket": bucket_dst or bucket,
@@ -280,7 +278,7 @@ def get_object_s3(
     range: Optional[list] = None,
     full_output: bool = False,
 ):
-    filename = f"{ASSETS_DIR}/{uuid.uuid4()}"
+    filename = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
     try:
         params = {"Bucket": bucket, "Key": object_key}
         if version_id:

@@ -255,7 +255,7 @@ class AwsCliClient:
         return self._to_json(output)
 
     def delete_objects(self, Bucket: str, Delete: dict) -> dict:
-        file_path = f"{os.getcwd()}/{ASSETS_DIR}/delete.json"
+        file_path = os.path.join(os.getcwd(), ASSETS_DIR, "delete.json")
         with open(file_path, "w") as out_file:
             out_file.write(json.dumps(Delete))
         logger.info(f"Input file for delete-objects: {json.dumps(Delete)}")
@@ -448,7 +448,7 @@ class AwsCliClient:
     def complete_multipart_upload(
         self, Bucket: str, Key: str, UploadId: str, MultipartUpload: dict
     ) -> dict:
-        file_path = f"{os.getcwd()}/{ASSETS_DIR}/parts.json"
+        file_path = os.path.join(os.getcwd(), ASSETS_DIR, "parts.json")
         with open(file_path, "w") as out_file:
             out_file.write(json.dumps(MultipartUpload))
         logger.info(f"Input file for complete-multipart-upload: {json.dumps(MultipartUpload)}")

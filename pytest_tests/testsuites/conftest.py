@@ -70,7 +70,7 @@ def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
 @pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
 def prepare_tmp_dir():
-    full_path = f"{os.getcwd()}/{ASSETS_DIR}"
+    full_path = os.path.join(os.getcwd(), ASSETS_DIR)
     shutil.rmtree(full_path, ignore_errors=True)
     os.mkdir(full_path)
     yield full_path
