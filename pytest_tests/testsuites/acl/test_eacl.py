@@ -39,7 +39,9 @@ class TestEACLContainer:
     NODE_COUNT = len(NEOFS_NETMAP_DICT.keys())
 
     @pytest.fixture(scope="function")
-    def eacl_full_placement_container_with_object(self, wallets, file_path, shell: Shell):
+    def eacl_full_placement_container_with_object(
+        self, wallets, file_path, client_shell: Shell
+    ) -> str:
         user_wallet = wallets.get_wallet()
         with allure.step("Create eACL public container with full placement rule"):
             full_placement_rule = (
@@ -49,12 +51,14 @@ class TestEACLContainer:
                 user_wallet.wallet_path,
                 full_placement_rule,
                 basic_acl=PUBLIC_ACL,
-                shell=shell,
+                shell=client_shell,
             )
 
         with allure.step("Add test object to container"):
             oid = put_object(user_wallet.wallet_path, file_path, cid)
-            wait_object_replication_on_nodes(user_wallet.wallet_path, cid, oid, self.NODE_COUNT)
+            wait_object_replication_on_nodes(
+                user_wallet.wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
+            )
 
         yield cid, oid, file_path
 
@@ -227,7 +231,9 @@ class TestEACLContainer:
 
         storage_wallet_path = NEOFS_NETMAP_DICT[[*NEOFS_NETMAP_DICT][0]]["wallet_path"]
         with allure.step("Wait for dropped object replicated"):
-            wait_object_replication_on_nodes(storage_wallet_path, cid, oid, self.NODE_COUNT)
+            wait_object_replication_on_nodes(
+                storage_wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
+            )
 
     @allure.title("Testcase to validate NeoFS system operations with extended ACL")
     def test_extended_actions_system(self, wallets, client_shell, eacl_container_with_objects):
