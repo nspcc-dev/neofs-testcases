@@ -380,7 +380,7 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, host
 
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object could be dropped using control command")
-def test_drop_object(prepare_wallet_and_deposit, hosting: Hosting):
+def test_drop_object(prepare_wallet_and_deposit, client_shell: Shell, hosting: Hosting):
     """
     Test checks object could be dropped using `neofs-cli control drop-objects` command.
     """
@@ -389,37 +389,42 @@ def test_drop_object(prepare_wallet_and_deposit, hosting: Hosting):
 
     locode = get_locode()
     rule = f"REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '{locode}' AS LOC"
-    cid = create_container(wallet, rule=rule)
-    oid_simple = put_object(wallet, file_path_simple, cid)
-    oid_complex = put_object(wallet, file_path_complex, cid)
+    cid = create_container(wallet, rule=rule, shell=client_shell)
+    oid_simple = put_object(wallet, file_path_simple, cid, shell=client_shell)
+    oid_complex = put_object(wallet, file_path_complex, cid, shell=client_shell)
 
     for oid in (oid_simple, oid_complex):
-        get_object(wallet, cid, oid)
-        head_object(wallet, cid, oid)
+        get_object(wallet, cid, oid, client_shell)
+        head_object(wallet, cid, oid, client_shell)
 
-    nodes = get_nodes_with_object(wallet, cid, oid_simple)
+    nodes = get_nodes_with_object(wallet, cid, oid_simple, shell=client_shell)
     node_name = choice(
         [name for name, config in NEOFS_NETMAP_DICT.items() if config.get("rpc") in nodes]
     )
 
     for oid in (oid_simple, oid_complex):
         with allure.step(f"Drop object {oid}"):
-            get_object(wallet, cid, oid)
-            head_object(wallet, cid, oid)
+            get_object(wallet, cid, oid, shell=client_shell)
+            head_object(wallet, cid, oid, shell=client_shell)
             drop_object(hosting, node_name, cid, oid)
-            wait_for_obj_dropped(wallet, cid, oid, get_object)
-            wait_for_obj_dropped(wallet, cid, oid, head_object)
+            wait_for_obj_dropped(wallet, cid, oid, client_shell, get_object)
+            wait_for_obj_dropped(wallet, cid, oid, client_shell, head_object)
 
 
 @pytest.mark.node_mgmt
 @pytest.mark.skip(reason="Need to clarify scenario")
 @allure.title("Control Operations with storage nodes")
-def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node, hosting: Hosting):
+def test_shards(
+    prepare_wallet_and_deposit,
+    create_container_and_pick_node,
+    client_shell: Shell,
+    hosting: Hosting,
+):
     wallet = prepare_wallet_and_deposit
     file_path = generate_file()
 
     cid, node_name = create_container_and_pick_node
-    original_oid = put_object(wallet, file_path, cid)
+    original_oid = put_object(wallet, file_path, cid, shell=client_shell)
 
     # for mode in ('read-only', 'degraded'):
     for mode in ("degraded",):
@@ -433,13 +438,12 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node, host
         assert shards
 
         with pytest.raises(RuntimeError):
-            put_object(wallet, file_path, cid)
+            put_object(wallet, file_path, cid, shell=client_shell)
 
         with pytest.raises(RuntimeError):
-            delete_object(wallet, cid, original_oid)
+            delete_object(wallet, cid, original_oid, shell=client_shell)
 
-        # head_object(wallet, cid, original_oid)
-        get_object(wallet, cid, original_oid)
+        get_object(wallet, cid, original_oid, shell=client_shell)
 
         for shard in shards:
             node_shard_set_mode(hosting, node_name, shard, "read-write")
@@ -447,8 +451,8 @@ def test_shards(prepare_wallet_and_deposit, create_container_and_pick_node, host
         shards = node_shard_list(hosting, node_name)
         assert shards
 
-        oid = put_object(wallet, file_path, cid)
-        delete_object(wallet, cid, oid)
+        oid = put_object(wallet, file_path, cid, shell=client_shell)
+        delete_object(wallet, cid, oid, shell=client_shell)
 
 
 @allure.step("Validate object has {expected_copies} copies")
@@ -515,10 +519,10 @@ def wait_for_expected_object_copies(
 
 
 @allure.step("Wait for object to be dropped")
-def wait_for_obj_dropped(wallet: str, cid: str, oid: str, checker) -> None:
+def wait_for_obj_dropped(wallet: str, cid: str, oid: str, shell: Shell, checker) -> None:
     for _ in range(3):
         try:
-            checker(wallet, cid, oid)
+            checker(wallet, cid, oid, shell=shell)
             wait_for_gc_pass_on_storage_nodes()
         except Exception as err:
             if error_matches_status(err, OBJECT_NOT_FOUND):

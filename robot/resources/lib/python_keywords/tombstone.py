@@ -11,8 +11,8 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
     header = head_object(wallet_path, cid, oid_ts, shell=shell)["header"]
     assert header["containerID"] == cid, "Tombstone Header CID is wrong"
 
-    with open(wallet_path, "r") as fout:
-        wlt_data = json.loads(fout.read())
+    with open(wallet_path, "r") as file:
+        wlt_data = json.loads(file.read())
     wlt = wallet.Wallet.from_json(wlt_data, password="")
     addr = wlt.accounts[0].address
 
