@@ -48,8 +48,8 @@ class TestEACLContainer:
                 f"REP {self.NODE_COUNT} IN X CBF 1 SELECT {self.NODE_COUNT} FROM * AS X"
             )
             cid = create_container(
-                user_wallet.wallet_path,
-                full_placement_rule,
+                wallet=user_wallet.wallet_path,
+                rule=full_placement_rule,
                 basic_acl=PUBLIC_ACL,
                 shell=client_shell,
             )
@@ -322,22 +322,21 @@ class TestEACLContainer:
                     wallet_config=storage_wallet.config_path,
                 )
 
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=client_shell,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=client_shell,
-                    wallet_config=storage_wallet.config_path,
-                )
+            assert can_get_range_hash_of_object(
+                wallet=ir_wallet.wallet_path,
+                cid=cid,
+                oid=object_oids[0],
+                shell=client_shell,
+                wallet_config=ir_wallet.config_path,
+            )
+
+            assert can_get_range_hash_of_object(
+                wallet=storage_wallet.wallet_path,
+                cid=cid,
+                oid=object_oids[0],
+                shell=client_shell,
+                wallet_config=storage_wallet.config_path,
+            )
 
             with pytest.raises(AssertionError):
                 assert can_delete_object(
@@ -588,22 +587,21 @@ class TestEACLContainer:
                     wallet_config=storage_wallet.config_path,
                 )
 
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=client_shell,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=client_shell,
-                    wallet_config=storage_wallet.config_path,
-                )
+            assert can_get_range_hash_of_object(
+                wallet=ir_wallet.wallet_path,
+                cid=cid,
+                oid=object_oids[0],
+                shell=client_shell,
+                wallet_config=ir_wallet.config_path,
+            )
+
+            assert can_get_range_hash_of_object(
+                wallet=storage_wallet.wallet_path,
+                cid=cid,
+                oid=object_oids[0],
+                shell=client_shell,
+                wallet_config=storage_wallet.config_path,
+            )
 
             with pytest.raises(AssertionError):
                 assert can_delete_object(

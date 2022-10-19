@@ -180,9 +180,9 @@ def verify_get_storage_group(
                 wallet, cid, obj, shell=shell, bearer=bearer, wallet_config=wallet_config
             )
             obj_head = head_object(
-                wallet,
-                cid,
-                link_oid,
+                wallet=wallet,
+                cid=cid,
+                oid=link_oid,
                 shell=shell,
                 is_raw=True,
                 bearer=bearer,
