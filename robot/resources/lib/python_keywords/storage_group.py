@@ -49,9 +49,7 @@ def put_storagegroup(
 
 
 @allure.step("List Storagegroup")
-def list_storagegroup(
-    wallet: str, cid: str, bearer: str = "", wallet_config: str = WALLET_CONFIG
-):
+def list_storagegroup(wallet: str, cid: str, bearer: str = "", wallet_config: str = WALLET_CONFIG):
     """
     Wrapper for `neofs-cli storagegroup list`.  This operation
     requires SEARCH allowed for `wallet` in `cid`.
@@ -160,9 +158,7 @@ def verify_list_storage_group(
     bearer: str = None,
     wallet_config: str = WALLET_CONFIG,
 ):
-    storage_groups = list_storagegroup(
-        wallet, cid, bearer=bearer, wallet_config=wallet_config
-    )
+    storage_groups = list_storagegroup(wallet, cid, bearer=bearer, wallet_config=wallet_config)
     assert storagegroup in storage_groups
 
 
@@ -187,6 +183,7 @@ def verify_get_storage_group(
                 wallet,
                 cid,
                 link_oid,
+                shell=shell,
                 is_raw=True,
                 bearer=bearer,
                 wallet_config=wallet_config,

@@ -140,6 +140,7 @@ class TestStorageGroup:
                 EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER)
                 for op in EACLOperation
             ],
+            shell=client_shell,
         )
         self.expect_success_for_storagegroup_operations(
             self.main_wallet, cid, objects, object_size, client_shell, bearer_file
@@ -174,9 +175,7 @@ class TestStorageGroup:
         """
         storage_group = put_storagegroup(wallet, cid, obj_list, bearer)
         verify_list_storage_group(wallet, cid, storage_group, bearer)
-        verify_get_storage_group(
-            wallet, cid, storage_group, obj_list, object_size, shell, bearer
-        )
+        verify_get_storage_group(wallet, cid, storage_group, obj_list, object_size, shell, bearer)
         delete_storagegroup(wallet, cid, storage_group, bearer)
 
     @staticmethod
