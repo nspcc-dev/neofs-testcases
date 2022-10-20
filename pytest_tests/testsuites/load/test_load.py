@@ -3,8 +3,8 @@ import pytest
 from common import LOAD_NODE_SSH_PRIVATE_KEY_PATH, LOAD_NODE_SSH_USER, LOAD_NODES
 from neofs_testlib.hosting import Hosting
 
-from pytest_tests.helpers.k6 import LoadParams
-from pytest_tests.steps.load import (
+from k6 import LoadParams
+from load import (
     clear_cache_and_data,
     get_storage_host_endpoints,
     multi_node_k6_run,
