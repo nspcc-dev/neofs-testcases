@@ -55,7 +55,7 @@ class TestEACLContainer:
             )
 
         with allure.step("Add test object to container"):
-            oid = put_object(user_wallet.wallet_path, file_path, cid)
+            oid = put_object(user_wallet.wallet_path, file_path, cid, shell=client_shell)
             wait_object_replication_on_nodes(
                 user_wallet.wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
             )
