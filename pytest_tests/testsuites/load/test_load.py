@@ -15,6 +15,7 @@ CONTAINERS_COUNT = 1
 OBJ_COUNT = 3
 
 
+@pytest.mark.load
 class TestLoad:
     @pytest.fixture(autouse=True)
     def clear_cache_and_data(self, hosting: Hosting):
