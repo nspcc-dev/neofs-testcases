@@ -132,7 +132,7 @@ class TestS3GateBucket(TestS3GateBase):
                 ObjectLockLegalHoldStatus="ON",
             )
             assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj_1, "ON"
+                self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON"
             )
 
     @allure.title("Test S3: delete bucket")

@@ -739,7 +739,7 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client,
                 bucket,
                 file_path_6,
-                GrantFullControl=f"'id={self.other_public_key}'",
+                GrantFullControl=f"id={self.other_public_key}",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
             obj_permission = [permission.get("Permission") for permission in obj_acl]
