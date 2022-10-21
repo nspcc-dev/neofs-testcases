@@ -171,7 +171,7 @@ class AwsCliClient:
         if ObjectLockLegalHoldStatus:
             cmd += f" --object-lock-legal-hold-status {ObjectLockLegalHoldStatus}"
         if GrantFullControl:
-            cmd += f" --grant-full-control {GrantFullControl}"
+            cmd += f" --grant-full-control '{GrantFullControl}'"
         if GrantRead:
             cmd += f" --grant-read {GrantRead}"
         output = _cmd_run(cmd, LONG_TIMEOUT)
@@ -322,6 +322,28 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api delete-bucket-tagging --bucket {Bucket} "
             f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def put_object_retention(
+        self, Bucket: str, Key: str, Retention: dict, VersionId: Optional[str] = None
+    ) -> dict:
+        version = f" --version-id {VersionId}" if VersionId else ""
+        cmd = (
+            f"aws {self.common_flags} s3api put-object-retention --bucket {Bucket} --key {Key} "
+            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def put_object_legal_hold(
+        self, Bucket: str, Key: str, LegalHold: dict, VersionId: Optional[str] = None
+    ) -> dict:
+        version = f" --version-id {VersionId}" if VersionId else ""
+        cmd = (
+            f"aws {self.common_flags} s3api  put-object-legal-hold --bucket {Bucket} --key {Key} "
+            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {S3_GATE}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
