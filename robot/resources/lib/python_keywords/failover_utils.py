@@ -26,7 +26,7 @@ def wait_object_replication_on_nodes(
     nodes = []
     for __attempt in range(attempts):
         nodes = get_nodes_with_object(wallet, cid, oid, shell=shell, skip_nodes=excluded_nodes)
-        if len(nodes) == expected_copies:
+        if len(nodes) >= expected_copies:
             return nodes
         sleep(sleep_interval)
     raise AssertionError(

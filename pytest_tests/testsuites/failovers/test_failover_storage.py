@@ -64,13 +64,13 @@ def test_lose_storage_node_host(
         with allure.step(f"Stop host {host_address}"):
             host.stop_host("hard" if hard_reboot else "soft")
 
-    new_nodes = wait_object_replication_on_nodes(
-        wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node_endpoint]
-    )
+        new_nodes = wait_object_replication_on_nodes(
+            wallet, cid, oid, 2, shell=client_shell, excluded_nodes=[node_endpoint]
+        )
     assert all(old_node not in new_nodes for old_node in node_endpoints)
 
     with allure.step("Check object data is not corrupted"):
-        got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0])
+        got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0], shell=client_shell)
         assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     with allure.step(f"Return all hosts"):
