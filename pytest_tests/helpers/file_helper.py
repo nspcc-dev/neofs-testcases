@@ -60,19 +60,23 @@ def generate_file_with_content(
 
 
 @allure.step("Get File Hash")
-def get_file_hash(file_path: str, len: Optional[int] = None) -> str:
+def get_file_hash(file_path: str, len: Optional[int] = None, offset: Optional[int] = None) -> str:
     """Generates hash for the specified file.
 
     Args:
         file_path: Path to the file to generate hash for.
         len: How many bytes to read.
+        offset: Which position to start reading
 
     Returns:
         Hash of the file as hex-encoded string.
     """
     file_hash = hashlib.sha256()
     with open(file_path, "rb") as out:
-        if len:
+        if len and offset is None:
+            file_hash.update(out.read(len))
+        elif len and offset:
+            out.seek(offset, 1)
             file_hash.update(out.read(len))
         else:
             file_hash.update(out.read())
