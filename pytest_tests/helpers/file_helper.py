@@ -66,7 +66,7 @@ def get_file_hash(file_path: str, len: Optional[int] = None, offset: Optional[in
     Args:
         file_path: Path to the file to generate hash for.
         len: How many bytes to read.
-        offset: Which position to start reading
+        offset: Position to start reading from.
 
     Returns:
         Hash of the file as hex-encoded string.
