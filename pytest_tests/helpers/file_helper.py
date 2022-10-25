@@ -73,7 +73,7 @@ def get_file_hash(file_path: str, len: Optional[int] = None, offset: Optional[in
     """
     file_hash = hashlib.sha256()
     with open(file_path, "rb") as out:
-        if len and offset is None:
+        if len and not offset:
             file_hash.update(out.read(len))
         elif len and offset:
             out.seek(offset, 0)
