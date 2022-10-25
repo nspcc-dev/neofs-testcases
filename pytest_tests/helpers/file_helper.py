@@ -78,6 +78,9 @@ def get_file_hash(file_path: str, len: Optional[int] = None, offset: Optional[in
         elif len and offset:
             out.seek(offset, 0)
             file_hash.update(out.read(len))
+        elif offset and not len:
+            out.seek(offset, 0)
+            file_hash.update(out.read())
         else:
             file_hash.update(out.read())
     return file_hash.hexdigest()
@@ -133,7 +136,9 @@ def split_file(file_path: str, parts: int) -> list[str]:
     return part_file_paths
 
 
-def get_file_content(file_path: str, content_len: Optional[int] = None, mode: str = "r") -> Any:
+def get_file_content(
+    file_path: str, content_len: Optional[int] = None, mode: str = "r", offset: Optional[int] = None
+) -> Any:
     """Returns content of specified file.
 
     Args:
@@ -141,13 +146,20 @@ def get_file_content(file_path: str, content_len: Optional[int] = None, mode: st
         content_len: Limit of content length. If None, then entire file content is returned;
             otherwise only the first content_len bytes of the content are returned.
         mode: Mode of opening the file.
+        offset: Position to start reading from.
 
     Returns:
         Content of the specified file.
     """
     with open(file_path, mode) as file:
-        if content_len:
+        if content_len and not offset:
             content = file.read(content_len)
+        elif content_len and offset:
+            file.seek(offset, 0)
+            content = file.read(content_len)
+        elif offset and not content_len:
+            file.seek(offset, 0)
+            content = file.read()
         else:
             content = file.read()
 
