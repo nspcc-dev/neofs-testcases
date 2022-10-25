@@ -76,7 +76,7 @@ def get_file_hash(file_path: str, len: Optional[int] = None, offset: Optional[in
         if len and offset is None:
             file_hash.update(out.read(len))
         elif len and offset:
-            out.seek(offset, 1)
+            out.seek(offset, 0)
             file_hash.update(out.read(len))
         else:
             file_hash.update(out.read())
