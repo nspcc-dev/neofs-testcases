@@ -15,6 +15,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.s3_gate
+@pytest.mark.s3_gate_multipart
 class TestS3GateMultipart(TestS3GateBase):
     @allure.title("Test S3 Object Multipart API")
     def test_s3_object_multipart(self):
