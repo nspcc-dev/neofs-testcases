@@ -45,8 +45,9 @@ def test_object_api(prepare_wallet_and_deposit, client_shell, request, object_si
     file_usr_header = {"key1": 1, "key2": "abc", "common_key": "common_value"}
     file_usr_header_oth = {"key1": 2, "common_key": "common_value"}
     common_header = {"common_key": "common_value"}
+    range_offset = 0
     range_len = 10
-    range_cut = f"0:{range_len}"
+    range_cut = f"{range_offset}:{range_len}"
     file_path = generate_file(object_size)
     file_hash = get_file_hash(file_path)
 
@@ -98,21 +99,22 @@ def test_object_api(prepare_wallet_and_deposit, client_shell, request, object_si
             **wallet_cid, oid=oids[0], shell=client_shell, range_cut=range_cut
         )
         assert (
-            get_file_hash(file_path, range_len) == range_hash
+            get_file_hash(file_path, range_len, range_offset) == range_hash
         ), f"Expected range hash to match {range_cut} slice of file payload"
 
         range_hash = get_range_hash(
             **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
         )
         assert (
-            get_file_hash(file_path, range_len) == range_hash
+            get_file_hash(file_path, range_len, range_offset) == range_hash
         ), f"Expected range hash to match {range_cut} slice of file payload"
 
         _, range_content = get_range(
             **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
         )
         assert (
-            get_file_content(file_path, content_len=range_len, mode="rb") == range_content
+            get_file_content(file_path, content_len=range_len, mode="rb", offset=range_offset)
+            == range_content
         ), f"Expected range content to match {range_cut} slice of file payload"
 
     with allure.step("Search objects"):
