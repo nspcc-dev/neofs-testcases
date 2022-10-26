@@ -78,39 +78,6 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
             endpoint=session_token_node,
             session=session_token,
         )
-        head_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=session_token_node,
-            session=session_token,
-        )
-        search_object(
-            wallet=wallet,
-            cid=cid,
-            shell=client_shell,
-            endpoint=session_token_node,
-            expected_objects_list=[oid],
-            session=session_token,
-        )
-        get_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=session_token_node,
-            session=session_token,
-        )
-        get_range(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            range_cut="0:256",
-            endpoint=session_token_node,
-            session=session_token,
-        )
         delete_object(
             wallet=wallet,
             cid=cid,
@@ -130,39 +97,6 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
                 endpoint=container_node,
                 session=session_token,
             )
-        head_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=container_node,
-            session=session_token,
-        )
-        search_object(
-            wallet=wallet,
-            cid=cid,
-            shell=client_shell,
-            endpoint=container_node,
-            expected_objects_list=[oid],
-            session=session_token,
-        )
-        get_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=container_node,
-            session=session_token,
-        )
-        get_range(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            range_cut="0:256",
-            shell=client_shell,
-            endpoint=container_node,
-            session=session_token,
-        )
         with pytest.raises(Exception, match=SESSION_NOT_FOUND):
             delete_object(
                 wallet=wallet,
@@ -183,39 +117,6 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
                 endpoint=noncontainer_node,
                 session=session_token,
             )
-        head_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=noncontainer_node,
-            session=session_token,
-        )
-        search_object(
-            wallet=wallet,
-            cid=cid,
-            shell=client_shell,
-            endpoint=noncontainer_node,
-            expected_objects_list=[oid],
-            session=session_token,
-        )
-        get_object(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            shell=client_shell,
-            endpoint=noncontainer_node,
-            session=session_token,
-        )
-        get_range(
-            wallet=wallet,
-            cid=cid,
-            oid=oid,
-            range_cut="0:256",
-            shell=client_shell,
-            endpoint=noncontainer_node,
-            session=session_token,
-        )
         with pytest.raises(Exception, match=SESSION_NOT_FOUND):
             delete_object(
                 wallet=wallet,
