@@ -1,9 +1,12 @@
+import datetime
 import os
+from datetime import datetime, timedelta
 from typing import Optional
 
 import allure
 import s3_gate_bucket
 import s3_gate_object
+from dateutil.parser import parse
 
 
 @allure.step("Expected all objects are presented in the bucket")
@@ -97,8 +100,9 @@ def assert_object_lock_mode(
     bucket: str,
     file_name: str,
     object_lock_mode: str,
-    retain_untile_date,
-    legal_hold_status: str,
+    retain_untile_date: datetime,
+    legal_hold_status: str = "OFF",
+    retain_period: Optional[int] = None,
 ):
     object_dict = s3_gate_object.get_object_s3(s3_client, bucket, file_name, full_output=True)
     assert (
@@ -109,10 +113,17 @@ def assert_object_lock_mode(
     ), f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
     object_retain_date = object_dict.get("ObjectLockRetainUntilDate")
     retain_date = (
-        object_retain_date
-        if isinstance(object_retain_date, str)
-        else object_retain_date.strftime("%Y-%m-%dT%H:%M:%S")
+        parse(object_retain_date) if isinstance(object_retain_date, str) else object_retain_date
     )
-    assert str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S")) in str(
-        retain_date
-    ), f'Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"))}'
+    if retain_untile_date:
+        assert retain_date.strftime("%Y-%m-%dT%H:%M:%S") == retain_untile_date.strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        ), f'Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"))}'
+    elif retain_period:
+        last_modify_date = object_dict.get("LastModified")
+        last_modify = (
+            parse(last_modify_date) if isinstance(last_modify_date, str) else last_modify_date
+        )
+        assert (
+            retain_date - last_modify + timedelta(seconds=1)
+        ).days == retain_period, f"Expected retention period is {retain_period} days"

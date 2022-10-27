@@ -440,6 +440,43 @@ def complete_multipart_upload_s3(
         ) from err
 
 
+@allure.step("Put object retention")
+def put_object_retention(
+    s3_client,
+    bucket_name: str,
+    object_key: str,
+    retention: dict,
+    version_id: Optional[str] = None,
+    bypass_governance_retention: Optional[bool] = None,
+):
+    try:
+        params = {"Bucket": bucket_name, "Key": object_key, "Retention": retention}
+        if version_id:
+            params.update({"VersionId": version_id})
+        if not bypass_governance_retention is None:
+            params.update({"BypassGovernanceRetention": bypass_governance_retention})
+        s3_client.put_object_retention(**params)
+        log_command_execution("S3 Put object retention ", str(retention))
+
+    except ClientError as err:
+        raise Exception(f"Got error during put object tagging: {err}") from err
+
+
+@allure.step("Put object legal hold")
+def put_object_legal_hold(
+    s3_client, bucket_name: str, object_key: str, legal_hold: str, version_id: Optional[str] = None
+):
+    try:
+        params = {"Bucket": bucket_name, "Key": object_key, "LegalHold": {"Status": legal_hold}}
+        if version_id:
+            params.update({"VersionId": version_id})
+        s3_client.put_object_legal_hold(**params)
+        log_command_execution("S3 Put object legal hold ", str(legal_hold))
+
+    except ClientError as err:
+        raise Exception(f"Got error during put object tagging: {err}") from err
+
+
 @allure.step("Put object tagging")
 def put_object_tagging(s3_client, bucket_name: str, object_key: str, tags: list):
     try:

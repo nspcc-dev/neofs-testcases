@@ -206,3 +206,31 @@ def put_bucket_acl_s3(
             f'Error Message: {err.response["Error"]["Message"]}\n'
             f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
         ) from err
+
+
+@allure.step("Put object lock configuration")
+def put_object_lock_configuration(s3_client, bucket: str, configuration: dict):
+    params = {"Bucket": bucket, "ObjectLockConfiguration": configuration}
+    try:
+        response = s3_client.put_object_lock_configuration(**params)
+        log_command_execution("S3 put_object_lock_configuration result", response)
+        return response
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
+
+
+@allure.step("Get object lock configuration")
+def get_object_lock_configuration(s3_client, bucket: str):
+    params = {"Bucket": bucket}
+    try:
+        response = s3_client.get_object_lock_configuration(**params)
+        log_command_execution("S3 get_object_lock_configuration result", response)
+        return response.get("ObjectLockConfiguration")
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
