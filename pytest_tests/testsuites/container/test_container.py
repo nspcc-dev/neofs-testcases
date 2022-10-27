@@ -58,7 +58,7 @@ def test_container_creation(client_shell, prepare_wallet_and_deposit, name):
 
     with allure.step("Delete container and check it was deleted"):
         delete_container(wallet, cid, shell=client_shell)
-        tick_epoch()
+        tick_epoch(shell=client_shell)
         wait_for_container_deletion(wallet, cid, shell=client_shell)
 
 
@@ -92,5 +92,5 @@ def test_container_creation_deletion_parallel(client_shell, prepare_wallet_and_d
     with allure.step("Delete containers and check they were deleted"):
         for cid in cids:
             delete_container(wallet, cid, shell=client_shell)
-        tick_epoch()
+        tick_epoch(shell=client_shell)
         wait_for_container_deletion(wallet, cid, shell=client_shell)

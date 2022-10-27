@@ -154,7 +154,7 @@ class TestHttpGate:
         file_path = generate_file()
         oids = []
 
-        curr_epoch = get_epoch()
+        curr_epoch = get_epoch(client_shell)
         epochs = (curr_epoch, curr_epoch + 1, curr_epoch + 2, curr_epoch + 100)
 
         for epoch in epochs:
@@ -170,7 +170,7 @@ class TestHttpGate:
                 get_via_http_gate(cid=cid, oid=oid)
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
-            tick_epoch()
+            tick_epoch(shell=client_shell)
 
             # Wait for GC, because object with expiration is counted as alive until GC removes it
             wait_for_gc_pass_on_storage_nodes()

@@ -6,7 +6,7 @@ from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE
 from file_helper import generate_file
 from grpc_responses import SESSION_NOT_FOUND
 from neofs_testlib.shell import Shell
-from payment_neogo import _address_from_wallet
+from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import (
     delete_object,
@@ -39,7 +39,7 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
 
     with allure.step("Init wallet"):
         wallet = prepare_wallet_and_deposit
-        address = _address_from_wallet(wallet, "")
+        address = get_last_address_from_wallet(wallet, "")
 
     with allure.step("Nodes Settlements"):
         (

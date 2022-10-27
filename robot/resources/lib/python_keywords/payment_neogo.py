@@ -1,15 +1,14 @@
-#!/usr/bin/python3
-
+import base64
+import json
 import logging
 import re
 import time
+from typing import Optional
 
 import allure
-import contract
-import converters
-import rpc_client
 from common import (
     GAS_HASH,
+    MAINNET_BLOCK_TIME,
     MAINNET_SINGLE_ADDR,
     MAINNET_WALLET_PASS,
     MAINNET_WALLET_PATH,
@@ -18,10 +17,13 @@ from common import (
     NEOFS_CONTRACT,
     NEOGO_EXECUTABLE,
 )
-from converters import load_wallet
-from neo3 import wallet
-from wallet import nep17_transfer
-from wrappers import run_sh_with_passwd_contract
+from neo3 import wallet as neo3_wallet
+from neofs_testlib.blockchain import RPCClient
+from neofs_testlib.cli import NeoGo
+from neofs_testlib.shell import Shell
+from neofs_testlib.utils.converters import contract_hash_to_address
+from neofs_testlib.utils.wallet import get_last_address_from_wallet
+from utility import parse_time
 
 logger = logging.getLogger("NeoLogger")
 
@@ -30,26 +32,46 @@ TX_PERSIST_TIMEOUT = 15  # seconds
 ASSET_POWER_MAINCHAIN = 10**8
 ASSET_POWER_SIDECHAIN = 10**12
 
-morph_rpc_cli = rpc_client.RPCClient(MORPH_ENDPOINT)
-mainnet_rpc_cli = rpc_client.RPCClient(NEO_MAINNET_ENDPOINT)
+morph_rpc_client = RPCClient(MORPH_ENDPOINT)
+mainnet_rpc_client = RPCClient(NEO_MAINNET_ENDPOINT)
+
+
+def get_nns_contract_hash() -> str:
+    rpc_client = RPCClient(MORPH_ENDPOINT)
+    return rpc_client.get_contract_state(1)["hash"]
+
+
+def get_contract_hash(resolve_name: str, shell: Shell) -> str:
+    nns_contract_hash = get_nns_contract_hash()
+    neogo = NeoGo(shell=shell, neo_go_exec_path=NEOGO_EXECUTABLE)
+    out = neogo.contract.testinvokefunction(
+        scripthash=nns_contract_hash,
+        method="resolve",
+        arguments=f"string:{resolve_name} int:16",
+        rpc_endpoint=MORPH_ENDPOINT,
+    )
+    stack_data = json.loads(out.stdout.replace("\n", ""))["stack"][0]["value"]
+    return bytes.decode(base64.b64decode(stack_data[0]["value"]))
 
 
 @allure.step("Withdraw Mainnet Gas")
-def withdraw_mainnet_gas(wlt: str, amount: int):
-    address = _address_from_wallet(wlt, EMPTY_PASSWORD)
-    scripthash = wallet.Account.address_to_script_hash(address)
+def withdraw_mainnet_gas(shell: Shell, wlt: str, amount: int):
+    address = get_last_address_from_wallet(wlt, EMPTY_PASSWORD)
+    scripthash = neo3_wallet.Account.address_to_script_hash(address)
 
-    cmd = (
-        f"{NEOGO_EXECUTABLE} contract invokefunction -w {wlt} -a {address} "
-        f"-r {NEO_MAINNET_ENDPOINT} {NEOFS_CONTRACT} withdraw {scripthash} "
-        f"int:{amount}  -- {scripthash}:Global"
+    neogo = NeoGo(shell=shell, neo_go_exec_path=NEOGO_EXECUTABLE)
+    out = neogo.contract.invokefunction(
+        wallet=wlt,
+        address=address,
+        rpc_endpoint=NEO_MAINNET_ENDPOINT,
+        scripthash=NEOFS_CONTRACT,
+        method="withdraw",
+        arguments=f"{scripthash} int:{amount}",
+        multisig_hash=f"{scripthash}:Global",
+        wallet_password="",
     )
 
-    logger.info(f"Executing command: {cmd}")
-    raw_out = run_sh_with_passwd_contract("", cmd, expect_confirmation=True)
-    out = raw_out.decode("utf-8")
-    logger.info(f"Command completed with output: {out}")
-    m = re.match(r"^Sent invocation transaction (\w{64})$", out)
+    m = re.match(r"^Sent invocation transaction (\w{64})$", out.stdout)
     if m is None:
         raise Exception("Can not get Tx.")
     tx = m.group(1)
@@ -69,7 +91,7 @@ def transaction_accepted(tx_id: str):
     try:
         for _ in range(0, TX_PERSIST_TIMEOUT):
             time.sleep(1)
-            resp = mainnet_rpc_cli.get_transaction_height(tx_id)
+            resp = mainnet_rpc_client.get_transaction_height(tx_id)
             if resp is not None:
                 logger.info(f"TX is accepted in block: {resp}")
                 return True
@@ -80,16 +102,17 @@ def transaction_accepted(tx_id: str):
 
 
 @allure.step("Get NeoFS Balance")
-def get_balance(wallet_path: str):
+def get_balance(shell: Shell, wallet_path: str, wallet_password: str = ""):
     """
     This function returns NeoFS balance for given wallet.
     """
-    wlt = load_wallet(wallet_path)
-    acc = wlt.accounts[-1]
+    with open(wallet_path) as wallet_file:
+        wallet = neo3_wallet.Wallet.from_json(json.load(wallet_file), password=wallet_password)
+    acc = wallet.accounts[-1]
     payload = [{"type": "Hash160", "value": str(acc.script_hash)}]
     try:
-        resp = morph_rpc_cli.invoke_function(
-            contract.get_balance_contract_hash(MORPH_ENDPOINT), "balanceOf", payload
+        resp = morph_rpc_client.invoke_function(
+            get_contract_hash("balance.neofs", shell=shell), "balanceOf", payload
         )
         logger.info(f"Got response \n{resp}")
         value = int(resp["stack"][0]["value"])
@@ -99,81 +122,79 @@ def get_balance(wallet_path: str):
         raise out
 
 
-@allure.step("Transfer Mainnet Gas")
-def transfer_mainnet_gas(
-    wallet_to: str,
+@allure.title("Transfer Gas")
+def transfer_gas(
+    shell: Shell,
     amount: int,
-    wallet_password: str = EMPTY_PASSWORD,
-    wallet_path: str = MAINNET_WALLET_PATH,
+    wallet_from_path: str = MAINNET_WALLET_PATH,
+    wallet_from_password: str = MAINNET_WALLET_PASS,
+    address_from: str = MAINNET_SINGLE_ADDR,
+    address_to: Optional[str] = None,
+    wallet_to_path: Optional[str] = None,
+    wallet_to_password: Optional[str] = None,
 ):
     """
     This function transfer GAS in main chain from mainnet wallet to
     the provided wallet. If the wallet contains more than one address,
     the assets will be transferred to the last one.
     Args:
-        wallet_to (str): the path to the wallet to transfer assets to
-        amount (int): amount of gas to transfer
-        wallet_password (optional, str): password of the wallet; it is
+        shell: Shell instance.
+        wallet_from_password: password of the wallet; it is
             required to decode the wallet and extract its addresses
-        wallet_path (str): path to chain node wallet
+        wallet_from_path: path to chain node wallet
+        address_from: the address of the wallet to transfer assets from
+        wallet_to_path: the path to the wallet to transfer assets to
+        wallet_to_password: the password to the wallet to transfer assets to
+        address_to: the address of the wallet to transfer assets to
+        amount: amount of gas to transfer
     Returns:
         (void)
     """
-    address_to = _address_from_wallet(wallet_to, wallet_password)
+    address_to = address_to or get_last_address_from_wallet(wallet_to_path, wallet_to_password)
 
-    txid = nep17_transfer(
-        wallet_path,
-        address_to,
-        amount,
-        NEO_MAINNET_ENDPOINT,
-        wallet_pass=MAINNET_WALLET_PASS,
-        addr_from=MAINNET_SINGLE_ADDR,
+    neogo = NeoGo(shell, neo_go_exec_path=NEOGO_EXECUTABLE)
+    out = neogo.nep17.transfer(
+        rpc_endpoint=NEO_MAINNET_ENDPOINT,
+        wallet=wallet_from_path,
+        wallet_password=wallet_from_password,
+        amount=amount,
+        from_address=address_from,
+        to_address=address_to,
+        token="GAS",
+        force=True,
     )
+    txid = out.stdout.strip().split("\n")[-1]
+    if len(txid) != 64:
+        raise Exception("Got no TXID after run the command")
     if not transaction_accepted(txid):
         raise AssertionError(f"TX {txid} hasn't been processed")
+    time.sleep(parse_time(MAINNET_BLOCK_TIME))
 
 
 @allure.step("NeoFS Deposit")
-def neofs_deposit(wallet_to: str, amount: int, wallet_password: str = EMPTY_PASSWORD):
+def deposit_gas(shell: Shell, amount: int, wallet_from_path: str, wallet_from_password: str):
     """
     Transferring GAS from given wallet to NeoFS contract address.
     """
     # get NeoFS contract address
-    deposit_addr = converters.contract_hash_to_address(NEOFS_CONTRACT)
+    deposit_addr = contract_hash_to_address(NEOFS_CONTRACT)
     logger.info(f"NeoFS contract address: {deposit_addr}")
-
-    address_to = _address_from_wallet(wallet_to, wallet_password)
-
-    txid = nep17_transfer(
-        wallet_to,
-        deposit_addr,
-        amount,
-        NEO_MAINNET_ENDPOINT,
-        wallet_pass=wallet_password,
-        addr_from=address_to,
+    address_from = get_last_address_from_wallet(
+        wallet_path=wallet_from_path, wallet_password=wallet_from_password
     )
-    if not transaction_accepted(txid):
-        raise AssertionError(f"TX {txid} hasn't been processed")
-
-
-def _address_from_wallet(wlt: str, wallet_password: str):
-    """
-    Extracting the address from the given wallet.
-    Args:
-        wlt (str):  the path to the wallet to extract address from
-        wallet_password (str): the password for the given wallet
-    Returns:
-        (str): the address for the wallet
-    """
-    wallet_loaded = load_wallet(wlt, wallet_password)
-    address = wallet_loaded.accounts[-1].address
-    logger.info(f"got address: {address}")
-    return address
+    transfer_gas(
+        shell=shell,
+        amount=amount,
+        wallet_from_path=wallet_from_path,
+        wallet_from_password=wallet_from_password,
+        address_to=deposit_addr,
+        address_from=address_from,
+    )
 
 
 @allure.step("Get Mainnet Balance")
 def get_mainnet_balance(address: str):
-    resp = mainnet_rpc_cli.get_nep17_balances(address=address)
+    resp = mainnet_rpc_client.get_nep17_balances(address=address)
     logger.info(f"Got getnep17balances response: {resp}")
     for balance in resp["balance"]:
         if balance["assethash"] == GAS_HASH:
@@ -183,7 +204,7 @@ def get_mainnet_balance(address: str):
 
 @allure.step("Get Sidechain Balance")
 def get_sidechain_balance(address: str):
-    resp = morph_rpc_cli.get_nep17_balances(address=address)
+    resp = morph_rpc_client.get_nep17_balances(address=address)
     logger.info(f"Got getnep17balances response: {resp}")
     for balance in resp["balance"]:
         if balance["assethash"] == GAS_HASH:

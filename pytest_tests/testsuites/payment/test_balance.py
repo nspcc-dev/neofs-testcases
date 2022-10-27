@@ -1,13 +1,13 @@
 import logging
 import os
+import uuid
 
 import allure
 import pytest
 import yaml
-from common import ASSETS_DIR, FREE_STORAGE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from common import ASSETS_DIR, FREE_STORAGE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG, WALLET_PASS
 from neofs_testlib.cli import NeofsCli
-from python_keywords.payment_neogo import _address_from_wallet
-from wallet import init_wallet
+from neofs_testlib.utils.wallet import get_last_address_from_wallet, init_wallet
 
 logger = logging.getLogger("NeoLogger")
 DEPOSIT_AMOUNT = 30
@@ -19,8 +19,10 @@ class TestBalanceAccounting:
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, prepare_wallet_and_deposit):
         self.user_wallet = prepare_wallet_and_deposit
-        self.address = _address_from_wallet(self.user_wallet, "")
-        _, self.another_address, _ = init_wallet(ASSETS_DIR)
+        self.address = get_last_address_from_wallet(self.user_wallet, WALLET_PASS)
+        another_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+        init_wallet(another_wallet, WALLET_PASS)
+        self.another_address = get_last_address_from_wallet(another_wallet, WALLET_PASS)
 
     @allure.title("Test balance request with wallet and address")
     def test_balance_wallet_address(self, client_shell):
