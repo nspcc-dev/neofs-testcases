@@ -151,7 +151,7 @@ def test_object_api(prepare_wallet_and_deposit, client_shell, request, object_si
         wallet_path=wallet, cid=cid, oid_ts=tombstone_h, oid=oids[1], shell=client_shell
     )
 
-    tick_epoch()
+    tick_epoch(shell=client_shell)
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step("Get objects and check errors"):
@@ -180,7 +180,7 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, client_shell, request, 
 
     file_path = generate_file(object_size)
     file_hash = get_file_hash(file_path)
-    epoch = get_epoch()
+    epoch = get_epoch(shell=client_shell)
 
     oid = put_object(wallet, file_path, cid, shell=client_shell, expire_at=epoch + 1)
     got_file = get_object(wallet, cid, oid, shell=client_shell)
@@ -188,7 +188,7 @@ def test_object_api_lifetime(prepare_wallet_and_deposit, client_shell, request, 
 
     with allure.step("Tick two epochs"):
         for _ in range(2):
-            tick_epoch()
+            tick_epoch(shell=client_shell)
 
     # Wait for GC, because object with expiration is counted as alive until GC removes it
     wait_for_gc_pass_on_storage_nodes()

@@ -1,25 +1,20 @@
 import logging
 import os
 import shutil
+import uuid
 from datetime import datetime
 
 import allure
 import pytest
-import wallet
 import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
-from common import (
-    ASSETS_DIR,
-    FREE_STORAGE,
-    HOSTING_CONFIG_FILE,
-    MAINNET_WALLET_PATH,
-    NEOFS_NETMAP_DICT,
-)
+from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS
 from env_properties import save_env_properties
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
-from payment_neogo import neofs_deposit, transfer_mainnet_gas
+from neofs_testlib.utils.wallet import init_wallet
+from payment_neogo import deposit_gas, transfer_gas
 from python_keywords.node_management import node_healthcheck
 
 logger = logging.getLogger("NeoLogger")
@@ -112,14 +107,24 @@ def run_health_check(collect_logs, hosting: Hosting):
 
 @pytest.fixture(scope="session")
 @allure.title("Prepare wallet and deposit")
-def prepare_wallet_and_deposit(prepare_tmp_dir):
-    wallet_path, address, _ = wallet.init_wallet(ASSETS_DIR)
-    logger.info(f"Init wallet: {wallet_path}, address: {address}")
+def prepare_wallet_and_deposit(client_shell, prepare_tmp_dir):
+    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+    init_wallet(wallet_path, WALLET_PASS)
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
         deposit = 30
-        transfer_mainnet_gas(wallet_path, deposit + 1, wallet_path=MAINNET_WALLET_PATH)
-        neofs_deposit(wallet_path, deposit)
+        transfer_gas(
+            shell=client_shell,
+            amount=deposit + 1,
+            wallet_to_path=wallet_path,
+            wallet_to_password=WALLET_PASS,
+        )
+        deposit_gas(
+            shell=client_shell,
+            amount=deposit,
+            wallet_from_path=wallet_path,
+            wallet_from_password=WALLET_PASS,
+        )
 
     return wallet_path

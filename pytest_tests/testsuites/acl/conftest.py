@@ -1,3 +1,5 @@
+import os
+import uuid
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -10,12 +12,13 @@ from common import (
     STORAGE_WALLET_CONFIG,
     STORAGE_WALLET_PATH,
     WALLET_CONFIG,
+    WALLET_PASS,
 )
 from file_helper import generate_file
+from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import put_object
-from wallet import init_wallet
 from wellknown_acl import PUBLIC_ACL
 
 OBJECT_COUNT = 5
@@ -40,14 +43,20 @@ class Wallets:
 
 @pytest.fixture(scope="module")
 def wallets(prepare_wallet_and_deposit):
+    other_wallets_paths = [
+        os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json") for _ in range(2)
+    ]
+    for other_wallet_path in other_wallets_paths:
+        init_wallet(other_wallet_path, WALLET_PASS)
+
     yield Wallets(
         wallets={
             EACLRole.USER: [
                 Wallet(wallet_path=prepare_wallet_and_deposit, config_path=WALLET_CONFIG)
             ],
             EACLRole.OTHERS: [
-                Wallet(wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG),
-                Wallet(wallet_path=init_wallet(ASSETS_DIR)[0], config_path=WALLET_CONFIG),
+                Wallet(wallet_path=other_wallet_path, config_path=WALLET_CONFIG)
+                for other_wallet_path in other_wallets_paths
             ],
             EACLRole.SYSTEM: [
                 Wallet(wallet_path=IR_WALLET_PATH, config_path=IR_WALLET_CONFIG),

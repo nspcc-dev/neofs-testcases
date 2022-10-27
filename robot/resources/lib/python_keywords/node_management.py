@@ -174,7 +174,7 @@ def exclude_node_from_network_map(
     node_set_status(hosting, node_to_exclude, status="offline")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=shell)
 
     snapshot = get_netmap_snapshot(node_name=alive_node, shell=shell)
     assert (
@@ -189,7 +189,7 @@ def include_node_to_network_map(
     node_set_status(hosting, node_to_include, status="online")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=shell)
 
     check_node_in_map(node_to_include, shell, alive_node)
 

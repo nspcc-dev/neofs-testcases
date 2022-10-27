@@ -5,12 +5,12 @@ from random import sample
 
 import allure
 import pytest
-from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE
+from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE, WALLET_PASS
 from data_formatters import get_wallet_public_key
 from file_helper import concat_files, generate_file, generate_file_with_content, get_file_hash
-from python_keywords.payment_neogo import neofs_deposit, transfer_mainnet_gas
+from python_keywords.payment_neogo import deposit_gas, transfer_gas
 from s3_helper import assert_object_lock_mode, check_objects_in_bucket, set_bucket_versioning
-from wallet import init_wallet
+from neofs_testlib.utils.wallet import init_wallet
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.aws_cli_client import AwsCliClient
@@ -660,14 +660,27 @@ class TestS3GateObject(TestS3GateBase):
             ], "Tags must be the same"
 
     @pytest.fixture
-    def prepare_two_wallets(self, prepare_wallet_and_deposit):
+    def prepare_two_wallets(self, prepare_wallet_and_deposit, client_shell):
         self.main_wallet = prepare_wallet_and_deposit
-        self.main_public_key = get_wallet_public_key(self.main_wallet, "")
-        self.other_wallet, _, _ = init_wallet(ASSETS_DIR)
-        self.other_public_key = get_wallet_public_key(self.other_wallet, "")
+        self.main_public_key = get_wallet_public_key(self.main_wallet, WALLET_PASS)
+        self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+        init_wallet(self.other_wallet, WALLET_PASS)
+        self.other_public_key = get_wallet_public_key(self.other_wallet, WALLET_PASS)
+
         if not FREE_STORAGE:
-            transfer_mainnet_gas(self.other_wallet, 31)
-            neofs_deposit(self.other_wallet, 30)
+            deposit = 30
+            transfer_gas(
+                shell=client_shell,
+                amount=deposit + 1,
+                wallet_to_path=self.other_wallet,
+                wallet_to_password=WALLET_PASS,
+            )
+            deposit_gas(
+                shell=client_shell,
+                amount=deposit,
+                wallet_from_path=self.other_wallet,
+                wallet_from_password=WALLET_PASS,
+            )
 
     @allure.title("Test S3: put object with ACL")
     @pytest.mark.parametrize("bucket_versioning", ["ENABLED", "SUSPENDED"])
