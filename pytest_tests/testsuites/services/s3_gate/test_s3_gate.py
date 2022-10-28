@@ -273,6 +273,7 @@ class TestS3Gate(TestS3GateBase):
                 got_content == version_2_content
             ), f"Expected object content is\n{version_2_content}\nGot\n{got_content}"
 
+    @pytest.mark.s3_gate_multipart
     @allure.title("Test S3 Object Multipart API")
     def test_s3_api_multipart(self, bucket):
         """
