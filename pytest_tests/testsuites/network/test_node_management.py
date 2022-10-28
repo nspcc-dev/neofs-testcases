@@ -109,7 +109,7 @@ def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = Non
         sleep(parse_time(MORPH_BLOCK_TIME))
         for __attempt in range(3):
             try:
-                tick_epoch()
+                tick_epoch(shell=shell)
                 break
             except RuntimeError:
                 sleep(3)
@@ -212,7 +212,7 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
         node_set_status(hosting, random_node, status="offline")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     with allure.step(f"Check node {random_node} went to offline"):
         health_check = node_healthcheck(hosting, random_node)
@@ -224,7 +224,7 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
         node_set_status(hosting, random_node, status="online")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     with allure.step(f"Check node {random_node} went to online"):
         health_check = node_healthcheck(hosting, random_node)
@@ -348,7 +348,9 @@ def test_placement_policy_negative(
 @pytest.mark.skip(reason="We cover this scenario in failover tests")
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object replication on node failover")
-def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, hosting: Hosting):
+def test_replication(
+        prepare_wallet_and_deposit, client_shell: Shell, after_run_start_all_nodes, hosting: Hosting
+):
     """
     Test checks object replication on storage not failover and come back.
     """
@@ -370,7 +372,7 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, host
     wait_for_expected_object_copies(wallet, cid, oid)
 
     start_nodes(hosting, stopped_nodes)
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     for node_name in node_names:
         wait_for_node_go_online(hosting, node_name)
