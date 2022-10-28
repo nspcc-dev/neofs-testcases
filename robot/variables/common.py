@@ -35,7 +35,7 @@ DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
 WALLET_PASS = os.getenv("WALLET_PASS", "")
 
 # Load node parameters
-LOAD_NODES = os.getenv("LOAD_NODES")
+LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
 LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER")
 LOAD_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("LOAD_NODE_SSH_PRIVATE_KEY_PATH")
 
@@ -122,6 +122,8 @@ BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
 
 HOSTING_CONFIG_FILE = os.getenv("HOSTING_CONFIG_FILE", ".devenv.hosting.yaml")
 STORAGE_NODE_SERVICE_NAME_REGEX = r"s\d\d"
+HTTP_GATE_SERVICE_NAME_REGEX = r"http-gate\d\d"
+S3_GATE_SERVICE_NAME_REGEX = r"s3-gate\d\d"
 
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures

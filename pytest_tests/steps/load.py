@@ -9,10 +9,12 @@ from neofs_testlib.shell import SSHShell
 from k6 import K6, LoadParams, LoadResults
 
 
-@allure.title("Get storage host endpoints")
-def get_storage_host_endpoints(hosting: Hosting) -> list:
-    service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
-    return [service_config.attributes["rpc_endpoint"] for service_config in service_configs]
+@allure.title("Get services endpoints")
+def get_services_endpoints(
+    hosting: Hosting, service_name_regex: str, endpoint_attribute: str
+) -> list[str]:
+    service_configs = hosting.find_service_configs(service_name_regex)
+    return [service_config.attributes[endpoint_attribute] for service_config in service_configs]
 
 
 @allure.title("Clear cache and data from storage nodes")
