@@ -9,6 +9,17 @@ from neofs_testlib.shell import Shell
 from remote_process import RemoteProcess
 
 EXIT_RESULT_CODE = 0
+LOAD_RESULTS_PATTERNS = {
+    "grpc": {
+        "write_ops": r"neofs_obj_put_total\W*\d*\W*(?P<write_ops>\d*\.\d*)",
+        "read_ops": r"neofs_obj_get_total\W*\d*\W*(?P<read_ops>\d*\.\d*)",
+    },
+    "s3": {
+        "write_ops": r"aws_obj_put_total\W*\d*\W*(?P<write_ops>\d*\.\d*)",
+        "read_ops": r"aws_obj_get_total\W*\d*\W*(?P<write_ops>\d*\.\d*)",
+    },
+    "http": {"total_ops": r"http_reqs\W*\d*\W*(?P<total_ops>\d*\.\d*)"},
+}
 
 
 @dataclass
@@ -27,16 +38,11 @@ class LoadParams:
 
 @dataclass
 class LoadResults:
-    latency_write_min: float = 0.0
-    latency_write_max: float = 0.0
-    latency_write_med: float = 0.0
-    latency_write_avg: float = 0.0
-    latency_read_min: float = 0.0
-    latency_read_max: float = 0.0
-    latency_read_med: float = 0.0
-    latency_read_avg: float = 0.0
+    data_sent: float = 0.0
+    data_received: float = 0.0
     read_ops: float = 0.0
     write_ops: float = 0.0
+    total_ops: float = 0.0
 
 
 class K6:
@@ -176,17 +182,10 @@ class K6:
     def parsing_results(self) -> LoadResults:
         output = self._k6_process.stdout(full=True).replace("\n", "")
         metric_regex_map = {
-            "latency_write_min": r"neofs_obj_put_duration.*?min=(?P<latency_write_min>\d*\.\d*)",
-            "latency_write_max": r"neofs_obj_put_duration.*?max=(?P<latency_write_max>\d*\.\d*)",
-            "latency_write_med": r"neofs_obj_put_duration.*?med=(?P<latency_write_med>\d*\.\d*)",
-            "latency_write_avg": r"neofs_obj_put_duration.*?avg=(?P<latency_write_avg>\d*\.\d*)",
-            "write_ops": r"neofs_obj_put_total\W*\d*\W*(?P<write_ops>\d*\.\d*)",
-            "latency_read_min": r"neofs_obj_get_duration.*?min=(?P<latency_read_min>\d*\.\d*)",
-            "latency_read_max": r"neofs_obj_get_duration.*?max=(?P<latency_read_max>\d*\.\d*)",
-            "latency_read_med": r"neofs_obj_get_duration.*?med=(?P<latency_read_med>\d*\.\d*)",
-            "latency_read_avg": r"neofs_obj_get_duration.*?avg=(?P<latency_read_avg>\d*\.\d*)",
-            "read_ops": r"neofs_obj_get_total\W*\d*\W*(?P<read_ops>\d*\.\d*)",
+            "data_received": r"data_received\W*\d*.\d*.\w*\W*(?P<data_received>\d*)",
+            "data_sent": r"data_sent\W*\d*.\d*.\w*\W*(?P<data_sent>\d*)",
         }
+        metric_regex_map.update(LOAD_RESULTS_PATTERNS[self.load_params.load_type])
         metric_values = {}
         for metric_name, metric_regex in metric_regex_map.items():
             match = re.search(metric_regex, output)
