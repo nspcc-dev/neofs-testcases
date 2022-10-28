@@ -369,7 +369,7 @@ def test_replication(
     node_names = [name for name, config in NEOFS_NETMAP_DICT.items() if config.get("rpc") in nodes]
     stopped_nodes = stop_nodes(hosting, 1, node_names)
 
-    wait_for_expected_object_copies(wallet, cid, oid)
+    wait_for_expected_object_copies(client_shell, wallet, cid, oid)
 
     start_nodes(hosting, stopped_nodes)
     tick_epoch(shell=client_shell)
@@ -377,7 +377,7 @@ def test_replication(
     for node_name in node_names:
         wait_for_node_go_online(hosting, node_name)
 
-    wait_for_expected_object_copies(wallet, cid, oid)
+    wait_for_expected_object_copies(client_shell, wallet, cid, oid)
 
 
 @pytest.mark.node_mgmt
@@ -508,13 +508,13 @@ def wait_for_node_to_be_ready(hosting: Hosting, node_name: str) -> None:
 
 @allure.step("Wait for {expected_copies} object copies in the wallet")
 def wait_for_expected_object_copies(
-    wallet: str, cid: str, oid: str, expected_copies: int = 2
+    shell: Shell, wallet: str, cid: str, oid: str, expected_copies: int = 2
 ) -> None:
     for i in range(2):
         copies = get_simple_object_copies(wallet, cid, oid)
         if copies == expected_copies:
             break
-        tick_epoch(shell=client_shell)
+        tick_epoch(shell=shell)
         sleep(parse_time(NEOFS_CONTRACT_CACHE_TIMEOUT))
     else:
         raise AssertionError(f"There are no {expected_copies} copies during time")
