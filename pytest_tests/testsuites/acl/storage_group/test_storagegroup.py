@@ -1,6 +1,6 @@
+import logging
 import os
 import uuid
-import logging
 from typing import Optional
 
 import allure
@@ -168,8 +168,8 @@ class TestStorageGroup:
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         storage_group = put_storagegroup(self.main_wallet, cid, objects, lifetime="1")
-        tick_epoch()
-        tick_epoch()
+        tick_epoch(shell=client_shell)
+        tick_epoch(shell=client_shell)
         with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
             get_storagegroup(self.main_wallet, cid, storage_group)
 

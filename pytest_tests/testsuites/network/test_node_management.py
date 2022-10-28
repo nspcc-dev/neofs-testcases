@@ -109,7 +109,7 @@ def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = Non
         sleep(parse_time(MORPH_BLOCK_TIME))
         for __attempt in range(3):
             try:
-                tick_epoch()
+                tick_epoch(shell=shell)
                 break
             except RuntimeError:
                 sleep(3)
@@ -212,7 +212,7 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
         node_set_status(hosting, random_node, status="offline")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     with allure.step(f"Check node {random_node} went to offline"):
         health_check = node_healthcheck(hosting, random_node)
@@ -224,7 +224,7 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
         node_set_status(hosting, random_node, status="online")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     with allure.step(f"Check node {random_node} went to online"):
         health_check = node_healthcheck(hosting, random_node)
@@ -512,7 +512,7 @@ def wait_for_expected_object_copies(
         copies = get_simple_object_copies(wallet, cid, oid)
         if copies == expected_copies:
             break
-        tick_epoch()
+        tick_epoch(shell=client_shell)
         sleep(parse_time(NEOFS_CONTRACT_CACHE_TIMEOUT))
     else:
         raise AssertionError(f"There are no {expected_copies} copies during time")
