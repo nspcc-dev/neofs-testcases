@@ -348,7 +348,9 @@ def test_placement_policy_negative(
 @pytest.mark.skip(reason="We cover this scenario in failover tests")
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object replication on node failover")
-def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, hosting: Hosting):
+def test_replication(
+        prepare_wallet_and_deposit, client_shell: Shell, after_run_start_all_nodes, hosting: Hosting
+):
     """
     Test checks object replication on storage not failover and come back.
     """
@@ -370,7 +372,7 @@ def test_replication(prepare_wallet_and_deposit, after_run_start_all_nodes, host
     wait_for_expected_object_copies(wallet, cid, oid)
 
     start_nodes(hosting, stopped_nodes)
-    tick_epoch()
+    tick_epoch(shell=client_shell)
 
     for node_name in node_names:
         wait_for_node_go_online(hosting, node_name)
