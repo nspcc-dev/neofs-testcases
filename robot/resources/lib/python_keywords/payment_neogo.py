@@ -139,16 +139,14 @@ def transfer_gas(
     the assets will be transferred to the last one.
     Args:
         shell: Shell instance.
-        wallet_from_password: password of the wallet; it is
-            required to decode the wallet and extract its addresses
-        wallet_from_path: path to chain node wallet
-        address_from: the address of the wallet to transfer assets from
-        wallet_to_path: the path to the wallet to transfer assets to
-        wallet_to_password: the password to the wallet to transfer assets to
-        address_to: the address of the wallet to transfer assets to
-        amount: amount of gas to transfer
-    Returns:
-        (void)
+        wallet_from_password: Password of the wallet; it is required to decode the wallet
+            and extract its addresses.
+        wallet_from_path: Path to chain node wallet.
+        address_from: The address of the wallet to transfer assets from.
+        wallet_to_path: The path to the wallet to transfer assets to.
+        wallet_to_password: The password to the wallet to transfer assets to.
+        address_to: The address of the wallet to transfer assets to.
+        amount: Amount of gas to transfer.
     """
     address_to = address_to or get_last_address_from_wallet(wallet_to_path, wallet_to_password)
 

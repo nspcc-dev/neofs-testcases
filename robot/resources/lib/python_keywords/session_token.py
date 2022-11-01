@@ -6,8 +6,9 @@ import uuid
 
 import allure
 import json_transformers
-from cli_helpers import _cmd_run, _run_with_passwd
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from neofs_testlib.cli import NeofsCli
+from neofs_testlib.shell import Shell
 from neo3 import wallet
 
 logger = logging.getLogger("NeoLogger")
@@ -70,39 +71,52 @@ def generate_session_token(owner: str, session_wallet: str, cid: str = "") -> st
 
 
 @allure.step("Create Session Token")
-def create_session_token(owner: str, wallet_path: str, rpc: str = NEOFS_ENDPOINT):
+def create_session_token(
+    shell: Shell,
+    owner: str,
+    wallet_path: str,
+    wallet_password: str,
+    rpc_endpoint: str = NEOFS_ENDPOINT,
+) -> str:
     """
     Create session token for an object.
     Args:
-        owner(str): user that writes the token
-        session_wallet(str): the path to wallet to which we grant the
-                    access via session token
+        shell: Shell instance.
+        owner: User that writes the token.
+        wallet_path: The path to wallet to which we grant the access via session token.
+        wallet_password: Wallet password.
+        rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
     Returns:
-        (str): the path to the generated session token file
+        The path to the generated session token file.
     """
     session_token = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
-    cmd = (
-        f"{NEOFS_CLI_EXEC} session create --address {owner} -w {wallet_path} "
-        f"--out {session_token} --rpc-endpoint {rpc}"
+    neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC)
+    neofscli.session.create(
+        rpc_endpoint=rpc_endpoint,
+        address=owner,
+        wallet=wallet_path,
+        wallet_password=wallet_password,
+        out=session_token,
     )
-    _run_with_passwd(cmd)
     return session_token
 
 
 @allure.step("Sign Session Token")
-def sign_session_token(session_token: str, wlt: str):
+def sign_session_token(shell: Shell, session_token_file: str, wlt: str) -> str:
     """
     This function signs the session token by the given wallet.
+
     Args:
-        session_token(str): the path to the session token file
-        wlt(str): the path to the signing wallet
+        shell: Shell instance.
+        session_token_file: The path to the session token file.
+        wlt: The path to the signing wallet.
+
     Returns:
-        (str): the path to the signed token
+        The path to the signed token.
     """
-    signed_token = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
-    cmd = (
-        f"{NEOFS_CLI_EXEC} util sign session-token --from {session_token} "
-        f"-w {wlt} --to {signed_token} --config {WALLET_CONFIG}"
+    signed_token_file = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
+    neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
+    neofscli.util.sign_session_token(
+        wallet=wlt, from_file=session_token_file, to_file=signed_token_file
     )
-    _cmd_run(cmd)
-    return signed_token
+    return signed_token_file
