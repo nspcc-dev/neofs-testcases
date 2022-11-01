@@ -281,6 +281,8 @@ def search_object(
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
+    phy: bool = False,
+    root: bool = False,
 ) -> list:
     """
     SEARCH an Object.
@@ -296,6 +298,9 @@ def search_object(
         wallet_config(optional, str): path to the wallet config
         xhdr (optional, dict): Request X-Headers in form of Key=Value
         session (optional, dict): path to a JSON-encoded container session token
+        phy: Search physically stored objects.
+        root: Search for user objects.
+
     Returns:
         (list): list of found ObjectIDs
     """
@@ -311,6 +316,8 @@ def search_object(
         if filters
         else None,
         session=session,
+        phy=phy,
+        root=root,
     )
 
     found_objects = re.findall(r"(\w{43,44})", output.stdout)
@@ -328,6 +335,55 @@ def search_object(
             )
 
     return found_objects
+
+
+@allure.step("Get netmap netinfo")
+def get_netmap_netinfo(
+    wallet: str,
+    shell: Shell,
+    wallet_config: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    address: Optional[str] = None,
+    ttl: Optional[int] = None,
+    xhdr: Optional[dict] = None,
+) -> dict[str, object]:
+    """
+    Get netmap netinfo output from node
+
+    Args:
+        wallet (str): wallet on whose behalf SEARCH is done
+        shell: executor for cli command
+        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        address: Address of wallet account
+        ttl: TTL value in request meta header (default 2)
+        wallet: Path to the wallet or binary key
+        xhdr: Request X-Headers in form of Key=Value
+
+    Returns:
+        (dict): dict of parsed command output
+    """
+
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
+    output = cli.netmap.netinfo(
+        wallet=wallet,
+        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        address=address,
+        ttl=ttl,
+        xhdr=xhdr,
+    )
+
+    settings = dict()
+
+    patterns = [
+        (re.compile("(.*): (\d+)"), int),
+        (re.compile("(.*): (false|true)"), bool),
+        (re.compile("(.*): (\d+\.\d+)"), float),
+    ]
+    for pattern, func in patterns:
+        for setting, value in re.findall(pattern, output.stdout):
+            settings[setting.lower().strip().replace(" ", "_")] = func(value)
+
+    return settings
 
 
 @allure.step("Head object")
@@ -355,7 +411,7 @@ def head_object(
         shell: executor for cli command
         bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
         endpoint(optional, str): NeoFS endpoint to send request to
-        json_output(optional, bool): return reponse in JSON format or not; this flag
+        json_output(optional, bool): return response in JSON format or not; this flag
                                     turns into `--json` key
         is_raw(optional, bool): send "raw" request or not; this flag
                                     turns into `--raw` key

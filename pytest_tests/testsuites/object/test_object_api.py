@@ -1,16 +1,21 @@
 import logging
+import random
+import sys
+from dataclasses import dataclass
 from time import sleep
 
 import allure
 import pytest
 from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from container import create_container
-from epoch import get_epoch, tick_epoch
+from epoch import tick_epoch
 from file_helper import generate_file, get_file_content, get_file_hash
-from grpc_responses import OBJECT_ALREADY_REMOVED, OBJECT_NOT_FOUND, error_matches_status
+from grpc_responses import OBJECT_ALREADY_REMOVED, OUT_OF_RANGE, error_matches_status
 from neofs_testlib.shell import Shell
+from pytest import FixtureRequest
 from python_keywords.neofs_verbs import (
     delete_object,
+    get_netmap_netinfo,
     get_object,
     get_range,
     get_range_hash,
@@ -20,182 +25,479 @@ from python_keywords.neofs_verbs import (
 )
 from python_keywords.storage_policy import get_complex_object_copies, get_simple_object_copies
 from tombstone import verify_head_tombstone
-from utility import wait_for_gc_pass_on_storage_nodes
 
 logger = logging.getLogger("NeoLogger")
 
 CLEANUP_TIMEOUT = 10
+COMMON_ATTRIBUTE = {"common_key": "common_value"}
+# Will upload object for each attribute set
+OBJECT_ATTRIBUTES = [
+    None,
+    {"key1": 1, "key2": "abc", "common_key": "common_value"},
+    {"key1": 2, "common_key": "common_value"},
+]
+
+# Config for Range tests
+RANGES_COUNT = 4  # by quarters
+RANGE_MIN_LEN = 10
+RANGE_MAX_LEN = 500
+# Used for static ranges found with issues
+STATIC_RANGES = {
+    SIMPLE_OBJ_SIZE: [],
+    COMPLEX_OBJ_SIZE: [],
+}
 
 
-@allure.title("Test native object API")
-@pytest.mark.sanity
-@pytest.mark.grpc_api
-@pytest.mark.parametrize(
-    "object_size", [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=["simple object", "complex object"]
-)
-def test_object_api(prepare_wallet_and_deposit, client_shell, request, object_size):
-    """
-    Test common gRPC API for object (put/get/head/get_range_hash/get_range/search/delete).
-    """
-    allure.dynamic.title(f"Test native object API for {request.node.callspec.id}")
+@dataclass
+class StorageObjectInfo:
+    size: str = None
+    cid: str = None
+    wallet: str = None
+    file_path: str = None
+    file_hash: str = None
+    attributes: list[dict[str, str]] = None
+    oid: str = None
+    tombstone: str = None
 
-    wallet = prepare_wallet_and_deposit
-    cid = create_container(wallet, shell=client_shell)
-    wallet_cid = {"wallet": wallet, "cid": cid}
-    file_usr_header = {"key1": 1, "key2": "abc", "common_key": "common_value"}
-    file_usr_header_oth = {"key1": 2, "common_key": "common_value"}
-    common_header = {"common_key": "common_value"}
-    range_offset = 0
-    range_len = 10
-    range_cut = f"{range_offset}:{range_len}"
-    file_path = generate_file(object_size)
-    file_hash = get_file_hash(file_path)
 
-    with allure.step("Check container is empty"):
-        search_object(**wallet_cid, expected_objects_list=[], shell=client_shell)
+def generate_ranges(file_size: int, max_object_size: int) -> list[(int, int)]:
+    file_range_step = file_size / RANGES_COUNT
 
-    oids = []
-    with allure.step("Put objects"):
-        oids.append(put_object(wallet=wallet, path=file_path, cid=cid, shell=client_shell))
-        oids.append(
-            put_object(
-                wallet=wallet,
-                path=file_path,
-                cid=cid,
-                shell=client_shell,
-                attributes=file_usr_header,
-            )
-        )
-        oids.append(
-            put_object(
-                wallet=wallet,
-                path=file_path,
-                cid=cid,
-                shell=client_shell,
-                attributes=file_usr_header_oth,
-            )
-        )
+    file_ranges = []
+    file_ranges_to_test = []
 
-    with allure.step("Validate storage policy for objects"):
-        for oid_to_check in oids:
-            if object_size == SIMPLE_OBJ_SIZE:
-                copies = get_simple_object_copies(
-                    wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell
-                )
-            else:
-                copies = get_complex_object_copies(
-                    wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell
-                )
-            assert copies == 2, "Expected 2 copies"
+    for i in range(0, RANGES_COUNT):
+        file_ranges.append((int(file_range_step * i), int(file_range_step * (i + 1))))
 
-    with allure.step("Get objects and compare hashes"):
-        for oid_to_check in oids:
-            got_file_path = get_object(wallet=wallet, cid=cid, oid=oid_to_check, shell=client_shell)
-            got_file_hash = get_file_hash(got_file_path)
-            assert file_hash == got_file_hash
-
-    with allure.step("Get range/range hash"):
-        range_hash = get_range_hash(
-            **wallet_cid, oid=oids[0], shell=client_shell, range_cut=range_cut
-        )
+    # For simple object we can read all file ranges without too much time for testing
+    if file_size == SIMPLE_OBJ_SIZE:
+        file_ranges_to_test.extend(file_ranges)
+    # For complex object we need to fetch multiple child objects from different nodes.
+    if file_size == COMPLEX_OBJ_SIZE:
         assert (
-            get_file_hash(file_path, range_len, range_offset) == range_hash
-        ), f"Expected range hash to match {range_cut} slice of file payload"
+            file_size >= RANGE_MAX_LEN + max_object_size
+        ), f"Complex object size should be at least {max_object_size + RANGE_MAX_LEN}. Current: {file_size}"
+        file_ranges_to_test.append((RANGE_MAX_LEN, RANGE_MAX_LEN + max_object_size))
 
-        range_hash = get_range_hash(
-            **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
-        )
-        assert (
-            get_file_hash(file_path, range_len, range_offset) == range_hash
-        ), f"Expected range hash to match {range_cut} slice of file payload"
+    # Special cases to read some bytes from start and some bytes from end of object
+    file_ranges_to_test.append((0, RANGE_MIN_LEN))
+    file_ranges_to_test.append((file_size - RANGE_MIN_LEN, file_size))
 
-        _, range_content = get_range(
-            **wallet_cid, oid=oids[1], shell=client_shell, range_cut=range_cut
-        )
-        assert (
-            get_file_content(file_path, content_len=range_len, mode="rb", offset=range_offset)
-            == range_content
-        ), f"Expected range content to match {range_cut} slice of file payload"
+    for start, end in file_ranges:
+        range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
+        range_start = random.randint(start, end)
 
-    with allure.step("Search objects"):
-        search_object(**wallet_cid, shell=client_shell, expected_objects_list=oids)
-        search_object(
-            **wallet_cid,
-            shell=client_shell,
-            filters=file_usr_header,
-            expected_objects_list=oids[1:2],
-        )
-        search_object(
-            **wallet_cid,
-            shell=client_shell,
-            filters=file_usr_header_oth,
-            expected_objects_list=oids[2:3],
-        )
-        search_object(
-            **wallet_cid, shell=client_shell, filters=common_header, expected_objects_list=oids[1:3]
-        )
+        file_ranges_to_test.append((range_start, min(range_start + range_length, file_size)))
 
-    with allure.step("Head object and validate"):
-        head_object(**wallet_cid, oid=oids[0], shell=client_shell)
-        head_info = head_object(**wallet_cid, oid=oids[1], shell=client_shell)
-        check_header_is_presented(head_info, file_usr_header)
+    file_ranges_to_test.extend(STATIC_RANGES[file_size])
 
+    return file_ranges_to_test
+
+
+def delete_objects(storage_objects: list, client_shell: Shell) -> None:
     with allure.step("Delete objects"):
-        tombstone_s = delete_object(**wallet_cid, oid=oids[0], shell=client_shell)
-        tombstone_h = delete_object(**wallet_cid, oid=oids[1], shell=client_shell)
-
-    verify_head_tombstone(
-        wallet_path=wallet, cid=cid, oid_ts=tombstone_s, oid=oids[0], shell=client_shell
-    )
-    verify_head_tombstone(
-        wallet_path=wallet, cid=cid, oid_ts=tombstone_h, oid=oids[1], shell=client_shell
-    )
+        for storage_object in storage_objects:
+            storage_object.tombstone = delete_object(
+                storage_object.wallet, storage_object.cid, storage_object.oid, client_shell
+            )
+            verify_head_tombstone(
+                wallet_path=storage_object.wallet,
+                cid=storage_object.cid,
+                oid_ts=storage_object.tombstone,
+                oid=storage_object.oid,
+                shell=client_shell,
+            )
 
     tick_epoch(shell=client_shell)
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step("Get objects and check errors"):
-        get_object_and_check_error(
-            **wallet_cid, oid=oids[0], error_pattern=OBJECT_ALREADY_REMOVED, shell=client_shell
-        )
-        get_object_and_check_error(
-            **wallet_cid, oid=oids[1], error_pattern=OBJECT_ALREADY_REMOVED, shell=client_shell
-        )
+        for storage_object in storage_objects:
+            get_object_and_check_error(
+                storage_object.wallet,
+                storage_object.cid,
+                storage_object.oid,
+                error_pattern=OBJECT_ALREADY_REMOVED,
+                shell=client_shell,
+            )
 
 
-@allure.title("Test object life time")
+@pytest.fixture(
+    params=[SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE],
+    ids=["simple object", "complex object"],
+    # Scope session to upload/delete each files set only once
+    scope="session",
+)
+def storage_objects(
+    prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest
+) -> list[StorageObjectInfo]:
+    wallet = prepare_wallet_and_deposit
+    # Separate containers for complex/simple objects to avoid side-effects
+    cid = create_container(wallet, shell=client_shell)
+
+    file_path = generate_file(request.param)
+    file_hash = get_file_hash(file_path)
+
+    storage_objects = []
+
+    with allure.step("Put objects"):
+        # We need to upload objects multiple times with different attributes
+        for attributes in OBJECT_ATTRIBUTES:
+            storage_object = StorageObjectInfo()
+            storage_object.size = request.param
+            storage_object.cid = cid
+            storage_object.wallet = wallet
+            storage_object.file_path = file_path
+            storage_object.file_hash = file_hash
+            storage_object.attributes = attributes
+            storage_object.oid = put_object(
+                wallet=wallet,
+                path=file_path,
+                cid=cid,
+                shell=client_shell,
+                attributes=attributes,
+            )
+
+            storage_objects.append(storage_object)
+
+    yield storage_objects
+
+    # Teardown after all tests done with current param
+    delete_objects(storage_objects, client_shell)
+
+
+@allure.title("Validate object storage policy by native API")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_object_storage_policies(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate object storage policy
+    """
+    allure.dynamic.title(
+        f"Validate object storage policy by native API for {request.node.callspec.id}"
+    )
+
+    with allure.step("Validate storage policy for objects"):
+        for storage_object in storage_objects:
+            if storage_object.size == SIMPLE_OBJ_SIZE:
+                copies = get_simple_object_copies(
+                    storage_object.wallet,
+                    storage_object.cid,
+                    storage_object.oid,
+                    shell=client_shell,
+                )
+            else:
+                copies = get_complex_object_copies(
+                    storage_object.wallet,
+                    storage_object.cid,
+                    storage_object.oid,
+                    shell=client_shell,
+                )
+            assert copies == 2, "Expected 2 copies"
+
+
+@allure.title("Validate get object native API")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_get_object_api(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate get object native API
+    """
+    allure.dynamic.title(f"Validate get object native API for {request.node.callspec.id}")
+
+    with allure.step("Get objects and compare hashes"):
+        for storage_object in storage_objects:
+            file_path = get_object(
+                storage_object.wallet, storage_object.cid, storage_object.oid, client_shell
+            )
+            file_hash = get_file_hash(file_path)
+            assert storage_object.file_hash == file_hash
+
+
+@allure.title("Validate head object native API")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_head_object_api(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate head object native API
+    """
+    allure.dynamic.title(f"Validate head object by native API for {request.node.callspec.id}")
+
+    storage_object_1 = storage_objects[0]
+    storage_object_2 = storage_objects[1]
+
+    with allure.step("Head object and validate"):
+        head_object(
+            storage_object_1.wallet, storage_object_1.cid, storage_object_1.oid, shell=client_shell
+        )
+        head_info = head_object(
+            storage_object_2.wallet, storage_object_2.cid, storage_object_2.oid, shell=client_shell
+        )
+        check_header_is_presented(head_info, storage_object_2.attributes)
+
+
+@allure.title("Validate object search by native API")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_search_object_api(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate object search by native API
+    """
+    allure.dynamic.title(f"Validate object search by native API for {request.node.callspec.id}")
+
+    oids = [storage_object.oid for storage_object in storage_objects]
+    wallet = storage_objects[0].wallet
+    cid = storage_objects[0].cid
+
+    test_table = [
+        (OBJECT_ATTRIBUTES[1], oids[1:2]),
+        (OBJECT_ATTRIBUTES[2], oids[2:3]),
+        (COMMON_ATTRIBUTE, oids[1:3]),
+    ]
+
+    with allure.step("Search objects"):
+        # Search with no attributes
+        result = search_object(
+            wallet, cid, shell=client_shell, expected_objects_list=oids, root=True
+        )
+        assert sorted(oids) == sorted(result)
+
+        # search by test table
+        for filter, expected_oids in test_table:
+            result = search_object(
+                wallet,
+                cid,
+                shell=client_shell,
+                filters=filter,
+                expected_objects_list=expected_oids,
+                root=True,
+            )
+            assert sorted(expected_oids) == sorted(result)
+
+
+@allure.title("Validate object search with removed items")
 @pytest.mark.sanity
 @pytest.mark.grpc_api
 @pytest.mark.parametrize(
     "object_size", [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=["simple object", "complex object"]
 )
-def test_object_api_lifetime(prepare_wallet_and_deposit, client_shell, request, object_size):
+def test_object_search_should_return_tombstone_items(
+    prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest, object_size: int
+):
     """
-    Test object deleted after expiration epoch.
+    Validate object search with removed items
     """
+    allure.dynamic.title(
+        f"Validate object search with removed items for {request.node.callspec.id}"
+    )
+
     wallet = prepare_wallet_and_deposit
     cid = create_container(wallet, shell=client_shell)
 
-    allure.dynamic.title(f"Test object life time for {request.node.callspec.id}")
+    with allure.step("Upload file"):
+        file_path = generate_file(object_size)
+        file_hash = get_file_hash(file_path)
 
-    file_path = generate_file(object_size)
-    file_hash = get_file_hash(file_path)
-    epoch = get_epoch(shell=client_shell)
+        storage_object = StorageObjectInfo(
+            size=object_size,
+            cid=cid,
+            wallet=wallet,
+            file_path=file_path,
+            file_hash=file_hash,
+            oid=put_object(wallet, file_path, cid, shell=client_shell),
+        )
 
-    oid = put_object(wallet, file_path, cid, shell=client_shell, expire_at=epoch + 1)
-    got_file = get_object(wallet, cid, oid, shell=client_shell)
-    assert get_file_hash(got_file) == file_hash
+    with allure.step("Search object"):
+        # Root Search object should return root object oid
+        result = search_object(wallet, cid, shell=client_shell, root=True)
+        assert result == [storage_object.oid]
 
-    with allure.step("Tick two epochs"):
-        for _ in range(2):
-            tick_epoch(shell=client_shell)
+    with allure.step("Delete file"):
+        delete_objects([storage_object], client_shell)
 
-    # Wait for GC, because object with expiration is counted as alive until GC removes it
-    wait_for_gc_pass_on_storage_nodes()
+    with allure.step("Search deleted object with --root"):
+        # Root Search object should return nothing
+        result = search_object(wallet, cid, shell=client_shell, root=True)
+        assert len(result) == 0
 
-    with allure.step("Check object deleted because it expires-on epoch"):
-        with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
-            get_object(wallet, cid, oid, shell=client_shell)
+    with allure.step("Search deleted object with --phy should return only tombstones"):
+        # Physical Search object should return only tombstones
+        result = search_object(wallet, cid, shell=client_shell, phy=True)
+        assert (
+            storage_object.tombstone in result
+        ), f"Search result should contain tombstone of removed object"
+        assert (
+            storage_object.oid not in result
+        ), f"Search result should not contain ObjectId of removed object"
+        for tombstone_oid in result:
+            header = head_object(wallet, cid, tombstone_oid, shell=client_shell)["header"]
+            object_type = header["objectType"]
+            assert (
+                object_type == "TOMBSTONE"
+            ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
+
+
+@allure.title("Validate native object API get_range_hash")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_object_get_range_hash(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate get_range_hash for object by common gRPC API
+    """
+    allure.dynamic.title(
+        f"Validate native get_range_hash object API for {request.node.callspec.id}"
+    )
+
+    wallet = storage_objects[0].wallet
+    cid = storage_objects[0].cid
+    oids = [storage_object.oid for storage_object in storage_objects[:2]]
+    file_path = storage_objects[0].file_path
+    net_info = get_netmap_netinfo(wallet, client_shell)
+    max_object_size = net_info["maximum_object_size"]
+
+    file_ranges_to_test = generate_ranges(storage_objects[0].size, max_object_size)
+    logging.info(f"Ranges used in test {file_ranges_to_test}")
+
+    for range_start, range_end in file_ranges_to_test:
+        range_len = range_end - range_start
+        range_cut = f"{range_start}:{range_len}"
+        with allure.step(f"Get range hash ({range_cut})"):
+            for oid in oids:
+                range_hash = get_range_hash(
+                    wallet, cid, oid, shell=client_shell, range_cut=range_cut
+                )
+                assert (
+                    get_file_hash(file_path, range_len, range_start) == range_hash
+                ), f"Expected range hash to match {range_cut} slice of file payload"
+
+
+@allure.title("Validate native object API get_range")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_object_get_range(
+    client_shell: Shell, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
+):
+    """
+    Validate get_range for object by common gRPC API
+    """
+    allure.dynamic.title(f"Validate native get_range object API for {request.node.callspec.id}")
+
+    wallet = storage_objects[0].wallet
+    cid = storage_objects[0].cid
+    oids = [storage_object.oid for storage_object in storage_objects[:2]]
+    file_path = storage_objects[0].file_path
+    net_info = get_netmap_netinfo(wallet, client_shell)
+    max_object_size = net_info["maximum_object_size"]
+
+    file_ranges_to_test = generate_ranges(storage_objects[0].size, max_object_size)
+    logging.info(f"Ranges used in test {file_ranges_to_test}")
+
+    for range_start, range_end in file_ranges_to_test:
+        range_len = range_end - range_start
+        range_cut = f"{range_start}:{range_len}"
+        with allure.step(f"Get range ({range_cut})"):
+            for oid in oids:
+                _, range_content = get_range(
+                    wallet, cid, oid, shell=client_shell, range_cut=range_cut
+                )
+                assert (
+                    get_file_content(
+                        file_path, content_len=range_len, mode="rb", offset=range_start
+                    )
+                    == range_content
+                ), f"Expected range content to match {range_cut} slice of file payload"
+
+
+@allure.title("Validate native object API get_range negative cases")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_object_get_range_negatives(
+    client_shell: Shell,
+    request: FixtureRequest,
+    storage_objects: list[StorageObjectInfo],
+):
+    """
+    Validate get_range negative for object by common gRPC API
+    """
+    allure.dynamic.title(
+        f"Validate native get_range negative object API for {request.node.callspec.id}"
+    )
+
+    wallet = storage_objects[0].wallet
+    cid = storage_objects[0].cid
+    oids = [storage_object.oid for storage_object in storage_objects[:2]]
+    file_size = storage_objects[0].size
+
+    assert (
+        RANGE_MIN_LEN < file_size
+    ), f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+
+    file_ranges_to_test = [
+        # Offset is bigger than the file size, the length is small.
+        (file_size + 1, RANGE_MIN_LEN),
+        # Offset is ok, but offset+length is too big.
+        (file_size - RANGE_MIN_LEN, RANGE_MIN_LEN * 2),
+        # Offset is ok, and length is very-very big (e.g. MaxUint64) so that offset+length is wrapped and still "valid".
+        (RANGE_MIN_LEN, sys.maxsize * 2 + 1),
+    ]
+
+    for range_start, range_len in file_ranges_to_test:
+        range_cut = f"{range_start}:{range_len}"
+        with allure.step(f"Get range ({range_cut})"):
+            for oid in oids:
+                with pytest.raises(Exception, match=OUT_OF_RANGE):
+                    get_range(wallet, cid, oid, shell=client_shell, range_cut=range_cut)
+
+
+@allure.title("Validate native object API get_range_hash negative cases")
+@pytest.mark.sanity
+@pytest.mark.grpc_api
+def test_object_get_range_hash_negatives(
+    client_shell: Shell,
+    request: FixtureRequest,
+    storage_objects: list[StorageObjectInfo],
+):
+    """
+    Validate get_range_hash negative for object by common gRPC API
+    """
+    allure.dynamic.title(
+        f"Validate native get_range_hash negative object API for {request.node.callspec.id}"
+    )
+
+    wallet = storage_objects[0].wallet
+    cid = storage_objects[0].cid
+    oids = [storage_object.oid for storage_object in storage_objects[:2]]
+    file_size = storage_objects[0].size
+
+    assert (
+        RANGE_MIN_LEN < file_size
+    ), f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+
+    file_ranges_to_test = [
+        # Offset is bigger than the file size, the length is small.
+        (file_size + 1, RANGE_MIN_LEN),
+        # Offset is ok, but offset+length is too big.
+        (file_size - RANGE_MIN_LEN, RANGE_MIN_LEN * 2),
+        # Offset is ok, and length is very-very big (e.g. MaxUint64) so that offset+length is wrapped and still "valid".
+        (RANGE_MIN_LEN, sys.maxsize * 2 + 1),
+    ]
+
+    for range_start, range_len in file_ranges_to_test:
+        range_cut = f"{range_start}:{range_len}"
+        with allure.step(f"Get range ({range_cut})"):
+            for oid in oids:
+                with pytest.raises(Exception, match=OUT_OF_RANGE):
+                    get_range_hash(wallet, cid, oid, shell=client_shell, range_cut=range_cut)
 
 
 def get_object_and_check_error(
@@ -209,7 +511,7 @@ def get_object_and_check_error(
         assert error_matches_status(err, error_pattern), f"Expected {err} to match {error_pattern}"
 
 
-def check_header_is_presented(head_info: dict, object_header: dict):
+def check_header_is_presented(head_info: dict, object_header: dict) -> None:
     for key_to_check, val_to_check in object_header.items():
         assert (
             key_to_check in head_info["header"]["attributes"]
