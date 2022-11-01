@@ -59,7 +59,7 @@ def create_container(
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-    output = cli.container.create(
+    result = cli.container.create(
         rpc_endpoint=NEOFS_ENDPOINT,
         wallet=session_wallet if session_wallet else wallet,
         policy=rule,
@@ -71,7 +71,7 @@ def create_container(
         **options or {},
     )
 
-    cid = _parse_cid(output.stdout)
+    cid = _parse_cid(result.stdout)
 
     logger.info("Container created; waiting until it is persisted in the sidechain")
 
@@ -122,9 +122,9 @@ def list_containers(wallet: str, shell: Shell) -> list[str]:
         (list): list of containers
     """
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-    output = cli.container.list(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet)
+    result = cli.container.list(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet)
     logger.info(f"Containers: \n{output}")
-    return output.stdout.split()
+    return result.stdout.split()
 
 
 @allure.step("Get Container")
@@ -146,14 +146,14 @@ def get_container(
         (dict, str): dict of container attributes
     """
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-    output = cli.container.get(
+    result = cli.container.get(
         rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet, cid=cid, json_mode=json_mode
     )
 
     if not json_mode:
-        return output.stdout
+        return result.stdout
 
-    container_info = json.loads(output.stdout)
+    container_info = json.loads(result.stdout)
     attributes = dict()
     for attr in container_info["attributes"]:
         attributes[attr["key"]] = attr["value"]

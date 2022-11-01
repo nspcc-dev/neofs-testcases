@@ -2,20 +2,13 @@ import random
 
 import allure
 import pytest
-from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE
+from common import COMPLEX_OBJ_SIZE, NEOFS_NETMAP_DICT, SIMPLE_OBJ_SIZE, WALLET_PASS
 from file_helper import generate_file
 from grpc_responses import SESSION_NOT_FOUND
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from python_keywords.container import create_container
-from python_keywords.neofs_verbs import (
-    delete_object,
-    get_object,
-    get_range,
-    head_object,
-    put_object,
-    search_object,
-)
+from python_keywords.neofs_verbs import delete_object, put_object
 from python_keywords.session_token import create_session_token
 
 
@@ -32,9 +25,12 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
 
     Steps:
     1. Create a private container
-    2. Obj operation requests to the node which IS NOT in the container but granted with a session token
-    3. Obj operation requests to the node which IS in the container and NOT granted with a session token
-    4. Obj operation requests to the node which IS NOT in the container and NOT granted with a session token
+    2. Obj operation requests to the node which IS NOT in the container but granted
+        with a session token
+    3. Obj operation requests to the node which IS in the container and NOT granted
+        with a session token
+    4. Obj operation requests to the node which IS NOT in the container and NOT granted
+        with a session token
     """
 
     with allure.step("Init wallet"):
@@ -52,7 +48,13 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
         noncontainer_node = NEOFS_NETMAP_DICT[noncontainer_node_name]["rpc"]
 
     with allure.step("Create Session Token"):
-        session_token = create_session_token(address, wallet, rpc=session_token_node)
+        session_token = create_session_token(
+            shell=client_shell,
+            owner=address,
+            wallet_path=wallet,
+            wallet_password=WALLET_PASS,
+            rpc_endpoint=session_token_node,
+        )
 
     with allure.step("Create Private Container"):
         un_locode = NEOFS_NETMAP_DICT[container_node_name]["UN-LOCODE"]

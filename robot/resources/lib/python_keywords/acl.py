@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from cli_helpers import _cmd_run
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from neofs_testlib.cli import NeofsCli
@@ -120,14 +119,14 @@ class EACLRule:
 def get_eacl(wallet_path: str, cid: str, shell: Shell) -> Optional[str]:
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     try:
-        output = cli.container.get_eacl(wallet=wallet_path, rpc_endpoint=NEOFS_ENDPOINT, cid=cid)
+        result = cli.container.get_eacl(wallet=wallet_path, rpc_endpoint=NEOFS_ENDPOINT, cid=cid)
     except RuntimeError as exc:
         logger.info("Extended ACL table is not set for this container")
         logger.info(f"Got exception while getting eacl: {exc}")
         return None
-    if "extended ACL table is not set for this container" in output.stdout:
+    if "extended ACL table is not set for this container" in result.stdout:
         return None
-    return output.stdout
+    return result.stdout
 
 
 @allure.title("Set extended ACL")
@@ -208,7 +207,7 @@ def form_bearertoken_file(
         json.dump(eacl_result, eacl_file, ensure_ascii=False, indent=4)
 
     logger.info(f"Got these extended ACL records: {eacl_result}")
-    sign_bearer(wif, file_path)
+    sign_bearer(shell, wif, file_path)
     return file_path
 
 
@@ -235,12 +234,11 @@ def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     return rules
 
 
-def sign_bearer(wallet_path: str, eacl_rules_file: str) -> None:
-    cmd = (
-        f"{NEOFS_CLI_EXEC} util sign bearer-token --from {eacl_rules_file} "
-        f"--to {eacl_rules_file} --wallet {wallet_path} --config {WALLET_CONFIG} --json"
+def sign_bearer(shell: Shell, wallet_path: str, eacl_rules_file: str) -> None:
+    neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
+    neofscli.util.sign_bearer_token(
+        wallet=wallet_path, from_file=eacl_rules_file, to_file=eacl_rules_file, json=True
     )
-    _cmd_run(cmd)
 
 
 @allure.title("Wait for eACL cache expired")

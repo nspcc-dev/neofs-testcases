@@ -102,7 +102,7 @@ def get_range_hash(
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    output = cli.object.hash(
+    result = cli.object.hash(
         rpc_endpoint=endpoint or NEOFS_ENDPOINT,
         wallet=wallet,
         cid=cid,
@@ -113,7 +113,7 @@ def get_range_hash(
     )
 
     # cutting off output about range offset and length
-    return output.stdout.split(":")[1].strip()
+    return result.stdout.split(":")[1].strip()
 
 
 @allure.step("Put object")
@@ -156,7 +156,7 @@ def put_object(
             logger.info(f"---DEB:\n{NEOFS_NETMAP}")
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    output = cli.object.put(
+    result = cli.object.put(
         rpc_endpoint=endpoint,
         wallet=wallet,
         file=path,
@@ -170,7 +170,7 @@ def put_object(
     )
 
     # splitting CLI output to lines and taking the penultimate line
-    id_str = output.stdout.strip().split("\n")[-2]
+    id_str = result.stdout.strip().split("\n")[-2]
     oid = id_str.split(":")[1]
     return oid.strip()
 
@@ -204,7 +204,7 @@ def delete_object(
         (str): Tombstone ID
     """
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    output = cli.object.delete(
+    result = cli.object.delete(
         rpc_endpoint=endpoint or NEOFS_ENDPOINT,
         wallet=wallet,
         cid=cid,
@@ -214,7 +214,7 @@ def delete_object(
         session=session,
     )
 
-    id_str = output.stdout.split("\n")[1]
+    id_str = result.stdout.split("\n")[1]
     tombstone = id_str.split(":")[1]
     return tombstone.strip()
 
@@ -301,7 +301,7 @@ def search_object(
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    output = cli.object.search(
+    result = cli.object.search(
         rpc_endpoint=endpoint or NEOFS_ENDPOINT,
         wallet=wallet,
         cid=cid,
@@ -313,7 +313,7 @@ def search_object(
         session=session,
     )
 
-    found_objects = re.findall(r"(\w{43,44})", output.stdout)
+    found_objects = re.findall(r"(\w{43,44})", result.stdout)
 
     if expected_objects_list:
         if sorted(found_objects) == sorted(expected_objects_list):
@@ -372,7 +372,7 @@ def head_object(
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    output = cli.object.head(
+    result = cli.object.head(
         rpc_endpoint=endpoint or NEOFS_ENDPOINT,
         wallet=wallet,
         cid=cid,
@@ -386,18 +386,18 @@ def head_object(
     )
 
     if not json_output:
-        return output
+        return result
 
     try:
-        decoded = json.loads(output.stdout)
+        decoded = json.loads(result.stdout)
     except Exception as exc:
         # If we failed to parse output as JSON, the cause might be
         # the plain text string in the beginning of the output.
         # Here we cut off first string and try to parse again.
         logger.info(f"failed to parse output: {exc}")
         logger.info("parsing output in another way")
-        fst_line_idx = output.stdout.find("\n")
-        decoded = json.loads(output.stdout[fst_line_idx:])
+        fst_line_idx = result.stdout.find("\n")
+        decoded = json.loads(result.stdout[fst_line_idx:])
 
     # If response is Complex Object header, it has `splitId` key
     if "splitId" in decoded.keys():

@@ -27,18 +27,18 @@ class TestBalanceAccounting:
     @allure.title("Test balance request with wallet and address")
     def test_balance_wallet_address(self, client_shell):
         cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-        output = cli.accounting.balance(
+        result = cli.accounting.balance(
             wallet=self.user_wallet,
             rpc_endpoint=NEOFS_ENDPOINT,
             address=self.address,
         )
-        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
+        assert int(result.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet only")
     def test_balance_wallet(self, client_shell):
         cli = NeofsCli(client_shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-        output = cli.accounting.balance(wallet=self.user_wallet, rpc_endpoint=NEOFS_ENDPOINT)
-        assert int(output.stdout.rstrip()) == DEPOSIT_AMOUNT
+        result = cli.accounting.balance(wallet=self.user_wallet, rpc_endpoint=NEOFS_ENDPOINT)
+        assert int(result.stdout.rstrip()) == DEPOSIT_AMOUNT
 
     @allure.title("Test balance request with wallet and wrong address")
     def test_balance_wrong_address(self, client_shell):

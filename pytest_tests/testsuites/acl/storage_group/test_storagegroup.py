@@ -78,16 +78,32 @@ class TestStorageGroup:
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
-        storage_group = put_storagegroup(self.main_wallet, cid, objects)
+        storage_group = put_storagegroup(
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            objects=objects)
 
         self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
         self.expect_failure_for_storagegroup_operations(
-            self.other_wallet, cid, objects, storage_group
+            shell=client_shell,
+            wallet=self.other_wallet,
+            cid=cid,
+            obj_list=objects,
+            gid=storage_group,
         )
         self.storagegroup_operations_by_system_ro_container(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
 
     @allure.title("Test Storage Group in Public Container")
@@ -97,13 +113,25 @@ class TestStorageGroup:
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
         self.expect_success_for_storagegroup_operations(
-            self.other_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.other_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
         self.storagegroup_operations_by_system_ro_container(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
 
     @allure.title("Test Storage Group in Read-Only Container")
@@ -113,13 +141,26 @@ class TestStorageGroup:
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
         self.storagegroup_operations_by_other_ro_container(
-            self.main_wallet, self.other_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            owner_wallet=self.main_wallet,
+            other_wallet=self.other_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
         self.storagegroup_operations_by_system_ro_container(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
 
     @allure.title("Test Storage Group with Bearer Allow")
@@ -131,9 +172,13 @@ class TestStorageGroup:
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size, client_shell
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
         )
-        storage_group = put_storagegroup(self.main_wallet, cid, objects)
+        storage_group = put_storagegroup(client_shell, self.main_wallet, cid, objects)
         eacl_deny = [
             EACLRule(access=EACLAccess.DENY, role=role, operation=op)
             for op in EACLOperation
@@ -146,7 +191,7 @@ class TestStorageGroup:
             shell=client_shell,
         )
         self.expect_failure_for_storagegroup_operations(
-            self.main_wallet, cid, objects, storage_group
+            client_shell, self.main_wallet, cid, objects, storage_group
         )
         bearer_file = form_bearertoken_file(
             self.main_wallet,
@@ -158,7 +203,12 @@ class TestStorageGroup:
             shell=client_shell,
         )
         self.expect_success_for_storagegroup_operations(
-            self.main_wallet, cid, objects, object_size, client_shell, bearer_file
+            shell=client_shell,
+            wallet=self.main_wallet,
+            cid=cid,
+            obj_list=objects,
+            object_size=object_size,
+            bearer=bearer_file,
         )
 
     @allure.title("Test to check Storage Group lifetime")
@@ -167,21 +217,23 @@ class TestStorageGroup:
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
-        storage_group = put_storagegroup(self.main_wallet, cid, objects, lifetime="1")
+        storage_group = put_storagegroup(client_shell, self.main_wallet, cid, objects, lifetime=1)
         with allure.step("Tick two epochs"):
             for _ in range(2):
                 tick_epoch(shell=client_shell)
         with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
-            get_storagegroup(self.main_wallet, cid, storage_group)
+            get_storagegroup(
+                shell=client_shell, wallet=self.main_wallet, cid=cid, gid=storage_group
+            )
 
     @staticmethod
     @allure.step("Run Storage Group Operations And Expect Success")
     def expect_success_for_storagegroup_operations(
+        shell: Shell,
         wallet: str,
         cid: str,
         obj_list: list,
         object_size: int,
-        shell: Shell,
         bearer: Optional[str] = None,
     ):
         """
@@ -189,15 +241,25 @@ class TestStorageGroup:
         Put, List, Get and Delete the Storage Group which contains
         the Object.
         """
-        storage_group = put_storagegroup(wallet, cid, obj_list, bearer)
-        verify_list_storage_group(wallet, cid, storage_group, bearer)
-        verify_get_storage_group(wallet, cid, storage_group, obj_list, object_size, shell, bearer)
-        delete_storagegroup(wallet, cid, storage_group, bearer)
+        storage_group = put_storagegroup(shell, wallet, cid, obj_list, bearer)
+        verify_list_storage_group(
+            shell=shell, wallet=wallet, cid=cid, gid=storage_group, bearer=bearer
+        )
+        verify_get_storage_group(
+            shell=shell,
+            wallet=wallet,
+            cid=cid,
+            gid=storage_group,
+            obj_list=obj_list,
+            object_size=object_size,
+            bearer=bearer,
+        )
+        delete_storagegroup(shell=shell, wallet=wallet, cid=cid, gid=storage_group, bearer=bearer)
 
     @staticmethod
     @allure.step("Run Storage Group Operations And Expect Failure")
     def expect_failure_for_storagegroup_operations(
-        wallet: str, cid: str, obj_list: list, storagegroup: str
+        shell: Shell, wallet: str, cid: str, obj_list: list, gid: str
     ):
         """
         This func verifies if the Object's owner isn't allowed to
@@ -205,36 +267,43 @@ class TestStorageGroup:
         the Object.
         """
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_storagegroup(wallet, cid, obj_list)
+            put_storagegroup(shell=shell, wallet=wallet, cid=cid, objects=obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            list_storagegroup(wallet, cid)
+            list_storagegroup(shell=shell, wallet=wallet, cid=cid)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            get_storagegroup(wallet, cid, storagegroup)
+            get_storagegroup(shell=shell, wallet=wallet, cid=cid, gid=gid)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            delete_storagegroup(wallet, cid, storagegroup)
+            delete_storagegroup(shell=shell, wallet=wallet, cid=cid, gid=gid)
 
     @staticmethod
     @allure.step("Run Storage Group Operations On Other's Behalf In RO Container")
     def storagegroup_operations_by_other_ro_container(
+        shell: Shell,
         owner_wallet: str,
         other_wallet: str,
         cid: str,
         obj_list: list,
         object_size: int,
-        shell: Shell,
     ):
-        storage_group = put_storagegroup(owner_wallet, cid, obj_list)
+        storage_group = put_storagegroup(shell, owner_wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_storagegroup(other_wallet, cid, obj_list)
-        verify_list_storage_group(other_wallet, cid, storage_group)
-        verify_get_storage_group(other_wallet, cid, storage_group, obj_list, object_size, shell)
+            put_storagegroup(shell=shell, wallet=other_wallet, cid=cid, objects=obj_list)
+        verify_list_storage_group(shell=shell, wallet=other_wallet, cid=cid, gid=storage_group)
+        verify_get_storage_group(
+            shell=shell,
+            wallet=other_wallet,
+            cid=cid,
+            gid=storage_group,
+            obj_list=obj_list,
+            object_size=object_size,
+        )
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            delete_storagegroup(other_wallet, cid, storage_group)
+            delete_storagegroup(shell=shell, wallet=other_wallet, cid=cid, gid=storage_group)
 
     @staticmethod
     @allure.step("Run Storage Group Operations On Systems's Behalf In RO Container")
     def storagegroup_operations_by_system_ro_container(
-        wallet: str, cid: str, obj_list: list, object_size: int, shell: Shell
+        shell: Shell, wallet: str, cid: str, obj_list: list, object_size: int
     ):
         """
         In this func we create a Storage Group on Inner Ring's key behalf
@@ -255,20 +324,26 @@ class TestStorageGroup:
                 wallet_from_path=IR_WALLET_PATH,
                 wallet_from_password=IR_WALLET_PASS,
             )
-        storage_group = put_storagegroup(wallet, cid, obj_list)
+        storage_group = put_storagegroup(shell, wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_storagegroup(IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG)
+            put_storagegroup(shell, IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG)
         verify_list_storage_group(
             IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG
         )
         verify_get_storage_group(
-            IR_WALLET_PATH,
-            cid,
-            storage_group,
-            obj_list,
-            object_size,
-            shell,
+            shell=shell,
+            wallet=IR_WALLET_PATH,
+            cid=cid,
+            gid=storage_group,
+            obj_list=obj_list,
+            object_size=object_size,
             wallet_config=IR_WALLET_CONFIG,
         )
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            delete_storagegroup(IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG)
+            delete_storagegroup(
+                shell=shell,
+                wallet=IR_WALLET_PATH,
+                cid=cid,
+                gid=storage_group,
+                wallet_config=IR_WALLET_CONFIG,
+            )
