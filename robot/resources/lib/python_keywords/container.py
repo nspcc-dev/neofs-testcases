@@ -123,7 +123,7 @@ def list_containers(wallet: str, shell: Shell) -> list[str]:
     """
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     result = cli.container.list(rpc_endpoint=NEOFS_ENDPOINT, wallet=wallet)
-    logger.info(f"Containers: \n{output}")
+    logger.info(f"Containers: \n{result}")
     return result.stdout.split()
 
 
