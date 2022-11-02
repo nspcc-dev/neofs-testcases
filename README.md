@@ -124,14 +124,15 @@ Then, you can check the allure report in your browser [by this link](http://loca
 
 NOTE: feel free to select a different location for `allure-reports` directory, there is no requirement to have it inside `neofs-testcases`. For example, you can place it under `/tmp` path.
 
-## Code style
+# Contributing
 
-The names of Python variables, functions and classes must comply with [PEP8](https://peps.python.org/pep-0008) rules, in particular:
-* Name of a variable/function must be in snake_case (lowercase, with words separated by underscores as necessary to improve readability).
-* Name of a global variable must be in UPPER_SNAKE_CASE, the underscore (`_`) symbol must be used as a separator between words.
-* Name of a class must be in PascalCase (the first letter of each compound word in a variable name is capitalized).
-* Names of other variables should not be ended with the underscore symbol.
+Feel free to contribute to this project after reading the [contributing
+guidelines](CONTRIBUTING.md).
 
-Line length limit is set as 100 characters.
+Before starting to work on a certain topic, create a new issue first, describing
+the feature/topic you are going to implement.
 
-Imports should be ordered in accordance with [isort default rules](https://pycqa.github.io/isort/).
+
+# License
+
+- [GNU General Public License v3.0](LICENSE)

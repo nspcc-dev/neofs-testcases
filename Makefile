@@ -2,20 +2,14 @@
 
 .DEFAULT_GOAL := help
 
-SHELL = bash
+SHELL ?= bash
 
-OUTPUT_DIR = artifacts/
-KEYWORDS_REPO = git@github.com:nspcc-dev/neofs-keywords.git
 VENVS = $(shell ls -1d venv/*/ | sort -u | xargs basename -a)
 
 .PHONY: all
 all: venvs
 
 include venv_template.mk
-
-run: venvs
-	@echo "⇒ Test Run"
-	@robot --timestampoutputs --outputdir $(OUTPUT_DIR) robot/testsuites/integration/
 
 .PHONY: venvs
 venvs:
