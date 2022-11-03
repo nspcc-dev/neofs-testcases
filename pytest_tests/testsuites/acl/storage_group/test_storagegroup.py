@@ -79,10 +79,8 @@ class TestStorageGroup:
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         storage_group = put_storagegroup(
-            shell=client_shell,
-            wallet=self.main_wallet,
-            cid=cid,
-            objects=objects)
+            shell=client_shell, wallet=self.main_wallet, cid=cid, objects=objects
+        )
 
         self.expect_success_for_storagegroup_operations(
             shell=client_shell,
@@ -328,7 +326,11 @@ class TestStorageGroup:
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_storagegroup(shell, IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG)
         verify_list_storage_group(
-            IR_WALLET_PATH, cid, storage_group, wallet_config=IR_WALLET_CONFIG
+            shell=shell,
+            wallet=IR_WALLET_PATH,
+            cid=cid,
+            gid=storage_group,
+            wallet_config=IR_WALLET_CONFIG,
         )
         verify_get_storage_group(
             shell=shell,
