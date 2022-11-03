@@ -326,7 +326,13 @@ class TestStorageGroup:
             )
         storage_group = put_storagegroup(shell, wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            put_storagegroup(shell, IR_WALLET_PATH, cid, obj_list, wallet_config=IR_WALLET_CONFIG)
+            put_storagegroup(
+                shell=shell,
+                wallet=IR_WALLET_PATH,
+                cid=cid,
+                objects=obj_list,
+                wallet_config=IR_WALLET_CONFIG,
+            )
         verify_list_storage_group(
             shell=shell,
             wallet=IR_WALLET_PATH,
@@ -334,6 +340,7 @@ class TestStorageGroup:
             gid=storage_group,
             wallet_config=IR_WALLET_CONFIG,
         )
+
         verify_get_storage_group(
             shell=shell,
             wallet=IR_WALLET_PATH,
