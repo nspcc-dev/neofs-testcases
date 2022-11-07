@@ -19,6 +19,7 @@ from python_keywords.node_management import node_healthcheck
 
 logger = logging.getLogger("NeoLogger")
 
+
 def pytest_collection_modifyitems(items):
     # Make network tests last based on @pytest.mark.node_mgmt
     def priority(item: pytest.Item) -> int:
@@ -26,6 +27,7 @@ def pytest_collection_modifyitems(items):
         return 0 if not is_node_mgmt_test else 1
 
     items.sort(key=lambda item: priority(item))
+
 
 @pytest.fixture(scope="session")
 def configure_testlib():
