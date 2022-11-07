@@ -5,7 +5,14 @@ import uuid
 import allure
 import pytest
 import yaml
-from common import ASSETS_DIR, FREE_STORAGE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG, WALLET_PASS
+from common import (
+    ASSETS_DIR,
+    FREE_STORAGE,
+    NEOFS_CLI_EXEC,
+    NEOFS_ENDPOINT,
+    WALLET_CONFIG,
+    WALLET_PASS,
+)
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.utils.wallet import get_last_address_from_wallet, init_wallet
 

@@ -7,9 +7,9 @@ import uuid
 import allure
 import json_transformers
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from neo3 import wallet
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
-from neo3 import wallet
 
 logger = logging.getLogger("NeoLogger")
 

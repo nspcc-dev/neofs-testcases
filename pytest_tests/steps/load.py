@@ -3,10 +3,9 @@ from dataclasses import asdict
 
 import allure
 from common import STORAGE_NODE_SERVICE_NAME_REGEX
+from k6 import K6, LoadParams, LoadResults
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import SSHShell
-
-from k6 import K6, LoadParams, LoadResults
 
 
 @allure.title("Get services endpoints")

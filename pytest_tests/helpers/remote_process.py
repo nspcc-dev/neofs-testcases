@@ -41,9 +41,7 @@ class RemoteProcess:
         Returns:
             RemoteProcess instance for further examination
         """
-        remote_process = cls(
-            cmd=command, process_dir=f"/tmp/proc_{uuid.uuid4()}", shell=shell
-        )
+        remote_process = cls(cmd=command, process_dir=f"/tmp/proc_{uuid.uuid4()}", shell=shell)
         remote_process._create_process_dir()
         remote_process._generate_command_script(command)
         remote_process._start_process()
