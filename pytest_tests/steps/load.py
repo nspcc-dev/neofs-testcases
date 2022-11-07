@@ -5,14 +5,20 @@ from dataclasses import asdict
 import allure
 from common import STORAGE_NODE_SERVICE_NAME_REGEX
 from k6 import K6, LoadParams, LoadResults
+<<<<<<< HEAD
 from neofs_testlib.cli.neofs_authmate import NeofsAuthmate
 from neofs_testlib.cli.neogo import NeoGo
+=======
+>>>>>>> Bump neofs-testlib version 0.3.0 -> 0.4.0
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import CommandOptions, SSHShell
 from neofs_testlib.shell.interfaces import InteractiveInput
 
+<<<<<<< HEAD
 NEOFS_AUTHMATE_PATH = "neofs-s3-authmate"
 
+=======
+>>>>>>> Bump neofs-testlib version 0.3.0 -> 0.4.0
 
 @allure.title("Get services endpoints")
 def get_services_endpoints(
