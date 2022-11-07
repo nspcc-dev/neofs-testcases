@@ -17,10 +17,6 @@ venvs:
 
 $(foreach venv,$(VENVS),$(eval $(call VENV_template,$(venv))))
 
-submodules:
-	@git submodule init
-	@git submodule update --recursive --remote
-
 clean:
 	rm -rf venv.*
 
