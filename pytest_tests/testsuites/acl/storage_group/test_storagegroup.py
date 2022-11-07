@@ -1,6 +1,6 @@
+import logging
 import os
 import uuid
-import logging
 from typing import Optional
 
 import allure

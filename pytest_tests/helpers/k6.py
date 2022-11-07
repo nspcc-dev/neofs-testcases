@@ -5,7 +5,6 @@ from time import sleep
 
 import allure
 from neofs_testlib.shell import Shell
-
 from remote_process import RemoteProcess
 
 EXIT_RESULT_CODE = 0

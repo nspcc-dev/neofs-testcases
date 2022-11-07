@@ -3,14 +3,12 @@ from enum import Enum
 import allure
 import pytest
 from common import (
+    HTTP_GATE_SERVICE_NAME_REGEX,
     LOAD_NODE_SSH_PRIVATE_KEY_PATH,
     LOAD_NODE_SSH_USER,
     LOAD_NODES,
     STORAGE_NODE_SERVICE_NAME_REGEX,
-    HTTP_GATE_SERVICE_NAME_REGEX,
 )
-from neofs_testlib.hosting import Hosting
-
 from k6 import LoadParams
 from load import (
     clear_cache_and_data,
@@ -18,6 +16,7 @@ from load import (
     multi_node_k6_run,
     prepare_k6_instances,
 )
+from neofs_testlib.hosting import Hosting
 
 
 class LoadTime(Enum):
