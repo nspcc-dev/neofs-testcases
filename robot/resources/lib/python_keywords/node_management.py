@@ -188,6 +188,9 @@ def include_node_to_network_map(
 ) -> None:
     node_set_status(hosting, node_to_include, status="online")
 
+    # Per suggestion of @fyrchik we need to wait for 2 blocks after we set status and after tick epoch.
+    # First sleep can be ommited afer https://github.com/nspcc-dev/neofs-node/issues/1790 complete.
+
     time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
     tick_epoch(shell=shell)
     time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
