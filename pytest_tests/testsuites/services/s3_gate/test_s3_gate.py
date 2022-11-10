@@ -34,7 +34,9 @@ def pytest_generate_tests(metafunc):
 
 
 @allure.link("https://github.com/nspcc-dev/neofs-s3-gw#neofs-s3-gateway", name="neofs-s3-gateway")
+@pytest.mark.sanity
 @pytest.mark.s3_gate
+@pytest.mark.s3_gate_base
 class TestS3Gate(TestS3GateBase):
     @pytest.fixture
     @allure.title("Create two buckets")
@@ -133,7 +135,6 @@ class TestS3Gate(TestS3GateBase):
                 s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
 
     @allure.title("Test S3 Object API")
-    @pytest.mark.sanity
     @pytest.mark.parametrize(
         "file_type", ["simple", "large"], ids=["Simple object", "Large object"]
     )

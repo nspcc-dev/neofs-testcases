@@ -37,6 +37,7 @@ OBJECT_UPLOAD_DELAY = 10
 )
 @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
 @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
+@pytest.mark.sanity
 @pytest.mark.http_gate
 class TestHttpGate:
     PLACEMENT_RULE = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
@@ -80,8 +81,8 @@ class TestHttpGate:
 
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
-    @pytest.mark.sanity
     @allure.title("Test Put over HTTP, Get over HTTP")
+    @pytest.mark.smoke
     def test_put_http_get_http(self, client_shell):
         """
         Test that object can be put and get using HTTP interface.
@@ -206,12 +207,12 @@ class TestHttpGate:
             assert get_file_hash(f"{dir_path}/file1") == get_file_hash(file_path_simple)
             assert get_file_hash(f"{dir_path}/file2") == get_file_hash(file_path_large)
 
-    @pytest.mark.curl
     @pytest.mark.long
     @allure.title("Test Put over HTTP/Curl, Get over HTTP/Curl for large object")
     def test_put_http_get_http_large_file(self, client_shell):
         """
-        This test checks upload and download using curl with 'large' object. Large is object with size up to 20Mb.
+        This test checks upload and download using curl with 'large' object.
+        Large is object with size up to 20Mb.
         """
         cid = create_container(
             self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
@@ -234,7 +235,6 @@ class TestHttpGate:
             object_getter=get_via_http_curl,
         )
 
-    @pytest.mark.curl
     @allure.title("Test Put/Get over HTTP using Curl utility")
     def test_put_http_get_http_curl(self, client_shell):
         """

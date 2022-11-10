@@ -20,6 +20,7 @@ logger = logging.getLogger("NeoLogger")
 DEPOSIT_AMOUNT = 30
 
 
+@pytest.mark.sanity
 @pytest.mark.payments
 @pytest.mark.skipif(FREE_STORAGE, reason="Test only works on public network with paid storage")
 class TestBalanceAccounting:

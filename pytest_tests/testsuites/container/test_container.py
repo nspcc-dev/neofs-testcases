@@ -17,6 +17,7 @@ from wellknown_acl import PRIVATE_ACL_F
 
 @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
 @pytest.mark.sanity
+@pytest.mark.smoke
 @pytest.mark.container
 def test_container_creation(client_shell, prepare_wallet_and_deposit, name):
     scenario_title = f"with name {name}" if name else "without name"

@@ -22,6 +22,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
+@pytest.mark.sanity
+@pytest.mark.s3_gate
 @pytest.mark.s3_gate_object
 class TestS3GateObject(TestS3GateBase):
     @staticmethod
@@ -473,6 +475,7 @@ class TestS3GateObject(TestS3GateBase):
             assert get_file_hash(con_file) == get_file_hash(file_name_1), "Hashes must be the same"
 
     @allure.title("Test S3: Copy object with metadata")
+    @pytest.mark.smoke
     def test_s3_head_object(self):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         file_path = generate_file(COMPLEX_OBJ_SIZE)

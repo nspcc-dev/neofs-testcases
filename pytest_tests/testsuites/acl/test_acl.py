@@ -12,6 +12,7 @@ from wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL_F, READONLY_ACL_F
 
 
 @pytest.mark.sanity
+@pytest.mark.smoke
 @pytest.mark.acl
 @pytest.mark.acl_basic
 class TestACLBasic:

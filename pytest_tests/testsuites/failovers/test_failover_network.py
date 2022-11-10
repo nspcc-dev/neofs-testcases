@@ -36,7 +36,7 @@ def restore_network(hosting: Hosting):
 
 @allure.title("Block Storage node traffic")
 @pytest.mark.failover
-@pytest.mark.failover_net
+@pytest.mark.failover_network
 def test_block_storage_node_traffic(
     prepare_wallet_and_deposit, client_shell, require_multiple_hosts, hosting: Hosting
 ):

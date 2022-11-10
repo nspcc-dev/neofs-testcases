@@ -14,7 +14,7 @@ logger = logging.getLogger("NeoLogger")
 stopped_hosts = []
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 @allure.step("Return all stopped hosts")
 def after_run_return_all_stopped_hosts(hosting: Hosting):
     yield
@@ -42,6 +42,7 @@ def return_stopped_hosts(hosting: Hosting) -> None:
 @allure.title("Lose and return storage node's host")
 @pytest.mark.parametrize("hard_reboot", [True, False])
 @pytest.mark.failover
+@pytest.mark.failover_reboot
 def test_lose_storage_node_host(
     prepare_wallet_and_deposit,
     client_shell,
@@ -84,8 +85,8 @@ def test_lose_storage_node_host(
 
 @allure.title("Panic storage node's host")
 @pytest.mark.parametrize("sequence", [True, False])
-@pytest.mark.failover_panic
 @pytest.mark.failover
+@pytest.mark.failover_panic
 def test_panic_storage_node_host(
     prepare_wallet_and_deposit,
     client_shell,

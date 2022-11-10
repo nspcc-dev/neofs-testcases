@@ -14,7 +14,9 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
+@pytest.mark.sanity
 @pytest.mark.s3_gate
+@pytest.mark.s3_gate_versioning
 class TestS3GateVersioning(TestS3GateBase):
     @staticmethod
     def object_key_from_file_path(full_path: str) -> str:

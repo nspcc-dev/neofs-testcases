@@ -13,6 +13,7 @@ from python_keywords.session_token import create_session_token
 
 
 @allure.title("Test Object Operations with Session Token")
+@pytest.mark.sanity
 @pytest.mark.session_token
 @pytest.mark.parametrize(
     "object_size",
