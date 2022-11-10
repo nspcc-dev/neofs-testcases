@@ -53,6 +53,7 @@ deposit = 30
 @pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.storage_group
+@pytest.mark.skip
 class TestStorageGroup:
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, prepare_wallet_and_deposit, client_shell):
