@@ -26,7 +26,6 @@ from wellknown_acl import PUBLIC_ACL
 
 @pytest.mark.sanity
 @pytest.mark.acl
-@pytest.mark.acl_bearer
 @pytest.mark.acl_filters
 class TestEACLFilters:
     #  SPEC: https://github.com/nspcc-dev/neofs-spec/blob/master/01-arch/07-acl.md

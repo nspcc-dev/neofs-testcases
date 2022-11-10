@@ -50,6 +50,8 @@ deposit = 30
     [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE],
     ids=["simple object", "complex object"],
 )
+@pytest.mark.sanity
+@pytest.mark.acl
 @pytest.mark.storage_group
 class TestStorageGroup:
     @pytest.fixture(autouse=True)

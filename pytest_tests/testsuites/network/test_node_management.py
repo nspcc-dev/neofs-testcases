@@ -346,6 +346,7 @@ def test_placement_policy_negative(
 
 
 @pytest.mark.skip(reason="We cover this scenario in failover tests")
+@pytest.mark.sanity
 @pytest.mark.node_mgmt
 @allure.title("NeoFS object replication on node failover")
 def test_replication(

@@ -136,3 +136,9 @@ the feature/topic you are going to implement.
 # License
 
 - [GNU General Public License v3.0](LICENSE)
+
+## Pytest marks
+
+Custom pytest marks used in tests:
+* `sanity` - Tests must be runs in sanity testruns.
+* `smoke` - Tests must be runs in smoke testruns.
