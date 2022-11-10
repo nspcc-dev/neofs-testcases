@@ -188,8 +188,9 @@ def include_node_to_network_map(
 ) -> None:
     node_set_status(hosting, node_to_include, status="online")
 
-    time.sleep(parse_time(MORPH_BLOCK_TIME))
+    time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
     tick_epoch(shell=shell)
+    time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
 
     check_node_in_map(node_to_include, shell, alive_node)
 
