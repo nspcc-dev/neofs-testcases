@@ -1,20 +1,16 @@
 import logging
 import random
 import sys
-from dataclasses import dataclass
-from time import sleep
 
 import allure
 import pytest
 from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from container import create_container
-from epoch import tick_epoch
 from file_helper import generate_file, get_file_content, get_file_hash
-from grpc_responses import OBJECT_ALREADY_REMOVED, OUT_OF_RANGE, error_matches_status
+from grpc_responses import OUT_OF_RANGE
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 from python_keywords.neofs_verbs import (
-    delete_object,
     get_netmap_netinfo,
     get_object,
     get_range,
@@ -24,7 +20,9 @@ from python_keywords.neofs_verbs import (
     search_object,
 )
 from python_keywords.storage_policy import get_complex_object_copies, get_simple_object_copies
-from tombstone import verify_head_tombstone
+
+from helpers.storage_object_info import StorageObjectInfo
+from steps.storage_object import delete_objects
 
 logger = logging.getLogger("NeoLogger")
 
@@ -46,18 +44,6 @@ STATIC_RANGES = {
     SIMPLE_OBJ_SIZE: [],
     COMPLEX_OBJ_SIZE: [],
 }
-
-
-@dataclass
-class StorageObjectInfo:
-    size: str = None
-    cid: str = None
-    wallet: str = None
-    file_path: str = None
-    file_hash: str = None
-    attributes: list[dict[str, str]] = None
-    oid: str = None
-    tombstone: str = None
 
 
 def generate_ranges(file_size: int, max_object_size: int) -> list[(int, int)]:
@@ -94,39 +80,11 @@ def generate_ranges(file_size: int, max_object_size: int) -> list[(int, int)]:
     return file_ranges_to_test
 
 
-def delete_objects(storage_objects: list, client_shell: Shell) -> None:
-    with allure.step("Delete objects"):
-        for storage_object in storage_objects:
-            storage_object.tombstone = delete_object(
-                storage_object.wallet, storage_object.cid, storage_object.oid, client_shell
-            )
-            verify_head_tombstone(
-                wallet_path=storage_object.wallet,
-                cid=storage_object.cid,
-                oid_ts=storage_object.tombstone,
-                oid=storage_object.oid,
-                shell=client_shell,
-            )
-
-    tick_epoch(shell=client_shell)
-    sleep(CLEANUP_TIMEOUT)
-
-    with allure.step("Get objects and check errors"):
-        for storage_object in storage_objects:
-            get_object_and_check_error(
-                storage_object.wallet,
-                storage_object.cid,
-                storage_object.oid,
-                error_pattern=OBJECT_ALREADY_REMOVED,
-                shell=client_shell,
-            )
-
-
 @pytest.fixture(
     params=[SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE],
     ids=["simple object", "complex object"],
     # Scope session to upload/delete each files set only once
-    scope="session",
+    scope="module",
 )
 def storage_objects(
     prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest
@@ -498,17 +456,6 @@ def test_object_get_range_hash_negatives(
             for oid in oids:
                 with pytest.raises(Exception, match=OUT_OF_RANGE):
                     get_range_hash(wallet, cid, oid, shell=client_shell, range_cut=range_cut)
-
-
-def get_object_and_check_error(
-    wallet: str, cid: str, oid: str, error_pattern: str, shell: Shell
-) -> None:
-    try:
-        get_object(wallet=wallet, cid=cid, oid=oid, shell=shell)
-        raise AssertionError(f"Expected object {oid} removed, but it is not")
-    except Exception as err:
-        logger.info(f"Error is {err}")
-        assert error_matches_status(err, error_pattern), f"Expected {err} to match {error_pattern}"
 
 
 def check_header_is_presented(head_info: dict, object_header: dict) -> None:

@@ -9,7 +9,8 @@ from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import delete_object, put_object
-from python_keywords.session_token import create_session_token
+
+from steps.session_token import create_session_token
 
 
 @allure.title("Test Object Operations with Session Token")
