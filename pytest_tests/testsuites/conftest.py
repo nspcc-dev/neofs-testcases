@@ -16,6 +16,7 @@ from neofs_testlib.shell import LocalShell, Shell
 from neofs_testlib.utils.wallet import init_wallet
 from payment_neogo import deposit_gas, transfer_gas
 from python_keywords.node_management import node_healthcheck
+from wallet import WalletFactory
 
 logger = logging.getLogger("NeoLogger")
 
@@ -61,6 +62,11 @@ def require_multiple_hosts(hosting: Hosting):
     yield
 
 
+@pytest.fixture(scope="session")
+def wallet_factory(prepare_tmp_dir: str, client_shell: Shell) -> WalletFactory:
+    return WalletFactory(prepare_tmp_dir, client_shell)
+
+
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Check binary versions")
 def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
@@ -74,11 +80,15 @@ def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
 @pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
 def prepare_tmp_dir():
-    full_path = os.path.join(os.getcwd(), ASSETS_DIR)
-    shutil.rmtree(full_path, ignore_errors=True)
-    os.mkdir(full_path)
+    with allure.step("Prepare tmp directory"):
+        full_path = os.path.join(os.getcwd(), ASSETS_DIR)
+        shutil.rmtree(full_path, ignore_errors=True)
+        os.mkdir(full_path)
+
     yield full_path
-    shutil.rmtree(full_path)
+
+    with allure.step("Remove tmp directory"):
+        shutil.rmtree(full_path)
 
 
 @pytest.fixture(scope="session", autouse=True)
