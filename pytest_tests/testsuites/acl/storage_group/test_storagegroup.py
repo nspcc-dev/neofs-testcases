@@ -53,7 +53,6 @@ deposit = 30
 @pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.storage_group
-@pytest.mark.skip
 class TestStorageGroup:
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, prepare_wallet_and_deposit, client_shell):
@@ -212,6 +211,7 @@ class TestStorageGroup:
             bearer=bearer_file,
         )
 
+    @pytest.mark.skip
     @allure.title("Test to check Storage Group lifetime")
     def test_storagegroup_lifetime(self, client_shell, object_size):
         cid = create_container(self.main_wallet, shell=client_shell)
