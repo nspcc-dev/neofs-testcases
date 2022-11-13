@@ -64,7 +64,9 @@ class K6:
     @property
     def k6_dir(self) -> str:
         if not self._k6_dir:
-            self._k6_dir = self.shell.exec("sudo find . -name 'k6'").stdout.strip("\n")
+            self._k6_dir = self.shell.exec(
+                r"sudo find . -name 'k6' -exec dirname {} \; -quit"
+            ).stdout.strip("\n")
         return self._k6_dir
 
     @allure.step("Prepare containers and objects")

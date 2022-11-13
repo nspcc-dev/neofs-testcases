@@ -1,11 +1,17 @@
 import concurrent.futures
+import re
 from dataclasses import asdict
 
 import allure
 from common import STORAGE_NODE_SERVICE_NAME_REGEX
 from k6 import K6, LoadParams, LoadResults
+from neofs_testlib.cli.neofs_authmate import NeofsAuthmate
+from neofs_testlib.cli.neogo import NeoGo
 from neofs_testlib.hosting import Hosting
-from neofs_testlib.shell import SSHShell
+from neofs_testlib.shell import CommandOptions, SSHShell
+from neofs_testlib.shell.interfaces import InteractiveInput
+
+NEOFS_AUTHMATE_PATH = "neofs-s3-authmate"
 
 
 @allure.title("Get services endpoints")
@@ -14,6 +20,54 @@ def get_services_endpoints(
 ) -> list[str]:
     service_configs = hosting.find_service_configs(service_name_regex)
     return [service_config.attributes[endpoint_attribute] for service_config in service_configs]
+
+
+@allure.title("Init s3 client")
+def init_s3_client(load_nodes: list, login: str, pkey: str, hosting: Hosting):
+    service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
+    host = hosting.get_host_by_service(service_configs[0].name)
+    wallet_path = service_configs[0].attributes["wallet_path"]
+    neogo_cli_config = host.get_cli_config("neo-go")
+    neogo_wallet = NeoGo(shell=host.get_shell(), neo_go_exec_path=neogo_cli_config.exec_path).wallet
+    dump_keys_output = neogo_wallet.dump_keys(wallet_config=wallet_path).stdout
+    public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
+    node_endpoint = service_configs[0].attributes["rpc_endpoint"]
+    # prompt_pattern doesn't work at the moment
+    for load_node in load_nodes:
+        ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
+        path = ssh_client.exec(r"sudo find . -name 'k6' -exec dirname {} \; -quit").stdout.strip(
+            "\n"
+        )
+        neofs_authmate_exec = NeofsAuthmate(ssh_client, NEOFS_AUTHMATE_PATH)
+        issue_secret_output = neofs_authmate_exec.secret.issue(
+            wallet=f"{path}/scenarios/files/wallet.json",
+            peer=node_endpoint,
+            bearer_rules=f"{path}/scenarios/files/rules.json",
+            gate_public_key=public_key,
+            container_placement_policy="REP 1 IN X CBF 1 SELECT 1  FROM * AS X",
+            container_policy=f"{path}/scenarios/files/policy.json",
+            wallet_password="",
+        ).stdout
+        aws_access_key_id = str(
+            re.search(r"access_key_id.*:\s.(?P<aws_access_key_id>\w*)", issue_secret_output).group(
+                "aws_access_key_id"
+            )
+        )
+        aws_secret_access_key = str(
+            re.search(
+                r"secret_access_key.*:\s.(?P<aws_secret_access_key>\w*)", issue_secret_output
+            ).group("aws_secret_access_key")
+        )
+        # prompt_pattern doesn't work at the moment
+        configure_input = [
+            InteractiveInput(prompt_pattern=r"AWS Access Key ID.*", input=aws_access_key_id),
+            InteractiveInput(
+                prompt_pattern=r"AWS Secret Access Key.*", input=aws_secret_access_key
+            ),
+            InteractiveInput(prompt_pattern=r".*", input=""),
+            InteractiveInput(prompt_pattern=r".*", input=""),
+        ]
+        ssh_client.exec("aws configure", CommandOptions(interactive_inputs=configure_input))
 
 
 @allure.title("Clear cache and data from storage nodes")
