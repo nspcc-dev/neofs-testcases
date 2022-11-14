@@ -71,6 +71,14 @@ class AwsCliClient:
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
 
+    def get_bucket_location(self, Bucket: str) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api get-bucket-location --bucket {Bucket} "
+            f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd, REGULAR_TIMEOUT)
+        return self._to_json(output)
+
     def put_bucket_versioning(self, Bucket: str, VersioningConfiguration: dict) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-versioning --bucket {Bucket} "
@@ -305,6 +313,46 @@ class AwsCliClient:
     def get_bucket_tagging(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-tagging --bucket {Bucket} "
+            f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def get_bucket_policy(self, Bucket: str) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api get-bucket-policy --bucket {Bucket} "
+            f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def put_bucket_policy(self, Bucket: str, Policy: dict) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api put-bucket-policy --bucket {Bucket} "
+            f"--policy {json.dumps(Policy)} --endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def get_bucket_cors(self, Bucket: str) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api get-bucket-cors --bucket {Bucket} "
+            f"--endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def put_bucket_cors(self, Bucket: str, CORSConfiguration: dict) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api put-bucket-cors --bucket {Bucket} "
+            f"--cors-configuration '{json.dumps(CORSConfiguration)}' --endpoint {S3_GATE}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
+    def delete_bucket_cors(self, Bucket: str) -> dict:
+        cmd = (
+            f"aws {self.common_flags} s3api delete-bucket-cors --bucket {Bucket} "
             f"--endpoint {S3_GATE}"
         )
         output = _cmd_run(cmd)
