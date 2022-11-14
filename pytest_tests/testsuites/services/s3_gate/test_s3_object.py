@@ -628,6 +628,8 @@ class TestS3GateObject(TestS3GateBase):
                 version_id_1,
                 version_id_2,
             }, f"Expected object has versions: {version_id_1, version_id_2}"
+            got_tags_4 = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name_3)
+            assert not got_tags_4, f"No expected tags"
 
         with allure.step("Get object"):
             object_3 = s3_gate_object.get_object_s3(
