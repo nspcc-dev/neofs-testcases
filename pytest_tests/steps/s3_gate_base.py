@@ -46,18 +46,18 @@ class TestS3GateBase:
     def s3_client(self, prepare_wallet_and_deposit, client_shell: Shell, request):
         wallet = prepare_wallet_and_deposit
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
-
+        policy = None if isinstance(request.param, str) else request.param[1]
         (
             cid,
             bucket,
             access_key_id,
             secret_access_key,
             owner_private_key,
-        ) = init_s3_credentials(wallet, s3_bearer_rules_file=s3_bearer_rules_file)
+        ) = init_s3_credentials(wallet, s3_bearer_rules_file=s3_bearer_rules_file, policy=policy)
         containers_list = list_containers(wallet, shell=client_shell)
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
-        if request.param == "aws cli":
+        if "aws cli" in request.param:
             client = configure_cli_client(access_key_id, secret_access_key)
         else:
             client = configure_boto3_client(access_key_id, secret_access_key)
@@ -66,7 +66,9 @@ class TestS3GateBase:
 
 
 @allure.step("Init S3 Credentials")
-def init_s3_credentials(wallet_path: str, s3_bearer_rules_file: Optional[str] = None):
+def init_s3_credentials(
+    wallet_path: str, s3_bearer_rules_file: Optional[str] = None, policy: Optional[dict] = None
+):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or "robot/resources/files/s3_bearer_rules.json"
     gate_public_key = get_wallet_public_key(S3_GATE_WALLET_PATH, S3_GATE_WALLET_PASS)
@@ -76,6 +78,8 @@ def init_s3_credentials(wallet_path: str, s3_bearer_rules_file: Optional[str] = 
         f"--peer {NEOFS_ENDPOINT} --container-friendly-name {bucket} "
         f"--bearer-rules {s3_bearer_rules}"
     )
+    if policy:
+        cmd += f" --container-policy {policy}'"
     logger.info(f"Executing command: {cmd}")
 
     try:

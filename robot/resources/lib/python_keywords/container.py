@@ -204,3 +204,13 @@ def _parse_cid(output: str) -> str:
     if len(splitted) != 2:
         raise ValueError(f"no CID was parsed from command output: \t{first_line}")
     return splitted[1]
+
+
+@allure.step("Search container by name")
+def search_container_by_name(wallet: str, name: str, shell: Shell):
+    list_cids = list_containers(wallet, shell)
+    for cid in list_cids:
+        cont_info = get_container(wallet, cid, shell, True)
+        if cont_info.get("attributes").get("Name", None) == name:
+            return cid
+    return None
