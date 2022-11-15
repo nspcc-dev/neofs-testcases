@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import uuid
 from datetime import datetime
@@ -99,6 +100,24 @@ def collect_logs(prepare_tmp_dir, hosting: Hosting):
     # zip with all logs rather than mess with individual logs files per service or node
     logs_zip_file_path = shutil.make_archive(logs_dir, "zip", logs_dir)
     allure.attach.file(logs_zip_file_path, name="logs.zip", extension="zip")
+
+    problem_pattern = r"\Wpanic\W|\Woom\W"
+
+    log_file_paths = []
+    for directory_path, _, file_names in os.walk(logs_dir):
+        log_file_paths += [
+            os.path.join(directory_path, file_name)
+            for file_name in file_names
+            if re.match(r"\.(txt|log)", os.path.splitext(file_name)[-1], flags=re.IGNORECASE)
+        ]
+
+    logs_with_problem = []
+    for file_path in log_file_paths:
+        with open(file_path, "r") as log_file:
+            if re.search(problem_pattern, log_file.read(), flags=re.IGNORECASE):
+                logs_with_problem.append(file_path)
+    if logs_with_problem:
+        raise RuntimeError(f"System logs {', '.join(logs_with_problem)} contain critical errors")
 
 
 @pytest.fixture(scope="session", autouse=True)
