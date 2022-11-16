@@ -141,6 +141,10 @@ def run_health_check(collect_logs, hosting: Hosting):
 @pytest.fixture(scope="session")
 @allure.title("Prepare wallet and deposit")
 def prepare_wallet_and_deposit(client_shell, prepare_tmp_dir):
+    return create_wallet_with_gas(client_shell, prepare_tmp_dir)
+
+
+def create_wallet_with_gas(client_shell, prepare_tmp_dir):
     wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
     init_wallet(wallet_path, WALLET_PASS)
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
