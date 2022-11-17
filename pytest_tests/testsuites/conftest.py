@@ -11,11 +11,13 @@ import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
 from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS
 from env_properties import save_env_properties
+from file_helper import sanitize_for_file_name
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
 from neofs_testlib.utils.wallet import init_wallet
 from payment_neogo import deposit_gas, transfer_gas
+from pytest import FixtureRequest
 from python_keywords.node_management import node_healthcheck
 from wallet import WalletFactory
 
@@ -92,6 +94,23 @@ def prepare_tmp_dir():
         shutil.rmtree(full_path)
 
 
+@pytest.fixture(scope="function", autouse=True)
+@allure.title("Analyze logs")
+def analyze_logs(prepare_tmp_dir: str, hosting: Hosting, request: FixtureRequest):
+    start_time = datetime.utcnow()
+    yield
+    end_time = datetime.utcnow()
+
+    # Skip tests where we expect failures in logs
+    if request.node.get_closest_marker("no_log_analyze"):
+        with allure.step("Skip analyze logs due to no_log_analyze mark"):
+            return
+
+    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{sanitize_for_file_name(request.node.name)}")
+    dump_logs(hosting, logs_dir, start_time, end_time)
+    check_logs(logs_dir)
+
+
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Collect logs")
 def collect_logs(prepare_tmp_dir, hosting: Hosting):
@@ -101,33 +120,8 @@ def collect_logs(prepare_tmp_dir, hosting: Hosting):
 
     # Dump logs to temp directory (because they might be too large to keep in RAM)
     logs_dir = os.path.join(prepare_tmp_dir, "logs")
-    os.makedirs(logs_dir)
-
-    for host in hosting.hosts:
-        host.dump_logs(logs_dir, since=start_time, until=end_time)
-
-    # Zip all files and attach to Allure because it is more convenient to download a single
-    # zip with all logs rather than mess with individual logs files per service or node
-    logs_zip_file_path = shutil.make_archive(logs_dir, "zip", logs_dir)
-    allure.attach.file(logs_zip_file_path, name="logs.zip", extension="zip")
-
-    problem_pattern = r"\Wpanic\W|\Woom\W"
-
-    log_file_paths = []
-    for directory_path, _, file_names in os.walk(logs_dir):
-        log_file_paths += [
-            os.path.join(directory_path, file_name)
-            for file_name in file_names
-            if re.match(r"\.(txt|log)", os.path.splitext(file_name)[-1], flags=re.IGNORECASE)
-        ]
-
-    logs_with_problem = []
-    for file_path in log_file_paths:
-        with open(file_path, "r") as log_file:
-            if re.search(problem_pattern, log_file.read(), flags=re.IGNORECASE):
-                logs_with_problem.append(file_path)
-    if logs_with_problem:
-        raise RuntimeError(f"System logs {', '.join(logs_with_problem)} contain critical errors")
+    dump_logs(hosting, logs_dir, start_time, end_time)
+    attach_logs(logs_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -166,3 +160,39 @@ def prepare_wallet_and_deposit(client_shell, prepare_tmp_dir):
         )
 
     return wallet_path
+
+
+def check_logs(logs_dir: str):
+    problem_pattern = r"\Wpanic\W|\Woom\W"
+
+    log_file_paths = []
+    for directory_path, _, file_names in os.walk(logs_dir):
+        log_file_paths += [
+            os.path.join(directory_path, file_name)
+            for file_name in file_names
+            if re.match(r"\.(txt|log)", os.path.splitext(file_name)[-1], flags=re.IGNORECASE)
+        ]
+
+    logs_with_problem = []
+    for file_path in log_file_paths:
+        with open(file_path, "r") as log_file:
+            if re.search(problem_pattern, log_file.read(), flags=re.IGNORECASE):
+                attach_logs(logs_dir)
+                logs_with_problem.append(file_path)
+    if logs_with_problem:
+        raise pytest.fail(f"System logs {', '.join(logs_with_problem)} contain critical errors")
+
+
+def dump_logs(hosting: Hosting, logs_dir: str, since: datetime, until: datetime) -> None:
+    # Dump logs to temp directory (because they might be too large to keep in RAM)
+    os.makedirs(logs_dir)
+
+    for host in hosting.hosts:
+        host.dump_logs(logs_dir, since=since, until=until)
+
+
+def attach_logs(logs_dir: str) -> None:
+    # Zip all files and attach to Allure because it is more convenient to download a single
+    # zip with all logs rather than mess with individual logs files per service or node
+    logs_zip_file_path = shutil.make_archive(logs_dir, "zip", logs_dir)
+    allure.attach.file(logs_zip_file_path, name="logs.zip", extension="zip")
