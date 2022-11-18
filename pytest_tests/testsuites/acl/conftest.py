@@ -13,9 +13,10 @@ from common import (
     STORAGE_WALLET_PATH,
     WALLET_CONFIG,
     WALLET_PASS,
+    NEOGO_EXECUTABLE,
 )
 from file_helper import generate_file
-from neofs_testlib.utils.wallet import init_wallet
+from neofs_testlib.cli.neogo import NeoGo
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import put_object
@@ -42,12 +43,13 @@ class Wallets:
 
 
 @pytest.fixture(scope="module")
-def wallets(prepare_wallet_and_deposit):
+def wallets(prepare_wallet_and_deposit, client_shell):
     other_wallets_paths = [
         os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json") for _ in range(2)
     ]
     for other_wallet_path in other_wallets_paths:
-        init_wallet(other_wallet_path, WALLET_PASS)
+        neogo_cli = NeoGo(client_shell, NEOGO_EXECUTABLE)
+        neogo_cli.wallet.init(wallet=other_wallet_path, account=True, password=WALLET_PASS)
 
     yield Wallets(
         wallets={

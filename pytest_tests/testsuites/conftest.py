@@ -9,12 +9,12 @@ import allure
 import pytest
 import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
-from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS
+from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS, NEOGO_EXECUTABLE
 from env_properties import save_env_properties
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
-from neofs_testlib.utils.wallet import init_wallet
+from neofs_testlib.cli.neogo import NeoGo
 from payment_neogo import deposit_gas, transfer_gas
 from pytest import FixtureRequest
 from python_keywords.node_management import node_healthcheck
@@ -142,7 +142,8 @@ def run_health_check(collect_logs, hosting: Hosting):
 @allure.title("Prepare wallet and deposit")
 def prepare_wallet_and_deposit(client_shell, prepare_tmp_dir):
     wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
-    init_wallet(wallet_path, WALLET_PASS)
+    neogo_cli = NeoGo(client_shell, NEOGO_EXECUTABLE)
+    neogo_cli.wallet.init(wallet=wallet_path, account=True, password=WALLET_PASS)
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:

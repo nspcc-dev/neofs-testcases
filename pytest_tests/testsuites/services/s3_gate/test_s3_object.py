@@ -5,10 +5,10 @@ from random import sample
 
 import allure
 import pytest
-from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE, WALLET_PASS
+from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE, WALLET_PASS, NEOGO_EXECUTABLE
 from data_formatters import get_wallet_public_key
 from file_helper import concat_files, generate_file, generate_file_with_content, get_file_hash
-from neofs_testlib.utils.wallet import init_wallet
+from neofs_testlib.cli.neogo import NeoGo
 from python_keywords.payment_neogo import deposit_gas, transfer_gas
 from s3_helper import assert_object_lock_mode, check_objects_in_bucket, set_bucket_versioning
 
@@ -669,7 +669,8 @@ class TestS3GateObject(TestS3GateBase):
         self.main_wallet = prepare_wallet_and_deposit
         self.main_public_key = get_wallet_public_key(self.main_wallet, WALLET_PASS)
         self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
-        init_wallet(self.other_wallet, WALLET_PASS)
+        neogo_cli = NeoGo(client_shell, NEOGO_EXECUTABLE)
+        neogo_cli.wallet.init(wallet=self.other_wallet, account=True, password=WALLET_PASS)
         self.other_public_key = get_wallet_public_key(self.other_wallet, WALLET_PASS)
 
         if not FREE_STORAGE:

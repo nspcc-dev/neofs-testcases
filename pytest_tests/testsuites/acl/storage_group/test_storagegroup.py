@@ -14,12 +14,13 @@ from common import (
     IR_WALLET_PATH,
     SIMPLE_OBJ_SIZE,
     WALLET_PASS,
+    NEOGO_EXECUTABLE,
 )
 from epoch import tick_epoch
 from file_helper import generate_file
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from neofs_testlib.shell import Shell
-from neofs_testlib.utils.wallet import init_wallet
+from neofs_testlib.cli.neogo import NeoGo
 from python_keywords.acl import (
     EACLAccess,
     EACLOperation,
@@ -58,7 +59,8 @@ class TestStorageGroup:
     def prepare_two_wallets(self, prepare_wallet_and_deposit, client_shell):
         self.main_wallet = prepare_wallet_and_deposit
         self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
-        init_wallet(self.other_wallet, WALLET_PASS)
+        neogo_cli = NeoGo(client_shell, NEOGO_EXECUTABLE)
+        neogo_cli.wallet.init(wallet=self.other_wallet, account=True, password=WALLET_PASS)
         if not FREE_STORAGE:
             deposit = 30
             transfer_gas(

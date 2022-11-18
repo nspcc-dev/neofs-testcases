@@ -45,7 +45,7 @@ def tick_epoch(shell: Shell):
     # Otherwise we tick epoch using transaction
     cur_epoch = get_epoch(shell)
 
-    ir_address = get_last_address_from_wallet(IR_WALLET_PATH, IR_WALLET_PASS)
+    ir_address = get_last_address_from_wallet(IR_WALLET_PATH)
 
     neogo = NeoGo(shell, neo_go_exec_path=NEOGO_EXECUTABLE)
     neogo.contract.invokefunction(

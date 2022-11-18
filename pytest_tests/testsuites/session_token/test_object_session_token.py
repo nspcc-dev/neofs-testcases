@@ -37,7 +37,7 @@ def test_object_session_token(prepare_wallet_and_deposit, client_shell: Shell, o
 
     with allure.step("Init wallet"):
         wallet = prepare_wallet_and_deposit
-        address = get_last_address_from_wallet(wallet, "")
+        address = get_last_address_from_wallet(wallet)
 
     with allure.step("Nodes Settlements"):
         (

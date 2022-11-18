@@ -3,9 +3,10 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
-from common import FREE_STORAGE, WALLET_PASS
+from common import FREE_STORAGE, WALLET_PASS, NEOGO_EXECUTABLE
+from neofs_testlib.cli.neogo import NeoGo
 from neofs_testlib.shell import Shell
-from neofs_testlib.utils.wallet import get_last_address_from_wallet, init_wallet
+from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from python_keywords.payment_neogo import deposit_gas, transfer_gas
 
 
@@ -22,7 +23,7 @@ class WalletFile:
         Returns:
             The address of the wallet.
         """
-        return get_last_address_from_wallet(self.path, self.password)
+        return get_last_address_from_wallet(self.path)
 
 
 class WalletFactory:
@@ -40,7 +41,8 @@ class WalletFactory:
             WalletFile object of new wallet
         """
         wallet_path = os.path.join(self.wallets_dir, f"{str(uuid.uuid4())}.json")
-        init_wallet(wallet_path, password)
+        neogo_cli = NeoGo(self.shell, NEOGO_EXECUTABLE)
+        neogo_cli.wallet.init(wallet=wallet_path, account=True, password=password)
         if not FREE_STORAGE:
             deposit = 30
             transfer_gas(

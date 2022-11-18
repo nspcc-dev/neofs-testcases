@@ -56,7 +56,7 @@ def get_contract_hash(resolve_name: str, shell: Shell) -> str:
 
 @allure.step("Withdraw Mainnet Gas")
 def withdraw_mainnet_gas(shell: Shell, wlt: str, amount: int):
-    address = get_last_address_from_wallet(wlt, EMPTY_PASSWORD)
+    address = get_last_address_from_wallet(wlt)
     scripthash = neo3_wallet.Account.address_to_script_hash(address)
 
     neogo = NeoGo(shell=shell, neo_go_exec_path=NEOGO_EXECUTABLE)
@@ -148,7 +148,7 @@ def transfer_gas(
         address_to: The address of the wallet to transfer assets to.
         amount: Amount of gas to transfer.
     """
-    address_to = address_to or get_last_address_from_wallet(wallet_to_path, wallet_to_password)
+    address_to = address_to or get_last_address_from_wallet(wallet_to_path)
 
     neogo = NeoGo(shell, neo_go_exec_path=NEOGO_EXECUTABLE)
     out = neogo.nep17.transfer(
@@ -177,9 +177,7 @@ def deposit_gas(shell: Shell, amount: int, wallet_from_path: str, wallet_from_pa
     # get NeoFS contract address
     deposit_addr = contract_hash_to_address(NEOFS_CONTRACT)
     logger.info(f"NeoFS contract address: {deposit_addr}")
-    address_from = get_last_address_from_wallet(
-        wallet_path=wallet_from_path, wallet_password=wallet_from_password
-    )
+    address_from = get_last_address_from_wallet(wallet_from_path)
     transfer_gas(
         shell=shell,
         amount=amount,
