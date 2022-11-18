@@ -98,6 +98,16 @@ def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:
     return service_config.attributes.get("wallet_password")
 
 
+def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:
+    service_config = hosting.get_service_config(s3_service_name)
+    return service_config.attributes.get("wallet_password")
+
+
+def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:
+    service_config = hosting.get_service_config(s3_service_name)
+    return service_config.attributes.get("wallet_password")
+
+
 @allure.step("Init S3 Credentials")
 def init_s3_credentials(
     wallet_path: str,
