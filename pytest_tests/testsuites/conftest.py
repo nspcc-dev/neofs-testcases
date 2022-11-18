@@ -126,7 +126,7 @@ def analyze_logs(prepare_tmp_dir: str, hosting: Hosting, request: FixtureRequest
             return
 
     # Test name may exceed os NAME_MAX (255 bytes), so we use timestamp instead
-    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{sanitize_for_file_name(start_time)}")
+    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{sanitize_for_file_name(str(start_time))}")
     dump_logs(hosting, logs_dir, start_time, end_time)
     check_logs(logs_dir)
 
