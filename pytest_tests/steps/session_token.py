@@ -11,7 +11,6 @@ import json_transformers
 from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from json_transformers import encode_for_json
-from neo3 import wallet
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
 from storage_object_info import StorageObjectInfo

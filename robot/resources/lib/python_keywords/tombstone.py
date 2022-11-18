@@ -1,10 +1,9 @@
-import json
 import logging
 
 import allure
-from neo3 import wallet
 from neofs_testlib.shell import Shell
 from neofs_verbs import head_object
+from neofs_testlib.utils.wallet import get_first_address_from_wallet
 
 logger = logging.getLogger("NeoLogger")
 
@@ -19,10 +18,7 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
 
     assert header["containerID"] == cid, "Tombstone Header CID is wrong"
 
-    with open(wallet_path, "r") as file:
-        wlt_data = json.loads(file.read())
-    wlt = wallet.Wallet.from_json(wlt_data, password="")
-    addr = wlt.accounts[0].address
+    addr = get_first_address_from_wallet(wallet_path)
 
     assert header["ownerID"] == addr, "Tombstone Owner ID is wrong"
     assert header["objectType"] == "TOMBSTONE", "Header Type isn't Tombstone"
