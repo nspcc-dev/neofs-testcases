@@ -12,14 +12,9 @@ import urllib3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from cli_helpers import _cmd_run, _configure_aws_cli, _run_with_passwd
-from common import (
-    NEOFS_AUTHMATE_EXEC,
-    NEOFS_ENDPOINT,
-    S3_GATE,
-    S3_GATE_WALLET_PASS,
-    S3_GATE_WALLET_PATH,
-)
+from common import NEOFS_AUTHMATE_EXEC, NEOFS_ENDPOINT, S3_GATE, S3_GATE_WALLET_PATH
 from data_formatters import get_wallet_public_key
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from python_keywords.container import list_containers
 
@@ -43,7 +38,7 @@ class TestS3GateBase:
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
-    def s3_client(self, prepare_wallet_and_deposit, client_shell: Shell, request):
+    def s3_client(self, prepare_wallet_and_deposit, client_shell: Shell, request, hosting: Hosting):
         wallet = prepare_wallet_and_deposit
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
 
@@ -53,7 +48,7 @@ class TestS3GateBase:
             access_key_id,
             secret_access_key,
             owner_private_key,
-        ) = init_s3_credentials(wallet, s3_bearer_rules_file=s3_bearer_rules_file)
+        ) = init_s3_credentials(wallet, hosting, s3_bearer_rules_file=s3_bearer_rules_file)
         containers_list = list_containers(wallet, shell=client_shell)
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
@@ -65,11 +60,22 @@ class TestS3GateBase:
         TestS3GateBase.wallet = wallet
 
 
+def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:
+    service_config = hosting.get_service_config(s3_service_name)
+    return service_config.attributes.get("wallet_password")
+
+
 @allure.step("Init S3 Credentials")
-def init_s3_credentials(wallet_path: str, s3_bearer_rules_file: Optional[str] = None):
+def init_s3_credentials(
+    wallet_path: str,
+    hosting: Hosting,
+    s3_bearer_rules_file: Optional[str] = None,
+    s3_service_name: str = "s3-gate01",
+):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or "robot/resources/files/s3_bearer_rules.json"
-    gate_public_key = get_wallet_public_key(S3_GATE_WALLET_PATH, S3_GATE_WALLET_PASS)
+    s3_password = get_wallet_password(hosting, s3_service_name)
+    gate_public_key = get_wallet_public_key(S3_GATE_WALLET_PATH, s3_password)
     cmd = (
         f"{NEOFS_AUTHMATE_EXEC} --debug --with-log --timeout {CREDENTIALS_CREATE_TIMEOUT} "
         f"issue-secret --wallet {wallet_path} --gate-public-key={gate_public_key} "
