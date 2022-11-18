@@ -11,7 +11,6 @@ import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
 from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS
 from env_properties import save_env_properties
-from file_helper import sanitize_for_file_name
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
@@ -106,7 +105,9 @@ def analyze_logs(prepare_tmp_dir: str, hosting: Hosting, request: FixtureRequest
         with allure.step("Skip analyze logs due to no_log_analyze mark"):
             return
 
-    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{sanitize_for_file_name(request.node.name)}")
+    # Test name may exceed os NAME_MAX (255 bytes), so we use test start datetime instead
+    start_time_str = start_time.strftime("%Y_%m_%d_%H_%M_%S_%f")
+    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{start_time_str}")
     dump_logs(hosting, logs_dir, start_time, end_time)
     check_logs(logs_dir)
 
