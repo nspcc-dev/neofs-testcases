@@ -164,15 +164,3 @@ def get_file_content(
             content = file.read()
 
     return content
-
-
-def sanitize_for_file_name(string: str) -> str:
-    """
-    Returns string with only alpha num string with all other characters replaced by '_'
-    which is valid string to use as file name
-
-    Args:
-        string: string to sanitize
-    """
-
-    return "".join(character if character.isalnum() else "_" for character in string).strip("_")
