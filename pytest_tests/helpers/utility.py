@@ -1,7 +1,11 @@
+import os
 import time
+from typing import Any, Optional
 
 import allure
+import yaml
 from common import STORAGE_GC_TIME
+from neofs_testlib.hosting import Hosting
 
 
 def parse_time(value: str) -> int:
@@ -60,3 +64,16 @@ def wait_for_gc_pass_on_storage_nodes() -> None:
     wait_time = parse_time(STORAGE_GC_TIME)
     with allure.step(f"Wait {wait_time}s until GC completes on storage nodes"):
         time.sleep(wait_time)
+
+
+def get_wallet_password(hosting: Hosting, service_name: str) -> Optional[str]:
+    service_config = hosting.get_service_config(service_name)
+    return service_config.attributes.get("wallet_password")
+
+
+def create_wallet_config(hosting: Hosting, service_name: str) -> Optional[str]:
+    password = get_wallet_password(hosting=hosting, service_name=service_name)
+    wallet_config_path = os.path.join(os.getcwd(), f"{service_name}_wallet_config.yml")
+    with open(wallet_config_path, "w") as file:
+        yaml.dump({"password": password}, file)
+    return wallet_config_path
