@@ -236,7 +236,9 @@ class TestEACLContainer:
             )
 
     @allure.title("Testcase to validate NeoFS system operations with extended ACL")
-    def test_extended_actions_system(self, wallets, client_shell, eacl_container_with_objects):
+    def test_extended_actions_system(
+        self, wallets, client_shell, eacl_container_with_objects, hosting
+    ):
         user_wallet = wallets.get_wallet()
         ir_wallet, storage_wallet = wallets.get_wallets_list(role=EACLRole.SYSTEM)[:2]
 

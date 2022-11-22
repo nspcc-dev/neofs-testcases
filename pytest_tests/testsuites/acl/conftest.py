@@ -5,20 +5,14 @@ from typing import Dict, List, Optional
 
 import allure
 import pytest
-from common import (
-    ASSETS_DIR,
-    IR_WALLET_CONFIG,
-    IR_WALLET_PATH,
-    STORAGE_WALLET_CONFIG,
-    STORAGE_WALLET_PATH,
-    WALLET_CONFIG,
-    WALLET_PASS,
-)
+import yaml
+from common import ASSETS_DIR, IR_WALLET_PATH, STORAGE_WALLET_PATH, WALLET_CONFIG, WALLET_PASS
 from file_helper import generate_file
 from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import put_object
+from utility import create_wallet_config
 from wellknown_acl import PUBLIC_ACL
 
 OBJECT_COUNT = 5
@@ -42,12 +36,15 @@ class Wallets:
 
 
 @pytest.fixture(scope="module")
-def wallets(prepare_wallet_and_deposit):
+def wallets(prepare_wallet_and_deposit, hosting):
     other_wallets_paths = [
         os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json") for _ in range(2)
     ]
     for other_wallet_path in other_wallets_paths:
         init_wallet(other_wallet_path, WALLET_PASS)
+
+    ir_wallet_config = create_wallet_config(hosting, "ir01")
+    storage_wallet_config = create_wallet_config(hosting, "s01")
 
     yield Wallets(
         wallets={
@@ -59,8 +56,8 @@ def wallets(prepare_wallet_and_deposit):
                 for other_wallet_path in other_wallets_paths
             ],
             EACLRole.SYSTEM: [
-                Wallet(wallet_path=IR_WALLET_PATH, config_path=IR_WALLET_CONFIG),
-                Wallet(wallet_path=STORAGE_WALLET_PATH, config_path=STORAGE_WALLET_CONFIG),
+                Wallet(wallet_path=IR_WALLET_PATH, config_path=ir_wallet_config),
+                Wallet(wallet_path=STORAGE_WALLET_PATH, config_path=storage_wallet_config),
             ],
         }
     )

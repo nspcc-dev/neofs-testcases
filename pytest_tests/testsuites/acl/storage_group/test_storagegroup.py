@@ -5,12 +5,11 @@ from typing import Optional
 
 import allure
 import pytest
+import yaml
 from common import (
     ASSETS_DIR,
     COMPLEX_OBJ_SIZE,
     FREE_STORAGE,
-    IR_WALLET_CONFIG,
-    IR_WALLET_PASS,
     IR_WALLET_PATH,
     SIMPLE_OBJ_SIZE,
     WALLET_PASS,
@@ -18,6 +17,7 @@ from common import (
 from epoch import tick_epoch
 from file_helper import generate_file
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.acl import (
@@ -40,6 +40,7 @@ from python_keywords.storage_group import (
     verify_get_storage_group,
     verify_list_storage_group,
 )
+from utility import get_wallet_password
 
 logger = logging.getLogger("NeoLogger")
 deposit = 30
@@ -73,9 +74,10 @@ class TestStorageGroup:
             )
 
     @allure.title("Test Storage Group in Private Container")
-    def test_storagegroup_basic_private_container(self, client_shell, object_size):
+    def test_storagegroup_basic_private_container(self, client_shell, object_size, hosting):
         cid = create_container(self.main_wallet, shell=client_shell)
         file_path = generate_file(object_size)
+        password = get_wallet_password(hosting=hosting, service_name="ir01")
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
         objects = [oid]
         storage_group = put_storagegroup(
@@ -102,10 +104,11 @@ class TestStorageGroup:
             cid=cid,
             obj_list=objects,
             object_size=object_size,
+            hosting=hosting,
         )
 
     @allure.title("Test Storage Group in Public Container")
-    def test_storagegroup_basic_public_container(self, client_shell, object_size):
+    def test_storagegroup_basic_public_container(self, client_shell, object_size, hosting):
         cid = create_container(self.main_wallet, basic_acl="public-read-write", shell=client_shell)
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
@@ -130,10 +133,11 @@ class TestStorageGroup:
             cid=cid,
             obj_list=objects,
             object_size=object_size,
+            hosting=hosting,
         )
 
     @allure.title("Test Storage Group in Read-Only Container")
-    def test_storagegroup_basic_ro_container(self, client_shell, object_size):
+    def test_storagegroup_basic_ro_container(self, client_shell, object_size, hosting):
         cid = create_container(self.main_wallet, basic_acl="public-read", shell=client_shell)
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
@@ -159,6 +163,7 @@ class TestStorageGroup:
             cid=cid,
             obj_list=objects,
             object_size=object_size,
+            hosting=hosting,
         )
 
     @allure.title("Test Storage Group with Bearer Allow")
@@ -302,26 +307,30 @@ class TestStorageGroup:
     @staticmethod
     @allure.step("Run Storage Group Operations On Systems's Behalf In RO Container")
     def storagegroup_operations_by_system_ro_container(
-        shell: Shell, wallet: str, cid: str, obj_list: list, object_size: int
+        shell: Shell, wallet: str, cid: str, obj_list: list, object_size: int, hosting: Hosting
     ):
         """
         In this func we create a Storage Group on Inner Ring's key behalf
         and include an Object created on behalf of some user. We expect
         that System key is granted to make all operations except PUT and DELETE.
         """
+        password = get_wallet_password(hosting=hosting, service_name="ir01")
+        ir_wallet_config = os.path.join(os.getcwd(), "ir_wallet_config.yml")
+        with open(ir_wallet_config, "w") as file:
+            yaml.dump({"password": password}, file)
         if not FREE_STORAGE:
             deposit = 30
             transfer_gas(
                 shell=shell,
                 amount=deposit + 1,
                 wallet_to_path=IR_WALLET_PATH,
-                wallet_to_password=IR_WALLET_PASS,
+                wallet_to_password=password,
             )
             deposit_gas(
                 shell=shell,
                 amount=deposit,
                 wallet_from_path=IR_WALLET_PATH,
-                wallet_from_password=IR_WALLET_PASS,
+                wallet_from_password=password,
             )
         storage_group = put_storagegroup(shell, wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
@@ -330,14 +339,14 @@ class TestStorageGroup:
                 wallet=IR_WALLET_PATH,
                 cid=cid,
                 objects=obj_list,
-                wallet_config=IR_WALLET_CONFIG,
+                wallet_config=ir_wallet_config,
             )
         verify_list_storage_group(
             shell=shell,
             wallet=IR_WALLET_PATH,
             cid=cid,
             gid=storage_group,
-            wallet_config=IR_WALLET_CONFIG,
+            wallet_config=ir_wallet_config,
         )
 
         verify_get_storage_group(
@@ -347,7 +356,7 @@ class TestStorageGroup:
             gid=storage_group,
             obj_list=obj_list,
             object_size=object_size,
-            wallet_config=IR_WALLET_CONFIG,
+            wallet_config=ir_wallet_config,
         )
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             delete_storagegroup(
@@ -355,5 +364,5 @@ class TestStorageGroup:
                 wallet=IR_WALLET_PATH,
                 cid=cid,
                 gid=storage_group,
-                wallet_config=IR_WALLET_CONFIG,
+                wallet_config=ir_wallet_config,
             )

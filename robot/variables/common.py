@@ -138,7 +138,3 @@ with open(STORAGE_WALLET_CONFIG, "w") as file:
 MAINNET_WALLET_CONFIG = os.path.join(os.getcwd(), "mainnet_wallet_config.yml")
 with open(MAINNET_WALLET_CONFIG, "w") as file:
     yaml.dump({"password": MAINNET_WALLET_PASS}, file)
-
-IR_WALLET_CONFIG = os.path.join(os.getcwd(), "ir_wallet_config.yml")
-with open(IR_WALLET_CONFIG, "w") as file:
-    yaml.dump({"password": IR_WALLET_PASS}, file)
