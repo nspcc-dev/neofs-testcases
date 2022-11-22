@@ -82,21 +82,23 @@ def get_range_hash(
     endpoint: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    session: Optional[str] = None,
 ):
     """
     GETRANGEHASH of given Object.
 
     Args:
-        wallet (str): wallet on whose behalf GETRANGEHASH is done
-        cid (str): ID of Container where we get the Object from
-        oid (str): Object ID
+        wallet: wallet on whose behalf GETRANGEHASH is done
+        cid: ID of Container where we get the Object from
+        oid: Object ID
         shell: executor for cli command
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        range_cut (str): Range to take hash from in the form offset1:length1,...,
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        range_cut: Range to take hash from in the form offset1:length1,...,
                         value to pass to the `--range` parameter
-        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        wallet_config(optional, str): path to the wallet config
-        xhdr (optional, dict): Request X-Headers in form of Key=Value
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        wallet_config: path to the wallet config
+        xhdr: Request X-Headers in form of Key=Values
+        session: Filepath to a JSON- or binary-encoded token of the object RANGEHASH session.
     Returns:
         None
     """
@@ -110,6 +112,7 @@ def get_range_hash(
         range=range_cut,
         bearer=bearer,
         xhdr=xhdr,
+        session=session,
     )
 
     # cutting off output about range offset and length
