@@ -207,10 +207,7 @@ def test_static_session_read(
 @pytest.mark.static_session
 @pytest.mark.parametrize(
     "method_under_test,verb",
-    [
-        (get_range, RANGE_VERB),
-        # (get_range_hash, RANGEHASH_VERB), session is absent in neofs-cli object hash command (see https://github.com/nspcc-dev/neofs-node/issues/2029)
-    ],
+    [(get_range, RANGE_VERB), (get_range_hash, RANGEHASH_VERB)],
 )
 def test_static_session_range(
     user_wallet: WalletFile,
@@ -487,10 +484,10 @@ def test_static_session_expiration_at_next(
     request: FixtureRequest,
 ):
     """
-    Validate static session expires which at next epoch
+    Validate static session which expires at next epoch
     """
     allure.dynamic.title(
-        f"Validate static session expires which at next epoch for {request.node.callspec.id}"
+        f"Validate static session which expires at next epoch for {request.node.callspec.id}"
     )
     epoch = ensure_fresh_epoch(client_shell)
 
@@ -540,7 +537,7 @@ def test_static_session_start_at_next(
 
     container = owner_wallet.containers[0]
     object_id = storage_objects[0].oid
-    expiration = Lifetime(epoch + 10, epoch + 1, epoch)
+    expiration = Lifetime(epoch + 2, epoch + 1, epoch)
 
     token_start_at_next_epoch = get_object_signed_token(
         owner_wallet,
@@ -561,6 +558,12 @@ def test_static_session_start_at_next(
     head_object(
         user_wallet.path, container, object_id, client_shell, session=token_start_at_next_epoch
     )
+
+    tick_epoch(client_shell)
+    with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        head_object(
+            user_wallet.path, container, object_id, client_shell, session=token_start_at_next_epoch
+        )
 
 
 @allure.title("Validate static session which is already expired")
