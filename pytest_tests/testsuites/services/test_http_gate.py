@@ -40,7 +40,8 @@ OBJECT_UPLOAD_DELAY = 10
 @pytest.mark.sanity
 @pytest.mark.http_gate
 class TestHttpGate:
-    PLACEMENT_RULE = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+    PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+    PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
@@ -64,7 +65,7 @@ class TestHttpGate:
         Hashes must be the same.
         """
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_1, basic_acl=PUBLIC_ACL
         )
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
@@ -97,7 +98,7 @@ class TestHttpGate:
         Hashes must be the same.
         """
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
@@ -135,7 +136,7 @@ class TestHttpGate:
         Hashes must be the same.
         """
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
         file_path = generate_file()
 
@@ -150,7 +151,7 @@ class TestHttpGate:
     @allure.title("Test Expiration-Epoch in HTTP header")
     def test_expiration_epoch_in_http(self, client_shell):
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
         file_path = generate_file()
         oids = []
@@ -188,7 +189,7 @@ class TestHttpGate:
     @allure.title("Test Zip in HTTP header")
     def test_zip_in_http(self, client_shell):
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
         common_prefix = "my_files"
@@ -215,7 +216,7 @@ class TestHttpGate:
         Large is object with size up to 20Mb.
         """
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
 
         obj_size = int(os.getenv("BIG_OBJ_SIZE", COMPLEX_OBJ_SIZE))
@@ -241,7 +242,7 @@ class TestHttpGate:
         Test checks upload and download over HTTP using curl utility.
         """
         cid = create_container(
-            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
+            self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE_2, basic_acl=PUBLIC_ACL
         )
         file_path_simple, file_path_large = generate_file(), generate_file(COMPLEX_OBJ_SIZE)
 
