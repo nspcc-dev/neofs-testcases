@@ -81,8 +81,6 @@ class K6:
                 f"--endpoint {self.load_params.endpoint.split(',')[0]} "
                 f"--preload_obj {self.load_params.obj_count} "
             )
-            terminal = self.shell.exec(command)
-            return terminal.stdout.strip("\n")
         elif self.load_params.load_type == "s3":
             command = (
                 f"{self.k6_dir}/scenarios/preset/preset_s3.py --size {self.load_params.obj_size} "
@@ -92,10 +90,12 @@ class K6:
                 f"--preload_obj {self.load_params.obj_count} "
                 f"--location load-1-1"
             )
-            terminal = self.shell.exec(command)
-            return terminal.stdout.strip("\n")
         else:
             raise AssertionError("Wrong K6 load type")
+        terminal = self.shell.exec(command)
+        if re.search(r"has\s*been\s*created:\s*0", terminal.stdout):
+            raise Exception("Containers haven't been created")
+        return terminal.stdout.strip("\n")
 
     @allure.step("Start K6 on initiator")
     def start(self) -> None:
