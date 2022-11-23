@@ -9,6 +9,7 @@ from common import COMPLEX_OBJ_SIZE
 from container import create_container
 from epoch import get_epoch, tick_epoch
 from file_helper import generate_file, get_file_hash
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from python_keywords.http_gate import (
     get_via_http_curl,
@@ -147,7 +148,7 @@ class TestHttpGate:
         self.get_object_by_attr_and_verify_hashes(oid, file_path, cid, attributes)
 
     @allure.title("Test Expiration-Epoch in HTTP header")
-    def test_expiration_epoch_in_http(self, client_shell):
+    def test_expiration_epoch_in_http(self, client_shell, hosting):
         cid = create_container(
             self.wallet, shell=client_shell, rule=self.PLACEMENT_RULE, basic_acl=PUBLIC_ACL
         )
@@ -170,7 +171,7 @@ class TestHttpGate:
                 get_via_http_gate(cid=cid, oid=oid)
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
-            tick_epoch(shell=client_shell)
+            tick_epoch(shell=client_shell, hosting=hosting)
 
             # Wait for GC, because object with expiration is counted as alive until GC removes it
             wait_for_gc_pass_on_storage_nodes()

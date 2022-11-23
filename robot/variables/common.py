@@ -64,7 +64,7 @@ STORAGE_WALLET_PATH_4 = os.getenv(
     "STORAGE_WALLET_PATH_4", os.path.join(DEVENV_PATH, "services", "storage", "wallet04.json")
 )
 STORAGE_WALLET_PATH = STORAGE_WALLET_PATH_1
-STORAGE_WALLET_PASS = os.getenv("STORAGE_WALLET_PASS", "")
+
 
 NEOFS_NETMAP_DICT = {
     "s01": {
@@ -107,7 +107,6 @@ MAINNET_SINGLE_ADDR = os.getenv("MAINNET_SINGLE_ADDR", "NfgHwwTi3wHAS8aFAN243C5v
 MAINNET_WALLET_PASS = os.getenv("MAINNET_WALLET_PASS", "one")
 
 IR_WALLET_PATH = os.getenv("IR_WALLET_PATH", os.path.join(DEVENV_PATH, "services", "ir", "az.json"))
-IR_WALLET_PASS = os.getenv("IR_WALLET_PASS", "one")
 
 S3_GATE_WALLET_PATH = os.getenv(
     "S3_GATE_WALLET_PATH", os.path.join(DEVENV_PATH, "services", "s3_gate", "wallet.json")
@@ -130,11 +129,3 @@ S3_GATE_SERVICE_NAME_REGEX = r"s3-gate\d\d"
 WALLET_CONFIG = os.path.join(os.getcwd(), "wallet_config.yml")
 with open(WALLET_CONFIG, "w") as file:
     yaml.dump({"password": WALLET_PASS}, file)
-
-STORAGE_WALLET_CONFIG = os.path.join(os.getcwd(), "storage_wallet_config.yml")
-with open(STORAGE_WALLET_CONFIG, "w") as file:
-    yaml.dump({"password": STORAGE_WALLET_PASS}, file)
-
-MAINNET_WALLET_CONFIG = os.path.join(os.getcwd(), "mainnet_wallet_config.yml")
-with open(MAINNET_WALLET_CONFIG, "w") as file:
-    yaml.dump({"password": MAINNET_WALLET_PASS}, file)

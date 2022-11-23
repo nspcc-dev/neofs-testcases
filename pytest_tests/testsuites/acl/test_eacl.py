@@ -29,6 +29,7 @@ from python_keywords.object_access import (
     can_put_object,
     can_search_object,
 )
+from utility import create_wallet_config
 from wellknown_acl import PUBLIC_ACL
 
 
@@ -230,9 +231,15 @@ class TestEACLContainer:
             drop_object(hosting, node_name=[*NEOFS_NETMAP_DICT][0], cid=cid, oid=oid)
 
         storage_wallet_path = NEOFS_NETMAP_DICT[[*NEOFS_NETMAP_DICT][0]]["wallet_path"]
+        storage_wallet_conf = create_wallet_config(hosting, [*NEOFS_NETMAP_DICT][0])
         with allure.step("Wait for dropped object replicated"):
             wait_object_replication_on_nodes(
-                storage_wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
+                storage_wallet_path,
+                cid,
+                oid,
+                self.NODE_COUNT,
+                shell=client_shell,
+                wallet_config=storage_wallet_conf,
             )
 
     @allure.title("Testcase to validate NeoFS system operations with extended ACL")

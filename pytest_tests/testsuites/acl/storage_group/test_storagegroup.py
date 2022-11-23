@@ -216,7 +216,7 @@ class TestStorageGroup:
 
     @pytest.mark.skip
     @allure.title("Test to check Storage Group lifetime")
-    def test_storagegroup_lifetime(self, client_shell, object_size):
+    def test_storagegroup_lifetime(self, client_shell, object_size, hosting):
         cid = create_container(self.main_wallet, shell=client_shell)
         file_path = generate_file(object_size)
         oid = put_object(self.main_wallet, file_path, cid, shell=client_shell)
@@ -224,7 +224,7 @@ class TestStorageGroup:
         storage_group = put_storagegroup(client_shell, self.main_wallet, cid, objects, lifetime=1)
         with allure.step("Tick two epochs"):
             for _ in range(2):
-                tick_epoch(shell=client_shell)
+                tick_epoch(shell=client_shell, hosting=hosting)
         with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
             get_storagegroup(
                 shell=client_shell, wallet=self.main_wallet, cid=cid, gid=storage_group

@@ -11,7 +11,6 @@ from common import (
     NEOFS_CONTRACT_CACHE_TIMEOUT,
     NEOFS_NETMAP_DICT,
     STORAGE_RPC_ENDPOINT_1,
-    STORAGE_WALLET_PASS,
 )
 from data_formatters import get_wallet_public_key
 from epoch import tick_epoch
@@ -38,7 +37,12 @@ from python_keywords.node_management import (
     stop_nodes,
 )
 from storage_policy import get_nodes_with_object, get_simple_object_copies
-from utility import parse_time, placement_policy_from_container, wait_for_gc_pass_on_storage_nodes
+from utility import (
+    get_wallet_password,
+    parse_time,
+    placement_policy_from_container,
+    wait_for_gc_pass_on_storage_nodes,
+)
 from wellknown_acl import PUBLIC_ACL
 
 logger = logging.getLogger("NeoLogger")
@@ -109,12 +113,12 @@ def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = Non
         sleep(parse_time(MORPH_BLOCK_TIME))
         for __attempt in range(3):
             try:
-                tick_epoch(shell=shell)
+                tick_epoch(shell=shell, hosting=hosting)
                 break
             except RuntimeError:
                 sleep(3)
 
-        check_node_in_map(node, shell=shell, alive_node=alive_node)
+        check_node_in_map(node, shell=shell, hosting=hosting, alive_node=alive_node)
 
 
 @allure.title("Add one node to cluster")
@@ -141,7 +145,7 @@ def test_add_nodes(
     )
     alive_node = choice([node for node in NEOFS_NETMAP_DICT if node != additional_node])
 
-    check_node_in_map(additional_node, shell=client_shell, alive_node=alive_node)
+    check_node_in_map(additional_node, shell=client_shell, hosting=hosting, alive_node=alive_node)
 
     # Add node to recovery list before messing with it
     check_nodes.append(additional_node)
@@ -197,10 +201,11 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
 
     # Calculate public key that identifies node in netmap
     random_node_wallet_path = NEOFS_NETMAP_DICT[random_node]["wallet_path"]
-    random_node_netmap_key = get_wallet_public_key(random_node_wallet_path, STORAGE_WALLET_PASS)
+    node_wallet_password = get_wallet_password(hosting=hosting, service_name=random_node)
+    random_node_netmap_key = get_wallet_public_key(random_node_wallet_path, node_wallet_password)
 
     with allure.step("Check node {random_node} is in netmap"):
-        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell, hosting=hosting)
         assert random_node_netmap_key in snapshot, f"Expected node {random_node} in netmap"
 
     with allure.step("Run health check for all storage nodes"):
@@ -212,24 +217,24 @@ def test_nodes_management(prepare_tmp_dir, client_shell, hosting: Hosting):
         node_set_status(hosting, random_node, status="offline")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch(shell=client_shell)
+    tick_epoch(shell=client_shell, hosting=hosting)
 
     with allure.step(f"Check node {random_node} went to offline"):
         health_check = node_healthcheck(hosting, random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "OFFLINE"
-        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell, hosting=hosting)
         assert random_node_netmap_key not in snapshot, f"Expected node {random_node} not in netmap"
 
     with allure.step(f"Check node {random_node} went to online"):
         node_set_status(hosting, random_node, status="online")
 
     sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch(shell=client_shell)
+    tick_epoch(shell=client_shell, hosting=hosting)
 
     with allure.step(f"Check node {random_node} went to online"):
         health_check = node_healthcheck(hosting, random_node)
         assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
-        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell)
+        snapshot = get_netmap_snapshot(node_name=alive_node, shell=client_shell, hosting=hosting)
         assert random_node_netmap_key in snapshot, f"Expected node {random_node} in netmap"
 
 
@@ -372,7 +377,7 @@ def test_replication(
     wait_for_expected_object_copies(client_shell, wallet, cid, oid)
 
     start_nodes(hosting, stopped_nodes)
-    tick_epoch(shell=client_shell)
+    tick_epoch(shell=client_shell, hosting=hosting)
 
     for node_name in node_names:
         wait_for_node_go_online(hosting, node_name)
@@ -508,13 +513,13 @@ def wait_for_node_to_be_ready(hosting: Hosting, node_name: str) -> None:
 
 @allure.step("Wait for {expected_copies} object copies in the wallet")
 def wait_for_expected_object_copies(
-    shell: Shell, wallet: str, cid: str, oid: str, expected_copies: int = 2
+    shell: Shell, wallet: str, cid: str, oid: str, hosting: Hosting, expected_copies: int = 2
 ) -> None:
     for i in range(2):
         copies = get_simple_object_copies(wallet, cid, oid)
         if copies == expected_copies:
             break
-        tick_epoch(shell=shell)
+        tick_epoch(shell=shell, hosting=hosting)
         sleep(parse_time(NEOFS_CONTRACT_CACHE_TIMEOUT))
     else:
         raise AssertionError(f"There are no {expected_copies} copies during time")

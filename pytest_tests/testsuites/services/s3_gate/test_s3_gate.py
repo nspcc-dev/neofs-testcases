@@ -66,7 +66,7 @@ class TestS3Gate(TestS3GateBase):
         s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
     @allure.title("Test S3 Bucket API")
-    def test_s3_buckets(self, client_shell):
+    def test_s3_buckets(self, client_shell, hosting):
         """
         Test base S3 Bucket API (Create/List/Head/Delete).
         """
@@ -110,7 +110,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete empty bucket {bucket_2}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_2)
-            tick_epoch(shell=client_shell)
+            tick_epoch(shell=client_shell, hosting=hosting)
 
         with allure.step(f"Check bucket {bucket_2} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):
@@ -126,7 +126,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete bucket {bucket_1}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_1)
-            tick_epoch(shell=client_shell)
+            tick_epoch(shell=client_shell, hosting=hosting)
 
         with allure.step(f"Check bucket {bucket_1} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):

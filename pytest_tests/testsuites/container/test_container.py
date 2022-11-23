@@ -3,6 +3,7 @@ import json
 import allure
 import pytest
 from epoch import tick_epoch
+from neofs_testlib.hosting import Hosting
 from python_keywords.container import (
     create_container,
     delete_container,
@@ -18,7 +19,7 @@ from wellknown_acl import PRIVATE_ACL_F
 @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
 @pytest.mark.sanity
 @pytest.mark.container
-def test_container_creation(client_shell, prepare_wallet_and_deposit, name):
+def test_container_creation(client_shell, prepare_wallet_and_deposit, name, hosting):
     scenario_title = f"with name {name}" if name else "without name"
     allure.dynamic.title(f"User can create container {scenario_title}")
 
@@ -58,14 +59,14 @@ def test_container_creation(client_shell, prepare_wallet_and_deposit, name):
 
     with allure.step("Delete container and check it was deleted"):
         delete_container(wallet, cid, shell=client_shell)
-        tick_epoch(shell=client_shell)
+        tick_epoch(shell=client_shell, hosting=hosting)
         wait_for_container_deletion(wallet, cid, shell=client_shell)
 
 
 @allure.title("Parallel container creation and deletion")
 @pytest.mark.sanity
 @pytest.mark.container
-def test_container_creation_deletion_parallel(client_shell, prepare_wallet_and_deposit):
+def test_container_creation_deletion_parallel(client_shell, prepare_wallet_and_deposit, hosting):
     containers_count = 3
     wallet = prepare_wallet_and_deposit
     placement_rule = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
@@ -92,5 +93,5 @@ def test_container_creation_deletion_parallel(client_shell, prepare_wallet_and_d
     with allure.step("Delete containers and check they were deleted"):
         for cid in cids:
             delete_container(wallet, cid, shell=client_shell)
-        tick_epoch(shell=client_shell)
+        tick_epoch(shell=client_shell, hosting=hosting)
         wait_for_container_deletion(wallet, cid, shell=client_shell)

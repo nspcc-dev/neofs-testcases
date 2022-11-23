@@ -4,7 +4,6 @@ from time import sleep
 
 import allure
 from common import (
-    IR_WALLET_PASS,
     IR_WALLET_PATH,
     MAINNET_BLOCK_TIME,
     MORPH_ENDPOINT,
@@ -13,10 +12,11 @@ from common import (
     NEOGO_EXECUTABLE,
 )
 from neofs_testlib.cli import NeofsAdm, NeoGo
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from payment_neogo import get_contract_hash
-from utility import parse_time
+from utility import get_wallet_password, parse_time
 
 logger = logging.getLogger("NeoLogger")
 
@@ -33,7 +33,7 @@ def get_epoch(shell: Shell):
 
 
 @allure.step("Tick Epoch")
-def tick_epoch(shell: Shell):
+def tick_epoch(shell: Shell, hosting: Hosting):
     if NEOFS_ADM_EXEC and NEOFS_ADM_CONFIG_PATH:
         # If neofs-adm is available, then we tick epoch with it (to be consistent with UAT tests)
         neofsadm = NeofsAdm(
@@ -44,13 +44,13 @@ def tick_epoch(shell: Shell):
 
     # Otherwise we tick epoch using transaction
     cur_epoch = get_epoch(shell)
-
-    ir_address = get_last_address_from_wallet(IR_WALLET_PATH, IR_WALLET_PASS)
+    ir_wallet_password = get_wallet_password(hosting, "ir01")
+    ir_address = get_last_address_from_wallet(IR_WALLET_PATH, ir_wallet_password)
 
     neogo = NeoGo(shell, neo_go_exec_path=NEOGO_EXECUTABLE)
     neogo.contract.invokefunction(
         wallet=IR_WALLET_PATH,
-        wallet_password=IR_WALLET_PASS,
+        wallet_password=ir_wallet_password,
         scripthash=get_contract_hash("netmap.neofs", shell=shell),
         method="newEpoch",
         arguments=f"int:{cur_epoch + 1}",

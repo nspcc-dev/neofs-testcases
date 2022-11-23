@@ -11,6 +11,7 @@ from container import create_container
 from epoch import tick_epoch
 from file_helper import generate_file, get_file_content, get_file_hash
 from grpc_responses import OBJECT_ALREADY_REMOVED, OUT_OF_RANGE, error_matches_status
+from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 from python_keywords.neofs_verbs import (
@@ -94,7 +95,7 @@ def generate_ranges(file_size: int, max_object_size: int) -> list[(int, int)]:
     return file_ranges_to_test
 
 
-def delete_objects(storage_objects: list, client_shell: Shell) -> None:
+def delete_objects(storage_objects: list, client_shell: Shell, hosting: Hosting) -> None:
     with allure.step("Delete objects"):
         for storage_object in storage_objects:
             storage_object.tombstone = delete_object(
@@ -108,7 +109,7 @@ def delete_objects(storage_objects: list, client_shell: Shell) -> None:
                 shell=client_shell,
             )
 
-    tick_epoch(shell=client_shell)
+    tick_epoch(shell=client_shell, hosting=hosting)
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step("Get objects and check errors"):
@@ -129,7 +130,7 @@ def delete_objects(storage_objects: list, client_shell: Shell) -> None:
     scope="session",
 )
 def storage_objects(
-    prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest
+    prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest, hosting: Hosting
 ) -> list[StorageObjectInfo]:
     wallet = prepare_wallet_and_deposit
     # Separate containers for complex/simple objects to avoid side-effects
@@ -163,7 +164,7 @@ def storage_objects(
     yield storage_objects
 
     # Teardown after all tests done with current param
-    delete_objects(storage_objects, client_shell)
+    delete_objects(storage_objects, client_shell, hosting)
 
 
 @allure.title("Validate object storage policy by native API")
@@ -290,7 +291,11 @@ def test_search_object_api(
     "object_size", [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE], ids=["simple object", "complex object"]
 )
 def test_object_search_should_return_tombstone_items(
-    prepare_wallet_and_deposit: str, client_shell: Shell, request: FixtureRequest, object_size: int
+    prepare_wallet_and_deposit: str,
+    client_shell: Shell,
+    request: FixtureRequest,
+    object_size: int,
+    hosting: Hosting,
 ):
     """
     Validate object search with removed items
@@ -321,7 +326,7 @@ def test_object_search_should_return_tombstone_items(
         assert result == [storage_object.oid]
 
     with allure.step("Delete file"):
-        delete_objects([storage_object], client_shell)
+        delete_objects([storage_object], client_shell, hosting)
 
     with allure.step("Search deleted object with --root"):
         # Root Search object should return nothing

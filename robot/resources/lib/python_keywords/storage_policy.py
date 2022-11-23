@@ -97,7 +97,12 @@ def get_complex_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> 
 
 @allure.step("Get Nodes With Object")
 def get_nodes_with_object(
-    wallet: str, cid: str, oid: str, shell: Shell, skip_nodes: Optional[list[str]] = None
+    wallet: str,
+    cid: str,
+    oid: str,
+    shell: Shell,
+    skip_nodes: Optional[list[str]] = None,
+    wallet_config: Optional[str] = None,
 ) -> list[str]:
     """
     The function returns list of nodes which store
@@ -120,7 +125,13 @@ def get_nodes_with_object(
     for node in nodes_to_search:
         try:
             res = neofs_verbs.head_object(
-                wallet, cid, oid, shell=shell, endpoint=node, is_direct=True
+                wallet,
+                cid,
+                oid,
+                shell=shell,
+                endpoint=node,
+                is_direct=True,
+                wallet_config=wallet_config,
             )
             if res is not None:
                 logger.info(f"Found object {oid} on node {node}")
