@@ -21,6 +21,16 @@ from utility import parse_time
 logger = logging.getLogger("NeoLogger")
 
 
+@allure.step("Ensure fresh epoch")
+def ensure_fresh_epoch(shell: Shell) -> int:
+    # ensure new fresh epoch to avoid epoch switch during test session
+    current_epoch = get_epoch(shell)
+    tick_epoch(shell)
+    epoch = get_epoch(shell)
+    assert epoch > current_epoch, "Epoch wasn't ticked"
+    return epoch
+
+
 @allure.step("Get Epoch")
 def get_epoch(shell: Shell):
     neogo = NeoGo(shell=shell, neo_go_exec_path=NEOGO_EXECUTABLE)

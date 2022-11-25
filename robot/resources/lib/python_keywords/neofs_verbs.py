@@ -272,6 +272,63 @@ def get_range(
     return range_file_path, content
 
 
+@allure.step("Lock Object")
+def lock_object(
+    wallet: str,
+    cid: str,
+    oid: str,
+    shell: Shell,
+    lifetime: Optional[int] = None,
+    expire_at: Optional[int] = None,
+    endpoint: Optional[str] = None,
+    address: Optional[str] = None,
+    bearer: Optional[str] = None,
+    session: Optional[str] = None,
+    wallet_config: Optional[str] = None,
+    ttl: Optional[int] = None,
+    xhdr: Optional[dict] = None,
+) -> str:
+    """
+    Lock object in container.
+
+    Args:
+        address: Address of wallet account.
+        bearer: File with signed JSON or binary encoded bearer token.
+        cid: Container ID.
+        oid: Object ID.
+        lifetime: Lock lifetime.
+        expire_at: Lock expiration epoch.
+        endpoint: Remote node address.
+        session: Path to a JSON-encoded container session token.
+        ttl: TTL value in request meta header (default 2).
+        wallet: WIF (NEP-2) string or path to the wallet or binary key.
+        xhdr: Dict with request X-Headers.
+
+    Returns:
+        Lock object ID
+    """
+
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
+    result = cli.object.lock(
+        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        lifetime=lifetime,
+        expire_at=expire_at,
+        address=address,
+        wallet=wallet,
+        cid=cid,
+        oid=oid,
+        bearer=bearer,
+        xhdr=xhdr,
+        session=session,
+        ttl=ttl,
+    )
+
+    # splitting CLI output to lines and taking the penultimate line
+    id_str = result.stdout.strip().split("\n")[0]
+    oid = id_str.split(":")[1]
+    return oid.strip()
+
+
 @allure.step("Search object")
 def search_object(
     wallet: str,

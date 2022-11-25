@@ -13,7 +13,6 @@ from python_keywords.payment_neogo import deposit_gas, transfer_gas
 class WalletFile:
     path: str
     password: str
-    containers: Optional[list[str]] = None
 
     def get_address(self) -> str:
         """

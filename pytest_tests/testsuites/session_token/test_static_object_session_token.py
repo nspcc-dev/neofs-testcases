@@ -3,7 +3,7 @@ import logging
 import allure
 import pytest
 from common import COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
-from epoch import get_epoch, tick_epoch
+from epoch import ensure_fresh_epoch, tick_epoch
 from file_helper import generate_file
 from grpc_responses import MALFORMED_REQUEST, OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from neofs_testlib.hosting import Hosting
@@ -41,21 +41,11 @@ from steps.session_token import (
     get_object_signed_token,
     sign_session_token,
 )
-from steps.storage_object import delete_objects, wait_until_objects_available_on_all_nodes
+from steps.storage_object import delete_objects
 
 logger = logging.getLogger("NeoLogger")
 
 RANGE_OFFSET_FOR_COMPLEX_OBJECT = 200
-
-
-@allure.step("Ensure fresh epoch")
-def ensure_fresh_epoch(shell: Shell) -> int:
-    # ensure new fresh epoch to avoid epoch switch during test session
-    current_epoch = get_epoch(shell)
-    tick_epoch(shell)
-    epoch = get_epoch(shell)
-    assert epoch > current_epoch, "Epoch wasn't ticked"
-    return epoch
 
 
 @pytest.fixture(
@@ -65,7 +55,7 @@ def ensure_fresh_epoch(shell: Shell) -> int:
     scope="module",
 )
 def storage_objects(
-    hosting: Hosting, owner_wallet: WalletFile, client_shell: Shell, request: FixtureRequest
+    owner_wallet: WalletFile, client_shell: Shell, request: FixtureRequest
 ) -> list[StorageObjectInfo]:
     file_path = generate_file(request.param)
     storage_objects = []
@@ -77,23 +67,19 @@ def storage_objects(
 
     with allure.step("Put objects"):
         # upload couple objects
-        for i in range(3):
-            storage_object = StorageObjectInfo()
-            storage_object.size = request.param
-            storage_object.cid = cid
-            storage_object.wallet = owner_wallet.path
-            storage_object.file_path = file_path
-
-            storage_object.oid = put_object(
+        for _ in range(3):
+            storage_object_id = put_object(
                 wallet=owner_wallet.path,
                 path=file_path,
                 cid=cid,
                 shell=client_shell,
             )
 
+            storage_object = StorageObjectInfo(cid, storage_object_id)
+            storage_object.size = request.param
+            storage_object.wallet_file_path = owner_wallet.path
+            storage_object.file_path = file_path
             storage_objects.append(storage_object)
-
-    wait_until_objects_available_on_all_nodes(hosting, storage_objects, client_shell)
 
     yield storage_objects
 
@@ -109,7 +95,7 @@ def get_ranges(storage_object: StorageObjectInfo, shell: Shell) -> list[str]:
     object_size = storage_object.size
 
     if object_size == COMPLEX_OBJ_SIZE:
-        net_info = get_netmap_netinfo(storage_object.wallet, shell)
+        net_info = get_netmap_netinfo(storage_object.wallet_file_path, shell)
         max_object_size = net_info["maximum_object_size"]
         # make sure to test multiple parts of complex object
         assert object_size >= max_object_size + RANGE_OFFSET_FOR_COMPLEX_OBJECT
