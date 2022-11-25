@@ -101,20 +101,20 @@ def storage_objects(
     with allure.step("Put objects"):
         # We need to upload objects multiple times with different attributes
         for attributes in OBJECT_ATTRIBUTES:
-            storage_object = StorageObjectInfo()
-            storage_object.size = request.param
-            storage_object.cid = cid
-            storage_object.wallet = wallet
-            storage_object.file_path = file_path
-            storage_object.file_hash = file_hash
-            storage_object.attributes = attributes
-            storage_object.oid = put_object(
+            storage_object_id = put_object(
                 wallet=wallet,
                 path=file_path,
                 cid=cid,
                 shell=client_shell,
                 attributes=attributes,
             )
+
+            storage_object = StorageObjectInfo(cid, storage_object_id)
+            storage_object.size = request.param
+            storage_object.wallet_file_path = wallet
+            storage_object.file_path = file_path
+            storage_object.file_hash = file_hash
+            storage_object.attributes = attributes
 
             storage_objects.append(storage_object)
 
@@ -141,14 +141,14 @@ def test_object_storage_policies(
         for storage_object in storage_objects:
             if storage_object.size == SIMPLE_OBJ_SIZE:
                 copies = get_simple_object_copies(
-                    storage_object.wallet,
+                    storage_object.wallet_file_path,
                     storage_object.cid,
                     storage_object.oid,
                     shell=client_shell,
                 )
             else:
                 copies = get_complex_object_copies(
-                    storage_object.wallet,
+                    storage_object.wallet_file_path,
                     storage_object.cid,
                     storage_object.oid,
                     shell=client_shell,
@@ -170,7 +170,10 @@ def test_get_object_api(
     with allure.step("Get objects and compare hashes"):
         for storage_object in storage_objects:
             file_path = get_object(
-                storage_object.wallet, storage_object.cid, storage_object.oid, client_shell
+                storage_object.wallet_file_path,
+                storage_object.cid,
+                storage_object.oid,
+                client_shell,
             )
             file_hash = get_file_hash(file_path)
             assert storage_object.file_hash == file_hash
@@ -192,10 +195,16 @@ def test_head_object_api(
 
     with allure.step("Head object and validate"):
         head_object(
-            storage_object_1.wallet, storage_object_1.cid, storage_object_1.oid, shell=client_shell
+            storage_object_1.wallet_file_path,
+            storage_object_1.cid,
+            storage_object_1.oid,
+            shell=client_shell,
         )
         head_info = head_object(
-            storage_object_2.wallet, storage_object_2.cid, storage_object_2.oid, shell=client_shell
+            storage_object_2.wallet_file_path,
+            storage_object_2.cid,
+            storage_object_2.oid,
+            shell=client_shell,
         )
         check_header_is_presented(head_info, storage_object_2.attributes)
 
@@ -212,7 +221,7 @@ def test_search_object_api(
     allure.dynamic.title(f"Validate object search by native API for {request.node.callspec.id}")
 
     oids = [storage_object.oid for storage_object in storage_objects]
-    wallet = storage_objects[0].wallet
+    wallet = storage_objects[0].wallet_file_path
     cid = storage_objects[0].cid
 
     test_table = [
@@ -265,12 +274,12 @@ def test_object_search_should_return_tombstone_items(
         file_hash = get_file_hash(file_path)
 
         storage_object = StorageObjectInfo(
-            size=object_size,
             cid=cid,
-            wallet=wallet,
+            oid=put_object(wallet, file_path, cid, shell=client_shell),
+            size=object_size,
+            wallet_file_path=wallet,
             file_path=file_path,
             file_hash=file_hash,
-            oid=put_object(wallet, file_path, cid, shell=client_shell),
         )
 
     with allure.step("Search object"):
@@ -316,7 +325,7 @@ def test_object_get_range_hash(
         f"Validate native get_range_hash object API for {request.node.callspec.id}"
     )
 
-    wallet = storage_objects[0].wallet
+    wallet = storage_objects[0].wallet_file_path
     cid = storage_objects[0].cid
     oids = [storage_object.oid for storage_object in storage_objects[:2]]
     file_path = storage_objects[0].file_path
@@ -350,7 +359,7 @@ def test_object_get_range(
     """
     allure.dynamic.title(f"Validate native get_range object API for {request.node.callspec.id}")
 
-    wallet = storage_objects[0].wallet
+    wallet = storage_objects[0].wallet_file_path
     cid = storage_objects[0].cid
     oids = [storage_object.oid for storage_object in storage_objects[:2]]
     file_path = storage_objects[0].file_path
@@ -391,7 +400,7 @@ def test_object_get_range_negatives(
         f"Validate native get_range negative object API for {request.node.callspec.id}"
     )
 
-    wallet = storage_objects[0].wallet
+    wallet = storage_objects[0].wallet_file_path
     cid = storage_objects[0].cid
     oids = [storage_object.oid for storage_object in storage_objects[:2]]
     file_size = storage_objects[0].size
@@ -432,7 +441,7 @@ def test_object_get_range_hash_negatives(
         f"Validate native get_range_hash negative object API for {request.node.callspec.id}"
     )
 
-    wallet = storage_objects[0].wallet
+    wallet = storage_objects[0].wallet_file_path
     cid = storage_objects[0].cid
     oids = [storage_object.oid for storage_object in storage_objects[:2]]
     file_size = storage_objects[0].size

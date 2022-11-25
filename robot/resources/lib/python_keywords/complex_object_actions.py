@@ -29,6 +29,7 @@ def get_link_object(
     shell: Shell,
     bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
+    is_direct: bool = True,
 ):
     """
     Args:
@@ -39,6 +40,8 @@ def get_link_object(
         shell: executor for cli command
         bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to the neofs-cli config file
+        is_direct: send request directly to the node or not; this flag
+                   turns into `--ttl 1` key
     Returns:
         (str): Link Object ID
         When no Link Object ID is found after all Storage Nodes polling,
@@ -53,7 +56,7 @@ def get_link_object(
                 shell=shell,
                 endpoint=node,
                 is_raw=True,
-                is_direct=True,
+                is_direct=is_direct,
                 bearer=bearer,
                 wallet_config=wallet_config,
             )
