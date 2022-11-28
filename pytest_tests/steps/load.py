@@ -86,15 +86,18 @@ def prepare_objects(k6_instance: K6):
 
 
 @allure.title("Prepare K6 instances and objects")
-def prepare_k6_instances(load_nodes: list, login: str, pkey: str, load_params: LoadParams) -> list:
+def prepare_k6_instances(
+    load_nodes: list, login: str, pkey: str, load_params: LoadParams, prepare: bool = True
+) -> list:
     k6_load_objects = []
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
         k6_load_object = K6(load_params, ssh_client)
         k6_load_objects.append(k6_load_object)
     for k6_load_object in k6_load_objects:
-        with allure.step("Prepare objects"):
-            prepare_objects(k6_load_object)
+        if prepare:
+            with allure.step("Prepare objects"):
+                prepare_objects(k6_load_object)
     return k6_load_objects
 
 

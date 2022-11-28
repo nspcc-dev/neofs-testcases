@@ -89,6 +89,18 @@ def return_nodes_after_test_run(client_shell: Shell, hosting: Hosting):
     return_nodes(client_shell, hosting)
 
 
+@allure.step("Tick epoch with retries")
+def tick_epoch_with_retries(shell: Shell, attempts: int = 3, timeout: int = 3):
+    for __attempt in range(attempts):
+        try:
+            tick_epoch(shell=shell)
+        except RuntimeError:
+            sleep(timeout)
+            continue
+        return
+    raise
+
+
 @allure.step("Return node to cluster")
 def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = None) -> None:
     for node in list(check_nodes):
@@ -107,13 +119,7 @@ def return_nodes(shell: Shell, hosting: Hosting, alive_node: Optional[str] = Non
 
         check_nodes.remove(node)
         sleep(parse_time(MORPH_BLOCK_TIME))
-        for __attempt in range(3):
-            try:
-                tick_epoch(shell=shell)
-                break
-            except RuntimeError:
-                sleep(3)
-
+        tick_epoch_with_retries(attempts=3)
         check_node_in_map(node, shell=shell, alive_node=alive_node)
 
 
