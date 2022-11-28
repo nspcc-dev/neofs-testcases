@@ -9,8 +9,24 @@ import allure
 import pytest
 import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
-from common import ASSETS_DIR, FREE_STORAGE, HOSTING_CONFIG_FILE, NEOFS_NETMAP_DICT, WALLET_PASS
+from common import (
+    ASSETS_DIR,
+    BACKGROUND_LOAD_MAX_TIME,
+    BACKGROUND_OBJ_SIZE,
+    BACKGROUND_READERS_COUNT,
+    BACKGROUND_WRITERS_COUNT,
+    FREE_STORAGE,
+    HOSTING_CONFIG_FILE,
+    LOAD_NODE_SSH_PRIVATE_KEY_PATH,
+    LOAD_NODE_SSH_USER,
+    LOAD_NODES,
+    NEOFS_NETMAP_DICT,
+    STORAGE_NODE_SERVICE_NAME_REGEX,
+    WALLET_PASS,
+)
 from env_properties import save_env_properties
+from k6 import LoadParams
+from load import get_services_endpoints, prepare_k6_instances
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import LocalShell, Shell
@@ -136,6 +152,71 @@ def run_health_check(collect_logs, hosting: Hosting):
 
     if failed_nodes:
         raise AssertionError(f"Nodes {failed_nodes} are not healthy")
+
+
+@pytest.fixture(scope="session")
+def background_grpc_load(client_shell, prepare_wallet_and_deposit):
+    registry_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.bolt")
+    prepare_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.json")
+    allure.dynamic.title(
+        f"Start background load with parameters: "
+        f"writers = {BACKGROUND_WRITERS_COUNT}, "
+        f"obj_size = {BACKGROUND_OBJ_SIZE}, "
+        f"load_time = {BACKGROUND_LOAD_MAX_TIME}"
+        f"prepare_json = {prepare_file}"
+    )
+    with allure.step("Get endpoints"):
+        endpoints_list = get_services_endpoints(
+            hosting=hosting,
+            service_name_regex=STORAGE_NODE_SERVICE_NAME_REGEX,
+            endpoint_attribute="rpc_endpoint",
+        )
+        endpoints = ",".join(endpoints_list)
+    load_params = LoadParams(
+        endpoint=endpoints,
+        obj_size=BACKGROUND_OBJ_SIZE,
+        registry_file=registry_file,
+        containers_count=1,
+        obj_count=0,
+        out_file=prepare_file,
+        readers=0,
+        writers=BACKGROUND_WRITERS_COUNT,
+        deleters=0,
+        load_time=BACKGROUND_LOAD_MAX_TIME,
+        load_type="grpc",
+    )
+    k6_load_instances = prepare_k6_instances(
+        load_nodes=LOAD_NODES,
+        login=LOAD_NODE_SSH_USER,
+        pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
+        load_params=load_params,
+    )
+    with allure.step("Run background load"):
+        for k6_load_instance in k6_load_instances:
+            k6_load_instance.start()
+    yield
+    with allure.step("Stop background load"):
+        for k6_load_instance in k6_load_instances:
+            k6_load_instance.stop()
+    with allure.step("Verify background load data"):
+        verify_params = LoadParams(
+            endpoint=endpoints,
+            clients=BACKGROUND_READERS_COUNT,
+            registry_file=registry_file,
+            load_time=BACKGROUND_LOAD_MAX_TIME,
+            load_type="verify",
+        )
+        k6_verify_instances = prepare_k6_instances(
+            load_nodes=LOAD_NODES,
+            login=LOAD_NODE_SSH_USER,
+            pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
+            load_params=verify_params,
+            prepare=False,
+        )
+        with allure.step("Run verify background load data"):
+            for k6_verify_instance in k6_verify_instances:
+                k6_verify_instance.start()
+                k6_verify_instance.wait_until_finished(BACKGROUND_LOAD_MAX_TIME)
 
 
 @pytest.fixture(scope="session")

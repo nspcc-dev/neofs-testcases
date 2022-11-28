@@ -2,6 +2,7 @@ import re
 from contextlib import contextmanager
 from dataclasses import dataclass
 from time import sleep
+from typing import Optional
 
 import allure
 from neofs_testlib.shell import Shell
@@ -23,16 +24,18 @@ LOAD_RESULTS_PATTERNS = {
 
 @dataclass
 class LoadParams:
-    obj_size: int
-    containers_count: int
-    out_file: str
-    obj_count: int
-    writers: int
-    readers: int
-    deleters: int
-    load_time: int
     load_type: str
     endpoint: str
+    writers: Optional[int] = None
+    readers: Optional[int] = None
+    deleters: Optional[int] = None
+    clients: Optional[int] = None
+    containers_count: Optional[int] = None
+    out_file: Optional[str] = None
+    load_time: Optional[int] = None
+    obj_count: Optional[int] = None
+    obj_size: Optional[int] = None
+    registry_file: Optional[str] = None
 
 
 @dataclass
@@ -97,19 +100,36 @@ class K6:
         else:
             raise AssertionError("Wrong K6 load type")
 
+    @allure.step("Generate K6 command")
+    def _generate_env_variables(self, load_params: LoadParams, k6_dir: str) -> str:
+        env_vars = {
+            "DURATION": load_params.load_time or None,
+            "WRITE_OBJ_SIZE": load_params.obj_size or None,
+            "WRITERS": load_params.writers or 0,
+            "READERS": load_params.readers or 0,
+            "DELETERS": load_params.deleters or 0,
+            "REGISTRY_FILE": load_params.registry_file or None,
+            "CLIENTS": load_params.clients or None,
+            f"{self.load_params.load_type.upper()}_ENDPOINTS": self.load_params.endpoint,
+            "PREGEN_JSON": f"{self.k6_dir}/{self.load_params.load_type}_{self.load_params.out_file}"
+            if load_params.out_file
+            else None,
+        }
+        allure.attach(
+            "\n".join(f"{param}: {value}" for param, value in env_vars.items()),
+            "K6 ENV variables",
+            allure.attachment_type.TEXT,
+        )
+        return " ".join(
+            [f"-e {param}={value}" for param, value in env_vars.items() if value is not None]
+        )
+
     @allure.step("Start K6 on initiator")
     def start(self) -> None:
 
         self._k6_dir = self.k6_dir
         command = (
-            f"{self.k6_dir}/k6 run "
-            f"-e DURATION={self.load_params.load_time} "
-            f"-e WRITE_OBJ_SIZE={self.load_params.obj_size} "
-            f"-e WRITERS={self.load_params.writers} -e READERS={self.load_params.readers} "
-            f"-e DELETERS={self.load_params.deleters} "
-            f"-e {self.load_params.load_type.upper()}_ENDPOINTS={self.load_params.endpoint} "
-            f"-e PREGEN_JSON={self.k6_dir}/"
-            f"{self.load_params.load_type}_{self.load_params.out_file} "
+            f"{self.k6_dir}/k6 run {self._generate_env_variables(self.load_params, self.k6_dir)} "
             f"{self.k6_dir}/scenarios/{self.load_params.load_type}.js"
         )
         self._k6_process = RemoteProcess.create(command, self.shell)

@@ -36,8 +36,12 @@ WALLET_PASS = os.getenv("WALLET_PASS", "")
 
 # Load node parameters
 LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
-LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER")
+LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER", "root")
 LOAD_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("LOAD_NODE_SSH_PRIVATE_KEY_PATH")
+BACKGROUND_WRITERS_COUNT = os.getenv("BACKGROUND_WRITERS_COUNT", 10)
+BACKGROUND_READERS_COUNT = os.getenv("BACKGROUND_READERS_COUNT", 10)
+BACKGROUND_OBJ_SIZE = os.getenv("BACKGROUND_OBJ_SIZE", 1024)
+BACKGROUND_LOAD_MAX_TIME = os.getenv("BACKGROUND_LOAD_MAX_TIME", 600)
 
 # Configuration of storage nodes
 # TODO: we should use hosting instead of all these variables
