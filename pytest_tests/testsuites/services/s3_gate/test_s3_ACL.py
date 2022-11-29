@@ -17,13 +17,9 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate
 class TestS3GateACL(TestS3GateBase):
     @allure.title("Test S3: Object ACL")
-    def test_s3_object_ACL(self):
+    def test_s3_object_ACL(self, bucket):
         file_path = generate_file()
         file_name = object_key_from_file_path(file_path)
-
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, acl="public-read-write")
-        objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)
-        assert not objects_list, f"Expected empty bucket, got {objects_list}"
 
         with allure.step("Put object into bucket, Check ACL is empty"):
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)

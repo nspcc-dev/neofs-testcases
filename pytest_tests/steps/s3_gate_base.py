@@ -18,6 +18,7 @@ from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from python_keywords.container import list_containers
 
+from steps import s3_gate_bucket, s3_gate_object
 from steps.aws_cli_client import AwsCliClient
 
 # Disable warnings on self-signed certificate which the
@@ -58,6 +59,38 @@ class TestS3GateBase:
             client = configure_boto3_client(access_key_id, secret_access_key)
         TestS3GateBase.s3_client = client
         TestS3GateBase.wallet = wallet
+
+    @pytest.fixture
+    @allure.title("Create/delete bucket")
+    def bucket(self):
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
+        yield bucket
+        self.delete_all_object_in_bucket(bucket)
+
+    @pytest.fixture
+    @allure.title("Create two buckets")
+    def two_buckets(self):
+        bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
+        bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
+        yield bucket_1, bucket_2
+        for bucket in [bucket_1, bucket_2]:
+            self.delete_all_object_in_bucket(bucket)
+
+    def delete_all_object_in_bucket(self, bucket):
+        versioning_status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
+        if versioning_status == s3_gate_bucket.VersioningStatus.ENABLED.value:
+            # From versioned bucket we should delete all versions of all objects
+            objects_versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
+            if objects_versions:
+                s3_gate_object.delete_object_versions_s3(self.s3_client, bucket, objects_versions)
+        else:
+            # From non-versioned bucket it's sufficient to delete objects by key
+            objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
+            if objects:
+                s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
+
+        # Delete the bucket itself
+        s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
 
 def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:

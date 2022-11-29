@@ -32,11 +32,9 @@ class TestS3GateTagging(TestS3GateBase):
         return tags
 
     @allure.title("Test S3: Object tagging")
-    def test_s3_object_tagging(self):
+    def test_s3_object_tagging(self, bucket):
         file_path = generate_file()
         file_name = object_key_from_file_path(file_path)
-
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
 
         with allure.step("Put with 3 tags object into bucket"):
             tag_1 = "Tag1=Value1"
@@ -82,8 +80,7 @@ class TestS3GateTagging(TestS3GateBase):
             check_tags_by_object(self.s3_client, bucket, file_name, [])
 
     @allure.title("Test S3: bucket tagging")
-    def test_s3_bucket_tagging(self):
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
+    def test_s3_bucket_tagging(self, bucket):
 
         with allure.step("Put 10 bucket tags"):
             tags_1 = self.create_tags(10)
