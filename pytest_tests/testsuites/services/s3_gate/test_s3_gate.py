@@ -38,35 +38,6 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_base
 class TestS3Gate(TestS3GateBase):
-    @pytest.fixture
-    @allure.title("Create two buckets")
-    def create_buckets(self):
-        bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        return bucket_1, bucket_2
-
-    @pytest.fixture
-    @allure.title("Create/delete bucket")
-    def bucket(self):
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        yield bucket
-
-        # Delete all objects from bucket
-        versioning_status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
-        if versioning_status == s3_gate_bucket.VersioningStatus.ENABLED.value:
-            # From versioned bucket we should delete all versions of all objects
-            objects_versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            if objects_versions:
-                s3_gate_object.delete_object_versions_s3(self.s3_client, bucket, objects_versions)
-        else:
-            # From non-versioned bucket it's sufficient to delete objects by key
-            objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
-            if objects:
-                s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
-
-        # Delete the bucket itself
-        s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
-
     @allure.title("Test S3 Bucket API")
     def test_s3_buckets(self, client_shell):
         """
@@ -138,15 +109,14 @@ class TestS3Gate(TestS3GateBase):
     @pytest.mark.parametrize(
         "file_type", ["simple", "large"], ids=["Simple object", "Large object"]
     )
-    def test_s3_api_object(self, file_type):
+    def test_s3_api_object(self, file_type, two_buckets):
         """
         Test base S3 Object API (Put/Head/List) for simple and large objects.
         """
         file_path = generate_file(SIMPLE_OBJ_SIZE if file_type == "simple" else COMPLEX_OBJ_SIZE)
         file_name = self.object_key_from_file_path(file_path)
 
-        bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
+        bucket_1, bucket_2 = two_buckets
 
         for bucket in (bucket_1, bucket_2):
             with allure.step("Bucket must be empty"):
@@ -380,7 +350,7 @@ class TestS3Gate(TestS3GateBase):
         check_tags_by_object(self.s3_client, bucket, obj_key, [])
 
     @allure.title("Test S3: Delete object & delete objects S3 API")
-    def test_s3_api_delete(self, create_buckets):
+    def test_s3_api_delete(self, two_buckets):
         """
         Check delete_object and delete_objects S3 API operation. From first bucket some objects deleted one by one.
         From second bucket some objects deleted all at once.
@@ -391,7 +361,7 @@ class TestS3Gate(TestS3GateBase):
         file_paths = []
         obj_sizes = [SIMPLE_OBJ_SIZE, COMPLEX_OBJ_SIZE]
 
-        bucket_1, bucket_2 = create_buckets
+        bucket_1, bucket_2 = two_buckets
 
         with allure.step(f"Generate {max_obj_count} files"):
             for _ in range(max_obj_count):
@@ -436,7 +406,7 @@ class TestS3Gate(TestS3GateBase):
             try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
     @allure.title("Test S3: Copy object to the same bucket")
-    def test_s3_copy_same_bucket(self):
+    def test_s3_copy_same_bucket(self, bucket):
         """
         Test object can be copied to the same bucket.
         #TODO: delete after test_s3_copy_object will be merge
@@ -445,8 +415,6 @@ class TestS3Gate(TestS3GateBase):
         file_name_simple = self.object_key_from_file_path(file_path_simple)
         file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_objects = [file_name_simple, file_name_large]
-
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
 
         with allure.step("Bucket must be empty"):
             objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)
@@ -480,7 +448,7 @@ class TestS3Gate(TestS3GateBase):
         )
 
     @allure.title("Test S3: Copy object to another bucket")
-    def test_s3_copy_to_another_bucket(self):
+    def test_s3_copy_to_another_bucket(self, two_buckets):
         """
         Test object can be copied to another bucket.
         #TODO: delete after test_s3_copy_object will be merge
@@ -490,8 +458,7 @@ class TestS3Gate(TestS3GateBase):
         file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_1_objects = [file_name_simple, file_name_large]
 
-        bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client)
-        bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client)
+        bucket_1, bucket_2 = two_buckets
 
         with allure.step("Buckets must be empty"):
             for bucket in (bucket_1, bucket_2):
