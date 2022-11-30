@@ -130,7 +130,13 @@ def get_eacl(wallet_path: str, cid: str, shell: Shell) -> Optional[str]:
 
 
 @allure.title("Set extended ACL")
-def set_eacl(wallet_path: str, cid: str, eacl_table_path: str, shell: Shell) -> None:
+def set_eacl(
+    wallet_path: str,
+    cid: str,
+    eacl_table_path: str,
+    shell: Shell,
+    session_token: Optional[str] = None,
+) -> None:
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.container.set_eacl(
         wallet=wallet_path,
@@ -138,6 +144,7 @@ def set_eacl(wallet_path: str, cid: str, eacl_table_path: str, shell: Shell) -> 
         cid=cid,
         table=eacl_table_path,
         await_mode=True,
+        session=session_token,
     )
 
 

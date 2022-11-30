@@ -1,7 +1,5 @@
-import logging
 from dataclasses import dataclass
-
-logger = logging.getLogger("NeoLogger")
+from typing import Optional
 
 
 @dataclass
@@ -12,16 +10,16 @@ class ObjectRef:
 
 @dataclass
 class LockObjectInfo(ObjectRef):
-    lifetime: int = None
-    expire_at: int = None
+    lifetime: Optional[int] = None
+    expire_at: Optional[int] = None
 
 
 @dataclass
 class StorageObjectInfo(ObjectRef):
-    size: str = None
-    wallet_file_path: str = None
-    file_path: str = None
-    file_hash: str = None
-    attributes: list[dict[str, str]] = None
-    tombstone: str = None
-    locks: list[LockObjectInfo] = None
+    size: Optional[int] = None
+    wallet_file_path: Optional[str] = None
+    file_path: Optional[str] = None
+    file_hash: Optional[str] = None
+    attributes: Optional[list[dict[str, str]]] = None
+    tombstone: Optional[str] = None
+    locks: Optional[list[LockObjectInfo]] = None
