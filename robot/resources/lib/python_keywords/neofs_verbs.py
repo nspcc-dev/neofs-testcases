@@ -4,7 +4,7 @@ import os
 import random
 import re
 import uuid
-from typing import Optional
+from typing import Any, Optional
 
 import allure
 import json_transformers
@@ -406,7 +406,7 @@ def get_netmap_netinfo(
     address: Optional[str] = None,
     ttl: Optional[int] = None,
     xhdr: Optional[dict] = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """
     Get netmap netinfo output from node
 

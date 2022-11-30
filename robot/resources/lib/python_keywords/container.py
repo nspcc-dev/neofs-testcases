@@ -165,7 +165,9 @@ def get_container(
 @allure.step("Delete Container")
 # TODO: make the error message about a non-found container more user-friendly
 # https://github.com/nspcc-dev/neofs-contract/issues/121
-def delete_container(wallet: str, cid: str, shell: Shell, force: bool = False) -> None:
+def delete_container(
+    wallet: str, cid: str, shell: Shell, force: bool = False, session_token: Optional[str] = None
+) -> None:
     """
     A wrapper for `neofs-cli container delete` call.
     Args:
@@ -173,11 +175,14 @@ def delete_container(wallet: str, cid: str, shell: Shell, force: bool = False) -
         cid (str): ID of the container to delete
         shell: executor for cli command
         force (bool): do not check whether container contains locks and remove immediately
+        session_token: a path to session token file
     This function doesn't return anything.
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
-    cli.container.delete(wallet=wallet, cid=cid, rpc_endpoint=NEOFS_ENDPOINT, force=force)
+    cli.container.delete(
+        wallet=wallet, cid=cid, rpc_endpoint=NEOFS_ENDPOINT, force=force, session=session_token
+    )
 
 
 def _parse_cid(output: str) -> str:
