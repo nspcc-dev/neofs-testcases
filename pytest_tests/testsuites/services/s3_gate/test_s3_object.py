@@ -1,7 +1,8 @@
 import os
+import string
 import uuid
 from datetime import datetime, timedelta
-from random import sample
+from random import choices, sample
 
 import allure
 import pytest
@@ -903,3 +904,16 @@ class TestS3GateObject(TestS3GateBase):
                 #     "FULL_CONTROL",
                 #     "FULL_CONTROL",
                 # ], "Permission for all groups is FULL_CONTROL"
+
+    @allure.title("Test S3 Put 10 nested level object")
+    def test_s3_put_10_folder(self, bucket, prepare_tmp_dir):
+        path = "/".join(["".join(choices(string.ascii_letters, k=3)) for _ in range(10)])
+        file_path_1 = os.path.join(prepare_tmp_dir, path, "test_file_1")
+        generate_file_with_content(file_path=file_path_1)
+        file_name = self.object_key_from_file_path(file_path_1)
+        objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)
+        assert not objects_list, f"Expected empty bucket, got {objects_list}"
+
+        with allure.step("Put object"):
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1)
+            check_objects_in_bucket(self.s3_client, bucket, [file_name])
