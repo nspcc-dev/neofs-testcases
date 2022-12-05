@@ -1,5 +1,6 @@
 import allure
 import pytest
+from cluster_test_base import ClusterTestBase
 from python_keywords.acl import (
     EACLAccess,
     EACLFilter,
@@ -19,7 +20,7 @@ from python_keywords.container_access import (
     check_full_access_to_container,
     check_no_access_to_container,
 )
-from python_keywords.neofs_verbs import put_object
+from python_keywords.neofs_verbs import put_object_to_random_node
 from python_keywords.object_access import can_get_head_object, can_get_object, can_put_object
 from wellknown_acl import PUBLIC_ACL
 
@@ -27,7 +28,7 @@ from wellknown_acl import PUBLIC_ACL
 @pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.acl_filters
-class TestEACLFilters:
+class TestEACLFilters(ClusterTestBase):
     #  SPEC: https://github.com/nspcc-dev/neofs-spec/blob/master/01-arch/07-acl.md
     ATTRIBUTE = {"check_key": "check_value"}
     OTHER_ATTRIBUTE = {"check_key": "other_value"}
@@ -67,52 +68,66 @@ class TestEACLFilters:
     ]
 
     @pytest.fixture(scope="function")
-    def eacl_container_with_objects(self, wallets, client_shell, file_path):
+    def eacl_container_with_objects(self, wallets, file_path):
         user_wallet = wallets.get_wallet()
         with allure.step("Create eACL public container"):
             cid = create_container(
-                user_wallet.wallet_path, basic_acl=PUBLIC_ACL, shell=client_shell
+                user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
 
         with allure.step("Add test objects to container"):
             objects_with_header = [
-                put_object(
+                put_object_to_random_node(
                     user_wallet.wallet_path,
                     file_path,
                     cid,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     attributes={**self.SET_HEADERS, "key": val},
                 )
                 for val in range(self.OBJECT_COUNT)
             ]
 
             objects_with_other_header = [
-                put_object(
+                put_object_to_random_node(
                     user_wallet.wallet_path,
                     file_path,
                     cid,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     attributes={**self.OTHER_HEADERS, "key": val},
                 )
                 for val in range(self.OBJECT_COUNT)
             ]
 
             objects_without_header = [
-                put_object(user_wallet.wallet_path, file_path, cid, shell=client_shell)
+                put_object_to_random_node(
+                    user_wallet.wallet_path,
+                    file_path,
+                    cid,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                )
                 for _ in range(self.OBJECT_COUNT)
             ]
 
         yield cid, objects_with_header, objects_with_other_header, objects_without_header, file_path
 
         with allure.step("Delete eACL public container"):
-            delete_container(user_wallet.wallet_path, cid, shell=client_shell)
+            delete_container(
+                user_wallet.wallet_path,
+                cid,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
+            )
 
     @pytest.mark.parametrize(
         "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
     )
-    def test_extended_acl_filters_request(
-        self, wallets, client_shell, eacl_container_with_objects, match_type
-    ):
+    def test_extended_acl_filters_request(self, wallets, eacl_container_with_objects, match_type):
         allure.dynamic.title(f"Validate NeoFS operations with request filter: {match_type.name}")
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
@@ -139,8 +154,9 @@ class TestEACLFilters:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl_deny, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl_deny, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
@@ -163,7 +179,12 @@ class TestEACLFilters:
         ):
             with allure.step("Check other has full access when sending request without headers"):
                 check_full_access_to_container(
-                    other_wallet.wallet_path, cid, oid.pop(), file_path, shell=client_shell
+                    other_wallet.wallet_path,
+                    cid,
+                    oid.pop(),
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
             with allure.step(
@@ -174,7 +195,8 @@ class TestEACLFilters:
                     cid,
                     oid.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=allow_headers,
                 )
 
@@ -184,7 +206,8 @@ class TestEACLFilters:
                     cid,
                     oid.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=deny_headers,
                 )
 
@@ -199,14 +222,16 @@ class TestEACLFilters:
                         EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
                         for op in EACLOperation
                     ],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
                 )
                 check_full_access_to_container(
                     other_wallet.wallet_path,
                     cid,
                     oid.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=deny_headers,
                     bearer=bearer_other,
                 )
@@ -215,7 +240,7 @@ class TestEACLFilters:
         "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
     )
     def test_extended_acl_deny_filters_object(
-        self, wallets, client_shell, eacl_container_with_objects, match_type
+        self, wallets, eacl_container_with_objects, match_type
     ):
         allure.dynamic.title(
             f"Validate NeoFS operations with deny user headers filter: {match_type.name}"
@@ -245,8 +270,9 @@ class TestEACLFilters:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl_deny, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl_deny, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
@@ -271,7 +297,8 @@ class TestEACLFilters:
                     cid,
                     objs_without_header.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=xhdr,
                 )
 
@@ -281,7 +308,8 @@ class TestEACLFilters:
                     cid,
                     allow_objects.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=xhdr,
                 )
 
@@ -291,7 +319,8 @@ class TestEACLFilters:
                         other_wallet.wallet_path,
                         cid,
                         deny_objects[0],
-                        shell=client_shell,
+                        shell=self.shell,
+                        endpoint=self.cluster.default_rpc_endpoint,
                         xhdr=xhdr,
                     )
                 with pytest.raises(AssertionError):
@@ -300,7 +329,8 @@ class TestEACLFilters:
                         cid,
                         deny_objects[0],
                         file_path,
-                        shell=client_shell,
+                        shell=self.shell,
+                        cluster=self.cluster,
                         xhdr=xhdr,
                     )
 
@@ -318,14 +348,16 @@ class TestEACLFilters:
                         )
                         for op in EACLOperation
                     ],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
                 )
                 check_full_access_to_container(
                     other_wallet.wallet_path,
                     cid,
                     deny_objects.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     xhdr=xhdr,
                     bearer=bearer_other,
                 )
@@ -338,10 +370,13 @@ class TestEACLFilters:
                 other_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 attributes=allow_attribute,
             )
-            assert can_put_object(other_wallet.wallet_path, cid, file_path, shell=client_shell)
+            assert can_put_object(
+                other_wallet.wallet_path, cid, file_path, shell=self.shell, cluster=self.cluster
+            )
 
         deny_attribute = (
             self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
@@ -352,7 +387,8 @@ class TestEACLFilters:
                     other_wallet.wallet_path,
                     cid,
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     attributes=deny_attribute,
                 )
 
@@ -369,13 +405,15 @@ class TestEACLFilters:
                         role=EACLRole.OTHERS,
                     )
                 ],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             assert can_put_object(
                 other_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 attributes=deny_attribute,
                 bearer=bearer_other_for_put,
             )
@@ -384,7 +422,7 @@ class TestEACLFilters:
         "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
     )
     def test_extended_acl_allow_filters_object(
-        self, wallets, client_shell, eacl_container_with_objects, match_type
+        self, wallets, eacl_container_with_objects, match_type
     ):
         allure.dynamic.title(
             "Testcase to validate NeoFS operation with allow eACL user headers filters:"
@@ -420,8 +458,9 @@ class TestEACLFilters:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
@@ -439,13 +478,26 @@ class TestEACLFilters:
         with allure.step(f"Check other cannot get and put objects without attributes"):
             oid = objects_without_header.pop()
             with pytest.raises(AssertionError):
-                assert can_get_head_object(other_wallet.wallet_path, cid, oid, shell=client_shell)
-            with pytest.raises(AssertionError):
-                assert can_get_object(
-                    other_wallet.wallet_path, cid, oid, file_path, shell=client_shell
+                assert can_get_head_object(
+                    other_wallet.wallet_path,
+                    cid,
+                    oid,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
                 )
             with pytest.raises(AssertionError):
-                assert can_put_object(other_wallet.wallet_path, cid, file_path, shell=client_shell)
+                assert can_get_object(
+                    other_wallet.wallet_path,
+                    cid,
+                    oid,
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                )
+            with pytest.raises(AssertionError):
+                assert can_put_object(
+                    other_wallet.wallet_path, cid, file_path, shell=self.shell, cluster=self.cluster
+                )
 
         with allure.step(
             "Check other can get and put objects without attributes and using bearer token"
@@ -461,13 +513,15 @@ class TestEACLFilters:
                     )
                     for op in EACLOperation
                 ],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             assert can_get_head_object(
                 other_wallet.wallet_path,
                 cid,
                 objects_without_header[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
                 bearer=bearer_other,
             )
             assert can_get_object(
@@ -475,37 +529,62 @@ class TestEACLFilters:
                 cid,
                 objects_without_header[0],
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 bearer=bearer_other,
             )
             assert can_put_object(
                 other_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 bearer=bearer_other,
             )
 
         with allure.step(f"Check other can get objects with attributes matching the filter"):
             oid = allow_objects.pop()
-            assert can_get_head_object(other_wallet.wallet_path, cid, oid, shell=client_shell)
-            assert can_get_object(other_wallet.wallet_path, cid, oid, file_path, shell=client_shell)
+            assert can_get_head_object(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
+            )
+            assert can_get_object(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                cluster=self.cluster,
+            )
             assert can_put_object(
                 other_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 attributes=allow_attribute,
             )
 
         with allure.step("Check other cannot get objects without attributes matching the filter"):
             with pytest.raises(AssertionError):
                 assert can_get_head_object(
-                    other_wallet.wallet_path, cid, deny_objects[0], shell=client_shell
+                    other_wallet.wallet_path,
+                    cid,
+                    deny_objects[0],
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
                 )
             with pytest.raises(AssertionError):
                 assert can_get_object(
-                    other_wallet.wallet_path, cid, deny_objects[0], file_path, shell=client_shell
+                    other_wallet.wallet_path,
+                    cid,
+                    deny_objects[0],
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
             with pytest.raises(AssertionError):
                 assert can_put_object(
@@ -513,7 +592,8 @@ class TestEACLFilters:
                     cid,
                     file_path,
                     attributes=deny_attribute,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
         with allure.step(
@@ -522,21 +602,28 @@ class TestEACLFilters:
         ):
             oid = deny_objects.pop()
             assert can_get_head_object(
-                other_wallet.wallet_path, cid, oid, shell=client_shell, bearer=bearer_other
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
+                bearer=bearer_other,
             )
             assert can_get_object(
                 other_wallet.wallet_path,
                 cid,
                 oid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 bearer=bearer_other,
             )
             assert can_put_object(
                 other_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 attributes=deny_attribute,
                 bearer=bearer_other,
             )

@@ -6,12 +6,12 @@
 """
 
 import logging
-from typing import List, Optional
+from typing import List
 
 import allure
 import complex_object_actions
 import neofs_verbs
-from common import NEOFS_NETMAP
+from cluster import StorageNode
 from grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from neofs_testlib.shell import Shell
 
@@ -19,7 +19,9 @@ logger = logging.getLogger("NeoLogger")
 
 
 @allure.step("Get Object Copies")
-def get_object_copies(complexity: str, wallet: str, cid: str, oid: str, shell: Shell) -> int:
+def get_object_copies(
+    complexity: str, wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> int:
     """
     The function performs requests to all nodes of the container and
     finds out if they store a copy of the object. The procedure is
@@ -37,14 +39,16 @@ def get_object_copies(complexity: str, wallet: str, cid: str, oid: str, shell: S
         (int): the number of object copies in the container
     """
     return (
-        get_simple_object_copies(wallet, cid, oid, shell)
+        get_simple_object_copies(wallet, cid, oid, shell, nodes)
         if complexity == "Simple"
-        else get_complex_object_copies(wallet, cid, oid, shell)
+        else get_complex_object_copies(wallet, cid, oid, shell, nodes)
     )
 
 
 @allure.step("Get Simple Object Copies")
-def get_simple_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> int:
+def get_simple_object_copies(
+    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> int:
     """
     To figure out the number of a simple object copies, only direct
     HEAD requests should be made to the every node of the container.
@@ -55,14 +59,15 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> i
         cid (str): ID of the container
         oid (str): ID of the Object
         shell: executor for cli command
+        nodes: nodes to search on
     Returns:
         (int): the number of object copies in the container
     """
     copies = 0
-    for node in NEOFS_NETMAP:
+    for node in nodes:
         try:
             response = neofs_verbs.head_object(
-                wallet, cid, oid, shell=shell, endpoint=node, is_direct=True
+                wallet, cid, oid, shell=shell, endpoint=node.get_rpc_endpoint(), is_direct=True
             )
             if response:
                 logger.info(f"Found object {oid} on node {node}")
@@ -74,7 +79,9 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> i
 
 
 @allure.step("Get Complex Object Copies")
-def get_complex_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> int:
+def get_complex_object_copies(
+    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> int:
     """
     To figure out the number of a complex object copies, we firstly
     need to retrieve its Last object. We consider that the number of
@@ -90,37 +97,40 @@ def get_complex_object_copies(wallet: str, cid: str, oid: str, shell: Shell) -> 
     Returns:
         (int): the number of object copies in the container
     """
-    last_oid = complex_object_actions.get_last_object(wallet, cid, oid, shell)
+    last_oid = complex_object_actions.get_last_object(wallet, cid, oid, shell, nodes)
     assert last_oid, f"No Last Object for {cid}/{oid} found among all Storage Nodes"
-    return get_simple_object_copies(wallet, cid, last_oid, shell)
+    return get_simple_object_copies(wallet, cid, last_oid, shell, nodes)
 
 
 @allure.step("Get Nodes With Object")
 def get_nodes_with_object(
-    wallet: str, cid: str, oid: str, shell: Shell, skip_nodes: Optional[list[str]] = None
-) -> list[str]:
+    cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> list[StorageNode]:
     """
     The function returns list of nodes which store
     the given object.
     Args:
-         wallet (str): the path to the wallet on whose behalf
-                     we request the nodes
          cid (str): ID of the container which store the object
          oid (str): object ID
          shell: executor for cli command
-         skip_nodes (list): list of nodes that should be excluded from check
+         nodes: nodes to find on
     Returns:
          (list): nodes which store the object
     """
-    nodes_to_search = NEOFS_NETMAP
-    if skip_nodes:
-        nodes_to_search = [node for node in NEOFS_NETMAP if node not in skip_nodes]
 
     nodes_list = []
-    for node in nodes_to_search:
+    for node in nodes:
+        wallet = node.get_wallet_path()
+        wallet_config = node.get_wallet_config_path()
         try:
             res = neofs_verbs.head_object(
-                wallet, cid, oid, shell=shell, endpoint=node, is_direct=True
+                wallet,
+                cid,
+                oid,
+                shell=shell,
+                endpoint=node.get_rpc_endpoint(),
+                is_direct=True,
+                wallet_config=wallet_config,
             )
             if res is not None:
                 logger.info(f"Found object {oid} on node {node}")
@@ -132,7 +142,9 @@ def get_nodes_with_object(
 
 
 @allure.step("Get Nodes Without Object")
-def get_nodes_without_object(wallet: str, cid: str, oid: str, shell: Shell) -> List[str]:
+def get_nodes_without_object(
+    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> list[StorageNode]:
     """
     The function returns list of nodes which do not store
     the given object.
@@ -146,10 +158,10 @@ def get_nodes_without_object(wallet: str, cid: str, oid: str, shell: Shell) -> L
          (list): nodes which do not store the object
     """
     nodes_list = []
-    for node in NEOFS_NETMAP:
+    for node in nodes:
         try:
             res = neofs_verbs.head_object(
-                wallet, cid, oid, shell=shell, endpoint=node, is_direct=True
+                wallet, cid, oid, shell=shell, endpoint=node.get_rpc_endpoint(), is_direct=True
             )
             if res is None:
                 nodes_list.append(node)

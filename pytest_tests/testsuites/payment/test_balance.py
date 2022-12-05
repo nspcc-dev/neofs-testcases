@@ -4,7 +4,8 @@ import os
 import allure
 import pytest
 import yaml
-from common import FREE_STORAGE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from cluster_test_base import ClusterTestBase
+from common import FREE_STORAGE, NEOFS_CLI_EXEC, WALLET_CONFIG
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import CommandResult, Shell
 from wallet import WalletFactory, WalletFile
@@ -16,7 +17,7 @@ DEPOSIT_AMOUNT = 30
 @pytest.mark.sanity
 @pytest.mark.payments
 @pytest.mark.skipif(FREE_STORAGE, reason="Test only works on public network with paid storage")
-class TestBalanceAccounting:
+class TestBalanceAccounting(ClusterTestBase):
     @pytest.fixture(scope="class")
     def main_wallet(self, wallet_factory: WalletFactory) -> WalletFile:
         return wallet_factory.create_wallet()
@@ -61,7 +62,7 @@ class TestBalanceAccounting:
     def test_balance_wallet_address(self, main_wallet: WalletFile, cli: NeofsCli):
         result = cli.accounting.balance(
             wallet=main_wallet.path,
-            rpc_endpoint=NEOFS_ENDPOINT,
+            rpc_endpoint=self.cluster.default_rpc_endpoint,
             address=main_wallet.get_address(),
         )
 
@@ -69,7 +70,9 @@ class TestBalanceAccounting:
 
     @allure.title("Test balance request with wallet only")
     def test_balance_wallet(self, main_wallet: WalletFile, cli: NeofsCli):
-        result = cli.accounting.balance(wallet=main_wallet.path, rpc_endpoint=NEOFS_ENDPOINT)
+        result = cli.accounting.balance(
+            wallet=main_wallet.path, rpc_endpoint=self.cluster.default_rpc_endpoint
+        )
         self.check_amount(result)
 
     @allure.title("Test balance request with wallet and wrong address")
@@ -79,14 +82,16 @@ class TestBalanceAccounting:
         with pytest.raises(Exception, match="address option must be specified and valid"):
             cli.accounting.balance(
                 wallet=main_wallet.path,
-                rpc_endpoint=NEOFS_ENDPOINT,
+                rpc_endpoint=self.cluster.default_rpc_endpoint,
                 address=other_wallet.get_address(),
             )
 
     @allure.title("Test balance request with config file")
-    def test_balance_api(self, prepare_tmp_dir: str, main_wallet: WalletFile, client_shell: Shell):
+    def test_balance_api(self, temp_directory: str, main_wallet: WalletFile, client_shell: Shell):
         config_file = self.write_api_config(
-            config_dir=prepare_tmp_dir, endpoint=NEOFS_ENDPOINT, wallet=main_wallet.path
+            config_dir=temp_directory,
+            endpoint=self.cluster.default_rpc_endpoint,
+            wallet=main_wallet.path,
         )
         logger.info(f"Config with API endpoint: {config_file}")
 

@@ -1,16 +1,17 @@
 from typing import Optional
 
 import allure
+from cluster import Cluster
 from file_helper import get_file_hash
 from grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
 from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import (
     delete_object,
-    get_object,
+    get_object_from_random_node,
     get_range,
     get_range_hash,
     head_object,
-    put_object,
+    put_object_to_random_node,
     search_object,
 )
 
@@ -23,13 +24,14 @@ def can_get_object(
     oid: str,
     file_name: str,
     shell: Shell,
+    cluster: Cluster,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ) -> bool:
     with allure.step("Try get object from container"):
         try:
-            got_file_path = get_object(
+            got_file_path = get_object_from_random_node(
                 wallet,
                 cid,
                 oid,
@@ -37,6 +39,7 @@ def can_get_object(
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
+                cluster=cluster,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -52,6 +55,7 @@ def can_put_object(
     cid: str,
     file_name: str,
     shell: Shell,
+    cluster: Cluster,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -59,7 +63,7 @@ def can_put_object(
 ) -> bool:
     with allure.step("Try put object to container"):
         try:
-            put_object(
+            put_object_to_random_node(
                 wallet,
                 file_name,
                 cid,
@@ -68,6 +72,7 @@ def can_put_object(
                 xhdr=xhdr,
                 attributes=attributes,
                 shell=shell,
+                cluster=cluster,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -82,6 +87,7 @@ def can_delete_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -89,7 +95,14 @@ def can_delete_object(
     with allure.step("Try delete object from container"):
         try:
             delete_object(
-                wallet, cid, oid, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr, shell=shell
+                wallet,
+                cid,
+                oid,
+                bearer=bearer,
+                wallet_config=wallet_config,
+                xhdr=xhdr,
+                shell=shell,
+                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -104,6 +117,7 @@ def can_get_head_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -118,6 +132,7 @@ def can_get_head_object(
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
+                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -132,6 +147,7 @@ def can_get_range_of_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -147,6 +163,7 @@ def can_get_range_of_object(
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
+                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -161,6 +178,7 @@ def can_get_range_hash_of_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -176,6 +194,7 @@ def can_get_range_hash_of_object(
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
+                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
@@ -189,6 +208,7 @@ def can_search_object(
     wallet: str,
     cid: str,
     shell: Shell,
+    endpoint: str,
     oid: Optional[str] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
@@ -197,7 +217,13 @@ def can_search_object(
     with allure.step("Try search object in container"):
         try:
             oids = search_object(
-                wallet, cid, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr, shell=shell
+                wallet,
+                cid,
+                bearer=bearer,
+                wallet_config=wallet_config,
+                xhdr=xhdr,
+                shell=shell,
+                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(

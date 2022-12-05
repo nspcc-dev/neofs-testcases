@@ -4,6 +4,7 @@ from random import choice, choices
 
 import allure
 import pytest
+from aws_cli_client import AwsCliClient
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, SIMPLE_OBJ_SIZE
 from epoch import tick_epoch
 from file_helper import (
@@ -22,7 +23,6 @@ from s3_helper import (
 )
 
 from steps import s3_gate_bucket, s3_gate_object
-from steps.aws_cli_client import AwsCliClient
 from steps.s3_gate_base import TestS3GateBase
 
 logger = logging.getLogger("NeoLogger")
@@ -39,7 +39,7 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate_base
 class TestS3Gate(TestS3GateBase):
     @allure.title("Test S3 Bucket API")
-    def test_s3_buckets(self, client_shell):
+    def test_s3_buckets(self):
         """
         Test base S3 Bucket API (Create/List/Head/Delete).
         """
@@ -83,7 +83,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete empty bucket {bucket_2}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_2)
-            tick_epoch(shell=client_shell)
+            tick_epoch(self.shell, self.cluster)
 
         with allure.step(f"Check bucket {bucket_2} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):
@@ -99,7 +99,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete bucket {bucket_1}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_1)
-            tick_epoch(shell=client_shell)
+            tick_epoch(self.shell, self.cluster)
 
         with allure.step(f"Check bucket {bucket_1} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):

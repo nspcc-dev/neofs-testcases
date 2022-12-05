@@ -10,8 +10,10 @@ logger = logging.getLogger("NeoLogger")
 
 
 @allure.step("Verify Head Tombstone")
-def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell):
-    header = head_object(wallet_path, cid, oid_ts, shell=shell)["header"]
+def verify_head_tombstone(
+    wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell, endpoint: str
+):
+    header = head_object(wallet_path, cid, oid_ts, shell=shell, endpoint=endpoint)["header"]
 
     s_oid = header["sessionToken"]["body"]["object"]["target"]["objects"]
     logger.info(f"Header Session OIDs is {s_oid}")

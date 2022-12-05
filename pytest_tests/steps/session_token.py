@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 import allure
 import json_transformers
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from json_transformers import encode_for_json
 from neofs_testlib.cli import NeofsCli
@@ -180,7 +180,7 @@ def generate_object_session_token(
     )
 
 
-@allure.step("Get signed token for object session")
+@allure.step("Get signed token for container session")
 def get_container_signed_token(
     owner_wallet: WalletFile,
     user_wallet: WalletFile,
@@ -190,7 +190,7 @@ def get_container_signed_token(
     lifetime: Optional[Lifetime] = None,
 ) -> str:
     """
-    Returns signed token file path for static object session
+    Returns signed token file path for static container session
     """
     session_token_file = generate_container_session_token(
         owner_wallet=owner_wallet,
@@ -235,7 +235,7 @@ def create_session_token(
     owner: str,
     wallet_path: str,
     wallet_password: str,
-    rpc_endpoint: str = NEOFS_ENDPOINT,
+    rpc_endpoint: str,
 ) -> str:
     """
     Create session token for an object.

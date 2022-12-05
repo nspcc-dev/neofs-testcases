@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 import allure
+from cluster import Cluster
 from file_helper import generate_file, get_file_hash
 from neofs_testlib.shell import Shell
-from neofs_verbs import put_object
+from neofs_verbs import put_object_to_random_node
 from storage_object import StorageObjectInfo
 from wallet import WalletFile
 
@@ -16,9 +17,15 @@ class StorageContainerInfo:
 
 
 class StorageContainer:
-    def __init__(self, storage_container_info: StorageContainerInfo, shell: Shell) -> None:
+    def __init__(
+        self,
+        storage_container_info: StorageContainerInfo,
+        shell: Shell,
+        cluster: Cluster,
+    ) -> None:
         self.shell = shell
         self.storage_container_info = storage_container_info
+        self.cluster = cluster
 
     def get_id(self) -> str:
         return self.storage_container_info.id
@@ -36,12 +43,13 @@ class StorageContainer:
         wallet_path = self.get_wallet_path()
 
         with allure.step(f"Put object with size {size} to container {container_id}"):
-            object_id = put_object(
+            object_id = put_object_to_random_node(
                 wallet=wallet_path,
                 path=file_path,
                 cid=container_id,
                 expire_at=expire_at,
                 shell=self.shell,
+                cluster=self.cluster,
             )
 
             storage_object = StorageObjectInfo(

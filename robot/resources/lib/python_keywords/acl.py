@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, WALLET_CONFIG
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
@@ -116,10 +116,10 @@ class EACLRule:
 
 
 @allure.title("Get extended ACL")
-def get_eacl(wallet_path: str, cid: str, shell: Shell) -> Optional[str]:
+def get_eacl(wallet_path: str, cid: str, shell: Shell, endpoint: str) -> Optional[str]:
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     try:
-        result = cli.container.get_eacl(wallet=wallet_path, rpc_endpoint=NEOFS_ENDPOINT, cid=cid)
+        result = cli.container.get_eacl(wallet=wallet_path, rpc_endpoint=endpoint, cid=cid)
     except RuntimeError as exc:
         logger.info("Extended ACL table is not set for this container")
         logger.info(f"Got exception while getting eacl: {exc}")
@@ -135,12 +135,13 @@ def set_eacl(
     cid: str,
     eacl_table_path: str,
     shell: Shell,
+    endpoint: str,
     session_token: Optional[str] = None,
 ) -> None:
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.container.set_eacl(
         wallet=wallet_path,
-        rpc_endpoint=NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         cid=cid,
         table=eacl_table_path,
         await_mode=True,
@@ -166,7 +167,11 @@ def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell) -> str:
 
 
 def form_bearertoken_file(
-    wif: str, cid: str, eacl_rule_list: List[Union[EACLRule, EACLPubKey]], shell: Shell
+    wif: str,
+    cid: str,
+    eacl_rule_list: List[Union[EACLRule, EACLPubKey]],
+    shell: Shell,
+    endpoint: str,
 ) -> str:
     """
     This function fetches eACL for given <cid> on behalf of <wif>,
@@ -176,7 +181,7 @@ def form_bearertoken_file(
     enc_cid = _encode_cid_for_eacl(cid)
     file_path = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
 
-    eacl = get_eacl(wif, cid, shell=shell)
+    eacl = get_eacl(wif, cid, shell, endpoint)
     json_eacl = dict()
     if eacl:
         eacl = eacl.replace("eACL: ", "").split("Signature")[0]

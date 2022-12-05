@@ -1,8 +1,7 @@
 import allure
 import pytest
-from common import NEOFS_NETMAP_DICT
-from failover_utils import wait_object_replication_on_nodes
-from neofs_testlib.hosting import Hosting
+from cluster_test_base import ClusterTestBase
+from failover_utils import wait_object_replication
 from neofs_testlib.shell import Shell
 from python_keywords.acl import (
     EACLAccess,
@@ -18,7 +17,7 @@ from python_keywords.container_access import (
     check_full_access_to_container,
     check_no_access_to_container,
 )
-from python_keywords.neofs_verbs import put_object
+from python_keywords.neofs_verbs import put_object_to_random_node
 from python_keywords.node_management import drop_object
 from python_keywords.object_access import (
     can_delete_object,
@@ -35,36 +34,39 @@ from wellknown_acl import PUBLIC_ACL
 @pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.acl_extended
-class TestEACLContainer:
-    NODE_COUNT = len(NEOFS_NETMAP_DICT.keys())
-
+class TestEACLContainer(ClusterTestBase):
     @pytest.fixture(scope="function")
-    def eacl_full_placement_container_with_object(
-        self, wallets, file_path, client_shell: Shell
-    ) -> str:
+    def eacl_full_placement_container_with_object(self, wallets, file_path) -> str:
         user_wallet = wallets.get_wallet()
+        storage_nodes = self.cluster.storage_nodes
+        node_count = len(storage_nodes)
         with allure.step("Create eACL public container with full placement rule"):
-            full_placement_rule = (
-                f"REP {self.NODE_COUNT} IN X CBF 1 SELECT {self.NODE_COUNT} FROM * AS X"
-            )
+            full_placement_rule = f"REP {node_count} IN X CBF 1 SELECT {node_count} FROM * AS X"
             cid = create_container(
                 wallet=user_wallet.wallet_path,
                 rule=full_placement_rule,
                 basic_acl=PUBLIC_ACL,
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
 
         with allure.step("Add test object to container"):
-            oid = put_object(user_wallet.wallet_path, file_path, cid, shell=client_shell)
-            wait_object_replication_on_nodes(
-                user_wallet.wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
+            oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, cluster=self.cluster
+            )
+            wait_object_replication(
+                cid,
+                oid,
+                node_count,
+                shell=self.shell,
+                nodes=storage_nodes,
             )
 
         yield cid, oid, file_path
 
     @pytest.mark.parametrize("deny_role", [EACLRole.USER, EACLRole.OTHERS])
     def test_extended_acl_deny_all_operations(
-        self, wallets, client_shell, eacl_container_with_objects, deny_role
+        self, wallets, eacl_container_with_objects, deny_role
     ):
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
@@ -83,8 +85,9 @@ class TestEACLContainer:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl_deny, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl_deny, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
@@ -97,7 +100,8 @@ class TestEACLContainer:
                     cid,
                     object_oids[0],
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
             with allure.step(
@@ -108,7 +112,8 @@ class TestEACLContainer:
                     cid,
                     object_oids.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
         with allure.step(f"Allow all operations for {deny_role_str} via eACL"):
@@ -119,30 +124,33 @@ class TestEACLContainer:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl_deny, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl_deny, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
-        with allure.step(f"Check all have full access to eACL public container"):
+        with allure.step("Check all have full access to eACL public container"):
             check_full_access_to_container(
                 user_wallet.wallet_path,
                 cid,
                 object_oids.pop(),
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
             )
             check_full_access_to_container(
                 other_wallet.wallet_path,
                 cid,
                 object_oids.pop(),
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
             )
 
     @allure.title("Testcase to allow NeoFS operations for only one other pubkey.")
     def test_extended_acl_deny_all_operations_exclude_pubkey(
-        self, wallets, client_shell, eacl_container_with_objects
+        self, wallets, eacl_container_with_objects
     ):
         user_wallet = wallets.get_wallet()
         other_wallet, other_wallet_allow = wallets.get_wallets_list(EACLRole.OTHERS)[0:2]
@@ -164,8 +172,9 @@ class TestEACLContainer:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
@@ -176,7 +185,8 @@ class TestEACLContainer:
                     cid,
                     object_oids[0],
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
             with allure.step("Check owner has full access to public container"):
@@ -185,7 +195,8 @@ class TestEACLContainer:
                     cid,
                     object_oids.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
             with allure.step("Check allowed other has full access to public container"):
@@ -194,20 +205,20 @@ class TestEACLContainer:
                     cid,
                     object_oids.pop(),
                     file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                 )
 
     @allure.title("Testcase to validate NeoFS replication with eACL deny rules.")
     def test_extended_acl_deny_replication(
         self,
         wallets,
-        client_shell,
-        hosting: Hosting,
         eacl_full_placement_container_with_object,
-        file_path,
     ):
         user_wallet = wallets.get_wallet()
         cid, oid, file_path = eacl_full_placement_container_with_object
+        storage_nodes = self.cluster.storage_nodes
+        storage_node = self.cluster.storage_nodes[0]
 
         with allure.step("Deny all operations for user via eACL"):
             eacl_deny = [
@@ -221,40 +232,48 @@ class TestEACLContainer:
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(cid, eacl_deny, shell=client_shell),
-                shell=client_shell,
+                create_eacl(cid, eacl_deny, shell=self.shell),
+                shell=self.shell,
+                endpoint=self.cluster.default_rpc_endpoint,
             )
             wait_for_cache_expired()
 
         with allure.step("Drop object to check replication"):
-            drop_object(hosting, node_name=[*NEOFS_NETMAP_DICT][0], cid=cid, oid=oid)
+            drop_object(storage_node, cid=cid, oid=oid)
 
-        storage_wallet_path = NEOFS_NETMAP_DICT[[*NEOFS_NETMAP_DICT][0]]["wallet_path"]
+        storage_wallet_path = storage_node.get_wallet_path()
         with allure.step("Wait for dropped object replicated"):
-            wait_object_replication_on_nodes(
-                storage_wallet_path, cid, oid, self.NODE_COUNT, shell=client_shell
+            wait_object_replication(
+                cid,
+                oid,
+                len(storage_nodes),
+                self.shell,
+                storage_nodes,
             )
 
     @allure.title("Testcase to validate NeoFS system operations with extended ACL")
-    def test_extended_actions_system(self, wallets, client_shell, eacl_container_with_objects):
+    def test_extended_actions_system(self, wallets, eacl_container_with_objects):
         user_wallet = wallets.get_wallet()
         ir_wallet, storage_wallet = wallets.get_wallets_list(role=EACLRole.SYSTEM)[:2]
 
         cid, object_oids, file_path = eacl_container_with_objects
+        endpoint = self.cluster.default_rpc_endpoint
 
         with allure.step("Check IR and STORAGE rules compliance"):
             assert not can_put_object(
                 ir_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_put_object(
                 storage_wallet.wallet_path,
                 cid,
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -263,7 +282,8 @@ class TestEACLContainer:
                 cid,
                 object_oids[0],
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_get_object(
@@ -271,7 +291,8 @@ class TestEACLContainer:
                 cid,
                 object_oids[0],
                 file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -279,28 +300,32 @@ class TestEACLContainer:
                 ir_wallet.wallet_path,
                 cid,
                 object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_get_head_object(
                 storage_wallet.wallet_path,
                 cid,
                 object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 
             assert can_search_object(
                 ir_wallet.wallet_path,
                 cid,
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 oid=object_oids[0],
                 wallet_config=ir_wallet.config_path,
             )
             assert can_search_object(
                 storage_wallet.wallet_path,
                 cid,
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 oid=object_oids[0],
                 wallet_config=storage_wallet.config_path,
             )
@@ -310,7 +335,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -318,7 +344,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -326,7 +353,8 @@ class TestEACLContainer:
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=ir_wallet.config_path,
             )
 
@@ -334,7 +362,8 @@ class TestEACLContainer:
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -343,7 +372,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -351,7 +381,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -365,9 +396,10 @@ class TestEACLContainer:
                         EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
                         for op in EACLOperation
                     ],
-                    shell=client_shell,
+                    shell=self.shell,
                 ),
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
             )
             wait_for_cache_expired()
 
@@ -376,14 +408,16 @@ class TestEACLContainer:
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=ir_wallet.config_path,
             )
             assert not can_put_object(
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -393,7 +427,8 @@ class TestEACLContainer:
                     cid=cid,
                     oid=object_oids[0],
                     file_name=file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -402,7 +437,8 @@ class TestEACLContainer:
                     cid=cid,
                     oid=object_oids[0],
                     file_name=file_path,
-                    shell=client_shell,
+                    shell=self.shell,
+                    cluster=self.cluster,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -411,7 +447,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -419,7 +456,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -427,7 +465,8 @@ class TestEACLContainer:
                 assert can_search_object(
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     oid=object_oids[0],
                     wallet_config=ir_wallet.config_path,
                 )
@@ -435,7 +474,8 @@ class TestEACLContainer:
                 assert can_search_object(
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     oid=object_oids[0],
                     wallet_config=storage_wallet.config_path,
                 )
@@ -445,7 +485,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -453,7 +494,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -462,7 +504,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -470,7 +513,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -479,7 +523,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -487,7 +532,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -501,9 +547,10 @@ class TestEACLContainer:
                         EACLRule(access=EACLAccess.ALLOW, role=EACLRole.SYSTEM, operation=op)
                         for op in EACLOperation
                     ],
-                    shell=client_shell,
+                    shell=self.shell,
                 ),
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
             )
             wait_for_cache_expired()
 
@@ -512,14 +559,16 @@ class TestEACLContainer:
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_put_object(
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -528,7 +577,8 @@ class TestEACLContainer:
                 cid=cid,
                 oid=object_oids[0],
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_get_object(
@@ -536,7 +586,8 @@ class TestEACLContainer:
                 cid=cid,
                 oid=object_oids[0],
                 file_name=file_path,
-                shell=client_shell,
+                shell=self.shell,
+                cluster=self.cluster,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -544,29 +595,33 @@ class TestEACLContainer:
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_get_head_object(
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 
             assert can_search_object(
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
-                shell=client_shell,
+                shell=self.shell,
                 oid=object_oids[0],
+                endpoint=endpoint,
                 wallet_config=ir_wallet.config_path,
             )
             assert can_search_object(
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
-                shell=client_shell,
+                shell=self.shell,
                 oid=object_oids[0],
+                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -575,7 +630,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -583,7 +639,8 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
 
@@ -591,7 +648,8 @@ class TestEACLContainer:
                 wallet=ir_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=ir_wallet.config_path,
             )
 
@@ -599,7 +657,8 @@ class TestEACLContainer:
                 wallet=storage_wallet.wallet_path,
                 cid=cid,
                 oid=object_oids[0],
-                shell=client_shell,
+                shell=self.shell,
+                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 
@@ -608,7 +667,8 @@ class TestEACLContainer:
                     wallet=ir_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
             with pytest.raises(AssertionError):
@@ -616,6 +676,7 @@ class TestEACLContainer:
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
                     oid=object_oids[0],
-                    shell=client_shell,
+                    shell=self.shell,
+                    endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
