@@ -6,17 +6,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 import allure
-from common import (
-    MORPH_BLOCK_TIME,
-    NEOFS_CLI_EXEC,
-    NEOFS_NETMAP_DICT,
-    STORAGE_WALLET_CONFIG,
-    STORAGE_WALLET_PASS,
-)
-from data_formatters import get_wallet_public_key
+from cluster import Cluster, StorageNode
+from common import MORPH_BLOCK_TIME, NEOFS_CLI_EXEC
 from epoch import tick_epoch
 from neofs_testlib.cli import NeofsCli
-from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import Shell
 from utility import parse_time
 
@@ -39,183 +32,189 @@ class HealthStatus:
         return HealthStatus(network, health)
 
 
-@allure.step("Stop storage nodes")
-def stop_nodes(hosting: Hosting, number: int, nodes: list[str]) -> list[str]:
+@allure.step("Stop random storage nodes")
+def stop_random_storage_nodes(number: int, nodes: list[StorageNode]) -> list[StorageNode]:
     """
     Shuts down the given number of randomly selected storage nodes.
     Args:
-       number (int): the number of nodes to shut down
-       nodes (list): the list of nodes for possible shut down
+       number: the number of storage nodes to stop
+       nodes: the list of storage nodes to stop
     Returns:
-        (list): the list of nodes that were shut down
+        the list of nodes that were stopped
     """
     nodes_to_stop = random.sample(nodes, number)
     for node in nodes_to_stop:
-        host = hosting.get_host_by_service(node)
-        host.stop_service(node)
+        node.stop_service()
     return nodes_to_stop
 
 
-@allure.step("Start storage nodes")
-def start_nodes(hosting: Hosting, nodes: list[str]) -> None:
+@allure.step("Start storage node")
+def start_storage_nodes(nodes: list[StorageNode]) -> None:
     """
     The function starts specified storage nodes.
     Args:
-       nodes (list): the list of nodes to start
+       nodes: the list of nodes to start
     """
     for node in nodes:
-        host = hosting.get_host_by_service(node)
-        host.start_service(node)
+        node.start_service()
 
 
-@allure.step("Get Locode")
-def get_locode() -> str:
-    endpoint_values = random.choice(list(NEOFS_NETMAP_DICT.values()))
-    locode = endpoint_values["UN-LOCODE"]
-    logger.info(f"Random locode chosen: {locode}")
+@allure.step("Get Locode from random storage node")
+def get_locode_from_random_node(cluster: Cluster) -> str:
+    node = random.choice(cluster.storage_nodes)
+    locode = node.get_un_locode()
+    logger.info(f"Chosen '{locode}' locode from node {node}")
     return locode
 
 
-@allure.step("Healthcheck for node {node_name}")
-def node_healthcheck(hosting: Hosting, node_name: str) -> HealthStatus:
+@allure.step("Healthcheck for storage node {node}")
+def storage_node_healthcheck(node: StorageNode) -> HealthStatus:
     """
-    The function returns node's health status.
+    The function returns storage node's health status.
     Args:
-        node_name str: node name for which health status should be retrieved.
+        node: storage node for which health status should be retrieved.
     Returns:
         health status as HealthStatus object.
     """
     command = "control healthcheck"
-    output = _run_control_command_with_retries(hosting, node_name, command)
+    output = _run_control_command_with_retries(node, command)
     return HealthStatus.from_stdout(output)
 
 
-@allure.step("Set status for node {node_name}")
-def node_set_status(hosting: Hosting, node_name: str, status: str, retries: int = 0) -> None:
+@allure.step("Set status for {node}")
+def storage_node_set_status(node: StorageNode, status: str, retries: int = 0) -> None:
     """
     The function sets particular status for given node.
     Args:
-        node_name: node name for which status should be set.
+        node: node for which status should be set.
         status: online or offline.
         retries (optional, int): number of retry attempts if it didn't work from the first time
     """
     command = f"control set-status --status {status}"
-    _run_control_command_with_retries(hosting, node_name, command, retries)
+    _run_control_command_with_retries(node, command, retries)
 
 
 @allure.step("Get netmap snapshot")
-def get_netmap_snapshot(node_name: str, shell: Shell) -> str:
+def get_netmap_snapshot(node: StorageNode, shell: Shell) -> str:
     """
     The function returns string representation of netmap snapshot.
     Args:
-        node_name str: node name from which netmap snapshot should be requested.
+        node: node from which netmap snapshot should be requested.
     Returns:
         string representation of netmap
     """
-    node_info = NEOFS_NETMAP_DICT[node_name]
-    cli = NeofsCli(shell, NEOFS_CLI_EXEC, config_file=STORAGE_WALLET_CONFIG)
+
+    storage_wallet_config = node.get_wallet_config_path()
+    storage_wallet_path = node.get_wallet_path()
+
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, config_file=storage_wallet_config)
     return cli.netmap.snapshot(
-        rpc_endpoint=node_info["rpc"],
-        wallet=node_info["wallet_path"],
+        rpc_endpoint=node.get_rpc_endpoint(),
+        wallet=storage_wallet_path,
     ).stdout
 
 
-@allure.step("Get shard list for node {node_name}")
-def node_shard_list(hosting: Hosting, node_name: str) -> list[str]:
+@allure.step("Get shard list for {node}")
+def node_shard_list(node: StorageNode) -> list[str]:
     """
-    The function returns list of shards for specified node.
+    The function returns list of shards for specified storage node.
     Args:
-        node_name str: node name for which shards should be returned.
+        node: node for which shards should be returned.
     Returns:
         list of shards.
     """
     command = "control shards list"
-    output = _run_control_command_with_retries(hosting, node_name, command)
+    output = _run_control_command_with_retries(node, command)
     return re.findall(r"Shard (.*):", output)
 
 
-@allure.step("Shard set for node {node_name}")
-def node_shard_set_mode(hosting: Hosting, node_name: str, shard: str, mode: str) -> str:
+@allure.step("Shard set for {node}")
+def node_shard_set_mode(node: StorageNode, shard: str, mode: str) -> str:
     """
     The function sets mode for specified shard.
     Args:
-        node_name str: node name on which shard mode should be set.
+        node: node on which shard mode should be set.
     """
     command = f"control shards set-mode --id {shard} --mode {mode}"
-    return _run_control_command_with_retries(hosting, node_name, command)
+    return _run_control_command_with_retries(node, command)
 
 
-@allure.step("Drop object from node {node_name}")
-def drop_object(hosting: Hosting, node_name: str, cid: str, oid: str) -> str:
+@allure.step("Drop object from {node}")
+def drop_object(node: StorageNode, cid: str, oid: str) -> str:
     """
     The function drops object from specified node.
     Args:
-        node_name str: node name from which object should be dropped.
+        node_id str: node from which object should be dropped.
     """
     command = f"control drop-objects  -o {cid}/{oid}"
-    return _run_control_command_with_retries(hosting, node_name, command)
+    return _run_control_command_with_retries(node, command)
 
 
-@allure.step("Delete data of node {node_name}")
-def delete_node_data(hosting: Hosting, node_name: str) -> None:
-    host = hosting.get_host_by_service(node_name)
-    host.stop_service(node_name)
-    host.delete_storage_node_data(node_name)
+@allure.step("Delete data from host for node {node}")
+def delete_node_data(node: StorageNode) -> None:
+    node.stop_service()
+    node.host.delete_storage_node_data(node.name)
     time.sleep(parse_time(MORPH_BLOCK_TIME))
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
 def exclude_node_from_network_map(
-    hosting: Hosting, node_to_exclude: str, alive_node: str, shell: Shell
+    node_to_exclude: StorageNode,
+    alive_node: StorageNode,
+    shell: Shell,
+    cluster: Cluster,
 ) -> None:
-    node_wallet_path = NEOFS_NETMAP_DICT[node_to_exclude]["wallet_path"]
-    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
+    node_netmap_key = node_to_exclude.get_wallet_public_key()
 
-    node_set_status(hosting, node_to_exclude, status="offline")
+    storage_node_set_status(node_to_exclude, status="offline")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
-    tick_epoch(shell=shell)
+    tick_epoch(shell, cluster)
 
-    snapshot = get_netmap_snapshot(node_name=alive_node, shell=shell)
+    snapshot = get_netmap_snapshot(node=alive_node, shell=shell)
     assert (
         node_netmap_key not in snapshot
-    ), f"Expected node with key {node_netmap_key} not in network map"
+    ), f"Expected node with key {node_netmap_key} to be absent in network map"
 
 
 @allure.step("Include node {node_to_include} into network map")
 def include_node_to_network_map(
-    hosting: Hosting, node_to_include: str, alive_node: str, shell: Shell
+    node_to_include: StorageNode,
+    alive_node: StorageNode,
+    shell: Shell,
+    cluster: Cluster,
 ) -> None:
-    node_set_status(hosting, node_to_include, status="online")
+    storage_node_set_status(node_to_include, status="online")
 
     # Per suggestion of @fyrchik we need to wait for 2 blocks after we set status and after tick epoch.
-    # First sleep can be ommited afer https://github.com/nspcc-dev/neofs-node/issues/1790 complete.
+    # First sleep can be omitted after https://github.com/nspcc-dev/neofs-node/issues/1790 complete.
 
     time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
-    tick_epoch(shell=shell)
+    tick_epoch(shell, cluster)
     time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
 
     check_node_in_map(node_to_include, shell, alive_node)
 
 
-@allure.step("Check node {node_name} in network map")
-def check_node_in_map(node_name: str, shell: Shell, alive_node: Optional[str] = None) -> None:
-    alive_node = alive_node or node_name
-    node_wallet_path = NEOFS_NETMAP_DICT[node_name]["wallet_path"]
-    node_netmap_key = get_wallet_public_key(node_wallet_path, STORAGE_WALLET_PASS)
+@allure.step("Check node {node} in network map")
+def check_node_in_map(
+    node: StorageNode, shell: Shell, alive_node: Optional[StorageNode] = None
+) -> None:
+    alive_node = alive_node or node
 
-    logger.info(f"Node {node_name} netmap key: {node_netmap_key}")
+    node_netmap_key = node.get_wallet_public_key()
+    logger.info(f"Node ({node.label}) netmap key: {node_netmap_key}")
 
-    snapshot = get_netmap_snapshot(node_name=alive_node, shell=shell)
-    assert node_netmap_key in snapshot, f"Expected node with key {node_netmap_key} in network map"
+    snapshot = get_netmap_snapshot(alive_node, shell)
+    assert (
+        node_netmap_key in snapshot
+    ), f"Expected node with key {node_netmap_key} to be in network map"
 
 
-def _run_control_command_with_retries(
-    hosting: Hosting, node_name: str, command: str, retries: int = 0
-) -> str:
+def _run_control_command_with_retries(node: StorageNode, command: str, retries: int = 0) -> str:
     for attempt in range(1 + retries):  # original attempt + specified retries
         try:
-            return _run_control_command(hosting, node_name, command)
+            return _run_control_command(node, command)
         except AssertionError as err:
             if attempt < retries:
                 logger.warning(f"Command {command} failed with error {err} and will be retried")
@@ -223,16 +222,16 @@ def _run_control_command_with_retries(
             raise AssertionError(f"Command {command} failed with error {err}") from err
 
 
-def _run_control_command(hosting: Hosting, service_name: str, command: str) -> None:
-    host = hosting.get_host_by_service(service_name)
+def _run_control_command(node: StorageNode, command: str) -> None:
+    host = node.host
 
-    service_config = host.get_service_config(service_name)
+    service_config = host.get_service_config(node.name)
     wallet_path = service_config.attributes["wallet_path"]
     wallet_password = service_config.attributes["wallet_password"]
     control_endpoint = service_config.attributes["control_endpoint"]
 
     shell = host.get_shell()
-    wallet_config_path = f"/tmp/{service_name}-config.yaml"
+    wallet_config_path = f"/tmp/{node.name}-config.yaml"
     wallet_config = f'password: "{wallet_password}"'
     shell.exec(f"echo '{wallet_config}' > {wallet_config_path}")
 

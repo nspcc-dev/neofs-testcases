@@ -1,29 +1,77 @@
 import json
 import logging
 import os
-import random
 import re
 import uuid
 from typing import Any, Optional
 
 import allure
 import json_transformers
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, NEOFS_NETMAP, WALLET_CONFIG
+from cluster import Cluster
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 
 
-@allure.step("Get object")
+@allure.step("Get object from random node")
+def get_object_from_random_node(
+    wallet: str,
+    cid: str,
+    oid: str,
+    shell: Shell,
+    cluster: Cluster,
+    bearer: Optional[str] = None,
+    write_object: Optional[str] = None,
+    xhdr: Optional[dict] = None,
+    wallet_config: Optional[str] = None,
+    no_progress: bool = True,
+    session: Optional[str] = None,
+) -> str:
+    """
+    GET from NeoFS random storage node
+
+    Args:
+        wallet: wallet on whose behalf GET is done
+        cid: ID of Container where we get the Object from
+        oid: Object ID
+        shell: executor for cli command
+        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
+        write_object (optional, str): path to downloaded file, appends to `--file` key
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        wallet_config(optional, str): path to the wallet config
+        no_progress(optional, bool): do not show progress bar
+        xhdr (optional, dict): Request X-Headers in form of Key=Value
+        session (optional, dict): path to a JSON-encoded container session token
+    Returns:
+        (str): path to downloaded file
+    """
+    endpoint = cluster.get_random_storage_rpc_endpoint()
+    return get_object(
+        wallet,
+        cid,
+        oid,
+        shell,
+        endpoint,
+        bearer,
+        write_object,
+        xhdr,
+        wallet_config,
+        no_progress,
+        session,
+    )
+
+
+@allure.step("Get object from {endpoint}")
 def get_object(
     wallet: str,
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str = None,
     bearer: Optional[str] = None,
-    write_object: str = "",
-    endpoint: str = "",
+    write_object: Optional[str] = None,
     xhdr: Optional[dict] = None,
     wallet_config: Optional[str] = None,
     no_progress: bool = True,
@@ -37,9 +85,9 @@ def get_object(
         cid (str): ID of Container where we get the Object from
         oid (str): Object ID
         shell: executor for cli command
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        write_object (optional, str): path to downloaded file, appends to `--file` key
-        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        write_object: path to downloaded file, appends to `--file` key
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         wallet_config(optional, str): path to the wallet config
         no_progress(optional, bool): do not show progress bar
         xhdr (optional, dict): Request X-Headers in form of Key=Value
@@ -52,12 +100,9 @@ def get_object(
         write_object = str(uuid.uuid4())
     file_path = os.path.join(ASSETS_DIR, write_object)
 
-    if not endpoint:
-        endpoint = random.sample(NEOFS_NETMAP, 1)[0]
-
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     cli.object.get(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,
@@ -71,15 +116,15 @@ def get_object(
     return file_path
 
 
-@allure.step("Get Range Hash")
+@allure.step("Get Range Hash from {endpoint}")
 def get_range_hash(
     wallet: str,
     cid: str,
     oid: str,
     range_cut: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
-    endpoint: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
@@ -102,10 +147,9 @@ def get_range_hash(
     Returns:
         None
     """
-
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.hash(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,
@@ -119,16 +163,69 @@ def get_range_hash(
     return result.stdout.split(":")[1].strip()
 
 
-@allure.step("Put object")
+@allure.step("Put object to random node")
+def put_object_to_random_node(
+    wallet: str,
+    path: str,
+    cid: str,
+    shell: Shell,
+    cluster: Cluster,
+    bearer: Optional[str] = None,
+    attributes: Optional[dict] = None,
+    xhdr: Optional[dict] = None,
+    wallet_config: Optional[str] = None,
+    expire_at: Optional[int] = None,
+    no_progress: bool = True,
+    session: Optional[str] = None,
+):
+    """
+    PUT of given file to a random storage node.
+
+    Args:
+        wallet: wallet on whose behalf PUT is done
+        path: path to file to be PUT
+        cid: ID of Container where we get the Object from
+        shell: executor for cli command
+        cluster: cluster under test
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        attributes: User attributes in form of Key1=Value1,Key2=Value2
+        cluster: cluster under test
+        wallet_config: path to the wallet config
+        no_progress: do not show progress bar
+        expire_at: Last epoch in the life of the object
+        xhdr: Request X-Headers in form of Key=Value
+        session: path to a JSON-encoded container session token
+    Returns:
+        ID of uploaded Object
+    """
+
+    endpoint = cluster.get_random_storage_rpc_endpoint()
+    return put_object(
+        wallet,
+        path,
+        cid,
+        shell,
+        endpoint,
+        bearer,
+        attributes,
+        xhdr,
+        wallet_config,
+        expire_at,
+        no_progress,
+        session,
+    )
+
+
+@allure.step("Put object at {endpoint} in container {cid}")
 def put_object(
     wallet: str,
     path: str,
     cid: str,
     shell: Shell,
+    endpoint: str,
     bearer: Optional[str] = None,
     attributes: Optional[dict] = None,
     xhdr: Optional[dict] = None,
-    endpoint: Optional[str] = None,
     wallet_config: Optional[str] = None,
     expire_at: Optional[int] = None,
     no_progress: bool = True,
@@ -138,25 +235,21 @@ def put_object(
     PUT of given file.
 
     Args:
-        wallet (str): wallet on whose behalf PUT is done
-        path (str): path to file to be PUT
-        cid (str): ID of Container where we get the Object from
+        wallet: wallet on whose behalf PUT is done
+        path: path to file to be PUT
+        cid: ID of Container where we get the Object from
         shell: executor for cli command
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        attributes (optional, str): User attributes in form of Key1=Value1,Key2=Value2
-        endpoint(optional, str): NeoFS endpoint to send request to
-        wallet_config(optional, str): path to the wallet config
-        no_progress(optional, bool): do not show progress bar
-        expire_at (optional, int): Last epoch in the life of the object
-        xhdr (optional, dict): Request X-Headers in form of Key=Value
-        session (optional, dict): path to a JSON-encoded container session token
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        attributes: User attributes in form of Key1=Value1,Key2=Value2
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        wallet_config: path to the wallet config
+        no_progress: do not show progress bar
+        expire_at: Last epoch in the life of the object
+        xhdr: Request X-Headers in form of Key=Value
+        session: path to a JSON-encoded container session token
     Returns:
         (str): ID of uploaded Object
     """
-    if not endpoint:
-        endpoint = random.sample(NEOFS_NETMAP, 1)[0]
-        if not endpoint:
-            logger.info(f"---DEB:\n{NEOFS_NETMAP}")
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.put(
@@ -178,13 +271,13 @@ def put_object(
     return oid.strip()
 
 
-@allure.step("Delete object")
+@allure.step("Delete object {cid}/{oid} from {endpoint}")
 def delete_object(
     wallet: str,
     cid: str,
     oid: str,
     shell: Shell,
-    endpoint: Optional[str] = None,
+    endpoint: str = None,
     bearer: str = "",
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -194,21 +287,22 @@ def delete_object(
     DELETE an Object.
 
     Args:
-        wallet (str): wallet on whose behalf DELETE is done
-        cid (str): ID of Container where we get the Object from
-        oid (str): ID of Object we are going to delete
+        wallet: wallet on whose behalf DELETE is done
+        cid: ID of Container where we get the Object from
+        oid: ID of Object we are going to delete
         shell: executor for cli command
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        wallet_config(optional, str): path to the wallet config
-        xhdr (optional, dict): Request X-Headers in form of Key=Value
-        session (optional, dict): path to a JSON-encoded container session token
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        wallet_config: path to the wallet config
+        xhdr: Request X-Headers in form of Key=Value
+        session: path to a JSON-encoded container session token
     Returns:
         (str): Tombstone ID
     """
+
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.delete(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,
@@ -229,7 +323,7 @@ def get_range(
     oid: str,
     range_cut: str,
     shell: Shell,
-    endpoint: Optional[str] = None,
+    endpoint: str = None,
     wallet_config: Optional[str] = None,
     bearer: str = "",
     xhdr: Optional[dict] = None,
@@ -239,16 +333,16 @@ def get_range(
     GETRANGE an Object.
 
     Args:
-        wallet (str): wallet on whose behalf GETRANGE is done
-        cid (str): ID of Container where we get the Object from
-        oid (str): ID of Object we are going to request
-        range_cut (str): range to take data from in the form offset:length
+        wallet: wallet on whose behalf GETRANGE is done
+        cid: ID of Container where we get the Object from
+        oid: ID of Object we are going to request
+        range_cut: range to take data from in the form offset:length
         shell: executor for cli command
-        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        wallet_config(optional, str): path to the wallet config
-        xhdr (optional, dict): Request X-Headers in form of Key=Value
-        session (optional, dict): path to a JSON-encoded container session token
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        wallet_config: path to the wallet config
+        xhdr: Request X-Headers in form of Key=Value
+        session: path to a JSON-encoded container session token
     Returns:
         (str, bytes) - path to the file with range content and content of this file as bytes
     """
@@ -256,7 +350,7 @@ def get_range(
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     cli.object.range(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,
@@ -278,9 +372,9 @@ def lock_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     lifetime: Optional[int] = None,
     expire_at: Optional[int] = None,
-    endpoint: Optional[str] = None,
     address: Optional[str] = None,
     bearer: Optional[str] = None,
     session: Optional[str] = None,
@@ -298,7 +392,8 @@ def lock_object(
         oid: Object ID.
         lifetime: Lock lifetime.
         expire_at: Lock expiration epoch.
-        endpoint: Remote node address.
+        shell: executor for cli command
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         session: Path to a JSON-encoded container session token.
         ttl: TTL value in request meta header (default 2).
         wallet: WIF (NEP-2) string or path to the wallet or binary key.
@@ -310,7 +405,7 @@ def lock_object(
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.lock(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         lifetime=lifetime,
         expire_at=expire_at,
         address=address,
@@ -334,8 +429,8 @@ def search_object(
     wallet: str,
     cid: str,
     shell: Shell,
+    endpoint: str,
     bearer: str = "",
-    endpoint: Optional[str] = None,
     filters: Optional[dict] = None,
     expected_objects_list: Optional[list] = None,
     wallet_config: Optional[str] = None,
@@ -348,26 +443,26 @@ def search_object(
     SEARCH an Object.
 
     Args:
-        wallet (str): wallet on whose behalf SEARCH is done
-        cid (str): ID of Container where we get the Object from
+        wallet: wallet on whose behalf SEARCH is done
+        cid: ID of Container where we get the Object from
         shell: executor for cli command
-        bearer (optional, str): path to Bearer Token file, appends to `--bearer` key
-        endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        filters (optional, dict): key=value pairs to filter Objects
-        expected_objects_list (optional, list): a list of ObjectIDs to compare found Objects with
-        wallet_config(optional, str): path to the wallet config
-        xhdr (optional, dict): Request X-Headers in form of Key=Value
-        session (optional, dict): path to a JSON-encoded container session token
+        bearer: path to Bearer Token file, appends to `--bearer` key
+        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
+        filters: key=value pairs to filter Objects
+        expected_objects_list: a list of ObjectIDs to compare found Objects with
+        wallet_config: path to the wallet config
+        xhdr: Request X-Headers in form of Key=Value
+        session: path to a JSON-encoded container session token
         phy: Search physically stored objects.
         root: Search for user objects.
 
     Returns:
-        (list): list of found ObjectIDs
+        list of found ObjectIDs
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.search(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         bearer=bearer,
@@ -401,8 +496,8 @@ def search_object(
 def get_netmap_netinfo(
     wallet: str,
     shell: Shell,
+    endpoint: str,
     wallet_config: Optional[str] = None,
-    endpoint: Optional[str] = None,
     address: Optional[str] = None,
     ttl: Optional[int] = None,
     xhdr: Optional[dict] = None,
@@ -411,7 +506,7 @@ def get_netmap_netinfo(
     Get netmap netinfo output from node
 
     Args:
-        wallet (str): wallet on whose behalf SEARCH is done
+        wallet (str): wallet on whose behalf request is done
         shell: executor for cli command
         endpoint (optional, str): NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         address: Address of wallet account
@@ -426,7 +521,7 @@ def get_netmap_netinfo(
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     output = cli.netmap.netinfo(
         wallet=wallet,
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         address=address,
         ttl=ttl,
         xhdr=xhdr,
@@ -452,9 +547,9 @@ def head_object(
     cid: str,
     oid: str,
     shell: Shell,
+    endpoint: str,
     bearer: str = "",
     xhdr: Optional[dict] = None,
-    endpoint: Optional[str] = None,
     json_output: bool = True,
     is_raw: bool = False,
     is_direct: bool = False,
@@ -489,7 +584,7 @@ def head_object(
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     result = cli.object.head(
-        rpc_endpoint=endpoint or NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,

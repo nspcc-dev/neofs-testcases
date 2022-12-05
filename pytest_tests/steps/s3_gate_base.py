@@ -3,23 +3,24 @@ import logging
 import os
 import re
 import uuid
-from typing import Optional
+from typing import Any, Optional
 
 import allure
 import boto3
 import pytest
+import s3_gate_bucket
+import s3_gate_object
 import urllib3
+from aws_cli_client import AwsCliClient
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from cli_helpers import _cmd_run, _configure_aws_cli, _run_with_passwd
-from common import NEOFS_AUTHMATE_EXEC, NEOFS_ENDPOINT, S3_GATE, S3_GATE_WALLET_PATH
-from data_formatters import get_wallet_public_key
-from neofs_testlib.hosting import Hosting
+from cluster import Cluster
+from cluster_test_base import ClusterTestBase
+from common import NEOFS_AUTHMATE_EXEC
 from neofs_testlib.shell import Shell
+from pytest import FixtureRequest
 from python_keywords.container import list_containers
-
-from steps import s3_gate_bucket, s3_gate_object
-from steps.aws_cli_client import AwsCliClient
 
 # Disable warnings on self-signed certificate which the
 # boto library produces on requests to S3-gate in dev-env
@@ -34,13 +35,15 @@ MAX_REQUEST_ATTEMPTS = 1
 RETRY_MODE = "standard"
 
 
-class TestS3GateBase:
-    s3_client = None
+class TestS3GateBase(ClusterTestBase):
+    s3_client: Any = None
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
-    def s3_client(self, prepare_wallet_and_deposit, client_shell: Shell, request, hosting: Hosting):
-        wallet = prepare_wallet_and_deposit
+    def s3_client(
+        self, default_wallet, client_shell: Shell, request: FixtureRequest, cluster: Cluster
+    ) -> Any:
+        wallet = default_wallet
         s3_bearer_rules_file = f"{os.getcwd()}/robot/resources/files/s3_bearer_rules.json"
         policy = None if isinstance(request.param, str) else request.param[1]
         (
@@ -49,14 +52,20 @@ class TestS3GateBase:
             access_key_id,
             secret_access_key,
             owner_private_key,
-        ) = init_s3_credentials(wallet, hosting, s3_bearer_rules_file=s3_bearer_rules_file)
-        containers_list = list_containers(wallet, shell=client_shell)
+        ) = init_s3_credentials(wallet, cluster, s3_bearer_rules_file=s3_bearer_rules_file)
+        containers_list = list_containers(
+            wallet, shell=client_shell, endpoint=self.cluster.default_rpc_endpoint
+        )
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
         if "aws cli" in request.param:
-            client = configure_cli_client(access_key_id, secret_access_key)
+            client = configure_cli_client(
+                access_key_id, secret_access_key, cluster.default_s3_gate_endpoint
+            )
         else:
-            client = configure_boto3_client(access_key_id, secret_access_key)
+            client = configure_boto3_client(
+                access_key_id, secret_access_key, cluster.default_s3_gate_endpoint
+            )
         TestS3GateBase.s3_client = client
         TestS3GateBase.wallet = wallet
 
@@ -93,27 +102,22 @@ class TestS3GateBase:
         s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
 
-def get_wallet_password(hosting: Hosting, s3_service_name: str) -> str:
-    service_config = hosting.get_service_config(s3_service_name)
-    return service_config.attributes.get("wallet_password")
-
-
 @allure.step("Init S3 Credentials")
 def init_s3_credentials(
     wallet_path: str,
-    hosting: Hosting,
+    cluster: Cluster,
     s3_bearer_rules_file: Optional[str] = None,
     policy: Optional[dict] = None,
-    s3_service_name: str = "s3-gate01",
 ):
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or "robot/resources/files/s3_bearer_rules.json"
-    s3_password = get_wallet_password(hosting, s3_service_name)
-    gate_public_key = get_wallet_public_key(S3_GATE_WALLET_PATH, s3_password)
+
+    s3gate_node = cluster.s3gates[0]
+    gate_public_key = s3gate_node.get_wallet_public_key()
     cmd = (
         f"{NEOFS_AUTHMATE_EXEC} --debug --with-log --timeout {CREDENTIALS_CREATE_TIMEOUT} "
         f"issue-secret --wallet {wallet_path} --gate-public-key={gate_public_key} "
-        f"--peer {NEOFS_ENDPOINT} --container-friendly-name {bucket} "
+        f"--peer {cluster.default_rpc_endpoint} --container-friendly-name {bucket} "
         f"--bearer-rules {s3_bearer_rules}"
     )
     if policy:
@@ -148,9 +152,9 @@ def init_s3_credentials(
 
 
 @allure.step("Configure S3 client (boto3)")
-def configure_boto3_client(access_key_id: str, secret_access_key: str):
+def configure_boto3_client(access_key_id: str, secret_access_key: str, s3gate_endpoint: str):
     try:
-        session = boto3.session.Session()
+        session = boto3.Session()
         config = Config(
             retries={
                 "max_attempts": MAX_REQUEST_ATTEMPTS,
@@ -163,7 +167,7 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str):
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             config=config,
-            endpoint_url=S3_GATE,
+            endpoint_url=s3gate_endpoint,
             verify=False,
         )
         return s3_client
@@ -175,9 +179,9 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str):
 
 
 @allure.step("Configure S3 client (aws cli)")
-def configure_cli_client(access_key_id: str, secret_access_key: str):
+def configure_cli_client(access_key_id: str, secret_access_key: str, s3gate_endpoint: str):
     try:
-        client = AwsCliClient()
+        client = AwsCliClient(s3gate_endpoint)
         _configure_aws_cli("aws configure", access_key_id, secret_access_key)
         _cmd_run(f"aws configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
         _cmd_run(f"aws configure set retry_mode {RETRY_MODE}")

@@ -6,7 +6,8 @@ import logging
 from typing import Optional
 
 import allure
-from common import COMPLEX_OBJ_SIZE, NEOFS_CLI_EXEC, NEOFS_ENDPOINT, SIMPLE_OBJ_SIZE, WALLET_CONFIG
+from cluster import Cluster
+from common import COMPLEX_OBJ_SIZE, NEOFS_CLI_EXEC, SIMPLE_OBJ_SIZE, WALLET_CONFIG
 from complex_object_actions import get_link_object
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
@@ -18,6 +19,7 @@ logger = logging.getLogger("NeoLogger")
 @allure.step("Put Storagegroup")
 def put_storagegroup(
     shell: Shell,
+    endpoint: str,
     wallet: str,
     cid: str,
     objects: list,
@@ -47,7 +49,7 @@ def put_storagegroup(
         lifetime=lifetime,
         members=objects,
         bearer=bearer,
-        rpc_endpoint=NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
     )
     gid = result.stdout.split("\n")[1].split(": ")[1]
     return gid
@@ -56,6 +58,7 @@ def put_storagegroup(
 @allure.step("List Storagegroup")
 def list_storagegroup(
     shell: Shell,
+    endpoint: str,
     wallet: str,
     cid: str,
     bearer: Optional[str] = None,
@@ -78,7 +81,7 @@ def list_storagegroup(
         wallet=wallet,
         cid=cid,
         bearer=bearer,
-        rpc_endpoint=NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
     )
     # throwing off the first string of output
     found_objects = result.stdout.split("\n")[1:]
@@ -88,6 +91,7 @@ def list_storagegroup(
 @allure.step("Get Storagegroup")
 def get_storagegroup(
     shell: Shell,
+    endpoint: str,
     wallet: str,
     cid: str,
     gid: str,
@@ -112,7 +116,7 @@ def get_storagegroup(
         cid=cid,
         bearer=bearer,
         id=gid,
-        rpc_endpoint=NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
     )
 
     # TODO: temporary solution for parsing output. Needs to be replaced with
@@ -136,6 +140,7 @@ def get_storagegroup(
 @allure.step("Delete Storagegroup")
 def delete_storagegroup(
     shell: Shell,
+    endpoint: str,
     wallet: str,
     cid: str,
     gid: str,
@@ -160,7 +165,7 @@ def delete_storagegroup(
         cid=cid,
         bearer=bearer,
         id=gid,
-        rpc_endpoint=NEOFS_ENDPOINT,
+        rpc_endpoint=endpoint,
     )
     tombstone_id = result.stdout.strip().split("\n")[1].split(": ")[1]
     return tombstone_id
@@ -169,6 +174,7 @@ def delete_storagegroup(
 @allure.step("Verify list operation over Storagegroup")
 def verify_list_storage_group(
     shell: Shell,
+    endpoint: str,
     wallet: str,
     cid: str,
     gid: str,
@@ -176,7 +182,12 @@ def verify_list_storage_group(
     wallet_config: str = WALLET_CONFIG,
 ):
     storage_groups = list_storagegroup(
-        shell=shell, wallet=wallet, cid=cid, bearer=bearer, wallet_config=wallet_config
+        shell=shell,
+        endpoint=endpoint,
+        wallet=wallet,
+        cid=cid,
+        bearer=bearer,
+        wallet_config=wallet_config,
     )
     assert gid in storage_groups
 
@@ -184,6 +195,7 @@ def verify_list_storage_group(
 @allure.step("Verify get operation over Storagegroup")
 def verify_get_storage_group(
     shell: Shell,
+    cluster: Cluster,
     wallet: str,
     cid: str,
     gid: str,
@@ -193,16 +205,24 @@ def verify_get_storage_group(
     wallet_config: str = WALLET_CONFIG,
 ):
     obj_parts = []
+    endpoint = cluster.default_rpc_endpoint
     if object_size == COMPLEX_OBJ_SIZE:
         for obj in obj_list:
             link_oid = get_link_object(
-                wallet, cid, obj, shell=shell, bearer=bearer, wallet_config=wallet_config
+                wallet,
+                cid,
+                obj,
+                shell=shell,
+                nodes=cluster.storage_nodes,
+                bearer=bearer,
+                wallet_config=wallet_config,
             )
             obj_head = head_object(
                 wallet=wallet,
                 cid=cid,
                 oid=link_oid,
                 shell=shell,
+                endpoint=endpoint,
                 is_raw=True,
                 bearer=bearer,
                 wallet_config=wallet_config,
@@ -212,6 +232,7 @@ def verify_get_storage_group(
     obj_num = len(obj_list)
     storagegroup_data = get_storagegroup(
         shell=shell,
+        endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         gid=gid,

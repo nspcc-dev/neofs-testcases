@@ -9,6 +9,7 @@ import allure
 import pytest
 import yaml
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
+from cluster import Cluster
 from common import (
     ASSETS_DIR,
     BACKGROUND_LOAD_MAX_TIME,
@@ -20,7 +21,6 @@ from common import (
     LOAD_NODE_SSH_PRIVATE_KEY_PATH,
     LOAD_NODE_SSH_USER,
     LOAD_NODES,
-    NEOFS_NETMAP_DICT,
     STORAGE_NODE_SERVICE_NAME_REGEX,
     WALLET_PASS,
 )
@@ -33,8 +33,9 @@ from neofs_testlib.shell import LocalShell, Shell
 from neofs_testlib.utils.wallet import init_wallet
 from payment_neogo import deposit_gas, transfer_gas
 from pytest import FixtureRequest
-from python_keywords.node_management import node_healthcheck
-from wallet import WalletFactory
+from python_keywords.node_management import storage_node_healthcheck
+
+from helpers.wallet import WalletFactory
 
 logger = logging.getLogger("NeoLogger")
 
@@ -66,6 +67,7 @@ def hosting(configure_testlib) -> Hosting:
 
     hosting_instance = Hosting()
     hosting_instance.configure(hosting_config)
+
     yield hosting_instance
 
 
@@ -81,8 +83,13 @@ def require_multiple_hosts(hosting: Hosting):
 
 
 @pytest.fixture(scope="session")
-def wallet_factory(prepare_tmp_dir: str, client_shell: Shell) -> WalletFactory:
-    return WalletFactory(prepare_tmp_dir, client_shell)
+def wallet_factory(temp_directory: str, client_shell: Shell, cluster: Cluster) -> WalletFactory:
+    return WalletFactory(temp_directory, client_shell, cluster)
+
+
+@pytest.fixture(scope="session")
+def cluster(hosting: Hosting) -> Cluster:
+    yield Cluster(hosting)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -97,7 +104,7 @@ def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
 
 @pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
-def prepare_tmp_dir():
+def temp_directory():
     with allure.step("Prepare tmp directory"):
         full_path = os.path.join(os.getcwd(), ASSETS_DIR)
         shutil.rmtree(full_path, ignore_errors=True)
@@ -111,7 +118,7 @@ def prepare_tmp_dir():
 
 @pytest.fixture(scope="function", autouse=True)
 @allure.title("Analyze logs")
-def analyze_logs(prepare_tmp_dir: str, hosting: Hosting, request: FixtureRequest):
+def analyze_logs(temp_directory: str, hosting: Hosting, request: FixtureRequest):
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
@@ -123,39 +130,39 @@ def analyze_logs(prepare_tmp_dir: str, hosting: Hosting, request: FixtureRequest
 
     # Test name may exceed os NAME_MAX (255 bytes), so we use test start datetime instead
     start_time_str = start_time.strftime("%Y_%m_%d_%H_%M_%S_%f")
-    logs_dir = os.path.join(prepare_tmp_dir, f"logs_{start_time_str}")
+    logs_dir = os.path.join(temp_directory, f"logs_{start_time_str}")
     dump_logs(hosting, logs_dir, start_time, end_time)
     check_logs(logs_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Collect logs")
-def collect_logs(prepare_tmp_dir, hosting: Hosting):
+def collect_logs(temp_directory, hosting: Hosting):
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
 
     # Dump logs to temp directory (because they might be too large to keep in RAM)
-    logs_dir = os.path.join(prepare_tmp_dir, "logs")
+    logs_dir = os.path.join(temp_directory, "logs")
     dump_logs(hosting, logs_dir, start_time, end_time)
     attach_logs(logs_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Run health check for all storage nodes")
-def run_health_check(collect_logs, hosting: Hosting):
+def run_health_check(collect_logs, cluster: Cluster):
     failed_nodes = []
-    for node_name in NEOFS_NETMAP_DICT.keys():
-        health_check = node_healthcheck(hosting, node_name)
+    for node in cluster.storage_nodes:
+        health_check = storage_node_healthcheck(node)
         if health_check.health_status != "READY" or health_check.network_status != "ONLINE":
-            failed_nodes.append(node_name)
+            failed_nodes.append(node)
 
     if failed_nodes:
         raise AssertionError(f"Nodes {failed_nodes} are not healthy")
 
 
 @pytest.fixture(scope="session")
-def background_grpc_load(client_shell, prepare_wallet_and_deposit):
+def background_grpc_load(client_shell, default_wallet):
     registry_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.bolt")
     prepare_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.json")
     allure.dynamic.title(
@@ -221,21 +228,24 @@ def background_grpc_load(client_shell, prepare_wallet_and_deposit):
 
 @pytest.fixture(scope="session")
 @allure.title("Prepare wallet and deposit")
-def prepare_wallet_and_deposit(client_shell, prepare_tmp_dir):
+def default_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster):
     wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
     init_wallet(wallet_path, WALLET_PASS)
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
     if not FREE_STORAGE:
+        main_chain = cluster.main_chain_nodes[0]
         deposit = 30
         transfer_gas(
             shell=client_shell,
             amount=deposit + 1,
+            main_chain=main_chain,
             wallet_to_path=wallet_path,
             wallet_to_password=WALLET_PASS,
         )
         deposit_gas(
             shell=client_shell,
+            main_chain=main_chain,
             amount=deposit,
             wallet_from_path=wallet_path,
             wallet_from_password=WALLET_PASS,

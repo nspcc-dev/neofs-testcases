@@ -15,7 +15,8 @@ from typing import Optional
 
 import allure
 import neofs_verbs
-from common import NEOFS_NETMAP, WALLET_CONFIG
+from cluster import StorageNode
+from common import WALLET_CONFIG
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
@@ -27,6 +28,7 @@ def get_link_object(
     cid: str,
     oid: str,
     shell: Shell,
+    nodes: list[StorageNode],
     bearer: str = "",
     wallet_config: str = WALLET_CONFIG,
     is_direct: bool = True,
@@ -38,6 +40,7 @@ def get_link_object(
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
         shell: executor for cli command
+        nodes: list of nodes to do search on
         bearer (optional, str): path to Bearer token file
         wallet_config (optional, str): path to the neofs-cli config file
         is_direct: send request directly to the node or not; this flag
@@ -47,14 +50,15 @@ def get_link_object(
         When no Link Object ID is found after all Storage Nodes polling,
         the function throws an error.
     """
-    for node in NEOFS_NETMAP:
+    for node in nodes:
+        endpoint = node.get_rpc_endpoint()
         try:
             resp = neofs_verbs.head_object(
                 wallet,
                 cid,
                 oid,
                 shell=shell,
-                endpoint=node,
+                endpoint=endpoint,
                 is_raw=True,
                 is_direct=is_direct,
                 bearer=bearer,
@@ -63,13 +67,15 @@ def get_link_object(
             if resp["link"]:
                 return resp["link"]
         except Exception:
-            logger.info(f"No Link Object found on {node}; continue")
+            logger.info(f"No Link Object found on {endpoint}; continue")
     logger.error(f"No Link Object for {cid}/{oid} found among all Storage Nodes")
     return None
 
 
 @allure.step("Get Last Object")
-def get_last_object(wallet: str, cid: str, oid: str, shell: Shell) -> Optional[str]:
+def get_last_object(
+    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
+) -> Optional[str]:
     """
     Args:
         wallet (str): path to the wallet on whose behalf the Storage Nodes
@@ -77,19 +83,21 @@ def get_last_object(wallet: str, cid: str, oid: str, shell: Shell) -> Optional[s
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
         shell: executor for cli command
+        nodes: list of nodes to do search on
     Returns:
         (str): Last Object ID
         When no Last Object ID is found after all Storage Nodes polling,
         the function throws an error.
     """
-    for node in NEOFS_NETMAP:
+    for node in nodes:
+        endpoint = node.get_rpc_endpoint()
         try:
             resp = neofs_verbs.head_object(
-                wallet, cid, oid, shell=shell, endpoint=node, is_raw=True, is_direct=True
+                wallet, cid, oid, shell=shell, endpoint=endpoint, is_raw=True, is_direct=True
             )
             if resp["lastPart"]:
                 return resp["lastPart"]
         except Exception:
-            logger.info(f"No Last Object found on {node}; continue")
+            logger.info(f"No Last Object found on {endpoint}; continue")
     logger.error(f"No Last Object for {cid}/{oid} found among all Storage Nodes")
     return None

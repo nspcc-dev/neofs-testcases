@@ -6,7 +6,7 @@ from typing import Optional
 
 import allure
 from cli_helpers import _cmd_run
-from common import ASSETS_DIR, S3_GATE
+from common import ASSETS_DIR
 
 logger = logging.getLogger("NeoLogger")
 REGULAR_TIMEOUT = 90
@@ -17,6 +17,10 @@ class AwsCliClient:
     # Flags that we use for all S3 commands: disable SSL verification (as we use self-signed
     # certificate in devenv) and disable automatic pagination in CLI output
     common_flags = "--no-verify-ssl --no-paginate"
+    s3gate_endpoint: str
+
+    def __init__(self, s3gate_endpoint) -> None:
+        self.s3gate_endpoint = s3gate_endpoint
 
     def create_bucket(
         self,
@@ -36,7 +40,7 @@ class AwsCliClient:
             object_lock = " --no-object-lock-enabled-for-bucket"
         cmd = (
             f"aws {self.common_flags} s3api create-bucket --bucket {Bucket} "
-            f"{object_lock} --endpoint {S3_GATE}"
+            f"{object_lock} --endpoint {self.s3gate_endpoint}"
         )
         if ACL:
             cmd += f" --acl {ACL}"
@@ -51,14 +55,14 @@ class AwsCliClient:
         _cmd_run(cmd, REGULAR_TIMEOUT)
 
     def list_buckets(self) -> dict:
-        cmd = f"aws {self.common_flags} s3api list-buckets --endpoint {S3_GATE}"
+        cmd = f"aws {self.common_flags} s3api list-buckets --endpoint {self.s3gate_endpoint}"
         output = _cmd_run(cmd)
         return self._to_json(output)
 
     def get_bucket_acl(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-acl --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
@@ -66,7 +70,7 @@ class AwsCliClient:
     def get_bucket_versioning(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-versioning --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
@@ -74,7 +78,7 @@ class AwsCliClient:
     def get_bucket_location(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-location --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
@@ -83,14 +87,15 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-versioning --bucket {Bucket} "
             f'--versioning-configuration Status={VersioningConfiguration.get("Status")} '
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
 
     def list_objects(self, Bucket: str) -> dict:
         cmd = (
-            f"aws {self.common_flags} s3api list-objects --bucket {Bucket} " f"--endpoint {S3_GATE}"
+            f"aws {self.common_flags} s3api list-objects --bucket {Bucket} "
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -98,7 +103,7 @@ class AwsCliClient:
     def list_objects_v2(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api list-objects-v2 --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -106,7 +111,7 @@ class AwsCliClient:
     def list_object_versions(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api list-object-versions --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -124,7 +129,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api copy-object --copy-source {CopySource} "
-            f"--bucket {Bucket} --key {Key} --endpoint {S3_GATE}"
+            f"--bucket {Bucket} --key {Key} --endpoint {self.s3gate_endpoint}"
         )
         if ACL:
             cmd += f" --acl {ACL}"
@@ -142,7 +147,7 @@ class AwsCliClient:
         return self._to_json(output)
 
     def head_bucket(self, Bucket: str) -> dict:
-        cmd = f"aws {self.common_flags} s3api head-bucket --bucket {Bucket} --endpoint {S3_GATE}"
+        cmd = f"aws {self.common_flags} s3api head-bucket --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
         output = _cmd_run(cmd)
         return self._to_json(output)
 
@@ -162,7 +167,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-object --bucket {Bucket} --key {Key} "
-            f"--body {Body} --endpoint {S3_GATE}"
+            f"--body {Body} --endpoint {self.s3gate_endpoint}"
         )
         if Metadata:
             cmd += f" --metadata"
@@ -189,7 +194,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api head-object --bucket {Bucket} --key {Key} "
-            f"{version} --endpoint {S3_GATE}"
+            f"{version} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -205,7 +210,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api get-object --bucket {Bucket} --key {Key} "
-            f"{version} {file_path} --endpoint {S3_GATE}"
+            f"{version} {file_path} --endpoint {self.s3gate_endpoint}"
         )
         if Range:
             cmd += f" --range {Range}"
@@ -216,7 +221,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api get-object-acl --bucket {Bucket} --key {Key} "
-            f"{version} --endpoint {S3_GATE}"
+            f"{version} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
@@ -231,7 +236,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-object-acl --bucket {Bucket} --key {Key} "
-            f" --endpoint {S3_GATE}"
+            f" --endpoint {self.s3gate_endpoint}"
         )
         if ACL:
             cmd += f" --acl {ACL}"
@@ -251,7 +256,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-acl --bucket {Bucket} "
-            f" --endpoint {S3_GATE}"
+            f" --endpoint {self.s3gate_endpoint}"
         )
         if ACL:
             cmd += f" --acl {ACL}"
@@ -270,7 +275,7 @@ class AwsCliClient:
 
         cmd = (
             f"aws {self.common_flags} s3api delete-objects --bucket {Bucket} "
-            f"--delete file://{file_path} --endpoint {S3_GATE}"
+            f"--delete file://{file_path} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
@@ -279,7 +284,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api delete-object --bucket {Bucket} "
-            f"--key {Key} {version} --endpoint {S3_GATE}"
+            f"--key {Key} {version} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
@@ -300,20 +305,20 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api get-object-attributes --bucket {bucket} "
             f"--key {key} {version} {parts} {part_number} --object-attributes {attrs} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
 
     def delete_bucket(self, Bucket: str) -> dict:
-        cmd = f"aws {self.common_flags} s3api delete-bucket --bucket {Bucket} --endpoint {S3_GATE}"
+        cmd = f"aws {self.common_flags} s3api delete-bucket --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
 
     def get_bucket_tagging(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-tagging --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -321,7 +326,7 @@ class AwsCliClient:
     def get_bucket_policy(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-policy --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -329,7 +334,7 @@ class AwsCliClient:
     def put_bucket_policy(self, Bucket: str, Policy: dict) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-policy --bucket {Bucket} "
-            f"--policy {json.dumps(Policy)} --endpoint {S3_GATE}"
+            f"--policy {json.dumps(Policy)} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -337,7 +342,7 @@ class AwsCliClient:
     def get_bucket_cors(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api get-bucket-cors --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -345,7 +350,7 @@ class AwsCliClient:
     def put_bucket_cors(self, Bucket: str, CORSConfiguration: dict) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-cors --bucket {Bucket} "
-            f"--cors-configuration '{json.dumps(CORSConfiguration)}' --endpoint {S3_GATE}"
+            f"--cors-configuration '{json.dumps(CORSConfiguration)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -353,7 +358,7 @@ class AwsCliClient:
     def delete_bucket_cors(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api delete-bucket-cors --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -361,7 +366,7 @@ class AwsCliClient:
     def put_bucket_tagging(self, Bucket: str, Tagging: dict) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-bucket-tagging --bucket {Bucket} "
-            f"--tagging '{json.dumps(Tagging)}' --endpoint {S3_GATE}"
+            f"--tagging '{json.dumps(Tagging)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -369,7 +374,7 @@ class AwsCliClient:
     def delete_bucket_tagging(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api delete-bucket-tagging --bucket {Bucket} "
-            f"--endpoint {S3_GATE}"
+            f"--endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -380,7 +385,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api put-object-retention --bucket {Bucket} --key {Key} "
-            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {S3_GATE}"
+            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -391,7 +396,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api  put-object-legal-hold --bucket {Bucket} --key {Key} "
-            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {S3_GATE}"
+            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -407,7 +412,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api put-object-retention --bucket {Bucket} --key {Key} "
-            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {S3_GATE}"
+            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {self.s3gate_endpoint}"
         )
         if not BypassGovernanceRetention is None:
             cmd += " --bypass-governance-retention"
@@ -420,7 +425,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api  put-object-legal-hold --bucket {Bucket} --key {Key} "
-            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {S3_GATE}"
+            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -428,7 +433,7 @@ class AwsCliClient:
     def put_object_tagging(self, Bucket: str, Key: str, Tagging: dict) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api put-object-tagging --bucket {Bucket} --key {Key} "
-            f"--tagging '{json.dumps(Tagging)}' --endpoint {S3_GATE}"
+            f"--tagging '{json.dumps(Tagging)}' --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -437,7 +442,7 @@ class AwsCliClient:
         version = f" --version-id {VersionId}" if VersionId else ""
         cmd = (
             f"aws {self.common_flags} s3api get-object-tagging --bucket {Bucket} --key {Key} "
-            f"{version}  --endpoint {S3_GATE}"
+            f"{version}  --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, REGULAR_TIMEOUT)
         return self._to_json(output)
@@ -445,7 +450,7 @@ class AwsCliClient:
     def delete_object_tagging(self, Bucket: str, Key: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api delete-object-tagging --bucket {Bucket} "
-            f"--key {Key} --endpoint {S3_GATE}"
+            f"--key {Key} --endpoint {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -460,7 +465,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3 sync {dir_path}  s3://{bucket_name} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         if Metadata:
             cmd += f" --metadata"
@@ -481,7 +486,7 @@ class AwsCliClient:
     ) -> dict:
         cmd = (
             f"aws {self.common_flags} s3 cp {dir_path}  s3://{bucket_name} "
-            f"--endpoint-url {S3_GATE}  --recursive"
+            f"--endpoint-url {self.s3gate_endpoint}  --recursive"
         )
         if Metadata:
             cmd += f" --metadata"
@@ -495,7 +500,7 @@ class AwsCliClient:
     def create_multipart_upload(self, Bucket: str, Key: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api create-multipart-upload --bucket {Bucket} "
-            f"--key {Key} --endpoint-url {S3_GATE}"
+            f"--key {Key} --endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -503,7 +508,7 @@ class AwsCliClient:
     def list_multipart_uploads(self, Bucket: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api list-multipart-uploads --bucket {Bucket} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -511,7 +516,7 @@ class AwsCliClient:
     def abort_multipart_upload(self, Bucket: str, Key: str, UploadId: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api abort-multipart-upload  --bucket {Bucket} "
-            f"--key {Key} --upload-id {UploadId} --endpoint-url {S3_GATE}"
+            f"--key {Key} --upload-id {UploadId} --endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -520,7 +525,7 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api upload-part --bucket {Bucket} --key {Key} "
             f"--upload-id {UploadId} --part-number {PartNumber} --body {Body} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
@@ -531,7 +536,7 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api upload-part-copy --bucket {Bucket} --key {Key} "
             f"--upload-id {UploadId} --part-number {PartNumber} --copy-source {CopySource} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
@@ -539,7 +544,7 @@ class AwsCliClient:
     def list_parts(self, UploadId: str, Bucket: str, Key: str) -> dict:
         cmd = (
             f"aws {self.common_flags} s3api list-parts --bucket {Bucket} --key {Key} "
-            f"--upload-id {UploadId} --endpoint-url {S3_GATE}"
+            f"--upload-id {UploadId} --endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -555,7 +560,7 @@ class AwsCliClient:
         cmd = (
             f"aws {self.common_flags} s3api complete-multipart-upload --bucket {Bucket} "
             f"--key {Key}  --upload-id {UploadId} --multipart-upload file://{file_path} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -563,7 +568,7 @@ class AwsCliClient:
     def put_object_lock_configuration(self, Bucket, ObjectLockConfiguration):
         cmd = (
             f"aws {self.common_flags} s3api put-object-lock-configuration --bucket {Bucket} "
-            f"--object-lock-configuration '{json.dumps(ObjectLockConfiguration)}' --endpoint-url {S3_GATE}"
+            f"--object-lock-configuration '{json.dumps(ObjectLockConfiguration)}' --endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)
@@ -571,7 +576,7 @@ class AwsCliClient:
     def get_object_lock_configuration(self, Bucket):
         cmd = (
             f"aws {self.common_flags} s3api get-object-lock-configuration --bucket {Bucket} "
-            f"--endpoint-url {S3_GATE}"
+            f"--endpoint-url {self.s3gate_endpoint}"
         )
         output = _cmd_run(cmd)
         return self._to_json(output)

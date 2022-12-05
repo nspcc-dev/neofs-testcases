@@ -9,7 +9,6 @@ from urllib.parse import quote_plus
 import allure
 import requests
 from cli_helpers import _cmd_run
-from common import HTTP_GATE
 
 logger = logging.getLogger("NeoLogger")
 
@@ -17,13 +16,14 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
 @allure.step("Get via HTTP Gate")
-def get_via_http_gate(cid: str, oid: str):
+def get_via_http_gate(cid: str, oid: str, endpoint: str):
     """
     This function gets given object from HTTP gate
-    :param cid:      CID to get object from
-    :param oid:      object OID
+    cid:      container id to get object from
+    oid:      object ID
+    endpoint: http gate endpoint
     """
-    request = f"{HTTP_GATE}/get/{cid}/{oid}"
+    request = f"{endpoint}/get/{cid}/{oid}"
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -44,13 +44,14 @@ def get_via_http_gate(cid: str, oid: str):
 
 
 @allure.step("Get via Zip HTTP Gate")
-def get_via_zip_http_gate(cid: str, prefix: str):
+def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
     """
     This function gets given object from HTTP gate
-    :param cid:      CID to get object from
-    :param prefix:   common prefix
+    cid:      container id to get object from
+    prefix:   common prefix
+    endpoint: http gate endpoint
     """
-    request = f"{HTTP_GATE}/zip/{cid}/{prefix}"
+    request = f"{endpoint}/zip/{cid}/{prefix}"
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -75,15 +76,16 @@ def get_via_zip_http_gate(cid: str, prefix: str):
 
 
 @allure.step("Get via HTTP Gate by attribute")
-def get_via_http_gate_by_attribute(cid: str, attribute: dict):
+def get_via_http_gate_by_attribute(cid: str, attribute: dict, endpoint: str):
     """
     This function gets given object from HTTP gate
-    :param cid:         CID to get object from
-    :param attribute:   attribute name: attribute value pair
+    cid:         CID to get object from
+    attribute:   attribute {name: attribute} value pair
+    endpoint: http gate endpoint
     """
     attr_name = list(attribute.keys())[0]
     attr_value = quote_plus(str(attribute.get(attr_name)))
-    request = f"{HTTP_GATE}/get_by_attribute/{cid}/{quote_plus(str(attr_name))}/{attr_value}"
+    request = f"{endpoint}/get_by_attribute/{cid}/{quote_plus(str(attr_name))}/{attr_value}"
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -104,14 +106,15 @@ def get_via_http_gate_by_attribute(cid: str, attribute: dict):
 
 
 @allure.step("Upload via HTTP Gate")
-def upload_via_http_gate(cid: str, path: str, headers: dict = None) -> str:
+def upload_via_http_gate(cid: str, path: str, endpoint: str, headers: dict = None) -> str:
     """
     This function upload given object through HTTP gate
-    :param cid:    CID to get object from
-    :param path:   File path to upload
-    :param headers: Object header
+    cid:      CID to get object from
+    path:     File path to upload
+    endpoint: http gate endpoint
+    headers:  Object header
     """
-    request = f"{HTTP_GATE}/upload/{cid}"
+    request = f"{endpoint}/upload/{cid}"
     files = {"upload_file": open(path, "rb")}
     body = {"filename": path}
     resp = requests.post(request, files=files, data=body, headers=headers)
@@ -134,15 +137,16 @@ def upload_via_http_gate(cid: str, path: str, headers: dict = None) -> str:
 
 @allure.step("Upload via HTTP Gate using Curl")
 def upload_via_http_gate_curl(
-    cid: str, filepath: str, large_object=False, headers: dict = None
+    cid: str, filepath: str, endpoint: str, large_object=False, headers: dict = None
 ) -> str:
     """
     This function upload given object through HTTP gate using curl utility.
-    :param cid:    CID to get object from
-    :param filepath:   File path to upload
-    :param headers: Object header
+    cid: CID to get object from
+    filepath: File path to upload
+    headers: Object header
+    endpoint: http gate endpoint
     """
-    request = f"{HTTP_GATE}/upload/{cid}"
+    request = f"{endpoint}/upload/{cid}"
     files = f"file=@{filepath};filename={os.path.basename(filepath)}"
     cmd = f"curl -F '{files}' {request}"
     if large_object:
@@ -156,13 +160,14 @@ def upload_via_http_gate_curl(
 
 
 @allure.step("Get via HTTP Gate using Curl")
-def get_via_http_curl(cid: str, oid: str) -> str:
+def get_via_http_curl(cid: str, oid: str, endpoint: str) -> str:
     """
     This function gets given object from HTTP gate using curl utility.
-    :param cid:      CID to get object from
-    :param oid:      object OID
+    cid:      CID to get object from
+    oid:      object OID
+    endpoint: http gate endpoint
     """
-    request = f"{HTTP_GATE}/get/{cid}/{oid}"
+    request = f"{endpoint}/get/{cid}/{oid}"
     file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}_{str(uuid.uuid4())}")
 
     cmd = f"curl {request} > {file_path}"

@@ -35,7 +35,7 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate
 class TestS3GatePolicy(TestS3GateBase):
     @allure.title("Test S3: Verify bucket creation with retention policy applied")
-    def test_s3_bucket_location(self, client_shell):
+    def test_s3_bucket_location(self):
         file_path_1 = generate_file()
         file_name_1 = object_key_from_file_path(file_path_1)
         file_path_2 = generate_file()
@@ -72,14 +72,26 @@ class TestS3GatePolicy(TestS3GateBase):
             assert bucket_loc_2 == "rep-3"
 
         with allure.step("Check object policy"):
-            cid_1 = search_container_by_name(self.wallet, bucket_1, shell=client_shell)
+            cid_1 = search_container_by_name(
+                self.wallet, bucket_1, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
+            )
             copies_1 = get_simple_object_copies(
-                wallet=self.wallet, cid=cid_1, oid=version_id_1, shell=client_shell
+                wallet=self.wallet,
+                cid=cid_1,
+                oid=version_id_1,
+                shell=self.shell,
+                nodes=self.cluster.storage_nodes,
             )
             assert copies_1 == 1
-            cid_2 = search_container_by_name(self.wallet, bucket_2, shell=client_shell)
+            cid_2 = search_container_by_name(
+                self.wallet, bucket_2, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
+            )
             copies_2 = get_simple_object_copies(
-                wallet=self.wallet, cid=cid_2, oid=version_id_2, shell=client_shell
+                wallet=self.wallet,
+                cid=cid_2,
+                oid=version_id_2,
+                shell=self.shell,
+                nodes=self.cluster.storage_nodes,
             )
             assert copies_2 == 3
 

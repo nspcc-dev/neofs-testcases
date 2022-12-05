@@ -6,6 +6,7 @@ from random import choices, sample
 
 import allure
 import pytest
+from aws_cli_client import AwsCliClient
 from common import ASSETS_DIR, COMPLEX_OBJ_SIZE, FREE_STORAGE, SIMPLE_OBJ_SIZE, WALLET_PASS
 from data_formatters import get_wallet_public_key
 from file_helper import concat_files, generate_file, generate_file_with_content, get_file_hash
@@ -14,7 +15,6 @@ from python_keywords.payment_neogo import deposit_gas, transfer_gas
 from s3_helper import assert_object_lock_mode, check_objects_in_bucket, set_bucket_versioning
 
 from steps import s3_gate_bucket, s3_gate_object
-from steps.aws_cli_client import AwsCliClient
 from steps.s3_gate_base import TestS3GateBase
 
 
@@ -653,23 +653,26 @@ class TestS3GateObject(TestS3GateBase):
             ], "Tags must be the same"
 
     @pytest.fixture
-    def prepare_two_wallets(self, prepare_wallet_and_deposit, client_shell):
-        self.main_wallet = prepare_wallet_and_deposit
+    def prepare_two_wallets(self, default_wallet, client_shell):
+        self.main_wallet = default_wallet
         self.main_public_key = get_wallet_public_key(self.main_wallet, WALLET_PASS)
         self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
         init_wallet(self.other_wallet, WALLET_PASS)
         self.other_public_key = get_wallet_public_key(self.other_wallet, WALLET_PASS)
 
         if not FREE_STORAGE:
+            main_chain = self.cluster.main_chain_nodes[0]
             deposit = 30
             transfer_gas(
                 shell=client_shell,
                 amount=deposit + 1,
+                main_chain=main_chain,
                 wallet_to_path=self.other_wallet,
                 wallet_to_password=WALLET_PASS,
             )
             deposit_gas(
                 shell=client_shell,
+                main_chain=main_chain,
                 amount=deposit,
                 wallet_from_path=self.other_wallet,
                 wallet_from_password=WALLET_PASS,
@@ -906,9 +909,9 @@ class TestS3GateObject(TestS3GateBase):
                 # ], "Permission for all groups is FULL_CONTROL"
 
     @allure.title("Test S3 Put 10 nested level object")
-    def test_s3_put_10_folder(self, bucket, prepare_tmp_dir):
+    def test_s3_put_10_folder(self, bucket, temp_directory):
         path = "/".join(["".join(choices(string.ascii_letters, k=3)) for _ in range(10)])
-        file_path_1 = os.path.join(prepare_tmp_dir, path, "test_file_1")
+        file_path_1 = os.path.join(temp_directory, path, "test_file_1")
         generate_file_with_content(file_path=file_path_1)
         file_name = self.object_key_from_file_path(file_path_1)
         objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)

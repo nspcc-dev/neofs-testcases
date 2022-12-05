@@ -1,18 +1,16 @@
 import logging
 import os
 import uuid
-from enum import Enum
 from time import sleep
 from typing import Optional
 
 import allure
 import pytest
 import urllib3
+from aws_cli_client import AwsCliClient
 from botocore.exceptions import ClientError
 from cli_helpers import log_command_execution
-
-from steps.aws_cli_client import AwsCliClient
-from steps.s3_gate_bucket import S3_SYNC_WAIT_TIME
+from s3_gate_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the
