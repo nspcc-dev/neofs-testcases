@@ -23,7 +23,16 @@ from common import (
 from env_properties import save_env_properties
 from k6 import LoadParams
 from load import get_services_endpoints, prepare_k6_instances
-from load_params import (
+from neofs_testlib.hosting import Hosting
+from neofs_testlib.reporter import AllureHandler, get_reporter
+from neofs_testlib.shell import LocalShell, Shell
+from neofs_testlib.utils.wallet import init_wallet
+from payment_neogo import deposit_gas, transfer_gas
+from python_keywords.neofs_verbs import get_netmap_netinfo
+from python_keywords.node_management import storage_node_healthcheck
+
+from helpers.wallet import WalletFactory
+from resources.load_params import (
     BACKGROUND_LOAD_MAX_TIME,
     BACKGROUND_OBJ_SIZE,
     BACKGROUND_READERS_COUNT,
@@ -32,16 +41,6 @@ from load_params import (
     LOAD_NODE_SSH_USER,
     LOAD_NODES,
 )
-from neofs_testlib.hosting import Hosting
-from neofs_testlib.reporter import AllureHandler, get_reporter
-from neofs_testlib.shell import LocalShell, Shell
-from neofs_testlib.utils.wallet import init_wallet
-from payment_neogo import deposit_gas, transfer_gas
-from pytest import FixtureRequest
-from python_keywords.neofs_verbs import get_netmap_netinfo
-from python_keywords.node_management import storage_node_healthcheck
-
-from helpers.wallet import WalletFactory
 
 logger = logging.getLogger("NeoLogger")
 
@@ -172,7 +171,7 @@ def run_health_check(collect_logs, cluster: Cluster):
 
 
 @pytest.fixture(scope="session")
-def background_grpc_load(client_shell):
+def background_grpc_load(client_shell: Shell, hosting: Hosting):
     registry_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.bolt")
     prepare_file = os.path.join("/tmp/", f"{str(uuid.uuid4())}.json")
     allure.dynamic.title(
