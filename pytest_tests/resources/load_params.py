@@ -1,7 +1,7 @@
 import os
 
 # Load node parameters
-LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
+#LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
 LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER", "root")
 LOAD_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("LOAD_NODE_SSH_PRIVATE_KEY_PATH")
 BACKGROUND_WRITERS_COUNT = os.getenv("BACKGROUND_WRITERS_COUNT", 10)

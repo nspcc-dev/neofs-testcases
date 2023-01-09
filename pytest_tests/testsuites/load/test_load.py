@@ -104,7 +104,7 @@ class TestLoad(ClusterTestBase):
         #         endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
         #     )
         #     endpoints = ",".join(endpoints_list[:node_count])
-        endpoints = ",".join(load_nodes)
+        endpoints = nodes
         load_params = LoadParams(
             endpoint=endpoints,
             obj_size=obj_size,
@@ -118,7 +118,7 @@ class TestLoad(ClusterTestBase):
             load_type=load_type,
             region=region,
         )
-        load_nodes_list = LOAD_NODES
+        load_nodes_list = load_nodes
         k6_load_instances = prepare_k6_instances(
             load_nodes=load_nodes_list,
             login=LOAD_NODE_SSH_USER,
