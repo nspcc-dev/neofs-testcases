@@ -49,7 +49,8 @@ def init_s3_client(
     neogo_wallet = NeoGo(shell=host.get_shell(), neo_go_exec_path=neogo_cli_config.exec_path).wallet
     dump_keys_output = neogo_wallet.dump_keys(wallet=wallet_path, wallet_config=None).stdout
     public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
-    node_endpoint = service_configs[0].attributes["rpc_endpoint"]
+    # TODO: data0/1
+    node_endpoint = service_configs[0].attributes["endpoint_data0"]
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
