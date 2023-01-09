@@ -40,7 +40,7 @@ def start_stopped_nodes():
 
 @allure.title("Init s3 client")
 def init_s3_client(
-    load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting
+    load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting, region: str
 ):
     service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
     host = hosting.get_host_by_service(service_configs[0].name)
@@ -82,7 +82,7 @@ def init_s3_client(
             InteractiveInput(
                 prompt_pattern=r"AWS Secret Access Key.*", input=aws_secret_access_key
             ),
-            InteractiveInput(prompt_pattern=r".*", input=""),
+            InteractiveInput(prompt_pattern=r"Default region name.*", input=region),
             InteractiveInput(prompt_pattern=r".*", input=""),
         ]
         ssh_client.exec("aws configure", CommandOptions(interactive_inputs=configure_input))

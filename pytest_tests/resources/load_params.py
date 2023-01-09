@@ -18,10 +18,12 @@ OBJ_COUNT = os.getenv("OBJ_COUNT", "4").split(",")
 WRITERS = os.getenv("WRITERS", "200").split(",")
 READERS = os.getenv("READER", "0").split(",")
 DELETERS = os.getenv("DELETERS", "0").split(",")
+# only for s3 tests
+REGION = os.getenv("REGION", "load-1-4").split(",")
 LOAD_TIME = os.getenv("LOAD_TIME", "200").split(",")
 LOAD_TYPE = os.getenv("LOAD_TYPE", "grpc").split(",")
-LOAD_NODES_COUNT = os.getenv("LOAD_NODES_COUNT", "1").split(",")
-STORAGE_NODE_COUNT = os.getenv("STORAGE_NODE_COUNT", "4").split(",")
+LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
+STORAGE_NODE_IPS = os.getenv("STORAGE_NODE_IPS", "").split(",")
 CONTAINER_PLACEMENT_POLICY = os.getenv(
     "CONTAINER_PLACEMENT_POLICY", "REP 1 IN X CBF 1 SELECT 1  FROM * AS X"
 )

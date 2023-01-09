@@ -23,15 +23,15 @@ from load_params import (
     LOAD_NODE_SSH_PRIVATE_KEY_PATH,
     LOAD_NODE_SSH_USER,
     LOAD_NODES,
-    LOAD_NODES_COUNT,
     LOAD_TIME,
     LOAD_TYPE,
     OBJ_COUNT,
     OBJ_SIZE,
     OUT_FILE,
     READERS,
-    STORAGE_NODE_COUNT,
+    STORAGE_NODE_IPS,
     WRITERS,
+    REGION,
 )
 from neofs_testlib.hosting import Hosting
 
@@ -59,16 +59,18 @@ class TestLoad(ClusterTestBase):
                 pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
                 hosting=hosting,
                 container_placement_policy=CONTAINER_PLACEMENT_POLICY,
+                region=REGION
             )
 
     @pytest.mark.parametrize("obj_size, out_file", list(zip(OBJ_SIZE, OUT_FILE)))
     @pytest.mark.parametrize("writers, readers, deleters", list(zip(WRITERS, READERS, DELETERS)))
     @pytest.mark.parametrize("load_time", LOAD_TIME)
-    @pytest.mark.parametrize("node_count", STORAGE_NODE_COUNT)
+    @pytest.mark.parametrize("nodes", STORAGE_NODE_IPS)
     @pytest.mark.parametrize("containers_count", CONTAINERS_COUNT)
     @pytest.mark.parametrize("load_type", LOAD_TYPE)
     @pytest.mark.parametrize("obj_count", OBJ_COUNT)
-    @pytest.mark.parametrize("load_nodes_count", LOAD_NODES_COUNT)
+    @pytest.mark.parametrize("load_nodes", LOAD_NODES)
+    @pytest.mark.parametrize("region", REGION)
     @pytest.mark.benchmark
     @pytest.mark.grpc
     def test_custom_load(
@@ -79,27 +81,30 @@ class TestLoad(ClusterTestBase):
         readers,
         deleters,
         load_time,
-        node_count,
+        nodes,
         obj_count,
         load_type,
-        load_nodes_count,
+        load_nodes,
         containers_count,
+        region,
         hosting: Hosting,
     ):
         allure.dynamic.title(
-            f"Load test - node_count = {node_count}, "
+            f"Load test - nodes = {nodes.len()}, "
             f"writers = {writers} readers = {readers}, "
             f"deleters = {deleters}, obj_size = {obj_size}, "
             f"load_time = {load_time}"
         )
-        stop_unused_nodes(self.cluster.storage_nodes, node_count)
-        with allure.step("Get endpoints"):
-            endpoints_list = get_services_endpoints(
-                hosting=hosting,
-                service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
-                endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
-            )
-            endpoints = ",".join(endpoints_list[:node_count])
+        # TODO: stop unused nodes
+        #stop_unused_nodes(self.cluster.storage_nodes, node_count)
+        # with allure.step("Get endpoints"):
+        #     endpoints_list = get_services_endpoints(
+        #         hosting=hosting,
+        #         service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
+        #         endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
+        #     )
+        #     endpoints = ",".join(endpoints_list[:node_count])
+        endpoints = ",".join(load_nodes)
         load_params = LoadParams(
             endpoint=endpoints,
             obj_size=obj_size,
@@ -111,8 +116,9 @@ class TestLoad(ClusterTestBase):
             deleters=deleters,
             load_time=load_time,
             load_type=load_type,
+            region=region,
         )
-        load_nodes_list = LOAD_NODES[:load_nodes_count]
+        load_nodes_list = LOAD_NODES
         k6_load_instances = prepare_k6_instances(
             load_nodes=load_nodes_list,
             login=LOAD_NODE_SSH_USER,

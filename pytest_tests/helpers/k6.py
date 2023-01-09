@@ -36,6 +36,7 @@ class LoadParams:
     obj_count: Optional[int] = None
     obj_size: Optional[int] = None
     registry_file: Optional[str] = None
+    region: Optional[str] = None
 
 
 @dataclass
