@@ -90,7 +90,7 @@ class TestLoad(ClusterTestBase):
         hosting: Hosting,
     ):
         allure.dynamic.title(
-            f"Load test - nodes = {nodes.len()}, "
+            f"Load test - nodes = {obj_count}, "
             f"writers = {writers} readers = {readers}, "
             f"deleters = {deleters}, obj_size = {obj_size}, "
             f"load_time = {load_time}"
