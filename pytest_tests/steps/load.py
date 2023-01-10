@@ -83,7 +83,7 @@ def init_s3_client(
             InteractiveInput(
                 prompt_pattern=r"AWS Secret Access Key.*", input=aws_secret_access_key
             ),
-            InteractiveInput(prompt_pattern=r"Default region name.*", input=region),
+            InteractiveInput(prompt_pattern=r"Default region name.*", input=region[0]),
             InteractiveInput(prompt_pattern=r".*", input=""),
         ]
         ssh_client.exec("aws configure", CommandOptions(interactive_inputs=configure_input))
