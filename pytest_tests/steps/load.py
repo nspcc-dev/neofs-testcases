@@ -77,6 +77,7 @@ def init_s3_client(
                 r"secret_access_key.*:\s.(?P<aws_secret_access_key>\w*)", issue_secret_output
             ).group("aws_secret_access_key")
         )
+        allure.step(f"region: {region}, region[0]: {region[0]}")
         # prompt_pattern doesn't work at the moment
         configure_input = [
             InteractiveInput(prompt_pattern=r"AWS Access Key ID.*", input=aws_access_key_id),
