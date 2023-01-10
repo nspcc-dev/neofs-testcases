@@ -119,7 +119,7 @@ class TestLoad(ClusterTestBase):
             load_type=load_type,
             region=region,
         )
-        load_nodes_list = load_nodes
+        load_nodes_list = load_nodes[0]
         k6_load_instances = prepare_k6_instances(
             load_nodes=load_nodes_list,
             login=LOAD_NODE_SSH_USER,
