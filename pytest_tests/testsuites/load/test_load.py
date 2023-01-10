@@ -44,11 +44,11 @@ ENDPOINTS_ATTRIBUTES = {
 
 @pytest.mark.load
 class TestLoad(ClusterTestBase):
-    @pytest.fixture(autouse=True)
-    def clear_cache_and_data(self, hosting: Hosting):
-        clear_cache_and_data(hosting=hosting)
-        yield
-        start_stopped_nodes()
+    # @pytest.fixture(autouse=True)
+    # def clear_cache_and_data(self, hosting: Hosting):
+    #     clear_cache_and_data(hosting=hosting)
+    #     yield
+    #     start_stopped_nodes()
 
     @pytest.fixture(scope="session", autouse=True)
     def init_s3_client(self, hosting: Hosting):
