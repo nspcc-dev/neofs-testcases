@@ -69,7 +69,7 @@ class K6:
     def k6_dir(self) -> str:
         if not self._k6_dir:
             self._k6_dir = self.shell.exec(
-                r"sudo find . -name 'k6' -exec dirname {} \; -quit"
+                r"sudo find / -name 'k6' -exec dirname {} \; -quit"
             ).stdout.strip("\n")
         return self._k6_dir
 
