@@ -137,6 +137,7 @@ class K6:
 
     @allure.step("Wait until K6 is finished")
     def wait_until_finished(self, timeout: int = 0, k6_should_be_running: bool = False) -> None:
+        allure.step(f"timeout: {timeout}")
         if self._k6_process is None:
             assert "No k6 instances were executed"
         if k6_should_be_running:
@@ -145,7 +146,7 @@ class K6:
             if not self._k6_process.running():
                 return
             if __attempt:  # no sleep in last iteration
-                sleep(int(timeout / 5))
+                sleep(int(int(timeout) / 5))
         self._stop_k6()
         raise TimeoutError(f"Expected K6 finished in {timeout} sec.")
 
