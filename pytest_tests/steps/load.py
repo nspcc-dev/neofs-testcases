@@ -3,7 +3,7 @@ import re
 from dataclasses import asdict
 
 import allure
-from common import STORAGE_NODE_SERVICE_NAME_REGEX
+from common import S3_GATE_SERVICE_NAME_REGEX
 from k6 import K6, LoadParams, LoadResults
 from neofs_testlib.cli.neofs_authmate import NeofsAuthmate
 from neofs_testlib.cli.neogo import NeoGo
@@ -42,7 +42,7 @@ def start_stopped_nodes():
 def init_s3_client(
     load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting, region: str
 ):
-    service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
+    service_configs = hosting.find_service_configs(S3_GATE_SERVICE_NAME_REGEX)
     host = hosting.get_host_by_service(service_configs[0].name)
     wallet_path = service_configs[0].attributes["wallet_path"]
     neogo_cli_config = host.get_cli_config("neo-go")
