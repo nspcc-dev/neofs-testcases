@@ -111,7 +111,7 @@ class RemoteProcess:
             return self.proc_rc
 
         terminal = self.shell.exec(f"cat {self.process_dir}/rc", CommandOptions(check=False))
-        if "No such file or directory" in terminal.stderr:
+        if "No such file or directory" in terminal.stderr or "Нет такого файла или каталога" in terminal.stderr:
             return None
         elif terminal.stderr or terminal.return_code != 0:
             raise AssertionError(f"cat process rc was not successfull: {terminal.stderr}")
