@@ -1,5 +1,5 @@
 import logging
-from time import sleep
+import time
 from typing import Optional
 
 import allure
@@ -55,19 +55,27 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
         alive_node: node to send requests to (first node in cluster by default)
     """
 
-    alive_node = alive_node if alive_node else cluster.storage_nodes[0]
-    remote_shell = alive_node.host.get_shell()
-
     if NEOFS_ADM_EXEC and NEOFS_ADM_CONFIG_PATH:
+        alive_node = alive_node if alive_node else cluster.storage_nodes[0]
+        remote_shell = alive_node.host.get_shell()
         # If neofs-adm is available, then we tick epoch with it (to be consistent with UAT tests)
-        neofsadm = NeofsAdm(
-            shell=remote_shell,
-            neofs_adm_exec_path=NEOFS_ADM_EXEC,
-            config_file=NEOFS_ADM_CONFIG_PATH,
-        )
-        neofsadm.morph.force_new_epoch()
-        return
+        _tick_epoch_via_neofs_adm(remote_shell)
+    else:
+        _tick_epoch_via_contract(shell, cluster)
 
+    time.sleep(parse_time(MAINNET_BLOCK_TIME))
+
+
+def _tick_epoch_via_neofs_adm(remote_shell: Shell):
+    neofsadm = NeofsAdm(
+        shell=remote_shell,
+        neofs_adm_exec_path=NEOFS_ADM_EXEC,
+        config_file=NEOFS_ADM_CONFIG_PATH,
+    )
+    neofsadm.morph.force_new_epoch()
+
+
+def _tick_epoch_via_contract(shell: Shell, cluster: Cluster):
     # Otherwise we tick epoch using transaction
     cur_epoch = get_epoch(shell, cluster)
 
@@ -94,4 +102,3 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
         force=True,
         gas=1,
     )
-    sleep(parse_time(MAINNET_BLOCK_TIME))
