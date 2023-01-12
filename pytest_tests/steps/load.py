@@ -12,6 +12,9 @@ from neofs_testlib.cli.neogo import NeoGo
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import CommandOptions, SSHShell
 from neofs_testlib.shell.interfaces import InteractiveInput
+import logging
+
+logger = logging.getLogger("NeoLogger")
 
 NEOFS_AUTHMATE_PATH = "neofs-s3-authmate"
 STOPPED_HOSTS = []
