@@ -7,6 +7,9 @@ from typing import Optional
 import allure
 from neofs_testlib.shell import Shell
 from remote_process import RemoteProcess
+import logging
+
+logger = logging.getLogger("NeoLogger")
 
 EXIT_RESULT_CODE = 0
 LOAD_RESULTS_PATTERNS = {
@@ -138,6 +141,7 @@ class K6:
     @allure.step("Wait until K6 is finished")
     def wait_until_finished(self, timeout: int = 0, k6_should_be_running: bool = False) -> None:
         allure.step(f"timeout: {timeout}")
+        logger.info(f"wait_until_finished timeout: {timeout}")
         if self._k6_process is None:
             assert "No k6 instances were executed"
         if k6_should_be_running:
