@@ -132,7 +132,7 @@ def prepare_k6_instances(
 def run_k6_load(k6_instance: K6) -> LoadResults:
     with allure.step("Executing load"):
         k6_instance.start()
-        k6_instance.wait_until_finished(k6_instance.load_params.load_time * 2)
+        k6_instance.wait_until_finished(int(k6_instance.load_params.load_time) * 2)
     with allure.step("Printing results"):
         k6_instance.get_k6_results()
         return k6_instance.parsing_results()
