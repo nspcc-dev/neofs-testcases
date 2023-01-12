@@ -3,7 +3,9 @@ import re
 from dataclasses import asdict
 
 import allure
-from common import S3_GATE_SERVICE_NAME_REGEX
+from common import (
+    S3_GATE_SERVICE_NAME_REGEX, STORAGE_NODE_SERVICE_NAME_REGEX
+)
 from k6 import K6, LoadParams, LoadResults
 from neofs_testlib.cli.neofs_authmate import NeofsAuthmate
 from neofs_testlib.cli.neogo import NeoGo
@@ -42,16 +44,17 @@ def start_stopped_nodes():
 def init_s3_client(
     load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting, region: str
 ):
-    service_configs = hosting.find_service_configs(S3_GATE_SERVICE_NAME_REGEX)
+    service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
+    service_configs_s3 = hosting.find_service_configs(S3_GATE_SERVICE_NAME_REGEX)
     host = hosting.get_host_by_service(service_configs[0].name)
-    wallet_path = service_configs[0].attributes["wallet_path"]
+    wallet_path = service_configs_s3[0].attributes["wallet_path"]
     neogo_cli_config = host.get_cli_config("neo-go")
     neogo_wallet = NeoGo(shell=host.get_shell(), neo_go_exec_path=neogo_cli_config.exec_path).wallet
     dump_keys_output = neogo_wallet.dump_keys(wallet=wallet_path, wallet_config=None).stdout
     public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
     # TODO: data0/1
     node_endpoint = service_configs[0].attributes["endpoint_data0"]
-    allure.step(f"node_endpoint: {node_endpoint}")
+    logger.info(f"node_endpoint: {node_endpoint}")
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
