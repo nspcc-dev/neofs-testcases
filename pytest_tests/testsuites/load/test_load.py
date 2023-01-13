@@ -61,7 +61,7 @@ class TestLoad(ClusterTestBase):
                 hosting=hosting,
                 container_placement_policy=CONTAINER_PLACEMENT_POLICY,
                 region=REGION,
-                node_amount=len(STORAGE_NODE_IPS.len)
+                node_amount=len(STORAGE_NODE_IPS)
             )
 
     @pytest.mark.parametrize("obj_size, out_file", list(zip(OBJ_SIZE, OUT_FILE)))
