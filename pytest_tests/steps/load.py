@@ -45,19 +45,27 @@ def start_stopped_nodes():
 
 @allure.title("Init s3 client")
 def init_s3_client(
-    load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting, region: str
+    load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting, region: str, node_amount: int
 ):
     service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
-    service_configs_s3 = hosting.find_service_configs(S3_GATE_SERVICE_NAME_REGEX)
-    host = hosting.get_host_by_service(service_configs[0].name)
-    wallet_path = service_configs_s3[0].attributes["wallet_path"]
-    neogo_cli_config = host.get_cli_config("neo-go")
-    neogo_wallet = NeoGo(shell=host.get_shell(), neo_go_exec_path=neogo_cli_config.exec_path).wallet
-    dump_keys_output = neogo_wallet.dump_keys(wallet=wallet_path, wallet_config=None).stdout
-    public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
+    logger.info(f"service_configs: {service_configs}")
+    logger.info(f"node_amount: {node_amount}")
+    node_endpoints = []
+    public_keys = []
     # TODO: data0/1
-    node_endpoint = service_configs[0].attributes["endpoint_data0"]
-    logger.info(f"node_endpoint: {node_endpoint}")
+    for i in range(node_amount):
+        node_endpoint = service_configs[i].attributes["endpoint_data0"]
+        logger.info(f"node_endpoint: {node_endpoint}")
+        node_endpoints.append(node_endpoint)
+        service_config_s3 = hosting.find_service_configs(S3_GATE_SERVICE_NAME_REGEX)
+        host = hosting.get_host_by_service(service_configs[i].name)
+        wallet_path = service_config_s3[i].attributes["wallet_path"]
+        neogo_cli_config = host.get_cli_config("neo-go")
+        neogo_wallet = NeoGo(shell=host.get_shell(), neo_go_exec_path=neogo_cli_config.exec_path).wallet
+        dump_keys_output = neogo_wallet.dump_keys(wallet=wallet_path, wallet_config=None).stdout
+        public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
+        public_keys.append(public_key)
+
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
@@ -67,9 +75,9 @@ def init_s3_client(
         neofs_authmate_exec = NeofsAuthmate(ssh_client, NEOFS_AUTHMATE_PATH)
         issue_secret_output = neofs_authmate_exec.secret.issue(
             wallet=f"{path}/scenarios/files/wallet.json",
-            peer=node_endpoint,
+            peer=",".join(node_endpoints),
             bearer_rules=f"{path}/scenarios/files/rules.json",
-            gate_public_key=public_key,
+            gate_public_key=public_keys[0],
             container_placement_policy=container_placement_policy,
             container_policy=f"{path}/scenarios/files/policy.json",
             wallet_password="",
