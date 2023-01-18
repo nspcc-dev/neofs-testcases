@@ -116,8 +116,9 @@ class TestLoad(ClusterTestBase):
                 endpoint_attribute=endpoint_attribute,
             )
         logger.info(f"endpoints_list: {endpoints_list}")
-        endpoints = ",".join(endpoints_list[:node_count])
-        endpoints = nodes
+        # TODO return node_count
+        # endpoints = ",".join(endpoints_list[:node_count])
+        endpoints = ",".join(endpoints_list[:4])
         load_params = LoadParams(
             endpoint=endpoints,
             obj_size=obj_size,
