@@ -39,7 +39,8 @@ def get_services_endpoints_regexp(
     r = re.compile(endpoint_attribute)
     endpoints = []
     for service_config in service_configs:
-        endpoint = filter(r.match, service_config.attributes)
+        endpoint = "".join(filter(r.match, service_config.attributes))
+        logger.info(f"filtered_endpoint: {endpoint}")
         endpoints.append(endpoint)
     return endpoints
 
