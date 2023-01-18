@@ -10,6 +10,7 @@ from k6 import LoadParams
 from load import (
     clear_cache_and_data,
     get_services_endpoints,
+    get_services_endpoints_regexp,
     init_s3_client,
     multi_node_k6_run,
     prepare_k6_instances,
