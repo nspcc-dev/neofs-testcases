@@ -109,7 +109,7 @@ class TestLoad(ClusterTestBase):
         logger.info(f"endpoint_attribute: {endpoint_attribute}")
 
         with allure.step("Get endpoints"):
-            endpoints_list = get_services_endpoints(
+            endpoints_list = get_services_endpoints_regexp(
                 hosting=hosting,
                 service_name_regex=service_name_regex,
                 endpoint_attribute=endpoint_attribute,

@@ -13,8 +13,8 @@ from neofs_testlib.hosting import Hosting
 from neofs_testlib.shell import CommandOptions, SSHShell
 from neofs_testlib.shell.interfaces import InteractiveInput
 import logging
-
 logger = logging.getLogger("NeoLogger")
+import re
 
 NEOFS_AUTHMATE_PATH = "neofs-s3-authmate"
 STOPPED_HOSTS = []
@@ -29,6 +29,19 @@ def get_services_endpoints(
     logger.info(f"service_configs: {service_configs}")
     return [service_config.attributes[endpoint_attribute] for service_config in service_configs]
 
+@allure.title("Get services endpoints")
+def get_services_endpoints_regexp(
+    hosting: Hosting, service_name_regex: str, endpoint_attribute: str
+) -> list[str]:
+    service_configs = hosting.find_service_configs(service_name_regex)
+    # TODO: remove extra logging
+    logger.info(f"service_configs: {service_configs}")
+    r = re.compile(endpoint_attribute)
+    endpoints = []
+    for service_config in service_configs:
+        endpoint = filter(r.match, service_config.attributes)
+        endpoints.append(endpoint)
+    return endpoints
 
 @allure.title("Stop nodes")
 def stop_unused_nodes(storage_nodes: list, used_nodes_count: int):
