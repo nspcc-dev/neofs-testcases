@@ -41,7 +41,7 @@ logger = logging.getLogger("NeoLogger")
 ENDPOINTS_ATTRIBUTES = {
     "http": {"regex": HTTP_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint"},
     "grpc": {"regex": STORAGE_NODE_SERVICE_NAME_REGEX, "endpoint_attribute": "rpc_endpoint"},
-    "s3": {"regex": S3_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint"},
+    "s3": {"regex": S3_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint_data\d"},
 }
 
 
@@ -112,7 +112,7 @@ class TestLoad(ClusterTestBase):
             endpoints_list = get_services_endpoints(
                 hosting=hosting,
                 service_name_regex=service_name_regex,
-                endpoint_attribute=ENDPOINTS_ATTRIBUTES[load_type]["endpoint_attribute"],
+                endpoint_attribute=endpoint_attribute,
             )
         logger.info(f"endpoints_list: {endpoints_list}")
         endpoints = ",".join(endpoints_list[:node_count])
