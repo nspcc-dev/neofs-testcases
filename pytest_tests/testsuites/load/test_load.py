@@ -112,7 +112,7 @@ class TestLoad(ClusterTestBase):
             endpoints_list = get_services_endpoints(
                 hosting=hosting,
                 service_name_regex=service_name_regex,
-                endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
+                endpoint_attribute=ENDPOINTS_ATTRIBUTES[load_type]["endpoint_attribute"],
             )
         logger.info(f"endpoints_list: {endpoints_list}")
         endpoints = ",".join(endpoints_list[:node_count])
