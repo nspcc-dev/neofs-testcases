@@ -26,7 +26,7 @@ def get_services_endpoints(
 ) -> list[str]:
     service_configs = hosting.find_service_configs(service_name_regex)
     # TODO: remove extra logging
-    # logger.info(f"service_configs: {service_configs}")
+    logger.info(f"service_configs: {service_configs}")
     return [service_config.attributes[endpoint_attribute] for service_config in service_configs]
 
 
