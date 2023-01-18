@@ -102,8 +102,9 @@ class TestLoad(ClusterTestBase):
         )
         # TODO: stop unused nodes
         #stop_unused_nodes(self.cluster.storage_nodes, node_count)
-        service_name_regex = ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"]
-        endpoint_attribute = ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"]
+        load_type = LOAD_TYPE[0]
+        service_name_regex = ENDPOINTS_ATTRIBUTES[load_type]["regex"]
+        endpoint_attribute = ENDPOINTS_ATTRIBUTES[load_type]["endpoint_attribute"]
         logger.info(f"service_name_regex: {service_name_regex}")
         logger.info(f"endpoint_attribute: {endpoint_attribute}")
 
