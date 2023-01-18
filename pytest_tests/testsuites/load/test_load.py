@@ -102,10 +102,15 @@ class TestLoad(ClusterTestBase):
         )
         # TODO: stop unused nodes
         #stop_unused_nodes(self.cluster.storage_nodes, node_count)
+        service_name_regex = ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"]
+        endpoint_attribute = ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"]
+        logger.info(f"service_name_regex: {service_name_regex}")
+        logger.info(f"endpoint_attribute: {endpoint_attribute}")
+
         with allure.step("Get endpoints"):
             endpoints_list = get_services_endpoints(
                 hosting=hosting,
-                service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
+                service_name_regex=service_name_regex,
                 endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
             )
         logger.info(f"endpoints_list: {endpoints_list}")
