@@ -35,6 +35,9 @@ from load_params import (
 )
 from neofs_testlib.hosting import Hosting
 
+import logging
+logger = logging.getLogger("NeoLogger")
+
 ENDPOINTS_ATTRIBUTES = {
     "http": {"regex": HTTP_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint"},
     "grpc": {"regex": STORAGE_NODE_SERVICE_NAME_REGEX, "endpoint_attribute": "rpc_endpoint"},
@@ -99,13 +102,14 @@ class TestLoad(ClusterTestBase):
         )
         # TODO: stop unused nodes
         #stop_unused_nodes(self.cluster.storage_nodes, node_count)
-        # with allure.step("Get endpoints"):
-        #     endpoints_list = get_services_endpoints(
-        #         hosting=hosting,
-        #         service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
-        #         endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
-        #     )
-        #     endpoints = ",".join(endpoints_list[:node_count])
+        with allure.step("Get endpoints"):
+            endpoints_list = get_services_endpoints(
+                hosting=hosting,
+                service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
+                endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
+            )
+        logger.info(f"endpoints_list: {endpoints_list}")
+        endpoints = ",".join(endpoints_list[:node_count])
         endpoints = nodes
         load_params = LoadParams(
             endpoint=endpoints,
