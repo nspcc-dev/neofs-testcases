@@ -31,15 +31,16 @@ def get_services_endpoints(
 
 @allure.title("Get services endpoints")
 def get_services_endpoints_regexp(
-    hosting: Hosting, service_name_regex: str, endpoint_attribute: str
+    hosting: Hosting, service_name_regex: str, endpoint_attribute_regexp: str
 ) -> list[str]:
     service_configs = hosting.find_service_configs(service_name_regex)
     # TODO: remove extra logging
     logger.info(f"service_configs: {service_configs}")
-    r = re.compile(endpoint_attribute)
+    r = re.compile(endpoint_attribute_regexp)
     endpoints = []
     for service_config in service_configs:
-        endpoint = "".join(filter(r.match, service_config.attributes))
+        endpoint_attribute = "".join(filter(r.match, service_config.attributes))
+        endpoint = service_config.attributes[endpoint_attribute]
         logger.info(f"filtered_endpoint: {endpoint}")
         endpoints.append(endpoint)
     return endpoints
