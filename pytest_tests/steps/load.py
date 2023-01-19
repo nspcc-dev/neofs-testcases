@@ -94,7 +94,7 @@ def init_s3_client(
         neofs_authmate_exec = NeofsAuthmate(ssh_client, NEOFS_AUTHMATE_PATH)
         issue_secret_output = neofs_authmate_exec.secret.issue(
             wallet=f"{path}/scenarios/files/wallet.json",
-            peer=",".join(node_endpoints),
+            peer=node_endpoints[0],
             bearer_rules=f"{path}/scenarios/files/rules.json",
             gate_public_key=public_keys,
             container_placement_policy=container_placement_policy,
