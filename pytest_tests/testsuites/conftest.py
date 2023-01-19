@@ -30,7 +30,7 @@ from load_params import (
     BACKGROUND_WRITERS_COUNT,
     LOAD_NODE_SSH_PRIVATE_KEY_PATH,
     LOAD_NODE_SSH_USER,
-    LOAD_NODES,
+    LOAD_NODE,
 )
 from neofs_testlib.hosting import Hosting
 from neofs_testlib.reporter import AllureHandler, get_reporter
@@ -205,7 +205,7 @@ def background_grpc_load(client_shell: Shell, hosting: Hosting):
         load_type="grpc",
     )
     k6_load_instances = prepare_k6_instances(
-        load_nodes=LOAD_NODES,
+        load_nodes=LOAD_NODE,
         login=LOAD_NODE_SSH_USER,
         pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
         load_params=load_params,
@@ -226,7 +226,7 @@ def background_grpc_load(client_shell: Shell, hosting: Hosting):
             load_type="verify",
         )
         k6_verify_instances = prepare_k6_instances(
-            load_nodes=LOAD_NODES,
+            load_nodes=LOAD_NODE,
             login=LOAD_NODE_SSH_USER,
             pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
             load_params=verify_params,

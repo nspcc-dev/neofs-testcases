@@ -23,14 +23,14 @@ from load_params import (
     DELETERS,
     LOAD_NODE_SSH_PRIVATE_KEY_PATH,
     LOAD_NODE_SSH_USER,
-    LOAD_NODES,
+    LOAD_NODE,
     LOAD_TIME,
     LOAD_TYPE,
     OBJ_COUNT,
     OBJ_SIZE,
     OUT_FILE,
     READERS,
-    NODES_COUNT,
+    STORAGE_NODES_COUNT,
     WRITERS,
     REGION,
 )
@@ -59,7 +59,7 @@ class TestLoad(ClusterTestBase):
         if "s3" in list(map(lambda x: x.lower(), LOAD_TYPE)):
             allure.step(f"LOAD_NODE_SSH_PRIVATE_KEY_PATH: {LOAD_NODE_SSH_PRIVATE_KEY_PATH}")
             init_s3_client(
-                load_nodes=LOAD_NODES,
+                load_nodes=LOAD_NODE,
                 login=LOAD_NODE_SSH_USER,
                 pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
                 hosting=hosting,
@@ -72,11 +72,11 @@ class TestLoad(ClusterTestBase):
     @pytest.mark.parametrize("obj_size, out_file", list(zip(OBJ_SIZE, OUT_FILE)))
     @pytest.mark.parametrize("writers, readers, deleters", list(zip(WRITERS, READERS, DELETERS)))
     @pytest.mark.parametrize("load_time", LOAD_TIME)
-    @pytest.mark.parametrize("nodes_count", NODES_COUNT)
+    @pytest.mark.parametrize("nodes_count", STORAGE_NODES_COUNT)
     @pytest.mark.parametrize("containers_count", CONTAINERS_COUNT)
     @pytest.mark.parametrize("load_type", LOAD_TYPE)
     @pytest.mark.parametrize("obj_count", OBJ_COUNT)
-    @pytest.mark.parametrize("load_nodes", LOAD_NODES)
+    @pytest.mark.parametrize("load_nodes", LOAD_NODE)
     @pytest.mark.parametrize("region", REGION)
     @pytest.mark.benchmark
     @pytest.mark.grpc
@@ -135,7 +135,7 @@ class TestLoad(ClusterTestBase):
             load_type=load_type,
             region=region,
         )
-        load_nodes_list = LOAD_NODES[:1]
+        load_nodes_list = LOAD_NODE[:1]
         allure.step(f"load_nodes_list: {load_nodes_list}, region[0]: {load_nodes_list[0]}")
         k6_load_instances = prepare_k6_instances(
             load_nodes=load_nodes_list,

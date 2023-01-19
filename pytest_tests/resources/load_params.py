@@ -1,7 +1,7 @@
 import os
 
 # Load node parameters
-#LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
+# LOAD_NODES = os.getenv("LOAD_NODES", "").split(",")
 LOAD_NODE_SSH_USER = os.getenv("LOAD_NODE_SSH_USER", "service")
 LOAD_NODE_SSH_PRIVATE_KEY_PATH = os.getenv("LOAD_NODE_SSH_PRIVATE_KEY_PATH", "./pytest_tests/resources/load_ssh_key")
 BACKGROUND_WRITERS_COUNT = os.getenv("BACKGROUND_WRITERS_COUNT", 10)
@@ -22,8 +22,8 @@ DELETERS = os.getenv("DELETERS", "0").split(",")
 REGION = os.getenv("REGION", "load-1-4").split(",")
 LOAD_TIME = os.getenv("LOAD_TIME", "200").split(",")
 LOAD_TYPE = os.getenv("LOAD_TYPE", "s3").split(",")
-LOAD_NODES = os.getenv("LOAD_NODES", "10.78.69.101").split(",")
-NODES_COUNT = os.getenv("NODES_COUNT", "4").split(",")
+LOAD_NODE = os.getenv("LOAD_NODE", "10.78.69.101").split(",")
+STORAGE_NODES_COUNT = os.getenv("STORAGE_NODES_COUNT", "4").split(",")
 CONTAINER_PLACEMENT_POLICY = os.getenv(
     "CONTAINER_PLACEMENT_POLICY", "REP 1 IN X CBF 1 SELECT 1  FROM * AS X"
 )
