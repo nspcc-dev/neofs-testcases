@@ -96,7 +96,7 @@ def init_s3_client(
             wallet=f"{path}/scenarios/files/wallet.json",
             peer=",".join(node_endpoints),
             bearer_rules=f"{path}/scenarios/files/rules.json",
-            gate_public_key=public_keys[0],
+            gate_public_key=public_keys,
             container_placement_policy=container_placement_policy,
             container_policy=f"{path}/scenarios/files/policy.json",
             wallet_password="",
