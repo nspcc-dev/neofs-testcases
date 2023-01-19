@@ -72,7 +72,7 @@ def init_s3_client(
     node_endpoints = []
     public_keys = []
     # TODO: data0/1
-    for i in range(node_amount):
+    for i in range(len(service_configs)):
         node_endpoint = service_configs[i].attributes["endpoint_data0"]
         logger.info(f"node_endpoint: {node_endpoint}")
         node_endpoints.append(node_endpoint)
