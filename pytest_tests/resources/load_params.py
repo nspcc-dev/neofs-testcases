@@ -23,7 +23,7 @@ REGION = os.getenv("REGION", "load-1-4").split(",")
 LOAD_TIME = os.getenv("LOAD_TIME", "200").split(",")
 LOAD_TYPE = os.getenv("LOAD_TYPE", "s3").split(",")
 LOAD_NODES = os.getenv("LOAD_NODES", "10.78.69.101").split(",")
-STORAGE_NODE_IPS = os.getenv("STORAGE_NODE_IPS", "10.78.70.130:8084").split(",")
+NODES_COUNT = os.getenv("NODES_COUNT", "4").split(",")
 CONTAINER_PLACEMENT_POLICY = os.getenv(
     "CONTAINER_PLACEMENT_POLICY", "REP 1 IN X CBF 1 SELECT 1  FROM * AS X"
 )

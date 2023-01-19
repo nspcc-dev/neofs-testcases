@@ -30,7 +30,7 @@ from load_params import (
     OBJ_SIZE,
     OUT_FILE,
     READERS,
-    STORAGE_NODE_IPS,
+    NODES_COUNT,
     WRITERS,
     REGION,
 )
@@ -72,7 +72,7 @@ class TestLoad(ClusterTestBase):
     @pytest.mark.parametrize("obj_size, out_file", list(zip(OBJ_SIZE, OUT_FILE)))
     @pytest.mark.parametrize("writers, readers, deleters", list(zip(WRITERS, READERS, DELETERS)))
     @pytest.mark.parametrize("load_time", LOAD_TIME)
-    @pytest.mark.parametrize("nodes", STORAGE_NODE_IPS)
+    @pytest.mark.parametrize("nodes_count", NODES_COUNT)
     @pytest.mark.parametrize("containers_count", CONTAINERS_COUNT)
     @pytest.mark.parametrize("load_type", LOAD_TYPE)
     @pytest.mark.parametrize("obj_count", OBJ_COUNT)
@@ -88,7 +88,7 @@ class TestLoad(ClusterTestBase):
         readers,
         deleters,
         load_time,
-        nodes,
+        nodes_count,
         obj_count,
         load_type,
         load_nodes,
