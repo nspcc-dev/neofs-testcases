@@ -39,10 +39,11 @@ def get_services_endpoints_regexp(
     r = re.compile(endpoint_attribute_regexp)
     endpoints = []
     for service_config in service_configs:
-        endpoint_attribute = "".join(filter(r.match, service_config.attributes))
-        endpoint = service_config.attributes[endpoint_attribute]
-        logger.info(f"filtered_endpoint: {endpoint}")
-        endpoints.append(endpoint)
+        endpoint_attributes = (filter(r.match, service_config.attributes))
+        for endpoint_attribute in endpoint_attributes:
+           endpoint = service_config.attributes[endpoint_attribute]
+           logger.info(f"filtered_endpoint: {endpoint}")
+           endpoints.append(endpoint)
     return endpoints
 
 @allure.title("Stop nodes")
