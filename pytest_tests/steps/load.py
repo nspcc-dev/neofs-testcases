@@ -84,7 +84,7 @@ def init_s3_client(
         dump_keys_output = neogo_wallet.dump_keys(wallet=wallet_path, wallet_config=None).stdout
         public_key = str(re.search(r":\n(?P<public_key>.*)", dump_keys_output).group("public_key"))
         public_keys.append(public_key)
-
+    logger.info(f"gate_public_keys: {public_keys}")
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
