@@ -115,10 +115,11 @@ class TestLoad(ClusterTestBase):
                 service_name_regex=service_name_regex,
                 endpoint_attribute_regexp=endpoint_attribute,
             )
-        logger.info(f"endpoints_list: {endpoints_list}")
+        logger.info(f"test_custom_load endpoints_list: {endpoints_list}")
         # TODO return node_count
         # endpoints = ",".join(endpoints_list[:node_count])
         endpoints = ",".join(endpoints_list)
+        logger.info(f"test_custom_load endpoints: {endpoints}")
         logger.info(f"endpoints: {endpoints}")
         load_params = LoadParams(
             endpoint=endpoints,
