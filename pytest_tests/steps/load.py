@@ -43,8 +43,8 @@ def get_services_endpoints_regexp(
         for endpoint_attribute in endpoint_attributes:
            endpoint = service_config.attributes[endpoint_attribute]
            logger.info(f"filtered_endpoint: {endpoint}")
-           endpoint.replace("http://", "")
-           endpoints.append(endpoint)
+           e = endpoint.replace("http://", "")
+           endpoints.append(e)
     return endpoints
 
 @allure.title("Stop nodes")
