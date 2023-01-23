@@ -6,7 +6,12 @@ from cluster import Cluster
 from cluster_test_base import ClusterTestBase
 from epoch import ensure_fresh_epoch
 from file_helper import generate_file
-from grpc_responses import MALFORMED_REQUEST, OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
+from grpc_responses import (
+    EXPIRED_SESSION_TOKEN,
+    MALFORMED_REQUEST,
+    OBJECT_ACCESS_DENIED,
+    OBJECT_NOT_FOUND,
+)
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 from python_keywords.container import create_container
@@ -516,7 +521,7 @@ class TestObjectStaticSession(ClusterTestBase):
 
         self.tick_epoch()
 
-        with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        with pytest.raises(Exception, match=EXPIRED_SESSION_TOKEN):
             head_object(
                 user_wallet.path,
                 container,
@@ -581,7 +586,7 @@ class TestObjectStaticSession(ClusterTestBase):
         )
 
         self.tick_epoch()
-        with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        with pytest.raises(Exception, match=EXPIRED_SESSION_TOKEN):
             head_object(
                 user_wallet.path,
                 container,
@@ -625,7 +630,7 @@ class TestObjectStaticSession(ClusterTestBase):
             expiration,
         )
 
-        with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        with pytest.raises(Exception, match=EXPIRED_SESSION_TOKEN):
             head_object(
                 user_wallet.path,
                 container,
