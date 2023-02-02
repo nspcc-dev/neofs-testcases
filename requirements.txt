@@ -23,7 +23,7 @@ Events==0.4
 flake8==4.0.1
 idna==3.3
 iniconfig==1.1.1
-isort==5.10.1
+isort==5.12.0
 jmespath==0.10.0
 jsonschema==4.5.1
 lz4==3.1.3
