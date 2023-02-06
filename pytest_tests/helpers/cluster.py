@@ -46,11 +46,9 @@ class NodeBase:
     def label(self) -> str:
         return self.name
 
-    @wait_for_success(60, 1)
     def start_service(self):
         self.host.start_service(self.name)
 
-    @wait_for_success(60, 1)
     def stop_service(self):
         self.host.stop_service(self.name)
 
