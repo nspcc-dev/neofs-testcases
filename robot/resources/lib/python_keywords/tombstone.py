@@ -2,7 +2,7 @@ import json
 import logging
 
 import allure
-from neo3 import wallet
+from neo3.wallet import wallet
 from neofs_testlib.shell import Shell
 from neofs_verbs import head_object
 
