@@ -1,5 +1,6 @@
 # ignore IDE files
 .vscode
+.idea
 
 # ignore test results
 **/log.html

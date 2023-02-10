@@ -2,7 +2,7 @@ import base64
 import json
 
 import base58
-from neo3 import wallet
+from neo3.wallet import wallet
 
 
 def dict_to_attrs(attrs: dict) -> str:

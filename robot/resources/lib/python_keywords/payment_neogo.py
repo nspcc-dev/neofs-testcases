@@ -8,7 +8,8 @@ from typing import Optional
 import allure
 from cluster import MainChain, MorphChain
 from common import GAS_HASH, MAINNET_BLOCK_TIME, NEOFS_CONTRACT, NEOGO_EXECUTABLE
-from neo3 import wallet as neo3_wallet
+from neo3.wallet import wallet as neo3_wallet
+from neo3.wallet import utils as neo3_utils
 from neofs_testlib.cli import NeoGo
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.converters import contract_hash_to_address
@@ -43,7 +44,7 @@ def get_contract_hash(morph_chain: MorphChain, resolve_name: str, shell: Shell) 
 @allure.step("Withdraw Mainnet Gas")
 def withdraw_mainnet_gas(shell: Shell, main_chain: MainChain, wlt: str, amount: int):
     address = get_last_address_from_wallet(wlt, EMPTY_PASSWORD)
-    scripthash = neo3_wallet.Account.address_to_script_hash(address)
+    scripthash = neo3_utils.address_to_script_hash(address)
 
     neogo = NeoGo(shell=shell, neo_go_exec_path=NEOGO_EXECUTABLE)
     out = neogo.contract.invokefunction(
