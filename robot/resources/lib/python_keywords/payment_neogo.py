@@ -8,8 +8,8 @@ from typing import Optional
 import allure
 from cluster import MainChain, MorphChain
 from common import GAS_HASH, MAINNET_BLOCK_TIME, NEOFS_CONTRACT, NEOGO_EXECUTABLE
-from neo3.wallet import wallet as neo3_wallet
 from neo3.wallet import utils as neo3_utils
+from neo3.wallet import wallet as neo3_wallet
 from neofs_testlib.cli import NeoGo
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.converters import contract_hash_to_address
