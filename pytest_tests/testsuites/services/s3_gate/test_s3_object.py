@@ -12,7 +12,12 @@ from data_formatters import get_wallet_public_key
 from file_helper import concat_files, generate_file, generate_file_with_content, get_file_hash
 from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.payment_neogo import deposit_gas, transfer_gas
-from s3_helper import assert_object_lock_mode, check_objects_in_bucket, set_bucket_versioning
+from s3_helper import (
+    assert_object_lock_mode,
+    assert_s3_acl,
+    check_objects_in_bucket,
+    set_bucket_versioning,
+)
 
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
@@ -131,10 +136,7 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client, bucket, obj_key, ACL="public-read-write"
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, copy_obj_path)
-            for control in obj_acl:
-                assert (
-                    control.get("Permission") == "FULL_CONTROL"
-                ), "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
 
     @allure.title("Test S3: Copy object with metadata")
     def test_s3_copy_metadate(self, bucket, simple_object_size):
@@ -703,8 +705,7 @@ class TestS3GateObject(TestS3GateBase):
         with allure.step("Put object with acl private"):
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1, ACL="private")
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == ["FULL_CONTROL"], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
             object_1 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_1) == get_file_hash(object_1), "Hashes must be the same"
 
@@ -712,11 +713,7 @@ class TestS3GateObject(TestS3GateBase):
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL="public-read")
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == [
-                "FULL_CONTROL",
-                "FULL_CONTROL",
-            ], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
             object_2 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_2) == get_file_hash(object_2), "Hashes must be the same"
 
@@ -726,11 +723,7 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client, bucket, file_path_3, ACL="public-read-write"
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == [
-                "FULL_CONTROL",
-                "FULL_CONTROL",
-            ], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
             object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_3) == get_file_hash(object_3), "Hashes must be the same"
 
@@ -740,11 +733,7 @@ class TestS3GateObject(TestS3GateBase):
                 self.s3_client, bucket, file_path_4, ACL="authenticated-read"
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == [
-                "FULL_CONTROL",
-                "FULL_CONTROL",
-            ], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_4) == get_file_hash(object_4), "Hashes must be the same"
 
@@ -760,11 +749,7 @@ class TestS3GateObject(TestS3GateBase):
                 GrantFullControl=f"id={self.other_public_key}",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == [
-                "FULL_CONTROL",
-                "FULL_CONTROL",
-            ], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_5) == get_file_hash(object_4), "Hashes must be the same"
 
@@ -779,11 +764,7 @@ class TestS3GateObject(TestS3GateBase):
                 GrantRead="uri=http://acs.amazonaws.com/groups/global/AllUsers",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
-            obj_permission = [permission.get("Permission") for permission in obj_acl]
-            assert obj_permission == [
-                "FULL_CONTROL",
-                "FULL_CONTROL",
-            ], "Permission for all groups is FULL_CONTROL"
+            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
             object_7 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
 
@@ -913,12 +894,9 @@ class TestS3GateObject(TestS3GateBase):
                 assert (
                     obj_head.get("Metadata") == object_metadata
                 ), f"Metadata of object is {object_metadata}"
+                # Uncomment after https://github.com/nspcc-dev/neofs-s3-gw/issues/685 is solved
                 # obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, obj_key)
-                # obj_permission = [permission.get("Permission") for permission in obj_acl]
-                # assert obj_permission == [
-                #     "FULL_CONTROL",
-                #     "FULL_CONTROL",
-                # ], "Permission for all groups is FULL_CONTROL"
+                # assert_s3_acl(acl_grants = obj_acl, permitted_users = "AllUsers")
 
     @allure.title("Test S3 Put 10 nested level object")
     def test_s3_put_10_folder(self, bucket, temp_directory, simple_object_size):

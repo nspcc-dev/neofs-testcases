@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from datetime import datetime, timedelta
 from typing import Optional
@@ -7,6 +8,8 @@ import allure
 import s3_gate_bucket
 import s3_gate_object
 from dateutil.parser import parse
+
+logger = logging.getLogger("NeoLogger")
 
 
 @allure.step("Expected all objects are presented in the bucket")
@@ -127,3 +130,31 @@ def assert_object_lock_mode(
         assert (
             retain_date - last_modify + timedelta(seconds=1)
         ).days == retain_period, f"Expected retention period is {retain_period} days"
+
+
+def assert_s3_acl(acl_grants: list, permitted_users: str):
+    if permitted_users == "AllUsers":
+        grantees = {"AllUsers": 0, "CanonicalUser": 0}
+        for acl_grant in acl_grants:
+            if acl_grant.get("Grantee", {}).get("Type") == "Group":
+                uri = acl_grant.get("Grantee", {}).get("URI")
+                permission = acl_grant.get("Permission")
+                assert (uri, permission) == (
+                    "http://acs.amazonaws.com/groups/global/AllUsers",
+                    "FULL_CONTROL",
+                ), "All Groups should have FULL_CONTROL"
+                grantees["AllUsers"] += 1
+            if acl_grant.get("Grantee", {}).get("Type") == "CanonicalUser":
+                permission = acl_grant.get("Permission")
+                assert permission == "FULL_CONTROL", "Canonical User should have FULL_CONTROL"
+                grantees["CanonicalUser"] += 1
+        assert grantees["AllUsers"] >= 1, "All Users should have FULL_CONTROL"
+        assert grantees["CanonicalUser"] >= 1, "Canonical User should have FULL_CONTROL"
+
+    if permitted_users == "CanonicalUser":
+        for acl_grant in acl_grants:
+            if acl_grant.get("Grantee", {}).get("Type") == "CanonicalUser":
+                permission = acl_grant.get("Permission")
+                assert permission == "FULL_CONTROL", "Only CanonicalUser should have FULL_CONTROL"
+            else:
+                logger.error("FULL_CONTROL is given to All Users")
