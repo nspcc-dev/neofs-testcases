@@ -74,14 +74,14 @@ class StorageContainer:
                     bearer=bearer_token,
                     wallet_config=wallet_config,
                 )
-
-            storage_object = StorageObjectInfo(
-                container_id,
-                object_id,
-                size=size,
-                wallet_file_path=wallet_path,
-                file_path=file_path,
-                file_hash=file_hash,
-            )
+            with allure.step(f"Store object with size {size} to container {container_id}"):
+                storage_object = StorageObjectInfo(
+                    container_id,
+                    object_id,
+                    size=size,
+                    wallet_file_path=wallet_path,
+                    file_path=file_path,
+                    file_hash=file_hash,
+                )
 
         return storage_object
