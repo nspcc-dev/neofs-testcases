@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
+from common import CONFIGS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
@@ -155,7 +155,7 @@ def _encode_cid_for_eacl(cid: str) -> str:
 
 
 def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell) -> str:
-    table_file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
+    table_file_path = os.path.join(os.getcwd(), CONFIGS_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
@@ -180,7 +180,7 @@ def form_bearertoken_file(
     with bearer token and writes to file
     """
     enc_cid = _encode_cid_for_eacl(cid) if cid else None
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
+    file_path = os.path.join(os.getcwd(), CONFIGS_DIR, str(uuid.uuid4()))
 
     eacl = get_eacl(wif, cid, shell, endpoint)
     json_eacl = dict()

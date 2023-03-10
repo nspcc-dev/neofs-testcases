@@ -22,6 +22,7 @@ GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
+CONFIGS_DIR = os.getenv("CONFIGS_DIR", "ConfigsDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
 
 # Password of wallet owned by user on behalf of whom we are running tests

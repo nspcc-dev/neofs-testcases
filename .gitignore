@@ -21,6 +21,7 @@ xunit_results.xml
 .setup
 .env
 TemporaryDir/*
+ConfigsDir/*
 artifacts/*
 docs/*
 venv.*/*

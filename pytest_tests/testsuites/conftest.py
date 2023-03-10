@@ -14,6 +14,7 @@ from common import (
     ASSETS_DIR,
     COMPLEX_OBJECT_CHUNKS_COUNT,
     COMPLEX_OBJECT_TAIL_SIZE,
+    CONFIGS_DIR,
     FREE_STORAGE,
     HOSTING_CONFIG_FILE,
     SIMPLE_OBJECT_SIZE,
@@ -115,7 +116,7 @@ def wallet_factory(temp_directory: str, client_shell: Shell, cluster: Cluster) -
 
 
 @pytest.fixture(scope="session")
-def cluster(temp_directory: str, hosting: Hosting) -> Cluster:
+def cluster(temp_directory: str, configs_directory: str, hosting: Hosting) -> Cluster:
     cluster = Cluster(hosting)
     if cluster.is_local_devevn():
         cluster.create_wallet_configs(hosting)
@@ -146,9 +147,26 @@ def temp_directory():
         shutil.rmtree(full_path)
 
 
+@pytest.fixture(scope="session")
+@allure.title("Prepare configs directory")
+def configs_directory():
+    with allure.step("Prepare configs directory"):
+        full_path = os.path.join(os.getcwd(), CONFIGS_DIR)
+        shutil.rmtree(full_path, ignore_errors=True)
+        os.mkdir(full_path)
+
+    yield full_path
+
+    with allure.step("Dump important config files"):
+        attach_logs(full_path)
+
+    with allure.step("Remove configs directory"):
+        shutil.rmtree(full_path)
+
+
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Collect logs")
-def collect_logs(temp_directory, hosting: Hosting):
+def collect_logs(temp_directory, configs_directory, hosting: Hosting):
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
@@ -241,7 +259,7 @@ def background_grpc_load(client_shell: Shell, hosting: Hosting):
 @pytest.fixture(scope="session")
 @allure.title("Prepare wallet and deposit")
 def default_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster):
-    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+    wallet_path = os.path.join(os.getcwd(), CONFIGS_DIR, f"{str(uuid.uuid4())}.json")
     init_wallet(wallet_path, WALLET_PASS)
     allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
 
