@@ -12,7 +12,7 @@ logger = logging.getLogger("NeoLogger")
 def get_local_binaries_versions(shell: Shell) -> dict[str, str]:
     versions = {}
 
-    for binary in ["neo-go", "neofs-authmate"]:
+    for binary in ["neo-go", "neofs-s3-authmate"]:
         out = shell.exec(f"{binary} --version").stdout
         versions[binary] = _parse_version(out)
 
