@@ -102,6 +102,20 @@ class TestObjectApiWithBearerToken(ClusterTestBase):
         )
 
         s3_gate_wallet = self.cluster.s3gates[0]
+
+        with allure.step("Try to fetch each object from first storage node"):
+            for storage_object in storage_objects:
+                with expect_not_raises():
+                    get_object(
+                        s3_gate_wallet.get_wallet_path(),
+                        storage_object.cid,
+                        storage_object.oid,
+                        self.shell,
+                        endpoint=self.cluster.default_rpc_endpoint,
+                        bearer=bearer_token_file_all_allow,
+                        wallet_config=s3_gate_wallet.get_wallet_config_path(),
+                    )
+
         with allure.step("Try to delete each object from first storage node"):
             for storage_object in storage_objects:
                 with expect_not_raises():
