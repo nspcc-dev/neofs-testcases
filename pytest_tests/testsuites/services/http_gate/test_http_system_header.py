@@ -206,6 +206,8 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_epoch_duration(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -253,6 +255,8 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_dur_timestamp(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -307,6 +311,8 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_timestamp_rfc(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -359,6 +365,8 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_rfc_object_unavailable_after_expir(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
