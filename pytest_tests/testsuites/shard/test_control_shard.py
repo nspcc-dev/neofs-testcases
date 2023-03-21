@@ -146,6 +146,8 @@ class TestControlShard:
         return [Shard.from_object(shard) for shard in json.loads(result.stdout.split(">", 1)[1])]
 
     @allure.title("All shards are available")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/527")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_527
     def test_control_shard(self, cluster: Cluster):
         for storage_node in cluster.storage_nodes:
             shards_from_config = self.get_shards_from_config(storage_node)
