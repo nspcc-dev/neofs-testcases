@@ -21,6 +21,8 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_tagging
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateTagging(TestS3GateBase):
     @staticmethod
     def create_tags(count: int) -> Tuple[list, list]:

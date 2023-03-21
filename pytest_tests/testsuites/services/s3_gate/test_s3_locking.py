@@ -19,6 +19,8 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_locking
 @pytest.mark.parametrize("version_id", [None, "second"])
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateLocking(TestS3GateBase):
     @allure.title("Test S3: Checking the operation of retention period & legal lock on the object")
     def test_s3_object_locking(self, version_id, simple_object_size):
@@ -203,6 +205,8 @@ class TestS3GateLocking(TestS3GateBase):
 
 
 @pytest.mark.s3_gate
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateLockingBucket(TestS3GateBase):
     @allure.title("Test S3: Bucket Lock")
     def test_s3_bucket_lock(self, simple_object_size):
