@@ -91,6 +91,8 @@ class TestObjectApiWithBearerToken(ClusterTestBase):
         ids=["simple object", "complex object"],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/523")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_523
     def test_delete_object_with_s3_wallet_bearer(
         self,
         storage_objects: list[StorageObjectInfo],
