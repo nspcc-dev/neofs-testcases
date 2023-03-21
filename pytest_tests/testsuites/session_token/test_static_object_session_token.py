@@ -232,8 +232,8 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session with search operation")
     @pytest.mark.static_session
-    @pytest.mark.xfail
-    # (see https://github.com/nspcc-dev/neofs-node/issues/2030)
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2030")
+    @pytest.mark.nspcc_dev__neofs_node__issue_2030
     def test_static_session_search(
         self,
         user_wallet: WalletFile,
