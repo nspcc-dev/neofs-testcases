@@ -494,6 +494,8 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session which expires at next epoch")
     @pytest.mark.static_session
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/520")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_520
     def test_static_session_expiration_at_next(
         self,
         owner_wallet: WalletFile,
@@ -549,6 +551,8 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session which is valid starting from next epoch")
     @pytest.mark.static_session
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/520")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_520
     def test_static_session_start_at_next(
         self,
         owner_wallet: WalletFile,
@@ -614,6 +618,8 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session which is already expired")
     @pytest.mark.static_session
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/520")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_520
     def test_static_session_already_expired(
         self,
         owner_wallet: WalletFile,
