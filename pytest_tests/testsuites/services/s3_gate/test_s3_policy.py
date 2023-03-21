@@ -23,6 +23,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.s3_gate
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GatePolicy(TestS3GateBase):
     @allure.title("Test S3: Verify bucket creation with retention policy applied")
     def test_s3_bucket_location(self, simple_object_size):

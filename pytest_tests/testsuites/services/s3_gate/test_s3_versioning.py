@@ -17,6 +17,8 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_versioning
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateVersioning(TestS3GateBase):
     @staticmethod
     def object_key_from_file_path(full_path: str) -> str:
