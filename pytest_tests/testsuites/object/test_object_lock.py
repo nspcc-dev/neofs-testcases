@@ -347,6 +347,9 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/539")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_539
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_519
     def test_should_be_possible_to_lock_multiple_objects_at_once(
         self,
         request: FixtureRequest,
