@@ -531,6 +531,8 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         [pytest.lazy_fixture("complex_object_size")],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/535")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_535
     def test_complex_object_chunks_should_also_be_protected_from_deletion(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -645,6 +647,8 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         [pytest.lazy_fixture("complex_object_size")],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/535")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_535
     def test_link_object_of_complex_object_should_also_be_protected_from_deletion(
         self,
         locked_storage_object: StorageObjectInfo,
