@@ -180,6 +180,8 @@ class TestObjectLockWithGrpc(ClusterTestBase):
     @pytest.mark.parametrize(
         "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_lock_object_itself_cannot_be_deleted(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -205,6 +207,8 @@ class TestObjectLockWithGrpc(ClusterTestBase):
     @pytest.mark.parametrize(
         "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_lock_object_cannot_be_locked(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -242,6 +246,8 @@ class TestObjectLockWithGrpc(ClusterTestBase):
             (None, -1, 'invalid argument "-1" for "-e, --expire-at" flag'),
         ],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_cannot_lock_object_without_lifetime(
         self,
         locked_storage_object: StorageObjectInfo,
