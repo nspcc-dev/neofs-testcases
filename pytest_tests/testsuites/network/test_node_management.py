@@ -46,6 +46,8 @@ check_nodes: list[StorageNode] = []
 @allure.title("Add one node to cluster")
 @pytest.mark.add_nodes
 @pytest.mark.node_mgmt
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_542
 class TestNodeManagement(ClusterTestBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")

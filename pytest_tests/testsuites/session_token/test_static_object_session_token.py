@@ -345,6 +345,8 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session with container id not in session")
     @pytest.mark.static_session
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_static_session_unrelated_container(
         self,
         user_wallet: WalletFile,

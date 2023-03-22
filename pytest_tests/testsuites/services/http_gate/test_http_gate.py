@@ -46,6 +46,8 @@ class TestHttpGate(ClusterTestBase):
         TestHttpGate.wallet = default_wallet
 
     @allure.title("Test Put over gRPC, Get over HTTP")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_put_grpc_get_http(self, complex_object_size, simple_object_size):
         """
         Test that object can be put using gRPC interface and get using HTTP.
