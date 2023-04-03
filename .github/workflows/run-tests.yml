@@ -104,6 +104,11 @@ jobs:
         cat storage/.env
       working-directory: neofs-dev-env/services
 
+    - name: Generate hosts
+      run: |
+        make hosts >> /etc/hosts
+      working-directory: neofs-dev-env
+
     - name: Prepare test environment
       run: |
         make prepare-test-env
