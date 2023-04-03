@@ -104,6 +104,11 @@ jobs:
         cat storage/.env
       working-directory: neofs-dev-env/services
 
+    - name: Get vendor
+      run: |
+        make get
+      working-directory: neofs-dev-env
+
     - name: Generate hosts
       run: |
         make hosts | sudo tee -a /etc/hosts
