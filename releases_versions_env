@@ -1,0 +1,61 @@
+# Basenet settings
+LOCAL_DOMAIN=neofs.devenv
+IPV4_PREFIX=192.168.100
+CA_CERTS_TRUSTED_STORE=/etc/ssl/certs
+
+# Bastion image
+BASTION_VERSION=10
+BASTION_IMAGE=debian
+
+# NeoGo privnet
+#CHAIN_PATH="/path/to/devenv.dump.gz"
+CHAIN_URL="https://github.com/nspcc-dev/neofs-contract/releases/download/v0.16.0/devenv_mainchain_notary_disabled.gz"
+NEOGO_VERSION=0.101.0
+NEOGO_IMAGE=nspccdev/neo-go
+
+# NeoFS InnerRing nodes
+IR_VERSION=0.35.0
+IR_IMAGE=nspccdev/neofs-ir
+
+# NeoFS Storage nodes
+NODE_VERSION=0.35.0
+NODE_IMAGE=nspccdev/neofs-storage
+
+# NATS Server
+NATS_VERSION=2.7.2
+NATS_IMAGE=nats
+
+# HTTP Gate
+HTTP_GW_VERSION=0.26.0
+HTTP_GW_IMAGE=nspccdev/neofs-http-gw
+
+# REST Gate
+REST_GW_VERSION=0.5.0
+REST_GW_IMAGE=nspccdev/neofs-rest-gw
+
+# S3 Gate
+S3_GW_VERSION=0.26.1
+S3_GW_IMAGE=nspccdev/neofs-s3-gw
+
+# Coredns
+#COREDNS_VERSION=v019
+COREDNS_VERSION=v016
+COREDNS_IMAGE=nspccdev/coredns
+
+# NeoFS LOCODE database
+LOCODE_DB_URL=https://github.com/nspcc-dev/neofs-locode-db/releases/download/v0.3.0/locode_db.gz
+#LOCODE_DB_PATH=/path/to/locode_db
+
+# NeoFS CLI binary
+NEOFS_CLI_URL=https://github.com/nspcc-dev/neofs-node/releases/download/v0.35.0/neofs-cli-amd64.tar.gz
+#NEOFS_CLI_PATH=/path/to/neofs-cli-binary
+
+# NeoFS ADM tool binary
+NEOFS_ADM_VERSION=v0.35.0
+NEOFS_ADM_URL=https://github.com/nspcc-dev/neofs-node/releases/download/${NEOFS_ADM_VERSION}/neofs-adm-amd64.tar.gz
+#NEOFS_ADM_PATH=/path/to/neofs-adm-binary
+
+# Compiled NeoFS Smart Contracts
+NEOFS_CONTRACTS_VERSION=v0.16.0
+NEOFS_CONTRACTS_URL=https://github.com/nspcc-dev/neofs-contract/releases/download/${NEOFS_CONTRACTS_VERSION}/neofs-contract-${NEOFS_CONTRACTS_VERSION}.tar.gz
+#NEOFS_CONTRACTS_PATH=/path/to/unpacked/neofs-contracts-dir
