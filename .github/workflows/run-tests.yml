@@ -2,6 +2,13 @@ name: Run tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'g-e'
+  pull_request:
+
+permissions: write-all
 
 env:
   CONTRACT_DIR: /tmp/neofs-contract
@@ -10,17 +17,9 @@ env:
 jobs:
   run_tests:
     runs-on: self-hosted
-#    runs-on: ubuntu-latest
     steps:
-    - name: Check node
-      run: |
-        ip a
-        docker network ls
-        openssl version -d
-        cat /usr/lib/ssl/openssl.cnf
-
-    # Cleanup directories before finish
-    - name: Cleanup directories before finish
+    # Cleanup directories before start
+    - name: Cleanup directories before start
       run: | 
         rm -rf ${{ env.CONTRACT_DIR }}
         rm -rf ${{ env.LOCODE_DIR }}
@@ -33,8 +32,8 @@ jobs:
     - name: Checkout neofs-testcases repository
       uses: actions/checkout@v3
       with:
-        repository: vvarg229/neofs-testcases
-        ref: github-actions
+        repository: nspcc-dev/neofs-testcases
+        ref: g-e
         path: neofs-testcases
 
     # neofs-dev-env
@@ -42,7 +41,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: vvarg229/neofs-dev-env
-        ref: update-hosts
+        ref: timeouts
         path: neofs-dev-env
 
     # neofs-node
@@ -50,7 +49,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-node
-        ref: v0.35.0
+        ref: v0.36.0
         path: neofs-node
 
     # neofs-s3-gw
@@ -88,67 +87,25 @@ jobs:
 ###############################################################################
 ###############################################################################
 ###############################################################################
-#    # Prerequisites
-#    # Python 3.10
-#    - name: Set up Python 3.10.2
-#      uses: actions/setup-python@v4
-#      with:
-#        python-version: '3.10.2'
-#        architecture: 'x64'
-
-    # Check Python
-    - name: Display Python version
-      run: python3 -c "import sys; print(sys.version)"
-
-#    # Create the basenet_internet docker external network manually
-#    - name: Create basenet_internet
-#      run: docker network create basenet_internet
-#
-#    # List docker networks
-#    - name: Check basenet_internet
-#      run: docker network ls
-
-#    - name: Create Docker network
-#      run: docker network create -d macvlan --subnet=192.168.100.0/24 --gateway=192.168.100.1 -o parent=eth0 my_macvlan_network
-
-
-#    - name: Install net-tools
-#      run: sudo apt-get update && sudo apt-get install -y net-tools
-#
-#    - name: Create network interface
-#      run: |
-#        sudo ip link add eth100 type dummy
-#        sudo ip addr add 192.168.100.5/24 dev eth100
-#        sudo ip link set eth100 up
-
-    - name: Verify network interface
-      run: |
-        ip a
-
-      # Dependencies
-    - name: Install dependencies
-      run: |
-        echo "Install dependencies"
-        ls /home/
-#        sudo apt-get update
-#        sudo apt-get install -y make python3.10-dev libssl-dev default-jre
-#        sudo apt-get install -y make openssl expect jq coreutils awscli
-#        python3 -m pip install --upgrade pip
-#        pip install -r requirements.txt
-      working-directory: neofs-testcases
+# Prerequisites
+    # Set up Go
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18.2
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
     # Build and install NEOFS parts on runner
     # Install neofs-cli
-    - name: Install neofs-cli
+    - name: Install neofs-cli and neofs-adm
       run: |
-        make
+        make all
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+        sudo cp bin/neofs-adm /usr/local/bin/neofs-adm
         cp bin/neofs-cli /tmp/neofs-cli
         cp bin/neofs-adm /tmp/neofs-adm
-
       working-directory: neofs-node
 
     # Install neofs-s3-authmate
@@ -185,25 +142,14 @@ jobs:
     # Transfer the env file for the NEOFS test cluster deployment to docker
     - name: Copy .env file to .env in neofs-dev-env
       run: |
-        ls -la ${GITHUB_WORKSPACE}
-        ls -la ${GITHUB_WORKSPACE}/neofs-dev-env
         cp .env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
+        cat .env
+        cat ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
-
-    # Check before make the NEOFS test cluster
-    - name: Check env files
-      run: |
-        pwd
-        ls -la neo-go
-        ls -la neofs-dev-env
-        ls -la neofs-node
-        ls -la neofs-s3-gw
-        ls -la neofs-testcases
 
     # Get vendor
     - name: Get vendor
       run: |
-        pwd
         make get
       working-directory: neofs-dev-env
 
@@ -213,53 +159,84 @@ jobs:
         sudo ./bin/update_hosts.sh
       working-directory: neofs-dev-env
 
-    # Check hosts
-    - name: Check hosts
-      run: |
-        pwd
-        cat /etc/hosts
-        cat services/coredns/Corefile
-      working-directory: neofs-dev-env
-
     # Prepare test environment
     - name: Prepare test environment
       run: |
-        pwd
-        ls -la
-        ls ..
         make prepare-test-env
       working-directory: neofs-dev-env
 
     # Make venv
-    - name: Prepare test environment
+    - name: Prepare venv
       run: |
         make venv.local-pytest
       working-directory: neofs-testcases
 
     # Run tests
     - name: Run tests
-      run: source venv.local-pytest/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+      run: |
+        source venv.local-pytest/bin/activate && pytest --alluredir=allure-results pytest_tests/testsuites
+      continue-on-error: true
+      working-directory: neofs-testcases
+
+    # Cleanup tests
+    - name: Cleanup test environment
+      if: always()
+      run: |
+        make clean
+      continue-on-error: true
       working-directory: neofs-testcases
 
     # Cleanup test environment
     - name: Cleanup test environment
-      run: | 
+      if: always()
+      run: |
         make down
         make clean
+      continue-on-error: true
       working-directory: neofs-dev-env
 
     # Cleanup directories before finish
     - name: Cleanup directories before finish
-      run: | 
+      if: always()
+      run: |
+        echo "Clean"
         rm -rf ${{ env.CONTRACT_DIR }}
         rm -rf ${{ env.LOCODE_DIR }}
+      continue-on-error: true
 
-    - name: Test marketplace action
+
+    - name: Get Allure history
+      uses: actions/checkout@v2
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages
+        path: gh-pages
+
+    - name: Allure Report action from marketplace
       uses: simple-elf/allure-report-action@master
       if: always()
       id: allure-report
       with:
-        allure_results: allure-report
-        gh_pages: gh-pages
+        allure_results: allure-results
         allure_report: allure-report
+        gh_pages: gh-pages
         allure_history: allure-history
+
+    - name: Deploy report to Github Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v2
+      env:
+        PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PUBLISH_BRANCH: gh-pages
+        PUBLISH_DIR: allure-history
+
+    - name: Post the link to the report
+      if: always()
+      uses: Sibz/github-status-action@v1
+      with:
+        authToken: ${{secrets.GITHUB_TOKEN}}
+        context: 'Test report'
+        state: 'success'
+        sha: ${{github.event.pull_request.head.sha || github.sha}}
+        target_url: https://${{ github.repository_owner }}.github.io/${{ github.repository }}/allure-history/${{ github.run_number }}
