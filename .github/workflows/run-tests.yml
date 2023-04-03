@@ -83,7 +83,8 @@ jobs:
 
     - name: Copy releases_versions_env file to .env in neofs-dev-env
       run: |
-        cp releases_versions_env neofs-dev-env/.env
+        ls -la ${GITHUB_WORKSPACE}
+        cp releases_versions_env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
 
     - name: Prepare test environment
