@@ -82,7 +82,7 @@ jobs:
 
     - name: Copy releases_versions_env file to .env in neofs-dev-env
       run: |
-        cp neofs-testcases/releases_versions_env neofs-dev-env/.env
+        cp releases_versions_env neofs-dev-env/.env
       working-directory: neofs-testcases
 
     - name: Prepare test environment
