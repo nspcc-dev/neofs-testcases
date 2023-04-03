@@ -60,42 +60,45 @@ jobs:
         sudo apt-get install -y make python3.10-dev libssl-dev default-jre
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+      working-directory: neofs-testcases
 
     - name: Install neofs-cli
       run: |
-        cd neofs-node
         make
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+      working-directory: neofs-node
 
     - name: Install neofs-authmate
       run: |
-        cd neofs-s3-gw
         make
         sudo cp bin/neofs-s3-authmate /usr/local/bin/neofs-s3-authmate
+      working-directory: neofs-s3-gw
 
     - name: Install neo-go
       run: |
-        cd neo-go
         make
         sudo cp bin/neo-go /usr/local/bin/neo-go
+      working-directory: neo-go
 
     - name: Copy releases_versions_env file to .env in neofs-dev-env
       run: |
         cp neofs-testcases/releases_versions_env neofs-dev-env/.env
+      working-directory: neofs-testcases
 
     - name: Prepare test environment
       run: |
-        cd neofs-dev-env
         make prepare-test-env
+      working-directory: neofs-dev-env
 
     - name: Run tests
       run: source venv/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+      working-directory: neofs-testcases
 
     - name: Cleanup test environment
-      run: |
-        cd neofs-dev-env
+      run: | 
         make down
         make clean
+      working-directory: neofs-dev-env
 
     - name: Test marketplace action
       uses: simple-elf/allure-report-action@master
