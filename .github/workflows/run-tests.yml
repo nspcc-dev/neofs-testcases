@@ -70,7 +70,7 @@ jobs:
       run: |
         cd neofs-s3-gw
         make
-        sudo cp bin/neofs-authmate /usr/local/bin/neofs-authmate
+        sudo cp bin/neofs-s3-authmate /usr/local/bin/neofs-s3-authmate
 
     - name: Install neo-go
       run: |
