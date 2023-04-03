@@ -1,6 +1,6 @@
 # Basenet settings
 LOCAL_DOMAIN=neofs.devenv
-IPV4_PREFIX=127.0.0
+IPV4_PREFIX=10.1.0
 CA_CERTS_TRUSTED_STORE=/etc/ssl/certs
 
 # Bastion image
