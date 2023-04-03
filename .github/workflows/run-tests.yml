@@ -106,7 +106,7 @@ jobs:
 
     - name: Generate hosts
       run: |
-        make hosts >> /etc/hosts
+        make hosts | sudo tee -a /etc/hosts
       working-directory: neofs-dev-env
 
     - name: Prepare test environment
