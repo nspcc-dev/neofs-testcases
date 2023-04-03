@@ -78,23 +78,9 @@ jobs:
         make
         sudo cp bin/neo-go /usr/local/bin/neo-go
 
-    - name: Setup environment variables
+    - name: Copy releases_versions_env file to .env in neofs-dev-env
       run: |
-        echo "IPV4_PREFIX=${{ secrets.IPV4_PREFIX }}" >> $GITHUB_ENV
-        echo "NEOGO_VERSION=${{ secrets.NEOGO_VERSION }}" >> $GITHUB_ENV
-        echo "IR_VERSION=${{ secrets.IR_VERSION }}" >> $GITHUB_ENV
-        echo "NODE_VERSION=${{ secrets.NODE_VERSION }}" >> $GITHUB_ENV
-        echo "HTTP_GW_VERSION=${{ secrets.HTTP_GW_VERSION }}" >> $GITHUB_ENV
-        echo "REST_GW_VERSION=${{ secrets.REST_GW_VERSION }}" >> $GITHUB_ENV
-        echo "S3_GW_VERSION=${{ secrets.S3_GW_VERSION }}" >> $GITHUB_ENV
-        echo "COREDNS_VERSION=${{ secrets.COREDNS_VERSION }}" >> $GITHUB_ENV
-        echo "NEOFS_CLI_URL=${{ secrets.NEOFS_CLI_URL }}" >> $GITHUB_ENV
-        echo "NEOFS_ADM_VERSION=${{ secrets.NEOFS_ADM_VERSION }}" >> $GITHUB_ENV
-
-    - name: Create .env file
-      run: |
-        cd neofs-dev-env
-        make create-env
+        cp releases_versions_env ../neofs-dev-env/.env
 
     - name: Prepare test environment
       run: |
