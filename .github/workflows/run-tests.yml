@@ -89,8 +89,7 @@ jobs:
         echo "S3_GW_VERSION=${{ secrets.S3_GW_VERSION }}" >> $GITHUB_ENV
         echo "COREDNS_VERSION=${{ secrets.COREDNS_VERSION }}" >> $GITHUB_ENV
         echo "NEOFS_CLI_URL=${{ secrets.NEOFS_CLI_URL }}" >> $GITHUB_ENV
-        echo "NEOFS_ADM_VERSION=${
-
+        echo "NEOFS_ADM_VERSION=${{ secrets.NEOFS_ADM_VERSION }}" >> $GITHUB_ENV
 
     - name: Create .env file
       run: |
