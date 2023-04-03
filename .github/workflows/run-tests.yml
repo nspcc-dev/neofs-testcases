@@ -14,10 +14,29 @@ jobs:
         repository: nspcc-dev/neofs-testcases
 
     - name: Checkout neofs-dev-env repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-dev-env
         path: neofs-dev-env
+
+    - name: Checkout neofs-node repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-node
+        path: neofs-node
+
+    - name: Checkout neofs-s3-gw repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-s3-gw
+        path: neofs-s3-gw
+
+    - name: Checkout neo-go repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neo-go
+        path: neo-go
+        ref: v0.92.0
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
@@ -43,23 +62,19 @@ jobs:
 
     - name: Install neofs-cli
       run: |
-        git clone git@github.com:nspcc-dev/neofs-node.git
         cd neofs-node
         make
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
 
     - name: Install neofs-authmate
       run: |
-        git clone git@github.com:nspcc-dev/neofs-s3-gw.git
         cd neofs-s3-gw
         make
         sudo cp bin/neofs-authmate /usr/local/bin/neofs-authmate
 
     - name: Install neo-go
       run: |
-        git clone git@github.com:nspcc-dev/neo-go.git
         cd neo-go
-        git checkout v0.92.0
         make
         sudo cp bin/neo-go /usr/local/bin/neo-go
 
@@ -74,7 +89,8 @@ jobs:
         echo "S3_GW_VERSION=${{ secrets.S3_GW_VERSION }}" >> $GITHUB_ENV
         echo "COREDNS_VERSION=${{ secrets.COREDNS_VERSION }}" >> $GITHUB_ENV
         echo "NEOFS_CLI_URL=${{ secrets.NEOFS_CLI_URL }}" >> $GITHUB_ENV
-        echo "NEOFS_ADM_VERSION=${{ secrets.NEOFS_ADM_VERSION }}" >> $GITHUB_ENV
+        echo "NEOFS_ADM_VERSION=${
+
 
     - name: Create .env file
       run: |
