@@ -90,6 +90,20 @@ jobs:
         cp releases_versions_env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
 
+    - name: Check env files
+      run: |
+        cat basenet/.env
+        cat chain/.env
+        cat coredns/.env
+        cat http_gate/.env
+        cat ir/.env
+        cat morph_chain/.env
+        cat nats/.env
+        cat rest_gate/.env
+        cat s3_gate/.env
+        cat storage/.env
+      working-directory: neofs-dev-env/services
+
     - name: Prepare test environment
       run: |
         make prepare-test-env
