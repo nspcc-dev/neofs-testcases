@@ -1,0 +1,106 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run_tests:
+#    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout neofs-testcases repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-testcases
+
+    - name: Checkout neofs-dev-env repository
+      uses: actions/checkout@v2
+      with:
+        repository: nspcc-dev/neofs-dev-env
+        path: neofs-dev-env
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        architecture: 'x64'
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+
+    - name: Set up Python virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+
+    - name: Install dependencies
+      run: |
+        source venv/bin/activate &&
+        sudo apt-get update
+        sudo apt-get install -y make python3.10-dev libssl-dev default-jre
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install neofs-cli
+      run: |
+        git clone git@github.com:nspcc-dev/neofs-node.git
+        cd neofs-node
+        make
+        sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+
+    - name: Install neofs-authmate
+      run: |
+        git clone git@github.com:nspcc-dev/neofs-s3-gw.git
+        cd neofs-s3-gw
+        make
+        sudo cp bin/neofs-authmate /usr/local/bin/neofs-authmate
+
+    - name: Install neo-go
+      run: |
+        git clone git@github.com:nspcc-dev/neo-go.git
+        cd neo-go
+        git checkout v0.92.0
+        make
+        sudo cp bin/neo-go /usr/local/bin/neo-go
+
+    - name: Setup environment variables
+      run: |
+        echo "IPV4_PREFIX=${{ secrets.IPV4_PREFIX }}" >> $GITHUB_ENV
+        echo "NEOGO_VERSION=${{ secrets.NEOGO_VERSION }}" >> $GITHUB_ENV
+        echo "IR_VERSION=${{ secrets.IR_VERSION }}" >> $GITHUB_ENV
+        echo "NODE_VERSION=${{ secrets.NODE_VERSION }}" >> $GITHUB_ENV
+        echo "HTTP_GW_VERSION=${{ secrets.HTTP_GW_VERSION }}" >> $GITHUB_ENV
+        echo "REST_GW_VERSION=${{ secrets.REST_GW_VERSION }}" >> $GITHUB_ENV
+        echo "S3_GW_VERSION=${{ secrets.S3_GW_VERSION }}" >> $GITHUB_ENV
+        echo "COREDNS_VERSION=${{ secrets.COREDNS_VERSION }}" >> $GITHUB_ENV
+        echo "NEOFS_CLI_URL=${{ secrets.NEOFS_CLI_URL }}" >> $GITHUB_ENV
+        echo "NEOFS_ADM_VERSION=${{ secrets.NEOFS_ADM_VERSION }}" >> $GITHUB_ENV
+
+    - name: Create .env file
+      run: |
+        cd neofs-dev-env
+        make create-env
+
+    - name: Prepare test environment
+      run: |
+        cd neofs-dev-env
+        make prepare-test-env
+
+    - name: Run tests
+      run: source venv/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+
+    - name: Cleanup test environment
+      run: |
+        cd neofs-dev-env
+        make down
+        make clean
+
+    - name: Test marketplace action
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      id: allure-report
+      with:
+        allure_results: allure-report
+        gh_pages: gh-pages
+        allure_report: allure-report
+        allure_history: allure-history
