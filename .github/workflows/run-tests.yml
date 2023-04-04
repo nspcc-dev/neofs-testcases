@@ -91,7 +91,6 @@ jobs:
 
     - name: Verify network interface
       run: |
-#        ifconfig eth100
         ip a
 
       # Dependencies
