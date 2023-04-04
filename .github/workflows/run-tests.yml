@@ -9,7 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check node
-      run: ip a
+      run: |
+        ip a
+        docker network ls
 
     # Checkout NEOFS parts for the test environment
     # neofs-testcases
@@ -63,6 +65,14 @@ jobs:
     # Check Python
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
+
+    # Create the basenet_internet docker external network manually
+    - name: Create basenet_internet
+      run: docker network create basenet_internet
+
+    # List docker networks
+    - name: Create basenet_internet
+      run: docker network ls
 
     # Dependencies
     - name: Install dependencies
