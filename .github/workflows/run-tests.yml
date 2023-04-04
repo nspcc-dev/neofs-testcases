@@ -113,7 +113,6 @@ jobs:
         ls -la neofs-node
         ls -la neofs-s3-gw
         ls -la neofs-testcases
-      working-directory: neofs-testcases
 
     # Get vendor
     - name: Get vendor
@@ -139,6 +138,8 @@ jobs:
     - name: Prepare test environment
       run: |
         pwd
+        ls -la
+        ls ..
         make prepare-test-env
       working-directory: neofs-dev-env
 
