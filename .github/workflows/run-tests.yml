@@ -11,6 +11,8 @@ jobs:
     - name: Check node
       run: ip a
 
+    # Checkout NEOFS parts for the test environment
+    # neofs-testcases
     - name: Checkout neofs-testcases repository
       uses: actions/checkout@v3
       with:
@@ -18,31 +20,40 @@ jobs:
         ref: github-actions
         path: neofs-testcases
 
+    # neofs-dev-env
     - name: Checkout neofs-dev-env repository
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-dev-env
+        ref: master
         path: neofs-dev-env
 
+    # neofs-node
     - name: Checkout neofs-node repository
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-node
+        ref: v0.35.0
         path: neofs-node
 
+    # neofs-s3-gw
     - name: Checkout neofs-s3-gw repository
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-s3-gw
+        ref: v0.26.1
         path: neofs-s3-gw
 
+    # neo-go
     - name: Checkout neo-go repository
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neo-go
         path: neo-go
-        ref: v0.92.0
+        ref: v0.101.0
 
+    # Prerequisites
+    # Python 3.10
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
@@ -52,77 +63,130 @@ jobs:
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
 
-    - name: Set up Python virtual environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+#    - name: Set up Python virtual environment
+#      run: |
+#        python -m venv venv
+#        source venv/bin/activate
 
+    # Dependencies
     - name: Install dependencies
       run: |
-        source venv/bin/activate &&
+#        source venv/bin/activate &&
         sudo apt-get update
         sudo apt-get install -y make python3.10-dev libssl-dev default-jre
         python -m pip install --upgrade pip
         pip install -r requirements.txt
       working-directory: neofs-testcases
 
+    # Install NEOFS parts on runner
+    # Install neofs-cli
     - name: Install neofs-cli
       run: |
         make
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
       working-directory: neofs-node
 
-    - name: Install neofs-authmate
+    # Install neofs-s3-authmate
+    - name: Install neofs-s3-authmate
       run: |
         make
         sudo cp bin/neofs-s3-authmate /usr/local/bin/neofs-s3-authmate
       working-directory: neofs-s3-gw
 
+    # Install neo-go
     - name: Install neo-go
       run: |
         make
         sudo cp bin/neo-go /usr/local/bin/neo-go
       working-directory: neo-go
 
+    # Transfer the env file for the NEOFS test cluster deployment to docker
     - name: Copy releases_versions_env file to .env in neofs-dev-env
       run: |
         ls -la ${GITHUB_WORKSPACE}
         cp releases_versions_env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
 
+    # Check before make the NEOFS test cluster
     - name: Check env files
       run: |
+        echo /.env
+        cat /.env
+        echo "----------------------------------------------------------------"
+        echo ./.env
+        cat ./.env
+        echo "----------------------------------------------------------------"
+        echo ../.env
+        cat ../.env
+        echo "----------------------------------------------------------------"
+        echo basenet/.env
         cat basenet/.env
+        echo "----------------------------------------------------------------"
+        echo chain/.env
         cat chain/.env
+        echo "----------------------------------------------------------------"
+        echo coredns/.env
         cat coredns/.env
+        echo "----------------------------------------------------------------"
+        echo http_gate/.env
         cat http_gate/.env
+        echo "----------------------------------------------------------------"
+        echo ir/.env
         cat ir/.env
+        echo "----------------------------------------------------------------"
+        echo morph_chain/.env
         cat morph_chain/.env
+        echo "----------------------------------------------------------------"
+        echo nats/.env
         cat nats/.env
+        echo "----------------------------------------------------------------"
+        echo rest_gate/.env
         cat rest_gate/.env
+        echo "----------------------------------------------------------------"
+        echo s3_gate/.env
         cat s3_gate/.env
+        echo "----------------------------------------------------------------"
+        echo storage/.env
         cat storage/.env
+        echo "----------------------------------------------------------------"
       working-directory: neofs-dev-env/services
 
+    # Get vendor
     - name: Get vendor
       run: |
         make get
       working-directory: neofs-dev-env
 
+    # Generate hosts
     - name: Generate hosts
       run: |
         make hosts | sudo tee -a /etc/hosts
       working-directory: neofs-dev-env
 
+    # Check hosts
+    - name: Check hosts
+      run: |
+        cat /etc/hosts
+      working-directory: neofs-dev-env
+
+    # Prepare test environment
     - name: Prepare test environment
       run: |
         make prepare-test-env
       working-directory: neofs-dev-env
 
-    - name: Run tests
-      run: source venv/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+    # Make venv
+    - name: Prepare test environment
+      run: |
+        make venv.local-pytest
       working-directory: neofs-testcases
 
+    # Run tests
+    - name: Run tests
+      run: source venv.local-pytest/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+      working-directory: neofs-testcases
+
+    # Cleanup test environment
     - name: Cleanup test environment
       run: | 
         make down
