@@ -80,7 +80,7 @@ jobs:
     - name: Create network interface
       run: |
         sudo ip link add eth100 type dummy
-        sudo ip addr add 192.168.100.1/24 dev eth100
+        sudo ip addr add 192.168.100.5/24 dev eth100
         sudo ip link set eth100 up
 
     - name: Verify network interface
