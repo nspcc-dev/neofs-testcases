@@ -114,10 +114,12 @@ jobs:
         ls -la neofs-node
         ls -la neofs-s3-gw
         ls -la neofs-testcases
+      working-directory: ${GITHUB_WORKSPACE}
 
     # Get vendor
     - name: Get vendor
       run: |
+        pwd
         make get
       working-directory: neofs-dev-env
 
@@ -130,6 +132,7 @@ jobs:
     # Check hosts
     - name: Check hosts
       run: |
+        pwd
         cat /etc/hosts
       working-directory: neofs-dev-env
 
