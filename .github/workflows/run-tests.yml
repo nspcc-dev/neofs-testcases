@@ -105,15 +105,6 @@ jobs:
     # Check before make the NEOFS test cluster
     - name: Check env files
       run: |
-        echo /.env
-        cat /.env
-        echo "----------------------------------------------------------------"
-        echo ./.env
-        cat ./.env
-        echo "----------------------------------------------------------------"
-        echo ../.env
-        cat ../.env
-        echo "----------------------------------------------------------------"
         echo basenet/.env
         cat basenet/.env
         echo "----------------------------------------------------------------"
