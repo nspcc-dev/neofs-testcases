@@ -105,37 +105,13 @@ jobs:
     # Check before make the NEOFS test cluster
     - name: Check env files
       run: |
-        echo basenet/.env
-        cat basenet/.env
-        echo "----------------------------------------------------------------"
-        echo chain/.env
-        cat chain/.env
-        echo "----------------------------------------------------------------"
-        echo coredns/.env
-        cat coredns/.env
-        echo "----------------------------------------------------------------"
-        echo http_gate/.env
-        cat http_gate/.env
-        echo "----------------------------------------------------------------"
-        echo ir/.env
-        cat ir/.env
-        echo "----------------------------------------------------------------"
-        echo morph_chain/.env
-        cat morph_chain/.env
-        echo "----------------------------------------------------------------"
-        echo nats/.env
-        cat nats/.env
-        echo "----------------------------------------------------------------"
-        echo rest_gate/.env
-        cat rest_gate/.env
-        echo "----------------------------------------------------------------"
-        echo s3_gate/.env
-        cat s3_gate/.env
-        echo "----------------------------------------------------------------"
-        echo storage/.env
-        cat storage/.env
-        echo "----------------------------------------------------------------"
-      working-directory: neofs-dev-env/services
+        ls -la ${GITHUB_WORKSPACE}
+        pwd
+        ls -la neo-go
+        ls -la neofs-dev-env
+        ls -la neofs-node
+        ls -la neofs-s3-gw
+        ls -la neofs-testcases
 
     # Get vendor
     - name: Get vendor
