@@ -12,6 +12,8 @@ jobs:
       run: |
         ip a
         docker network ls
+        openssl version -d
+        cat /usr/lib/ssl/openssl.cnf
 
     # Checkout NEOFS parts for the test environment
     # neofs-testcases
