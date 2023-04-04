@@ -68,7 +68,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y make python3.10-dev libssl-dev default-jre
+        sudo apt-get install -y make python3.10-dev libssl-dev default-jre 
+        sudo apt-get install -y make openssl docker docker-compose expect jq coreutils aws 
         python -m pip install --upgrade pip
         pip install -r requirements.txt
       working-directory: neofs-testcases
@@ -134,6 +135,7 @@ jobs:
     # Prepare test environment
     - name: Prepare test environment
       run: |
+        cd neofs-dev-env
         make prepare-test-env
       working-directory: neofs-dev-env
 
