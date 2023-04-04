@@ -66,15 +66,29 @@ jobs:
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
 
-    # Create the basenet_internet docker external network manually
-    - name: Create basenet_internet
-      run: docker network create basenet_internet
+#    # Create the basenet_internet docker external network manually
+#    - name: Create basenet_internet
+#      run: docker network create basenet_internet
+#
+#    # List docker networks
+#    - name: Check basenet_internet
+#      run: docker network ls
 
-    # List docker networks
-    - name: Create basenet_internet
-      run: docker network ls
+    - name: Install net-tools
+      run: sudo apt-get update && sudo apt-get install -y net-tools
 
-    # Dependencies
+    - name: Create network interface
+      run: |
+        sudo ip link add eth100 type dummy
+        sudo ip addr add 192.168.100.1/24 dev eth100
+        sudo ip link set eth100 up
+
+    - name: Verify network interface
+      run: |
+        ifconfig eth100
+        ip a
+
+      # Dependencies
     - name: Install dependencies
       run: |
         sudo apt-get update
