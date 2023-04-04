@@ -113,7 +113,7 @@ jobs:
         ls -la neofs-node
         ls -la neofs-s3-gw
         ls -la neofs-testcases
-      working-directory: ${GITHUB_WORKSPACE}
+      working-directory: neofs-testcases
 
     # Get vendor
     - name: Get vendor
