@@ -155,7 +155,6 @@ jobs:
     # Generate hosts
     - name: Generate hosts
       run: |
-#        make hosts | sudo tee -a /etc/hosts
         sudo ./update_hosts.sh
       working-directory: neofs-dev-env
 
