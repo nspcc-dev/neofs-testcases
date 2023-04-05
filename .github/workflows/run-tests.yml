@@ -66,7 +66,7 @@ jobs:
 
     # Check Python
     - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
+      run: python3 -c "import sys; print(sys.version)"
 
 #    # Create the basenet_internet docker external network manually
 #    - name: Create basenet_internet
@@ -99,7 +99,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y make python3.10-dev libssl-dev default-jre 
         sudo apt-get install -y make openssl expect jq coreutils awscli 
-        python -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip
         pip install -r requirements.txt
       working-directory: neofs-testcases
 
