@@ -76,8 +76,8 @@ jobs:
 #    - name: Check basenet_internet
 #      run: docker network ls
 
-    - name: Create Docker network
-      run: docker network create -d macvlan --subnet=192.168.100.0/24 --gateway=192.168.100.1 -o parent=eth0 my_macvlan_network
+#    - name: Create Docker network
+#      run: docker network create -d macvlan --subnet=192.168.100.0/24 --gateway=192.168.100.1 -o parent=eth0 my_macvlan_network
 
 
 #    - name: Install net-tools
@@ -96,11 +96,13 @@ jobs:
       # Dependencies
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y make python3.10-dev libssl-dev default-jre 
-        sudo apt-get install -y make openssl expect jq coreutils awscli 
-        python3 -m pip install --upgrade pip
-        pip install -r requirements.txt
+        echo "Install dependencies"
+        ls /home/
+#        sudo apt-get update
+#        sudo apt-get install -y make python3.10-dev libssl-dev default-jre
+#        sudo apt-get install -y make openssl expect jq coreutils awscli
+#        python3 -m pip install --upgrade pip
+#        pip install -r requirements.txt
       working-directory: neofs-testcases
 
     # Install NEOFS parts on runner
