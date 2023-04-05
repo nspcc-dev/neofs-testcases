@@ -28,8 +28,8 @@ jobs:
     - name: Checkout neofs-dev-env repository
       uses: actions/checkout@v3
       with:
-        repository: nspcc-dev/neofs-dev-env
-        ref: master
+        repository: vvarg229/neofs-dev-env
+        ref: update-hosts
         path: neofs-dev-env
 
     # neofs-node
@@ -155,7 +155,8 @@ jobs:
     # Generate hosts
     - name: Generate hosts
       run: |
-        make hosts | sudo tee -a /etc/hosts
+#        make hosts | sudo tee -a /etc/hosts
+        sudo ./update_hosts.sh
       working-directory: neofs-dev-env
 
     # Check hosts
