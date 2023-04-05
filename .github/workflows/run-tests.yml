@@ -56,13 +56,13 @@ jobs:
         ref: v0.101.0
         path: neo-go
 
-    # Prerequisites
-    # Python 3.10
-    - name: Set up Python 3.10.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10.10'
-        architecture: 'x64'
+#    # Prerequisites
+#    # Python 3.10
+#    - name: Set up Python 3.10.2
+#      uses: actions/setup-python@v4
+#      with:
+#        python-version: '3.10.2'
+#        architecture: 'x64'
 
     # Check Python
     - name: Display Python version
