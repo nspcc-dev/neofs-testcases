@@ -163,6 +163,7 @@ jobs:
       run: |
         pwd
         cat /etc/hosts
+        cat services/coredns/Corefile
       working-directory: neofs-dev-env
 
     # Prepare test environment
