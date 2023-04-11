@@ -176,9 +176,10 @@ jobs:
     # Install neofs-locode-db
     - name: Install neofs-locode-db
       run: |
-        make
-        mkdir -p ${{ env.LOCODE_DIR }}
-        cp locode_db ${{ env.LOCODE_DIR }}/locode_db
+#        make
+#        mkdir -p ${{ env.LOCODE_DIR }}
+#        cp locode_db ${{ env.LOCODE_DIR }}/locode_db
+        echo "Using v0.3.0"
       working-directory: neofs-locode-db
 
 ###############################################################################
