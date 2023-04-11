@@ -2,6 +2,10 @@ name: Run tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'g-e'
 
 env:
   CONTRACT_DIR: /tmp/neofs-contract
