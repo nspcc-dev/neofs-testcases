@@ -1,0 +1,265 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+
+env:
+  CONTRACT_DIR: /tmp/neofs-contract
+  LOCODE_DIR: /tmp/neofs-locode-db
+
+jobs:
+  run_tests:
+    runs-on: self-hosted
+#    runs-on: ubuntu-latest
+    steps:
+    - name: Check node
+      run: |
+        ip a
+        docker network ls
+        openssl version -d
+        cat /usr/lib/ssl/openssl.cnf
+
+    # Cleanup directories before finish
+    - name: Cleanup directories before finish
+      run: | 
+        rm -rf ${{ env.CONTRACT_DIR }}
+        rm -rf ${{ env.LOCODE_DIR }}
+
+###############################################################################
+###############################################################################
+###############################################################################
+    # Checkout NEOFS parts for the test environment
+    # neofs-testcases
+    - name: Checkout neofs-testcases repository
+      uses: actions/checkout@v3
+      with:
+        repository: vvarg229/neofs-testcases
+        ref: github-actions
+        path: neofs-testcases
+
+    # neofs-dev-env
+    - name: Checkout neofs-dev-env repository
+      uses: actions/checkout@v3
+      with:
+        repository: vvarg229/neofs-dev-env
+        ref: update-hosts
+        path: neofs-dev-env
+
+    # neofs-node
+    - name: Checkout neofs-node repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-node
+        ref: v0.35.0
+        path: neofs-node
+
+    # neofs-s3-gw
+    - name: Checkout neofs-s3-gw repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-s3-gw
+        ref: v0.26.1
+        path: neofs-s3-gw
+
+    # neo-go
+    - name: Checkout neo-go repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neo-go
+        ref: v0.101.0
+        path: neo-go
+
+    # neofs-contract
+    - name: Checkout neofs-contract repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-contract
+        ref: v0.17.0
+        path: neofs-contract
+
+    # neofs-locode-db
+    - name: Checkout neofs-locode-db repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-locode-db
+        ref: v0.3.0
+        path: neofs-locode-db
+
+###############################################################################
+###############################################################################
+###############################################################################
+#    # Prerequisites
+#    # Python 3.10
+#    - name: Set up Python 3.10.2
+#      uses: actions/setup-python@v4
+#      with:
+#        python-version: '3.10.2'
+#        architecture: 'x64'
+
+    # Check Python
+    - name: Display Python version
+      run: python3 -c "import sys; print(sys.version)"
+
+#    # Create the basenet_internet docker external network manually
+#    - name: Create basenet_internet
+#      run: docker network create basenet_internet
+#
+#    # List docker networks
+#    - name: Check basenet_internet
+#      run: docker network ls
+
+#    - name: Create Docker network
+#      run: docker network create -d macvlan --subnet=192.168.100.0/24 --gateway=192.168.100.1 -o parent=eth0 my_macvlan_network
+
+
+#    - name: Install net-tools
+#      run: sudo apt-get update && sudo apt-get install -y net-tools
+#
+#    - name: Create network interface
+#      run: |
+#        sudo ip link add eth100 type dummy
+#        sudo ip addr add 192.168.100.5/24 dev eth100
+#        sudo ip link set eth100 up
+
+    - name: Verify network interface
+      run: |
+        ip a
+
+      # Dependencies
+    - name: Install dependencies
+      run: |
+        echo "Install dependencies"
+        ls /home/
+#        sudo apt-get update
+#        sudo apt-get install -y make python3.10-dev libssl-dev default-jre
+#        sudo apt-get install -y make openssl expect jq coreutils awscli
+#        python3 -m pip install --upgrade pip
+#        pip install -r requirements.txt
+      working-directory: neofs-testcases
+
+###############################################################################
+###############################################################################
+###############################################################################
+    # Build and install NEOFS parts on runner
+    # Install neofs-cli
+    - name: Install neofs-cli
+      run: |
+        make
+        sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+        cp bin/neofs-cli /tmp/neofs-cli
+        cp bin/neofs-adm /tmp/neofs-adm
+
+      working-directory: neofs-node
+
+    # Install neofs-s3-authmate
+    - name: Install neofs-s3-authmate
+      run: |
+        make
+        sudo cp bin/neofs-s3-authmate /usr/local/bin/neofs-s3-authmate
+      working-directory: neofs-s3-gw
+
+    # Install neo-go
+    - name: Install neo-go
+      run: |
+        make
+        sudo cp bin/neo-go /usr/local/bin/neo-go
+      working-directory: neo-go
+
+    # Install neofs-contract
+    - name: Install neofs-contract
+      run: |
+        NEOGO=../neo-go/bin/neo-go make all
+        mkdir -p ${{ env.CONTRACT_DIR }}
+        cp -r ./* ${{ env.CONTRACT_DIR }}
+      working-directory: neofs-contract
+
+    # Install neofs-locode-db
+    - name: Install neofs-locode-db
+      run: |
+        echo "Using v0.3.0"
+      working-directory: neofs-locode-db
+
+###############################################################################
+###############################################################################
+###############################################################################
+    # Transfer the env file for the NEOFS test cluster deployment to docker
+    - name: Copy .env file to .env in neofs-dev-env
+      run: |
+        ls -la ${GITHUB_WORKSPACE}
+        ls -la ${GITHUB_WORKSPACE}/neofs-dev-env
+        cp .env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
+      working-directory: neofs-testcases
+
+    # Check before make the NEOFS test cluster
+    - name: Check env files
+      run: |
+        pwd
+        ls -la neo-go
+        ls -la neofs-dev-env
+        ls -la neofs-node
+        ls -la neofs-s3-gw
+        ls -la neofs-testcases
+
+    # Get vendor
+    - name: Get vendor
+      run: |
+        pwd
+        make get
+      working-directory: neofs-dev-env
+
+    # Generate hosts
+    - name: Generate hosts
+      run: |
+        sudo ./bin/update_hosts.sh
+      working-directory: neofs-dev-env
+
+    # Check hosts
+    - name: Check hosts
+      run: |
+        pwd
+        cat /etc/hosts
+        cat services/coredns/Corefile
+      working-directory: neofs-dev-env
+
+    # Prepare test environment
+    - name: Prepare test environment
+      run: |
+        pwd
+        ls -la
+        ls ..
+        make prepare-test-env
+      working-directory: neofs-dev-env
+
+    # Make venv
+    - name: Prepare test environment
+      run: |
+        make venv.local-pytest
+      working-directory: neofs-testcases
+
+    # Run tests
+    - name: Run tests
+      run: source venv.local-pytest/bin/activate && pytest --alluredir allure-report pytest_tests/testsuites/
+      working-directory: neofs-testcases
+
+    # Cleanup test environment
+    - name: Cleanup test environment
+      run: | 
+        make down
+        make clean
+      working-directory: neofs-dev-env
+
+    # Cleanup directories before finish
+    - name: Cleanup directories before finish
+      run: | 
+        rm -rf ${{ env.CONTRACT_DIR }}
+        rm -rf ${{ env.LOCODE_DIR }}
+
+    - name: Test marketplace action
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      id: allure-report
+      with:
+        allure_results: allure-report
+        gh_pages: gh-pages
+        allure_report: allure-report
+        allure_history: allure-history
