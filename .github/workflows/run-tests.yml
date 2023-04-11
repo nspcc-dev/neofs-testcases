@@ -210,7 +210,7 @@ jobs:
     # Generate hosts
     - name: Generate hosts
       run: |
-        sudo ./update_hosts.sh
+        sudo ./bin/update_hosts.sh
       working-directory: neofs-dev-env
 
     # Check hosts
