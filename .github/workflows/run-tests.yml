@@ -3,6 +3,10 @@ name: Run tests
 on:
   workflow_dispatch:
 
+env:
+  CONTRACT_DIR: /tmp/neofs-contract
+  LOCODE_DIR: /tmp/neofs-locode-db
+
 jobs:
   run_tests:
     runs-on: self-hosted
@@ -14,6 +18,12 @@ jobs:
         docker network ls
         openssl version -d
         cat /usr/lib/ssl/openssl.cnf
+
+    # Cleanup directories before finish
+    - name: Cleanup directories before finish
+      run: | 
+        rm -rf ${{ env.CONTRACT_DIR }}
+        rm -rf ${{ env.LOCODE_DIR }}
 
 ###############################################################################
 ###############################################################################
@@ -159,16 +169,16 @@ jobs:
     - name: Install neofs-contract
       run: |
         NEOGO=../neo-go/bin/neo-go make all
-        mkdir /tmp/neofs-contract
-        cp -r ./* /tmp/neofs-contract
+        mkdir -p ${{ env.CONTRACT_DIR }}
+        cp -r ./* ${{ env.CONTRACT_DIR }}
       working-directory: neofs-contract
 
     # Install neofs-locode-db
     - name: Install neofs-locode-db
       run: |
         make
-        mkdir /tmp/neofs-locode-db
-        cp locode_db /tmp/neofs-locode-db/locode_db
+        mkdir -p ${{ env.LOCODE_DIR }}
+        cp locode_db ${{ env.LOCODE_DIR }}/locode_db
       working-directory: neofs-locode-db
 
 ###############################################################################
@@ -239,6 +249,12 @@ jobs:
         make down
         make clean
       working-directory: neofs-dev-env
+
+    # Cleanup directories before finish
+    - name: Cleanup directories before finish
+      run: | 
+        rm -rf ${{ env.CONTRACT_DIR }}
+        rm -rf ${{ env.LOCODE_DIR }}
 
     - name: Test marketplace action
       uses: simple-elf/allure-report-action@master
