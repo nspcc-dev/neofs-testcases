@@ -13,7 +13,7 @@ env:
 
 jobs:
   run_tests:
-    runs-on: self-hosted
+    runs-on: testsrv2
 #    runs-on: ubuntu-latest
     steps:
     - name: Check node
