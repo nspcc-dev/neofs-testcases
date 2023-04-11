@@ -15,6 +15,9 @@ jobs:
         openssl version -d
         cat /usr/lib/ssl/openssl.cnf
 
+###############################################################################
+###############################################################################
+###############################################################################
     # Checkout NEOFS parts for the test environment
     # neofs-testcases
     - name: Checkout neofs-testcases repository
@@ -56,6 +59,25 @@ jobs:
         ref: v0.101.0
         path: neo-go
 
+    # neofs-contract
+    - name: Checkout neofs-contract repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-contract
+        ref: v0.17.0
+        path: neofs-contract
+
+    # neofs-locode-db
+    - name: Checkout neofs-locode-db repository
+      uses: actions/checkout@v3
+      with:
+        repository: nspcc-dev/neofs-locode-db
+        ref: v0.3.0
+        path: neofs-locode-db
+
+###############################################################################
+###############################################################################
+###############################################################################
 #    # Prerequisites
 #    # Python 3.10
 #    - name: Set up Python 3.10.2
@@ -105,12 +127,18 @@ jobs:
 #        pip install -r requirements.txt
       working-directory: neofs-testcases
 
-    # Install NEOFS parts on runner
+###############################################################################
+###############################################################################
+###############################################################################
+    # Build and install NEOFS parts on runner
     # Install neofs-cli
     - name: Install neofs-cli
       run: |
         make
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+        cp bin/neofs-cli /tmp/neofs-cli
+        cp bin/neofs-adm /tmp/neofs-adm
+
       working-directory: neofs-node
 
     # Install neofs-s3-authmate
@@ -127,12 +155,31 @@ jobs:
         sudo cp bin/neo-go /usr/local/bin/neo-go
       working-directory: neo-go
 
+    # Install neofs-contract
+    - name: Install neofs-contract
+      run: |
+        NEOGO=../neo-go/bin/neo-go make all
+        mkdir /tmp/neofs-contract
+        cp -r ./* /tmp/neofs-contract
+      working-directory: neofs-contract
+
+    # Install neofs-locode-db
+    - name: Install neofs-locode-db
+      run: |
+        make
+        mkdir /tmp/neofs-locode-db
+        cp locode_db /tmp/neofs-locode-db/locode_db
+      working-directory: neofs-locode-db
+
+###############################################################################
+###############################################################################
+###############################################################################
     # Transfer the env file for the NEOFS test cluster deployment to docker
-    - name: Copy releases_versions_env file to .env in neofs-dev-env
+    - name: Copy .env file to .env in neofs-dev-env
       run: |
         ls -la ${GITHUB_WORKSPACE}
         ls -la ${GITHUB_WORKSPACE}/neofs-dev-env
-        cp releases_versions_env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
+        cp .env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
 
     # Check before make the NEOFS test cluster
