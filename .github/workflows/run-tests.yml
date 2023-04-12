@@ -196,6 +196,8 @@ jobs:
         ls -la ${GITHUB_WORKSPACE}
         ls -la ${GITHUB_WORKSPACE}/neofs-dev-env
         cp .env ${GITHUB_WORKSPACE}/neofs-dev-env/.env
+        cat .env
+        cat ${GITHUB_WORKSPACE}/neofs-dev-env/.env
       working-directory: neofs-testcases
 
     # Check before make the NEOFS test cluster
