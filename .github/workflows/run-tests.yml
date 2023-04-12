@@ -152,7 +152,6 @@ jobs:
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
         cp bin/neofs-cli /tmp/neofs-cli
         cp bin/neofs-adm /tmp/neofs-adm
-
       working-directory: neofs-node
 
     # Install neofs-s3-authmate
