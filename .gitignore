@@ -19,7 +19,6 @@ xunit_results.xml
 
 # ignore work directories and setup files
 .setup
-.env
 TemporaryDir/*
 artifacts/*
 docs/*
