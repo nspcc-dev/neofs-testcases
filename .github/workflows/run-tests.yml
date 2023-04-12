@@ -23,8 +23,8 @@ jobs:
         openssl version -d
         cat /usr/lib/ssl/openssl.cnf
 
-    # Cleanup directories before finish
-    - name: Cleanup directories before finish
+    # Cleanup directories before start
+    - name: Cleanup directories before start
       run: | 
         rm -rf ${{ env.CONTRACT_DIR }}
         rm -rf ${{ env.LOCODE_DIR }}
