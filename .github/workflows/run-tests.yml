@@ -271,7 +271,7 @@ jobs:
     - name: Allure Report action from marketplace
       uses: simple-elf/allure-report-action@master
       if: always()
-      #id: allure-report
+      id: allure-report
       with:
         allure_results: allure-results
         #gh_pages: gh-pages
