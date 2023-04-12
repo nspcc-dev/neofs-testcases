@@ -104,6 +104,11 @@ jobs:
     - name: Display Python version
       run: python3 -c "import sys; print(sys.version)"
 
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18.2
+
 #    # Create the basenet_internet docker external network manually
 #    - name: Create basenet_internet
 #      run: docker network create basenet_internet
