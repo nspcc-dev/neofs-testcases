@@ -148,7 +148,7 @@ jobs:
     # Install neofs-cli
     - name: Install neofs-cli
       run: |
-        make
+        make all
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
         cp bin/neofs-cli /tmp/neofs-cli
         cp bin/neofs-adm /tmp/neofs-adm
