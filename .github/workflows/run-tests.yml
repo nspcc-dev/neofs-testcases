@@ -54,7 +54,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: nspcc-dev/neofs-node
-        ref: master
+        ref: v0.35.0
         path: neofs-node
 
     # neofs-s3-gw
