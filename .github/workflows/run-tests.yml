@@ -229,6 +229,7 @@ jobs:
         pwd
         cat /etc/hosts
         cat services/coredns/Corefile
+        cat services/morph_chain/protocol.privnet.yml
       working-directory: neofs-dev-env
 
     # Prepare test environment
@@ -255,16 +256,18 @@ jobs:
     - name: Cleanup test environment
       if: always()
       run: | 
-        make down
-        make clean
+        echo "down"
+#        make down
+#        make clean
       working-directory: neofs-dev-env
 
     # Cleanup directories before finish
     - name: Cleanup directories before finish
       if: always()
       run: | 
-        rm -rf ${{ env.CONTRACT_DIR }}
-        rm -rf ${{ env.LOCODE_DIR }}
+        echo "Clean"
+#        rm -rf ${{ env.CONTRACT_DIR }}
+#        rm -rf ${{ env.LOCODE_DIR }}
 
     - name: Get Allure history
       uses: actions/checkout@v2
