@@ -5,6 +5,7 @@ venv.$(1)/bin/activate:
 	@echo "Creating $(1) venv in $$@ from $$<"
 	virtualenv --python=python3.10 --prompt="($(1))" venv.$(1)
 	. venv.$(1)/bin/activate && \
+	python -m pip install --upgrade pip && \
 	pip3.10 install -U setuptools==56.0.0 && \
 	pip3.10 install -Ur requirements.txt
 	@echo "Applying activate script patch"
