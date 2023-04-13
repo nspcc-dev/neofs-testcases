@@ -94,11 +94,11 @@ jobs:
 ###############################################################################
 #    # Prerequisites
 #    # Python 3.10
-#    - name: Set up Python 3.10.2
-#      uses: actions/setup-python@v4
-#      with:
-#        python-version: '3.10.2'
-#        architecture: 'x64'
+    - name: Set up Python 3.10.2
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10.2'
+        architecture: 'x64'
 
     # Check Python
     - name: Display Python version
