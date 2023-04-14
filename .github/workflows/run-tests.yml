@@ -151,10 +151,11 @@ jobs:
 ###############################################################################
     # Build and install NEOFS parts on runner
     # Install neofs-cli
-    - name: Install neofs-cli
+    - name: Install neofs-cli and neofs-adm
       run: |
         make all
         sudo cp bin/neofs-cli /usr/local/bin/neofs-cli
+        sudo cp bin/neofs-adm /usr/local/bin/neofs-adm
         cp bin/neofs-cli /tmp/neofs-cli
         cp bin/neofs-adm /tmp/neofs-adm
       working-directory: neofs-node
