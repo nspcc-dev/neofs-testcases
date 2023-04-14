@@ -279,13 +279,13 @@ jobs:
         rm -rf ${{ env.CONTRACT_DIR }}
         rm -rf ${{ env.LOCODE_DIR }}
 
-    - name: Get Allure history
-      uses: actions/checkout@v2
-      if: always()
-      continue-on-error: true
-      with:
-        ref: gh-pages
-        path: gh-pages
+#    - name: Get Allure history
+#      uses: actions/checkout@v2
+#      if: always()
+#      continue-on-error: true
+#      with:
+#        ref: gh-pages
+#        path: gh-pages
 
     - name: Allure Report action from marketplace
       uses: simple-elf/allure-report-action@master
@@ -304,3 +304,13 @@ jobs:
         PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PUBLISH_BRANCH: gh-pages
         PUBLISH_DIR: allure-history
+
+    - name: Post the link to the report
+      if: always()
+      uses: Sibz/github-status-action@v1
+      with:
+        authToken: ${{secrets.GITHUB_TOKEN}}
+        context: 'Test report'
+        state: 'success'
+        sha: ${{ github.event.pull_request.head.sha }}
+        target_url: simple-elf.github.io/github-allure-history/${{ github.run_number }}
