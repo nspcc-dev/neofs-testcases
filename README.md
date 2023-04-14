@@ -54,6 +54,25 @@ awscli
 As we use neofs-dev-env, you'll also need to install
 [prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
 
+Make sure that the config file `/usr/lib/ssl/openssl.cnf` contains following lines:
+```
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+legacy = legacy_sect
+
+[default_sect]
+activate = 1
+
+[legacy_sect]
+activate = 1
+```
+
+
 6. Prepare virtualenv
 
 ```shell
