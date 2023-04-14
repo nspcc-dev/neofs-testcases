@@ -45,8 +45,8 @@ manually set the full path to neofs-dev-env in the environment variable `DEVENV_
 
 ```
 make
-python3.9
-python3.9-dev
+python3.10
+python3.10-dev
 libssl-dev
 ```
 As we use neofs-dev-env, you'll also need to install
