@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - 'g-e'
+  pull_request:
 
 permissions: write-all
 
