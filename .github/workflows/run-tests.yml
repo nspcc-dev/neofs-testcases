@@ -260,15 +260,17 @@ jobs:
     - name: Cleanup test environment
       if: always()
       run: |
-        make clean
+        echo "Clean"
+#        make clean
       working-directory: neofs-testcases
 
     # Cleanup test environment
     - name: Cleanup test environment
       if: always()
       run: |
-        make down
-        make clean
+        echo "Clean"
+#        make down
+#        make clean
       working-directory: neofs-dev-env
 
     # Cleanup directories before finish
@@ -276,8 +278,8 @@ jobs:
       if: always()
       run: |
         echo "Clean"
-        rm -rf ${{ env.CONTRACT_DIR }}
-        rm -rf ${{ env.LOCODE_DIR }}
+#        rm -rf ${{ env.CONTRACT_DIR }}
+#        rm -rf ${{ env.LOCODE_DIR }}
 
 #    - name: Get Allure history
 #      uses: actions/checkout@v2
