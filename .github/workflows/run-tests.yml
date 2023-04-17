@@ -48,8 +48,8 @@ jobs:
     - name: Checkout neofs-dev-env repository
       uses: actions/checkout@v3
       with:
-        repository: vvarg229/neofs-dev-env
-        ref: update-hosts
+        repository: nspcc-dev/neofs-dev-env
+        ref: master
         path: neofs-dev-env
 
     # neofs-node
