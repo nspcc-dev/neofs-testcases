@@ -1,3 +1,5 @@
+[![Run tests](https://github.com/nspcc-dev/neofs-testcases/actions/workflows/run-tests.yml/badge.svg)](https://github.com/nspcc-dev/neofs-testcases/actions/workflows/run-tests.yml)
+
 ## Testcases structure
 
 Tests written with PyTest Framework are located under `pytest_tests/testsuites` directory.
