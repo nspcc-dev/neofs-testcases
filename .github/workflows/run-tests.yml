@@ -27,7 +27,7 @@ jobs:
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    # Checkout NEOFS parts for the test environment 
+    # Checkout NEOFS parts for the test environment
     # neofs-testcases
     - name: Checkout neofs-testcases repository
       uses: actions/checkout@v3
