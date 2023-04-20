@@ -54,14 +54,40 @@ awscli
 As we use neofs-dev-env, you'll also need to install
 [prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
 
-6. Prepare virtualenv
+6. Fix OpenSSL ripemd160
+
+Hashlib uses OpenSSL for ripemd160 and apparently OpenSSL disabled some older crypto algos around version 3.0
+in November 2021.
+All the functions are still there but require manual enabling. See https://github.com/openssl/openssl/issues/16994
+
+But we use ripemd160 for tests.
+For ripemd160 to be supported, make sure that the config file `/usr/lib/ssl/openssl.cnf` contains following lines:
+```
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+legacy = legacy_sect
+
+[default_sect]
+activate = 1
+
+[legacy_sect]
+activate = 1
+```
+
+
+7. Prepare virtualenv
 
 ```shell
 $ make venv.local-pytest
 $ . venv.local-pytest/bin/activate
 ```
 
-7. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
+8. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
 
 ```shell
 $ pre-commit install
@@ -71,7 +97,7 @@ Optionally you might want to integrate code formatters with your code editor to 
 * isort is supported by [PyCharm](https://plugins.jetbrains.com/plugin/15434-isortconnect), [VS Code](https://cereblanco.medium.com/setup-black-and-isort-in-vscode-514804590bf9). Plugins exist for other IDEs/editors as well.
 * black can be integrated with multiple editors, please, instructions are available [here](https://black.readthedocs.io/en/stable/integrations/editors.html).
 
-8. Install Allure CLI
+9. Install Allure CLI
 
 Allure CLI installation is not an easy task, so a better option might be to run allure from
 docker container (please, refer to p.2 of the next section for instructions).
@@ -144,3 +170,4 @@ the feature/topic you are going to implement.
 Custom pytest marks used in tests:
 * `sanity` - Tests must be runs in sanity testruns.
 * `smoke` - Tests must be runs in smoke testruns.
+
