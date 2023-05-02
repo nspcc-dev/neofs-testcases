@@ -46,8 +46,6 @@ check_nodes: list[StorageNode] = []
 @allure.title("Add one node to cluster")
 @pytest.mark.add_nodes
 @pytest.mark.node_mgmt
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_542
 class TestNodeManagement(ClusterTestBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
@@ -123,6 +121,8 @@ class TestNodeManagement(ClusterTestBase):
             self.tick_epoch_with_retries(3)
             check_node_in_map(node, shell=self.shell, alive_node=alive_node)
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     @allure.title("Add one node to cluster")
     @pytest.mark.add_nodes
     def test_add_nodes(
@@ -327,6 +327,8 @@ class TestNodeManagement(ClusterTestBase):
 
     @pytest.mark.node_mgmt
     @allure.title("NeoFS object could be dropped using control command")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/537")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_537
     def test_drop_object(self, default_wallet, complex_object_size, simple_object_size):
         """
         Test checks object could be dropped using `neofs-cli control drop-objects` command.

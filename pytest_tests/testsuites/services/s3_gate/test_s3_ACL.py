@@ -15,8 +15,6 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.s3_gate
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateACL(TestS3GateBase):
     @allure.title("Test S3: Object ACL")
     def test_s3_object_ACL(self, bucket, simple_object_size):

@@ -17,14 +17,14 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_versioning
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateVersioning(TestS3GateBase):
     @staticmethod
     def object_key_from_file_path(full_path: str) -> str:
         return os.path.basename(full_path)
 
     @allure.title("Test S3: try to disable versioning")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_version_off(self):
 
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True)
