@@ -25,7 +25,6 @@ from python_keywords.object_access import can_get_head_object, can_get_object, c
 from wellknown_acl import PUBLIC_ACL
 
 
-@pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.acl_filters
 class TestEACLFilters(ClusterTestBase):

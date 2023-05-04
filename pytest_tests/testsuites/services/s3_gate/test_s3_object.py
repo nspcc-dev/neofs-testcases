@@ -28,7 +28,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
-@pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_object
 class TestS3GateObject(TestS3GateBase):
@@ -36,6 +35,7 @@ class TestS3GateObject(TestS3GateBase):
     def object_key_from_file_path(full_path: str) -> str:
         return os.path.basename(full_path)
 
+    @pytest.mark.sanity
     @allure.title("Test S3: Copy object")
     @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
     @pytest.mark.nspcc_dev__neofs_testcases__issue_558

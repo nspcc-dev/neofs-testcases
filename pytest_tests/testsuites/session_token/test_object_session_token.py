@@ -13,7 +13,6 @@ from python_keywords.neofs_verbs import delete_object, put_object, put_object_to
 from steps.session_token import create_session_token
 
 
-@pytest.mark.sanity
 @pytest.mark.session_token
 class TestDynamicObjectSession(ClusterTestBase):
     @allure.title("Test Object Operations with Session Token")

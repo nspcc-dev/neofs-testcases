@@ -15,7 +15,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
-@pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_locking
 @pytest.mark.parametrize("version_id", [None, "second"])

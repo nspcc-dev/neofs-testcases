@@ -134,9 +134,9 @@ def storage_objects(
     delete_objects(storage_objects, client_shell, cluster)
 
 
-@pytest.mark.sanity
 @pytest.mark.grpc_api
 class TestObjectApi(ClusterTestBase):
+    @pytest.mark.sanity
     @allure.title("Validate object storage policy by native API")
     def test_object_storage_policies(
         self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], simple_object_size
@@ -336,7 +336,6 @@ class TestObjectApi(ClusterTestBase):
                 ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
 
     @allure.title("Validate native object API get_range_hash")
-    @pytest.mark.sanity
     @pytest.mark.grpc_api
     def test_object_get_range_hash(
         self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size
@@ -375,7 +374,6 @@ class TestObjectApi(ClusterTestBase):
                     ), f"Expected range hash to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range")
-    @pytest.mark.sanity
     @pytest.mark.grpc_api
     def test_object_get_range(
         self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size
@@ -415,7 +413,6 @@ class TestObjectApi(ClusterTestBase):
                     ), f"Expected range content to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range negative cases")
-    @pytest.mark.sanity
     @pytest.mark.grpc_api
     def test_object_get_range_negatives(
         self,

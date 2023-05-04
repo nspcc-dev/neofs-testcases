@@ -117,7 +117,6 @@ def locked_storage_object(
             logger.debug(ex_message)
 
 
-@pytest.mark.sanity
 @pytest.mark.grpc_object_lock
 class TestObjectLockWithGrpc(ClusterTestBase):
     @pytest.fixture()

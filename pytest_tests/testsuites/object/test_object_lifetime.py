@@ -15,7 +15,6 @@ from steps.cluster_test_base import ClusterTestBase
 logger = logging.getLogger("NeoLogger")
 
 
-@pytest.mark.sanity
 @pytest.mark.grpc_api
 class TestObjectApiLifetime(ClusterTestBase):
     @allure.title("Test object life time")

@@ -12,10 +12,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
-@pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.s3_gate
 class TestS3GateACL(TestS3GateBase):
+    @pytest.mark.sanity
     @allure.title("Test S3: Object ACL")
     def test_s3_object_ACL(self, bucket, simple_object_size):
         file_path = generate_file(simple_object_size)

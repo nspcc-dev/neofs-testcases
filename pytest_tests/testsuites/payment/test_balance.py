@@ -14,7 +14,6 @@ logger = logging.getLogger("NeoLogger")
 DEPOSIT_AMOUNT = 30
 
 
-@pytest.mark.sanity
 @pytest.mark.payments
 @pytest.mark.skipif(FREE_STORAGE, reason="Test only works on public network with paid storage")
 class TestBalanceAccounting(ClusterTestBase):
@@ -58,6 +57,7 @@ class TestBalanceAccounting(ClusterTestBase):
             yaml.dump(api_config, file)
         return api_config_file
 
+    @pytest.mark.sanity
     @allure.title("Test balance request with wallet and address")
     def test_balance_wallet_address(self, main_wallet: WalletFile, cli: NeofsCli):
         result = cli.accounting.balance(

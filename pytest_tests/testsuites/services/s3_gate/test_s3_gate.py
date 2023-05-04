@@ -34,7 +34,6 @@ def pytest_generate_tests(metafunc):
 
 
 @allure.link("https://github.com/nspcc-dev/neofs-s3-gw#neofs-s3-gateway", name="neofs-s3-gateway")
-@pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_base
 class TestS3Gate(TestS3GateBase):

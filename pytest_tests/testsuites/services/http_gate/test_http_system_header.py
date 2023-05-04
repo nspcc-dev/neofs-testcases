@@ -31,7 +31,6 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.sanity
 @pytest.mark.http_gate
 class Test_http_system_header(ClusterTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
@@ -200,6 +199,7 @@ class Test_http_system_header(ClusterTestBase):
             error_pattern=f"{EXPIRATION_EXPIRATION_RFC} must be in the future",
         )
 
+    @pytest.mark.sanity
     @allure.title("priority of attributes epoch>duration")
     @pytest.mark.parametrize(
         "object_size",
