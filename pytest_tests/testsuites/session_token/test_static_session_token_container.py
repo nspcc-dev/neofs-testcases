@@ -45,8 +45,6 @@ class TestSessionTokenContainer(ClusterTestBase):
             for verb in ContainerVerb
         }
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_static_session_token_container_create(
         self,
         owner_wallet: WalletFile,
@@ -114,8 +112,6 @@ class TestSessionTokenContainer(ClusterTestBase):
                     wait_for_creation=False,
                 )
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_static_session_token_container_delete(
         self,
         owner_wallet: WalletFile,
@@ -146,8 +142,6 @@ class TestSessionTokenContainer(ClusterTestBase):
             owner_wallet.path, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
         )
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_static_session_token_container_set_eacl(
         self,
         owner_wallet: WalletFile,

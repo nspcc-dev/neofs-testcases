@@ -26,8 +26,6 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.mark.sanity
 @pytest.mark.http_gate
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/523")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_523
 class Test_http_bearer(ClusterTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 
@@ -102,8 +100,6 @@ class Test_http_bearer(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_put_with_bearer_when_eacl_restrict(
         self,
         object_size: int,

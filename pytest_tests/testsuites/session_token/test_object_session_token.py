@@ -13,7 +13,6 @@ from python_keywords.neofs_verbs import delete_object, put_object, put_object_to
 from steps.session_token import create_session_token
 
 
-@pytest.mark.sanity
 @pytest.mark.session_token
 class TestDynamicObjectSession(ClusterTestBase):
     @allure.title("Test Object Operations with Session Token")
@@ -22,8 +21,6 @@ class TestDynamicObjectSession(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/523")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_523
     def test_object_session_token(self, default_wallet, object_size):
         """
         Test how operations over objects are executed with a session token

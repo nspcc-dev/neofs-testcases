@@ -31,7 +31,6 @@ from python_keywords.object_access import (
 from wellknown_acl import PUBLIC_ACL
 
 
-@pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.acl_extended
 class TestEACLContainer(ClusterTestBase):

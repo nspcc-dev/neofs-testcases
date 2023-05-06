@@ -15,12 +15,9 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
-@pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_locking
 @pytest.mark.parametrize("version_id", [None, "second"])
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateLocking(TestS3GateBase):
     @allure.title("Test S3: Checking the operation of retention period & legal lock on the object")
     def test_s3_object_locking(self, version_id, simple_object_size):
@@ -76,6 +73,8 @@ class TestS3GateLocking(TestS3GateBase):
                 s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name, version_id)
 
     @allure.title("Test S3: Checking the impossibility to change the retention mode COMPLIANCE")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_mode_compliance(self, version_id, simple_object_size):
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
@@ -117,6 +116,8 @@ class TestS3GateLocking(TestS3GateBase):
                 )
 
     @allure.title("Test S3: Checking the ability to change retention mode GOVERNANCE")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_mode_governance(self, version_id, simple_object_size):
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
@@ -185,6 +186,8 @@ class TestS3GateLocking(TestS3GateBase):
             )
 
     @allure.title("Test S3: Checking if an Object Cannot Be Locked")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_legal_hold(self, version_id, simple_object_size):
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
@@ -205,8 +208,6 @@ class TestS3GateLocking(TestS3GateBase):
 
 
 @pytest.mark.s3_gate
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateLockingBucket(TestS3GateBase):
     @allure.title("Test S3: Bucket Lock")
     def test_s3_bucket_lock(self, simple_object_size):

@@ -31,7 +31,6 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.sanity
 @pytest.mark.http_gate
 class Test_http_system_header(ClusterTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
@@ -138,10 +137,6 @@ class Test_http_system_header(ClusterTestBase):
         return oid, head
 
     @allure.title("[negative] attempt to put object with expired epoch")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2262")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2262
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/533")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_533
     def test_unable_put_expired_epoch(self, user_container: str, simple_object_size: int):
         headers = attr_into_str_header_curl(
             {"Neofs-Expiration-Epoch": str(get_epoch(self.shell, self.cluster) - 1)}
@@ -159,10 +154,6 @@ class Test_http_system_header(ClusterTestBase):
             )
 
     @allure.title("[negative] attempt to put object with negative Neofs-Expiration-Duration")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2262")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2262
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/533")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_533
     def test_unable_put_negative_duration(self, user_container: str, simple_object_size: int):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Duration": "-1h"})
         file_path = generate_file(simple_object_size)
@@ -180,10 +171,6 @@ class Test_http_system_header(ClusterTestBase):
     @allure.title(
         "[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past"
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2262")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2262
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/533")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_533
     def test_unable_put_expired_timestamp(self, user_container: str, simple_object_size: int):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Timestamp": "1635075727"})
         file_path = generate_file(simple_object_size)
@@ -201,10 +188,6 @@ class Test_http_system_header(ClusterTestBase):
     @allure.title(
         "[negative] Put object using HTTP with attribute Neofs-Expiration-RFC3339 where duration is in the past"
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2262")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2262
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/533")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_533
     def test_unable_put_expired_rfc(self, user_container: str, simple_object_size: int):
         headers = attr_into_str_header_curl({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
         file_path = generate_file(simple_object_size)
@@ -216,14 +199,13 @@ class Test_http_system_header(ClusterTestBase):
             error_pattern=f"{EXPIRATION_EXPIRATION_RFC} must be in the future",
         )
 
+    @pytest.mark.sanity
     @allure.title("priority of attributes epoch>duration")
     @pytest.mark.parametrize(
         "object_size",
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_epoch_duration(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -271,8 +253,6 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_dur_timestamp(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -327,8 +307,6 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_attr_priority_timestamp_rfc(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
@@ -381,8 +359,6 @@ class Test_http_system_header(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/524")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_524
     def test_http_rfc_object_unavailable_after_expir(
         self, user_container: str, object_size: int, epoch_duration: int
     ):

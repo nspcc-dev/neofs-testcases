@@ -14,11 +14,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
 
 
-@pytest.mark.sanity
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_multipart
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/521")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_521
 class TestS3GateMultipart(TestS3GateBase):
     @allure.title("Test S3 Object Multipart API")
     def test_s3_object_multipart(self):
@@ -65,6 +62,8 @@ class TestS3GateMultipart(TestS3GateBase):
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
     @allure.title("Test S3 Multipart abord")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_abort_multipart(self):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
@@ -92,6 +91,8 @@ class TestS3GateMultipart(TestS3GateBase):
             assert not uploads, f"Expected there is no uploads in bucket {bucket}"
 
     @allure.title("Test S3 Upload Part Copy")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
+    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_multipart_copy(self):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)

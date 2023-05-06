@@ -14,7 +14,6 @@ logger = logging.getLogger("NeoLogger")
 DEPOSIT_AMOUNT = 30
 
 
-@pytest.mark.sanity
 @pytest.mark.payments
 @pytest.mark.skipif(FREE_STORAGE, reason="Test only works on public network with paid storage")
 class TestBalanceAccounting(ClusterTestBase):
@@ -58,9 +57,8 @@ class TestBalanceAccounting(ClusterTestBase):
             yaml.dump(api_config, file)
         return api_config_file
 
+    @pytest.mark.sanity
     @allure.title("Test balance request with wallet and address")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_balance_wallet_address(self, main_wallet: WalletFile, cli: NeofsCli):
         result = cli.accounting.balance(
             wallet=main_wallet.path,
@@ -71,8 +69,6 @@ class TestBalanceAccounting(ClusterTestBase):
         self.check_amount(result)
 
     @allure.title("Test balance request with wallet only")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_balance_wallet(self, main_wallet: WalletFile, cli: NeofsCli):
         result = cli.accounting.balance(
             wallet=main_wallet.path, rpc_endpoint=self.cluster.default_rpc_endpoint
@@ -91,8 +87,6 @@ class TestBalanceAccounting(ClusterTestBase):
             )
 
     @allure.title("Test balance request with config file")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_balance_api(self, temp_directory: str, main_wallet: WalletFile, client_shell: Shell):
         config_file = self.write_api_config(
             config_dir=temp_directory,

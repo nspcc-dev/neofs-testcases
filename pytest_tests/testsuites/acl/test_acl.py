@@ -12,7 +12,6 @@ from python_keywords.neofs_verbs import put_object_to_random_node
 from wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL_F, READONLY_ACL_F
 
 
-@pytest.mark.sanity
 @pytest.mark.smoke
 @pytest.mark.acl
 @pytest.mark.acl_basic
@@ -65,6 +64,7 @@ class TestACLBasic(ClusterTestBase):
         # with allure.step('Delete public readonly container'):
         #     delete_container(user_wallet.wallet_path, cid_read_only)
 
+    @pytest.mark.sanity
     @allure.title("Test basic ACL on public container")
     def test_basic_acl_public(self, wallets, public_container, file_path):
         """

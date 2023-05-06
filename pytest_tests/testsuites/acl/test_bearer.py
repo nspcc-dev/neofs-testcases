@@ -18,7 +18,6 @@ from python_keywords.container_access import (
 )
 
 
-@pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.acl_bearer
 class TestACLBearer(ClusterTestBase):

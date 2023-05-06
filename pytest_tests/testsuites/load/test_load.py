@@ -43,6 +43,8 @@ ENDPOINTS_ATTRIBUTES = {
 
 
 @pytest.mark.load
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/544")
+@pytest.mark.nspcc_dev__neofs_testcases__issue_544
 class TestLoad(ClusterTestBase):
     @pytest.fixture(autouse=True)
     def clear_cache_and_data(self, hosting: Hosting):

@@ -18,11 +18,11 @@ from steps.cluster_test_base import ClusterTestBase
 
 
 @pytest.mark.container
-@pytest.mark.sanity
 @pytest.mark.container
 class TestContainer(ClusterTestBase):
     @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
     @pytest.mark.smoke
+    @pytest.mark.sanity
     def test_container_creation(self, default_wallet, name):
         scenario_title = f"with name {name}" if name else "without name"
         allure.dynamic.title(f"User can create container {scenario_title}")

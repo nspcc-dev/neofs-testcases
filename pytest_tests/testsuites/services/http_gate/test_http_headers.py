@@ -31,8 +31,6 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.mark.sanity
 @pytest.mark.http_gate
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/523")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_523
 class Test_http_headers(ClusterTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
     obj1_keys = ["Writer", "Chapter1", "Chapter2"]

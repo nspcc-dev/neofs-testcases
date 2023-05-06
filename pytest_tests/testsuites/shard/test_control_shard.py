@@ -110,7 +110,6 @@ def shards_from_env(contents: str) -> list[Shard]:
     return [Shard.from_config_object(configObj, shard_id) for shard_id in range(num_shards)]
 
 
-@pytest.mark.sanity
 @pytest.mark.shard
 class TestControlShard:
     @staticmethod
@@ -145,6 +144,7 @@ class TestControlShard:
         )
         return [Shard.from_object(shard) for shard in json.loads(result.stdout.split(">", 1)[1])]
 
+    @pytest.mark.sanity
     @allure.title("All shards are available")
     @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/527")
     @pytest.mark.nspcc_dev__neofs_testcases__issue_527

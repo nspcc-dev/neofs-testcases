@@ -34,8 +34,6 @@ class Test_http_object(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     def test_object_put_get_attributes(self, object_size: int):
         """
         Test that object can be put using gRPC interface and get using HTTP.

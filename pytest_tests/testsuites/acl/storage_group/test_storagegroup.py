@@ -40,7 +40,6 @@ deposit = 30
     [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
     ids=["simple object", "complex object"],
 )
-@pytest.mark.sanity
 @pytest.mark.acl
 @pytest.mark.storage_group
 class TestStorageGroup(ClusterTestBase):
@@ -104,6 +103,7 @@ class TestStorageGroup(ClusterTestBase):
             max_object_size=max_object_size,
         )
 
+    @pytest.mark.sanity
     @allure.title("Test Storage Group in Public Container")
     def test_storagegroup_basic_public_container(self, object_size, max_object_size):
         cid = create_container(
