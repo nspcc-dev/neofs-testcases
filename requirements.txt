@@ -38,7 +38,6 @@ pexpect==4.8.0
 pluggy==1.0.0
 pre-commit==2.20.0
 ptyprocess==0.7.0
-py==1.11.0
 pycares==4.2.0
 pycodestyle==2.8.0
 pycparser==2.21
