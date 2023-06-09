@@ -68,7 +68,7 @@ def wallets(default_wallet, temp_directory, cluster: Cluster) -> Wallets:
 
 
 @pytest.fixture(scope="module")
-def file_path(simple_object_size):
+def file_path(simple_object_size, artifacts_directory):
     yield generate_file(simple_object_size)
 
 

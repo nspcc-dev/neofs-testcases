@@ -13,6 +13,8 @@ from binary_version_helper import get_local_binaries_versions, get_remote_binari
 from cluster import Cluster
 from common import (
     ASSETS_DIR,
+    TEST_FILES_DIR,
+    TEST_OBJECTS_DIR,
     COMPLEX_OBJECT_CHUNKS_COUNT,
     COMPLEX_OBJECT_TAIL_SIZE,
     FREE_STORAGE,
@@ -144,6 +146,22 @@ def temp_directory() -> str:
 
     with allure.step("Remove tmp directory"):
         remove_dir(full_path)
+
+
+@pytest.fixture(scope="module", autouse=True)
+@allure.title(f'Prepare test files directories')
+def artifacts_directory(temp_directory: str) -> None:
+    dirs = [TEST_FILES_DIR, TEST_OBJECTS_DIR]
+    for dir_name in dirs:
+        with allure.step(f"Prepare {dir_name} directory"):
+            full_path = os.path.join(temp_directory, dir_name)
+            create_dir(full_path)
+
+    yield
+
+    for dir_name in dirs:
+        with allure.step(f"Remove {dir_name} directory"):
+            remove_dir(full_path)
 
 
 @pytest.fixture(scope="session", autouse=True)
