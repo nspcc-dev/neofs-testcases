@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import uuid
+import hashlib
 from datetime import datetime
 
 import allure
@@ -134,35 +135,47 @@ def check_binary_versions(request, hosting: Hosting, client_shell: Shell):
 
 @pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
-def temp_directory():
+def temp_directory() -> str:
     with allure.step("Prepare tmp directory"):
         full_path = os.path.join(os.getcwd(), ASSETS_DIR)
-        shutil.rmtree(full_path, ignore_errors=True)
-        os.mkdir(full_path)
+        create_dir(full_path)
 
     yield full_path
 
     with allure.step("Remove tmp directory"):
-        shutil.rmtree(full_path)
+        remove_dir(full_path)
 
 
 @pytest.fixture(scope="session", autouse=True)
-@allure.title("Collect logs")
-def collect_logs(temp_directory, hosting: Hosting):
+@allure.title("Collect full logs")
+def collect_full_tests_logs(temp_directory, hosting: Hosting):
+    test_name = 'full_logs'
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
-
-    # Dump logs to temp directory (because they might be too large to keep in RAM)
     logs_dir = os.path.join(temp_directory, "logs")
-    dump_logs(hosting, logs_dir, start_time, end_time)
-    attach_logs(logs_dir)
+    store_logs(hosting, logs_dir, test_name, start_time, end_time)
     check_logs(logs_dir)
+
+
+@pytest.fixture(scope="function", autouse=True)
+@allure.title("Collect test logs")
+def collect_test_logs(request, temp_directory, hosting: Hosting):
+    test_name = request.node.nodeid.translate(str.maketrans(":[]/", "____"))
+    hash_suffix = hashlib.md5(test_name.encode()).hexdigest()
+    file_name = (test_name[:200] + '_' + hash_suffix)  # limit total length to 255
+    logs_dir = os.path.join(temp_directory, "logs")
+    with allure.step(f'Start collecting logs for {file_name}'):
+        start_time = datetime.utcnow()
+    yield
+    with allure.step(f'Stop collecting logs for {file_name}, logs path: {logs_dir} '):
+        end_time = datetime.utcnow()
+        store_logs(hosting, logs_dir, file_name, start_time, end_time)
 
 
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Run health check for all storage nodes")
-def run_health_check(collect_logs, cluster: Cluster):
+def run_health_check(collect_full_tests_logs, cluster: Cluster):
     failed_nodes = []
     for node in cluster.storage_nodes:
         health_check = storage_node_healthcheck(node)
@@ -288,20 +301,37 @@ def check_logs(logs_dir: str):
         raise pytest.fail(f"System logs {', '.join(logs_with_problem)} contain critical errors")
 
 
+def store_logs(hosting: Hosting, logs_dir: str, file_name: str, start_time: datetime, end_time: datetime) -> None:
+    os.makedirs(logs_dir, exist_ok=True)
+    dump_logs(hosting, logs_dir, start_time, end_time)
+    attach_logs(logs_dir, os.path.join(os.getcwd(), ASSETS_DIR, file_name))
+
+
 def dump_logs(hosting: Hosting, logs_dir: str, since: datetime, until: datetime) -> None:
     # Dump logs to temp directory (because they might be too large to keep in RAM)
-    os.makedirs(logs_dir)
+    os.makedirs(logs_dir, exist_ok=True)
 
     for host in hosting.hosts:
-        with allure.step(f"Dump logs from host {host.config.address}"):
+        with allure.step(f"Dump logs from host {host.config.address} to {logs_dir}"):
             try:
                 host.dump_logs(logs_dir, since=since, until=until)
             except Exception as ex:
                 logger.warning(f"Exception during logs collection: {ex}")
 
 
-def attach_logs(logs_dir: str) -> None:
+def attach_logs(logs_dir: str, test_name: str) -> None:
     # Zip all files and attach to Allure because it is more convenient to download a single
     # zip with all logs rather than mess with individual logs files per service or node
-    logs_zip_file_path = shutil.make_archive(logs_dir, "zip", logs_dir)
-    allure.attach.file(logs_zip_file_path, name="logs.zip", extension="zip")
+    logs_zip_file_path = shutil.make_archive(test_name, "zip", logs_dir)
+    allure.attach.file(logs_zip_file_path, name=f'{test_name}.zip', extension="zip")
+
+
+def create_dir(dir_path: str) -> None:
+    with allure.step("Create directory"):
+        remove_dir(dir_path)
+        os.mkdir(dir_path)
+
+
+def remove_dir(dir_path: str) -> None:
+    with allure.step("Remove directory"):
+        shutil.rmtree(dir_path, ignore_errors=True)
