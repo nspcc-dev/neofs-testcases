@@ -79,8 +79,6 @@ class TestS3GateTagging(TestS3GateBase):
             check_tags_by_object(self.s3_client, bucket, file_name, [])
 
     @allure.title("Test S3: bucket tagging")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/558")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_558
     def test_s3_bucket_tagging(self, bucket):
 
         with allure.step("Put 10 bucket tags"):

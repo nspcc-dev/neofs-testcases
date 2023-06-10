@@ -24,7 +24,6 @@ def pytest_generate_tests(metafunc):
 class TestS3GateBucket(TestS3GateBase):
     @pytest.mark.sanity
     @allure.title("Test S3: Create Bucket with different ACL")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/784")
     def test_s3_create_bucket_with_ACL(self):
 
         with allure.step("Create bucket with ACL private"):

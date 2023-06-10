@@ -17,7 +17,6 @@ def pytest_generate_tests(metafunc):
 class TestS3GateACL(TestS3GateBase):
     @pytest.mark.sanity
     @allure.title("Test S3: Object ACL")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/784")
     def test_s3_object_ACL(self, bucket, simple_object_size):
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
