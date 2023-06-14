@@ -6,7 +6,7 @@ from typing import Optional
 import allure
 import pytest
 from cluster_test_base import ClusterTestBase
-from common import ASSETS_DIR, FREE_STORAGE, WALLET_PASS
+from common import ASSETS_DIR, TEST_FILES_DIR, FREE_STORAGE, WALLET_PASS
 from file_helper import generate_file
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from neofs_testlib.utils.wallet import init_wallet
@@ -46,7 +46,7 @@ class TestStorageGroup(ClusterTestBase):
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, default_wallet):
         self.main_wallet = default_wallet
-        self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+        self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"{str(uuid.uuid4())}.json")
         init_wallet(self.other_wallet, WALLET_PASS)
         if not FREE_STORAGE:
             main_chain = self.cluster.main_chain_nodes[0]

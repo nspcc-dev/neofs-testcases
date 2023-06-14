@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 import allure
 import json_transformers
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
+from common import ASSETS_DIR, TEST_FILES_DIR, TEST_OBJECTS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
 from json_transformers import encode_for_json
 from neofs_testlib.cli import NeofsCli
@@ -248,7 +248,7 @@ def create_session_token(
     Returns:
         The path to the generated session token file.
     """
-    session_token = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
+    session_token = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC)
     neofscli.session.create(
         rpc_endpoint=rpc_endpoint,
@@ -273,7 +273,7 @@ def sign_session_token(shell: Shell, session_token_file: str, wlt: WalletFile) -
     Returns:
         The path to the signed token.
     """
-    signed_token_file = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
+    signed_token_file = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
     neofscli.util.sign_session_token(
         wallet=wlt.path, from_file=session_token_file, to_file=signed_token_file

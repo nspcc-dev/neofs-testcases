@@ -8,7 +8,7 @@ from typing import Any, Optional
 import allure
 import json_transformers
 from cluster import Cluster
-from common import ASSETS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
+from common import ASSETS_DIR, TEST_OBJECTS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
 
@@ -98,7 +98,7 @@ def get_object(
 
     if not write_object:
         write_object = str(uuid.uuid4())
-    file_path = os.path.join(ASSETS_DIR, write_object)
+    file_path = os.path.join(ASSETS_DIR, TEST_OBJECTS_DIR, write_object)
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     cli.object.get(
@@ -346,7 +346,7 @@ def get_range(
     Returns:
         (str, bytes) - path to the file with range content and content of this file as bytes
     """
-    range_file_path = os.path.join(ASSETS_DIR, str(uuid.uuid4()))
+    range_file_path = os.path.join(ASSETS_DIR, TEST_OBJECTS_DIR, str(uuid.uuid4()))
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
     cli.object.range(

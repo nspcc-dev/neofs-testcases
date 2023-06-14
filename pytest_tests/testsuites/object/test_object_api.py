@@ -30,6 +30,7 @@ from python_keywords.storage_policy import get_complex_object_copies, get_simple
 from helpers.storage_object_info import StorageObjectInfo
 from steps.cluster_test_base import ClusterTestBase
 from steps.storage_object import delete_objects
+from test_control import expect_not_raises
 
 logger = logging.getLogger("NeoLogger")
 
@@ -93,7 +94,7 @@ def generate_ranges(
     params=[pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
     ids=["simple object", "complex object"],
     # Scope session to upload/delete each files set only once
-    scope="module",
+    scope="function",
 )
 def storage_objects(
     default_wallet: str, client_shell: Shell, cluster: Cluster, request: FixtureRequest
@@ -131,7 +132,8 @@ def storage_objects(
     yield storage_objects
 
     # Teardown after all tests done with current param
-    delete_objects(storage_objects, client_shell, cluster)
+    with expect_not_raises():
+        delete_objects(storage_objects, client_shell, cluster)
 
 
 @pytest.mark.grpc_api
