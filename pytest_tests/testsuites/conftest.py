@@ -45,8 +45,24 @@ from python_keywords.node_management import storage_node_healthcheck
 
 from helpers.wallet import WalletFactory
 
+from typing import Dict
+from pytest import StashKey, CollectReport
+
 logger = logging.getLogger("NeoLogger")
 
+phase_report_key = StashKey[Dict[str, CollectReport]]()
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # https://docs.pytest.org/en/latest/example/simple.html#making-test-result-information-available-in-fixtures
+    # execute all other hooks to obtain the report object
+    outcome = yield
+    rep = outcome.get_result()
+
+    # store test results for each phase of a call, which can
+    # be "setup", "call", "teardown"
+    item.stash.setdefault(phase_report_key, {})[rep.when] = rep
 
 def pytest_collection_modifyitems(items):
     # Make network tests last based on @pytest.mark.node_mgmt
@@ -177,7 +193,7 @@ def collect_full_tests_logs(temp_directory, hosting: Hosting):
 
 
 @pytest.fixture(scope="function", autouse=True)
-@allure.title("Collect test logs")
+@allure.title("Collect logs for failed tests")
 def collect_test_logs(request, temp_directory, hosting: Hosting):
     test_name = request.node.nodeid.translate(str.maketrans(":[]/", "____"))
     hash_suffix = hashlib.md5(test_name.encode()).hexdigest()
@@ -186,9 +202,12 @@ def collect_test_logs(request, temp_directory, hosting: Hosting):
     with allure.step(f'Start collecting logs for {file_name}'):
         start_time = datetime.utcnow()
     yield
-    with allure.step(f'Stop collecting logs for {file_name}, logs path: {logs_dir} '):
-        end_time = datetime.utcnow()
-        store_logs(hosting, logs_dir, file_name, start_time, end_time)
+    # https://docs.pytest.org/en/latest/example/simple.html#making-test-result-information-available-in-fixtures
+    report = request.node.stash[phase_report_key]
+    if report["setup"].failed or ("call" in report and report["call"].failed):
+        with allure.step(f'Stop collecting logs for {file_name}, logs path: {logs_dir} '):
+            end_time = datetime.utcnow()
+            store_logs(hosting, logs_dir, file_name, start_time, end_time)
 
 
 @pytest.fixture(scope="session", autouse=True)
