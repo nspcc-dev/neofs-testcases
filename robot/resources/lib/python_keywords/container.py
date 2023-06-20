@@ -206,9 +206,9 @@ def delete_container(
 def _parse_cid(output: str) -> str:
     """
     Parses container ID from a given CLI output. The input string we expect:
+            any lines or empty
             container ID: 2tz86kVTDpJxWHrhw3h6PbKMwkLtBEwoqhHQCKTre1FN
-            awaiting...
-            container has been persisted on sidechain
+            any lines or empty
     We want to take 'container ID' value from the string.
 
     Args:
@@ -217,16 +217,13 @@ def _parse_cid(output: str) -> str:
     Returns:
         (str): extracted CID
     """
-    try:
-        # taking first line from command's output
-        first_line = output.split("\n")[0]
-    except Exception:
-        first_line = ""
-        logger.error(f"Got empty output: {output}")
-    splitted = first_line.split(": ")
-    if len(splitted) != 2:
-        raise ValueError(f"no CID was parsed from command output: \t{first_line}")
-    return splitted[1]
+    lines = output.split("\n")
+    for line in lines:
+        if line.startswith("container ID:"):
+            cid = line.split(": ")[1]
+            return cid
+    logger.error(f"No CID found in output: {output}")
+    raise ValueError("No CID was parsed from command output.")
 
 
 @allure.step("Search container by name")
