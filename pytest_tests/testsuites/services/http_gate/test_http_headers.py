@@ -25,7 +25,6 @@ from wellknown_acl import PUBLIC_ACL
 from helpers.storage_object_info import StorageObjectInfo
 from steps.cluster_test_base import ClusterTestBase
 
-OBJECT_ALREADY_REMOVED_ERROR = "object already removed"
 logger = logging.getLogger("NeoLogger")
 
 
@@ -146,10 +145,11 @@ class Test_http_headers(ClusterTestBase):
                 shell=self.shell,
                 endpoint=self.cluster.default_rpc_endpoint,
             )
+            error_pattern = "404 Not Found"
             try_to_get_object_and_expect_error(
                 cid=storage_object_2.cid,
                 oid=storage_object_2.oid,
-                error_pattern=OBJECT_ALREADY_REMOVED_ERROR,
+                error_pattern=error_pattern,
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
             storage_objects_with_attributes.remove(storage_object_2)
