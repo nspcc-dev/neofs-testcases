@@ -206,6 +206,7 @@ def delete_container(
 def _parse_cid(output: str) -> str:
     """
     Parses container ID from a given CLI output. The input string we expect:
+            container creation request accepted for processing (the operation may not be completed yet)
             container ID: 2tz86kVTDpJxWHrhw3h6PbKMwkLtBEwoqhHQCKTre1FN
             awaiting...
             container has been persisted on sidechain
@@ -218,14 +219,14 @@ def _parse_cid(output: str) -> str:
         (str): extracted CID
     """
     try:
-        # taking first line from command's output
-        first_line = output.split("\n")[0]
+        # taking second line from command's output
+        second_line = output.split("\n")[1]
     except Exception:
-        first_line = ""
+        second_line = ""
         logger.error(f"Got empty output: {output}")
-    splitted = first_line.split(": ")
+    splitted = second_line.split(": ")
     if len(splitted) != 2:
-        raise ValueError(f"no CID was parsed from command output: \t{first_line}")
+        raise ValueError(f"no CID was parsed from command output: \t{second_line}")
     return splitted[1]
 
 
