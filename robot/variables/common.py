@@ -44,8 +44,11 @@ BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
 
 HOSTING_CONFIG_FILE = os.getenv("HOSTING_CONFIG_FILE", ".devenv.hosting.yaml")
 STORAGE_NODE_SERVICE_NAME_REGEX = r"s\d\d"
+MORPH_CHAIN_SERVICE_NAME_REGEX = r"morph-chain\d\d"
 HTTP_GATE_SERVICE_NAME_REGEX = r"http-gate\d\d"
 S3_GATE_SERVICE_NAME_REGEX = r"s3-gate\d\d"
+
+ENDPOINT_INTERNAL0 = "endpoint_internal0"
 
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures
