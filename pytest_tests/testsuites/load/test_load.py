@@ -8,7 +8,6 @@ from common import (
 )
 from k6 import LoadParams
 from load import (
-    clear_cache_and_data,
     get_services_endpoints,
     init_s3_client,
     multi_node_k6_run,
@@ -43,12 +42,9 @@ ENDPOINTS_ATTRIBUTES = {
 
 
 @pytest.mark.load
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/544")
-@pytest.mark.nspcc_dev__neofs_testcases__issue_544
 class TestLoad(ClusterTestBase):
     @pytest.fixture(autouse=True)
-    def clear_cache_and_data(self, hosting: Hosting):
-        clear_cache_and_data(hosting=hosting)
+    def restore_nodes(self, hosting: Hosting):
         yield
         start_stopped_nodes()
 
@@ -73,8 +69,7 @@ class TestLoad(ClusterTestBase):
     @pytest.mark.parametrize("load_nodes_count", LOAD_NODES_COUNT)
     @pytest.mark.benchmark
     @pytest.mark.grpc
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/544")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_544
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-dev-env/issues/271")
     def test_custom_load(
         self,
         obj_size,
@@ -96,32 +91,38 @@ class TestLoad(ClusterTestBase):
             f"deleters = {deleters}, obj_size = {obj_size}, "
             f"load_time = {load_time}"
         )
-        stop_unused_nodes(self.cluster.storage_nodes, node_count)
+        stop_unused_nodes(self.cluster.storage_nodes, int(node_count))
         with allure.step("Get endpoints"):
-            endpoints_list = get_services_endpoints(
-                hosting=hosting,
-                service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
-                endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
+            for load_type in LOAD_TYPE:
+                endpoints_list = get_services_endpoints(
+                    hosting=hosting,
+                    service_name_regex=ENDPOINTS_ATTRIBUTES[load_type]["regex"],
+                    endpoint_attribute=ENDPOINTS_ATTRIBUTES[load_type]["endpoint_attribute"],
+                )
+            endpoints = ",".join(e for e in endpoints_list[:int(node_count)] if e is not None)
+        with allure.step("Load params"):
+            load_params = LoadParams(
+                endpoint=endpoints,
+                obj_size=obj_size,
+                containers_count=containers_count,
+                out_file=out_file,
+                obj_count=obj_count,
+                writers=writers,
+                readers=readers,
+                deleters=deleters,
+                load_time=load_time,
+                load_type=load_type,
             )
-            endpoints = ",".join(endpoints_list[:node_count])
-        load_params = LoadParams(
-            endpoint=endpoints,
-            obj_size=obj_size,
-            containers_count=containers_count,
-            out_file=out_file,
-            obj_count=obj_count,
-            writers=writers,
-            readers=readers,
-            deleters=deleters,
-            load_time=load_time,
-            load_type=load_type,
-        )
-        load_nodes_list = LOAD_NODES[:load_nodes_count]
-        k6_load_instances = prepare_k6_instances(
-            load_nodes=load_nodes_list,
-            login=LOAD_NODE_SSH_USER,
-            pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
-            load_params=load_params,
-        )
+
+        with allure.step("Load nodes list"):
+            load_nodes_list = LOAD_NODES[:int(load_nodes_count)]
+
+        with allure.step("K6 load instances"):
+            k6_load_instances = prepare_k6_instances(
+                load_nodes=load_nodes_list,
+                login=LOAD_NODE_SSH_USER,
+                pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
+                load_params=load_params,
+            )
         with allure.step("Run load"):
             multi_node_k6_run(k6_load_instances)
