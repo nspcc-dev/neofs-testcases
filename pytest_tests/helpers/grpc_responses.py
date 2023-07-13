@@ -26,6 +26,9 @@ INVALID_RANGE_OVERFLOW = "invalid '{range}' range: uint64 overflow"
 INVALID_OFFSET_SPECIFIER = "invalid '{range}' range offset specifier"
 INVALID_LENGTH_SPECIFIER = "invalid '{range}' range length specifier"
 
+NOT_CONTAINER_OWNER = "provided account differs with the container owner"
+TIMED_OUT = "timed out after \\d+ seconds"
+CONTAINER_DELETION_TIMED_OUT = "container deletion: await timeout expired"
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """

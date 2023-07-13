@@ -2,6 +2,7 @@ import allure
 import pytest
 from cluster_test_base import ClusterTestBase
 from failover_utils import wait_object_replication
+from grpc_responses import NOT_CONTAINER_OWNER
 from neofs_testlib.shell import Shell
 from python_keywords.acl import (
     EACLAccess,
@@ -28,6 +29,7 @@ from python_keywords.object_access import (
     can_put_object,
     can_search_object,
 )
+from testsuites.acl.conftest import Wallets
 from wellknown_acl import PUBLIC_ACL
 
 
@@ -35,7 +37,7 @@ from wellknown_acl import PUBLIC_ACL
 @pytest.mark.acl_extended
 class TestEACLContainer(ClusterTestBase):
     @pytest.fixture(scope="function")
-    def eacl_full_placement_container_with_object(self, wallets, file_path) -> str:
+    def eacl_full_placement_container_with_object(self, wallets, file_path) -> tuple[str, str, str]:
         user_wallet = wallets.get_wallet()
         storage_nodes = self.cluster.storage_nodes
         node_count = len(storage_nodes)
@@ -678,4 +680,29 @@ class TestEACLContainer(ClusterTestBase):
                     shell=self.shell,
                     endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
+                )
+
+    @pytest.mark.trusted_party_proved
+    @allure.title("Not owner and not trusted party can NOT set eacl")
+    def test_only_owner_can_set_eacl(
+        self,
+        wallets: Wallets,
+        eacl_full_placement_container_with_object: tuple[str, str, str],
+        not_owner_wallet: str
+    ):
+        cid, oid, file_path = eacl_full_placement_container_with_object
+
+        eacl = [
+            EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op)
+            for op in EACLOperation
+        ]
+
+        with allure.step("Try to change EACL"):
+            with pytest.raises(RuntimeError, match=NOT_CONTAINER_OWNER):
+                set_eacl(
+                    wallet_path=not_owner_wallet,
+                    cid=cid,
+                    eacl_table_path=create_eacl(cid, eacl, shell=self.shell),
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
                 )

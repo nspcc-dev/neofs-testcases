@@ -3,6 +3,7 @@ import json
 import allure
 import pytest
 from epoch import tick_epoch
+from grpc_responses import NOT_CONTAINER_OWNER, CONTAINER_DELETION_TIMED_OUT
 from python_keywords.container import (
     create_container,
     delete_container,
@@ -11,6 +12,7 @@ from python_keywords.container import (
     wait_for_container_creation,
     wait_for_container_deletion,
 )
+from wallet import WalletFile
 from utility import placement_policy_from_container
 from wellknown_acl import PRIVATE_ACL_F
 
@@ -85,6 +87,40 @@ class TestContainer(ClusterTestBase):
             wait_for_container_deletion(
                 wallet, cid, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
             )
+
+    @pytest.mark.trusted_party_proved
+    @allure.title("Not owner and not trusted party can NOT delete container")
+    def test_only_owner_can_delete_container(
+            self,
+            not_owner_wallet: WalletFile,
+            default_wallet: str
+    ):
+        cid = create_container(
+            wallet=default_wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+        )
+
+        with allure.step("Try to delete container"):
+            with pytest.raises(RuntimeError, match=NOT_CONTAINER_OWNER):
+                delete_container(
+                    wallet=not_owner_wallet,
+                    cid=cid,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
+                    await_mode=True,
+                )
+
+        with allure.step("Try to force delete container"):
+            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+                delete_container(
+                    wallet=not_owner_wallet,
+                    cid=cid,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
+                    await_mode=True,
+                    force=True,
+                )
 
     @allure.title("Parallel container creation and deletion")
     def test_container_creation_deletion_parallel(self, default_wallet):

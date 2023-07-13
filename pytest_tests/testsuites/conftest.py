@@ -9,6 +9,7 @@ from datetime import datetime
 import allure
 import pytest
 import yaml
+from typing import Optional
 from binary_version_helper import get_local_binaries_versions, get_remote_binaries_versions
 from cluster import Cluster
 from common import (
@@ -304,33 +305,18 @@ def background_grpc_load(client_shell: Shell, hosting: Hosting):
                 k6_verify_instance.wait_until_finished(BACKGROUND_LOAD_MAX_TIME)
 
 
+@pytest.fixture(scope="function")
+@allure.title("Prepare not owner wallet and deposit")
+def not_owner_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster) -> str:
+    wallet_path = create_wallet(client_shell, temp_directory, cluster, 'not_owner_wallet')
+    yield wallet_path
+    os.remove(wallet_path)
+
+
 @pytest.fixture(scope="session")
-@allure.title("Prepare wallet and deposit")
+@allure.title("Prepare default wallet and deposit")
 def default_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster):
-    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
-    init_wallet(wallet_path, WALLET_PASS)
-    allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
-
-    if not FREE_STORAGE:
-        main_chain = cluster.main_chain_nodes[0]
-        deposit = 30
-        transfer_gas(
-            shell=client_shell,
-            amount=deposit + 1,
-            main_chain=main_chain,
-            wallet_to_path=wallet_path,
-            wallet_to_password=WALLET_PASS,
-        )
-        deposit_gas(
-            shell=client_shell,
-            main_chain=main_chain,
-            amount=deposit,
-            wallet_from_path=wallet_path,
-            wallet_from_password=WALLET_PASS,
-        )
-
-    return wallet_path
-
+    return create_wallet(client_shell, temp_directory, cluster)
 
 @allure.title("Check logs for OOM and PANIC entries in {logs_dir}")
 def check_logs(logs_dir: str):
@@ -388,3 +374,35 @@ def create_dir(dir_path: str) -> None:
 def remove_dir(dir_path: str) -> None:
     with allure.step("Remove directory"):
         shutil.rmtree(dir_path, ignore_errors=True)
+
+
+@allure.title("Prepare wallet and deposit")
+def create_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster, name: Optional[str] = None) -> str:
+    if name is None:
+        wallet_name = f'{str(uuid.uuid4())}.json'
+    else:
+        wallet_name = f'{name}.json'
+
+    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, wallet_name)
+    init_wallet(wallet_path, WALLET_PASS)
+    allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
+
+    if not FREE_STORAGE:
+        main_chain = cluster.main_chain_nodes[0]
+        deposit = 30
+        transfer_gas(
+            shell=client_shell,
+            amount=deposit + 1,
+            main_chain=main_chain,
+            wallet_to_path=wallet_path,
+            wallet_to_password=WALLET_PASS,
+        )
+        deposit_gas(
+            shell=client_shell,
+            main_chain=main_chain,
+            amount=deposit,
+            wallet_from_path=wallet_path,
+            wallet_from_password=WALLET_PASS,
+        )
+
+    return wallet_path
