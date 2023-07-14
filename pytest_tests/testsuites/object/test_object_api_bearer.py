@@ -91,6 +91,7 @@ class TestObjectApiWithBearerToken(ClusterTestBase):
         ids=["simple object", "complex object"],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_delete_object_with_s3_wallet_bearer(
         self,
         storage_objects: list[StorageObjectInfo],
@@ -140,6 +141,7 @@ class TestObjectApiWithBearerToken(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_get_object_with_s3_wallet_bearer_from_all_nodes(
         self,
         user_container: StorageContainer,

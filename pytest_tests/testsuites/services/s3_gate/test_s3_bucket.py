@@ -13,6 +13,7 @@ from s3_helper import (
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
 
+from aws_cli_client import AwsCliClient
 
 def pytest_generate_tests(metafunc):
     if "s3_client" in metafunc.fixturenames:
@@ -25,7 +26,6 @@ class TestS3GateBucket(TestS3GateBase):
     @pytest.mark.sanity
     @allure.title("Test S3: Create Bucket with different ACL")
     def test_s3_create_bucket_with_ACL(self):
-
         with allure.step("Create bucket with ACL private"):
             bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, acl="private")
             bucket_acl = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket)
@@ -52,7 +52,6 @@ class TestS3GateBucket(TestS3GateBase):
 
     @allure.title("Test S3: Create Bucket with different ACL by grand")
     def test_s3_create_bucket_with_grands(self):
-
         with allure.step("Create bucket with  --grant-read"):
             bucket = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,

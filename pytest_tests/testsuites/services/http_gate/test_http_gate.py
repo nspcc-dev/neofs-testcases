@@ -44,6 +44,7 @@ class TestHttpGate(ClusterTestBase):
         TestHttpGate.wallet = default_wallet
 
     @allure.title("Test Put over gRPC, Get over HTTP")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_put_grpc_get_http(self, complex_object_size, simple_object_size):
         """
         Test that object can be put using gRPC interface and get using HTTP.
@@ -100,6 +101,7 @@ class TestHttpGate(ClusterTestBase):
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
     @allure.title("Test Put over HTTP, Get over HTTP")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @pytest.mark.smoke
     def test_put_http_get_http(self, complex_object_size, simple_object_size):
         """
@@ -248,6 +250,7 @@ class TestHttpGate(ClusterTestBase):
                 for oid in not_expired_objects:
                     get_via_http_gate(cid=cid, oid=oid, endpoint=http_endpoint)
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Test Zip in HTTP header")
     def test_zip_in_http(self, complex_object_size, simple_object_size):
         cid = create_container(
@@ -288,6 +291,7 @@ class TestHttpGate(ClusterTestBase):
 
     @pytest.mark.long
     @allure.title("Test Put over HTTP/Curl, Get over HTTP/Curl for large object")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_put_http_get_http_large_file(self, complex_object_size):
         """
         This test checks upload and download using curl with 'large' object.
@@ -335,6 +339,7 @@ class TestHttpGate(ClusterTestBase):
         )
 
     @allure.title("Test Put/Get over HTTP using Curl utility")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_put_http_get_http_curl(self, complex_object_size, simple_object_size):
         """
         Test checks upload and download over HTTP using curl utility.

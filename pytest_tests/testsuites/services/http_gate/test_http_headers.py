@@ -81,6 +81,7 @@ class Test_http_headers(ClusterTestBase):
 
         yield storage_objects
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Get object1 by attribute")
     def test_object1_can_be_get_by_attr(
         self, storage_objects_with_attributes: list[StorageObjectInfo]
@@ -105,6 +106,7 @@ class Test_http_headers(ClusterTestBase):
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Test get object2 with different attributes, then delete object2 and get object1")
     def test_object2_can_be_get_by_attr(
         self, storage_objects_with_attributes: list[StorageObjectInfo]

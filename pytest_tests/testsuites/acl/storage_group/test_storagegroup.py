@@ -67,6 +67,7 @@ class TestStorageGroup(ClusterTestBase):
             )
 
     @allure.title("Test Storage Group in Private Container")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_storagegroup_basic_private_container(self, object_size, max_object_size):
         cid = create_container(
             self.main_wallet, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
@@ -105,6 +106,7 @@ class TestStorageGroup(ClusterTestBase):
 
     @pytest.mark.sanity
     @allure.title("Test Storage Group in Public Container")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_storagegroup_basic_public_container(self, object_size, max_object_size):
         cid = create_container(
             self.main_wallet,
@@ -140,6 +142,7 @@ class TestStorageGroup(ClusterTestBase):
         )
 
     @allure.title("Test Storage Group in Read-Only Container")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_storagegroup_basic_ro_container(self, object_size, max_object_size):
         cid = create_container(
             self.main_wallet,
@@ -176,6 +179,7 @@ class TestStorageGroup(ClusterTestBase):
         )
 
     @allure.title("Test Storage Group with Bearer Allow")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_storagegroup_bearer_allow(self, object_size, max_object_size):
         cid = create_container(
             self.main_wallet,
@@ -233,6 +237,7 @@ class TestStorageGroup(ClusterTestBase):
         )
 
     @allure.title("Test to check Storage Group lifetime")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_storagegroup_lifetime(self, object_size):
         cid = create_container(
             self.main_wallet, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint

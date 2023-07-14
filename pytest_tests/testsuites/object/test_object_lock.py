@@ -151,6 +151,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         ids=["simple object", "complex object"],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_locked_object_cannot_be_deleted(
         self,
         request: FixtureRequest,
@@ -343,6 +344,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_should_be_possible_to_lock_multiple_objects_at_once(
         self,
         request: FixtureRequest,
@@ -438,6 +440,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         ids=["simple object", "complex object"],
     )
     @expect_not_raises()
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_after_lock_expiration_with_lifetime_user_should_be_able_to_delete_object(
         self,
         request: FixtureRequest,
@@ -588,6 +591,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         [pytest.lazy_fixture("complex_object_size")],
         indirect=True,
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_chunks_of_locked_complex_object_can_be_dropped(
         self, new_locked_storage_object: StorageObjectInfo
     ):

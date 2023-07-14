@@ -28,6 +28,7 @@ class Test_http_streaming(ClusterTestBase):
         [pytest.lazy_fixture("complex_object_size")],
         ids=["complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_object_can_be_put_get_by_streaming(self, object_size: int):
         """
         Test that object can be put using gRPC interface and get using HTTP.

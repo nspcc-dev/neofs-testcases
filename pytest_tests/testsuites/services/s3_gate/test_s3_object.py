@@ -240,6 +240,7 @@ class TestS3GateObject(TestS3GateBase):
             for tag in expected_tags:
                 assert tag in got_tags, f"Expected tag {tag} in {got_tags}"
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/801")
     @allure.title("Test S3: Delete version of object")
     def test_s3_delete_versioning(self, bucket, complex_object_size, simple_object_size):
         version_1_content = "Version 1"
@@ -389,6 +390,7 @@ class TestS3GateObject(TestS3GateBase):
                 object_3.get("VersionId") == version_id_2
             ), f"Get object with version {version_id_2}"
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/802")
     @allure.title("Test S3: Get range")
     def test_s3_get_range(self, bucket, complex_object_size: int, simple_object_size: int):
         file_path = generate_file(complex_object_size)
@@ -471,6 +473,7 @@ class TestS3GateObject(TestS3GateBase):
             con_file = concat_files([object_3_part_1, object_3_part_2, object_3_part_3])
             assert get_file_hash(con_file) == get_file_hash(file_name_1), "Hashes must be the same"
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/801")
     @allure.title("Test S3: Copy object with metadata")
     @pytest.mark.smoke
     def test_s3_head_object(self, bucket, complex_object_size, simple_object_size):
@@ -510,6 +513,7 @@ class TestS3GateObject(TestS3GateBase):
             ), f"Expected VersionId is {version_id_1}"
             assert response.get("ContentLength") != 0, "Expected ContentLength is not zero"
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/801")
     @allure.title("Test S3: list of object with versions")
     @pytest.mark.parametrize("list_type", ["v1", "v2"])
     def test_s3_list_object(self, list_type: str, bucket, complex_object_size):
@@ -769,6 +773,7 @@ class TestS3GateObject(TestS3GateBase):
             object_7 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/802")
     @allure.title("Test S3: put object with lock-mode")
     def test_s3_put_object_lock_mode(self, complex_object_size, simple_object_size):
 

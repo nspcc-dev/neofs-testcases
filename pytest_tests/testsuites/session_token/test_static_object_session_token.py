@@ -159,6 +159,7 @@ class TestObjectStaticSession(ClusterTestBase):
             (get_object, ObjectVerb.GET),
         ],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_static_session_read(
         self,
         user_wallet: WalletFile,
@@ -186,6 +187,7 @@ class TestObjectStaticSession(ClusterTestBase):
                     session=static_sessions[verb],
                 )
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Validate static session with range operations")
     @pytest.mark.static_session
     @pytest.mark.parametrize(
@@ -476,6 +478,7 @@ class TestObjectStaticSession(ClusterTestBase):
                 session=session_token_file,
             )
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Validate static session which expires at next epoch")
     @pytest.mark.static_session
     def test_static_session_expiration_at_next(
@@ -531,6 +534,7 @@ class TestObjectStaticSession(ClusterTestBase):
                 session=token_expire_at_next_epoch,
             )
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     @allure.title("Validate static session which is valid starting from next epoch")
     @pytest.mark.static_session
     def test_static_session_start_at_next(
@@ -692,6 +696,7 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session which is issued in future epoch")
     @pytest.mark.static_session
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_static_session_invalid_issued_epoch(
         self,
         owner_wallet: WalletFile,

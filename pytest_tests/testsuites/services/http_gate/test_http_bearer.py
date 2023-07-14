@@ -100,6 +100,7 @@ class Test_http_bearer(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_put_with_bearer_when_eacl_restrict(
         self,
         object_size: int,

@@ -6,6 +6,7 @@ from s3_helper import assert_s3_acl, object_key_from_file_path
 from steps import s3_gate_bucket, s3_gate_object
 from steps.s3_gate_base import TestS3GateBase
 
+from aws_cli_client import AwsCliClient
 
 def pytest_generate_tests(metafunc):
     if "s3_client" in metafunc.fixturenames:

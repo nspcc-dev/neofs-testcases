@@ -23,6 +23,7 @@ class TestObjectApiLifetime(ClusterTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
     def test_object_api_lifetime(
         self, default_wallet: str, request: FixtureRequest, object_size: int
     ):

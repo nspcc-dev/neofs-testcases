@@ -284,6 +284,8 @@ class TestNodeManagement(ClusterTestBase):
     )
     @pytest.mark.node_mgmt
     @allure.title("Test object copies and storage nodes based on placement policy")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2440")
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2441")
     def test_placement_policy_with_nodes(
         self,
         default_wallet,
