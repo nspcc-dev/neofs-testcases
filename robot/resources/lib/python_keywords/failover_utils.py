@@ -2,10 +2,14 @@ import logging
 from time import sleep
 
 import allure
+from typing import List, Tuple, Optional
+from urllib.parse import urlparse
 from cluster import Cluster, StorageNode
 from neofs_testlib.shell import Shell
+from neofs_testlib.hosting import Hosting
 from python_keywords.node_management import storage_node_healthcheck
 from storage_policy import get_nodes_with_object
+from common import MORPH_CHAIN_SERVICE_NAME_REGEX, ENDPOINT_INTERNAL0
 
 logger = logging.getLogger("NeoLogger")
 
@@ -52,3 +56,18 @@ def is_all_storage_nodes_returned(cluster: Cluster) -> bool:
             if health_check.health_status != "READY" or health_check.network_status != "ONLINE":
                 return False
     return True
+
+
+@allure.step("Get morph chain endpoints")
+def get_morph_chain_endpoints(hosting: Hosting) -> List[Tuple[str, str]]:
+    morph_chain_config = hosting.find_service_configs(MORPH_CHAIN_SERVICE_NAME_REGEX)
+    endpoints = []
+    for config in morph_chain_config:
+        if ENDPOINT_INTERNAL0 not in config.attributes:
+            raise ValueError(f"{ENDPOINT_INTERNAL0} is not present in the attributes of the config: {config}")
+        morph_chain_addr_full = config.attributes[ENDPOINT_INTERNAL0]
+        parsed_url = urlparse(morph_chain_addr_full)
+        addr = parsed_url.hostname
+        port = str(parsed_url.port)
+        endpoints.append((addr, port))
+    return endpoints
