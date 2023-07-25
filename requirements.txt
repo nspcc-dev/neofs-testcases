@@ -1,5 +1,5 @@
 aiodns==3.0.0
-aiohttp==3.7.4.post0
+aiohttp==3.8.5
 aioresponses==0.7.2
 allure-pytest==2.9.45
 allure-python-commons==2.9.45
