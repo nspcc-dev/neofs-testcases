@@ -210,6 +210,22 @@ def collect_test_logs(request, temp_directory, hosting: Hosting):
             store_logs(hosting, logs_dir, file_name, start_time, end_time)
 
 
+@pytest.fixture(scope="function", autouse=True)
+@allure.title("Checking netinfo for failed tests")
+def netinfo(request, cluster: Cluster, client_shell: Shell, default_wallet: str):
+    yield
+    report = request.node.stash[phase_report_key]
+    if report["setup"].failed or ("call" in report and report["call"].failed):
+        for node in cluster.storage_nodes:
+            with allure.step(f'Checking netinfo for node {node}'):
+                net_info = get_netmap_netinfo(
+                    wallet=default_wallet,
+                    endpoint=node.get_rpc_endpoint(),
+                    shell=client_shell,
+                )
+            logger.info(f'Netinfo from {node}:\n{net_info}')
+
+
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Run health check for all storage nodes")
 def run_health_check(collect_full_tests_logs, cluster: Cluster):
