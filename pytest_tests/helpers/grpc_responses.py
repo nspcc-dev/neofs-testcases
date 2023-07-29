@@ -27,8 +27,10 @@ INVALID_OFFSET_SPECIFIER = "invalid '{range}' range offset specifier"
 INVALID_LENGTH_SPECIFIER = "invalid '{range}' range length specifier"
 
 NOT_CONTAINER_OWNER = "provided account differs with the container owner"
+NOT_SESSION_CONTAINER_OWNER = "session issuer differs with the container owner"
 TIMED_OUT = "timed out after \\d+ seconds"
 CONTAINER_DELETION_TIMED_OUT = "container deletion: await timeout expired"
+EACL_TIMED_OUT = "eACL setting: await timeout expired"
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """
