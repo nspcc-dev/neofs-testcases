@@ -94,7 +94,7 @@ def get_balance(shell: Shell, morph_chain: MorphChain, wallet_path: str, wallet_
     This function returns NeoFS balance for given wallet.
     """
     with open(wallet_path) as wallet_file:
-        wallet = neo3_wallet.Wallet.from_json(json.load(wallet_file), password=wallet_password)
+        wallet = neo3_wallet.Wallet.from_json(json.load(wallet_file), passwords=[wallet_password])
     acc = wallet.accounts[-1]
     payload = [{"type": "Hash160", "value": str(acc.script_hash)}]
     try:
