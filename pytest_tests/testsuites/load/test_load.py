@@ -8,7 +8,6 @@ from common import (
 )
 from k6 import LoadParams
 from load import (
-    clear_cache_and_data,
     get_services_endpoints,
     init_s3_client,
     multi_node_k6_run,
@@ -37,18 +36,16 @@ from neofs_testlib.hosting import Hosting
 
 ENDPOINTS_ATTRIBUTES = {
     "http": {"regex": HTTP_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint"},
-    "grpc": {"regex": STORAGE_NODE_SERVICE_NAME_REGEX, "endpoint_attribute": "rpc_endpoint"},
+    "grpc": {"regex": STORAGE_NODE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint_data0"},
     "s3": {"regex": S3_GATE_SERVICE_NAME_REGEX, "endpoint_attribute": "endpoint"},
 }
 
 
 @pytest.mark.load
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/544")
 @pytest.mark.nspcc_dev__neofs_testcases__issue_544
 class TestLoad(ClusterTestBase):
     @pytest.fixture(autouse=True)
-    def clear_cache_and_data(self, hosting: Hosting):
-        clear_cache_and_data(hosting=hosting)
+    def restore_nodes(self, hosting: Hosting):
         yield
         start_stopped_nodes()
 
@@ -61,6 +58,7 @@ class TestLoad(ClusterTestBase):
                 pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
                 hosting=hosting,
                 container_placement_policy=CONTAINER_PLACEMENT_POLICY,
+                ssh_port=2222,
             )
 
     @pytest.mark.parametrize("obj_size, out_file", list(zip(OBJ_SIZE, OUT_FILE)))
@@ -73,7 +71,6 @@ class TestLoad(ClusterTestBase):
     @pytest.mark.parametrize("load_nodes_count", LOAD_NODES_COUNT)
     @pytest.mark.benchmark
     @pytest.mark.grpc
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/544")
     @pytest.mark.nspcc_dev__neofs_testcases__issue_544
     def test_custom_load(
         self,
@@ -100,8 +97,8 @@ class TestLoad(ClusterTestBase):
         with allure.step("Get endpoints"):
             endpoints_list = get_services_endpoints(
                 hosting=hosting,
-                service_name_regex=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["regex"],
-                endpoint_attribute=ENDPOINTS_ATTRIBUTES[LOAD_TYPE]["endpoint_attribute"],
+                service_name_regex=ENDPOINTS_ATTRIBUTES[load_type]["regex"],
+                endpoint_attribute=ENDPOINTS_ATTRIBUTES[load_type]["endpoint_attribute"],
             )
             endpoints = ",".join(endpoints_list[:node_count])
         load_params = LoadParams(
@@ -122,6 +119,7 @@ class TestLoad(ClusterTestBase):
             login=LOAD_NODE_SSH_USER,
             pkey=LOAD_NODE_SSH_PRIVATE_KEY_PATH,
             load_params=load_params,
+            ssh_port=2222,
         )
         with allure.step("Run load"):
             multi_node_k6_run(k6_load_instances)

@@ -40,7 +40,12 @@ def start_stopped_nodes():
 
 @allure.title("Init s3 client")
 def init_s3_client(
-    load_nodes: list, login: str, pkey: str, container_placement_policy: str, hosting: Hosting
+    load_nodes: list,
+    login: str,
+    pkey: str,
+    container_placement_policy: str,
+    hosting: Hosting,
+    ssh_port: int,
 ):
     service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
     host = hosting.get_host_by_service(service_configs[0].name)
@@ -52,7 +57,7 @@ def init_s3_client(
     node_endpoint = service_configs[0].attributes["rpc_endpoint"]
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
-        ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
+        ssh_client = SSHShell(host=load_node, port=ssh_port, login=login, private_key_path=pkey)
         path = ssh_client.exec(r"sudo find . -name 'k6' -exec dirname {} \; -quit").stdout.strip(
             "\n"
         )
@@ -88,16 +93,6 @@ def init_s3_client(
         ssh_client.exec("aws configure", CommandOptions(interactive_inputs=configure_input))
 
 
-@allure.title("Clear cache and data from storage nodes")
-def clear_cache_and_data(hosting: Hosting):
-    service_configs = hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX)
-    for service_config in service_configs:
-        host = hosting.get_host_by_service(service_config.name)
-        host.stop_service(service_config.name)
-        host.delete_storage_node_data(service_config.name)
-        host.start_service(service_config.name)
-
-
 @allure.title("Prepare objects")
 def prepare_objects(k6_instance: K6):
     k6_instance.prepare()
@@ -105,11 +100,16 @@ def prepare_objects(k6_instance: K6):
 
 @allure.title("Prepare K6 instances and objects")
 def prepare_k6_instances(
-    load_nodes: list, login: str, pkey: str, load_params: LoadParams, prepare: bool = True
+    load_nodes: list,
+    login: str,
+    pkey: str,
+    load_params: LoadParams,
+    ssh_port: int,
+    prepare: bool = True,
 ) -> list[K6]:
     k6_load_objects = []
     for load_node in load_nodes:
-        ssh_client = SSHShell(host=load_node, login=login, private_key_path=pkey)
+        ssh_client = SSHShell(port=ssh_port, host=load_node, login=login, private_key_path=pkey)
         k6_load_object = K6(load_params, ssh_client)
         k6_load_objects.append(k6_load_object)
     for k6_load_object in k6_load_objects:

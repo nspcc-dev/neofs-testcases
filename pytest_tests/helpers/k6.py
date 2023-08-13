@@ -52,8 +52,8 @@ class K6:
 
         self.load_params = load_params
         self.shell = shell
+        self.k6_dir = "/xk6-neofs"
 
-        self._k6_dir = None
         self._k6_result = None
 
         self._k6_process = None
@@ -64,17 +64,8 @@ class K6:
     def process_dir(self) -> str:
         return self._k6_process.process_dir
 
-    @property
-    def k6_dir(self) -> str:
-        if not self._k6_dir:
-            self._k6_dir = self.shell.exec(
-                r"sudo find . -name 'k6' -exec dirname {} \; -quit"
-            ).stdout.strip("\n")
-        return self._k6_dir
-
     @allure.step("Prepare containers and objects")
     def prepare(self) -> str:
-        self._k6_dir = self.k6_dir
         if self.load_params.load_type == "http" or self.load_params.load_type == "grpc":
             command = (
                 f"{self.k6_dir}/scenarios/preset/preset_grpc.py "
@@ -126,8 +117,6 @@ class K6:
 
     @allure.step("Start K6 on initiator")
     def start(self) -> None:
-
-        self._k6_dir = self.k6_dir
         command = (
             f"{self.k6_dir}/k6 run {self._generate_env_variables(self.load_params, self.k6_dir)} "
             f"{self.k6_dir}/scenarios/{self.load_params.load_type}.js"
