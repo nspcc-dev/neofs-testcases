@@ -35,7 +35,7 @@ def get_wallet_public_key(wallet_path: str, wallet_password: str, format: str = 
         wallet_content = json.load(file)
     __fix_wallet_schema(wallet_content)
 
-    wallet_from_json = wallet.Wallet.from_json(wallet_content, password=wallet_password)
+    wallet_from_json = wallet.Wallet.from_json(wallet_content, passwords=[wallet_password])
     public_key_hex = str(wallet_from_json.accounts[0].public_key)
 
     # Convert public key to specified format

@@ -23,7 +23,7 @@ def verify_head_tombstone(
 
     with open(wallet_path, "r") as file:
         wlt_data = json.loads(file.read())
-    wlt = wallet.Wallet.from_json(wlt_data, password="")
+    wlt = wallet.Wallet.from_json(wlt_data, passwords=[""])
     addr = wlt.accounts[0].address
 
     assert header["ownerID"] == addr, "Tombstone Owner ID is wrong"
