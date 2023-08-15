@@ -17,16 +17,23 @@ def parse_args():
     parser.add_argument('--cid', required=True, type=str, help='Container ID')
     parser.add_argument('--run_id', required=True, type=str, help='GitHub run ID')
     parser.add_argument('--allure_report', type=str, help='Path to generated allure report directory',
-                        default='allure_report')
+                        default='allure_report'),
+    parser.add_argument('--expire-at', type=int,
+                        help='Expiration epoch. If epoch is not provided, or if it is 0, the report will be stored indefinitely',
+                        default=None)
+
     return parser.parse_args()
 
 
 def put_combine_result_as_static_page(directory: str, neofs_domain: str, wallet: str, cid: str, run_id: str,
-                                      password: str) -> None:
+                                      expire_at: int, password: str) -> None:
     base_cmd = (
         f'NEOFS_CLI_PASSWORD={password} neofs-cli --rpc-endpoint st1.{neofs_domain}:8080 '
         f'--wallet {wallet}  object put --cid {cid} --timeout {PUT_TIMEOUT}s'
     )
+
+    if expire_at is not None and expire_at > 0:
+        base_cmd += f' --expire-at {expire_at}'
 
     for subdir, dirs, files in os.walk(directory):
         current_dir_name = os.path.basename(subdir)
@@ -96,8 +103,9 @@ if __name__ == '__main__':
     combine_path = combine_report(args.allure_report)
     neofs_password = get_password()
 
-    put_combine_result_as_static_page(combine_path, args.neofs_domain, args.wallet, args.cid, args.run_id, neofs_password)
-    put_combine_result_as_static_page(args.allure_report, args.neofs_domain, args.wallet, args.cid, args.run_id,
+    put_combine_result_as_static_page(combine_path, args.neofs_domain, args.wallet, args.cid, args.run_id, args.expire_at,
                                       neofs_password)
+    put_combine_result_as_static_page(args.allure_report, args.neofs_domain, args.wallet, args.cid, args.run_id,
+                                      args.expire_at, neofs_password)
 
     print(f'See report: https://http.{args.neofs_domain}/{args.cid}/{args.run_id}/{COMPLETE_FILE_NAME}')
