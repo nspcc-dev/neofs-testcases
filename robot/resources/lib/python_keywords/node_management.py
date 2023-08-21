@@ -59,6 +59,28 @@ def start_storage_nodes(nodes: list[StorageNode]) -> None:
         node.start_service()
 
 
+@allure.step("Stop storage nodes")
+def stop_storage_nodes(nodes: list[StorageNode]) -> None:
+    """
+    The function stops specified storage nodes.
+    Args:
+       nodes: the list of nodes to stop
+    """
+    for node in nodes:
+        node.stop_service()
+
+
+@allure.step("Restart storage nodes")
+def restart_storage_nodes(nodes: list[StorageNode]) -> None:
+    """
+    The function restarts specified storage nodes.
+    Args:
+       nodes: the list of nodes to restart
+    """
+    for node in nodes:
+        node.restart_service()
+
+
 @allure.step("Get Locode from random storage node")
 def get_locode_from_random_node(cluster: Cluster) -> str:
     node = random.choice(cluster.storage_nodes)
