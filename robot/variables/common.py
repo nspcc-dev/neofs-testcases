@@ -36,8 +36,7 @@ NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
 NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "neofs-s3-authmate")
 NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC", "neofs-adm")
 
-# Config for neofs-adm utility. Optional if tests are running against devenv
-NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH")
+NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH", os.path.join(DEVENV_PATH, "neofs-adm.yml"))
 
 FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
 BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")
