@@ -529,9 +529,17 @@ def get_netmap_netinfo(
 
     settings = dict()
 
+    def str_to_bool(val: str) -> bool:
+        if val == "true":
+            return True
+        elif val == "false":
+            return False
+        else:
+            raise ValueError(f"Invalid value: {val}")
+
     patterns = [
         (re.compile("(.*): (\d+)"), int),
-        (re.compile("(.*): (false|true)"), bool),
+        (re.compile("(.*): (false|true)"), str_to_bool),
         (re.compile("(.*): (\d+\.\d+)"), float),
     ]
     for pattern, func in patterns:
