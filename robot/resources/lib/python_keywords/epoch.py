@@ -72,6 +72,13 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
     alive_node = alive_node if alive_node else cluster.storage_nodes[0]
     remote_shell = alive_node.host.get_shell()
 
+    # Use first node by default
+    ir_node = cluster.ir_nodes[0]
+    # In case if no local_wallet_path is provided, we use wallet_path
+    ir_wallet_path = ir_node.get_wallet_path()
+    morph_chain = cluster.morph_chain_nodes[0]
+    morph_endpoint = morph_chain.get_endpoint()
+
     if NEOFS_ADM_EXEC and NEOFS_ADM_CONFIG_PATH:
         # If neofs-adm is available, then we tick epoch with it (to be consistent with UAT tests)
         neofsadm = NeofsAdm(
@@ -79,21 +86,18 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
             neofs_adm_exec_path=NEOFS_ADM_EXEC,
             config_file=NEOFS_ADM_CONFIG_PATH,
         )
-        neofsadm.morph.force_new_epoch()
+        
+        neofsadm.morph.force_new_epoch(
+            rpc_endpoint=morph_endpoint,
+            alphabet_wallets="/".join(ir_wallet_path.split("/")[:-1]),
+        )
         return
+
+    ir_wallet_pass = ir_node.get_wallet_password()
 
     # Otherwise we tick epoch using transaction
     cur_epoch = get_epoch(shell, cluster)
-
-    # Use first node by default
-    ir_node = cluster.ir_nodes[0]
-    # In case if no local_wallet_path is provided, we use wallet_path
-    ir_wallet_path = ir_node.get_wallet_path()
-    ir_wallet_pass = ir_node.get_wallet_password()
     ir_address = get_last_address_from_wallet(ir_wallet_path, ir_wallet_pass)
-
-    morph_chain = cluster.morph_chain_nodes[0]
-    morph_endpoint = morph_chain.get_endpoint()
 
     neogo = NeoGo(shell, neo_go_exec_path=NEOGO_EXECUTABLE)
     neogo.contract.invokefunction(
