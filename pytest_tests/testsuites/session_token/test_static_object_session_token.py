@@ -228,8 +228,6 @@ class TestObjectStaticSession(ClusterTestBase):
 
     @allure.title("Validate static session with search operation")
     @pytest.mark.static_session
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2030")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2030
     def test_static_session_search(
         self,
         user_wallet: WalletFile,
@@ -243,7 +241,7 @@ class TestObjectStaticSession(ClusterTestBase):
         allure.dynamic.title(f"Validate static session with search for {request.node.callspec.id}")
 
         cid = storage_objects[0].cid
-        expected_object_ids = [storage_object.oid for storage_object in storage_objects[0:2]]
+        expected_object_ids = [storage_object.oid for storage_object in storage_objects]
         actual_object_ids = search_object(
             user_wallet.path,
             cid,
@@ -252,7 +250,7 @@ class TestObjectStaticSession(ClusterTestBase):
             session=static_sessions[ObjectVerb.SEARCH],
             root=True,
         )
-        assert expected_object_ids == actual_object_ids
+        assert set(expected_object_ids) == set(actual_object_ids)
 
     @allure.title("Validate static session with object id not in session")
     @pytest.mark.static_session
