@@ -24,3 +24,11 @@ def stranger_wallet(wallet_factory: WalletFactory) -> WalletFile:
     Returns stranger wallet which should fail to obtain data
     """
     return wallet_factory.create_wallet()
+
+
+@pytest.fixture(scope="module")
+def scammer_wallet(wallet_factory: WalletFactory) -> WalletFile:
+    """
+    Returns stranger wallet which should fail to obtain data
+    """
+    return wallet_factory.create_wallet()
