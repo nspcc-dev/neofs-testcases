@@ -5,7 +5,7 @@ hosts:
   - name: s01
     attributes:
       container_name: s01
-      config_path: ../neofs-dev-env/services/storage/.storage.env
+      config_path: ../neofs-dev-env/services/storage/cfg/config.yml
       wallet_path: ../neofs-dev-env/services/storage/wallet01.json
       local_config_path: ./TemporaryDir/empty-password.yml
       local_wallet_path: ../neofs-dev-env/services/storage/wallet01.json
@@ -17,7 +17,7 @@ hosts:
   - name: s02
     attributes:
       container_name: s02
-      config_path: ../neofs-dev-env/services/storage/.storage.env
+      config_path: ../neofs-dev-env/services/storage/cfg/config.yml
       wallet_path: ../neofs-dev-env/services/storage/wallet02.json
       local_config_path: ./TemporaryDir/empty-password.yml
       local_wallet_path: ../neofs-dev-env/services/storage/wallet02.json
@@ -29,7 +29,7 @@ hosts:
   - name: s03
     attributes:
       container_name: s03
-      config_path: ../neofs-dev-env/services/storage/.storage.env
+      config_path: ../neofs-dev-env/services/storage/cfg/config.yml
       wallet_path: ../neofs-dev-env/services/storage/wallet03.json
       local_config_path: ./TemporaryDir/empty-password.yml
       local_wallet_path: ../neofs-dev-env/services/storage/wallet03.json
@@ -41,7 +41,7 @@ hosts:
   - name: s04
     attributes:
       container_name: s04
-      config_path: ../neofs-dev-env/services/storage/.storage.env
+      config_path: ../neofs-dev-env/services/storage/cfg/config.yml
       wallet_path: ../neofs-dev-env/services/storage/wallet04.json
       local_config_path: ./TemporaryDir/empty-password.yml
       local_wallet_path: ../neofs-dev-env/services/storage/wallet04.json
