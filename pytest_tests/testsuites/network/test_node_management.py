@@ -121,8 +121,6 @@ class TestNodeManagement(ClusterTestBase):
             self.tick_epoch_with_retries(3)
             check_node_in_map(node, shell=self.shell, alive_node=alive_node)
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/542")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_542
     @allure.title("Add one node to cluster")
     @pytest.mark.add_nodes
     def test_add_nodes(
