@@ -80,9 +80,12 @@ class Shard:
     @staticmethod
     def from_object(shard):
         metabase = shard["metabase"]["path"] if "path" in shard["metabase"] else shard["metabase"]
-        writecache = (
-            shard["writecache"]["path"] if "path" in shard["writecache"] else shard["writecache"]
-        )
+        if "enabled" in shard["writecache"]:
+            writecache = shard["writecache"]["path"] if shard["writecache"]["enabled"] else ""
+        else:
+            writecache = (
+                shard["writecache"]["path"] if "path" in shard["writecache"] else shard["writecache"]
+            )
 
         return Shard(
             blobstor=[
@@ -96,8 +99,6 @@ class Shard:
 
 def shards_from_yaml(contents: str) -> list[Shard]:
     config = yaml.safe_load(contents)
-    config["storage"]["shard"].pop("default")
-
     return [Shard.from_object(shard) for shard in config["storage"]["shard"].values()]
 
 
@@ -130,7 +131,6 @@ class TestControlShard:
     @staticmethod
     def get_shards_from_cli(node: StorageNode) -> list[Shard]:
         wallet_path = node.get_remote_wallet_path()
-        wallet_password = node.get_wallet_password()
         control_endpoint = node.get_control_endpoint()
 
         cli_config = node.host.get_cli_config("neofs-cli")
@@ -139,15 +139,12 @@ class TestControlShard:
         result = cli.shards.list(
             endpoint=control_endpoint,
             wallet=wallet_path,
-            wallet_password=wallet_password,
             json_mode=True,
         )
-        return [Shard.from_object(shard) for shard in json.loads(result.stdout.split(">", 1)[1])]
+        return [Shard.from_object(shard) for shard in json.loads(result.stdout.strip())]
 
     @pytest.mark.sanity
     @allure.title("All shards are available")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/527")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_527
     def test_control_shard(self, cluster: Cluster):
         for storage_node in cluster.storage_nodes:
             shards_from_config = self.get_shards_from_config(storage_node)
