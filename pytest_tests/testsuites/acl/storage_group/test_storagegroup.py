@@ -6,7 +6,8 @@ from typing import Optional
 import allure
 import pytest
 from cluster_test_base import ClusterTestBase
-from common import ASSETS_DIR, TEST_FILES_DIR, FREE_STORAGE, WALLET_PASS
+from common import ASSETS_DIR, FREE_STORAGE, TEST_FILES_DIR, WALLET_PASS
+from epoch import get_epoch
 from file_helper import generate_file
 from grpc_responses import OBJECT_ACCESS_DENIED, OBJECT_NOT_FOUND
 from neofs_testlib.utils.wallet import init_wallet
@@ -233,7 +234,8 @@ class TestStorageGroup(ClusterTestBase):
         )
 
     @allure.title("Test to check Storage Group lifetime")
-    def test_storagegroup_lifetime(self, object_size):
+    @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
+    def test_storagegroup_lifetime(self, object_size, expiration_flag, cluster):
         cid = create_container(
             self.main_wallet, shell=self.shell, endpoint=self.cluster.default_rpc_endpoint
         )
@@ -242,13 +244,15 @@ class TestStorageGroup(ClusterTestBase):
             self.main_wallet, file_path, cid, shell=self.shell, cluster=self.cluster
         )
         objects = [oid]
+        current_epoch = get_epoch(self.shell, cluster)
         storage_group = put_storagegroup(
             self.shell,
             self.cluster.default_rpc_endpoint,
             self.main_wallet,
             cid,
             objects,
-            lifetime=1,
+            lifetime=1 if expiration_flag == "lifetime" else None,
+            expire_at=current_epoch + 1 if expiration_flag == "expire_at" else None,
         )
         with allure.step("Tick two epochs"):
             for _ in range(2):
