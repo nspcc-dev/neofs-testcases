@@ -2,7 +2,7 @@ import logging
 
 import allure
 import pytest
-from epoch import get_epoch, tick_epoch
+from epoch import get_epoch
 from file_helper import generate_file, get_file_hash
 from grpc_responses import OBJECT_NOT_FOUND
 from pytest import FixtureRequest
@@ -19,12 +19,15 @@ logger = logging.getLogger("NeoLogger")
 class TestObjectApiLifetime(ClusterTestBase):
     @allure.title("Test object life time")
     @pytest.mark.parametrize(
-        "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
-        ids=["simple object", "complex object"],
+        "object_size,expiration_flag",
+        [
+            (pytest.lazy_fixture("simple_object_size"), "lifetime"),
+            (pytest.lazy_fixture("complex_object_size"), "expire_at"),
+        ],
+        ids=["simple object, lifetime", "complex object, expire_at"],
     )
     def test_object_api_lifetime(
-        self, default_wallet: str, request: FixtureRequest, object_size: int
+        self, default_wallet: str, request: FixtureRequest, object_size: int, expiration_flag: str
     ):
         """
         Test object deleted after expiration epoch.
@@ -41,7 +44,13 @@ class TestObjectApiLifetime(ClusterTestBase):
         epoch = get_epoch(self.shell, self.cluster)
 
         oid = put_object_to_random_node(
-            wallet, file_path, cid, self.shell, self.cluster, expire_at=epoch + 1
+            wallet,
+            file_path,
+            cid,
+            self.shell,
+            self.cluster,
+            expire_at=epoch + 1 if expiration_flag == "expire_at" else None,
+            lifetime=1 if expiration_flag == "lifetime" else None,
         )
         got_file = get_object_from_random_node(wallet, cid, oid, self.shell, self.cluster)
         assert get_file_hash(got_file) == file_hash
