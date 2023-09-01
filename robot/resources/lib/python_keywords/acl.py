@@ -276,3 +276,30 @@ def bearer_token_base64_from_file(
     with open(bearer_path, "rb") as file:
         signed = file.read()
     return base64.b64encode(signed).decode("utf-8")
+
+
+@allure.step("Create bearer token")
+def create_bearer_token(
+    shell,
+    issued_at: int,
+    not_valid_before: int,
+    owner: str,
+    out: str,
+    rpc_endpoint: str,
+    json: Optional[bool] = False,
+    eacl: Optional[str] = None,
+    lifetime: Optional[int] = None,
+    expire_at: Optional[int] = None,
+) -> str:
+    neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
+    neofscli.bearer.create(
+        issued_at=issued_at,
+        not_valid_before=not_valid_before,
+        owner=owner,
+        out=out,
+        rpc_endpoint=rpc_endpoint,
+        json=json,
+        eacl=eacl,
+        lifetime=lifetime,
+        expire_at=expire_at,
+    )
