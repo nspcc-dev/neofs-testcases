@@ -26,6 +26,7 @@ def put_storagegroup(
     bearer: Optional[str] = None,
     wallet_config: str = WALLET_CONFIG,
     lifetime: int = 10,
+    expire_at: Optional[int] = None,
 ) -> str:
     """
     Wrapper for `neofs-cli storagegroup put`. Before the SG is created,
@@ -36,6 +37,7 @@ def put_storagegroup(
         wallet: Path to wallet on whose behalf the SG is created.
         cid: ID of Container to put SG to.
         lifetime: Storage group lifetime in epochs.
+        expire_at: The last active epoch of the storage group.
         objects: List of Object IDs to include into the SG.
         bearer: Path to Bearer token file.
         wallet_config: Path to neofs-cli config file.
@@ -47,6 +49,7 @@ def put_storagegroup(
         wallet=wallet,
         cid=cid,
         lifetime=lifetime,
+        expire_at=expire_at,
         members=objects,
         bearer=bearer,
         rpc_endpoint=endpoint,

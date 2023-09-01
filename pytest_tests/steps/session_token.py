@@ -236,6 +236,8 @@ def create_session_token(
     wallet_path: str,
     wallet_password: str,
     rpc_endpoint: str,
+    lifetime: Optional[int] = None,
+    expire_at: Optional[int] = None
 ) -> str:
     """
     Create session token for an object.
@@ -256,6 +258,8 @@ def create_session_token(
         wallet=wallet_path,
         wallet_password=wallet_password,
         out=session_token,
+        lifetime=lifetime,
+        expire_at=expire_at
     )
     return session_token
 
