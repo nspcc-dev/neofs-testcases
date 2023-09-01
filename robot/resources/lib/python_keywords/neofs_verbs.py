@@ -174,6 +174,7 @@ def put_object_to_random_node(
     attributes: Optional[dict] = None,
     xhdr: Optional[dict] = None,
     wallet_config: Optional[str] = None,
+    lifetime: Optional[int] = None,
     expire_at: Optional[int] = None,
     no_progress: bool = True,
     session: Optional[str] = None,
@@ -192,7 +193,8 @@ def put_object_to_random_node(
         cluster: cluster under test
         wallet_config: path to the wallet config
         no_progress: do not show progress bar
-        expire_at: Last epoch in the life of the object
+        lifetime: Lock lifetime - relative to the current epoch.
+        expire_at: Last epoch in the life of the object - absolute value.
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
     Returns:
@@ -213,6 +215,7 @@ def put_object_to_random_node(
         expire_at,
         no_progress,
         session,
+        lifetime
     )
 
 
@@ -230,6 +233,7 @@ def put_object(
     expire_at: Optional[int] = None,
     no_progress: bool = True,
     session: Optional[str] = None,
+    lifetime: Optional[int] = None,
 ):
     """
     PUT of given file.
@@ -247,6 +251,7 @@ def put_object(
         expire_at: Last epoch in the life of the object
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
+        lifetime: Lock lifetime - relative to the current epoch.
     Returns:
         (str): ID of uploaded Object
     """
@@ -259,6 +264,7 @@ def put_object(
         cid=cid,
         attributes=attributes,
         bearer=bearer,
+        lifetime=lifetime,
         expire_at=expire_at,
         no_progress=no_progress,
         xhdr=xhdr,
