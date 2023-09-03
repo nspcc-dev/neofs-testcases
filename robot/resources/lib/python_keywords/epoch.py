@@ -28,7 +28,7 @@ def ensure_fresh_epoch(
     # ensure new fresh epoch to avoid epoch switch during test session
     alive_node = alive_node if alive_node else cluster.storage_nodes[0]
     current_epoch = get_epoch(shell, cluster, alive_node)
-    tick_epoch(shell, cluster, alive_node)
+    tick_epoch_and_wait(shell, cluster, current_epoch, alive_node)
     epoch = get_epoch(shell, cluster, alive_node)
     assert epoch > current_epoch, "Epoch wasn't ticked"
     return epoch
@@ -36,10 +36,14 @@ def ensure_fresh_epoch(
 
 @allure.step("Wait for epochs align in whole cluster")
 @wait_for_success(60, 5)
-def wait_for_epochs_align(shell: Shell, cluster: Cluster) -> bool:
+def wait_for_epochs_align(shell: Shell, cluster: Cluster, epoch_number: Optional[int] = None) -> bool:
     epochs = []
     for node in cluster.storage_nodes:
-        epochs.append(get_epoch(shell, cluster, node))
+        current_epoch = get_epoch(shell, cluster, node)
+        assert (
+                epoch_number is None or current_epoch > epoch_number
+        ), f"Epoch {current_epoch} wasn't ticked yet. Expected epoch > {epoch_number}"
+        epochs.append(current_epoch)
     unique_epochs = list(set(epochs))
     assert (
         len(unique_epochs) == 1
@@ -113,3 +117,11 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
         gas=1,
     )
     sleep(parse_time(MAINNET_BLOCK_TIME))
+
+
+@allure.step("Tick Epoch and wait for epochs align")
+def tick_epoch_and_wait(shell: Shell, cluster: Cluster, current_epoch: Optional[int] = None,
+                        node: Optional[StorageNode] = None):
+    current_epoch = current_epoch if current_epoch else get_epoch(shell, cluster, node)
+    tick_epoch(shell, cluster, node)
+    wait_for_epochs_align(shell, cluster, current_epoch)
