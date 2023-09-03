@@ -245,7 +245,7 @@ class TestACLBearer(ClusterTestBase):
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_bearer_token_expiration(self, wallets, eacl_container_with_objects, expiration_flag):
         current_epoch = get_epoch(self.shell, self.cluster)
-        self.tick_epochs(1)
+        self.tick_epochs_and_wait(1)
         cid, objects_oids, file_path = eacl_container_with_objects
         user_wallet = wallets.get_wallet()
 
@@ -279,7 +279,7 @@ class TestACLBearer(ClusterTestBase):
                 json=True,
             )
 
-        self.tick_epochs(1)
+        self.tick_epochs_and_wait(1)
 
         with allure.step(
             f"Check {EACLRole.USER.value} with token has access to all operations with container"
@@ -295,7 +295,7 @@ class TestACLBearer(ClusterTestBase):
                 cluster=self.cluster,
             )
 
-        self.tick_epochs(1)
+        self.tick_epochs_and_wait(1)
 
         with allure.step(
             f"Check {EACLRole.USER.value} has no access to all operations with container"

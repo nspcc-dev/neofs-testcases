@@ -202,7 +202,7 @@ class TestDynamicObjectSession(ClusterTestBase):
                 session=session_token,
             )
 
-        self.tick_epochs(2)
+        self.tick_epochs_and_wait(2)
 
         with allure.step("Verify object operations with created session token are not allowed"):
             file_path = generate_file(simple_object_size)

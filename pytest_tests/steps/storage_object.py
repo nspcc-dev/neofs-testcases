@@ -4,7 +4,7 @@ from time import sleep
 import allure
 import pytest
 from cluster import Cluster
-from epoch import tick_epoch
+from epoch import tick_epoch, tick_epoch_and_wait, get_epoch
 from grpc_responses import OBJECT_ALREADY_REMOVED
 from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import delete_object, get_object
@@ -46,7 +46,7 @@ def delete_objects(
                 endpoint=cluster.default_rpc_endpoint,
             )
 
-    tick_epoch(shell, cluster)
+    tick_epoch_and_wait(shell, cluster)
     sleep(CLEANUP_TIMEOUT)
 
     with allure.step("Get objects and check errors"):

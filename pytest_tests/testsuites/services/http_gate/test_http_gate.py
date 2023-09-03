@@ -231,7 +231,7 @@ class TestHttpGate(ClusterTestBase):
                 get_via_http_gate(cid=cid, oid=oid, endpoint=http_endpoint)
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
-            self.tick_epoch()
+            self.tick_epochs_and_wait(1)
 
             # Wait for GC, because object with expiration is counted as alive until GC removes it
             wait_for_gc_pass_on_storage_nodes()

@@ -209,7 +209,7 @@ class Test_http_system_header(ClusterTestBase):
     def test_http_attr_priority_epoch_duration(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
-        self.tick_epoch()
+        self.tick_epochs_and_wait(1)
         epoch_count = 1
         expected_epoch = get_epoch(self.shell, self.cluster) + epoch_count
         logger.info(
@@ -225,8 +225,7 @@ class Test_http_system_header(ClusterTestBase):
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
-            for _ in range(0, epoch_count + 1):
-                self.tick_epoch()
+            self.tick_epochs_and_wait(epoch_count + 1)
             assert (
                 get_epoch(self.shell, self.cluster) == expected_epoch + 1
             ), f"Epochs should be equal: {get_epoch(self.shell, self.cluster)} != {expected_epoch + 1}"
@@ -256,7 +255,7 @@ class Test_http_system_header(ClusterTestBase):
     def test_http_attr_priority_dur_timestamp(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
-        self.tick_epoch()
+        self.tick_epochs_and_wait(1)
         epoch_count = 2
         expected_epoch = get_epoch(self.shell, self.cluster) + epoch_count
         logger.info(
@@ -279,8 +278,7 @@ class Test_http_system_header(ClusterTestBase):
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
-            for _ in range(0, epoch_count + 1):
-                self.tick_epoch()
+            self.tick_epochs_and_wait(epoch_count + 1)
             assert (
                 get_epoch(self.shell, self.cluster) == expected_epoch + 1
             ), f"Epochs should be equal: {get_epoch(self.shell, self.cluster)} != {expected_epoch + 1}"
@@ -310,7 +308,7 @@ class Test_http_system_header(ClusterTestBase):
     def test_http_attr_priority_timestamp_rfc(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
-        self.tick_epoch()
+        self.tick_epochs_and_wait(1)
         epoch_count = 2
         expected_epoch = get_epoch(self.shell, self.cluster) + epoch_count
         logger.info(
@@ -333,8 +331,7 @@ class Test_http_system_header(ClusterTestBase):
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
-            for _ in range(0, epoch_count + 1):
-                self.tick_epoch()
+            self.tick_epochs_and_wait(epoch_count + 1)
             assert (
                 get_epoch(self.shell, self.cluster) == expected_epoch + 1
             ), f"Epochs should be equal: {get_epoch(self.shell, self.cluster)} != {expected_epoch + 1}"
@@ -362,7 +359,7 @@ class Test_http_system_header(ClusterTestBase):
     def test_http_rfc_object_unavailable_after_expir(
         self, user_container: str, object_size: int, epoch_duration: int
     ):
-        self.tick_epoch()
+        self.tick_epochs_and_wait(1)
         epoch_count = 2
         expected_epoch = get_epoch(self.shell, self.cluster) + epoch_count
         logger.info(
@@ -384,8 +381,7 @@ class Test_http_system_header(ClusterTestBase):
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
-            for _ in range(0, epoch_count + 1):
-                self.tick_epoch()
+            self.tick_epochs_and_wait(epoch_count + 1)
             # check that {EXPIRATION_EXPIRATION_RFC} absents in header output
             assert (
                 get_epoch(self.shell, self.cluster) == expected_epoch + 1

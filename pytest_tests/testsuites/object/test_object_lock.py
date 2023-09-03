@@ -7,7 +7,7 @@ from cluster import Cluster
 from cluster_test_base import ClusterTestBase
 from common import STORAGE_GC_TIME
 from complex_object_actions import get_link_object, get_storage_object_chunks
-from epoch import ensure_fresh_epoch, get_epoch, tick_epoch
+from epoch import ensure_fresh_epoch, get_epoch, tick_epoch, tick_epoch_and_wait
 from grpc_responses import (
     LIFETIME_REQUIRED,
     LOCK_NON_REGULAR_OBJECT,
@@ -98,7 +98,7 @@ def locked_storage_object(
         if epoch_diff > 0:
             with allure.step(f"Tick {epoch_diff} epochs"):
                 for _ in range(epoch_diff):
-                    tick_epoch(client_shell, cluster)
+                    tick_epoch_and_wait(client_shell, cluster, current_epoch)
         try:
             delete_object(
                 storage_object.wallet_file_path,
@@ -310,7 +310,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
             )
 
         with allure.step("Check object is not deleted at expiration time"):
-            self.tick_epochs(2)
+            self.tick_epochs_and_wait(2)
             # Must wait to ensure object is not deleted
             wait_for_gc_pass_on_storage_nodes()
             with expect_not_raises():
@@ -334,7 +334,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 )
 
         with allure.step("Wait for object to be deleted after third epoch"):
-            self.tick_epoch()
+            self.tick_epochs_and_wait(1)
             check_object_not_found()
 
     @allure.title("Should be possible to lock multiple objects at once")
@@ -386,8 +386,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                     )
 
         with allure.step("Tick two epochs"):
-            self.tick_epoch()
-            self.tick_epoch()
+            self.tick_epochs_and_wait(2)
 
         with expect_not_raises():
             delete_objects(storage_objects, self.shell, self.cluster)
@@ -463,7 +462,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
             lifetime=1,
         )
 
-        self.tick_epochs(2)
+        self.tick_epochs_and_wait(2)
         with expect_not_raises():
             delete_object(
                 storage_object.wallet_file_path,
@@ -508,7 +507,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
             expire_at=current_epoch + 1,
         )
 
-        self.tick_epochs(2)
+        self.tick_epochs_and_wait(2)
 
         with expect_not_raises():
             delete_object(

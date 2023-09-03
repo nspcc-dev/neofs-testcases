@@ -6,7 +6,7 @@ import allure
 import pytest
 from aws_cli_client import AwsCliClient
 from common import ASSETS_DIR
-from epoch import tick_epoch
+from epoch import tick_epoch, tick_epoch_and_wait
 from file_helper import (
     generate_file,
     generate_file_with_content,
@@ -82,7 +82,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete empty bucket {bucket_2}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_2)
-            tick_epoch(self.shell, self.cluster)
+            self.tick_epochs_and_wait(1)
 
         with allure.step(f"Check bucket {bucket_2} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):
@@ -98,7 +98,7 @@ class TestS3Gate(TestS3GateBase):
 
         with allure.step(f"Delete bucket {bucket_1}"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_1)
-            self.tick_epoch()
+            self.tick_epochs_and_wait(1)
 
         with allure.step(f"Check bucket {bucket_1} deleted"):
             with pytest.raises(Exception, match=r".*Not Found.*"):
