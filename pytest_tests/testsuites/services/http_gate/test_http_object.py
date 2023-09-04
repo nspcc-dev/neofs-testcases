@@ -125,3 +125,15 @@ class Test_http_object(ClusterTestBase):
                 http_request_path=request,
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
+
+        with allure.step(
+            "[Negative] Try to get object with invalid attribute [get_by_attribute/$CID/chapter1/war]"
+        ):
+            with pytest.raises(Exception, match=".*object not found.*"):
+                get_object_by_attr_and_verify_hashes(
+                    oid=oid,
+                    file_name=file_path,
+                    cid=cid,
+                    attrs={obj_key1: obj_value2},
+                    endpoint=self.cluster.default_http_gate_endpoint,
+                )
