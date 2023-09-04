@@ -172,7 +172,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 self.cluster.default_rpc_endpoint,
             )
 
-    @allure.title("Lock object itself should be protected from deletion")
+    @allure.title("Lock object of a simple object should be protected from deletion")
     # We operate with only lock object here so no complex object needed in this test
     @pytest.mark.parametrize(
         "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
@@ -197,7 +197,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 self.cluster.default_rpc_endpoint,
             )
 
-    @allure.title("Lock object itself cannot be locked")
+    @allure.title("Lock object of a simple object cannot be locked")
     # We operate with only lock object here so no complex object needed in this test
     @pytest.mark.parametrize(
         "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
@@ -223,7 +223,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 1,
             )
 
-    @allure.title("Cannot lock object without lifetime and expire_at fields")
+    @allure.title("Cannot lock simple object without lifetime and expire_at fields")
     # We operate with only lock object here so no complex object needed in this test
     @pytest.mark.parametrize(
         "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
@@ -550,7 +550,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                         self.cluster.default_rpc_endpoint,
                     )
 
-    @allure.title("Link object of locked complex object can be dropped")
+    @allure.title("Link object of locked complex object can be dropped via control")
     @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
@@ -580,7 +580,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 with expect_not_raises():
                     drop_object(node, new_locked_storage_object.cid, link_object_id)
 
-    @allure.title("Chunks of locked complex object can be dropped")
+    @allure.title("Chunks of locked complex object can be dropped via control")
     @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
@@ -617,7 +617,7 @@ class TestObjectLockWithGrpc(ClusterTestBase):
     def test_locked_object_can_be_dropped(
         self, new_locked_storage_object: StorageObjectInfo, request: FixtureRequest
     ):
-        allure.dynamic.title(f"Locked {request.node.callspec.id} can be dropped")
+        allure.dynamic.title(f"Locked {request.node.callspec.id} can be dropped via control")
         nodes_with_object = get_nodes_with_object(
             new_locked_storage_object.cid,
             new_locked_storage_object.oid,
