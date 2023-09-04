@@ -629,6 +629,28 @@ class TestObjectLockWithGrpc(ClusterTestBase):
             with expect_not_raises():
                 drop_object(node, new_locked_storage_object.cid, new_locked_storage_object.oid)
 
+    @allure.title("Lock object of a simple object can be dropped via control")
+    @pytest.mark.parametrize(
+        "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
+    )
+    def test_lock_object_can_be_dropped(
+        self,
+        locked_storage_object: StorageObjectInfo,
+    ):
+
+        lock_object_info = locked_storage_object.locks[0]
+
+        nodes_with_object = get_nodes_with_object(
+            lock_object_info.cid,
+            lock_object_info.oid,
+            shell=self.shell,
+            nodes=self.cluster.storage_nodes,
+        )
+
+        for node in nodes_with_object:
+            with expect_not_raises():
+                drop_object(node, lock_object_info.cid, lock_object_info.oid)
+
     @allure.title("Link object of complex object should also be protected from deletion")
     @pytest.mark.parametrize(
         # Only complex objects are required for this test
