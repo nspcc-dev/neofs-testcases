@@ -133,7 +133,7 @@ class TestS3GateObject(TestS3GateBase):
 
         with allure.step("Copy object and check acl attribute"):
             copy_obj_path = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket, obj_key, ACL="public-read-write"
+                self.s3_client, bucket, obj_key, ACL="private"
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, copy_obj_path)
             assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")

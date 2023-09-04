@@ -157,4 +157,4 @@ def assert_s3_acl(acl_grants: list, permitted_users: str):
                 permission = acl_grant.get("Permission")
                 assert permission == "FULL_CONTROL", "Only CanonicalUser should have FULL_CONTROL"
             else:
-                logger.error("FULL_CONTROL is given to All Users")
+                raise AssertionError("FULL_CONTROL is given to All Users")
