@@ -146,7 +146,7 @@ def drop_object(node: StorageNode, cid: str, oid: str) -> str:
     Args:
         node_id str: node from which object should be dropped.
     """
-    command = f"control drop-objects  -o {cid}/{oid}"
+    command = f"control drop-objects -o {cid}/{oid}"
     return _run_control_command_with_retries(node, command)
 
 
