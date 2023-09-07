@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import allure
 import pytest
@@ -73,13 +73,15 @@ class TestNetworkConfigChange(ClusterTestBase):
     )
     @allure.title("Set network config key to invalid value")
     def test_config_set_invalid_value(self, key: str, value: Union[str, int, bool]):
-        self._set_and_verify_config_keys(**{key: value})
+        with pytest.raises(RuntimeError, match=f".*could not parse.*"):
+            self._set_and_verify_config_keys(**{key: value})
 
     @allure.title("Set multiple network config keys to invalid values with force")
     def test_config_set_multiple_invalid_values(self):
-        self._set_and_verify_config_keys(
-            **{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True
-        )
+        with pytest.raises(RuntimeError, match=f".*could not parse.*"):
+            self._set_and_verify_config_keys(
+                **{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True
+            )
 
     @allure.title("Set network config unknown key")
     def test_config_set_unknown_key(self):
@@ -88,11 +90,22 @@ class TestNetworkConfigChange(ClusterTestBase):
 
     @allure.title("Set network config unknown key with force")
     def test_config_force_set_unknown_key(self):
-        self._set_and_verify_config_keys(**{"unknown_key": 120}, force=True)
+        with pytest.raises(AssertionError):
+            self._set_and_verify_config_keys(
+                **{"unknown_key": 120},
+                force=True,
+                config_keys_mapping={"unknown_key": "unknown_key"},
+            )
 
     def _set_and_verify_config_keys(
-        self, force: bool = False, **key_value_pairs: dict[str, Union[str, int, bool]]
+        self,
+        force: bool = False,
+        config_keys_mapping: Optional[dict[str]] = None,
+        **key_value_pairs: dict[str, Union[str, int, bool]],
     ):
+        if config_keys_mapping is None:
+            config_keys_mapping = CONFIG_KEYS_MAPPING
+
         ir_node = self.cluster.ir_nodes[0]
         morph_chain = self.cluster.morph_chain_nodes[0]
         neofsadm = NeofsAdm(
@@ -122,7 +135,7 @@ class TestNetworkConfigChange(ClusterTestBase):
             )
 
             for key, value in key_value_pairs.items():
-                assert net_info[CONFIG_KEYS_MAPPING[key]] == value
+                assert net_info[config_keys_mapping[key]] == value
 
     @pytest.fixture(scope="function")
     def clean_config(self) -> None:
