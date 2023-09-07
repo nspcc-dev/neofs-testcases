@@ -517,7 +517,7 @@ class TestObjectStaticSession(ClusterTestBase):
             session=token_expire_at_next_epoch,
         )
 
-        self.tick_epochs(2)
+        self.tick_epochs_and_wait(2)
 
         with pytest.raises(Exception, match=EXPIRED_SESSION_TOKEN):
             head_object(
@@ -573,7 +573,7 @@ class TestObjectStaticSession(ClusterTestBase):
                 session=token_start_at_next_epoch,
             )
 
-        self.tick_epoch()
+        self.tick_epochs_and_wait(1)
         head_object(
             user_wallet.path,
             container,
@@ -583,7 +583,7 @@ class TestObjectStaticSession(ClusterTestBase):
             session=token_start_at_next_epoch,
         )
 
-        self.tick_epochs(2)
+        self.tick_epochs_and_wait(2)
         with pytest.raises(Exception, match=EXPIRED_SESSION_TOKEN):
             head_object(
                 user_wallet.path,

@@ -56,8 +56,7 @@ class TestObjectApiLifetime(ClusterTestBase):
         assert get_file_hash(got_file) == file_hash
 
         with allure.step("Tick two epochs"):
-            for _ in range(2):
-                self.tick_epoch()
+            self.tick_epochs_and_wait(2)
 
         # Wait for GC, because object with expiration is counted as alive until GC removes it
         wait_for_gc_pass_on_storage_nodes()

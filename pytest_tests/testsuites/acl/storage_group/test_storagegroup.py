@@ -255,9 +255,7 @@ class TestStorageGroup(ClusterTestBase):
             expire_at=current_epoch + 1 if expiration_flag == "expire_at" else None,
         )
         with allure.step("Tick two epochs"):
-            for _ in range(2):
-                self.tick_epoch()
-        self.wait_for_epochs_align()
+            self.tick_epochs_and_wait(2)
         with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
             get_storagegroup(
                 shell=self.shell,

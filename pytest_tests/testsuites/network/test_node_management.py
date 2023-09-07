@@ -83,7 +83,7 @@ class TestNodeManagement(ClusterTestBase):
     def tick_epoch_with_retries(self, attempts: int = 3, timeout: int = 3):
         for attempt in range(attempts):
             try:
-                self.tick_epoch()
+                self.tick_epochs_and_wait(1)
             except RuntimeError:
                 sleep(timeout)
                 if attempt >= attempts - 1:
@@ -475,7 +475,7 @@ class TestNodeManagement(ClusterTestBase):
             copies = get_simple_object_copies(wallet, cid, oid, self.shell, nodes)
             if copies == expected_copies:
                 break
-            tick_epoch(self.shell, self.cluster)
+            self.tick_epochs_and_wait(1)
             sleep(parse_time(NEOFS_CONTRACT_CACHE_TIMEOUT))
         else:
             raise AssertionError(f"There are no {expected_copies} copies during time")

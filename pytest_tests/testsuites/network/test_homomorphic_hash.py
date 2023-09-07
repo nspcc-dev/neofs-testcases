@@ -94,7 +94,7 @@ class TestHomomorphicHash(ClusterTestBase):
                         shell=self.shell,
                         endpoint=self.cluster.default_rpc_endpoint,
                     )
-                    self.tick_epoch()
+                    self.tick_epochs_and_wait(1)
                     wait_for_container_deletion(
                         default_wallet,
                         cid,
