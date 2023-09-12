@@ -179,6 +179,17 @@ def delete_node_data(node: StorageNode) -> None:
     time.sleep(parse_time(MORPH_BLOCK_TIME))
 
 
+@allure.step("Delete metadata from host for node {node}")
+def delete_node_metadata(node: StorageNode) -> None:
+    """
+    The function deletes metadata from host for specified node.
+    Args:
+        node: node for which metadata should be deleted.
+    """
+    node.stop_service()
+    node.host.delete_storage_node_data(node.name, cache_only=True)
+
+
 @allure.step("Exclude node {node_to_exclude} from network map")
 def exclude_node_from_network_map(
     node_to_exclude: StorageNode,
