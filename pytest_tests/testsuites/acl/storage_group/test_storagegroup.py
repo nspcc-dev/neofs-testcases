@@ -203,6 +203,7 @@ class TestStorageGroup(ClusterTestBase):
             EACLRule(access=EACLAccess.DENY, role=role, operation=op)
             for op in EACLOperation
             for role in EACLRole
+            if role != EACLRole.SYSTEM
         ]
         set_eacl(
             self.main_wallet,
