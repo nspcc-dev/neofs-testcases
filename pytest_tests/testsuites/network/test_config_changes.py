@@ -64,21 +64,23 @@ class TestNetworkConfigChange(ClusterTestBase):
         self._set_and_verify_config_keys(**new_key_value_pairs)
 
     @pytest.mark.parametrize(
-        "key, value",
+        "key, value, expected_type",
         [
-            ("MaxObjectSize", "VeryBigSize"),
-            ("BasicIncomeRate", False),
-            ("HomomorphicHashingDisabled", 0.2),
+            ("MaxObjectSize", "VeryBigSize", int),
+            ("BasicIncomeRate", False, int),
+            ("HomomorphicHashingDisabled", 0.2, bool),
         ],
     )
     @allure.title("Set network config key to invalid value")
-    def test_config_set_invalid_value(self, key: str, value: Union[str, int, bool]):
-        with pytest.raises(RuntimeError, match=f".*could not parse.*"):
+    def test_config_set_invalid_value(self, key: str, value: Union[str, int, bool], expected_type: type):
+        with pytest.raises(RuntimeError, match=f"Error: invalid value for {key} key, "
+                                               f"expected {expected_type.__name__}, got '{str(value).lower()}'"):
             self._set_and_verify_config_keys(**{key: value})
 
     @allure.title("Set multiple network config keys to invalid values with force")
     def test_config_set_multiple_invalid_values(self):
-        with pytest.raises(RuntimeError, match=f".*could not parse.*"):
+        with pytest.raises(RuntimeError, match="Error: invalid value for MaxObjectSize key, "
+                                               "expected int, got 'verybigsize'"):
             self._set_and_verify_config_keys(
                 **{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True
             )
