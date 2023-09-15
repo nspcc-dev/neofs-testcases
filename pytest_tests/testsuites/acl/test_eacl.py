@@ -2,7 +2,7 @@ import allure
 import pytest
 from cluster_test_base import ClusterTestBase
 from failover_utils import wait_object_replication
-from grpc_responses import NOT_CONTAINER_OWNER
+from grpc_responses import NOT_CONTAINER_OWNER, EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS
 from neofs_testlib.shell import Shell
 from python_keywords.acl import (
     EACLAccess,
@@ -11,7 +11,7 @@ from python_keywords.acl import (
     EACLRule,
     create_eacl,
     set_eacl,
-    wait_for_cache_expired,
+    wait_for_cache_expired, get_eacl,
 )
 from python_keywords.container import create_container
 from python_keywords.container_access import (
@@ -252,10 +252,106 @@ class TestEACLContainer(ClusterTestBase):
                 storage_nodes,
             )
 
-    @allure.title("Testcase to validate NeoFS system operations with extended ACL")
-    def test_extended_actions_system(self, wallets, eacl_container_with_objects):
+    @pytest.mark.trusted_party_proved
+    @pytest.mark.system_eacl
+    @allure.title("Test case for verifying the impossible to change system extended ACL")
+    def test_deprecated_change_system_eacl(self, wallets, eacl_container_with_objects):
         user_wallet = wallets.get_wallet()
-        ir_wallet, storage_wallet = wallets.get_wallets_list(role=EACLRole.SYSTEM)[:2]
+        cid, object_oids, file_path = eacl_container_with_objects
+        endpoint = self.cluster.default_rpc_endpoint
+
+        with allure.step("Try to deny the system extended ACL"):
+            with pytest.raises(Exception, match=EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(
+                        cid=cid,
+                        rules_list=[
+                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
+                            for op in EACLOperation
+                        ],
+                        shell=self.shell,
+                    ),
+                    shell=self.shell,
+                    endpoint=endpoint,
+                )
+            wait_for_cache_expired()
+            with allure.step("The eACL must be empty"):
+                assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) is None
+
+        with allure.step("Try to allow the system extended ACL"):
+            with pytest.raises(Exception, match=EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(
+                        cid=cid,
+                        rules_list=[
+                            EACLRule(access=EACLAccess.ALLOW, role=EACLRole.SYSTEM, operation=op)
+                            for op in EACLOperation
+                        ],
+                        shell=self.shell,
+                    ),
+                    shell=self.shell,
+                    endpoint=endpoint,
+                )
+            wait_for_cache_expired()
+            with allure.step("The eACL must be empty"):
+                assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) is None
+
+    @pytest.mark.trusted_party_proved
+    @pytest.mark.system_eacl
+    @allure.title("Test case for verifying the impossible to change system extended ACL if eACL already set")
+    def test_deprecated_change_system_eacl_if_eacl_already_set(self, wallets, eacl_container_with_objects):
+        user_wallet = wallets.get_wallet()
+        cid, object_oids, file_path = eacl_container_with_objects
+        endpoint = self.cluster.default_rpc_endpoint
+
+        with allure.step("Set eACL"):
+            set_eacl(
+                user_wallet.wallet_path,
+                cid,
+                create_eacl(
+                    cid=cid,
+                    rules_list=[
+                        EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op)
+                        for op in EACLOperation
+                    ],
+                    shell=self.shell,
+                ),
+                shell=self.shell,
+                endpoint=endpoint,
+            )
+            wait_for_cache_expired()
+
+        old_eacl = get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint)
+
+        with allure.step("Try to change the system extended ACL"):
+            with pytest.raises(Exception, match=EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(
+                        cid=cid,
+                        rules_list=[
+                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
+                            for op in EACLOperation
+                        ],
+                        shell=self.shell,
+                    ),
+                    shell=self.shell,
+                    endpoint=endpoint,
+                )
+        wait_for_cache_expired()
+        with allure.step("The eACL should not be changed"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) is old_eacl
+
+    @pytest.mark.trusted_party_proved
+    @allure.title("Test case to check compliance with Check IR and STORAGE rules")
+    def test_compliance_ir_and_storage_rules(self, wallets, eacl_container_with_objects):
+        ir_wallet = wallets.get_ir_wallet()
+        storage_wallet = wallets.get_storage_wallet()
 
         cid, object_oids, file_path = eacl_container_with_objects
         endpoint = self.cluster.default_rpc_endpoint
@@ -328,301 +424,6 @@ class TestEACLContainer(ClusterTestBase):
                 shell=self.shell,
                 endpoint=endpoint,
                 oid=object_oids[0],
-                wallet_config=storage_wallet.config_path,
-            )
-
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            assert can_get_range_hash_of_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                shell=self.shell,
-                endpoint=endpoint,
-                wallet_config=ir_wallet.config_path,
-            )
-
-            assert can_get_range_hash_of_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                shell=self.shell,
-                endpoint=endpoint,
-                wallet_config=storage_wallet.config_path,
-            )
-
-            with pytest.raises(AssertionError):
-                assert can_delete_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_delete_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-        with allure.step("Deny all operations for SYSTEM via eACL"):
-            set_eacl(
-                user_wallet.wallet_path,
-                cid,
-                create_eacl(
-                    cid=cid,
-                    rules_list=[
-                        EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
-                        for op in EACLOperation
-                    ],
-                    shell=self.shell,
-                ),
-                shell=self.shell,
-                endpoint=endpoint,
-            )
-            wait_for_cache_expired()
-
-        with allure.step("Check IR and STORAGE rules compliance with deny eACL"):
-            assert not can_put_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=ir_wallet.config_path,
-            )
-            assert not can_put_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=storage_wallet.config_path,
-            )
-
-            with pytest.raises(AssertionError):
-                assert can_get_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    file_name=file_path,
-                    shell=self.shell,
-                    cluster=self.cluster,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    file_name=file_path,
-                    shell=self.shell,
-                    cluster=self.cluster,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            with pytest.raises(AssertionError):
-                assert can_get_head_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_head_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            with pytest.raises(AssertionError):
-                assert can_search_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    oid=object_oids[0],
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_search_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    oid=object_oids[0],
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_hash_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-            with pytest.raises(AssertionError):
-                assert can_delete_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_delete_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
-
-        with allure.step("Allow all operations for SYSTEM via eACL"):
-            set_eacl(
-                user_wallet.wallet_path,
-                cid,
-                create_eacl(
-                    cid=cid,
-                    rules_list=[
-                        EACLRule(access=EACLAccess.ALLOW, role=EACLRole.SYSTEM, operation=op)
-                        for op in EACLOperation
-                    ],
-                    shell=self.shell,
-                ),
-                shell=self.shell,
-                endpoint=endpoint,
-            )
-            wait_for_cache_expired()
-
-        with allure.step("Check IR and STORAGE rules compliance with allow eACL"):
-            assert not can_put_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=ir_wallet.config_path,
-            )
-            assert can_put_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=storage_wallet.config_path,
-            )
-
-            assert can_get_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=ir_wallet.config_path,
-            )
-            assert can_get_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                file_name=file_path,
-                shell=self.shell,
-                cluster=self.cluster,
-                wallet_config=storage_wallet.config_path,
-            )
-
-            assert can_get_head_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                shell=self.shell,
-                endpoint=endpoint,
-                wallet_config=ir_wallet.config_path,
-            )
-            assert can_get_head_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                oid=object_oids[0],
-                shell=self.shell,
-                endpoint=endpoint,
-                wallet_config=storage_wallet.config_path,
-            )
-
-            assert can_search_object(
-                wallet=ir_wallet.wallet_path,
-                cid=cid,
-                shell=self.shell,
-                oid=object_oids[0],
-                endpoint=endpoint,
-                wallet_config=ir_wallet.config_path,
-            )
-            assert can_search_object(
-                wallet=storage_wallet.wallet_path,
-                cid=cid,
-                shell=self.shell,
-                oid=object_oids[0],
-                endpoint=endpoint,
                 wallet_config=storage_wallet.config_path,
             )
 

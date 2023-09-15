@@ -34,6 +34,12 @@ class Wallets:
     def get_wallets_list(self, role: EACLRole = EACLRole.USER) -> list[Wallet]:
         return self.wallets[role]
 
+    def get_ir_wallet(self) -> Wallet:
+        return self.wallets[EACLRole.SYSTEM][0]
+
+    def get_storage_wallet(self) -> Wallet:
+        return self.wallets[EACLRole.SYSTEM][1]
+
 
 @pytest.fixture(scope="module")
 def wallets(default_wallet, temp_directory, cluster: Cluster) -> Wallets:

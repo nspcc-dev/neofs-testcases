@@ -15,6 +15,8 @@ from data_formatters import get_wallet_public_key
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
 
+from grpc_responses import EACL_TABLE_IS_NOT_SET, EACL_NOT_FOUND
+
 logger = logging.getLogger("NeoLogger")
 EACL_LIFETIME = 100500
 NEOFS_CONTRACT_CACHE_TIMEOUT = 30
@@ -124,7 +126,7 @@ def get_eacl(wallet_path: str, cid: str, shell: Shell, endpoint: str) -> Optiona
         logger.info("Extended ACL table is not set for this container")
         logger.info(f"Got exception while getting eacl: {exc}")
         return None
-    if "extended ACL table is not set for this container" in result.stdout:
+    if EACL_TABLE_IS_NOT_SET or EACL_NOT_FOUND in result.stdout:
         return None
     return result.stdout
 
