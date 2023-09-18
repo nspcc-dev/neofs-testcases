@@ -147,8 +147,6 @@ class TestDynamicObjectSession(ClusterTestBase):
                 )
 
     @allure.title("Verify session token expiration flags")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2539")
-    @pytest.mark.nspcc_dev__neofs_node__issue_2539
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_session_token_expiration_flags(
         self, default_wallet, simple_object_size, expiration_flag, cluster
