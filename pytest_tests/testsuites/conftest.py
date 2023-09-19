@@ -5,6 +5,7 @@ import shutil
 import uuid
 import hashlib
 from datetime import datetime
+from distutils import dir_util
 
 import allure
 import pytest
@@ -406,3 +407,14 @@ def create_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster, na
         )
 
     return wallet_path
+
+
+@pytest.fixture
+def datadir(tmpdir, request):
+    filename = request.module.__file__
+    test_dir, _ = os.path.splitext(filename)
+
+    if os.path.isdir(test_dir):
+        dir_util.copy_tree(test_dir, str(tmpdir))
+
+    return tmpdir

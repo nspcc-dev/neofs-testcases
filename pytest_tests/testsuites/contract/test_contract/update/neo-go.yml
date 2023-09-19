@@ -1,0 +1,6 @@
+name: testctr
+sourceurl: http://example.com/
+safemethods: []
+supportedstandards: []
+permissions:
+    - methods: '*'
