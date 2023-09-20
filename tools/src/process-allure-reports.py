@@ -49,7 +49,7 @@ def put_combine_result_as_static_page(directory: str, neofs_domain: str, wallet:
                 # We save the logs archives as separate objects in order to make a static page small size.
                 # Without this, its size will be hundreds of megabytes.
                 object_cmd = (
-                    f'{base_cmd_with_file}{FILE_PATH}={run_id}/data/{current_dir_name}/{filename} '
+                    f'{base_cmd_with_file}{FILE_PATH}={run_id}/data/{current_dir_name}/{filename},'
                     f'ContentType=application/zip'
                 )
             else:
