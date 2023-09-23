@@ -1,3 +1,4 @@
+import random
 from typing import Optional
 
 import allure
@@ -142,6 +143,13 @@ def can_get_head_object(
     return True
 
 
+def _generate_random_range_cut(offset: int = 0, length: int = 10):
+    # [X:0] requests are not allowed
+    offset = random.randint(offset, length-1)
+    length = length - random.randint(offset, length-1)
+    return f"{offset}:{length}"
+
+
 def can_get_range_of_object(
     wallet: str,
     cid: str,
@@ -159,7 +167,7 @@ def can_get_range_of_object(
                 cid,
                 oid,
                 bearer=bearer,
-                range_cut="0:10",
+                range_cut=_generate_random_range_cut(),
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
@@ -190,7 +198,7 @@ def can_get_range_hash_of_object(
                 cid,
                 oid,
                 bearer=bearer,
-                range_cut="0:10",
+                range_cut=_generate_random_range_cut(),
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,
