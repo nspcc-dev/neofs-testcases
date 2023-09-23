@@ -246,8 +246,6 @@ class TestACLBearer(ClusterTestBase):
                 cluster=self.cluster,
             )
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-api/issues/273")
-    @pytest.mark.nspcc_dev__neofs_api__issue_273
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_bearer_token_expiration(self, wallets, eacl_container_with_objects, expiration_flag):
         self.tick_epochs_and_wait(1)
