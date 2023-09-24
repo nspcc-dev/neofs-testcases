@@ -9,7 +9,7 @@ import pytest
 import yaml
 from cluster import Cluster, StorageNode
 from common import WALLET_CONFIG
-from configobj import ConfigObj
+from dotenv import dotenv_values
 from neofs_testlib.cli import NeofsCli
 
 SHARD_PREFIX = "NEOFS_STORAGE_SHARD_"
@@ -30,9 +30,9 @@ class Blobstor:
         return hash((self.path, self.path_type))
 
     @staticmethod
-    def from_config_object(section: ConfigObj, shard_id: str, blobstor_id: str):
+    def from_config_object(section: dict, shard_id: str, blobstor_id: str):
         var_prefix = f"{SHARD_PREFIX}{shard_id}{BLOBSTOR_PREFIX}{blobstor_id}"
-        return Blobstor(section.get(f"{var_prefix}_PATH"), section.get(f"{var_prefix}_TYPE"))
+        return Blobstor(section[f"{var_prefix}_PATH"], section[f"{var_prefix}_TYPE"])
 
 
 @dataclass
@@ -54,13 +54,13 @@ class Shard:
         return hash((self.metabase, self.writecache))
 
     @staticmethod
-    def _get_blobstor_count_from_section(config_object: ConfigObj, shard_id: int):
+    def _get_blobstor_count_from_section(config_object: dict, shard_id: int):
         pattern = f"{SHARD_PREFIX}{shard_id}{BLOBSTOR_PREFIX}"
         blobstors = {key[: len(pattern) + 2] for key in config_object.keys() if pattern in key}
         return len(blobstors)
 
     @staticmethod
-    def from_config_object(config_object: ConfigObj, shard_id: int):
+    def from_config_object(config_object: dict, shard_id: int):
         var_prefix = f"{SHARD_PREFIX}{shard_id}"
 
         blobstor_count = Shard._get_blobstor_count_from_section(config_object, shard_id)
@@ -69,12 +69,18 @@ class Shard:
             for blobstor_id in range(blobstor_count)
         ]
 
-        write_cache_enabled = config_object.as_bool(f"{var_prefix}_WRITECACHE_ENABLED")
+        write_cache_enabled = config_object[f"{var_prefix}_WRITECACHE_ENABLED"].lower() in (
+            "true",
+            "1",
+            "yes",
+            "y",
+            "on",
+        )
 
         return Shard(
             blobstors,
-            config_object.get(f"{var_prefix}_METABASE_PATH"),
-            config_object.get(f"{var_prefix}_WRITECACHE_PATH") if write_cache_enabled else "",
+            config_object[f"{var_prefix}_METABASE_PATH"],
+            config_object[f"{var_prefix}_WRITECACHE_PATH"] if write_cache_enabled else "",
         )
 
     @staticmethod
@@ -103,7 +109,7 @@ def shards_from_yaml(contents: str) -> list[Shard]:
 
 
 def shards_from_env(contents: str) -> list[Shard]:
-    configObj = ConfigObj(StringIO(contents))
+    configObj = dotenv_values(stream=StringIO(contents))
 
     pattern = f"{SHARD_PREFIX}\d*"
     num_shards = len(set(re.findall(pattern, contents)))
