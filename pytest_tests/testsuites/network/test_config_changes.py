@@ -13,6 +13,7 @@ CONFIG_KEYS_MAPPING = {
     "AuditFee": "audit_fee",
     "EpochDuration": "epoch_duration",
     "ContainerFee": "container_fee",
+    "ContainerAliasFee": "container_alias_fee",
     "EigenTrustIterations": "number_of_eigentrust_iterations",
     "EigenTrustAlpha": "eigentrust_alpha",
     "InnerRingCandidateFee": "inner_ring_candidate_fee",
@@ -33,13 +34,7 @@ class TestNetworkConfigChange(ClusterTestBase):
             ("AuditFee", 5000),
             ("EpochDuration", 480),
             ("ContainerFee", 2000),
-            pytest.param(
-                "ContainerAliasFee",
-                5000,
-                marks=pytest.mark.skip(
-                    reason="https://github.com/nspcc-dev/neofs-testcases/issues/630"
-                ),
-            ),
+            ("ContainerAliasFee", 5000),
             ("EigenTrustIterations", 8),
             ("EigenTrustAlpha", 0.2),
             ("InnerRingCandidateFee", 5000000000),
