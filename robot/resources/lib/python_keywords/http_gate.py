@@ -6,7 +6,7 @@ import re
 import shutil
 import uuid
 import zipfile
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import quote_plus
 
 import allure
@@ -26,13 +26,20 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
 @allure.step("Get via HTTP Gate")
-def get_via_http_gate(cid: str, oid: str, endpoint: str, request_path: Optional[str] = None):
+def get_via_http_gate(
+    cid: str, 
+    oid: str, 
+    endpoint: str, 
+    request_path: Optional[str] = None, 
+    return_response = False
+) -> Union[str, requests.Response]:
     """
     This function gets given object from HTTP gate
     cid:          container id to get object from
     oid:          object ID
     endpoint:     http gate endpoint
     request_path: (optional) http request, if ommited - use default [{endpoint}/get/{cid}/{oid}]
+    return_response: (optional) either return internal requests.Response object or not
     """
 
     # if `request_path` parameter ommited, use default
@@ -57,7 +64,9 @@ def get_via_http_gate(cid: str, oid: str, endpoint: str, request_path: Optional[
     file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}")
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
-    return file_path
+    if not return_response:
+        return file_path
+    return resp
 
 
 @allure.step("Get via Zip HTTP Gate")
@@ -131,16 +140,26 @@ def get_via_http_gate_by_attribute(
 
 
 @allure.step("Upload via HTTP Gate")
-def upload_via_http_gate(cid: str, path: str, endpoint: str, headers: dict = None) -> str:
+def upload_via_http_gate(
+    cid: str, 
+    path: str, 
+    endpoint: str, 
+    headers: dict = None, 
+    file_content_type: str = None
+) -> str:
     """
     This function upload given object through HTTP gate
     cid:      CID to get object from
     path:     File path to upload
     endpoint: http gate endpoint
     headers:  Object header
+    file_content_type: Special Multipart Content-Type header
     """
     request = f"{endpoint}/upload/{cid}"
-    files = {"upload_file": open(path, "rb")}
+    if not file_content_type:
+        files = {"upload_file": open(path, "rb")}
+    else:
+        files = {"upload_file": (path, open(path, "rb"), file_content_type)}
     body = {"filename": path}
     resp = requests.post(request, files=files, data=body, headers=headers)
 

@@ -4,7 +4,7 @@ import os
 import allure
 import pytest
 from epoch import get_epoch, tick_epoch
-from file_helper import generate_file, get_file_hash
+from file_helper import generate_file, generate_file_with_content, get_file_hash
 from python_keywords.container import create_container
 from python_keywords.http_gate import (
     attr_into_header,
@@ -96,6 +96,87 @@ class TestHttpGate(ClusterTestBase):
                 nodes=self.cluster.storage_nodes,
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
+
+    @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
+    def test_put_http_get_http_without_content_type(self, simple_object_size):
+        cid = create_container(
+            self.wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+
+        with allure.step("Upload binary object"):
+            file_path = generate_file(simple_object_size)
+
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                endpoint=self.cluster.default_http_gate_endpoint,
+            )
+
+            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
+            assert resp.headers['Content-Type'] == 'application/octet-stream'
+        
+        with allure.step("Upload text object"):
+            file_path = generate_file_with_content(simple_object_size, content="123")
+
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                endpoint=self.cluster.default_http_gate_endpoint,
+            )
+
+            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
+            assert resp.headers['Content-Type'] == 'text/plain; charset=utf-8'
+
+    @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
+    def test_put_http_get_http_with_x_atribute_content_type(self, simple_object_size):
+        cid = create_container(
+            self.wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+
+        with allure.step("Upload object with X-Attribute-Content-Type"):
+            file_path = generate_file(simple_object_size)
+
+            headers = {"X-Attribute-Content-Type": "CoolContentType"}
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                headers=headers,
+                endpoint=self.cluster.default_http_gate_endpoint,
+            )
+
+            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
+            assert resp.headers['Content-Type'] == 'CoolContentType'
+
+    @allure.title("Verify Content-Type if uploaded with multipart Content-Type")
+    def test_put_http_get_http_with_multipart_content_type(self):
+        cid = create_container(
+            self.wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+        
+        with allure.step("Upload object with multipart content type"):
+            file_path = generate_file_with_content(0, content='123')
+
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                file_content_type='application/json'
+            )
+
+            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
+            assert resp.headers['Content-Type'] == 'application/json'
 
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
