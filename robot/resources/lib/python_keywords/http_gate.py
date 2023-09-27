@@ -31,7 +31,8 @@ def get_via_http_gate(
     oid: str, 
     endpoint: str, 
     request_path: Optional[str] = None, 
-    return_response = False
+    return_response = False,
+    download = False
 ) -> Union[str, requests.Response]:
     """
     This function gets given object from HTTP gate
@@ -43,10 +44,13 @@ def get_via_http_gate(
     """
 
     # if `request_path` parameter ommited, use default
+    download_attribute = ""
+    if download:
+        download_attribute="?download=true"
     if request_path is None:
-        request = f"{endpoint}/get/{cid}/{oid}"
+        request = f"{endpoint}/get/{cid}/{oid}{download_attribute}"
     else:
-        request = f"{endpoint}{request_path}"
+        request = f"{endpoint}{request_path}{download_attribute}"
 
     resp = requests.get(request, stream=True)
 
