@@ -97,6 +97,53 @@ class TestHttpGate(ClusterTestBase):
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
 
+    @allure.title("Verify Content-Disposition header")
+    def test_put_http_get_http_content_disposition(self, simple_object_size):
+        cid = create_container(
+            self.wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+
+        with allure.step("Verify Content-Disposition"):
+            file_path = generate_file(simple_object_size)
+
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                endpoint=self.cluster.default_http_gate_endpoint,
+            )
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid, 
+                endpoint=self.cluster.default_http_gate_endpoint, 
+                return_response=True
+            )
+            content_disposition_type, filename = resp.headers['Content-Disposition'].split(';')
+            assert content_disposition_type.strip() == 'inline'
+            assert filename.strip().split('=')[1] == file_path.split('/')[-1]
+
+        with allure.step("Verify Content-Disposition with download=true"):
+            file_path = generate_file(simple_object_size)
+
+            oid = upload_via_http_gate(
+                cid=cid,
+                path=file_path,
+                endpoint=self.cluster.default_http_gate_endpoint,
+            )
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid, 
+                endpoint=self.cluster.default_http_gate_endpoint, 
+                return_response=True,
+                download=True
+            )
+            content_disposition_type, filename = resp.headers['Content-Disposition'].split(';')
+            assert content_disposition_type.strip() == 'attachment'
+            assert filename.strip().split('=')[1] == file_path.split('/')[-1]
+
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
     def test_put_http_get_http_without_content_type(self, simple_object_size):
         cid = create_container(
