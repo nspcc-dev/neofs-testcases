@@ -58,4 +58,4 @@ typing-extensions==4.2.0
 urllib3==1.26.9
 websocket-client==1.3.2
 yarl==1.7.2
-allure-combine==1.0.8
+allure-combine==1.0.11
