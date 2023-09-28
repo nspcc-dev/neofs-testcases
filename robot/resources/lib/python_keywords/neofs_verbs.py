@@ -437,13 +437,14 @@ def search_object(
     shell: Shell,
     endpoint: str,
     bearer: str = "",
-    filters: Optional[dict] = None,
+    filters: Optional[list] = None,
     expected_objects_list: Optional[list] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
     phy: bool = False,
     root: bool = False,
+    fail_on_assert = False
 ) -> list:
     """
     SEARCH an Object.
@@ -454,13 +455,14 @@ def search_object(
         shell: executor for cli command
         bearer: path to Bearer Token file, appends to `--bearer` key
         endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        filters: key=value pairs to filter Objects
+        filters: list of filter objects
         expected_objects_list: a list of ObjectIDs to compare found Objects with
         wallet_config: path to the wallet config
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
         phy: Search physically stored objects.
         root: Search for user objects.
+        fail_on_assert: fail if expected_objects_list is not matched to the found objects list.
 
     Returns:
         list of found ObjectIDs
@@ -473,9 +475,7 @@ def search_object(
         cid=cid,
         bearer=bearer,
         xhdr=xhdr,
-        filters=[f"{filter_key} EQ {filter_val}" for filter_key, filter_val in filters.items()]
-        if filters
-        else None,
+        filters=filters,
         session=session,
         phy=phy,
         root=root,
@@ -490,10 +490,10 @@ def search_object(
                 f"is equal for expected list '{expected_objects_list}'"
             )
         else:
-            logger.warning(
-                f"Found object list {found_objects} "
-                f"is not equal to expected list '{expected_objects_list}'"
-            )
+            warning = f"Found object list {found_objects} is not equal to expected list '{expected_objects_list}'"
+            logger.warning(warning)
+            if fail_on_assert:
+                raise AssertionError(warning)
 
     return found_objects
 
