@@ -1,8 +1,10 @@
+import json
 import logging
 import os
 
 import allure
 import pytest
+from cluster import Cluster
 from epoch import get_epoch, tick_epoch
 from file_helper import generate_file, generate_file_with_content, get_file_hash
 from python_keywords.container import create_container
@@ -224,6 +226,36 @@ class TestHttpGate(ClusterTestBase):
 
             resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
             assert resp.headers['Content-Type'] == 'application/json'
+
+    @allure.title("Verify special HTTP headers")
+    def test_put_http_get_http_special_attributes(self, simple_object_size, cluster: Cluster):
+        cid = create_container(
+            self.wallet,
+            shell=self.shell,
+            endpoint=self.cluster.default_rpc_endpoint,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+
+        file_path = generate_file(simple_object_size)
+
+        oid = upload_via_http_gate(
+            cid=cid,
+            path=file_path,
+            endpoint=self.cluster.default_http_gate_endpoint,
+        )
+        resp = get_via_http_gate(
+            cid=cid,
+            oid=oid, 
+            endpoint=self.cluster.default_http_gate_endpoint, 
+            return_response=True
+        )
+        with open(cluster.http_gates[0].get_wallet_path()) as wallet_file:
+            wallet_json = json.load(wallet_file)
+
+        assert resp.headers['X-Owner-Id'] == wallet_json['accounts'][0]['address']
+        assert resp.headers['X-Object-Id'] == oid
+        assert resp.headers['X-Container-Id'] == cid
 
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
