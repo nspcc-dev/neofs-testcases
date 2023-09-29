@@ -204,6 +204,7 @@ def upload_via_http_gate_curl(
     endpoint: str,
     headers: list = None,
     error_pattern: Optional[str] = None,
+    cookies: dict = None,
 ) -> str:
     """
     This function upload given object through HTTP gate using curl utility.
@@ -219,18 +220,23 @@ def upload_via_http_gate_curl(
         # parse attributes
         attributes = " ".join(headers)
 
+    cookies_attr = ""
+    if cookies:
+        for k, v in cookies.items():
+            cookies_attr += f" -b '{k}={v}'"
+
     large_object = is_object_large(filepath)
     if large_object:
         # pre-clean
         _cmd_run("rm pipe -f")
         files = f"file=@pipe;filename={os.path.basename(filepath)}"
-        cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --no-buffer -F '{files}' {attributes} {request}"
+        cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --no-buffer -F '{files}' {attributes}{cookies_attr} {request}"
         output = _cmd_run(cmd, LONG_TIMEOUT)
         # clean up pipe
         _cmd_run("rm pipe")
     else:
         files = f"file=@{filepath};filename={os.path.basename(filepath)}"
-        cmd = f"curl -F '{files}' {attributes} {request}"
+        cmd = f"curl -F '{files}' {attributes}{cookies_attr} {request}"
         output = _cmd_run(cmd)
 
     if error_pattern:

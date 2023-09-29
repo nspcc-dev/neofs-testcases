@@ -95,6 +95,7 @@ class Test_http_bearer(ClusterTestBase):
             error_pattern="access to object operation denied",
         )
 
+    @pytest.mark.parametrize("bearer_type", ('header', 'cookie'))
     @pytest.mark.parametrize(
         "object_size",
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
@@ -103,6 +104,7 @@ class Test_http_bearer(ClusterTestBase):
     def test_put_with_bearer_when_eacl_restrict(
         self,
         object_size: int,
+        bearer_type: str,
         user_container: str,
         eacl_deny_for_others,
         bearer_token_no_limit_for_others: str,
@@ -113,12 +115,19 @@ class Test_http_bearer(ClusterTestBase):
         with allure.step(
             f"Put object with bearer token for {EACLRole.OTHERS}, then get and verify hashes"
         ):
-            headers = [f" -H 'Authorization: Bearer {bearer}'"]
+            headers = None
+            cookies = None
+            if bearer_type == 'header':
+                headers = [f" -H 'Authorization: Bearer {bearer}'"]
+            if bearer_type == 'cookie':
+                cookies = {'Bearer': bearer}
+            
             oid = upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
                 endpoint=self.cluster.default_http_gate_endpoint,
                 headers=headers,
+                cookies=cookies
             )
             get_object_and_verify_hashes(
                 oid=oid,
