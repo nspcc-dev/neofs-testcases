@@ -1,8 +1,8 @@
 aiodns==3.0.0
 aiohttp==3.8.5
 aioresponses==0.7.2
-allure-pytest==2.9.45
-allure-python-commons==2.9.45
+allure-pytest==2.13.2
+allure-python-commons==2.13.2
 async-timeout==4.0.2
 asynctest==0.13.0
 attrs==22.2.0
@@ -58,4 +58,4 @@ typing-extensions==4.2.0
 urllib3==1.26.9
 websocket-client==1.3.2
 yarl==1.7.2
-allure-combine==1.0.8
+allure-combine==1.0.11
