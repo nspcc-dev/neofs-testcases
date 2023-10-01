@@ -119,13 +119,13 @@ class TestHttpGate(ClusterTestBase):
             )
             resp = get_via_http_gate(
                 cid=cid,
-                oid=oid, 
-                endpoint=self.cluster.default_http_gate_endpoint, 
-                return_response=True
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                return_response=True,
             )
-            content_disposition_type, filename = resp.headers['Content-Disposition'].split(';')
-            assert content_disposition_type.strip() == 'inline'
-            assert filename.strip().split('=')[1] == file_path.split('/')[-1]
+            content_disposition_type, filename = resp.headers["Content-Disposition"].split(";")
+            assert content_disposition_type.strip() == "inline"
+            assert filename.strip().split("=")[1] == file_path.split("/")[-1]
 
         with allure.step("Verify Content-Disposition with download=true"):
             file_path = generate_file(simple_object_size)
@@ -137,14 +137,14 @@ class TestHttpGate(ClusterTestBase):
             )
             resp = get_via_http_gate(
                 cid=cid,
-                oid=oid, 
-                endpoint=self.cluster.default_http_gate_endpoint, 
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
                 return_response=True,
-                download=True
+                download=True,
             )
-            content_disposition_type, filename = resp.headers['Content-Disposition'].split(';')
-            assert content_disposition_type.strip() == 'attachment'
-            assert filename.strip().split('=')[1] == file_path.split('/')[-1]
+            content_disposition_type, filename = resp.headers["Content-Disposition"].split(";")
+            assert content_disposition_type.strip() == "attachment"
+            assert filename.strip().split("=")[1] == file_path.split("/")[-1]
 
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
     def test_put_http_get_http_without_content_type(self, simple_object_size):
@@ -165,9 +165,14 @@ class TestHttpGate(ClusterTestBase):
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
 
-            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
-            assert resp.headers['Content-Type'] == 'application/octet-stream'
-        
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                return_response=True,
+            )
+            assert resp.headers["Content-Type"] == "application/octet-stream"
+
         with allure.step("Upload text object"):
             file_path = generate_file_with_content(simple_object_size, content="123")
 
@@ -177,8 +182,13 @@ class TestHttpGate(ClusterTestBase):
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
 
-            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
-            assert resp.headers['Content-Type'] == 'text/plain; charset=utf-8'
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                return_response=True,
+            )
+            assert resp.headers["Content-Type"] == "text/plain; charset=utf-8"
 
     @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
     def test_put_http_get_http_with_x_atribute_content_type(self, simple_object_size):
@@ -201,8 +211,13 @@ class TestHttpGate(ClusterTestBase):
                 endpoint=self.cluster.default_http_gate_endpoint,
             )
 
-            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
-            assert resp.headers['Content-Type'] == 'CoolContentType'
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                return_response=True,
+            )
+            assert resp.headers["Content-Type"] == "CoolContentType"
 
     @allure.title("Verify Content-Type if uploaded with multipart Content-Type")
     def test_put_http_get_http_with_multipart_content_type(self):
@@ -213,19 +228,24 @@ class TestHttpGate(ClusterTestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        
+
         with allure.step("Upload object with multipart content type"):
-            file_path = generate_file_with_content(0, content='123')
+            file_path = generate_file_with_content(0, content="123")
 
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
                 endpoint=self.cluster.default_http_gate_endpoint,
-                file_content_type='application/json'
+                file_content_type="application/json",
             )
 
-            resp = get_via_http_gate(cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True)
-            assert resp.headers['Content-Type'] == 'application/json'
+            resp = get_via_http_gate(
+                cid=cid,
+                oid=oid,
+                endpoint=self.cluster.default_http_gate_endpoint,
+                return_response=True,
+            )
+            assert resp.headers["Content-Type"] == "application/json"
 
     @allure.title("Verify special HTTP headers")
     def test_put_http_get_http_special_attributes(self, simple_object_size, cluster: Cluster):
@@ -245,17 +265,14 @@ class TestHttpGate(ClusterTestBase):
             endpoint=self.cluster.default_http_gate_endpoint,
         )
         resp = get_via_http_gate(
-            cid=cid,
-            oid=oid, 
-            endpoint=self.cluster.default_http_gate_endpoint, 
-            return_response=True
+            cid=cid, oid=oid, endpoint=self.cluster.default_http_gate_endpoint, return_response=True
         )
         with open(cluster.http_gates[0].get_wallet_path()) as wallet_file:
             wallet_json = json.load(wallet_file)
 
-        assert resp.headers['X-Owner-Id'] == wallet_json['accounts'][0]['address']
-        assert resp.headers['X-Object-Id'] == oid
-        assert resp.headers['X-Container-Id'] == cid
+        assert resp.headers["X-Owner-Id"] == wallet_json["accounts"][0]["address"]
+        assert resp.headers["X-Object-Id"] == oid
+        assert resp.headers["X-Container-Id"] == cid
 
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")

@@ -3,8 +3,15 @@ import pytest
 
 from testsuites.acl.conftest import Wallets
 from cluster_test_base import ClusterTestBase
-from object_access import can_put_object, can_get_object, can_get_head_object, can_search_object, \
-    can_get_range_of_object, can_get_range_hash_of_object, can_delete_object
+from object_access import (
+    can_put_object,
+    can_get_object,
+    can_get_head_object,
+    can_search_object,
+    can_get_range_of_object,
+    can_get_range_hash_of_object,
+    can_delete_object,
+)
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.container_access import (
@@ -184,7 +191,9 @@ class TestACLBasic(ClusterTestBase):
             )
 
     @allure.title("Test basic ACL IR and STORAGE rules compliance")
-    def test_basic_acl_ir_storage_rules_compliance(self, wallets: Wallets, public_container: str, file_path: str):
+    def test_basic_acl_ir_storage_rules_compliance(
+        self, wallets: Wallets, public_container: str, file_path: str
+    ):
         """
         Test basic ACL IR and STORAGE rules compliance.
 
@@ -311,7 +320,9 @@ class TestACLBasic(ClusterTestBase):
                     endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
-            with allure.step("STORAGE node should NOT be able to GET range of object from container"):
+            with allure.step(
+                "STORAGE node should NOT be able to GET range of object from container"
+            ):
                 assert not can_get_range_of_object(
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
@@ -330,7 +341,9 @@ class TestACLBasic(ClusterTestBase):
                     endpoint=endpoint,
                     wallet_config=ir_wallet.config_path,
                 )
-            with allure.step("STORAGE node should be able to GET range hash of object from container"):
+            with allure.step(
+                "STORAGE node should be able to GET range hash of object from container"
+            ):
                 assert can_get_range_hash_of_object(
                     wallet=storage_wallet.wallet_path,
                     cid=cid,
@@ -358,4 +371,3 @@ class TestACLBasic(ClusterTestBase):
                     endpoint=endpoint,
                     wallet_config=storage_wallet.config_path,
                 )
-

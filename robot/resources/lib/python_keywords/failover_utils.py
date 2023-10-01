@@ -15,8 +15,13 @@ from neofs_testlib.shell import Shell
 from neofs_testlib.hosting import Hosting
 from python_keywords.node_management import storage_node_healthcheck, stop_storage_nodes
 from storage_policy import get_nodes_with_object
-from common import MORPH_CHAIN_SERVICE_NAME_REGEX, ENDPOINT_INTERNAL0, DOCKER_COMPOSE_ENV_FILE, \
-    DOCKER_COMPOSE_STORAGE_CONFIG_FILE, METABASE_RESYNC_TIMEOUT
+from common import (
+    MORPH_CHAIN_SERVICE_NAME_REGEX,
+    ENDPOINT_INTERNAL0,
+    DOCKER_COMPOSE_ENV_FILE,
+    DOCKER_COMPOSE_STORAGE_CONFIG_FILE,
+    METABASE_RESYNC_TIMEOUT,
+)
 
 logger = logging.getLogger("NeoLogger")
 
@@ -71,7 +76,9 @@ def get_morph_chain_endpoints(hosting: Hosting) -> List[Tuple[str, str]]:
     endpoints = []
     for config in morph_chain_config:
         if ENDPOINT_INTERNAL0 not in config.attributes:
-            raise ValueError(f"{ENDPOINT_INTERNAL0} is not present in the attributes of the config: {config}")
+            raise ValueError(
+                f"{ENDPOINT_INTERNAL0} is not present in the attributes of the config: {config}"
+            )
         morph_chain_addr_full = config.attributes[ENDPOINT_INTERNAL0]
         parsed_url = urlparse(morph_chain_addr_full)
         addr = parsed_url.hostname
@@ -91,8 +98,16 @@ def docker_compose_restart_storage_nodes(cluster: Cluster):
     wait_all_storage_nodes_returned(cluster)
     with allure.step("Log resync status"):
         for node in cluster.storage_nodes:
-            envs = subprocess.run(["docker", "inspect", "-f", "'{{range $index, $value := .Config.Env}}{{$value}} "
-                                                              "{{end}}'", node.name], capture_output=True)
+            envs = subprocess.run(
+                [
+                    "docker",
+                    "inspect",
+                    "-f",
+                    "'{{range $index, $value := .Config.Env}}{{$value}} " "{{end}}'",
+                    node.name,
+                ],
+                capture_output=True,
+            )
             env_stdout = envs.stdout.decode("utf-8")
             logger.debug(f"ENV from {node.name}: {env_stdout}")
 
@@ -114,15 +129,15 @@ def enable_metabase_resync_on_start(cluster: Cluster):
     """
     file_path = DOCKER_COMPOSE_ENV_FILE
     if not os.path.exists(file_path):
-        pytest.fail(f'File {file_path} does not exist!')
+        pytest.fail(f"File {file_path} does not exist!")
 
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         lines = file.readlines()
     logger.debug(f"Initial file content:\n{''.join(lines)}")
 
     replacements = {
-        'NEOFS_STORAGE_SHARD_0_RESYNC_METABASE=false': 'NEOFS_STORAGE_SHARD_0_RESYNC_METABASE=true\n',
-        'NEOFS_STORAGE_SHARD_1_RESYNC_METABASE=false': 'NEOFS_STORAGE_SHARD_1_RESYNC_METABASE=true\n'
+        "NEOFS_STORAGE_SHARD_0_RESYNC_METABASE=false": "NEOFS_STORAGE_SHARD_0_RESYNC_METABASE=true\n",
+        "NEOFS_STORAGE_SHARD_1_RESYNC_METABASE=false": "NEOFS_STORAGE_SHARD_1_RESYNC_METABASE=true\n",
     }
 
     unprocessed_lines = set(replacements.values())
@@ -138,9 +153,9 @@ def enable_metabase_resync_on_start(cluster: Cluster):
 
     modified_lines.extend(unprocessed_lines)
 
-    modified_content = ''.join(modified_lines)
+    modified_content = "".join(modified_lines)
 
-    with open(file_path, 'w') as file:
+    with open(file_path, "w") as file:
         file.write(modified_content)
     logger.debug(f"Modified file content:\n{modified_content}")
 
@@ -149,7 +164,7 @@ def enable_metabase_resync_on_start(cluster: Cluster):
 
     yield
 
-    with open(file_path, 'w') as file:
+    with open(file_path, "w") as file:
         file.writelines(lines)
     logger.debug(f"Restored file content:\n{''.join(lines)}")
 
@@ -158,4 +173,3 @@ def enable_metabase_resync_on_start(cluster: Cluster):
 
     with allure.step(f"Waiting {METABASE_RESYNC_TIMEOUT} seconds for the metabase to synchronize"):
         sleep(parse_time(METABASE_RESYNC_TIMEOUT))
-

@@ -215,7 +215,7 @@ def put_object_to_random_node(
         expire_at,
         no_progress,
         session,
-        lifetime
+        lifetime,
     )
 
 
@@ -444,7 +444,7 @@ def search_object(
     session: Optional[str] = None,
     phy: bool = False,
     root: bool = False,
-    fail_on_assert = False
+    fail_on_assert=False,
 ) -> list:
     """
     SEARCH an Object.

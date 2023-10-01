@@ -26,10 +26,13 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
 TEST_FILES_DIR = os.getenv("TEST_FILES_DIR", "TestFilesDir")
 TEST_OBJECTS_DIR = os.getenv("TEST_OBJECTS_DIR", "TestObjectsDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
-DOCKER_COMPOSE_STORAGE_CONFIG_FILE = os.getenv("DOCKER_COMPOSE_STORAGE_CONFIG_FILE", os.path.join(DEVENV_PATH, "services", "storage",
-                                                                                  "docker-compose.yml"))
-DOCKER_COMPOSE_ENV_FILE = os.getenv("DOCKER_COMPOSE_ENV_FILE", os.path.join(DEVENV_PATH, "services", "storage",
-                                                                            ".int_test.env"))
+DOCKER_COMPOSE_STORAGE_CONFIG_FILE = os.getenv(
+    "DOCKER_COMPOSE_STORAGE_CONFIG_FILE",
+    os.path.join(DEVENV_PATH, "services", "storage", "docker-compose.yml"),
+)
+DOCKER_COMPOSE_ENV_FILE = os.getenv(
+    "DOCKER_COMPOSE_ENV_FILE", os.path.join(DEVENV_PATH, "services", "storage", ".int_test.env")
+)
 
 # Password of wallet owned by user on behalf of whom we are running tests
 WALLET_PASS = os.getenv("WALLET_PASS", "")
@@ -41,7 +44,9 @@ NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
 NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "neofs-s3-authmate")
 NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC", "neofs-adm")
 
-NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH", os.path.join(DEVENV_PATH, "neofs-adm.yml"))
+NEOFS_ADM_CONFIG_PATH = os.getenv(
+    "NEOFS_ADM_CONFIG_PATH", os.path.join(DEVENV_PATH, "neofs-adm.yml")
+)
 
 FREE_STORAGE = os.getenv("FREE_STORAGE", "false").lower() == "true"
 BIN_VERSIONS_FILE = os.getenv("BIN_VERSIONS_FILE")

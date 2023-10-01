@@ -11,7 +11,8 @@ from python_keywords.acl import (
     EACLRule,
     create_eacl,
     set_eacl,
-    wait_for_cache_expired, get_eacl,
+    wait_for_cache_expired,
+    get_eacl,
 )
 from python_keywords.container import create_container
 from python_keywords.container_access import (
@@ -302,8 +303,12 @@ class TestEACLContainer(ClusterTestBase):
 
     @pytest.mark.trusted_party_proved
     @pytest.mark.system_eacl
-    @allure.title("Test case for verifying the impossible to change system extended ACL if eACL already set")
-    def test_deprecated_change_system_eacl_if_eacl_already_set(self, wallets, eacl_container_with_objects):
+    @allure.title(
+        "Test case for verifying the impossible to change system extended ACL if eACL already set"
+    )
+    def test_deprecated_change_system_eacl_if_eacl_already_set(
+        self, wallets, eacl_container_with_objects
+    ):
         user_wallet = wallets.get_wallet()
         cid, object_oids, file_path = eacl_container_with_objects
         endpoint = self.cluster.default_rpc_endpoint
@@ -489,7 +494,7 @@ class TestEACLContainer(ClusterTestBase):
         self,
         wallets: Wallets,
         eacl_full_placement_container_with_object: tuple[str, str, str],
-        not_owner_wallet: str
+        not_owner_wallet: str,
     ):
         cid, oid, file_path = eacl_full_placement_container_with_object
 

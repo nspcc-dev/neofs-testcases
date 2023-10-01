@@ -6,7 +6,11 @@ import allure
 import pytest
 import subprocess
 from cluster import StorageNode
-from failover_utils import wait_all_storage_nodes_returned, wait_object_replication, get_morph_chain_endpoints
+from failover_utils import (
+    wait_all_storage_nodes_returned,
+    wait_object_replication,
+    get_morph_chain_endpoints,
+)
 from file_helper import generate_file, get_file_hash
 from iptables_helper import IpTablesHelper
 from python_keywords.container import create_container
@@ -124,20 +128,34 @@ class TestFailoverNetwork(ClusterTestBase):
         dport_repeat = 10  # Constant for the number of the disconnect should be repeated
         morph_chain_endpoints = get_morph_chain_endpoints(hosting)
 
-        required_keys = ['epoch', 'time_per_block', 'audit_fee', 'storage_price', 'container_fee', 'eigentrust_alpha',
-                         'number_of_eigentrust_iterations', 'epoch_duration', 'inner_ring_candidate_fee',
-                         'maximum_object_size', 'withdrawal_fee', 'systemdns', 'homomorphic_hashing_disabled',
-                         'maintenance_mode_allowed']
+        required_keys = [
+            "epoch",
+            "time_per_block",
+            "audit_fee",
+            "storage_price",
+            "container_fee",
+            "eigentrust_alpha",
+            "number_of_eigentrust_iterations",
+            "epoch_duration",
+            "inner_ring_candidate_fee",
+            "maximum_object_size",
+            "withdrawal_fee",
+            "systemdns",
+            "homomorphic_hashing_disabled",
+            "maintenance_mode_allowed",
+        ]
 
         for storage_node in hosting.find_service_configs(STORAGE_NODE_SERVICE_NAME_REGEX):
             host = hosting.get_host_by_service(storage_node.name)
             pid = host.get_service_pid(storage_node.name)
 
             for morph_chain_addr, morph_chain_port in morph_chain_endpoints:
-                with allure.step(f'Disconnecting storage node {storage_node.name} '
-                                 f'from {morph_chain_addr} {dport_repeat} times'):
+                with allure.step(
+                    f"Disconnecting storage node {storage_node.name} "
+                    f"from {morph_chain_addr} {dport_repeat} times"
+                ):
                     for repeat in range(dport_repeat):
-                        with allure.step(f'Disconnect number {repeat}'):
+                        with allure.step(f"Disconnect number {repeat}"):
                             try:
                                 """
                                 Of course, it would be cleaner to use such code:
@@ -147,38 +165,40 @@ class TestFailoverNetwork(ClusterTestBase):
                                 But we face the limitations of the ubuntu-latest runner:
                                 And using setfacl is not possible due to GitHub ubuntu-latest runner limitations.
                                 """
-                                command = f'ss -K dst {morph_chain_addr} dport {morph_chain_port}'
-                                sudo_command = f'sudo nsenter -t {pid} -n {command}'
+                                command = f"ss -K dst {morph_chain_addr} dport {morph_chain_port}"
+                                sudo_command = f"sudo nsenter -t {pid} -n {command}"
                                 output = subprocess.check_output(sudo_command, shell=True)
-                                logger.info(f'Output of the command {sudo_command}: {output}')
+                                logger.info(f"Output of the command {sudo_command}: {output}")
                             except subprocess.CalledProcessError as e:
                                 logger.error(
-                                    f'Error occurred while running command: {sudo_command}. Error message: {str(e)}')
+                                    f"Error occurred while running command: {sudo_command}. Error message: {str(e)}"
+                                )
                                 raise
                             finally:
                                 # Delay between shutdown attempts, emulates a real disconnection
                                 sleep(1)
                         logger.info(
-                            f'Disconnected storage node {storage_node.name} '
-                            f'from {morph_chain_addr} {dport_repeat} times')
+                            f"Disconnected storage node {storage_node.name} "
+                            f"from {morph_chain_addr} {dport_repeat} times"
+                        )
 
             for node in self.cluster.storage_nodes:
 
-                with allure.step(f'Checking if node {node} is alive'):
+                with allure.step(f"Checking if node {node} is alive"):
                     try:
                         health_check = storage_node_healthcheck(node)
                         assert (
-                                health_check.health_status == "READY"
-                                and health_check.network_status == "ONLINE"
+                            health_check.health_status == "READY"
+                            and health_check.network_status == "ONLINE"
                         )
                     except Exception as err:
-                        logger.warning(f'Node {node} is not online:\n{err}')
+                        logger.warning(f"Node {node} is not online:\n{err}")
                         raise AssertionError(
-                            f'After the RPC connection failed, the storage node {node} DID NOT reconnect '
-                            f'to any other node and FAILED to continue operating. '
+                            f"After the RPC connection failed, the storage node {node} DID NOT reconnect "
+                            f"to any other node and FAILED to continue operating. "
                         )
 
-                with allure.step(f'Checking netinfo for node {node}'):
+                with allure.step(f"Checking netinfo for node {node}"):
                     try:
                         net_info = get_netmap_netinfo(
                             wallet=default_wallet,
@@ -188,15 +208,16 @@ class TestFailoverNetwork(ClusterTestBase):
                         missing_keys = [key for key in required_keys if key not in net_info]
                         if missing_keys:
                             raise AssertionError(
-                                f'Error occurred while checking netinfo for node {node} - '
-                                f'missing keys in the output: {missing_keys}.'
-                                f'Netmap netinfo: {net_info}'
+                                f"Error occurred while checking netinfo for node {node} - "
+                                f"missing keys in the output: {missing_keys}."
+                                f"Netmap netinfo: {net_info}"
                             )
                     except Exception as err:
                         logger.warning(
-                            f'Error occurred while checking netinfo for node {node}. Error message: {str(err)}')
+                            f"Error occurred while checking netinfo for node {node}. Error message: {str(err)}"
+                        )
                         raise Exception(
-                            f'After the RPC connection failed, the storage node {node} cannot get netmap netinfo'
+                            f"After the RPC connection failed, the storage node {node} cannot get netmap netinfo"
                         )
 
-            logger.info(f'Node {node} is alive and online')
+            logger.info(f"Node {node} is alive and online")

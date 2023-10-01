@@ -36,12 +36,14 @@ def ensure_fresh_epoch(
 
 @allure.step("Wait for epochs align in whole cluster")
 @wait_for_success(60, 5)
-def wait_for_epochs_align(shell: Shell, cluster: Cluster, epoch_number: Optional[int] = None) -> bool:
+def wait_for_epochs_align(
+    shell: Shell, cluster: Cluster, epoch_number: Optional[int] = None
+) -> bool:
     epochs = []
     for node in cluster.storage_nodes:
         current_epoch = get_epoch(shell, cluster, node)
         assert (
-                epoch_number is None or current_epoch > epoch_number
+            epoch_number is None or current_epoch > epoch_number
         ), f"Epoch {current_epoch} wasn't ticked yet. Expected epoch > {epoch_number}"
         epochs.append(current_epoch)
     unique_epochs = list(set(epochs))
@@ -90,7 +92,7 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
             neofs_adm_exec_path=NEOFS_ADM_EXEC,
             config_file=NEOFS_ADM_CONFIG_PATH,
         )
-        
+
         neofsadm.morph.force_new_epoch(
             rpc_endpoint=morph_endpoint,
             alphabet_wallets="/".join(ir_wallet_path.split("/")[:-1]),
@@ -120,8 +122,12 @@ def tick_epoch(shell: Shell, cluster: Cluster, alive_node: Optional[StorageNode]
 
 
 @allure.step("Tick Epoch and wait for epochs align")
-def tick_epoch_and_wait(shell: Shell, cluster: Cluster, current_epoch: Optional[int] = None,
-                        node: Optional[StorageNode] = None):
+def tick_epoch_and_wait(
+    shell: Shell,
+    cluster: Cluster,
+    current_epoch: Optional[int] = None,
+    node: Optional[StorageNode] = None,
+):
     current_epoch = current_epoch if current_epoch else get_epoch(shell, cluster, node)
     tick_epoch(shell, cluster, node)
     wait_for_epochs_align(shell, cluster, current_epoch)

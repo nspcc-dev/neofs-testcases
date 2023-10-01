@@ -145,8 +145,8 @@ def can_get_head_object(
 
 def _generate_random_range_cut(offset: int = 0, length: int = 10):
     # [X:0] requests are not allowed
-    offset = random.randint(offset, length-1)
-    length = length - random.randint(offset, length-1)
+    offset = random.randint(offset, length - 1)
+    length = length - random.randint(offset, length - 1)
     return f"{offset}:{length}"
 
 

@@ -137,13 +137,14 @@ def storage_objects(
     with expect_not_raises():
         delete_objects(storage_objects, client_shell, cluster)
 
+
 @pytest.fixture
 def container(default_wallet: str, client_shell: Shell, cluster: Cluster) -> str:
-    cid = create_container(default_wallet, shell=client_shell, endpoint=cluster.default_rpc_endpoint)
-    yield cid
-    delete_container(
-        default_wallet, cid, shell=client_shell, endpoint=cluster.default_rpc_endpoint
+    cid = create_container(
+        default_wallet, shell=client_shell, endpoint=cluster.default_rpc_endpoint
     )
+    yield cid
+    delete_container(default_wallet, cid, shell=client_shell, endpoint=cluster.default_rpc_endpoint)
 
 
 @pytest.mark.grpc_api
@@ -244,21 +245,14 @@ class TestObjectApi(ClusterTestBase):
         cid = storage_objects[0].cid
 
         def _generate_filters_expressions(attrib_dict: dict[str, str]):
-            return [f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()]
+            return [
+                f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()
+            ]
 
         test_table = [
-            (
-                _generate_filters_expressions(OBJECT_ATTRIBUTES[1]), 
-                oids[1:2]
-            ),
-            (
-                _generate_filters_expressions(OBJECT_ATTRIBUTES[2]),
-                oids[2:3]
-            ),
-            (
-                _generate_filters_expressions(COMMON_ATTRIBUTE), 
-                oids[1:3]
-            ),
+            (_generate_filters_expressions(OBJECT_ATTRIBUTES[1]), oids[1:2]),
+            (_generate_filters_expressions(OBJECT_ATTRIBUTES[2]), oids[2:3]),
+            (_generate_filters_expressions(COMMON_ATTRIBUTE), oids[1:3]),
         ]
 
         with allure.step("Search objects"):
@@ -360,7 +354,9 @@ class TestObjectApi(ClusterTestBase):
                 ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
 
     @allure.title("Validate objects search by common prefix")
-    def test_search_object_api_common_prefix(self, default_wallet: str, simple_object_size: int, container: str):
+    def test_search_object_api_common_prefix(
+        self, default_wallet: str, simple_object_size: int, container: str
+    ):
         FILEPATH_ATTR_NAME = "FilePath"
         NUMBER_OF_OBJECTS = 5
         wallet = default_wallet
@@ -376,15 +372,15 @@ class TestObjectApi(ClusterTestBase):
                     cid=container,
                     shell=self.shell,
                     cluster=self.cluster,
-                    attributes={FILEPATH_ATTR_NAME: file_path}
+                    attributes={FILEPATH_ATTR_NAME: file_path},
                 )
         all_oids = sorted(objects.values())
 
         for common_prefix, expected_oids in (
-            ('/', all_oids),
+            ("/", all_oids),
             (os.path.join(os.getcwd(), ASSETS_DIR), all_oids),
             (os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR), all_oids),
-            (file_path, [objects[file_path]])
+            (file_path, [objects[file_path]]),
         ):
             with allure.step(f"Search objects by path: {common_prefix}"):
                 search_object(
@@ -395,15 +391,10 @@ class TestObjectApi(ClusterTestBase):
                     filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
                     expected_objects_list=expected_oids,
                     root=True,
-                    fail_on_assert=True
+                    fail_on_assert=True,
                 )
-        
-        for common_prefix in (
-            f"{file_path}/o123"
-            '/COMMON_PREFIX',
-            '?',
-            '213'
-        ):
+
+        for common_prefix in (f"{file_path}/o123" "/COMMON_PREFIX", "?", "213"):
 
             with allure.step(f"Search objects by path: {common_prefix}"):
                 with pytest.raises(AssertionError):
@@ -415,7 +406,7 @@ class TestObjectApi(ClusterTestBase):
                         filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
                         expected_objects_list=expected_oids,
                         root=True,
-                        fail_on_assert=True
+                        fail_on_assert=True,
                     )
 
     @allure.title("Validate native object API get_range_hash")

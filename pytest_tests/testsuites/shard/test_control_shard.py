@@ -90,7 +90,9 @@ class Shard:
             writecache = shard["writecache"]["path"] if shard["writecache"]["enabled"] else ""
         else:
             writecache = (
-                shard["writecache"]["path"] if "path" in shard["writecache"] else shard["writecache"]
+                shard["writecache"]["path"]
+                if "path" in shard["writecache"]
+                else shard["writecache"]
             )
 
         return Shard(

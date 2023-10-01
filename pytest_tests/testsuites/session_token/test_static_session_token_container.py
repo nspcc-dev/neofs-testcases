@@ -155,14 +155,14 @@ class TestSessionTokenContainer(ClusterTestBase):
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner user can NOT delete container")
     def test_not_owner_user_can_not_delete_container(
-            self,
-            owner_wallet: WalletFile,
-            user_wallet: WalletFile,
-            stranger_wallet: WalletFile,
-            scammer_wallet: WalletFile,
-            static_sessions: dict[ContainerVerb, str],
-            temp_directory: str,
-            not_owner_wallet,
+        self,
+        owner_wallet: WalletFile,
+        user_wallet: WalletFile,
+        stranger_wallet: WalletFile,
+        scammer_wallet: WalletFile,
+        static_sessions: dict[ContainerVerb, str],
+        temp_directory: str,
+        not_owner_wallet,
     ):
         with allure.step("Create container"):
             cid = create_container(
@@ -171,8 +171,12 @@ class TestSessionTokenContainer(ClusterTestBase):
                 endpoint=self.cluster.default_rpc_endpoint,
             )
 
-        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
-        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
+        user_token = self.static_session_token(
+            owner_wallet, user_wallet, self.shell, temp_directory
+        )
+        stranger_token = self.static_session_token(
+            user_wallet, stranger_wallet, self.shell, temp_directory
+        )
 
         with allure.step("Try to delete container using stranger token"):
             with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
@@ -200,14 +204,14 @@ class TestSessionTokenContainer(ClusterTestBase):
     @pytest.mark.trusted_party_proved
     @allure.title("Not trusted party user can NOT delete container")
     def test_not_trusted_party_user_can_not_delete_container(
-            self,
-            owner_wallet: WalletFile,
-            user_wallet: WalletFile,
-            stranger_wallet: WalletFile,
-            scammer_wallet: WalletFile,
-            static_sessions: dict[ContainerVerb, str],
-            temp_directory: str,
-            not_owner_wallet,
+        self,
+        owner_wallet: WalletFile,
+        user_wallet: WalletFile,
+        stranger_wallet: WalletFile,
+        scammer_wallet: WalletFile,
+        static_sessions: dict[ContainerVerb, str],
+        temp_directory: str,
+        not_owner_wallet,
     ):
         with allure.step("Create container"):
             cid = create_container(
@@ -216,8 +220,12 @@ class TestSessionTokenContainer(ClusterTestBase):
                 endpoint=self.cluster.default_rpc_endpoint,
             )
 
-        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
-        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
+        user_token = self.static_session_token(
+            owner_wallet, user_wallet, self.shell, temp_directory
+        )
+        stranger_token = self.static_session_token(
+            user_wallet, stranger_wallet, self.shell, temp_directory
+        )
 
         with allure.step("Try to delete container using scammer token"):
             with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
@@ -263,7 +271,6 @@ class TestSessionTokenContainer(ClusterTestBase):
                     force=True,
                 )
 
-
     def test_static_session_token_container_set_eacl(
         self,
         owner_wallet: WalletFile,
@@ -305,14 +312,14 @@ class TestSessionTokenContainer(ClusterTestBase):
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT set eacl")
     def test_static_session_token_container_set_eacl_only_trusted_party_proved_by_the_container_owner(
-            self,
-            owner_wallet: WalletFile,
-            user_wallet: WalletFile,
-            stranger_wallet: WalletFile,
-            scammer_wallet: WalletFile,
-            static_sessions: dict[ContainerVerb, str],
-            temp_directory: str,
-            not_owner_wallet,
+        self,
+        owner_wallet: WalletFile,
+        user_wallet: WalletFile,
+        stranger_wallet: WalletFile,
+        scammer_wallet: WalletFile,
+        static_sessions: dict[ContainerVerb, str],
+        temp_directory: str,
+        not_owner_wallet,
     ):
         with allure.step("Create container"):
             cid = create_container(
@@ -322,8 +329,12 @@ class TestSessionTokenContainer(ClusterTestBase):
                 endpoint=self.cluster.default_rpc_endpoint,
             )
 
-        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
-        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
+        user_token = self.static_session_token(
+            owner_wallet, user_wallet, self.shell, temp_directory
+        )
+        stranger_token = self.static_session_token(
+            user_wallet, stranger_wallet, self.shell, temp_directory
+        )
 
         new_eacl = [
             EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op)

@@ -41,9 +41,12 @@ def user_container(user_wallet: WalletFile, client_shell: Shell, cluster: Cluste
 class TestFailoverNodePart(ClusterTestBase):
     @allure.title("Enable resync metabase, delete metadata and get object")
     @pytest.mark.delete_metadata
-    def test_enable_resync_metabase_delete_metadata(self, enable_metabase_resync_on_start,
-                                                    user_container: StorageContainer,
-                                                    simple_object_size: int):
+    def test_enable_resync_metabase_delete_metadata(
+        self,
+        enable_metabase_resync_on_start,
+        user_container: StorageContainer,
+        simple_object_size: int,
+    ):
         storage_object = user_container.generate_object(simple_object_size)
 
         with allure.step("Delete metabase files from storage nodes"):
@@ -66,7 +69,9 @@ class TestFailoverNodePart(ClusterTestBase):
                         wallet_config=user_container.get_wallet_config_path(),
                     )
 
-    @allure.title("Delete metadata without resync metabase enabling, delete metadata try to get object")
+    @allure.title(
+        "Delete metadata without resync metabase enabling, delete metadata try to get object"
+    )
     @pytest.mark.delete_metadata
     def test_delete_metadata(self, user_container: StorageContainer, simple_object_size: int):
         storage_object = user_container.generate_object(simple_object_size)
