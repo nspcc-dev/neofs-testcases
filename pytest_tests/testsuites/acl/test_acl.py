@@ -1,6 +1,10 @@
 import allure
 import pytest
+
+from testsuites.acl.conftest import Wallets
 from cluster_test_base import ClusterTestBase
+from object_access import can_put_object, can_get_object, can_get_head_object, can_search_object, \
+    can_get_range_of_object, can_get_range_hash_of_object, can_delete_object
 from python_keywords.acl import EACLRole
 from python_keywords.container import create_container
 from python_keywords.container_access import (
@@ -178,3 +182,180 @@ class TestACLBasic(ClusterTestBase):
                 shell=client_shell,
                 cluster=self.cluster,
             )
+
+    @allure.title("Test basic ACL IR and STORAGE rules compliance")
+    def test_basic_acl_ir_storage_rules_compliance(self, wallets: Wallets, public_container: str, file_path: str):
+        """
+        Test basic ACL IR and STORAGE rules compliance.
+
+        IR node should be able to perform the following operations:
+            GET object from container
+            GET head of object from container
+            SEARCH object in container
+            GET range hash of object from container
+
+        IR node should NOT be able to perform the following operations:
+            PUT object to container
+            GET range of object from container
+            DELETE object from container
+
+        STORAGE node should be able to perform the following operations:
+            PUT object to container
+            GET object from container
+            GET head of object from container
+            SEARCH object in container
+            GET range hash of object from container
+
+        STORAGE node should NOT be able to perform the following operations:
+            GET range of object from container
+            DELETE object from container
+        """
+        endpoint = self.cluster.default_rpc_endpoint
+
+        user_wallet = wallets.get_wallet()
+        ir_wallet = wallets.get_ir_wallet()
+        storage_wallet = wallets.get_storage_wallet()
+
+        cid = public_container
+
+        with allure.step("Add test objects to container"):
+            owner_object_oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, cluster=self.cluster
+            )
+
+        with allure.step("Check IR and STORAGE rules compliance"):
+            with allure.step("IR node should be able to PUT object to container"):
+                assert not can_put_object(
+                    ir_wallet.wallet_path,
+                    cid,
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should be able to PUT object to container"):
+                assert can_put_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should be able to GET object from container"):
+                assert can_get_object(
+                    ir_wallet.wallet_path,
+                    cid,
+                    owner_object_oid,
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should be able to GET object from container"):
+                assert can_get_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    owner_object_oid,
+                    file_path,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should be able to GET head of object from container"):
+                assert can_get_head_object(
+                    ir_wallet.wallet_path,
+                    cid,
+                    owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should be able to GET head of object from container"):
+                assert can_get_head_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should be able to SEARCH object in container"):
+                assert can_search_object(
+                    ir_wallet.wallet_path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    oid=owner_object_oid,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should be able to SEARCH object in container"):
+                assert can_search_object(
+                    storage_wallet.wallet_path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    oid=owner_object_oid,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should NOT be able to GET range of object from container"):
+                assert not can_get_range_of_object(
+                    wallet=ir_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should NOT be able to GET range of object from container"):
+                assert not can_get_range_of_object(
+                    wallet=storage_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should be able to GET range hash of object from container"):
+                assert can_get_range_hash_of_object(
+                    wallet=ir_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should be able to GET range hash of object from container"):
+                assert can_get_range_hash_of_object(
+                    wallet=storage_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=storage_wallet.config_path,
+                )
+
+            with allure.step("IR node should NOT be able to DELETE object from container"):
+                assert not can_delete_object(
+                    wallet=ir_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=ir_wallet.config_path,
+                )
+            with allure.step("STORAGE node should NOT be able to DELETE object from container"):
+                assert not can_delete_object(
+                    wallet=storage_wallet.wallet_path,
+                    cid=cid,
+                    oid=owner_object_oid,
+                    shell=self.shell,
+                    endpoint=endpoint,
+                    wallet_config=storage_wallet.config_path,
+                )
+
