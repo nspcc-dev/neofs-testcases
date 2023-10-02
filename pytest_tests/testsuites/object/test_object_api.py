@@ -1,10 +1,12 @@
 import logging
+import os
 import random
 import sys
 
 import allure
 import pytest
 from cluster import Cluster
+from common import ASSETS_DIR, TEST_FILES_DIR
 from complex_object_actions import get_complex_object_split_ranges
 from file_helper import generate_file, get_file_content, get_file_hash
 from grpc_responses import (
@@ -16,7 +18,7 @@ from grpc_responses import (
 )
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
-from python_keywords.container import create_container
+from python_keywords.container import create_container, delete_container
 from python_keywords.neofs_verbs import (
     get_object_from_random_node,
     get_range,
@@ -135,6 +137,14 @@ def storage_objects(
     with expect_not_raises():
         delete_objects(storage_objects, client_shell, cluster)
 
+@pytest.fixture
+def container(default_wallet: str, client_shell: Shell, cluster: Cluster) -> str:
+    cid = create_container(default_wallet, shell=client_shell, endpoint=cluster.default_rpc_endpoint)
+    yield cid
+    delete_container(
+        default_wallet, cid, shell=client_shell, endpoint=cluster.default_rpc_endpoint
+    )
+
 
 @pytest.mark.grpc_api
 class TestObjectApi(ClusterTestBase):
@@ -233,10 +243,22 @@ class TestObjectApi(ClusterTestBase):
         wallet = storage_objects[0].wallet_file_path
         cid = storage_objects[0].cid
 
+        def _generate_filters_expressions(attrib_dict: dict[str, str]):
+            return [f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()]
+
         test_table = [
-            (OBJECT_ATTRIBUTES[1], oids[1:2]),
-            (OBJECT_ATTRIBUTES[2], oids[2:3]),
-            (COMMON_ATTRIBUTE, oids[1:3]),
+            (
+                _generate_filters_expressions(OBJECT_ATTRIBUTES[1]), 
+                oids[1:2]
+            ),
+            (
+                _generate_filters_expressions(OBJECT_ATTRIBUTES[2]),
+                oids[2:3]
+            ),
+            (
+                _generate_filters_expressions(COMMON_ATTRIBUTE), 
+                oids[1:3]
+            ),
         ]
 
         with allure.step("Search objects"):
@@ -252,13 +274,13 @@ class TestObjectApi(ClusterTestBase):
             assert sorted(oids) == sorted(result)
 
             # search by test table
-            for filter, expected_oids in test_table:
+            for _filter, expected_oids in test_table:
                 result = search_object(
                     wallet,
                     cid,
                     shell=self.shell,
                     endpoint=self.cluster.default_rpc_endpoint,
-                    filters=filter,
+                    filters=_filter,
                     expected_objects_list=expected_oids,
                     root=True,
                 )
@@ -336,6 +358,65 @@ class TestObjectApi(ClusterTestBase):
                 assert (
                     object_type == "TOMBSTONE"
                 ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
+
+    @allure.title("Validate objects search by common prefix")
+    def test_search_object_api_common_prefix(self, default_wallet: str, simple_object_size: int, container: str):
+        FILEPATH_ATTR_NAME = "FilePath"
+        NUMBER_OF_OBJECTS = 5
+        wallet = default_wallet
+
+        objects = {}
+        for _ in range(NUMBER_OF_OBJECTS):
+            file_path = generate_file(simple_object_size)
+
+            with allure.step("Put objects"):
+                objects[file_path] = put_object_to_random_node(
+                    wallet=wallet,
+                    path=file_path,
+                    cid=container,
+                    shell=self.shell,
+                    cluster=self.cluster,
+                    attributes={FILEPATH_ATTR_NAME: file_path}
+                )
+        all_oids = sorted(objects.values())
+
+        for common_prefix, expected_oids in (
+            ('/', all_oids),
+            (os.path.join(os.getcwd(), ASSETS_DIR), all_oids),
+            (os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR), all_oids),
+            (file_path, [objects[file_path]])
+        ):
+            with allure.step(f"Search objects by path: {common_prefix}"):
+                search_object(
+                    wallet,
+                    container,
+                    shell=self.shell,
+                    endpoint=self.cluster.default_rpc_endpoint,
+                    filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
+                    expected_objects_list=expected_oids,
+                    root=True,
+                    fail_on_assert=True
+                )
+        
+        for common_prefix in (
+            f"{file_path}/o123"
+            '/COMMON_PREFIX',
+            '?',
+            '213'
+        ):
+
+            with allure.step(f"Search objects by path: {common_prefix}"):
+                with pytest.raises(AssertionError):
+                    search_object(
+                        wallet,
+                        container,
+                        shell=self.shell,
+                        endpoint=self.cluster.default_rpc_endpoint,
+                        filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
+                        expected_objects_list=expected_oids,
+                        root=True,
+                        fail_on_assert=True
+                    )
 
     @allure.title("Validate native object API get_range_hash")
     @pytest.mark.grpc_api
