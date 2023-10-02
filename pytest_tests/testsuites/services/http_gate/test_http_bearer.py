@@ -95,7 +95,7 @@ class Test_http_bearer(ClusterTestBase):
             error_pattern="access to object operation denied",
         )
 
-    @pytest.mark.parametrize("bearer_type", ('header', 'cookie'))
+    @pytest.mark.parametrize("bearer_type", ("header", "cookie"))
     @pytest.mark.parametrize(
         "object_size",
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
@@ -117,17 +117,17 @@ class Test_http_bearer(ClusterTestBase):
         ):
             headers = None
             cookies = None
-            if bearer_type == 'header':
+            if bearer_type == "header":
                 headers = [f" -H 'Authorization: Bearer {bearer}'"]
-            if bearer_type == 'cookie':
-                cookies = {'Bearer': bearer}
-            
+            if bearer_type == "cookie":
+                cookies = {"Bearer": bearer}
+
             oid = upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
                 endpoint=self.cluster.default_http_gate_endpoint,
                 headers=headers,
-                cookies=cookies
+                cookies=cookies,
             )
             get_object_and_verify_hashes(
                 oid=oid,

@@ -91,9 +91,7 @@ class TestContainer(ClusterTestBase):
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT delete container")
     def test_only_owner_can_delete_container(
-            self,
-            not_owner_wallet: WalletFile,
-            default_wallet: str
+        self, not_owner_wallet: WalletFile, default_wallet: str
     ):
         cid = create_container(
             wallet=default_wallet,

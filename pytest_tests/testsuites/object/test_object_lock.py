@@ -8,7 +8,11 @@ from cluster_test_base import ClusterTestBase
 from common import STORAGE_GC_TIME
 from complex_object_actions import get_link_object, get_storage_object_chunks
 from epoch import ensure_fresh_epoch, get_epoch, tick_epoch, tick_epoch_and_wait
-from failover_utils import wait_all_storage_nodes_returned, enable_metabase_resync_on_start, docker_compose_restart_storage_nodes
+from failover_utils import (
+    wait_all_storage_nodes_returned,
+    enable_metabase_resync_on_start,
+    docker_compose_restart_storage_nodes,
+)
 from grpc_responses import (
     LIFETIME_REQUIRED,
     LOCK_NON_REGULAR_OBJECT,
@@ -19,7 +23,12 @@ from grpc_responses import (
     OBJECT_NOT_FOUND,
 )
 from neofs_testlib.shell import Shell
-from node_management import drop_object, delete_node_metadata, stop_storage_nodes, start_storage_nodes
+from node_management import (
+    drop_object,
+    delete_node_metadata,
+    stop_storage_nodes,
+    start_storage_nodes,
+)
 from pytest import FixtureRequest
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import delete_object, head_object, lock_object
@@ -687,8 +696,10 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 )
 
     @pytest.mark.delete_metadata
-    @allure.title("The locked object must be protected from deletion after metabase deletion "
-                  "(metabase resynchronization must be enabled), and after restarting storage nodes")
+    @allure.title(
+        "The locked object must be protected from deletion after metabase deletion "
+        "(metabase resynchronization must be enabled), and after restarting storage nodes"
+    )
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
@@ -696,9 +707,9 @@ class TestObjectLockWithGrpc(ClusterTestBase):
         indirect=True,
     )
     def test_the_object_lock_should_be_kept_after_metabase_deletion(
-            self,
-            new_locked_storage_object: StorageObjectInfo,
-            enable_metabase_resync_on_start,
+        self,
+        new_locked_storage_object: StorageObjectInfo,
+        enable_metabase_resync_on_start,
     ):
         """
         Lock objects should fill metabase on resync_metabase
@@ -711,7 +722,9 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                 nodes=self.cluster.storage_nodes,
             )
 
-        with allure.step(f"Try to delete object {new_locked_storage_object.oid} before metabase deletion"):
+        with allure.step(
+            f"Try to delete object {new_locked_storage_object.oid} before metabase deletion"
+        ):
             with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
                 delete_object(
                     new_locked_storage_object.wallet_file_path,
@@ -749,7 +762,9 @@ class TestObjectLockWithGrpc(ClusterTestBase):
 
         assert nodes_with_object_before_first_try == nodes_with_object_after_metabase_deletion
 
-        with allure.step(f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"):
+        with allure.step(
+            f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"
+        ):
             with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
                 delete_object(
                     new_locked_storage_object.wallet_file_path,

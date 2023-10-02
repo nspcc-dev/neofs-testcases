@@ -21,7 +21,7 @@ class AwsCliClient:
 
     def __init__(self, s3gate_endpoint) -> None:
         self.s3gate_endpoint = s3gate_endpoint
-        os.environ['AWS_EC2_METADATA_DISABLED'] = 'true'
+        os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
     def create_bucket(
         self,

@@ -66,6 +66,7 @@ def pytest_runtest_makereport(item, call):
     # be "setup", "call", "teardown"
     item.stash.setdefault(phase_report_key, {})[rep.when] = rep
 
+
 def pytest_collection_modifyitems(items):
     # Make network tests last based on @pytest.mark.node_mgmt
     def priority(item: pytest.Item) -> int:
@@ -167,7 +168,7 @@ def temp_directory() -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@allure.title(f'Prepare test files directories')
+@allure.title(f"Prepare test files directories")
 def artifacts_directory(temp_directory: str) -> None:
     dirs = [TEST_FILES_DIR, TEST_OBJECTS_DIR]
     for dir_name in dirs:
@@ -185,7 +186,7 @@ def artifacts_directory(temp_directory: str) -> None:
 @pytest.fixture(scope="session", autouse=True)
 @allure.title("Collect full logs")
 def collect_full_tests_logs(temp_directory, hosting: Hosting):
-    test_name = 'full_logs'
+    test_name = "full_logs"
     start_time = datetime.utcnow()
     yield
     end_time = datetime.utcnow()
@@ -199,15 +200,15 @@ def collect_full_tests_logs(temp_directory, hosting: Hosting):
 def collect_test_logs(request, temp_directory, hosting: Hosting):
     test_name = request.node.nodeid.translate(str.maketrans(":[]/", "____"))
     hash_suffix = hashlib.md5(test_name.encode()).hexdigest()
-    file_name = (test_name[:200] + '_' + hash_suffix)  # limit total length to 255
+    file_name = test_name[:200] + "_" + hash_suffix  # limit total length to 255
     logs_dir = os.path.join(temp_directory, "logs")
-    with allure.step(f'Start collecting logs for {file_name}'):
+    with allure.step(f"Start collecting logs for {file_name}"):
         start_time = datetime.utcnow()
     yield
     # https://docs.pytest.org/en/latest/example/simple.html#making-test-result-information-available-in-fixtures
     report = request.node.stash[phase_report_key]
     if report["setup"].failed or ("call" in report and report["call"].failed):
-        with allure.step(f'Stop collecting logs for {file_name}, logs path: {logs_dir} '):
+        with allure.step(f"Stop collecting logs for {file_name}, logs path: {logs_dir} "):
             end_time = datetime.utcnow()
             store_logs(hosting, logs_dir, file_name, start_time, end_time)
 
@@ -219,13 +220,13 @@ def netinfo(request, cluster: Cluster, client_shell: Shell, default_wallet: str)
     report = request.node.stash[phase_report_key]
     if report["setup"].failed or ("call" in report and report["call"].failed):
         for node in cluster.storage_nodes:
-            with allure.step(f'Checking netinfo for node {node}'):
+            with allure.step(f"Checking netinfo for node {node}"):
                 net_info = get_netmap_netinfo(
                     wallet=default_wallet,
                     endpoint=node.get_rpc_endpoint(),
                     shell=client_shell,
                 )
-            logger.info(f'Netinfo from {node}:\n{net_info}')
+            logger.info(f"Netinfo from {node}:\n{net_info}")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -309,7 +310,7 @@ def background_grpc_load(client_shell: Shell, hosting: Hosting):
 @pytest.fixture(scope="function")
 @allure.title("Prepare not owner wallet and deposit")
 def not_owner_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster) -> str:
-    wallet_path = create_wallet(client_shell, temp_directory, cluster, 'not_owner_wallet')
+    wallet_path = create_wallet(client_shell, temp_directory, cluster, "not_owner_wallet")
     yield wallet_path
     os.remove(wallet_path)
 
@@ -318,6 +319,7 @@ def not_owner_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster)
 @allure.title("Prepare default wallet and deposit")
 def default_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster):
     return create_wallet(client_shell, temp_directory, cluster)
+
 
 @allure.title("Check logs for OOM and PANIC entries in {logs_dir}")
 def check_logs(logs_dir: str):
@@ -341,7 +343,9 @@ def check_logs(logs_dir: str):
         raise pytest.fail(f"System logs {', '.join(logs_with_problem)} contain critical errors")
 
 
-def store_logs(hosting: Hosting, logs_dir: str, file_name: str, start_time: datetime, end_time: datetime) -> None:
+def store_logs(
+    hosting: Hosting, logs_dir: str, file_name: str, start_time: datetime, end_time: datetime
+) -> None:
     os.makedirs(logs_dir, exist_ok=True)
     dump_logs(hosting, logs_dir, start_time, end_time)
     attach_logs(logs_dir, os.path.join(os.getcwd(), ASSETS_DIR, file_name))
@@ -363,7 +367,7 @@ def attach_logs(logs_dir: str, test_name: str) -> None:
     # Zip all files and attach to Allure because it is more convenient to download a single
     # zip with all logs rather than mess with individual logs files per service or node
     logs_zip_file_path = shutil.make_archive(test_name, "zip", logs_dir)
-    allure.attach.file(logs_zip_file_path, name=f'{test_name}.zip', extension="zip")
+    allure.attach.file(logs_zip_file_path, name=f"{test_name}.zip", extension="zip")
 
 
 def create_dir(dir_path: str) -> None:
@@ -378,11 +382,13 @@ def remove_dir(dir_path: str) -> None:
 
 
 @allure.title("Prepare wallet and deposit")
-def create_wallet(client_shell: Shell, temp_directory: str, cluster: Cluster, name: Optional[str] = None) -> str:
+def create_wallet(
+    client_shell: Shell, temp_directory: str, cluster: Cluster, name: Optional[str] = None
+) -> str:
     if name is None:
-        wallet_name = f'{str(uuid.uuid4())}.json'
+        wallet_name = f"{str(uuid.uuid4())}.json"
     else:
-        wallet_name = f'{name}.json'
+        wallet_name = f"{name}.json"
 
     wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, wallet_name)
     init_wallet(wallet_path, WALLET_PASS)

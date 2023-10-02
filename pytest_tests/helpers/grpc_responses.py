@@ -34,7 +34,10 @@ CONTAINER_DELETION_TIMED_OUT = "container deletion: await timeout expired"
 EACL_TIMED_OUT = "eACL setting: await timeout expired"
 EACL_TABLE_IS_NOT_SET = "extended ACL table is not set for this container"
 EACL_NOT_FOUND = "code = 3073.*message = eACL not found"
-EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = "table validation: it is prohibited to modify system access"
+EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = (
+    "table validation: it is prohibited to modify system access"
+)
+
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """

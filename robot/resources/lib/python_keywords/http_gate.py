@@ -27,12 +27,12 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 @allure.step("Get via HTTP Gate")
 def get_via_http_gate(
-    cid: str, 
-    oid: str, 
-    endpoint: str, 
-    request_path: Optional[str] = None, 
-    return_response = False,
-    download = False
+    cid: str,
+    oid: str,
+    endpoint: str,
+    request_path: Optional[str] = None,
+    return_response=False,
+    download=False,
 ) -> Union[str, requests.Response]:
     """
     This function gets given object from HTTP gate
@@ -46,7 +46,7 @@ def get_via_http_gate(
     # if `request_path` parameter ommited, use default
     download_attribute = ""
     if download:
-        download_attribute="?download=true"
+        download_attribute = "?download=true"
     if request_path is None:
         request = f"{endpoint}/get/{cid}/{oid}{download_attribute}"
     else:
@@ -145,11 +145,7 @@ def get_via_http_gate_by_attribute(
 
 @allure.step("Upload via HTTP Gate")
 def upload_via_http_gate(
-    cid: str, 
-    path: str, 
-    endpoint: str, 
-    headers: dict = None, 
-    file_content_type: str = None
+    cid: str, path: str, endpoint: str, headers: dict = None, file_content_type: str = None
 ) -> str:
     """
     This function upload given object through HTTP gate

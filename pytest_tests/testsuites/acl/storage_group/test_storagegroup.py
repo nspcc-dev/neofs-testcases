@@ -47,7 +47,9 @@ class TestStorageGroup(ClusterTestBase):
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, default_wallet):
         self.main_wallet = default_wallet
-        self.other_wallet = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"{str(uuid.uuid4())}.json")
+        self.other_wallet = os.path.join(
+            os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"{str(uuid.uuid4())}.json"
+        )
         init_wallet(self.other_wallet, WALLET_PASS)
         if not FREE_STORAGE:
             main_chain = self.cluster.main_chain_nodes[0]

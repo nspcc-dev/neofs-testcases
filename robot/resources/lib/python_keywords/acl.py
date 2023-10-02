@@ -157,7 +157,9 @@ def _encode_cid_for_eacl(cid: str) -> str:
 
 
 def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell) -> str:
-    table_file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
+    table_file_path = os.path.join(
+        os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json"
+    )
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
