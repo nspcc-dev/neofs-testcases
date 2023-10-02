@@ -8,6 +8,7 @@ from cluster_test_base import ClusterTestBase
 from common import STORAGE_GC_TIME
 from complex_object_actions import get_link_object, get_storage_object_chunks
 from epoch import ensure_fresh_epoch, get_epoch, tick_epoch, tick_epoch_and_wait
+from failover_utils import wait_all_storage_nodes_returned, enable_metabase_resync_on_start, docker_compose_restart_storage_nodes
 from grpc_responses import (
     LIFETIME_REQUIRED,
     LOCK_NON_REGULAR_OBJECT,
@@ -18,7 +19,7 @@ from grpc_responses import (
     OBJECT_NOT_FOUND,
 )
 from neofs_testlib.shell import Shell
-from node_management import drop_object
+from node_management import drop_object, delete_node_metadata, stop_storage_nodes, start_storage_nodes
 from pytest import FixtureRequest
 from python_keywords.container import create_container
 from python_keywords.neofs_verbs import delete_object, head_object, lock_object
@@ -681,6 +682,79 @@ class TestObjectLockWithGrpc(ClusterTestBase):
                     locked_storage_object.wallet_file_path,
                     locked_storage_object.cid,
                     link_object_id,
+                    self.shell,
+                    self.cluster.default_rpc_endpoint,
+                )
+
+    @pytest.mark.delete_metadata
+    @allure.title("The locked object must be protected from deletion after metabase deletion "
+                  "(metabase resynchronization must be enabled), and after restarting storage nodes")
+    @pytest.mark.parametrize(
+        "new_locked_storage_object",
+        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        ids=["simple object", "complex object"],
+        indirect=True,
+    )
+    def test_the_object_lock_should_be_kept_after_metabase_deletion(
+            self,
+            new_locked_storage_object: StorageObjectInfo,
+            enable_metabase_resync_on_start,
+    ):
+        """
+        Lock objects should fill metabase on resync_metabase
+        """
+        with allure.step("Log nodes with object"):
+            nodes_with_object_before_first_try = get_nodes_with_object(
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                shell=self.shell,
+                nodes=self.cluster.storage_nodes,
+            )
+
+        with allure.step(f"Try to delete object {new_locked_storage_object.oid} before metabase deletion"):
+            with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
+                delete_object(
+                    new_locked_storage_object.wallet_file_path,
+                    new_locked_storage_object.cid,
+                    new_locked_storage_object.oid,
+                    self.shell,
+                    self.cluster.default_rpc_endpoint,
+                )
+
+        with allure.step("Log nodes with object"):
+            nodes_with_object_after_first_try = get_nodes_with_object(
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                shell=self.shell,
+                nodes=self.cluster.storage_nodes,
+            )
+
+        assert nodes_with_object_before_first_try == nodes_with_object_after_first_try
+
+        with allure.step("Delete metabase files from storage nodes"):
+            for node in self.cluster.storage_nodes:
+                delete_node_metadata(node)
+
+        with allure.step("Start nodes after metabase deletion"):
+            start_storage_nodes(self.cluster.storage_nodes)
+            wait_all_storage_nodes_returned(self.cluster)
+
+        with allure.step("Log nodes with object"):
+            nodes_with_object_after_metabase_deletion = get_nodes_with_object(
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                shell=self.shell,
+                nodes=self.cluster.storage_nodes,
+            )
+
+        assert nodes_with_object_before_first_try == nodes_with_object_after_metabase_deletion
+
+        with allure.step(f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"):
+            with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
+                delete_object(
+                    new_locked_storage_object.wallet_file_path,
+                    new_locked_storage_object.cid,
+                    new_locked_storage_object.oid,
                     self.shell,
                     self.cluster.default_rpc_endpoint,
                 )

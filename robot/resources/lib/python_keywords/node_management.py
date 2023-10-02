@@ -59,6 +59,28 @@ def start_storage_nodes(nodes: list[StorageNode]) -> None:
         node.start_service()
 
 
+@allure.step("Stop storage nodes")
+def stop_storage_nodes(nodes: list[StorageNode]) -> None:
+    """
+    The function stops specified storage nodes.
+    Args:
+       nodes: the list of nodes to stop
+    """
+    for node in nodes:
+        node.stop_service()
+
+
+@allure.step("Restart storage nodes")
+def restart_storage_nodes(nodes: list[StorageNode]) -> None:
+    """
+    The function restarts specified storage nodes.
+    Args:
+       nodes: the list of nodes to restart
+    """
+    for node in nodes:
+        node.restart_service()
+
+
 @allure.step("Get Locode from random storage node")
 def get_locode_from_random_node(cluster: Cluster) -> str:
     node = random.choice(cluster.storage_nodes)
@@ -155,6 +177,17 @@ def delete_node_data(node: StorageNode) -> None:
     node.stop_service()
     node.host.delete_storage_node_data(node.name)
     time.sleep(parse_time(MORPH_BLOCK_TIME))
+
+
+@allure.step("Delete metadata from host for node {node}")
+def delete_node_metadata(node: StorageNode) -> None:
+    """
+    The function deletes metadata from host for specified node.
+    Args:
+        node: node for which metadata should be deleted.
+    """
+    node.stop_service()
+    node.host.delete_storage_node_data(node.name, cache_only=True)
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")

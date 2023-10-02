@@ -12,6 +12,7 @@ MAINNET_BLOCK_TIME = os.getenv("MAINNET_BLOCK_TIME", "1s")
 MAINNET_TIMEOUT = os.getenv("MAINNET_TIMEOUT", "1min")
 MORPH_BLOCK_TIME = os.getenv("MORPH_BLOCK_TIME", "1s")
 NEOFS_CONTRACT_CACHE_TIMEOUT = os.getenv("NEOFS_CONTRACT_CACHE_TIMEOUT", "30s")
+METABASE_RESYNC_TIMEOUT = os.getenv("METABASE_RESYNC_TIMEOUT", "10s")
 
 # Time interval that allows a GC pass on storage node (this includes GC sleep interval
 # of 1min plus 15 seconds for GC pass itself)
@@ -25,6 +26,10 @@ ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
 TEST_FILES_DIR = os.getenv("TEST_FILES_DIR", "TestFilesDir")
 TEST_OBJECTS_DIR = os.getenv("TEST_OBJECTS_DIR", "TestObjectsDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
+DOCKER_COMPOSE_STORAGE_CONFIG_FILE = os.getenv("DOCKER_COMPOSE_STORAGE_CONFIG_FILE", os.path.join(DEVENV_PATH, "services", "storage",
+                                                                                  "docker-compose.yml"))
+DOCKER_COMPOSE_ENV_FILE = os.getenv("DOCKER_COMPOSE_ENV_FILE", os.path.join(DEVENV_PATH, "services", "storage",
+                                                                            ".int_test.env"))
 
 # Password of wallet owned by user on behalf of whom we are running tests
 WALLET_PASS = os.getenv("WALLET_PASS", "")

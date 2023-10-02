@@ -52,6 +52,9 @@ class NodeBase:
     def stop_service(self):
         self.host.stop_service(self.name)
 
+    def restart_service(self):
+        self.host.restart_service(self.name)
+
     def get_wallet_password(self) -> str:
         return self._get_attribute(_ConfigAttributes.WALLET_PASSWORD)
 
