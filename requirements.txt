@@ -59,3 +59,4 @@ urllib3==1.26.17
 websocket-client==1.3.2
 yarl==1.7.2
 allure-combine==1.0.11
+awscliv2==2.2.0
