@@ -49,7 +49,7 @@ python3.10
 python3.10-dev
 python3.10-venv
 libssl-dev
-awscli
+awscli version 2
 ```
 As we use neofs-dev-env, you'll also need to install
 [prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
