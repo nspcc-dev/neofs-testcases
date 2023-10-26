@@ -14,7 +14,7 @@ from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.payment_neogo import deposit_gas, transfer_gas
 from s3_helper import (
     assert_object_lock_mode,
-    assert_s3_acl,
+    assert_object_s3_acl,
     check_objects_in_bucket,
     set_bucket_versioning,
     parametrize_clients
@@ -119,6 +119,7 @@ class TestS3GateObject(TestS3GateBase):
             with pytest.raises(Exception):
                 s3_gate_object.copy_object_s3(self.s3_client, bucket_1, obj_key)
 
+    @pytest.mark.acl
     @allure.title("Test S3: Checking copy with acl")
     def test_s3_copy_acl(self, bucket, simple_object_size):
         version_1_content = "Version 1"
@@ -132,11 +133,12 @@ class TestS3GateObject(TestS3GateBase):
             check_objects_in_bucket(self.s3_client, bucket, [obj_key])
 
         with allure.step("Copy object and check acl attribute"):
+            acl = "private"
             copy_obj_path = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket, obj_key, ACL="private"
+                self.s3_client, bucket, obj_key, ACL=acl
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, copy_obj_path)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser", acl=acl)
 
     @allure.title("Test S3: Copy object with metadata")
     def test_s3_copy_metadate(self, bucket, simple_object_size):
@@ -703,37 +705,45 @@ class TestS3GateObject(TestS3GateBase):
         set_bucket_versioning(self.s3_client, bucket, status)
 
         with allure.step("Put object with acl private"):
-            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1, ACL="private")
+            acl = "private"
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1, ACL=acl)
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser", acl=acl)
             object_1 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_1) == get_file_hash(object_1), "Hashes must be the same"
 
         with allure.step("Put object with acl public-read"):
+            acl = "public-read"
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
-            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL="public-read")
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL=acl)
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl=acl)
             object_2 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_2) == get_file_hash(object_2), "Hashes must be the same"
 
         with allure.step("Put object with acl public-read-write"):
+            acl = "public-read-write"
             file_path_3 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path_3, ACL="public-read-write"
+                self.s3_client, bucket, file_path_3, ACL=acl
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
+            assert_object_s3_acl(
+                acl_grants=obj_acl, permitted_users="AllUsers", acl=acl
+            )
             object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_3) == get_file_hash(object_3), "Hashes must be the same"
 
         with allure.step("Put object with acl authenticated-read"):
+            acl = "authenticated-read"
             file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path_4, ACL="authenticated-read"
+                self.s3_client, bucket, file_path_4, ACL=acl
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
+            assert_object_s3_acl(
+                acl_grants=obj_acl, permitted_users="AllUsers", acl=acl
+            )
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_4) == get_file_hash(object_4), "Hashes must be the same"
 
@@ -749,7 +759,9 @@ class TestS3GateObject(TestS3GateBase):
                 GrantFullControl=f"id={self.other_public_key}",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="CanonicalUser")
+            assert_object_s3_acl(
+                acl_grants=obj_acl, permitted_users="CanonicalUser", acl="grant-full-control"
+            )
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_5) == get_file_hash(object_4), "Hashes must be the same"
 
@@ -764,7 +776,7 @@ class TestS3GateObject(TestS3GateBase):
                 GrantRead="uri=http://acs.amazonaws.com/groups/global/AllUsers",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
-            assert_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers")
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="grant-read")
             object_7 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
 

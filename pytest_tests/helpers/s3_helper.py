@@ -12,6 +12,45 @@ from dateutil.parser import parse
 logger = logging.getLogger("NeoLogger")
 
 
+ACL_TO_PERMISSION_MAP_BUCKET = {
+    "Group": {
+        "public-read-write": "FULL_CONTROL",
+        "grant-full-control": "FULL_CONTROL",
+        "public-read": "READ",
+        "grant-read": "READ",
+        "authenticated-read": "READ",
+        "grant-write": "WRITE",
+    },
+    "CanonicalUser": {
+        "public-read-write": "FULL_CONTROL",
+        "grant-full-control": "FULL_CONTROL",
+        "public-read": "FULL_CONTROL",
+        "grant-read": "FULL_CONTROL",
+        "authenticated-read": "FULL_CONTROL",
+        "grant-write": "FULL_CONTROL",
+        "private": "FULL_CONTROL",
+    },
+}
+
+ACL_TO_PERMISSION_MAP_OBJECT = {
+    "Group": {
+        "public-read-write": "FULL_CONTROL",
+        "grant-full-control": "FULL_CONTROL",
+        "public-read": "READ",
+        "grant-read": "READ",
+        "authenticated-read": "READ",
+    },
+    "CanonicalUser": {
+        "public-read-write": "FULL_CONTROL",
+        "grant-full-control": "FULL_CONTROL",
+        "public-read": "FULL_CONTROL",
+        "grant-read": "FULL_CONTROL",
+        "authenticated-read": "FULL_CONTROL",
+        "private": "FULL_CONTROL",
+    },
+}
+
+
 @allure.step("Expected all objects are presented in the bucket")
 def check_objects_in_bucket(
     s3_client, bucket, expected_objects: list, unexpected_objects: Optional[list] = None
@@ -132,32 +171,49 @@ def assert_object_lock_mode(
         ).days == retain_period, f"Expected retention period is {retain_period} days"
 
 
-def assert_s3_acl(acl_grants: list, permitted_users: str):
-    if permitted_users == "AllUsers":
-        grantees = {"AllUsers": 0, "CanonicalUser": 0}
-        for acl_grant in acl_grants:
-            if acl_grant.get("Grantee", {}).get("Type") == "Group":
-                uri = acl_grant.get("Grantee", {}).get("URI")
-                permission = acl_grant.get("Permission")
-                assert (uri, permission) == (
-                    "http://acs.amazonaws.com/groups/global/AllUsers",
-                    "FULL_CONTROL",
-                ), "All Groups should have FULL_CONTROL"
-                grantees["AllUsers"] += 1
-            if acl_grant.get("Grantee", {}).get("Type") == "CanonicalUser":
-                permission = acl_grant.get("Permission")
-                assert permission == "FULL_CONTROL", "Canonical User should have FULL_CONTROL"
-                grantees["CanonicalUser"] += 1
-        assert grantees["AllUsers"] >= 1, "All Users should have FULL_CONTROL"
-        assert grantees["CanonicalUser"] >= 1, "Canonical User should have FULL_CONTROL"
+def check_permission(grantee_type: str, acl: str, actual_permission: str, acl_map: dict) -> str:
+    expected_permission = acl_map.get(grantee_type, {}).get(acl, "")
+    assert (
+        actual_permission == expected_permission
+    ), f"{grantee_type} should have {expected_permission} but got {actual_permission}"
+    return expected_permission
 
-    if permitted_users == "CanonicalUser":
-        for acl_grant in acl_grants:
-            if acl_grant.get("Grantee", {}).get("Type") == "CanonicalUser":
-                permission = acl_grant.get("Permission")
-                assert permission == "FULL_CONTROL", "Only CanonicalUser should have FULL_CONTROL"
-            else:
-                raise AssertionError("FULL_CONTROL is given to All Users")
+
+def assert_s3_acl(acl_grants: list, permitted_users: str, acl: str, acl_map: dict):
+    grantees = {"AllUsers": 0, "CanonicalUser": 0}
+
+    for acl_grant in acl_grants:
+        grantee_type = acl_grant.get("Grantee", {}).get("Type")
+
+        if grantee_type == "Group" and permitted_users == "AllUsers":
+            uri = acl_grant.get("Grantee", {}).get("URI")
+            permission = acl_grant.get("Permission")
+            expected_permission = check_permission(grantee_type, acl, permission, acl_map)
+            assert (
+                uri == "http://acs.amazonaws.com/groups/global/AllUsers"
+            ), f"All Groups should have {expected_permission} but got {permission}"
+            grantees["AllUsers"] += 1
+
+        elif grantee_type == "CanonicalUser":
+            permission = acl_grant.get("Permission")
+            check_permission(grantee_type, acl, permission, acl_map)
+            grantees["CanonicalUser"] += 1
+
+    if permitted_users == "AllUsers":
+        for key in grantees:
+            assert grantees[key] >= 1, f"{key} should have permission but got none"
+
+    elif permitted_users == "CanonicalUser" and grantees["AllUsers"] > 0:
+        logger.error(f"Permission is given to All Users")
+
+
+def assert_bucket_s3_acl(acl_grants: list, permitted_users: str, acl: str):
+    assert_s3_acl(acl_grants, permitted_users, acl, ACL_TO_PERMISSION_MAP_BUCKET)
+
+
+def assert_object_s3_acl(acl_grants: list, permitted_users: str, acl: str):
+    assert_s3_acl(acl_grants, permitted_users, acl, ACL_TO_PERMISSION_MAP_OBJECT)
+
 
 def parametrize_clients(metafunc):
     if "s3_client" in metafunc.fixturenames:
