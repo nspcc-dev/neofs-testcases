@@ -1,31 +1,32 @@
-diff -urN bin.orig/activate bin/activate
---- bin.orig/activate  2018-12-27 14:55:13.916461020 +0900
-+++ bin/activate       2018-12-27 20:38:35.223248728 +0900
-@@ -30,6 +30,15 @@
+--- activate.orig	2023-11-01 16:36:41.273318317 +0000
++++ activate	2023-11-01 16:29:45.610264478 +0000
+@@ -27,6 +27,17 @@
          unset _OLD_VIRTUAL_PS1
      fi
-
+ 
 +    # Unset exported dev-env variables
-+    pushd ${DEVENV_PATH} > /dev/null
-+    unset `make env | awk -F= '{print $1}'`
-+    popd > /dev/null
++    if [ ! -z "${DEVENV_PATH}" ] ; then
++        pushd ${DEVENV_PATH} > /dev/null
++        unset `make env | awk -F= '{print $1}'`
++        popd > /dev/null
++    fi
 +
 +    # Unset external env variables
 +    declare -f env_deactivate > /dev/null && env_deactivate
 +    declare -f venv_deactivate > /dev/null && venv_deactivate
 +
      unset VIRTUAL_ENV
-     if [ ! "${1-}" = "nondestructive" ] ; then
-     # Self destruct!
-@@ -47,6 +56,11 @@
+     unset VIRTUAL_ENV_PROMPT
+     if [ ! "${1:-}" = "nondestructive" ] ; then
+@@ -45,6 +56,11 @@
  PATH="$VIRTUAL_ENV/bin:$PATH"
  export PATH
-
+ 
 +# Set external variables
 +if [ -f ${VIRTUAL_ENV}/bin/environment.sh ] ; then
 +    . ${VIRTUAL_ENV}/bin/environment.sh
 +fi
 +
  # unset PYTHONHOME if set
- if ! [ -z "${PYTHONHOME+_}" ] ; then
-     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
+ # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
+ # could use `if (set -u; : $PYTHONHOME) ;` in bash
