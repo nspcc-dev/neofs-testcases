@@ -20,6 +20,7 @@ from s3_helper import (
     check_tags_by_object,
     set_bucket_versioning,
     try_to_get_objects_and_expect_error,
+    parametrize_clients
 )
 
 from steps import s3_gate_bucket, s3_gate_object
@@ -29,8 +30,7 @@ logger = logging.getLogger("NeoLogger")
 
 
 def pytest_generate_tests(metafunc):
-    if "s3_client" in metafunc.fixturenames:
-        metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
+    parametrize_clients(metafunc)
 
 
 @allure.link("https://github.com/nspcc-dev/neofs-s3-gw#neofs-s3-gateway", name="neofs-s3-gateway")
@@ -137,6 +137,7 @@ class TestS3Gate(TestS3GateBase):
                 s3_gate_object.get_object_attributes(self.s3_client, bucket, file_name, *attrs)
 
     @allure.title("Test S3 Sync directory")
+    @pytest.mark.aws_cli_only
     def test_s3_sync_dir(self, bucket, simple_object_size):
         """
         Test checks sync directory with AWS CLI utility.
@@ -145,8 +146,6 @@ class TestS3Gate(TestS3GateBase):
         file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
-        if not isinstance(self.s3_client, AwsCliClient):
-            pytest.skip("This test is not supported with boto3 client")
 
         generate_file_with_content(simple_object_size, file_path=file_path_1)
         generate_file_with_content(simple_object_size, file_path=file_path_2)
@@ -355,8 +354,6 @@ class TestS3Gate(TestS3GateBase):
         check_tags_by_object(self.s3_client, bucket, obj_key, [])
 
     @allure.title("Test S3: Delete object & delete objects S3 API")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/559")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_559
     def test_s3_api_delete(self, two_buckets, simple_object_size, complex_object_size):
         """
         Check delete_object and delete_objects S3 API operation. From first bucket some objects deleted one by one.
@@ -412,8 +409,6 @@ class TestS3Gate(TestS3GateBase):
             ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
             try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/535")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_535
     @allure.title("Test S3: Copy object to the same bucket")
     def test_s3_copy_same_bucket(self, bucket, complex_object_size, simple_object_size):
         """
@@ -458,8 +453,6 @@ class TestS3Gate(TestS3GateBase):
             unexpected_objects=[file_name_simple],
         )
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/535")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_535
     @allure.title("Test S3: Copy object to another bucket")
     def test_s3_copy_to_another_bucket(self, two_buckets, complex_object_size, simple_object_size):
         """

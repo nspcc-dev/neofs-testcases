@@ -17,6 +17,7 @@ from s3_helper import (
     assert_s3_acl,
     check_objects_in_bucket,
     set_bucket_versioning,
+    parametrize_clients
 )
 
 from steps import s3_gate_bucket, s3_gate_object
@@ -24,8 +25,7 @@ from steps.s3_gate_base import TestS3GateBase
 
 
 def pytest_generate_tests(metafunc):
-    if "s3_client" in metafunc.fixturenames:
-        metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
+    parametrize_clients(metafunc)
 
 
 @pytest.mark.s3_gate
@@ -685,7 +685,6 @@ class TestS3GateObject(TestS3GateBase):
             )
 
     @allure.title("Test S3: put object with ACL")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/791")
     @pytest.mark.parametrize("bucket_versioning", ["ENABLED", "SUSPENDED"])
     def test_s3_put_object_acl(
         self,
@@ -851,14 +850,13 @@ class TestS3GateObject(TestS3GateBase):
 
     @allure.title("Test S3 Sync directory")
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
+    @pytest.mark.aws_cli_only
     def test_s3_sync_dir(self, sync_type, bucket, simple_object_size):
         file_path_1 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_1")
         file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
-        if not isinstance(self.s3_client, AwsCliClient):
-            pytest.skip("This test is not supported with boto3 client")
 
         generate_file_with_content(simple_object_size, file_path=file_path_1)
         generate_file_with_content(simple_object_size, file_path=file_path_2)
