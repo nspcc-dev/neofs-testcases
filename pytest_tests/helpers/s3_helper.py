@@ -158,3 +158,15 @@ def assert_s3_acl(acl_grants: list, permitted_users: str):
                 assert permission == "FULL_CONTROL", "Only CanonicalUser should have FULL_CONTROL"
             else:
                 raise AssertionError("FULL_CONTROL is given to All Users")
+
+def parametrize_clients(metafunc):
+    if "s3_client" in metafunc.fixturenames:
+        clients = ["aws cli", "boto3"]
+        for mark in metafunc.definition.own_markers:
+            if mark.name == "aws_cli_only":
+                clients = ["aws cli"]
+                break
+            if mark.name == "boto3_only":
+                clients = ["boto3"]
+                break
+        metafunc.parametrize("s3_client", clients, indirect=True)

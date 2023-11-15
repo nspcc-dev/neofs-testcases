@@ -230,8 +230,6 @@ def put_object_acl_s3(
     grant_write: Optional[str] = None,
     grant_read: Optional[str] = None,
 ) -> list:
-    if not isinstance(s3_client, AwsCliClient):
-        pytest.skip("Method put_object_acl is not supported by boto3 client")
     params = {"Bucket": bucket, "Key": object_key}
     if acl:
         params.update({"ACL": acl})
