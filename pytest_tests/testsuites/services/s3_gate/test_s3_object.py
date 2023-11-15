@@ -685,7 +685,6 @@ class TestS3GateObject(TestS3GateBase):
             )
 
     @allure.title("Test S3: put object with ACL")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-s3-gw/issues/791")
     @pytest.mark.parametrize("bucket_versioning", ["ENABLED", "SUSPENDED"])
     def test_s3_put_object_acl(
         self,
