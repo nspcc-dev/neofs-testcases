@@ -1,16 +1,9 @@
 --- activate.orig	2023-11-01 16:36:41.273318317 +0000
 +++ activate	2023-11-01 16:29:45.610264478 +0000
-@@ -27,6 +27,17 @@
+@@ -27,6 +27,10 @@
          unset _OLD_VIRTUAL_PS1
      fi
- 
-+    # Unset exported dev-env variables
-+    if [ ! -z "${DEVENV_PATH}" ] ; then
-+        pushd ${DEVENV_PATH} > /dev/null
-+        unset `make env | awk -F= '{print $1}'`
-+        popd > /dev/null
-+    fi
-+
+
 +    # Unset external env variables
 +    declare -f env_deactivate > /dev/null && env_deactivate
 +    declare -f venv_deactivate > /dev/null && venv_deactivate
