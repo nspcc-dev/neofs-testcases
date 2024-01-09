@@ -60,7 +60,7 @@ class TestS3Gate(TestNeofsS3GateBase):
                 objects_list = s3_gate_object.list_objects_s3(self.s3_client, bucket)
                 assert not objects_list, f"Expected empty bucket, got {objects_list}"
 
-        with allure.step("Check buckets are visible with S3 head command"):
+        with allure.step("Check buckets are visible with S3 API HeadBucket op"):
             s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
             s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
 
@@ -73,7 +73,7 @@ class TestS3Gate(TestNeofsS3GateBase):
                 file_name in bucket_objects
             ), f"Expected file {file_name} in objects list {bucket_objects}"
 
-        with allure.step("Try to delete not empty bucket and get error"):
+        with allure.step("Try to delete not empty bucket and expect error"):
             with pytest.raises(Exception, match=r".*The bucket you tried to delete is not empty.*"):
                 s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket_1)
 
@@ -157,7 +157,7 @@ class TestS3Gate(TestNeofsS3GateBase):
         with allure.step("Check these are the same objects"):
             assert set(key_to_path.keys()) == set(
                 objects
-            ), f"Expected all objects saved. Got {objects}"
+            ), f"Expected exact objects saved. Got {objects}"
             for obj_key in objects:
                 got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key)
                 assert get_file_hash(got_object) == get_file_hash(
@@ -355,7 +355,7 @@ class TestS3Gate(TestNeofsS3GateBase):
     @allure.title("Test S3: Delete object & delete objects S3 API")
     def test_s3_api_delete(self, two_buckets, simple_object_size, complex_object_size):
         """
-        Check delete_object and delete_objects S3 API operation. From first bucket some objects deleted one by one.
+        Check DeleteObject and DeleteObjects S3 API operations. From first bucket some objects deleted one by one.
         From second bucket some objects deleted all at once.
         """
         max_obj_count = 20

@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
 class TestS3GateBucket(TestNeofsS3GateBase):
     @pytest.mark.acl
     @pytest.mark.sanity
-    @allure.title("Test S3: Create Bucket with different ACL")
+    @allure.title("Test S3: Create Bucket with various ACL")
     def test_s3_create_bucket_with_ACL(self):
 
         with allure.step("Create bucket with ACL private"):
@@ -78,7 +78,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
                 acl_grants=bucket_acl, permitted_users="AllUsers", acl="grant-read"
             )
 
-        with allure.step("Create bucket with --grant-wtite"):
+        with allure.step("Create bucket with --grant-write"):
             bucket_1 = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
@@ -150,11 +150,11 @@ class TestS3GateBucket(TestNeofsS3GateBase):
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2)
             check_objects_in_bucket(self.s3_client, bucket, [file_name_1, file_name_2])
 
-        with allure.step("Try to delete not empty bucket and get error"):
+        with allure.step("Try to delete not empty bucket and expect error"):
             with pytest.raises(Exception, match=r".*The bucket you tried to delete is not empty.*"):
                 s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
 
-        with allure.step("Delete object in bucket"):
+        with allure.step("Delete all objects in bucket"):
             s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name_1)
             s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name_2)
             check_objects_in_bucket(self.s3_client, bucket, [])
