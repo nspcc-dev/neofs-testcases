@@ -336,8 +336,6 @@ class TestS3Gate(TestNeofsS3GateBase):
         file_name_simple = generate_file(simple_object_size)
         obj_key = self.object_key_from_file_path(file_name_simple)
 
-        s3_gate_bucket.put_bucket_tagging(self.s3_client, bucket, key_value_pair_bucket)
-
         s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 
         for tags in (key_value_pair_obj, key_value_pair_obj_new):
