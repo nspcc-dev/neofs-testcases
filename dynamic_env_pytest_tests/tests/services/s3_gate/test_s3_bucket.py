@@ -28,7 +28,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
 
         with allure.step("Create bucket with ACL private"):
             acl="private"
-            bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, acl=acl, bucket_configuration="rep-1")
+            bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, acl=acl, bucket_configuration="rep-1")
             bucket_acl = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket)
             assert_bucket_s3_acl(
                 acl_grants=bucket_acl, permitted_users="CanonicalUser", acl=acl
@@ -36,7 +36,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
 
         with allure.step("Create bucket with ACL = public-read"):
             acl="public-read"
-            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, True, acl=acl, bucket_configuration="rep-1")
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, acl=acl, bucket_configuration="rep-1")
             bucket_acl_1 = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket_1)
             assert_bucket_s3_acl(
                 acl_grants=bucket_acl_1, permitted_users="AllUsers", acl=acl
@@ -45,7 +45,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         with allure.step("Create bucket with ACL public-read-write"):
             acl="public-read-write"
             bucket_2 = s3_gate_bucket.create_bucket_s3(
-                self.s3_client, True, acl=acl, bucket_configuration="rep-1"
+                self.s3_client, object_lock_enabled_for_bucket=True, acl=acl, bucket_configuration="rep-1"
             )
             bucket_acl_2 = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket_2)
             assert_bucket_s3_acl(
@@ -55,7 +55,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         with allure.step("Create bucket with ACL = authenticated-read"):
             acl="authenticated-read"
             bucket_3 = s3_gate_bucket.create_bucket_s3(
-                self.s3_client, True, acl=acl, bucket_configuration="rep-1"
+                self.s3_client, object_lock_enabled_for_bucket=True, acl=acl, bucket_configuration="rep-1"
             )
             bucket_acl_3 = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket_3)
             assert_bucket_s3_acl(
@@ -69,7 +69,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         with allure.step("Create bucket with  --grant-read"):
             bucket = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,
-                True,
+                object_lock_enabled_for_bucket=True,
                 grant_read="uri=http://acs.amazonaws.com/groups/global/AllUsers",
                 bucket_configuration="rep-1",
             )
@@ -81,7 +81,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         with allure.step("Create bucket with --grant-wtite"):
             bucket_1 = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,
-                True,
+                object_lock_enabled_for_bucket=True,
                 grant_write="uri=http://acs.amazonaws.com/groups/global/AllUsers",
                 bucket_configuration="rep-1",
             )
@@ -93,7 +93,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         with allure.step("Create bucket with --grant-full-control"):
             bucket_2 = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,
-                True,
+                object_lock_enabled_for_bucket=True,
                 grant_full_control="uri=http://acs.amazonaws.com/groups/global/AllUsers",
                 bucket_configuration="rep-1",
             )
@@ -108,7 +108,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
         file_name = object_key_from_file_path(file_path)
 
         with allure.step("Create bucket with --no-object-lock-enabled-for-bucket"):
-            bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, False, bucket_configuration="rep-1")
+            bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1")
             date_obj = datetime.utcnow() + timedelta(days=1)
             with pytest.raises(
                 Exception, match=r".*Object Lock configuration does not exist for this bucket.*"
@@ -123,7 +123,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
                     ObjectLockRetainUntilDate=date_obj.strftime("%Y-%m-%dT%H:%M:%S"),
                 )
         with allure.step("Create bucket with --object-lock-enabled-for-bucket"):
-            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
             date_obj_1 = datetime.utcnow() + timedelta(days=1)
             s3_gate_object.put_object_s3(
                 self.s3_client,

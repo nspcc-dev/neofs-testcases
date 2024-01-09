@@ -25,7 +25,7 @@ class TestS3GateLocking(TestNeofsS3GateBase):
         file_name = object_key_from_file_path(file_path)
         retention_period = 2
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
 
         with allure.step("Put several versions of object into bucket"):
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
@@ -79,7 +79,7 @@ class TestS3GateLocking(TestNeofsS3GateBase):
         retention_period = 2
         retention_period_1 = 1
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
 
         with allure.step("Put object into bucket"):
             obj_version = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
@@ -121,7 +121,7 @@ class TestS3GateLocking(TestNeofsS3GateBase):
         retention_period_1 = 2
         retention_period_2 = 5
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
 
         with allure.step("Put object into bucket"):
             obj_version = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
@@ -186,7 +186,7 @@ class TestS3GateLocking(TestNeofsS3GateBase):
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, False, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1")
 
         with allure.step("Put object into bucket"):
             obj_version = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
@@ -209,7 +209,7 @@ class TestS3GateLockingBucket(TestNeofsS3GateBase):
         file_name = object_key_from_file_path(file_path)
         configuration = {"Rule": {"DefaultRetention": {"Mode": "COMPLIANCE", "Days": 1}}}
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
 
         with allure.step("PutObjectLockConfiguration with ObjectLockEnabled=False"):
             s3_gate_bucket.put_object_lock_configuration(self.s3_client, bucket, configuration)

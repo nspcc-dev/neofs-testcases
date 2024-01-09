@@ -46,7 +46,7 @@ class TestS3Gate(TestNeofsS3GateBase):
         file_name = self.object_key_from_file_path(file_path)
 
         with allure.step("Create buckets"):
-            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
             set_bucket_versioning(self.s3_client, bucket_1, s3_gate_bucket.VersioningStatus.ENABLED)
             bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
 
