@@ -55,7 +55,7 @@ class TestS3GateACL(TestNeofsS3GateBase):
         with allure.step("Create bucket with ACL = public-read-write"):
             acl = "public-read-write"
             bucket = s3_gate_bucket.create_bucket_s3(
-                self.s3_client, True, acl=acl, bucket_configuration="rep-1"
+                self.s3_client, object_lock_enabled_for_bucket=True, acl=acl, bucket_configuration="rep-1"
             )
             bucket_acl = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket)
             assert_bucket_s3_acl(acl_grants=bucket_acl, permitted_users="AllUsers", acl=acl)

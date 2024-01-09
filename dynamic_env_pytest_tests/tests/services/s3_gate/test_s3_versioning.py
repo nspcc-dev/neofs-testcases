@@ -24,7 +24,7 @@ class TestS3GateVersioning(TestNeofsS3GateBase):
     @allure.title("Test S3: try to disable versioning")
     def test_s3_version_off(self):
 
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1")
         with pytest.raises(Exception):
             set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.SUSPENDED)
 
@@ -33,7 +33,7 @@ class TestS3GateVersioning(TestNeofsS3GateBase):
         file_path = generate_file(simple_object_size)
         file_name = self.object_key_from_file_path(file_path)
         bucket_objects = [file_name]
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, False, bucket_configuration="rep-1")
+        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1")
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.SUSPENDED)
 
         with allure.step("Put object into bucket"):
