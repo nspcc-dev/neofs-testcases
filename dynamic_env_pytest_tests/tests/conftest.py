@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+import time
 from typing import Optional
 
 import allure
@@ -36,8 +37,9 @@ def neofs_env(request):
     neofs_env.neofs_adm().morph.set_config(
         rpc_endpoint=f"http://{neofs_env.morph_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data=f"ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=1024",
+        post_data=f"ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
     )
+    time.sleep(30)
 
     yield neofs_env
 
@@ -46,6 +48,19 @@ def neofs_env(request):
     else:
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
+            
+    logs_path = os.path.join(os.getcwd(), ASSETS_DIR, "logs")
+    os.makedirs(logs_path, exist_ok=True)
+    
+    shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
+    shutil.copyfile(neofs_env.http_gw.stderr, f"{logs_path}/http_gw_log.txt")
+    for idx, ir in enumerate(neofs_env.inner_ring_nodes):
+        shutil.copyfile(ir.stderr, f"{logs_path}/ir_{idx}_log.txt")
+    for idx, sn in enumerate(neofs_env.storage_nodes):
+        shutil.copyfile(sn.stderr, f"{logs_path}/sn_{idx}_log.txt")
+
+    logs_zip_file_path = shutil.make_archive("neofs_logs", "zip", logs_path)
+    allure.attach.file(logs_zip_file_path, name="neofs logs", extension="zip")
 
 
 @pytest.fixture(scope="session")
