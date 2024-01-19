@@ -36,7 +36,7 @@ def neofs_env(request):
     neofs_env.neofs_adm().morph.set_config(
         rpc_endpoint=f"http://{neofs_env.morph_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data=f"ContainerFee=0 ContainerAliasFee=0",
+        post_data=f"ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=1024",
     )
 
     yield neofs_env
