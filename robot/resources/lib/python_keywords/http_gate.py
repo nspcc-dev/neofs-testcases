@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import os
 import random
@@ -226,13 +227,13 @@ def upload_via_http_gate_curl(
         # pre-clean
         _cmd_run("rm pipe -f")
         files = f"file=@pipe;filename={os.path.basename(filepath)}"
-        cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --no-buffer -F '{files}' {attributes}{cookies_attr} {request}"
+        cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --silent --no-buffer -F '{files}' {attributes}{cookies_attr} {request}"
         output = _cmd_run(cmd, LONG_TIMEOUT)
         # clean up pipe
         _cmd_run("rm pipe")
     else:
         files = f"file=@{filepath};filename={os.path.basename(filepath)}"
-        cmd = f"curl -F '{files}' {attributes}{cookies_attr} {request}"
+        cmd = f"curl --silent -F '{files}' {attributes}{cookies_attr} {request}"
         output = _cmd_run(cmd)
 
     if error_pattern:
@@ -240,11 +241,13 @@ def upload_via_http_gate_curl(
         assert match, f"Expected {output} to match {error_pattern}"
         return ""
 
-    oid_re = re.search(r'"object_id": "(.*)"', output)
-    if not oid_re:
-        raise AssertionError(f'Could not find "object_id" in {output}')
-    return oid_re.group(1)
-
+    try:
+        response_json = json.loads(output)
+    except json.JSONDecodeError:
+        raise AssertionError(f'Invalid JSON response: {output}')
+    if 'object_id' not in response_json:
+        raise AssertionError(f'Could not find "object_id" in JSON response: {output}')
+    return response_json['object_id']
 
 @allure.step("Get via HTTP Gate using Curl")
 def get_via_http_curl(cid: str, oid: str, endpoint: str) -> str:
