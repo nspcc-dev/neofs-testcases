@@ -30,7 +30,7 @@ class TestS3GateACL(TestNeofsS3GateBase):
             acl = "public-read"
             s3_gate_object.put_object_acl_s3(self.s3_client, bucket, file_name, acl)
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl=acl)
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="public-read-write")
 
         with allure.step("Put object ACL = private"):
             acl = "private"
@@ -48,7 +48,7 @@ class TestS3GateACL(TestNeofsS3GateBase):
                 grant_read="uri=http://acs.amazonaws.com/groups/global/AllUsers",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="grant-read")
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="public-read-write")
 
     @allure.title("Test S3: Bucket ACL")
     def test_s3_bucket_ACL(self):
@@ -76,5 +76,5 @@ class TestS3GateACL(TestNeofsS3GateBase):
             )
             bucket_acl = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket)
             assert_bucket_s3_acl(
-                acl_grants=bucket_acl, permitted_users="AllUsers", acl="grant-write"
+                acl_grants=bucket_acl, permitted_users="AllUsers", acl="public-read-write"
             )

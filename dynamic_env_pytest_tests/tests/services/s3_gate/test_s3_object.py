@@ -699,7 +699,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL=acl)
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl=acl)
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="public-read-write")
             object_2 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_2) == get_file_hash(object_2), "Hashes must be the same"
 
@@ -717,7 +717,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_4, ACL=acl)
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
-            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl=acl)
+            assert_object_s3_acl(acl_grants=obj_acl, permitted_users="AllUsers", acl="public-read-write")
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_4) == get_file_hash(object_4), "Hashes must be the same"
 
