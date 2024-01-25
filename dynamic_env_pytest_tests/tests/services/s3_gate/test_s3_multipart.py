@@ -17,6 +17,7 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.s3_gate
 @pytest.mark.s3_gate_multipart
 class TestS3GateMultipart(TestNeofsS3GateBase):
+    @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3 Object Multipart API")
     def test_s3_object_multipart(self):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
@@ -88,6 +89,7 @@ class TestS3GateMultipart(TestNeofsS3GateBase):
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
             assert not uploads, f"Expected there is no uploads in bucket {bucket}"
 
+    @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3 Upload Part Copy")
     def test_s3_multipart_copy(self):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")

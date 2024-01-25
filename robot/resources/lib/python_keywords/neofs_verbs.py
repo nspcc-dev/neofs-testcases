@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import random
 import re
 import uuid
 from typing import Any, Optional
@@ -10,6 +11,7 @@ import json_transformers
 from cluster import Cluster
 from common import ASSETS_DIR, TEST_OBJECTS_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
 from neofs_testlib.cli import NeofsCli
+from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
@@ -21,7 +23,8 @@ def get_object_from_random_node(
     cid: str,
     oid: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     write_object: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -47,7 +50,10 @@ def get_object_from_random_node(
     Returns:
         (str): path to downloaded file
     """
-    endpoint = cluster.get_random_storage_rpc_endpoint()
+    if cluster:
+        endpoint = cluster.get_random_storage_rpc_endpoint()
+    if neofs_env:
+        endpoint = random.choice(neofs_env.storage_nodes).endpoint
     return get_object(
         wallet,
         cid,
@@ -169,7 +175,8 @@ def put_object_to_random_node(
     path: str,
     cid: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     attributes: Optional[dict] = None,
     xhdr: Optional[dict] = None,
@@ -188,9 +195,9 @@ def put_object_to_random_node(
         cid: ID of Container where we get the Object from
         shell: executor for cli command
         cluster: cluster under test
+        neofs_env: neofs env under test
         bearer: path to Bearer Token file, appends to `--bearer` key
         attributes: User attributes in form of Key1=Value1,Key2=Value2
-        cluster: cluster under test
         wallet_config: path to the wallet config
         no_progress: do not show progress bar
         lifetime: Lock lifetime - relative to the current epoch.
@@ -201,7 +208,10 @@ def put_object_to_random_node(
         ID of uploaded Object
     """
 
-    endpoint = cluster.get_random_storage_rpc_endpoint()
+    if cluster:
+        endpoint = cluster.get_random_storage_rpc_endpoint()
+    if neofs_env:
+        endpoint = random.choice(neofs_env.storage_nodes).endpoint
     return put_object(
         wallet,
         path,
