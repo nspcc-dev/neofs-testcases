@@ -5,6 +5,7 @@ import allure
 from cluster import Cluster
 from file_helper import get_file_hash
 from grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
+from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import (
     delete_object,
@@ -56,7 +57,8 @@ def can_put_object(
     cid: str,
     file_name: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -74,6 +76,7 @@ def can_put_object(
                 attributes=attributes,
                 shell=shell,
                 cluster=cluster,
+                neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
