@@ -12,6 +12,7 @@ from common import (
     TEST_FILES_DIR,
     TEST_OBJECTS_DIR,
 )
+from file_helper import generate_file
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import get_netmap_netinfo
@@ -133,6 +134,10 @@ def simple_object_size(max_object_size: int) -> int:
 @pytest.fixture(scope="session")
 def complex_object_size(max_object_size: int) -> int:
     return max_object_size * int(COMPLEX_OBJECT_CHUNKS_COUNT) + int(COMPLEX_OBJECT_TAIL_SIZE)
+
+@pytest.fixture(scope="module")
+def file_path(simple_object_size, artifacts_directory):
+    yield generate_file(simple_object_size)
 
 
 @pytest.fixture(scope="session")

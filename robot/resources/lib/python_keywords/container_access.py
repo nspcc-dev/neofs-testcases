@@ -1,7 +1,8 @@
 from typing import List, Optional
-
+import random
 from acl import EACLOperation
 from cluster import Cluster
+from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 from python_keywords.object_access import (
     can_delete_object,
@@ -20,21 +21,23 @@ def check_full_access_to_container(
     oid: str,
     file_name: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ):
-    endpoint = cluster.default_rpc_endpoint
-    assert can_put_object(wallet, cid, file_name, shell, cluster, bearer, wallet_config, xhdr)
-    assert can_get_head_object(wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr)
-    assert can_get_range_of_object(wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr)
-    assert can_get_range_hash_of_object(
-        wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr
-    )
-    assert can_search_object(wallet, cid, shell, endpoint, oid, bearer, wallet_config, xhdr)
-    assert can_get_object(wallet, cid, oid, file_name, shell, cluster, bearer, wallet_config, xhdr)
-    assert can_delete_object(wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr)
+    if cluster:
+        endpoint = cluster.default_rpc_endpoint
+    if neofs_env:
+        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+    assert can_put_object(wallet=wallet, cid=cid, file_name=file_name, shell=shell, cluster=cluster, neofs_env=neofs_env, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_get_head_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_get_range_of_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_get_range_hash_of_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_search_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_get_object(wallet=wallet, cid=cid, oid=oid, file_name=file_name, shell=shell, cluster=cluster, neofs_env=neofs_env, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert can_delete_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
 
 
 def check_no_access_to_container(
@@ -43,25 +46,26 @@ def check_no_access_to_container(
     oid: str,
     file_name: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ):
-    endpoint = cluster.default_rpc_endpoint
-    assert not can_put_object(wallet, cid, file_name, shell, cluster, bearer, wallet_config, xhdr)
-    assert not can_get_head_object(wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr)
-    assert not can_get_range_of_object(
-        wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr
-    )
-    assert not can_get_range_hash_of_object(
-        wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr
-    )
-    assert not can_search_object(wallet, cid, shell, endpoint, oid, bearer, wallet_config, xhdr)
-    assert not can_get_object(
-        wallet, cid, oid, file_name, shell, cluster, bearer, wallet_config, xhdr
-    )
-    assert not can_delete_object(wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr)
+    if cluster:
+        endpoint = cluster.default_rpc_endpoint
+    if neofs_env:
+        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+    assert not can_put_object(wallet=wallet, cid=cid, file_name=file_name, shell=shell, cluster=cluster, neofs_env=neofs_env, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_get_head_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_get_range_of_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_get_range_hash_of_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_search_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer,
+                             wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_get_object(wallet=wallet, cid=cid, oid=oid, file_name=file_name, shell=shell, cluster=cluster,
+                          neofs_env=neofs_env, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr)
+    assert not can_delete_object(wallet=wallet, cid=cid, oid=oid, shell=shell, endpoint=endpoint, bearer=bearer,
+                             wallet_config=wallet_config, xhdr=xhdr)
 
 
 def check_custom_access_to_container(
@@ -70,20 +74,24 @@ def check_custom_access_to_container(
     oid: str,
     file_name: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     deny_operations: Optional[List[EACLOperation]] = None,
     ignore_operations: Optional[List[EACLOperation]] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
 ):
-    endpoint = cluster.default_rpc_endpoint
+    if cluster:
+        endpoint = cluster.default_rpc_endpoint
+    if neofs_env:
+        endpoint = random.choice(neofs_env.storage_nodes).endpoint
     deny_operations = [op.value for op in deny_operations or []]
     ignore_operations = [op.value for op in ignore_operations or []]
     checks: dict = {}
     if EACLOperation.PUT.value not in ignore_operations:
         checks[EACLOperation.PUT.value] = can_put_object(
-            wallet, cid, file_name, shell, cluster, bearer, wallet_config, xhdr
+            wallet=wallet, cid=cid, file_name=file_name, shell=shell, cluster=cluster, neofs_env=neofs_env, bearer=bearer, wallet_config=wallet_config, xhdr=xhdr
         )
     if EACLOperation.HEAD.value not in ignore_operations:
         checks[EACLOperation.HEAD.value] = can_get_head_object(
@@ -103,7 +111,8 @@ def check_custom_access_to_container(
         )
     if EACLOperation.GET.value not in ignore_operations:
         checks[EACLOperation.GET.value] = can_get_object(
-            wallet, cid, oid, file_name, shell, cluster, bearer, wallet_config, xhdr
+            wallet=wallet, cid=cid, oid=oid, file_name=file_name, shell=shell, cluster=cluster, neofs_env=neofs_env,
+            bearer=bearer, wallet_config=wallet_config, xhdr=xhdr
         )
     if EACLOperation.DELETE.value not in ignore_operations:
         checks[EACLOperation.DELETE.value] = can_delete_object(
@@ -129,7 +138,8 @@ def check_read_only_container(
     oid: str,
     file_name: str,
     shell: Shell,
-    cluster: Cluster,
+    cluster: Optional[Cluster] = None,
+    neofs_env: Optional[NeoFSEnv] = None,
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -145,4 +155,5 @@ def check_read_only_container(
         xhdr=xhdr,
         shell=shell,
         cluster=cluster,
+        neofs_env=neofs_env,
     )
