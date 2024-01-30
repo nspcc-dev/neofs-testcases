@@ -1,8 +1,6 @@
 import os
 import shutil
-import uuid
 import time
-from typing import Optional
 
 import allure
 import pytest
@@ -14,10 +12,11 @@ from common import (
     TEST_FILES_DIR,
     TEST_OBJECTS_DIR,
 )
-from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
-from neofs_testlib.utils.wallet import init_wallet
 from python_keywords.neofs_verbs import get_netmap_netinfo
+
+from helpers.wallet_helpers import create_wallet
 
 
 def pytest_addoption(parser):
@@ -48,10 +47,10 @@ def neofs_env(request):
     else:
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
-            
+
     logs_path = os.path.join(os.getcwd(), ASSETS_DIR, "logs")
     os.makedirs(logs_path, exist_ok=True)
-    
+
     shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
     shutil.copyfile(neofs_env.http_gw.stderr, f"{logs_path}/http_gw_log.txt")
     for idx, ir in enumerate(neofs_env.inner_ring_nodes):
@@ -72,22 +71,6 @@ def default_wallet(temp_directory):
 @pytest.fixture(scope="session")
 def client_shell(neofs_env: NeoFSEnv) -> Shell:
     yield neofs_env.shell
-
-
-@allure.title("Prepare wallet and deposit")
-def create_wallet(name: Optional[str] = None) -> NodeWallet:
-    if name is None:
-        wallet_name = f"{str(uuid.uuid4())}.json"
-    else:
-        wallet_name = f"{name}.json"
-
-    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, wallet_name)
-    wallet_password = "password"
-    wallet_address = init_wallet(wallet_path, wallet_password)
-
-    allure.attach.file(wallet_path, os.path.basename(wallet_path), allure.attachment_type.JSON)
-
-    return NodeWallet(path=wallet_path, address=wallet_address, password=wallet_password)
 
 
 @pytest.fixture(scope="session")
