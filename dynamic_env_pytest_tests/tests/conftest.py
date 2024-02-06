@@ -124,6 +124,16 @@ def artifacts_directory(temp_directory: str) -> None:
             remove_dir(full_path)
 
 
+@pytest.fixture(scope="function")
+@allure.title("Enable metabase resync on start")
+def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
+    for node in neofs_env.storage_nodes:
+        node.set_metabase_resync(True)
+    yield
+    for node in neofs_env.storage_nodes:
+        node.set_metabase_resync(False)
+
+
 def create_dir(dir_path: str) -> None:
     with allure.step("Create directory"):
         remove_dir(dir_path)
