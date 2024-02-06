@@ -1,10 +1,10 @@
 import logging
-import os
 import random
 import re
 import time
 from dataclasses import dataclass
 from typing import Optional
+import threading
 
 import allure
 import neofs_env.neofs_epoch as neofs_epoch
@@ -41,9 +41,19 @@ def start_storage_nodes(nodes: list[StorageNode]) -> None:
     Args:
        nodes: the list of nodes to start
     """
+    start_threads = []
     for node in nodes:
-        with allure.step(f"Launching Storage Node: {node}"):
-            node._launch_process()
+        start_threads.append(
+            threading.Thread(target=node._launch_process)
+        )
+    for t in start_threads:
+        t.start()
+    for t in start_threads:
+        t.join()
+        
+    time.sleep(10)
+        
+    for node in nodes:
         with allure.step("Wait until storage node is READY"):
             node._wait_until_ready()
 

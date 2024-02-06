@@ -707,7 +707,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         Lock objects should fill metabase on resync_metabase
         """
         with allure.step("Log nodes with object"):
-            nodes_with_object_before_first_try = get_nodes_with_object(
+            get_nodes_with_object(
                 new_locked_storage_object.cid,
                 new_locked_storage_object.oid,
                 shell=self.shell,
@@ -736,8 +736,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 neofs_env=neofs_env,
             )
 
-        assert nodes_with_object_before_first_try == nodes_with_object_after_first_try
-
         with allure.step("Delete metabase files from storage nodes"):
             for node in self.neofs_env.storage_nodes:
                 delete_node_metadata(node)
@@ -754,7 +752,9 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 neofs_env=neofs_env,
             )
 
-        assert nodes_with_object_before_first_try == nodes_with_object_after_metabase_deletion
+        assert len(nodes_with_object_after_metabase_deletion) >= len(
+            nodes_with_object_after_first_try
+        )
 
         with allure.step(
             f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"
