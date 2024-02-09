@@ -218,7 +218,7 @@ jobs:
         timeout-minutes: 120
         if: github.event_name == 'pull_request'
         run: |
-          source venv.no-dev-env-pytest/bin/activate && pytest -s -k test_the_object_lock_should_be_kept_after_metabase_deletion --alluredir=${GITHUB_WORKSPACE}/allure-results dynamic_env_pytest_tests/tests
+          source venv.no-dev-env-pytest/bin/activate && pytest -s --alluredir=${GITHUB_WORKSPACE}/allure-results dynamic_env_pytest_tests/tests
         working-directory: neofs-testcases
 
 ################################################################

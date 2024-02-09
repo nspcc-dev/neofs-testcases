@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import time
@@ -17,6 +18,8 @@ from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import get_netmap_netinfo
 
 from helpers.wallet_helpers import create_wallet
+
+logger = logging.getLogger("NeoLogger")
 
 
 def pytest_addoption(parser):
@@ -128,7 +131,15 @@ def artifacts_directory(temp_directory: str) -> None:
 @allure.title("Enable metabase resync on start")
 def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
     for node in neofs_env.storage_nodes:
-        node.set_metabase_resync(True)
+        try:
+            node.set_metabase_resync(True)
+        except Exception as exp:
+            logger.info("failed node logs: \n")
+            with open(node.stderr) as stderr:
+                logs = stderr.readlines()
+            logger.info(logs)
+            print(logs)
+
     yield
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(False)
