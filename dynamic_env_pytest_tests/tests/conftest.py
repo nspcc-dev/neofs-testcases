@@ -133,13 +133,8 @@ def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
     for node in neofs_env.storage_nodes:
         try:
             node.set_metabase_resync(True)
-        except Exception as exp:
-            logger.info("failed node logs: \n")
-            with open(node.stderr) as stderr:
-                logs = stderr.readlines()
-            logger.info(logs)
-            print(logs)
-
+        except Exception:
+            node.set_metabase_resync(True)
     yield
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(False)
