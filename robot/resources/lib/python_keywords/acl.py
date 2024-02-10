@@ -10,12 +10,11 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from common import ASSETS_DIR, TEST_FILES_DIR, NEOFS_CLI_EXEC, WALLET_CONFIG
+from common import ASSETS_DIR, NEOFS_CLI_EXEC, TEST_FILES_DIR, WALLET_CONFIG
 from data_formatters import get_wallet_public_key
+from grpc_responses import EACL_NOT_FOUND, EACL_TABLE_IS_NOT_SET
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
-
-from grpc_responses import EACL_TABLE_IS_NOT_SET, EACL_NOT_FOUND
 
 logger = logging.getLogger("NeoLogger")
 EACL_LIFETIME = 100500
@@ -99,6 +98,7 @@ class EACLRule:
     access: Optional[EACLAccess] = None
     role: Optional[Union[EACLRole, str]] = None
     filters: Optional[EACLFilters] = None
+    password: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -112,7 +112,7 @@ class EACLRule:
         role = (
             self.role.value
             if isinstance(self.role, EACLRole)
-            else f'pubkey:{get_wallet_public_key(self.role, "")}'
+            else f"pubkey:{get_wallet_public_key(self.role, self.password)}"
         )
         return f'{self.access.value} {self.operation.value} {self.filters or ""} {role}'
 
@@ -156,11 +156,13 @@ def _encode_cid_for_eacl(cid: str) -> str:
     return base64.b64encode(cid_base58).decode("utf-8")
 
 
-def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell) -> str:
+def create_eacl(
+    cid: str, rules_list: List[EACLRule], shell: Shell, wallet_config: str = None
+) -> str:
     table_file_path = os.path.join(
         os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json"
     )
-    cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG if not wallet_config else wallet_config)
     cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
     with open(table_file_path, "r") as file:
