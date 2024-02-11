@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional, Tuple
 
 import allure
@@ -325,3 +326,27 @@ def get_nodes_without_object(
             else:
                 raise Exception(f"Got error {err} on head object command") from err
     return nodes_list
+
+
+@allure.step("Wait for object replication")
+def wait_object_replication(
+    cid: str,
+    oid: str,
+    expected_copies: int,
+    shell: Shell,
+    nodes: list[StorageNode],
+    neofs_env: NeoFSEnv,
+) -> list[StorageNode]:
+    sleep_interval, attempts = 15, 20
+    nodes_with_object = []
+    for _ in range(attempts):
+        nodes_with_object = get_nodes_with_object(
+            cid, oid, shell=shell, nodes=nodes, neofs_env=neofs_env
+        )
+        if len(nodes_with_object) >= expected_copies:
+            return nodes_with_object
+        time.sleep(sleep_interval)
+    raise AssertionError(
+        f"Expected {expected_copies} copies of object, but found {len(nodes_with_object)}. "
+        f"Waiting time {sleep_interval * attempts}"
+    )

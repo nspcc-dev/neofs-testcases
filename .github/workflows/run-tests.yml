@@ -218,7 +218,7 @@ jobs:
         timeout-minutes: 120
         if: github.event_name == 'pull_request'
         run: |
-          source venv.no-dev-env-pytest/bin/activate && pytest -s --alluredir=${GITHUB_WORKSPACE}/allure-results dynamic_env_pytest_tests/tests
+          source venv.no-dev-env-pytest/bin/activate && pytest --alluredir=${GITHUB_WORKSPACE}/allure-results dynamic_env_pytest_tests/tests
         working-directory: neofs-testcases
 
 ################################################################

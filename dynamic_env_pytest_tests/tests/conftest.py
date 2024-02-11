@@ -13,7 +13,8 @@ from common import (
     TEST_FILES_DIR,
     TEST_OBJECTS_DIR,
 )
-from neofs_testlib.env.env import NeoFSEnv
+from file_helper import generate_file
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from python_keywords.neofs_verbs import get_netmap_netinfo
 
@@ -127,6 +128,46 @@ def artifacts_directory(temp_directory: str) -> None:
             remove_dir(full_path)
 
 
+@pytest.fixture(scope="module")
+def owner_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns wallet which owns containers and objects
+    """
+    return create_wallet()
+
+
+@pytest.fixture(scope="module")
+def user_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns wallet which will use objects from owner via static session
+    """
+    return create_wallet()
+
+
+@pytest.fixture(scope="module")
+def stranger_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns stranger wallet which should fail to obtain data
+    """
+    return create_wallet()
+
+
+@pytest.fixture(scope="module")
+def scammer_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns stranger wallet which should fail to obtain data
+    """
+    return create_wallet()
+
+
+@pytest.fixture(scope="module")
+def not_owner_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns stranger wallet which should fail to obtain data
+    """
+    return create_wallet()
+
+
 @pytest.fixture(scope="function")
 @allure.title("Enable metabase resync on start")
 def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
@@ -138,6 +179,11 @@ def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
     yield
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(False)
+
+
+@pytest.fixture(scope="module")
+def file_path(simple_object_size, artifacts_directory):
+    yield generate_file(simple_object_size)
 
 
 def create_dir(dir_path: str) -> None:
