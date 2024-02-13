@@ -28,7 +28,7 @@ class TestContainer(NeofsEnvTestBase):
         allure.dynamic.title(f"User can create container {scenario_title}")
 
         wallet = default_wallet
-        with open(wallet) as file:
+        with open(wallet.path) as file:
             json_wallet = json.load(file)
 
         placement_rule = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
