@@ -125,7 +125,6 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
     @allure.title("BearerToken Operations for compound Operations")
-    @pytest.mark.skip(reason="Unknown failure")
     def test_bearer_token_compound_operations(self, wallets, eacl_container_with_objects):
         endpoint = self.neofs_env.sn_rpc
         cid, objects_oids, file_path = eacl_container_with_objects

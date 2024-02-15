@@ -126,7 +126,7 @@ def get_eacl(wallet_path: str, cid: str, shell: Shell, endpoint: str) -> Optiona
         logger.info("Extended ACL table is not set for this container")
         logger.info(f"Got exception while getting eacl: {exc}")
         return None
-    if EACL_TABLE_IS_NOT_SET or EACL_NOT_FOUND in result.stdout:
+    if EACL_TABLE_IS_NOT_SET in result.stdout or EACL_NOT_FOUND in result.stdout:
         return None
     return result.stdout
 
