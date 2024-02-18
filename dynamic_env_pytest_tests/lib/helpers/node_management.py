@@ -1,10 +1,10 @@
 import logging
 import random
 import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Optional
-import threading
 
 import allure
 import neofs_env.neofs_epoch as neofs_epoch
@@ -43,16 +43,14 @@ def start_storage_nodes(nodes: list[StorageNode]) -> None:
     """
     start_threads = []
     for node in nodes:
-        start_threads.append(
-            threading.Thread(target=node._launch_process)
-        )
+        start_threads.append(threading.Thread(target=node._launch_process))
     for t in start_threads:
         t.start()
     for t in start_threads:
         t.join()
-        
+
     time.sleep(10)
-        
+
     for node in nodes:
         with allure.step("Wait until storage node is READY"):
             node._wait_until_ready()
@@ -194,14 +192,14 @@ def exclude_node_from_network_map(
         node_to_exclude.wallet.path, node_to_exclude.wallet.password
     )
 
-    storage_node_set_status(neofs_env, node_to_exclude, status="offline")
+    storage_node_set_status(node_to_exclude, status="offline")
 
     time.sleep(parse_time(MORPH_BLOCK_TIME))
     neofs_epoch.tick_epoch_and_wait(neofs_env)
 
     snapshot = get_netmap_snapshot(node=alive_node, shell=shell)
     assert (
-        node_netmap_key not in snapshot
+        f"{node_netmap_key}" not in snapshot
     ), f"Expected node with key {node_netmap_key} to be absent in network map"
 
 
@@ -212,7 +210,7 @@ def include_node_to_network_map(
     shell: Shell,
     neofs_env: NeoFSEnv,
 ) -> None:
-    storage_node_set_status(neofs_env, node_to_include, status="online")
+    storage_node_set_status(node_to_include, status="online")
 
     # Per suggestion of @fyrchik we need to wait for 2 blocks after we set status and after tick epoch.
     # First sleep can be omitted after https://github.com/nspcc-dev/neofs-node/issues/1790 complete.
@@ -237,7 +235,7 @@ def check_node_in_map(
 
     snapshot = get_netmap_snapshot(alive_node, shell)
     assert (
-        node_netmap_key in snapshot
+        f"{node_netmap_key}" in snapshot
     ), f"Expected node with key {node_netmap_key} to be in network map"
 
 
