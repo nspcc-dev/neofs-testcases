@@ -1,7 +1,7 @@
 import allure
 import pytest
 from file_helper import generate_file
-from grpc_responses import NOT_SESSION_CONTAINER_OWNER, CONTAINER_DELETION_TIMED_OUT, EACL_TIMED_OUT
+from grpc_responses import NOT_SESSION_CONTAINER_OWNER, CONTAINER_DELETION_TIMED_OUT, WRONG_CONTAINER
 from neofs_testlib.shell import Shell
 from python_keywords.acl import (
     EACLAccess,
@@ -136,7 +136,7 @@ class TestSessionTokenContainer(ClusterTestBase):
                 owner_wallet.path,
                 shell=self.shell,
                 endpoint=self.cluster.default_rpc_endpoint,
-                wait_for_creation=False,
+                wait_for_creation=True,
             )
         with allure.step("Delete container with static session token"):
             delete_container(
@@ -190,7 +190,7 @@ class TestSessionTokenContainer(ClusterTestBase):
                 )
 
         with allure.step("Try to force delete container using stranger token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=WRONG_CONTAINER):
                 delete_container(
                     wallet=user_wallet.path,
                     cid=cid,
@@ -228,7 +228,7 @@ class TestSessionTokenContainer(ClusterTestBase):
         )
 
         with allure.step("Try to delete container using scammer token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=WRONG_CONTAINER):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
@@ -249,7 +249,7 @@ class TestSessionTokenContainer(ClusterTestBase):
                 )
 
         with allure.step("Try to force delete container using scammer token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=WRONG_CONTAINER):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
@@ -260,7 +260,7 @@ class TestSessionTokenContainer(ClusterTestBase):
                     force=True,
                 )
 
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=WRONG_CONTAINER):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
@@ -354,7 +354,7 @@ class TestSessionTokenContainer(ClusterTestBase):
 
         with allure.step(f"Try to deny all operations for other via eACL using scammer wallet"):
             with allure.step(f"Using user token"):
-                with pytest.raises(RuntimeError, match=EACL_TIMED_OUT):
+                with pytest.raises(RuntimeError, match=WRONG_CONTAINER):
                     set_eacl(
                         scammer_wallet.path,
                         cid,

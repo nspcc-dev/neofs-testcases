@@ -6,6 +6,7 @@ CONTAINER_NOT_FOUND = "code = 3072.*message = container not found"
 
 # Regex patterns of status codes of Object service (https://github.com/nspcc-dev/neofs-spec/blob/98b154848116223e486ce8b43eaa35fec08b4a99/20-api-v2/object.md)
 MALFORMED_REQUEST = "code = 1024.*message = malformed request"
+WRONG_CONTAINER = "code = 1024.*message = wrong container"
 OBJECT_ACCESS_DENIED = "code = 2048.*message = access to object operation denied"
 OBJECT_NOT_FOUND = "code = 2049.*message = object not found"
 OBJECT_ALREADY_REMOVED = "code = 2052.*message = object already removed"
