@@ -239,6 +239,29 @@ def check_node_in_map(
     ), f"Expected node with key {node_netmap_key} to be in network map"
 
 
+@allure.step("Wait for storage nodes returned to cluster")
+def wait_all_storage_nodes_returned(neofs_env: NeoFSEnv) -> None:
+    sleep_interval, attempts = 15, 20
+    for _ in range(attempts):
+        if is_all_storage_nodes_returned(neofs_env):
+            return
+        time.sleep(sleep_interval)
+    raise AssertionError("Storage node(s) is broken")
+
+
+def is_all_storage_nodes_returned(neofs_env: NeoFSEnv) -> bool:
+    with allure.step("Run health check for all storage nodes"):
+        for node in neofs_env.storage_nodes:
+            try:
+                health_check = storage_node_healthcheck(node)
+            except Exception as err:
+                logger.warning(f"Node healthcheck fails with error {err}")
+                return False
+            if health_check.health_status != "READY" or health_check.network_status != "ONLINE":
+                return False
+    return True
+
+
 def _run_control_command_with_retries(node: StorageNode, command: str, retries: int = 0) -> str:
     for attempt in range(1 + retries):  # original attempt + specified retries
         try:
