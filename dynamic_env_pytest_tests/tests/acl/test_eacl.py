@@ -357,7 +357,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                 )
         wait_for_cache_expired()
         with allure.step("The eACL should not be changed"):
-            assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) is old_eacl
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) == old_eacl
 
     @pytest.mark.trusted_party_proved
     @allure.title("Test case to check compliance with Check IR and STORAGE rules")
