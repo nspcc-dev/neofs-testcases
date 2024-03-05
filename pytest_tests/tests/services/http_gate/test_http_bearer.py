@@ -83,15 +83,23 @@ class Test_http_bearer(NeofsEnvTestBase):
             )
             return bearer_token_base64_from_file(bearer_signed)
 
+    @pytest.fixture(scope="class", params=["HTTP", "REST"])
+    def gw_endpoint(self, request):
+        gw_type = request.param
+        if gw_type == "HTTP":
+            return f"http://{self.neofs_env.http_gw.address}"
+        else:  # Assuming REST
+            return f"http://{self.neofs_env.rest_gw.address}/v1"
+
     @allure.title(f"[negative] Put object without bearer token for {EACLRole.OTHERS}")
     def test_unable_put_without_bearer_token(
-        self, simple_object_size: int, user_container: str, eacl_deny_for_others
+        self, simple_object_size: int, user_container: str, eacl_deny_for_others, gw_endpoint
     ):
         eacl_deny_for_others
         upload_via_http_gate_curl(
             cid=user_container,
             filepath=generate_file(simple_object_size),
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_endpoint,
             error_pattern="access to object operation denied",
         )
 
@@ -108,6 +116,7 @@ class Test_http_bearer(NeofsEnvTestBase):
         user_container: str,
         eacl_deny_for_others,
         bearer_token_no_limit_for_others: str,
+        gw_endpoint,
     ):
         eacl_deny_for_others
         bearer = bearer_token_no_limit_for_others
@@ -125,7 +134,7 @@ class Test_http_bearer(NeofsEnvTestBase):
             oid = upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=headers,
                 cookies=cookies,
             )
@@ -136,5 +145,5 @@ class Test_http_bearer(NeofsEnvTestBase):
                 cid=user_container,
                 shell=self.shell,
                 nodes=self.neofs_env.storage_nodes,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
