@@ -38,6 +38,14 @@ class Test_http_headers(NeofsEnvTestBase):
         {obj2_keys[0]: values[0], obj2_keys[1]: values[1], obj2_keys[2]: values[2]},
     ]
 
+    @pytest.fixture(scope="class", params=["HTTP", "REST"])
+    def gw_endpoint(self, request):
+        gw_type = request.param
+        if gw_type == "HTTP":
+            return f"http://{self.neofs_env.http_gw.address}"
+        else:  # Assuming REST
+            return f"http://{self.neofs_env.rest_gw.address}/v1"
+
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
@@ -51,7 +59,9 @@ class Test_http_headers(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
         scope="class",
     )
-    def storage_objects_with_attributes(self, request: FixtureRequest) -> list[StorageObjectInfo]:
+    def storage_objects_with_attributes(
+        self, request: FixtureRequest, gw_endpoint
+    ) -> list[StorageObjectInfo]:
         storage_objects = []
         wallet = self.wallet.path
         cid = create_container(
@@ -66,7 +76,7 @@ class Test_http_headers(NeofsEnvTestBase):
             storage_object_id = upload_via_http_gate_curl(
                 cid=cid,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=attr_into_str_header_curl(attributes),
             )
             storage_object = StorageObjectInfo(cid, storage_object_id)
@@ -81,7 +91,7 @@ class Test_http_headers(NeofsEnvTestBase):
 
     @allure.title("Get object1 by attribute")
     def test_object1_can_be_get_by_attr(
-        self, storage_objects_with_attributes: list[StorageObjectInfo]
+        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
     ):
         """
         Test to get object#1 by attribute and comapre hashes
@@ -100,12 +110,12 @@ class Test_http_headers(NeofsEnvTestBase):
                 file_name=storage_object_1.file_path,
                 cid=storage_object_1.cid,
                 attrs={"Chapter2": storage_object_1.attributes["Chapter2"]},
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
 
     @allure.title("Test get object2 with different attributes, then delete object2 and get object1")
     def test_object2_can_be_get_by_attr(
-        self, storage_objects_with_attributes: list[StorageObjectInfo]
+        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
     ):
         """
         Test to get object2 with different attributes, then delete object2 and get object1 using 1st attribute. Note: obj1 and obj2 have the same attribute#1,
@@ -133,7 +143,7 @@ class Test_http_headers(NeofsEnvTestBase):
                     file_name=storage_object_2.file_path,
                     cid=storage_object_2.cid,
                     attrs=attributes,
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_endpoint,
                 )
         with allure.step("Delete object#2 and verify is the container deleted"):
             delete_object(
@@ -148,7 +158,7 @@ class Test_http_headers(NeofsEnvTestBase):
                 cid=storage_object_2.cid,
                 oid=storage_object_2.oid,
                 error_pattern=error_pattern,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
             storage_objects_with_attributes.remove(storage_object_2)
 
@@ -161,12 +171,12 @@ class Test_http_headers(NeofsEnvTestBase):
                 file_name=storage_object_1.file_path,
                 cid=storage_object_1.cid,
                 attrs=key_value_pair,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
 
     @allure.title("[Negative] Try to put object and get right after container is deleted")
     def test_negative_put_and_get_object3(
-        self, storage_objects_with_attributes: list[StorageObjectInfo]
+        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
     ):
         """
         Test to attempt to put object and try to download it right after the container has been deleted
@@ -191,7 +201,7 @@ class Test_http_headers(NeofsEnvTestBase):
             upload_via_http_gate_curl(
                 cid=storage_object_1.cid,
                 filepath=file_path_3,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern=error_pattern,
             )
@@ -223,5 +233,5 @@ class Test_http_headers(NeofsEnvTestBase):
                 error_pattern=error_pattern,
                 attrs=attrs_obj3,
                 http_request_path=request,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
