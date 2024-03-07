@@ -34,14 +34,14 @@ OBJECT_NOT_FOUND_ERROR = "not found"
 @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
 @pytest.mark.sanity
 @pytest.mark.http_and_rest_gates
-class TestHttpGate(NeofsEnvTestBase):
+class TestHttpRestGate(NeofsEnvTestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        TestHttpGate.wallet = default_wallet
+        TestHttpRestGate.wallet = default_wallet
 
     @pytest.fixture(scope="class", params=["HTTP", "REST"])
     def gw_params(self, request):

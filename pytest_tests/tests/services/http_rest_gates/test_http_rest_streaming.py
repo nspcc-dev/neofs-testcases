@@ -14,13 +14,13 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.mark.sanity
 @pytest.mark.http_and_rest_gates
-class Test_http_streaming(NeofsEnvTestBase):
+class Test_http_rest_streaming(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_streaming.wallet = default_wallet
+        Test_http_rest_streaming.wallet = default_wallet
 
     @pytest.fixture(scope="class", params=["HTTP", "REST"])
     def gw_endpoint(self, request):

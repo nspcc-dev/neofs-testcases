@@ -28,7 +28,7 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.mark.sanity
 @pytest.mark.http_and_rest_gates
-class Test_http_headers(NeofsEnvTestBase):
+class Test_http_rest_headers(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
     obj1_keys = ["Writer", "Chapter1", "Chapter2"]
     obj2_keys = ["Writer", "Ch@pter1", "chapter2"]
@@ -49,7 +49,7 @@ class Test_http_headers(NeofsEnvTestBase):
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_headers.wallet = default_wallet
+        Test_http_rest_headers.wallet = default_wallet
 
     @pytest.fixture(
         params=[

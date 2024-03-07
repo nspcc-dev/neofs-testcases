@@ -19,13 +19,13 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.mark.sanity
 @pytest.mark.http_and_rest_gates
-class Test_http_object(NeofsEnvTestBase):
+class Test_http_rest_object(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_object.wallet = default_wallet
+        Test_http_rest_object.wallet = default_wallet
 
     @pytest.fixture(scope="class", params=["HTTP", "REST"])
     def gw_attributes(self, request):
