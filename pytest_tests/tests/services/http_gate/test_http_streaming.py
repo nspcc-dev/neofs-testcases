@@ -13,7 +13,7 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-@pytest.mark.http_gate
+@pytest.mark.http_and_rest_gates
 class Test_http_streaming(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 

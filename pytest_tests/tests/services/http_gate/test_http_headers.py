@@ -27,7 +27,7 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-@pytest.mark.http_gate
+@pytest.mark.http_and_rest_gates
 class Test_http_headers(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
     obj1_keys = ["Writer", "Chapter1", "Chapter2"]
