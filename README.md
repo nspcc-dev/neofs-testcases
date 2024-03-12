@@ -1,60 +1,12 @@
 ## Testcases structure
 
-Tests written with PyTest Framework are located under `pytest_tests/testsuites` directory.
-
-These tests rely on resources and utility modules that have been originally developed for Robot Framework:
-
-`robot/resources/files` - static files that are used in tests' commands.
-
-`robot/resources/lib/` - common Python libraries that provide utility functions used as building blocks in tests.
-
-`robot/variables/` - constants and configuration variables for tests.
+Tests are located under `pytest_tests` directory.
 
 ## Testcases execution
 
 ### Initial preparation
 
-1. Install neofs-cli
-    - `git clone git@github.com:nspcc-dev/neofs-node.git`
-    - `cd neofs-node`
-    - `make`
-    - `sudo cp bin/neofs-cli /usr/local/bin/neofs-cli`
-
-2. Install neofs-authmate
-    - `git clone git@github.com:nspcc-dev/neofs-s3-gw.git`
-    - `cd neofs-s3-gw`
-    - `make`
-    - `sudo cp bin/neofs-authmate /usr/local/bin/neofs-authmate`
-
-3. Install neo-go
-    - `git clone git@github.com:nspcc-dev/neo-go.git`
-    - `cd neo-go`
-    - `git checkout v0.92.0` (or the current version in the neofs-dev-env)
-    - `make`
-    - `sudo cp bin/neo-go /usr/local/bin/neo-go`
-    or download binary from releases: https://github.com/nspcc-dev/neo-go/releases
-
-4. Clone neofs-dev-env
-`git clone git@github.com:nspcc-dev/neofs-dev-env.git`
-
-Note that we expect neofs-dev-env to be located under
-the `<testcases_root_dir>/../neofs-dev-env` directory. If you put this repo in any other place,
-manually set the full path to neofs-dev-env in the environment variable `DEVENV_PATH` at this step.
-
-5. Make sure you have installed all of the following prerequisites on your machine
-
-```
-make
-python3.10
-python3.10-dev
-python3.10-venv
-libssl-dev
-awscli version 2
-```
-As we use neofs-dev-env, you'll also need to install
-[prerequisites](https://github.com/nspcc-dev/neofs-dev-env#prerequisites) of this repository.
-
-6. Fix OpenSSL ripemd160
+1. Fix OpenSSL ripemd160
 
 Hashlib uses OpenSSL for ripemd160 and apparently OpenSSL disabled some older crypto algos around version 3.0
 in November 2021.
@@ -80,14 +32,14 @@ activate = 1
 ```
 
 
-7. Prepare virtualenv
+2. Prepare and activate virtualenv
 
 ```shell
-$ make venv.local-pytest
-$ . venv.local-pytest/bin/activate
+$ make venv.pytest
+$ . venv.pytest/bin/activate
 ```
 
-8. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
+3. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
 
 ```shell
 $ pre-commit install
@@ -97,7 +49,7 @@ Optionally you might want to integrate code formatters with your code editor to 
 * isort is supported by [PyCharm](https://plugins.jetbrains.com/plugin/15434-isortconnect), [VS Code](https://cereblanco.medium.com/setup-black-and-isort-in-vscode-514804590bf9). Plugins exist for other IDEs/editors as well.
 * black can be integrated with multiple editors, please, instructions are available [here](https://black.readthedocs.io/en/stable/integrations/editors.html).
 
-9. Install Allure CLI
+4. Install Allure CLI
 
 Allure CLI installation is not an easy task, so a better option might be to run allure from
 docker container (please, refer to p.2 of the next section for instructions).
@@ -117,15 +69,33 @@ If none of the options worked for you, please complete the instruction with your
 
 ### Run and get report
 
-1. Run tests
+1. Binaries
 
-Make sure that the virtualenv is activated, then execute the following command to run a singular test suite or all the suites in the directory
+By default binaries are downloaded automatically by tests, but if you place binaries under current directory, 
+they will be taken from there.
+
+Following binaries are needed:
+- neofs-cli
+- neofs-adm
+- neofs-ir
+- neofs-lens
+- neofs-node
+- neofs-rest-gw
+- neofs-http-gw
+- neo-go
+- neofs-s3-authmate
+- neofs-s3-gw
+
+2. Run tests
+
+Make sure that the virtualenv is activated, then execute the following command to run a specific test
 ```shell
-$ pytest --alluredir my-allure-123 pytest_tests/testsuites/object/test_object_api.py
-$ pytest --alluredir my-allure-123 pytest_tests/testsuites/
+$ pytest --alluredir my-allure-123 -s -k test_get_object_api pytest_tests/tests/object/test_object_api.py
 ```
 
-2. Generate report
+If anything goes wrong, first advice is to check .github/workflows/run-tests.yml, to ensure you've done all required steps.
+
+3. Generate report
 
 If you opted to install Allure CLI, you can generate a report using the command `allure generate`. The web representation of the report will be under `allure-report` directory:
 ```shell

@@ -22,7 +22,7 @@ clean:
 
 pytest-local:
 	@echo "⇒ Run Pytest"
-	python -m pytest pytest_tests/testsuites/
+	python -m pytest pytest_tests/tests/
 
 help:
 	@echo "⇒ run          Run testcases ${R}"
