@@ -83,14 +83,6 @@ class Test_http_rest_bearer(NeofsEnvTestBase):
             )
             return bearer_token_base64_from_file(bearer_signed)
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_endpoint(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return f"http://{self.neofs_env.http_gw.address}"
-        else:  # Assuming REST
-            return f"http://{self.neofs_env.rest_gw.address}/v1"
-
     @allure.title(f"[negative] Put object without bearer token for {EACLRole.OTHERS}")
     def test_unable_put_without_bearer_token(
         self, simple_object_size: int, user_container: str, eacl_deny_for_others, gw_endpoint

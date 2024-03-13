@@ -38,14 +38,6 @@ class Test_http_rest_headers(NeofsEnvTestBase):
         {obj2_keys[0]: values[0], obj2_keys[1]: values[1], obj2_keys[2]: values[2]},
     ]
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_endpoint(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return f"http://{self.neofs_env.http_gw.address}"
-        else:  # Assuming REST
-            return f"http://{self.neofs_env.rest_gw.address}/v1"
-
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):

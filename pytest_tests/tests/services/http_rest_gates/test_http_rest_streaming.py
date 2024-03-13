@@ -22,14 +22,6 @@ class Test_http_rest_streaming(NeofsEnvTestBase):
     def prepare_wallet(self, default_wallet):
         Test_http_rest_streaming.wallet = default_wallet
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_endpoint(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return f"http://{self.neofs_env.http_gw.address}"
-        else:  # Assuming REST
-            return f"http://{self.neofs_env.rest_gw.address}/v1"
-
     @allure.title("Test Put via pipe (steaming), Get over HTTP and verify hashes")
     @pytest.mark.parametrize(
         "object_size",

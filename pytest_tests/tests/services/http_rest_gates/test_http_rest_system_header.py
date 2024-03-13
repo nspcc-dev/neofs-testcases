@@ -62,14 +62,6 @@ class Test_http_rest_system_header(NeofsEnvTestBase):
         time_per_block = net_info["time_per_block"]
         return int(epoch_duration_in_blocks * time_per_block)
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_endpoint(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return f"http://{self.neofs_env.http_gw.address}"
-        else:  # Assuming REST
-            return f"http://{self.neofs_env.rest_gw.address}/v1"
-
     @allure.title("Return N-epoch count in minutes")
     def epoch_count_into_mins(self, epoch_duration: int, epoch: int) -> str:
         mins = epoch_duration * epoch / 60
