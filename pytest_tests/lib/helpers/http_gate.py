@@ -6,7 +6,7 @@ import shutil
 import uuid
 import zipfile
 from typing import Optional, Union
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 import allure
 import requests
@@ -115,10 +115,10 @@ def get_via_http_gate_by_attribute(
     request_path: (optional) http request path, if ommited - use default [{endpoint}/get_by_attribute/{Key}/{Value}]
     """
     attr_name = list(attribute.keys())[0]
-    attr_value = quote_plus(str(attribute.get(attr_name)))
+    attr_value = quote(str(attribute.get(attr_name)))
     # if `request_path` parameter ommited, use default
     if request_path is None:
-        request = f"{endpoint}/get_by_attribute/{cid}/{quote_plus(str(attr_name))}/{attr_value}"
+        request = f"{endpoint}/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}"
     else:
         request = f"{endpoint}{request_path}"
 
