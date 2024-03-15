@@ -33,15 +33,29 @@ OBJECT_NOT_FOUND_ERROR = "not found"
 @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
 @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
 @pytest.mark.sanity
-@pytest.mark.http_gate
-class TestHttpGate(NeofsEnvTestBase):
+@pytest.mark.http_and_rest_gates
+class TestHttpRestGate(NeofsEnvTestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        TestHttpGate.wallet = default_wallet
+        TestHttpRestGate.wallet = default_wallet
+
+    @pytest.fixture(scope="class", params=["HTTP", "REST"])
+    def gw_params(self, request):
+        gw_type = request.param
+        if gw_type == "HTTP":
+            return {
+                "endpoint": f"http://{self.neofs_env.http_gw.address}",
+                "wallet_path": self.neofs_env.http_gw.wallet.path,
+            }
+        else:  # Assuming REST
+            return {
+                "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+                "wallet_path": self.neofs_env.rest_gw.wallet.path,
+            }
 
     @allure.title("Test Put over gRPC, Get over HTTP")
     def test_put_grpc_get_http(self, complex_object_size, simple_object_size):
@@ -98,7 +112,7 @@ class TestHttpGate(NeofsEnvTestBase):
             )
 
     @allure.title("Verify Content-Disposition header")
-    def test_put_http_get_http_content_disposition(self, simple_object_size):
+    def test_put_http_get_http_content_disposition(self, simple_object_size, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -113,12 +127,12 @@ class TestHttpGate(NeofsEnvTestBase):
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
             )
             content_disposition_type, filename = resp.headers["Content-Disposition"].split(";")
@@ -131,12 +145,12 @@ class TestHttpGate(NeofsEnvTestBase):
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
                 download=True,
             )
@@ -145,7 +159,7 @@ class TestHttpGate(NeofsEnvTestBase):
             assert filename.strip().split("=")[1] == file_path.split("/")[-1]
 
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
-    def test_put_http_get_http_without_content_type(self, simple_object_size):
+    def test_put_http_get_http_without_content_type(self, simple_object_size, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -160,13 +174,13 @@ class TestHttpGate(NeofsEnvTestBase):
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "application/octet-stream"
@@ -177,19 +191,19 @@ class TestHttpGate(NeofsEnvTestBase):
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "text/plain; charset=utf-8"
 
     @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
-    def test_put_http_get_http_with_x_atribute_content_type(self, simple_object_size):
+    def test_put_http_get_http_with_x_atribute_content_type(self, simple_object_size, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -206,19 +220,19 @@ class TestHttpGate(NeofsEnvTestBase):
                 cid=cid,
                 path=file_path,
                 headers=headers,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "CoolContentType"
 
     @allure.title("Verify Content-Type if uploaded with multipart Content-Type")
-    def test_put_http_get_http_with_multipart_content_type(self):
+    def test_put_http_get_http_with_multipart_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -233,20 +247,20 @@ class TestHttpGate(NeofsEnvTestBase):
             oid = upload_via_http_gate(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 file_content_type="application/json",
             )
 
             resp = get_via_http_gate(
                 cid=cid,
                 oid=oid,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "application/json"
 
     @allure.title("Verify special HTTP headers")
-    def test_put_http_get_http_special_attributes(self, simple_object_size):
+    def test_put_http_get_http_special_attributes(self, simple_object_size, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -260,15 +274,15 @@ class TestHttpGate(NeofsEnvTestBase):
         oid = upload_via_http_gate(
             cid=cid,
             path=file_path,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_params["endpoint"],
         )
         resp = get_via_http_gate(
             cid=cid,
             oid=oid,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_params["endpoint"],
             return_response=True,
         )
-        with open(self.neofs_env.http_gw.wallet.path) as wallet_file:
+        with open(gw_params["wallet_path"]) as wallet_file:
             wallet_json = json.load(wallet_file)
 
         assert resp.headers["X-Owner-Id"] == wallet_json["accounts"][0]["address"]
@@ -279,7 +293,7 @@ class TestHttpGate(NeofsEnvTestBase):
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
     @allure.title("Test Put over HTTP, Get over HTTP")
     @pytest.mark.smoke
-    def test_put_http_get_http(self, complex_object_size, simple_object_size):
+    def test_put_http_get_http(self, complex_object_size, simple_object_size, gw_params):
         """
         Test that object can be put and get using HTTP interface.
 
@@ -305,10 +319,10 @@ class TestHttpGate(NeofsEnvTestBase):
 
         with allure.step("Put objects using HTTP"):
             oid_simple = upload_via_http_gate(
-                cid=cid, path=file_path_simple, endpoint=f"http://{self.neofs_env.http_gw.address}"
+                cid=cid, path=file_path_simple, endpoint=gw_params["endpoint"]
             )
             oid_large = upload_via_http_gate(
-                cid=cid, path=file_path_large, endpoint=f"http://{self.neofs_env.http_gw.address}"
+                cid=cid, path=file_path_large, endpoint=gw_params["endpoint"]
             )
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
@@ -319,7 +333,7 @@ class TestHttpGate(NeofsEnvTestBase):
                 cid=cid,
                 shell=self.shell,
                 nodes=self.neofs_env.storage_nodes,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
     @allure.link(
@@ -335,7 +349,7 @@ class TestHttpGate(NeofsEnvTestBase):
         ],
         ids=["simple", "hyphen", "percent"],
     )
-    def test_put_http_get_http_with_headers(self, attributes: dict, simple_object_size):
+    def test_put_http_get_http_with_headers(self, attributes: dict, simple_object_size, gw_params):
         """
         Test that object can be downloaded using different attributes in HTTP header.
 
@@ -363,7 +377,7 @@ class TestHttpGate(NeofsEnvTestBase):
                 cid=cid,
                 path=file_path,
                 headers=headers,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
         get_object_by_attr_and_verify_hashes(
@@ -371,13 +385,12 @@ class TestHttpGate(NeofsEnvTestBase):
             file_name=file_path,
             cid=cid,
             attrs=attributes,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_params["endpoint"],
         )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
-    def test_expiration_epoch_in_http(self, simple_object_size):
+    def test_expiration_epoch_in_http(self, simple_object_size, gw_params):
         endpoint = self.neofs_env.sn_rpc
-        http_endpoint = f"http://{self.neofs_env.http_gw.address}"
 
         cid = create_container(
             self.wallet.path,
@@ -398,7 +411,7 @@ class TestHttpGate(NeofsEnvTestBase):
             with allure.step("Put objects using HTTP with attribute Expiration-Epoch"):
                 oids.append(
                     upload_via_http_gate(
-                        cid=cid, path=file_path, headers=headers, endpoint=http_endpoint
+                        cid=cid, path=file_path, headers=headers, endpoint=gw_params["endpoint"]
                     )
                 )
 
@@ -406,7 +419,7 @@ class TestHttpGate(NeofsEnvTestBase):
 
         with allure.step("All objects can be get"):
             for oid in oids:
-                get_via_http_gate(cid=cid, oid=oid, endpoint=http_endpoint)
+                get_via_http_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
             self.tick_epochs_and_wait(1)
@@ -419,12 +432,12 @@ class TestHttpGate(NeofsEnvTestBase):
                     cid=cid,
                     oid=oid,
                     error_pattern=OBJECT_NOT_FOUND_ERROR,
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_params["endpoint"],
                 )
 
             with allure.step("Other objects can be get"):
                 for oid in not_expired_objects:
-                    get_via_http_gate(cid=cid, oid=oid, endpoint=http_endpoint)
+                    get_via_http_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
     @allure.title("Test Zip in HTTP header")
     def test_zip_in_http(self, complex_object_size, simple_object_size):
@@ -466,7 +479,7 @@ class TestHttpGate(NeofsEnvTestBase):
 
     @pytest.mark.long
     @allure.title("Test Put over HTTP/Curl, Get over HTTP/Curl for large object")
-    def test_put_http_get_http_large_file(self, complex_object_size):
+    def test_put_http_get_http_large_file(self, complex_object_size, gw_params):
         """
         This test checks upload and download using curl with 'large' object.
         Large is object with size up to 20Mb.
@@ -483,13 +496,11 @@ class TestHttpGate(NeofsEnvTestBase):
         file_path = generate_file(obj_size)
 
         with allure.step("Put objects using HTTP"):
-            oid_gate = upload_via_http_gate(
-                cid=cid, path=file_path, endpoint=f"http://{self.neofs_env.http_gw.address}"
-            )
+            oid_gate = upload_via_http_gate(cid=cid, path=file_path, endpoint=gw_params["endpoint"])
             oid_curl = upload_via_http_gate_curl(
                 cid=cid,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
         get_object_and_verify_hashes(
@@ -499,7 +510,7 @@ class TestHttpGate(NeofsEnvTestBase):
             cid=cid,
             shell=self.shell,
             nodes=self.neofs_env.storage_nodes,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_params["endpoint"],
         )
         get_object_and_verify_hashes(
             oid=oid_curl,
@@ -508,12 +519,12 @@ class TestHttpGate(NeofsEnvTestBase):
             cid=cid,
             shell=self.shell,
             nodes=self.neofs_env.storage_nodes,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_params["endpoint"],
             object_getter=get_via_http_curl,
         )
 
     @allure.title("Test Put/Get over HTTP using Curl utility")
-    def test_put_http_get_http_curl(self, complex_object_size, simple_object_size):
+    def test_put_http_get_http_curl(self, complex_object_size, simple_object_size, gw_params):
         """
         Test checks upload and download over HTTP using curl utility.
         """
@@ -532,12 +543,12 @@ class TestHttpGate(NeofsEnvTestBase):
             oid_simple = upload_via_http_gate_curl(
                 cid=cid,
                 filepath=file_path_simple,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
             oid_large = upload_via_http_gate_curl(
                 cid=cid,
                 filepath=file_path_large,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
             )
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
@@ -548,6 +559,6 @@ class TestHttpGate(NeofsEnvTestBase):
                 cid=cid,
                 shell=self.shell,
                 nodes=self.neofs_env.storage_nodes,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_params["endpoint"],
                 object_getter=get_via_http_curl,
             )

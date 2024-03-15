@@ -30,14 +30,14 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.http_gate
-class Test_http_system_header(NeofsEnvTestBase):
+@pytest.mark.http_and_rest_gates
+class Test_http_rest_system_header(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_system_header.wallet = default_wallet
+        Test_http_rest_system_header.wallet = default_wallet
 
     @pytest.fixture(scope="class")
     @allure.title("Create container")
@@ -110,11 +110,13 @@ class Test_http_system_header(NeofsEnvTestBase):
         ), f"Only {EXPIRATION_EXPIRATION_RFC} can be displayed in header attributes"
 
     @allure.title("Put / get / verify object and return head command result to invoker")
-    def oid_header_info_for_object(self, file_path: str, attributes: dict, user_container: str):
+    def oid_header_info_for_object(
+        self, file_path: str, attributes: dict, user_container: str, gw_endpoint: str
+    ):
         oid = upload_via_http_gate_curl(
             cid=user_container,
             filepath=file_path,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_endpoint,
             headers=attr_into_str_header_curl(attributes),
         )
         get_object_and_verify_hashes(
@@ -124,7 +126,7 @@ class Test_http_system_header(NeofsEnvTestBase):
             cid=user_container,
             shell=self.shell,
             nodes=self.neofs_env.storage_nodes,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_endpoint,
         )
         head = head_object(
             wallet=self.wallet.path,
@@ -136,7 +138,9 @@ class Test_http_system_header(NeofsEnvTestBase):
         return oid, head
 
     @allure.title("[negative] attempt to put object with expired epoch")
-    def test_unable_put_expired_epoch(self, user_container: str, simple_object_size: int):
+    def test_unable_put_expired_epoch(
+        self, user_container: str, simple_object_size: int, gw_endpoint
+    ):
         headers = attr_into_str_header_curl(
             {"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)}
         )
@@ -147,13 +151,15 @@ class Test_http_system_header(NeofsEnvTestBase):
             upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern="object has expired",
             )
 
     @allure.title("[negative] attempt to put object with negative Neofs-Expiration-Duration")
-    def test_unable_put_negative_duration(self, user_container: str, simple_object_size: int):
+    def test_unable_put_negative_duration(
+        self, user_container: str, simple_object_size: int, gw_endpoint
+    ):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Duration": "-1h"})
         file_path = generate_file(simple_object_size)
         with allure.step(
@@ -162,7 +168,7 @@ class Test_http_system_header(NeofsEnvTestBase):
             upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern=f"{EXPIRATION_DURATION_HEADER} must be positive",
             )
@@ -170,7 +176,9 @@ class Test_http_system_header(NeofsEnvTestBase):
     @allure.title(
         "[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past"
     )
-    def test_unable_put_expired_timestamp(self, user_container: str, simple_object_size: int):
+    def test_unable_put_expired_timestamp(
+        self, user_container: str, simple_object_size: int, gw_endpoint
+    ):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Timestamp": "1635075727"})
         file_path = generate_file(simple_object_size)
         with allure.step(
@@ -179,7 +187,7 @@ class Test_http_system_header(NeofsEnvTestBase):
             upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern=f"{EXPIRATION_TIMESTAMP_HEADER} must be in the future",
             )
@@ -187,13 +195,15 @@ class Test_http_system_header(NeofsEnvTestBase):
     @allure.title(
         "[negative] Put object using HTTP with attribute Neofs-Expiration-RFC3339 where duration is in the past"
     )
-    def test_unable_put_expired_rfc(self, user_container: str, simple_object_size: int):
+    def test_unable_put_expired_rfc(
+        self, user_container: str, simple_object_size: int, gw_endpoint
+    ):
         headers = attr_into_str_header_curl({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
         file_path = generate_file(simple_object_size)
         upload_via_http_gate_curl(
             cid=user_container,
             filepath=file_path,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
+            endpoint=gw_endpoint,
             headers=headers,
             error_pattern=f"{EXPIRATION_EXPIRATION_RFC} must be in the future",
         )
@@ -206,7 +216,7 @@ class Test_http_system_header(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_epoch_duration(
-        self, user_container: str, object_size: int, epoch_duration: int
+        self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 1
@@ -220,7 +230,10 @@ class Test_http_system_header(NeofsEnvTestBase):
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
             oid, head_info = self.oid_header_info_for_object(
-                file_path=file_path, attributes=attributes, user_container=user_container
+                file_path=file_path,
+                attributes=attributes,
+                user_container=user_container,
+                gw_endpoint=gw_endpoint,
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
@@ -235,7 +248,7 @@ class Test_http_system_header(NeofsEnvTestBase):
                     cid=user_container,
                     oid=oid,
                     error_pattern="404 Not Found",
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_endpoint,
                 )
                 # check that object is not available via grpc
                 with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
@@ -256,7 +269,7 @@ class Test_http_system_header(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_dur_timestamp(
-        self, user_container: str, object_size: int, epoch_duration: int
+        self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
@@ -277,7 +290,10 @@ class Test_http_system_header(NeofsEnvTestBase):
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
             oid, head_info = self.oid_header_info_for_object(
-                file_path=file_path, attributes=attributes, user_container=user_container
+                file_path=file_path,
+                attributes=attributes,
+                user_container=user_container,
+                gw_endpoint=gw_endpoint,
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
@@ -292,7 +308,7 @@ class Test_http_system_header(NeofsEnvTestBase):
                     cid=user_container,
                     oid=oid,
                     error_pattern="404 Not Found",
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_endpoint,
                 )
                 # check that object is not available via grpc
                 with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
@@ -313,7 +329,7 @@ class Test_http_system_header(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_timestamp_rfc(
-        self, user_container: str, object_size: int, epoch_duration: int
+        self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
@@ -334,7 +350,10 @@ class Test_http_system_header(NeofsEnvTestBase):
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
             oid, head_info = self.oid_header_info_for_object(
-                file_path=file_path, attributes=attributes, user_container=user_container
+                file_path=file_path,
+                attributes=attributes,
+                user_container=user_container,
+                gw_endpoint=gw_endpoint,
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
@@ -349,7 +368,7 @@ class Test_http_system_header(NeofsEnvTestBase):
                     cid=user_container,
                     oid=oid,
                     error_pattern="404 Not Found",
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_endpoint,
                 )
                 # check that object is not available via grpc
                 with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
@@ -368,7 +387,7 @@ class Test_http_system_header(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
     )
     def test_http_rfc_object_unavailable_after_expir(
-        self, user_container: str, object_size: int, epoch_duration: int
+        self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
@@ -389,6 +408,7 @@ class Test_http_system_header(NeofsEnvTestBase):
                 file_path=file_path,
                 attributes=attributes,
                 user_container=user_container,
+                gw_endpoint=gw_endpoint,
             )
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
@@ -404,7 +424,7 @@ class Test_http_system_header(NeofsEnvTestBase):
                     cid=user_container,
                     oid=oid,
                     error_pattern="404 Not Found",
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_endpoint,
                 )
                 # check that object is not available via grpc
                 with pytest.raises(Exception, match=OBJECT_NOT_FOUND):

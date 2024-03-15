@@ -18,14 +18,37 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-@pytest.mark.http_gate
-class Test_http_object(NeofsEnvTestBase):
+@pytest.mark.http_and_rest_gates
+class Test_http_rest_object(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_object.wallet = default_wallet
+        Test_http_rest_object.wallet = default_wallet
+
+    @pytest.fixture(scope="class", params=["HTTP", "REST"])
+    def gw_attributes(self, request):
+        gw_type = request.param
+        if gw_type == "HTTP":
+            return {
+                "endpoint": f"http://{self.neofs_env.http_gw.address}",
+                # List of Key=Value attributes
+                "obj_key1": "chapter1",
+                "obj_value1": "peace",
+                "obj_key2": "chapter2",
+                "obj_value2": "war",
+            }
+        else:  # Assuming REST
+            return {
+                "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+                # List of Key=Value attributes
+                # REST gateway accepts attributes in the Canonical MIME Header Key.
+                "obj_key1": "Chapter1",
+                "obj_value1": "peace",
+                "obj_key2": "Chapter2",
+                "obj_value2": "war",
+            }
 
     @allure.title("Test Put over gRPC, Get over HTTP")
     @pytest.mark.parametrize(
@@ -33,7 +56,7 @@ class Test_http_object(NeofsEnvTestBase):
         [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    def test_object_put_get_attributes(self, object_size: int):
+    def test_object_put_get_attributes(self, object_size: int, gw_attributes):
         """
         Test that object can be put using gRPC interface and get using HTTP.
 
@@ -64,10 +87,10 @@ class Test_http_object(NeofsEnvTestBase):
         file_path = generate_file(object_size)
 
         # List of Key=Value attributes
-        obj_key1 = "chapter1"
-        obj_value1 = "peace"
-        obj_key2 = "chapter2"
-        obj_value2 = "war"
+        obj_key1 = gw_attributes["obj_key1"]
+        obj_value1 = gw_attributes["obj_value1"]
+        obj_key2 = gw_attributes["obj_key2"]
+        obj_value2 = gw_attributes["obj_value2"]
 
         # Prepare for grpc PUT request
         key_value1 = obj_key1 + "=" + obj_value1
@@ -90,7 +113,7 @@ class Test_http_object(NeofsEnvTestBase):
                 cid=cid,
                 shell=self.shell,
                 nodes=self.neofs_env.storage_nodes,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_attributes["endpoint"],
             )
         with allure.step("[Negative] try to get object: [get/$CID/chapter1/peace]"):
             attrs = {obj_key1: obj_value1, obj_key2: obj_value2}
@@ -102,7 +125,7 @@ class Test_http_object(NeofsEnvTestBase):
                 error_pattern=expected_err_msg,
                 http_request_path=request,
                 attrs=attrs,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_attributes["endpoint"],
             )
 
         with allure.step(
@@ -113,7 +136,7 @@ class Test_http_object(NeofsEnvTestBase):
                 file_name=file_path,
                 cid=cid,
                 attrs=attrs,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_attributes["endpoint"],
             )
         with allure.step("[Negative] try to get object: get_by_attribute/$CID/$OID"):
             request = f"/get_by_attribute/{cid}/{oid}"
@@ -122,7 +145,7 @@ class Test_http_object(NeofsEnvTestBase):
                 oid=oid,
                 error_pattern=expected_err_msg,
                 http_request_path=request,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_attributes["endpoint"],
             )
 
         with allure.step(
@@ -134,5 +157,5 @@ class Test_http_object(NeofsEnvTestBase):
                     file_name=file_path,
                     cid=cid,
                     attrs={obj_key1: obj_value2},
-                    endpoint=f"http://{self.neofs_env.http_gw.address}",
+                    endpoint=gw_attributes["endpoint"],
                 )
