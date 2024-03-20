@@ -88,45 +88,12 @@ jobs:
           sudo python ./tools/src/openssl_config_fix.py
         working-directory: neofs-testcases
 
-      - name: Download latest stable neofs-cli
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
-        with:
-          repo: 'nspcc-dev/neofs-node'
-          version: 'tags/v0.39.2'
-          file: 'neofs-cli-amd64'
-          target: 'neofs-testcases/neofs-cli'
-      
-      - name: Download latest stable neofs-adm
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
-        with:
-          repo: 'nspcc-dev/neofs-node'
-          version: 'tags/v0.39.2'
-          file: 'neofs-adm-amd64'
-          target: 'neofs-testcases/neofs-adm'
-
-      - name: Download latest stable neofs-ir
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
-        with:
-          repo: 'nspcc-dev/neofs-node'
-          version: 'tags/v0.39.2'
-          file: 'neofs-ir-amd64'
-          target: 'neofs-testcases/neofs-ir'
-
-      - name: Download latest stable neofs-lens
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
-        with:
-          repo: 'nspcc-dev/neofs-node'
-          version: 'tags/v0.39.2'
-          file: 'neofs-lens-amd64'
-          target: 'neofs-testcases/neofs-lens'
-
-      - name: Download latest stable neofs-node
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
-        with:
-          repo: 'nspcc-dev/neofs-node'
-          version: 'tags/v0.39.2'
-          file: 'neofs-node-amd64'
-          target: 'neofs-testcases/neofs-node'
+      - name: Build neofs-node
+        timeout-minutes: 5
+        run: |
+          make all
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+        working-directory: neofs-node
 
       - name: Download latest stable neofs-s3-gw
         uses: dsaltares/fetch-gh-release-asset@1.1.1
@@ -167,6 +134,17 @@ jobs:
           version: 'tags/v0.104.0'
           file: 'neo-go-linux-amd64'
           target: 'neofs-testcases/neo-go'
+
+      - name: Copy built binaries
+        timeout-minutes: 30
+        run: |
+          ls -la ../neofs-node/bin
+          cp ../neofs-node/bin/neofs-adm .
+          cp ../neofs-node/bin/neofs-cli .
+          cp ../neofs-node/bin/neofs-ir .
+          cp ../neofs-node/bin/neofs-lens .
+          cp ../neofs-node/bin/neofs-node .
+        working-directory: neofs-testcases
 
       - name: Chmod latest stable binaries
         run: |
