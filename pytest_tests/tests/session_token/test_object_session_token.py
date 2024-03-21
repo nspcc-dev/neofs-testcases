@@ -52,6 +52,7 @@ class TestDynamicObjectSession(NeofsEnvTestBase):
                 wallet_path=wallet.path,
                 wallet_password=wallet.password,
                 rpc_endpoint=session_token_node.endpoint,
+                lifetime=2,
             )
 
         with allure.step("Create Private Container"):

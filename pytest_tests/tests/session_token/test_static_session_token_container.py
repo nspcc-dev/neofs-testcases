@@ -15,6 +15,7 @@ from helpers.grpc_responses import (
     CONTAINER_DELETION_TIMED_OUT,
     EACL_TIMED_OUT,
     NOT_SESSION_CONTAINER_OWNER,
+    SESSION_NOT_ISSUED_BY_OWNER,
 )
 from helpers.object_access import can_put_object
 from helpers.session_token import ContainerVerb, get_container_signed_token
@@ -188,7 +189,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 )
 
         with allure.step("Try to force delete container using stranger token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=SESSION_NOT_ISSUED_BY_OWNER):
                 delete_container(
                     wallet=user_wallet.path,
                     cid=cid,
@@ -258,7 +259,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     force=True,
                 )
 
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=SESSION_NOT_ISSUED_BY_OWNER):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
