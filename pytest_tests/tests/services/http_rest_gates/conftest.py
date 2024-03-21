@@ -2,9 +2,7 @@ import logging
 
 import pytest
 from neofs_testlib.env.env import NeoFSEnv
-from neofs_testlib.reporter import AllureHandler, get_reporter
 
-get_reporter().register_handler(AllureHandler())
 logger = logging.getLogger("NeoLogger")
 
 
