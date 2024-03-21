@@ -1,4 +1,5 @@
 import os
+import random
 import uuid
 from collections import namedtuple
 
@@ -25,6 +26,15 @@ from helpers.container_access import (
     check_no_access_to_container,
 )
 from helpers.neofs_verbs import put_object_to_random_node
+from helpers.object_access import (
+    can_delete_object,
+    can_get_head_object,
+    can_get_object,
+    can_get_range_hash_of_object,
+    can_get_range_of_object,
+    can_put_object,
+    can_search_object,
+)
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv
@@ -424,6 +434,187 @@ class TestACLBearer(NeofsEnvTestBase):
                 shell=self.shell,
                 neofs_env=self.neofs_env,
             )
+
+    @pytest.mark.parametrize("operation", list(EACLOperation))
+    def test_bearer_token_separate_operations(
+        self, wallets, eacl_container_with_objects, operation
+    ):
+        role = EACLRole.USER
+        not_allowed_operations = [op for op in EACLOperation if op != operation]
+
+        allure.dynamic.title(
+            f"Testcase to validate NeoFS {operation.value} with {role.value} BearerToken"
+        )
+        cid, objects_oids, file_path = eacl_container_with_objects
+        user_wallet = wallets.get_wallet()
+        deny_wallet = wallets.get_wallet(role)
+        endpoint = self.neofs_env.sn_rpc
+
+        with allure.step(f"Set deny all operations for {role.value} via eACL"):
+            eacl = [
+                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation
+            ]
+            eacl_file = create_eacl(cid, eacl, shell=self.shell)
+            set_eacl(user_wallet.wallet_path, cid, eacl_file, shell=self.shell, endpoint=endpoint)
+            wait_for_cache_expired()
+
+        with allure.step(f"Create bearer token for {role.value} with {operation.value} allowed"):
+            bearer = form_bearertoken_file(
+                user_wallet.wallet_path,
+                cid,
+                [EACLRule(operation=operation, access=EACLAccess.ALLOW, role=role)],
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step(
+            f"Check {role.value} with token has access to {operation.value} within container"
+        ):
+            if operation == EACLOperation.PUT:
+                assert can_put_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    file_path,
+                    self.shell,
+                    neofs_env=self.neofs_env,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET:
+                assert can_get_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    objects_oids.pop(),
+                    file_path,
+                    self.shell,
+                    neofs_env=self.neofs_env,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.HEAD:
+                assert can_get_head_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    objects_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET_RANGE:
+                assert can_get_range_of_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    objects_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET_RANGE_HASH:
+                assert can_get_range_hash_of_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    objects_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.SEARCH:
+                assert can_search_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.DELETE:
+                assert can_delete_object(
+                    deny_wallet.wallet_path,
+                    cid,
+                    objects_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    bearer=bearer,
+                    wallet_config=deny_wallet.config_path,
+                ), f"{operation.value} is not allowed, while it should be"
+
+        with allure.step(
+            f"Check {role.value} with token has no access to all other operations within container"
+        ):
+            for not_allowed_op in not_allowed_operations:
+                if not_allowed_op == EACLOperation.PUT:
+                    assert not can_put_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        file_path,
+                        self.shell,
+                        neofs_env=self.neofs_env,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET:
+                    assert not can_get_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        objects_oids.pop(),
+                        file_path,
+                        self.shell,
+                        neofs_env=self.neofs_env,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.HEAD:
+                    assert not can_get_head_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        objects_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET_RANGE:
+                    assert not can_get_range_of_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        objects_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET_RANGE_HASH:
+                    assert not can_get_range_hash_of_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        objects_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.SEARCH:
+                    assert not can_search_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.DELETE:
+                    assert not can_delete_object(
+                        deny_wallet.wallet_path,
+                        cid,
+                        objects_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        bearer=bearer,
+                        wallet_config=deny_wallet.config_path,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
 
     def _create_containers_with_objects(
         self,

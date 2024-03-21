@@ -1,3 +1,5 @@
+import random
+
 import allure
 import pytest
 from helpers.acl import (
@@ -150,6 +152,147 @@ class TestEACLContainer(NeofsEnvTestBase):
                 shell=self.shell,
                 neofs_env=self.neofs_env,
             )
+
+    @pytest.mark.parametrize("operation", list(EACLOperation))
+    def test_extended_acl_operations_enforcement(
+        self, wallets, eacl_container_with_objects, operation
+    ):
+        user_wallet = wallets.get_wallet()
+        cid, object_oids, file_path = eacl_container_with_objects
+
+        with allure.step(f"Deny all operations via eACL except {operation.value}"):
+            eacl = [
+                EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op)
+                for op in EACLOperation
+                if op != operation
+            ]
+            eacl.append(EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=operation))
+            eacl_file = create_eacl(cid, eacl, shell=self.shell)
+            set_eacl(
+                user_wallet.wallet_path,
+                cid,
+                eacl_file,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            wait_for_cache_expired()
+
+        with allure.step(f"Check {operation.value} is available"):
+            if operation == EACLOperation.PUT:
+                assert can_put_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    file_path,
+                    self.shell,
+                    neofs_env=self.neofs_env,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET:
+                assert can_get_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    object_oids.pop(),
+                    file_path,
+                    self.shell,
+                    neofs_env=self.neofs_env,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.HEAD:
+                assert can_get_head_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    object_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET_RANGE:
+                assert can_get_range_of_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    object_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.GET_RANGE_HASH:
+                assert can_get_range_hash_of_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    object_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.SEARCH:
+                assert can_search_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                ), f"{operation.value} is not allowed, while it should be"
+            elif operation == EACLOperation.DELETE:
+                assert can_delete_object(
+                    user_wallet.wallet_path,
+                    cid,
+                    object_oids.pop(),
+                    self.shell,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                ), f"{operation.value} is not allowed, while it should be"
+        with allure.step("Check all other operations are not available"):
+            not_allowed_operations = [op for op in EACLOperation if op != operation]
+            for not_allowed_op in not_allowed_operations:
+                if not_allowed_op == EACLOperation.PUT:
+                    assert not can_put_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        file_path,
+                        self.shell,
+                        neofs_env=self.neofs_env,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET:
+                    assert not can_get_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        object_oids.pop(),
+                        file_path,
+                        self.shell,
+                        neofs_env=self.neofs_env,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.HEAD:
+                    assert not can_get_head_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        object_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET_RANGE:
+                    assert not can_get_range_of_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        object_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.GET_RANGE_HASH:
+                    assert not can_get_range_hash_of_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        object_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.SEARCH:
+                    assert not can_search_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
+                elif not_allowed_op == EACLOperation.DELETE:
+                    assert not can_delete_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        object_oids.pop(),
+                        self.shell,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
 
     @allure.title("Testcase to allow NeoFS operations for only one other pubkey.")
     def test_extended_acl_deny_all_operations_exclude_pubkey(
