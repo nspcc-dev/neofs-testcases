@@ -62,6 +62,46 @@ class TestEACLFilters(NeofsEnvTestBase):
         EACLOperation.HEAD,
         EACLOperation.PUT,
     ]
+    OBJECT_NUMERIC_KEY_ATTR_NAME = "numeric_value"
+    OBJECT_NUMERIC_VALUES = [0, 1, 10]
+
+    @pytest.fixture(scope="class")
+    def eacl_container_objects_numeric_attrs(self, wallets, file_path):
+        user_wallet = wallets.get_wallet()
+
+        with allure.step("Create eACL public container"):
+            cid = create_container(
+                user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("Add test objects to container"):
+            objects = []
+            for numeric_value in self.OBJECT_NUMERIC_VALUES:
+                objects.append(
+                    {
+                        "numeric_value": numeric_value,
+                        "id": put_object_to_random_node(
+                            user_wallet.wallet_path,
+                            file_path,
+                            cid,
+                            shell=self.shell,
+                            neofs_env=self.neofs_env,
+                            attributes={self.OBJECT_NUMERIC_KEY_ATTR_NAME: numeric_value},
+                        ),
+                    }
+                )
+        yield cid, objects
+
+        with allure.step("Delete eACL public container"):
+            delete_container(
+                user_wallet.wallet_path,
+                cid,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
 
     @pytest.fixture(scope="function")
     def eacl_container_with_objects(self, wallets, file_path):
@@ -627,3 +667,75 @@ class TestEACLFilters(NeofsEnvTestBase):
                 attributes=deny_attribute,
                 bearer=bearer_other,
             )
+
+    @pytest.mark.parametrize(
+        "operator",
+        [
+            EACLMatchType.NUM_GT,
+            EACLMatchType.NUM_GE,
+            EACLMatchType.NUM_LT,
+            EACLMatchType.NUM_LE,
+        ],
+    )
+    def test_extended_acl_numeric_values(
+        self, wallets, file_path, operator, eacl_container_objects_numeric_attrs
+    ):
+        user_wallet = wallets.get_wallet()
+
+        cid, objects = eacl_container_objects_numeric_attrs
+
+        for numeric_value in self.OBJECT_NUMERIC_VALUES:
+            with allure.step(f"Deny GET for all objects {operator.value} {numeric_value}"):
+                eacl_deny = [
+                    EACLRule(
+                        access=EACLAccess.DENY,
+                        role=EACLRole.USER,
+                        filters=EACLFilters(
+                            [
+                                EACLFilter(
+                                    header_type=EACLHeaderType.OBJECT,
+                                    match_type=operator,
+                                    key=self.OBJECT_NUMERIC_KEY_ATTR_NAME,
+                                    value=numeric_value,
+                                )
+                            ]
+                        ),
+                        operation=EACLOperation.GET,
+                    )
+                ]
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(cid, eacl_deny, shell=self.shell),
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+                wait_for_cache_expired()
+
+            with allure.step(
+                f"GET object with numeric value attribute {operator.value} {numeric_value} should be denied"
+            ):
+                for obj in objects:
+                    if operator.compare(obj["numeric_value"], numeric_value):
+                        assert not can_get_object(
+                            user_wallet.wallet_path,
+                            cid,
+                            obj["id"],
+                            file_path,
+                            self.shell,
+                            neofs_env=self.neofs_env,
+                        ), f"GET is allowed for this object, while it shouldn't be"
+
+            with allure.step(
+                f"GET object with numeric value attribute not {operator.value} {numeric_value} should be allowed"
+            ):
+                for obj in objects:
+                    if not operator.compare(obj["numeric_value"], numeric_value):
+                        assert can_get_object(
+                            user_wallet.wallet_path,
+                            cid,
+                            obj["id"],
+                            file_path,
+                            self.shell,
+                            neofs_env=self.neofs_env,
+                        ), f"GET is not allowed for this object, while it should be"
