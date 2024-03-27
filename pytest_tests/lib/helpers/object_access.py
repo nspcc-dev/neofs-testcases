@@ -6,7 +6,7 @@ from helpers.file_helper import get_file_hash
 from helpers.grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
 from helpers.neofs_verbs import (
     delete_object,
-    get_object_from_random_node,
+    get_object,
     get_range,
     get_range_hash,
     head_object,
@@ -32,15 +32,15 @@ def can_get_object(
 ) -> bool:
     with allure.step("Try get object from container"):
         try:
-            got_file_path = get_object_from_random_node(
+            got_file_path = get_object(
                 wallet,
                 cid,
                 oid,
+                shell=shell,
+                endpoint=neofs_env.storage_nodes[0].endpoint,
                 bearer=bearer,
                 wallet_config=wallet_config,
                 xhdr=xhdr,
-                shell=shell,
-                neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(
