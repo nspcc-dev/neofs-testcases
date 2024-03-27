@@ -16,7 +16,7 @@ from helpers.acl import (
 )
 from helpers.container import create_container, delete_container
 from helpers.container_access import check_full_access_to_container, check_no_access_to_container
-from helpers.neofs_verbs import put_object_to_random_node
+from helpers.neofs_verbs import put_object, put_object_to_random_node
 from helpers.object_access import can_get_head_object, can_get_object, can_put_object
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
@@ -83,12 +83,12 @@ class TestEACLFilters(NeofsEnvTestBase):
                 objects.append(
                     {
                         "numeric_value": numeric_value,
-                        "id": put_object_to_random_node(
+                        "id": put_object(
                             user_wallet.wallet_path,
                             file_path,
                             cid,
                             shell=self.shell,
-                            neofs_env=self.neofs_env,
+                            endpoint=self.neofs_env.storage_nodes[0].endpoint,
                             attributes={self.OBJECT_NUMERIC_KEY_ATTR_NAME: numeric_value},
                         ),
                     }
