@@ -11,6 +11,7 @@ from helpers.acl import (
     EACLRule,
     create_eacl,
     form_bearertoken_file,
+    get_eacl,
     set_eacl,
     wait_for_cache_expired,
 )
@@ -685,6 +686,17 @@ class TestEACLFilters(NeofsEnvTestBase):
         cid, objects = eacl_container_objects_numeric_attrs
 
         for numeric_value in self.OBJECT_NUMERIC_VALUES:
+            with allure.step(f"GET objects with any numeric value attribute should be allowed"):
+                for obj in objects:
+                    assert can_get_object(
+                        user_wallet.wallet_path,
+                        cid,
+                        obj["id"],
+                        file_path,
+                        self.shell,
+                        neofs_env=self.neofs_env,
+                    ), f"GET is not allowed for this object, while it shouldn't be"
+
             with allure.step(f"Deny GET for all objects {operator.value} {numeric_value}"):
                 eacl_deny = [
                     EACLRule(
@@ -711,6 +723,12 @@ class TestEACLFilters(NeofsEnvTestBase):
                     endpoint=self.neofs_env.sn_rpc,
                 )
                 wait_for_cache_expired()
+                get_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
 
             with allure.step(
                 f"GET object with numeric value attribute {operator.value} {numeric_value} should be denied"
