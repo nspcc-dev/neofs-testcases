@@ -1,0 +1,47 @@
+logger:
+  level: debug # Log level
+  
+# Wallet settings
+wallet:
+  path: {{ wallet.path }}  # Path to wallet 
+  passphrase: {{ wallet.password }}  # Passphrase to decrypt wallet
+
+pprof:
+  enabled: true # Enable pprof.
+  address: {{ pprof_address }}
+prometheus:
+  enabled: true # Enable metrics.
+  address: {{ metrics_address }}
+
+pool:
+  # Timeout to dial node.
+  node-dial-timeout: 5s
+  # Timeout to check node health during rebalance.
+  healthcheck-timeout: 5s
+  # Interval to check nodes' health.
+  rebalance-timer: 30s
+  # The number of errors on connection after which node is considered as unhealthy.
+  error-threshold: 100
+
+server:
+  # The listeners to enable, this can be repeated and defaults to the schemes in the swagger spec.
+  scheme: [ http ]
+  # Grace period for which to wait before killing idle connections
+  cleanup-timeout: 10s
+  # Grace period for which to wait before shutting down the server
+  graceful-timeout: 15s
+  # Controls the maximum number of bytes the server will read parsing the request header's keys and values,
+  # including the request line. It does not limit the size of the request body.
+  max-header-size: 1000000
+
+  # The IP and port to listen on.
+  listen-address: {{ address }}
+  # Limit the number of outstanding requests.
+  listen-limit: 0
+  # Sets the TCP keep-alive timeouts on accepted connections.
+  # It prunes dead TCP connections ( e.g. closing laptop mid-download).
+  keep-alive: 3m
+  # Maximum duration before timing out read of the request.
+  read-timeout: 30s
+  # Maximum duration before timing out write of the response.
+  write-timeout: 30s
