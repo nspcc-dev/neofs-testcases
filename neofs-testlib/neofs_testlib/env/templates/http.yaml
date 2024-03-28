@@ -1,0 +1,16 @@
+logger:
+  level: debug # Log level
+  
+rebalance_timer: 5m  # Interval to check nodes' health
+
+connect_timeout: 60s  # Timeout to dial node
+
+request_timeout: 300s  # Timeout to check node health during rebalance
+
+server:
+  - address: {{ address }}
+
+# Wallet settings
+wallet:
+  path: {{ wallet.path }}  # Path to wallet 
+  passphrase: {{ wallet.password }}  # Passphrase to decrypt wallet

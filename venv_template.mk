@@ -3,11 +3,11 @@ venv.$(1): venv.$(1)/bin/activate venv.$(1)/bin/environment.sh
 
 venv.$(1)/bin/activate:
 	@echo "Creating $(1) venv in $$@ from $$<"
-	python3.10 -m venv venv.$(1)
+	python3.12 -m venv venv.$(1)
 	. venv.$(1)/bin/activate && \
-	pip3.10 install --upgrade pip && \
-	pip3.10 install -U setuptools==56.0.0 && \
-	pip3.10 install -Ur requirements.txt
+	pip3.12 install --upgrade pip && \
+	pip3.12 install -U setuptools && \
+	pip3.12 install -Ur requirements.txt
 	@echo "Applying activate script patch"
 	patch -b -d venv.$(1)/bin/ < build_assets/activate.patch
 

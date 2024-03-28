@@ -1,0 +1,79 @@
+# Logger section
+logger:
+  level: debug # Minimum enabled logging level
+
+
+# Profiler section
+pprof:
+  enabled: false
+  address: :6060  # Server address
+  shutdown_timeout: 15s  # Timeout for profiling HTTP server graceful shutdown
+
+# Application metrics section
+prometheus:
+  enabled: false
+  address: :9090  # Server address
+  shutdown_timeout: 15s  # Timeout for metrics HTTP server graceful shutdown
+
+# Morph section
+morph:
+  dial_timeout: 30s  # Timeout for side chain NEO RPC client connection
+  endpoints:  # Side chain NEO RPC endpoints
+    - ws://{{ morph_endpoint }}/ws
+
+
+# Tree section
+tree:
+  enabled: true
+
+node:
+  wallet:
+    path: "{{ wallet.path }}"
+    address: "{{ wallet.address }}"
+    password: "{{ wallet.password }}"
+
+  persistent_state:
+    path: {{ state_file }}  # Path to application state file
+
+# Storage engine configuration
+storage:
+  shard:
+    0:
+      writecache:
+        enabled: false
+        path: {{ shards[0].wc_path }}  # Write-cache root directory
+
+      metabase:
+        path: {{ shards[0].metabase_path }}  # Path to the metabase
+
+      blobstor:
+        - type: peapod
+          path: {{ shards[0].blobovnicza_path }}  # Blobovnicza root directory
+          depth: 2
+          width: 4
+        - type: fstree
+          path: {{ shards[0].fstree_path }}  # FSTree root directory
+          depth: 2
+
+      pilorama:
+        path: {{ shards[0].pilorama_path }}  # Path to the pilorama database
+
+    1:
+      writecache:
+        enabled: false
+        path: {{ shards[1].wc_path }}  # Write-cache root directory
+
+      metabase:
+        path: {{ shards[1].metabase_path }}  # Path to the metabase
+
+      blobstor:
+        - type: peapod
+          path: {{ shards[1].blobovnicza_path }}  # Blobovnicza root directory
+          depth: 2
+          width: 4
+        - type: fstree
+          path: {{ shards[1].fstree_path }}  # FSTree root directory
+          depth: 2
+
+      pilorama:
+        path: {{ shards[1].pilorama_path }}  # Path to the pilorama database
