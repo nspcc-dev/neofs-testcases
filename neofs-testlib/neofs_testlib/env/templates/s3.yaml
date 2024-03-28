@@ -1,0 +1,32 @@
+logger:
+  level: debug
+
+# Interval to check node health
+rebalance_interval: 30s
+
+# Timeout to check node health during rebalance
+healthcheck_timeout: 15s
+
+# Timeout to connect to a node
+connect_timeout: 10s
+
+# Limits for processing of clients' requests
+max_clients_count: 100
+
+# Deadline after which the gate sends error `RequestTimeout` to a client
+max_clients_deadline: 30s
+
+server:
+  - address: {{ address }}
+    tls:
+      enabled: true
+      cert_file: {{ cert_file_path }}
+      key_file:  {{ key_file_path }}
+
+# Wallet configuration
+wallet:
+  path: {{ wallet.path }} # Path to wallet
+  passphrase: {{ wallet.password }} # Passphrase to decrypt wallet
+
+# RPC endpoint
+rpc_endpoint: http://{{ morph_endpoint }}

@@ -1,0 +1,30 @@
+rpc-endpoint: http://{{ morph_endpoint }}
+alphabet-wallets: {{ alphabet_wallets_path }}
+network:
+  max_object_size: 67108864
+  epoch_duration: 240
+  basic_income_rate: 100000000
+  homomorphic_hash_disabled: false
+  fee:
+    audit: 0
+    candidate: 0
+    container: 0
+    container_alias: 0
+    withdraw: 0
+# if credentials section is omitted, then neofs-adm will require manual password input
+credentials:
+  az: {{ default_password }}
+  buky: {{ default_password }}
+  vedi: {{ default_password }}
+  glagoli: {{ default_password }}
+  dobro: {{ default_password }}
+  yest: {{ default_password }}
+  zhivete: {{ default_password }}
+storage:
+  sn1: {{ default_password }}
+  sn2: {{ default_password }}
+  sn3: {{ default_password }}
+  sn4: {{ default_password }}
+  s3: {{ default_password }}
+  http: {{ default_password }}
+  rest: {{ default_password }}

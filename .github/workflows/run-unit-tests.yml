@@ -1,0 +1,54 @@
+name: Run automated unit tests for neofs-testlib
+
+on:
+    push:
+      branches:
+        - master
+      paths:
+        - neofs-testlib/**
+
+    pull_request:
+      branches:
+        - master
+      paths:
+        - neofs-testlib/**
+
+concurrency:
+    group: ${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+  unittests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Checkout neofs-testcases repository
+        uses: actions/checkout@v4
+        with:
+            path: neofs-testcases
+
+      - name: Prepare venv
+        timeout-minutes: 30
+        run: |
+            make venv.pytest
+            echo "$(pwd)" >> $GITHUB_PATH
+        working-directory: neofs-testcases
+
+      - name: Fix OpenSSL ripemd160
+        run: |
+            sudo python ./tools/src/openssl_config_fix.py
+        working-directory: neofs-testcases
+
+      - name: Run unittest
+        run: |
+            source venv.pytest/bin/activate && python -m unittest discover --start-directory neofs-testlib/neofs_testlib_tests/unit
+        working-directory: neofs-testcases
