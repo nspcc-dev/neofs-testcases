@@ -1,0 +1,2 @@
+wallet: {{ wallet.path }}
+password: {{ wallet.password }}
