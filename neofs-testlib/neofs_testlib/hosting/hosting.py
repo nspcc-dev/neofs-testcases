@@ -2,8 +2,8 @@ import re
 from typing import Any
 
 from neofs_testlib.hosting.config import HostConfig, ServiceConfig
+from neofs_testlib.hosting.docker_host import DockerHost
 from neofs_testlib.hosting.interfaces import Host
-from neofs_testlib.plugins import load_plugin
 
 
 class Hosting:
@@ -36,8 +36,9 @@ class Hosting:
 
         host_configs = [HostConfig(**host_config) for host_config in config["hosts"]]
         for host_config in host_configs:
-            host_class = load_plugin("neofs.testlib.hosting", host_config.plugin_name)
-            host = host_class(host_config)
+            if host_config.plugin_name != "docker":
+                raise ValueError("Only docker hosts are currently supported")
+            host = DockerHost(host_config)
 
             hosts.append(host)
             host_by_address[host_config.address] = host
