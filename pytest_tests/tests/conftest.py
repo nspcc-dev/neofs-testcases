@@ -58,7 +58,7 @@ def neofs_env(request):
     os.makedirs(logs_path, exist_ok=True)
 
     shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
-    shutil.copyfile(neofs_env.http_gw.stderr, f"{logs_path}/http_gw_log.txt")
+    shutil.copyfile(neofs_env.rest_gw.stderr, f"{logs_path}/rest_gw_log.txt")
     for idx, ir in enumerate(neofs_env.inner_ring_nodes):
         shutil.copyfile(ir.stderr, f"{logs_path}/ir_{idx}_log.txt")
     for idx, sn in enumerate(neofs_env.storage_nodes):

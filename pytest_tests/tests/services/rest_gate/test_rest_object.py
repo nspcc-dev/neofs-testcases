@@ -18,37 +18,26 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-@pytest.mark.http_and_rest_gates
-class Test_http_rest_object(NeofsEnvTestBase):
+@pytest.mark.rest_gate
+class Test_rest_object(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_rest_object.wallet = default_wallet
+        Test_rest_object.wallet = default_wallet
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_attributes(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return {
-                "endpoint": f"http://{self.neofs_env.http_gw.address}",
-                # List of Key=Value attributes
-                "obj_key1": "chapter1",
-                "obj_value1": "peace",
-                "obj_key2": "chapter2",
-                "obj_value2": "war",
-            }
-        else:  # Assuming REST
-            return {
-                "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
-                # List of Key=Value attributes
-                # REST gateway accepts attributes in the Canonical MIME Header Key.
-                "obj_key1": "Chapter1",
-                "obj_value1": "peace",
-                "obj_key2": "Chapter2",
-                "obj_value2": "war",
-            }
+    @pytest.fixture(scope="class")
+    def gw_attributes(self):
+        return {
+            "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+            # List of Key=Value attributes
+            # REST gateway accepts attributes in the Canonical MIME Header Key.
+            "obj_key1": "Chapter1",
+            "obj_value1": "peace",
+            "obj_key2": "Chapter2",
+            "obj_value2": "war",
+        }
 
     @allure.title("Test Put over gRPC, Get over HTTP")
     @pytest.mark.parametrize(

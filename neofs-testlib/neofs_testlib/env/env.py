@@ -57,13 +57,11 @@ class NeoFSEnv:
         self.neofs_s3_authmate_path = os.getenv("NEOFS_S3_AUTHMATE_BIN", "./neofs-s3-authmate")
         self.neofs_s3_gw_path = os.getenv("NEOFS_S3_GW_BIN", "./neofs-s3-gw")
         self.neofs_rest_gw_path = os.getenv("NEOFS_REST_GW_BIN", "./neofs-rest-gw")
-        self.neofs_http_gw_path = os.getenv("NEOFS_HTTP_GW_BIN", "./neofs-http-gw")
         # nodes inside env
         self.storage_nodes = []
         self.inner_ring_nodes = []
         self.s3_gw = None
         self.rest_gw = None
-        self.http_gw = None
 
     @property
     def morph_rpc(self):
@@ -156,17 +154,11 @@ class NeoFSEnv:
         self.s3_gw.start()
         allure.attach(str(self.s3_gw), "s3_gw", allure.attachment_type.TEXT, ".txt")
 
-    @allure.step("Deploy http gateway")
-    def deploy_http_gw(self):
-        self.http_gw = HTTP_GW(self)
-        self.http_gw.start()
-        allure.attach(str(self.http_gw), "http_gw", allure.attachment_type.TEXT, ".txt")
-
     @allure.step("Deploy rest gateway")
     def deploy_rest_gw(self):
         self.rest_gw = REST_GW(self)
         self.rest_gw.start()
-        allure.attach(str(self.rest_gw), "http_gw", allure.attachment_type.TEXT, ".txt")
+        allure.attach(str(self.rest_gw), "rest_gw", allure.attachment_type.TEXT, ".txt")
 
     @allure.step("Generate wallet")
     def generate_wallet(
@@ -210,7 +202,6 @@ class NeoFSEnv:
     @allure.step("Kill current neofs env")
     def kill(self):
         self.rest_gw.process.kill()
-        self.http_gw.process.kill()
         self.s3_gw.process.kill()
         for sn in self.storage_nodes:
             sn.process.kill()
@@ -236,7 +227,6 @@ class NeoFSEnv:
                 
             env_details += f"{self.s3_gw}\n"
             env_details += f"{self.rest_gw}\n"
-            env_details += f"{self.http_gw}\n"
             
             fp.write(env_details)
             
@@ -250,7 +240,6 @@ class NeoFSEnv:
         versions += NeoFSEnv._run_single_command(self.neofs_s3_authmate_path, "--version")
         versions += NeoFSEnv._run_single_command(self.neofs_s3_gw_path, "--version")
         versions += NeoFSEnv._run_single_command(self.neofs_rest_gw_path, "--version")
-        versions += NeoFSEnv._run_single_command(self.neofs_http_gw_path, "--version")
         allure.attach(versions, f"neofs env versions", allure.attachment_type.TEXT, ".txt")
 
     @allure.step("Download binaries")
@@ -267,7 +256,6 @@ class NeoFSEnv:
             (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
             (self.neofs_s3_gw_path, "neofs_s3_gw"),
             (self.neofs_rest_gw_path, "neofs_rest_gw"),
-            (self.neofs_http_gw_path, "neofs_http_gw"),
         ]
 
         for binary in binaries:
@@ -325,7 +313,6 @@ class NeoFSEnv:
             }
         )
         neofs_env.deploy_s3_gw()
-        neofs_env.deploy_http_gw()
         neofs_env.deploy_rest_gw()
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
@@ -749,74 +736,6 @@ class S3_GW:
             stdout=stdout_fp,
             stderr=stderr_fp,
             env=s3_gw_env,
-        )
-
-
-class HTTP_GW:
-    def __init__(self, neofs_env: NeoFSEnv):
-        self.neofs_env = neofs_env
-        self.config_path = NeoFSEnv._generate_temp_file(extension="yml", prefix="http_gw_config")
-        self.wallet = NodeWallet(
-            path=NeoFSEnv._generate_temp_file(prefix="http_gw_wallet"),
-            address="",
-            password=self.neofs_env.default_password,
-        )
-        self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
-        self.stdout = "Not initialized"
-        self.stderr = "Not initialized"
-        self.process = None
-
-    def __str__(self):
-        return f"""
-            HTTP Gateway:
-            - Address: {self.address}
-            - HTTP GW Config path: {self.config_path}
-            - STDOUT: {self.stdout}
-            - STDERR: {self.stderr}
-        """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
-
-    def start(self):
-        if self.process is not None:
-            raise RuntimeError(f"This http gw instance has already been started:\n{self}")
-        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label=f"http")
-        logger.info(f"Generating config for http gw at {self.config_path}")
-        self._generate_config()
-        logger.info(f"Launching HTTP GW: {self}")
-        self._launch_process()
-        logger.info(f"Launched HTTP GW: {self}")
-
-    def _generate_config(self):
-        http_config_template = "http.yaml"
-
-        NeoFSEnv.generate_config_file(
-            config_template=http_config_template,
-            config_path=self.config_path,
-            custom=Path(http_config_template).is_file(),
-            address=self.address,
-            wallet=self.wallet,
-        )
-
-    def _launch_process(self):
-        self.stdout = NeoFSEnv._generate_temp_file(prefix="http_gw_stdout")
-        self.stderr = NeoFSEnv._generate_temp_file(prefix="http_gw_stderr")
-        stdout_fp = open(self.stdout, "w")
-        stderr_fp = open(self.stderr, "w")
-        http_gw_env = {}
-
-        for index, sn in enumerate(self.neofs_env.storage_nodes):
-            http_gw_env[f"HTTP_GW_PEERS_{index}_ADDRESS"] = sn.endpoint
-            http_gw_env[f"HTTP_GW_PEERS_{index}_WEIGHT"] = "0.2"
-
-        self.process = subprocess.Popen(
-            [self.neofs_env.neofs_http_gw_path, "--config", self.config_path],
-            stdout=stdout_fp,
-            stderr=stderr_fp,
-            env=http_gw_env,
         )
 
 
