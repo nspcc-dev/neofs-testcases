@@ -40,6 +40,8 @@ EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = (
     "table validation: it is prohibited to modify system access"
 )
 
+INVALID_SEARCH_QUERY = ".*invalid search query.*"
+
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """

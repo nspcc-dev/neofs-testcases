@@ -18,6 +18,7 @@ from helpers.grpc_responses import (
     INVALID_OFFSET_SPECIFIER,
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
+    INVALID_SEARCH_QUERY,
     OUT_OF_RANGE,
 )
 from helpers.neofs_verbs import (
@@ -52,6 +53,16 @@ RANGE_MIN_LEN = 10
 RANGE_MAX_LEN = 500
 # Used for static ranges found with issues
 STATIC_RANGES = {}
+OBJECT_NUMERIC_VALUES = [-2**64-1, -1, 0, 1, 10, 2**64+1]
+NUMERIC_VALUE_ATTR_NAME = "numeric_value"
+
+
+def _id_should_be_in_result(id_: int, result: list[int]):
+    assert id_ in result, f"{id_} not in result, while it should be"
+
+
+def _id_should_not_be_in_result(id_: int, result: list[int]):
+    assert id_ not in result, f"{id_} in result, while it should not be"
 
 
 def generate_ranges(
@@ -280,6 +291,133 @@ class TestObjectApi(NeofsEnvTestBase):
                     root=True,
                 )
                 assert sorted(expected_oids) == sorted(result)
+
+    @pytest.mark.parametrize("operator", ["GT", "GE", "LT", "LE"])
+    @pytest.mark.parametrize(
+        "object_size",
+        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        ids=["simple object", "complex object"],
+    )
+    def test_object_search_with_numeric_queries(
+        self, default_wallet: NodeWallet, container: str, object_size: int, operator: str
+    ):
+        objects = []
+        for numeric_value in OBJECT_NUMERIC_VALUES:
+            file_path = generate_file(object_size)
+
+            objects.append(
+                {
+                    NUMERIC_VALUE_ATTR_NAME: numeric_value,
+                    "id": put_object_to_random_node(
+                        default_wallet.path,
+                        file_path,
+                        container,
+                        shell=self.shell,
+                        neofs_env=self.neofs_env,
+                        attributes={NUMERIC_VALUE_ATTR_NAME: numeric_value},
+                    ),
+                }
+            )
+
+        for numeric_value in OBJECT_NUMERIC_VALUES:
+            result = search_object(
+                default_wallet.path,
+                container,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                filters=[f"{NUMERIC_VALUE_ATTR_NAME} {operator} {numeric_value}"],
+                root=True,
+            )
+
+            for obj in objects:
+                if operator == "GT":
+                    if obj[NUMERIC_VALUE_ATTR_NAME] > numeric_value:
+                        _id_should_be_in_result(obj["id"], result)
+                    else:
+                        _id_should_not_be_in_result(obj["id"], result)
+                elif operator == "GE":
+                    if obj[NUMERIC_VALUE_ATTR_NAME] >= numeric_value:
+                        _id_should_be_in_result(obj["id"], result)
+                    else:
+                        _id_should_not_be_in_result(obj["id"], result)
+                elif operator == "LT":
+                    if obj[NUMERIC_VALUE_ATTR_NAME] < numeric_value:
+                        _id_should_be_in_result(obj["id"], result)
+                    else:
+                        _id_should_not_be_in_result(obj["id"], result)
+                elif operator == "LE":
+                    if obj[NUMERIC_VALUE_ATTR_NAME] <= numeric_value:
+                        _id_should_be_in_result(obj["id"], result)
+                    else:
+                        _id_should_not_be_in_result(obj["id"], result)
+
+    @pytest.mark.parametrize(
+        "filters",
+        [
+            "non_existent_attr GT abc",
+            "non_existent_attr GT 99-32",
+            "non_existent_attr LT 9.1",
+        ],
+    )
+    def test_object_search_with_numeric_operators_invalid_filters(
+        self, default_wallet: NodeWallet, container: str, filters: str
+    ):
+        with pytest.raises(Exception, match=INVALID_SEARCH_QUERY):
+            search_object(
+                default_wallet.path,
+                container,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                filters=[filters],
+                root=True,
+            )
+
+    def test_object_search_with_attr_as_number(
+        self, default_wallet: NodeWallet, container: str, simple_object_size: int
+    ):
+        file_path = generate_file(simple_object_size)
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            container,
+            shell=self.shell,
+            neofs_env=self.neofs_env,
+            attributes={100: 200},
+        )
+        result = search_object(
+            default_wallet.path,
+            container,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            filters=["100 GE 200"],
+            root=True,
+        )
+
+        assert oid in result, f"Object was not found, while it should be"
+        
+    def test_object_search_numeric_with_attr_as_string(
+        self, default_wallet: NodeWallet, container: str, simple_object_size: int
+    ):
+        file_path = generate_file(simple_object_size)
+        string_attr = 'cool_string_attribute'
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            container,
+            shell=self.shell,
+            neofs_env=self.neofs_env,
+            attributes={string_attr: 'xyz'},
+        )
+        result = search_object(
+            default_wallet.path,
+            container,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            filters=[f"{string_attr} GT 0"],
+            root=True,
+        )
+
+        assert not oid in result, f"Object was found, while it should not be"
 
     @allure.title("Validate object search with removed items")
     @pytest.mark.parametrize(
