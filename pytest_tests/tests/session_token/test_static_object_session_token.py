@@ -380,7 +380,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             temp_directory,
         )
         signed_token_file = sign_session_token(self.shell, session_token_file, stranger_wallet)
-        with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             head_object(
                 user_wallet.path,
                 storage_object.cid,
@@ -670,7 +670,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             f"Put verb should be restricted for static session for {request.node.callspec.id}"
         )
         storage_object = storage_objects[0]
-        with pytest.raises(Exception, match=MALFORMED_REQUEST):
+        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_object_to_random_node(
                 user_wallet.path,
                 storage_object.file_path,
