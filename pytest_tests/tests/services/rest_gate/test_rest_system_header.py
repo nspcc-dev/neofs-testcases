@@ -30,14 +30,14 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.http_and_rest_gates
-class Test_http_rest_system_header(NeofsEnvTestBase):
+@pytest.mark.rest_gate
+class Test_rest_system_header(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        Test_http_rest_system_header.wallet = default_wallet
+        Test_rest_system_header.wallet = default_wallet
 
     @pytest.fixture(scope="class")
     @allure.title("Create container")

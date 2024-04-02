@@ -28,37 +28,29 @@ OBJECT_NOT_FOUND_ERROR = "not found"
 
 
 @allure.link(
-    "https://github.com/nspcc-dev/neofs-http-gw#neofs-http-gateway", name="neofs-http-gateway"
+    "https://github.com/nspcc-dev/neofs-rest-gw?tab=readme-ov-file#neofs-rest-gw",
+    name="neofs-rest-gateway",
 )
-@allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
-@allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
 @pytest.mark.sanity
-@pytest.mark.http_and_rest_gates
-class TestHttpRestGate(NeofsEnvTestBase):
+@pytest.mark.rest_gate
+class TestRestGate(NeofsEnvTestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Prepare wallet and deposit")
     def prepare_wallet(self, default_wallet):
-        TestHttpRestGate.wallet = default_wallet
+        TestRestGate.wallet = default_wallet
 
-    @pytest.fixture(scope="class", params=["HTTP", "REST"])
-    def gw_params(self, request):
-        gw_type = request.param
-        if gw_type == "HTTP":
-            return {
-                "endpoint": f"http://{self.neofs_env.http_gw.address}",
-                "wallet_path": self.neofs_env.http_gw.wallet.path,
-            }
-        else:  # Assuming REST
-            return {
-                "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
-                "wallet_path": self.neofs_env.rest_gw.wallet.path,
-            }
+    @pytest.fixture(scope="class")
+    def gw_params(self):
+        return {
+            "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+            "wallet_path": self.neofs_env.rest_gw.wallet.path,
+        }
 
     @allure.title("Test Put over gRPC, Get over HTTP")
-    def test_put_grpc_get_http(self, complex_object_size, simple_object_size):
+    def test_put_grpc_get_http(self, complex_object_size, simple_object_size, gw_endpoint):
         """
         Test that object can be put using gRPC interface and get using HTTP.
 
@@ -108,7 +100,7 @@ class TestHttpRestGate(NeofsEnvTestBase):
                 cid=cid,
                 shell=self.shell,
                 nodes=self.neofs_env.storage_nodes,
-                endpoint=f"http://{self.neofs_env.http_gw.address}",
+                endpoint=gw_endpoint,
             )
 
     @allure.title("Verify Content-Disposition header")
@@ -438,44 +430,6 @@ class TestHttpRestGate(NeofsEnvTestBase):
             with allure.step("Other objects can be get"):
                 for oid in not_expired_objects:
                     get_via_http_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
-
-    @allure.title("Test Zip in HTTP header")
-    def test_zip_in_http(self, complex_object_size, simple_object_size):
-        cid = create_container(
-            self.wallet.path,
-            shell=self.shell,
-            endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
-            basic_acl=PUBLIC_ACL,
-        )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
-        common_prefix = "my_files"
-
-        headers1 = {"X-Attribute-FilePath": f"{common_prefix}/file1"}
-        headers2 = {"X-Attribute-FilePath": f"{common_prefix}/file2"}
-
-        upload_via_http_gate(
-            cid=cid,
-            path=file_path_simple,
-            headers=headers1,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
-        )
-        upload_via_http_gate(
-            cid=cid,
-            path=file_path_large,
-            headers=headers2,
-            endpoint=f"http://{self.neofs_env.http_gw.address}",
-        )
-
-        dir_path = get_via_zip_http_gate(
-            cid=cid, prefix=common_prefix, endpoint=f"http://{self.neofs_env.http_gw.address}"
-        )
-
-        with allure.step("Verify hashes"):
-            assert get_file_hash(f"{dir_path}/file1") == get_file_hash(file_path_simple)
-            assert get_file_hash(f"{dir_path}/file2") == get_file_hash(file_path_large)
 
     @pytest.mark.long
     @allure.title("Test Put over HTTP/Curl, Get over HTTP/Curl for large object")
