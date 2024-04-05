@@ -4,12 +4,14 @@
 """
 
 import logging
+import os.path
+import string
 from typing import Optional
 
 import allure
 from helpers.common import NEOFS_CLI_EXEC, WALLET_CONFIG
 from helpers.complex_object_actions import get_link_object
-from helpers.neofs_verbs import head_object
+from helpers.neofs_verbs import get_object
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
@@ -210,6 +212,7 @@ def verify_get_storage_group(
     wallet_config: str = WALLET_CONFIG,
 ):
     obj_parts = []
+    exp_size = object_size
     endpoint = neofs_env.sn_rpc
     if object_size > max_object_size:
         for obj in obj_list:
@@ -222,19 +225,29 @@ def verify_get_storage_group(
                 bearer=bearer,
                 wallet_config=wallet_config,
             )
-            obj_head = head_object(
+
+            obj_parts.append(link_oid)
+
+            link_obj_path = get_object(
                 wallet=wallet,
                 cid=cid,
                 oid=link_oid,
                 shell=shell,
                 endpoint=endpoint,
-                is_raw=True,
                 bearer=bearer,
                 wallet_config=wallet_config,
             )
-            obj_parts = obj_head["header"]["split"]["children"]
 
-    obj_num = len(obj_list)
+            resp = neofs_env.neofs_lens().object.link(link_obj_path)
+
+            # exclude helper prompt
+            raw_children = resp.stdout.splitlines()[1:]
+            # exclude punctuation
+            children = [x.translate(str.maketrans("", "", string.punctuation)) for x in raw_children]
+
+            exp_size = sum([int(x.split()[1]) for x in children]) + os.path.getsize(link_obj_path)
+            obj_parts += [x.split()[-1] for x in children]
+
     storagegroup_data = get_storagegroup(
         shell=shell,
         endpoint=endpoint,
@@ -244,7 +257,6 @@ def verify_get_storage_group(
         bearer=bearer,
         wallet_config=wallet_config,
     )
-    exp_size = object_size * obj_num
     if object_size < max_object_size:
         assert int(storagegroup_data["Group size"]) == exp_size
         assert storagegroup_data["Members"] == obj_list
