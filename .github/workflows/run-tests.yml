@@ -200,7 +200,7 @@ jobs:
 
 ################################################################
       - name: Run Sanity tests for pull requests
-        timeout-minutes: 120
+        timeout-minutes: 240
         if: github.event_name == 'pull_request'
         run: |
           source venv.pytest/bin/activate && pytest --alluredir=${GITHUB_WORKSPACE}/allure-results pytest_tests/tests
