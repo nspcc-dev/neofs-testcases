@@ -5,7 +5,12 @@ from typing import Tuple
 import allure
 import pytest
 from helpers.file_helper import generate_file
-from helpers.s3_helper import check_tags_by_bucket, check_tags_by_object, object_key_from_file_path
+from helpers.s3_helper import (
+    NO_SUCH_TAGS_ERROR,
+    check_tags_by_bucket,
+    check_tags_by_object,
+    object_key_from_file_path,
+)
 from s3 import s3_gate_bucket, s3_gate_object
 from s3.s3_gate_base import TestNeofsS3GateBase
 
@@ -106,4 +111,5 @@ class TestS3GateTagging(TestNeofsS3GateBase):
 
         with allure.step("Delete tags by delete-bucket-tagging"):
             s3_gate_bucket.delete_bucket_tagging(self.s3_client, bucket)
-            check_tags_by_bucket(self.s3_client, bucket, [])
+            with pytest.raises(Exception, match=NO_SUCH_TAGS_ERROR):
+                check_tags_by_bucket(self.s3_client, bucket, [])
