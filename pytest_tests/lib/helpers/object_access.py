@@ -47,7 +47,9 @@ def can_get_object(
                 err, OBJECT_ACCESS_DENIED
             ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
-        assert get_file_hash(file_name) == get_file_hash(got_file_path)
+        assert get_file_hash(file_name) == get_file_hash(
+            got_file_path
+        ), "file hash of downloaded object is not equal to the uploaded"
     return True
 
 

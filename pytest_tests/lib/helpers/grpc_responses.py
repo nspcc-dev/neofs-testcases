@@ -41,6 +41,7 @@ EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = (
 )
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
+INVALID_RULES = ".*unable to parse provided rules.*"
 
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:

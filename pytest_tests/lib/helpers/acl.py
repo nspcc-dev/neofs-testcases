@@ -51,6 +51,21 @@ class EACLHeaderType(Enum):
 class EACLMatchType(Enum):
     STRING_EQUAL = "="  # Return true if strings are equal
     STRING_NOT_EQUAL = "!="  # Return true if strings are different
+    NUM_GT = ">"
+    NUM_GE = ">="
+    NUM_LT = "<"
+    NUM_LE = "<="
+
+    def compare(self, val1, val2):
+        if self.value == ">":
+            return val1 > val2
+        elif self.value == ">=":
+            return val1 >= val2
+        elif self.value == "<":
+            return val1 < val2
+        elif self.value == "<=":
+            return val1 <= val2
+        raise AssertionError(f"Unsupported value: {self.value} for compare")
 
 
 @dataclass
