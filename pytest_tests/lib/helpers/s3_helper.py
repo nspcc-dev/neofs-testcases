@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Optional
 
 import allure
@@ -9,6 +10,28 @@ from dateutil.parser import parse
 from s3 import s3_gate_bucket, s3_gate_object
 
 logger = logging.getLogger("NeoLogger")
+
+
+NO_SUCH_TAGS_ERROR = r".*The TagSet does not exist.*"
+GROUP_DEFAULT_URI = "http://acs.amazonaws.com/groups/global/AllUsers"
+
+
+class GranteeType(Enum):
+    CANONICAL_USER = "CanonicalUser"
+    GROUP = "Group"
+
+
+class PermissionType(Enum):
+    FULL_CONTROL = "FULL_CONTROL"
+    READ = "READ"
+    WRITE = "WRITE"
+
+
+class ACLType(Enum):
+    PUBLIC_READ = "public-read"
+    PUBLIC_WRITE = "public-write"
+    PUBLIC_READ_WRITE = "public-read-write"
+    PRIVATE = "private"
 
 
 ACL_TO_PERMISSION_MAP_BUCKET = {
@@ -170,50 +193,6 @@ def assert_object_lock_mode(
         ).days == retain_period, f"Expected retention period is {retain_period} days"
 
 
-def check_permission(grantee_type: str, acl: str, actual_permission: str, acl_map: dict) -> str:
-    expected_permission = acl_map.get(grantee_type, {}).get(acl, "")
-    assert (
-        actual_permission == expected_permission
-    ), f"{grantee_type} should have {expected_permission} but got {actual_permission}"
-    return expected_permission
-
-
-def assert_s3_acl(acl_grants: list, permitted_users: str, acl: str, acl_map: dict):
-    grantees = {"AllUsers": 0, "CanonicalUser": 0}
-
-    for acl_grant in acl_grants:
-        grantee_type = acl_grant.get("Grantee", {}).get("Type")
-
-        if grantee_type == "Group" and permitted_users == "AllUsers":
-            uri = acl_grant.get("Grantee", {}).get("URI")
-            permission = acl_grant.get("Permission")
-            expected_permission = check_permission(grantee_type, acl, permission, acl_map)
-            assert (
-                uri == "http://acs.amazonaws.com/groups/global/AllUsers"
-            ), f"All Groups should have {expected_permission} but got {permission}"
-            grantees["AllUsers"] += 1
-
-        elif grantee_type == "CanonicalUser":
-            permission = acl_grant.get("Permission")
-            check_permission(grantee_type, acl, permission, acl_map)
-            grantees["CanonicalUser"] += 1
-
-    if permitted_users == "AllUsers":
-        for key in grantees:
-            assert grantees[key] >= 1, f"{key} should have permission but got none"
-
-    elif permitted_users == "CanonicalUser" and grantees["AllUsers"] > 0:
-        logger.error(f"Permission is given to All Users")
-
-
-def assert_bucket_s3_acl(acl_grants: list, permitted_users: str, acl: str):
-    assert_s3_acl(acl_grants, permitted_users, acl, ACL_TO_PERMISSION_MAP_BUCKET)
-
-
-def assert_object_s3_acl(acl_grants: list, permitted_users: str, acl: str):
-    assert_s3_acl(acl_grants, permitted_users, acl, ACL_TO_PERMISSION_MAP_OBJECT)
-
-
 def parametrize_clients(metafunc):
     if "s3_client" in metafunc.fixturenames:
         clients = ["aws cli", "boto3"]
@@ -225,3 +204,63 @@ def parametrize_clients(metafunc):
                 clients = ["boto3"]
                 break
         metafunc.parametrize("s3_client", clients, indirect=True)
+
+
+def verify_acls(raw_acls: list[dict], acl_type: ACLType):
+    if acl_type == ACLType.PRIVATE:
+        verify_private_permissions(raw_acls)
+    elif acl_type == ACLType.PUBLIC_WRITE:
+        verify_public_write_permissions(raw_acls)
+    elif acl_type == ACLType.PUBLIC_READ:
+        verify_public_read_permissions(raw_acls)
+    elif acl_type == ACLType.PUBLIC_READ_WRITE:
+        verify_public_read_write_permissions(raw_acls)
+    else:
+        raise AssertionError(f"Invalid acl_type: {acl_type}")
+
+
+def verify_private_permissions(raw_acls: list[dict]):
+    canonical_grantee = _get_grantee(
+        raw_acls, GranteeType.CANONICAL_USER, PermissionType.FULL_CONTROL
+    )
+    assert (
+        canonical_grantee
+    ), f"Grantee {GranteeType.CANONICAL_USER.value} with {PermissionType.FULL_CONTROL.value} was not found"
+
+
+def verify_group_permissions(
+    raw_acls: list[dict], grantee_type: GranteeType, permission_type: PermissionType
+):
+    group_grantee = _get_grantee(raw_acls, grantee_type, permission_type)
+    assert group_grantee, f"No {grantee_type.value} with {permission_type.value} in grantee's list "
+
+    assert group_grantee["Grantee"]["URI"] == GROUP_DEFAULT_URI, "Invalid URI"
+
+
+def verify_public_write_permissions(raw_acls: list[dict]):
+    verify_private_permissions(raw_acls)
+    assert len(raw_acls) == 2, "Invalid number of grantee entries for public-write permissions"
+
+    verify_group_permissions(raw_acls, GranteeType.GROUP, PermissionType.WRITE)
+
+
+def verify_public_read_permissions(raw_acls: list[dict]):
+    verify_private_permissions(raw_acls)
+    assert len(raw_acls) == 2, "Invalid number of grantee entries for public-read permissions"
+
+    verify_group_permissions(raw_acls, GranteeType.GROUP, PermissionType.READ)
+
+
+def verify_public_read_write_permissions(raw_acls: list[dict]):
+    verify_private_permissions(raw_acls)
+    assert len(raw_acls) == 3, "Invalid number of grantee entries for public-read permissions"
+
+    verify_group_permissions(raw_acls, GranteeType.GROUP, PermissionType.READ)
+    verify_group_permissions(raw_acls, GranteeType.GROUP, PermissionType.WRITE)
+
+
+def _get_grantee(raw_acls: list[dict], grantee_type: GranteeType, permission_type: PermissionType):
+    for grantee in raw_acls:
+        if grantee["Grantee"]["Type"] == grantee_type.value:
+            if grantee["Permission"] == permission_type.value:
+                return grantee

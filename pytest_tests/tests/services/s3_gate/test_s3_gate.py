@@ -14,6 +14,7 @@ from helpers.file_helper import (
     split_file,
 )
 from helpers.s3_helper import (
+    NO_SUCH_TAGS_ERROR,
     check_objects_in_bucket,
     check_tags_by_bucket,
     check_tags_by_object,
@@ -322,7 +323,9 @@ class TestS3Gate(TestNeofsS3GateBase):
         check_tags_by_bucket(self.s3_client, bucket, key_value_pair)
 
         s3_gate_bucket.delete_bucket_tagging(self.s3_client, bucket)
-        check_tags_by_bucket(self.s3_client, bucket, [])
+
+        with pytest.raises(Exception, match=NO_SUCH_TAGS_ERROR):
+            check_tags_by_bucket(self.s3_client, bucket, [])
 
     @allure.title("Test S3 Object tagging API")
     def test_s3_api_object_tagging(self, bucket, simple_object_size):
