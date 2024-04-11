@@ -15,6 +15,9 @@ from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 
+# https://github.com/nspcc-dev/neofs-api/blob/5c3535423c564fe63991812cb84d8334db1c553a/object/service.proto#L319
+NEOFS_API_HEADER_LIMIT = 16384
+
 
 @allure.step("Get object from random node")
 def get_object_from_random_node(
