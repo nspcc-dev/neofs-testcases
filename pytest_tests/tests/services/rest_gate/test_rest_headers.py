@@ -31,7 +31,7 @@ logger = logging.getLogger("NeoLogger")
 class Test_rest_headers(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
     obj1_keys = ["Writer", "Chapter1", "Chapter2"]
-    obj2_keys = ["Writer", "Ch$pter1", "chapter2"]
+    obj2_keys = ["Writer", "Ch$pter1", "Chapter2"]
     values = ["Leo Tolstoy", "peace", "w$r"]
     OBJECT_ATTRIBUTES = [
         {obj1_keys[0]: values[0], obj1_keys[1]: values[1], obj1_keys[2]: values[2]},
@@ -114,7 +114,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         and when obj2 is deleted you can get obj1 by 1st attribute
 
         Steps:
-        1. Download object#2 with attributes [chapter2=w$r] and compare hashes
+        1. Download object#2 with attributes [Chapter2=w$r] and compare hashes
         2. Download object#2 with attributes [Ch$pter1=peace] and compare hashes
         3. Delete object#2
         4. Download object#1 with attributes [Writer=Leo Tolstoy] and compare hashes
@@ -123,10 +123,10 @@ class Test_rest_headers(NeofsEnvTestBase):
         storage_object_2 = storage_objects_with_attributes[1]
 
         with allure.step(
-            f'Download object#2 via wget with attributes [chapter2={storage_object_2.attributes["chapter2"]}] / [Ch$pter1={storage_object_2.attributes["Ch$pter1"]}]  and compare hashes'
+            f'Download object#2 via wget with attributes [Chapter2={storage_object_2.attributes["Chapter2"]}] / [Ch$pter1={storage_object_2.attributes["Ch$pter1"]}]  and compare hashes'
         ):
             selected_attributes_object2 = [
-                {"chapter2": storage_object_2.attributes["chapter2"]},
+                {"Chapter2": storage_object_2.attributes["Chapter2"]},
                 {"Ch$pter1": storage_object_2.attributes["Ch$pter1"]},
             ]
             for attributes in selected_attributes_object2:
