@@ -217,13 +217,12 @@ class Test_rest_headers(NeofsEnvTestBase):
         with allure.step(
             "[Negative] Try to download (wget) object via wget with attributes [peace=peace]"
         ):
-            request = f"/get/{storage_object_1.cid}/peace/peace"
             error_pattern = "404 Not Found"
             try_to_get_object_via_passed_request_and_expect_error(
                 cid=storage_object_1.cid,
                 oid="",
                 error_pattern=error_pattern,
                 attrs=attrs_obj3,
-                http_request_path=request,
+                http_request_path=None,
                 endpoint=gw_endpoint,
             )
