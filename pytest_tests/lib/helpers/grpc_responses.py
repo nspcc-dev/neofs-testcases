@@ -19,6 +19,7 @@ EXPIRED_SESSION_TOKEN = "code = 4097.*message = expired session token"
 # LOCK_NON_REGULAR_OBJECT = "code = 2051.*message = ..." will be available once 2092 is fixed
 OBJECT_IS_LOCKED = "code = 2050"
 LOCK_NON_REGULAR_OBJECT = "code = 2051"
+OBJECT_HEADER_LENGTH_LIMIT = ".*object header length exceeds the limit.*"
 
 LIFETIME_REQUIRED = ".*at least one of the flags in the group [expire-at lifetime] is required.*"
 LOCK_OBJECT_REMOVAL = "lock object removal"

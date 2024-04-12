@@ -19,9 +19,11 @@ from helpers.grpc_responses import (
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
     INVALID_SEARCH_QUERY,
+    OBJECT_HEADER_LENGTH_LIMIT,
     OUT_OF_RANGE,
 )
 from helpers.neofs_verbs import (
+    NEOFS_API_HEADER_LIMIT,
     get_object_from_random_node,
     get_range,
     get_range_hash,
@@ -736,6 +738,22 @@ class TestObjectApi(NeofsEnvTestBase):
                             endpoint=self.neofs_env.sn_rpc,
                             range_cut=range_cut,
                         )
+                        
+    def test_put_object_header_limitation(
+        self, default_wallet: NodeWallet, container: str, simple_object_size: int
+    ):
+        file_path = generate_file(simple_object_size)
+        attr_key = "a" * (NEOFS_API_HEADER_LIMIT // 2)
+        attr_val = "b"  * (NEOFS_API_HEADER_LIMIT // 2)
+        with pytest.raises(Exception, match=OBJECT_HEADER_LENGTH_LIMIT):
+            put_object_to_random_node(
+                default_wallet.path,
+                file_path,
+                container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+                attributes={attr_key: attr_val}
+            )
 
     def check_header_is_presented(self, head_info: dict, object_header: dict) -> None:
         for key_to_check, val_to_check in object_header.items():
