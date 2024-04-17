@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import time
-from distutils import dir_util
 
 import allure
 import pytest
@@ -205,6 +204,6 @@ def datadir(tmpdir, request):
     test_dir, _ = os.path.splitext(filename)
 
     if os.path.isdir(test_dir):
-        dir_util.copy_tree(test_dir, str(tmpdir))
+        shutil.copytree(test_dir, str(tmpdir), dirs_exist_ok=True)
 
     return tmpdir
