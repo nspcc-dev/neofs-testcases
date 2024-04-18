@@ -335,13 +335,18 @@ class TestRestGate(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "attributes",
         [
-            {"Filename": "simple_obj_filename"},
             {"File-Name": "simple obj filename"},
             {"FileName": "simple obj filename"},
             pytest.param(
                 {"cat%jpeg": "cat%jpeg"},
                 marks=pytest.mark.skip(
                     reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/195"
+                ),
+            ),
+            pytest.param(
+                {"Filename": "simple_obj_filename"},
+                marks=pytest.mark.skip(
+                    reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/168"
                 ),
             ),
         ],
