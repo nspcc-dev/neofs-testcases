@@ -245,7 +245,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 assert tag in got_tags, f"Expected tag {tag} in {got_tags}"
 
     @allure.title("Test S3: Delete version of object")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_delete_versioning(self, bucket, complex_object_size, simple_object_size):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
@@ -396,7 +395,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
     @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3: Get range")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_get_range(self, bucket, complex_object_size: int, simple_object_size: int):
         file_path = generate_file(complex_object_size)
         file_name = self.object_key_from_file_path(file_path)
@@ -480,7 +478,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
     @allure.title("Test S3: Copy object with metadata")
     @pytest.mark.smoke
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_head_object(self, bucket, complex_object_size, simple_object_size):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         file_path = generate_file(complex_object_size)
@@ -520,7 +517,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
     @allure.title("Test S3: list of object with versions")
     @pytest.mark.parametrize("list_type", ["v1", "v2"])
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_list_object(self, list_type: str, bucket, complex_object_size):
         file_path_1 = generate_file(complex_object_size)
         file_name = self.object_key_from_file_path(file_path_1)
@@ -558,7 +554,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
             assert "DeleteMarker" in delete_obj.keys(), f"Expected delete Marker"
 
     @allure.title("Test S3: put object")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_put_object(self, bucket, complex_object_size, simple_object_size):
         file_path_1 = generate_file(complex_object_size)
         file_name = self.object_key_from_file_path(file_path_1)
@@ -680,7 +675,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
         self.other_public_key = get_wallet_public_key(self.other_wallet.path, WALLET_PASS)
 
     @allure.title("Test S3: put object with ACL")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     @pytest.mark.parametrize("bucket_versioning", ["ENABLED", "SUSPENDED"])
     def test_s3_put_object_acl(
         self,
@@ -765,7 +759,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
             assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
 
     @allure.title("Test S3: put object with lock-mode")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_put_object_lock_mode(self, complex_object_size, simple_object_size):
         file_path_1 = generate_file(complex_object_size)
         file_name = self.object_key_from_file_path(file_path_1)
