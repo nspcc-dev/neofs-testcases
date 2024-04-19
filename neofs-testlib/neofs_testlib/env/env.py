@@ -21,7 +21,7 @@ import requests
 import yaml
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from neofs_testlib.cli import NeofsAdm, NeofsCli
+from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
 
@@ -51,6 +51,7 @@ class NeoFSEnv:
         self.neofs_env_config = neofs_env_config
         self.neofs_adm_path = os.getenv("NEOFS_ADM_BIN", "./neofs-adm")
         self.neofs_cli_path = os.getenv("NEOFS_CLI_BIN", "./neofs-cli")
+        self.neofs_lens_path = os.getenv("NEOFS_LENS_BIN", "./neofs-lens")
         self.neo_go_path = os.getenv("NEO_GO_BIN", "./neo-go")
         self.neofs_ir_path = os.getenv("NEOFS_IR_BIN", "./neofs-ir")
         self.neofs_node_path = os.getenv("NEOFS_NODE_BIN", "./neofs-node")
@@ -99,6 +100,9 @@ class NeoFSEnv:
 
     def neofs_cli(self, cli_config_path: str) -> NeofsCli:
         return NeofsCli(self.shell, self.neofs_cli_path, cli_config_path)
+
+    def neofs_lens(self,) -> NeofsLens:
+        return NeofsLens(self.shell, self.neofs_lens_path)
 
     def generate_cli_config(self, wallet: NodeWallet):
         cli_config_path = NeoFSEnv._generate_temp_file(extension="yml", prefix="cli_config")
@@ -250,6 +254,7 @@ class NeoFSEnv:
         binaries = [
             (self.neofs_adm_path, "neofs_adm"),
             (self.neofs_cli_path, "neofs_cli"),
+            (self.neofs_lens_path, "neofs_lens"),
             (self.neo_go_path, "neo_go"),
             (self.neofs_ir_path, "neofs_ir"),
             (self.neofs_node_path, "neofs_node"),
