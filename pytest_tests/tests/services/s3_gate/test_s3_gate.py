@@ -106,7 +106,6 @@ class TestS3Gate(TestNeofsS3GateBase):
                 s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
 
     @allure.title("Test S3 Object API")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     @pytest.mark.parametrize(
         "file_type", ["simple", "large"], ids=["Simple object", "Large object"]
     )
@@ -356,7 +355,6 @@ class TestS3Gate(TestNeofsS3GateBase):
         check_tags_by_object(self.s3_client, bucket, obj_key, [])
 
     @allure.title("Test S3: Delete object & delete objects S3 API")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_api_delete(self, two_buckets, simple_object_size, complex_object_size):
         """
         Check DeleteObject and DeleteObjects S3 API operations. From first bucket some objects deleted one by one.
@@ -413,7 +411,6 @@ class TestS3Gate(TestNeofsS3GateBase):
             try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
     @allure.title("Test S3: Copy object to the same bucket")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_copy_same_bucket(self, bucket, complex_object_size, simple_object_size):
         """
         Test object can be copied to the same bucket.
@@ -458,7 +455,6 @@ class TestS3Gate(TestNeofsS3GateBase):
         )
 
     @allure.title("Test S3: Copy object to another bucket")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2729")
     def test_s3_copy_to_another_bucket(self, two_buckets, complex_object_size, simple_object_size):
         """
         Test object can be copied to another bucket.
