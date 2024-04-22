@@ -10,7 +10,6 @@ from neofs_testlib.shell import Shell
 
 @pytest.mark.additional_contracts
 class TestContract(NeofsEnvTestBase):
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/pull/2740")
     @allure.title("Test operations with external smart contracts")
     def test_contract(self, datadir, client_shell: Shell, neofs_env: NeoFSEnv):
         neogo = NeoGo(client_shell, neo_go_exec_path=neofs_env.neo_go_path)
