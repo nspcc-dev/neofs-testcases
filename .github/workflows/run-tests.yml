@@ -23,6 +23,9 @@ on:
 
 permissions: write-all
 
+env:
+  ALLURE_RESULTS_DIR: ${{ github.workspace }}/allure-results
+
 jobs:
   run_system_tests:
     runs-on: ubuntu-latest
@@ -152,6 +155,7 @@ jobs:
         working-directory: neofs-testcases
 
       - name: Prepare venv
+        id: prepare_venv
         timeout-minutes: 30
         run: |
           make venv.pytest
@@ -202,25 +206,40 @@ jobs:
       - name: Run Sanity tests for pull requests
         timeout-minutes: 240
         if: github.event_name == 'pull_request'
+        env:
+          ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
         run: |
           source venv.pytest/bin/activate && pytest --alluredir=${GITHUB_WORKSPACE}/allure-results pytest_tests/tests
         working-directory: neofs-testcases
 
 ################################################################
-      - name: Generate Allure report
-        timeout-minutes: 60
-        uses: simple-elf/allure-report-action@v1.6
-        if: always()
-        id: allure-report
+      - name: Publish to NeoFS
+        id: put_report
+        if: always() && steps.prepare_venv.outcome == 'success'
+        uses: nspcc-dev/gh-push-allure-report-to-neofs@master
         with:
-          keep_reports: 100000
-          allure_results: allure-results
-          allure_report: allure-report
-          allure_history: allure-history
+          NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
+          NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
+          NEOFS_NETWORK_DOMAIN: ${{ vars.TEST_RESULTS_NEOFS_NETWORK_DOMAIN }}
+          NEOFS_HTTP_GATE: ${{ vars.TEST_RESULTS_HTTP_GATE }}
+          STORE_OBJECTS_CID: ${{ vars.TEST_RESULTS_CID }}
+          PR_LIFETIME: ${{ vars.PR_EXPIRATION_PERIOD }}
+          MASTER_LIFETIME: ${{ vars.MASTER_EXPIRATION_PERIOD }}
+          MANUAL_RUN_LIFETIME: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
+          OTHER_LIFETIME: ${{ vars.OTHER_EXPIRATION_PERIOD }}
+          ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
+          ALLURE_GENERATED_DIR: 'neofs-test-allure-generated-report'
 
-      - name: Archive allure report raw results
-        uses: actions/upload-artifact@v3
-        if: always()
+      - name: Post the link to the report
+        id: post_report_link
+        timeout-minutes: 60
+        if: always() && steps.put_report.outcome == 'success'
+        env:
+          REPORT_NEOFS_URL: ${{ steps.put_report.outputs.REPORT_NEOFS_URL }}index.html
+        uses: Sibz/github-status-action@v1
         with:
-          name: allure-report-raw-results
-          path: allure-results
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'Test report'
+          state: 'success'
+          sha: ${{github.event.pull_request.head.sha || github.sha}}
+          target_url: ${{ env.REPORT_NEOFS_URL }}
