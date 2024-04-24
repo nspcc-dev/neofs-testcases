@@ -218,9 +218,8 @@ jobs:
         working-directory: neofs-testcases
 
 ################################################################
-      - name: Run Sanity tests for pull requests
+      - name: Run tests
         timeout-minutes: 240
-        if: github.event_name == 'pull_request'
         env:
           ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
         run: |
