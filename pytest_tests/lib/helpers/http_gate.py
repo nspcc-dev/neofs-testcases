@@ -222,7 +222,7 @@ def upload_via_http_gate_curl(
     large_object = is_object_large(filepath)
     if large_object:
         # pre-clean
-        _cmd_run("rm pipe -f")
+        _cmd_run("rm pipe -f || true")
         files = f"file=@pipe;filename={os.path.basename(filepath)}"
         cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --silent --no-buffer -F '{files}' {attributes}{cookies_attr} {request}"
         output = _cmd_run(cmd, LONG_TIMEOUT)
