@@ -24,8 +24,26 @@ pool:
   error-threshold: 100
 
 server:
-  # The listeners to enable, this can be repeated and defaults to the schemes in the swagger spec.
-  scheme: [ http ]
+  endpoints:
+    # The IP and port to listen on.
+    - address: {{ address }}
+      tls:
+        # Use TLS for a gRPC connection (min version is TLS 1.2).
+        enabled: false
+        # The certificate file to use for secure connections.
+        certificate: /path/to/tls/cert
+        # The private key file to use for secure connections (without passphrase).
+        key: /path/to/tls/key
+        # The certificate authority certificate file to be used with mutual tls auth.
+        ca-certificate: /path/to/tls/ca
+      # Sets the TCP keep-alive timeouts on accepted connections.
+      # It prunes dead TCP connections ( e.g. closing laptop mid-download).
+      keep-alive: 3m
+      # Maximum duration before timing out read of the request.
+      read-timeout: 30s
+      # Maximum duration before timing out write of the response.
+      write-timeout: 30s
+
   # Grace period for which to wait before killing idle connections
   cleanup-timeout: 10s
   # Grace period for which to wait before shutting down the server
@@ -33,15 +51,5 @@ server:
   # Controls the maximum number of bytes the server will read parsing the request header's keys and values,
   # including the request line. It does not limit the size of the request body.
   max-header-size: 1000000
-
-  # The IP and port to listen on.
-  listen-address: {{ address }}
   # Limit the number of outstanding requests.
   listen-limit: 0
-  # Sets the TCP keep-alive timeouts on accepted connections.
-  # It prunes dead TCP connections ( e.g. closing laptop mid-download).
-  keep-alive: 3m
-  # Maximum duration before timing out read of the request.
-  read-timeout: 30s
-  # Maximum duration before timing out write of the response.
-  write-timeout: 30s
