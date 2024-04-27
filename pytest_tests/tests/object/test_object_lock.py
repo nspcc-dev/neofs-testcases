@@ -8,7 +8,7 @@ from helpers.common import STORAGE_GC_TIME
 from helpers.complex_object_actions import (
     get_link_object,
     get_nodes_with_object,
-    get_storage_object_chunks,
+    get_object_chunks,
 )
 from helpers.container import create_container
 from helpers.grpc_responses import (
@@ -526,16 +526,16 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         Complex object chunks should also be protected from deletion
         """
 
-        chunk_object_ids = get_storage_object_chunks(
+        chunks = get_object_chunks(
             locked_storage_object, self.shell, self.neofs_env
         )
-        for chunk_object_id in chunk_object_ids:
-            with allure.step(f"Try to delete chunk object {chunk_object_id}"):
+        for chunk in chunks:
+            with allure.step(f"Try to delete chunk object {chunk[0]}"):
                 with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
                     delete_object(
                         locked_storage_object.wallet_file_path,
                         locked_storage_object.cid,
-                        chunk_object_id,
+                        chunk[0],
                         self.shell,
                         self.neofs_env.sn_rpc,
                     )
@@ -582,22 +582,22 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     def test_chunks_of_locked_complex_object_can_be_dropped(
         self, new_locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv
     ):
-        chunk_objects = get_storage_object_chunks(
+        chunk_objects = get_object_chunks(
             new_locked_storage_object, self.shell, self.neofs_env
         )
 
-        for chunk_object_id in chunk_objects:
-            with allure.step(f"Drop chunk object with id {chunk_object_id} from nodes"):
+        for chunk in chunk_objects:
+            with allure.step(f"Drop chunk object with id {chunk[0]} from nodes"):
                 nodes_with_object = get_nodes_with_object(
                     new_locked_storage_object.cid,
-                    chunk_object_id,
+                    chunk[0],
                     shell=self.shell,
                     nodes=self.neofs_env.storage_nodes,
                     neofs_env=neofs_env,
                 )
                 for node in nodes_with_object:
                     with expect_not_raises():
-                        drop_object(node, new_locked_storage_object.cid, chunk_object_id)
+                        drop_object(node, new_locked_storage_object.cid, chunk[0])
 
     @pytest.mark.grpc_control
     @pytest.mark.parametrize(
