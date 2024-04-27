@@ -39,6 +39,8 @@ $ make venv.pytest
 $ . venv.pytest/bin/activate
 ```
 
+If you want to exit from the current venv for any reason, use the `deactivate` command.
+
 3. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
 
 ```shell
@@ -93,6 +95,19 @@ Make sure that the virtualenv is activated, then execute the following command t
 $ pytest --alluredir my-allure-123 -s -k test_get_object_api pytest_tests/tests/object/test_object_api.py
 ```
 
+If you are going to run tests several times in the same dev environment, 
+you can use the `--persist-env` key to initiate keeping the test environment. 
+As a result, you'll find something like `Persist env at: env_files/*` in the report. 
+For example:
+```shell
+[MainThread] 2024-04-27 18:31:55 [INFO] Persist env at: env_files/persisted_env_awxyrbxdwu
+```
+After that, you can run tests faster by adding the `--load-env` flag along with 
+the received value. This way you won't waste time redeploy the environment.
+For example:
+```shell
+pytest --alluredir my-allure-234 -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py --load-env env_files/persisted_env_awxyrbxdwu 
+```
 If anything goes wrong, first advice is to check .github/workflows/run-tests.yml, to ensure you've done all required steps.
 
 3. Generate report
