@@ -39,6 +39,8 @@ $ make venv.pytest
 $ . venv.pytest/bin/activate
 ```
 
+If you want to exit from the current venv for any reason, use the `deactivate` command.
+
 3. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
 
 ```shell
