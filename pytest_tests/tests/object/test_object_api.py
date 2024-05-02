@@ -10,6 +10,8 @@ from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
     get_simple_object_copies,
+    get_object_chunks,
+    get_link_object,
 )
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file, get_file_content, get_file_hash
@@ -21,6 +23,7 @@ from helpers.grpc_responses import (
     INVALID_SEARCH_QUERY,
     OBJECT_HEADER_LENGTH_LIMIT,
     OUT_OF_RANGE,
+    LINK_OBJECT_FOUND,
 )
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
@@ -30,6 +33,7 @@ from helpers.neofs_verbs import (
     head_object,
     put_object_to_random_node,
     search_object,
+    delete_object,
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
@@ -754,6 +758,47 @@ class TestObjectApi(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
                 attributes={attr_key: attr_val}
             )
+
+    @allure.title("Finished objects (with link object found) cannot be deleted")
+    def test_object_parts_cannot_be_deleted(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
+        file_path = generate_file(complex_object_size)
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            container,
+            shell=self.shell,
+            neofs_env=self.neofs_env,
+        )
+
+        link_oid = get_link_object(
+            default_wallet.path,
+            container,
+            oid,
+            shell=self.shell,
+            nodes=self.neofs_env.storage_nodes
+        )
+
+        with allure.step(f"Trying to delete link object {link_oid}"):
+            with pytest.raises(Exception, match=LINK_OBJECT_FOUND):
+                delete_object(
+                    default_wallet.path,
+                    container,
+                    link_oid,
+                    self.shell,
+                    self.neofs_env.sn_rpc,
+                )
+
+        with allure.step(f"Trying to delete children"):
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+            for part in parts:
+                with pytest.raises(Exception, match=LINK_OBJECT_FOUND):
+                    delete_object(
+                        default_wallet.path,
+                        container,
+                        part[0],
+                        self.shell,
+                        self.neofs_env.sn_rpc,
+                    )
 
     def check_header_is_presented(self, head_info: dict, object_header: dict) -> None:
         for key_to_check, val_to_check in object_header.items():
