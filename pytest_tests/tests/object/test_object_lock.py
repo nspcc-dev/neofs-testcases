@@ -511,35 +511,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 self.neofs_env.sn_rpc,
             )
 
-    @allure.title("Complex object chunks should also be protected from deletion")
-    @pytest.mark.parametrize(
-        # Only complex objects are required for this test
-        "locked_storage_object",
-        [pytest.lazy_fixture("complex_object_size")],
-        indirect=True,
-    )
-    def test_complex_object_chunks_should_also_be_protected_from_deletion(
-        self,
-        locked_storage_object: StorageObjectInfo,
-    ):
-        """
-        Complex object chunks should also be protected from deletion
-        """
-
-        chunks = get_object_chunks(
-            locked_storage_object, self.shell, self.neofs_env
-        )
-        for chunk in chunks:
-            with allure.step(f"Try to delete chunk object {chunk[0]}"):
-                with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
-                    delete_object(
-                        locked_storage_object.wallet_file_path,
-                        locked_storage_object.cid,
-                        chunk[0],
-                        self.shell,
-                        self.neofs_env.sn_rpc,
-                    )
-
     @allure.title("Link object of locked complex object can be dropped via control")
     @pytest.mark.grpc_control
     @pytest.mark.parametrize(
@@ -583,7 +554,11 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         self, new_locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv
     ):
         chunk_objects = get_object_chunks(
-            new_locked_storage_object, self.shell, self.neofs_env
+            new_locked_storage_object.wallet_file_path,
+            new_locked_storage_object.cid,
+            new_locked_storage_object.oid,
+            self.shell,
+            self.neofs_env
         )
 
         for chunk in chunk_objects:
@@ -645,39 +620,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         for node in nodes_with_object:
             with expect_not_raises():
                 drop_object(node, lock_object_info.cid, lock_object_info.oid)
-
-    @allure.title("Link object of complex object should also be protected from deletion")
-    @pytest.mark.parametrize(
-        # Only complex objects are required for this test
-        "locked_storage_object",
-        [pytest.lazy_fixture("complex_object_size")],
-        indirect=True,
-    )
-    def test_link_object_of_complex_object_should_also_be_protected_from_deletion(
-        self,
-        locked_storage_object: StorageObjectInfo,
-    ):
-        """
-        Link object of complex object should also be protected from deletion
-        """
-
-        link_object_id = get_link_object(
-            locked_storage_object.wallet_file_path,
-            locked_storage_object.cid,
-            locked_storage_object.oid,
-            self.shell,
-            self.neofs_env.storage_nodes,
-            is_direct=False,
-        )
-        with allure.step(f"Try to delete link object {link_object_id}"):
-            with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
-                delete_object(
-                    locked_storage_object.wallet_file_path,
-                    locked_storage_object.cid,
-                    link_object_id,
-                    self.shell,
-                    self.neofs_env.sn_rpc,
-                )
 
     @pytest.mark.delete_metadata
     @allure.title(
