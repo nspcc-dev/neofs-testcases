@@ -13,14 +13,14 @@ from helpers.storage_object_info import StorageObjectInfo
 from helpers.test_control import expect_not_raises
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
-from neofs_testlib.env.env import NeoFSEnv
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 
 
 @pytest.fixture(scope="module")
 @allure.title("Create bearer token for OTHERS with all operations allowed for all containers")
-def bearer_token_file_all_allow(default_wallet: str, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
+def bearer_token_file_all_allow(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
     bearer = form_bearertoken_file(
         default_wallet.path,
         "",
@@ -35,7 +35,7 @@ def bearer_token_file_all_allow(default_wallet: str, client_shell: Shell, neofs_
 @pytest.fixture(scope="module")
 @allure.title("Create user container for bearer token usage")
 def user_container(
-    default_wallet: str, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
+    default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
 ) -> StorageContainer:
     container_id = create_container(
         default_wallet.path,
