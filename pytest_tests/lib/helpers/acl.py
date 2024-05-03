@@ -270,6 +270,7 @@ def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     return rules
 
 
+@allure.step("Sign bearer token")
 def sign_bearer(shell: Shell, wallet_path: str, eacl_rules_file_from: str, eacl_rules_file_to: str, json: bool) -> None:
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
     neofscli.util.sign_bearer_token(
