@@ -143,7 +143,13 @@ def get_via_http_gate_by_attribute(
 
 @allure.step("Upload via HTTP Gate")
 def upload_via_http_gate(
-    cid: str, path: str, endpoint: str, headers: dict = None, file_content_type: str = None
+    cid: str,
+    path: str,
+    endpoint: str,
+    headers: dict = None,
+    cookies: dict = None,
+    file_content_type: str = None,
+    error_pattern: Optional[str] = None,
 ) -> str:
     """
     This function upload given object through HTTP gate
@@ -159,9 +165,13 @@ def upload_via_http_gate(
     else:
         files = {"upload_file": (path, open(path, "rb"), file_content_type)}
     body = {"filename": path}
-    resp = requests.post(request, files=files, data=body, headers=headers)
+    resp = requests.post(request, files=files, data=body, headers=headers, cookies=cookies)
 
     if not resp.ok:
+        if error_pattern:
+            match = error_pattern.casefold() in str(resp.text).casefold()
+            assert match, f"Expected {resp.text} to match {error_pattern}"
+            return ""
         raise Exception(
             f"""Failed to get object via HTTP gate:
                 request: {resp.request.path_url},
@@ -198,7 +208,6 @@ def upload_via_http_gate_curl(
     endpoint: str,
     headers: list = None,
     error_pattern: Optional[str] = None,
-    cookies: dict = None,
 ) -> str:
     """
     This function upload given object through HTTP gate using curl utility.
@@ -214,24 +223,9 @@ def upload_via_http_gate_curl(
         # parse attributes
         attributes = " ".join(headers)
 
-    cookies_attr = ""
-    if cookies:
-        for k, v in cookies.items():
-            cookies_attr += f" -b '{k}={v}'"
-
-    large_object = is_object_large(filepath)
-    if large_object:
-        # pre-clean
-        _cmd_run("rm pipe -f || true")
-        files = f"file=@pipe;filename={os.path.basename(filepath)}"
-        cmd = f"mkfifo pipe;cat {filepath} > pipe & curl --silent --no-buffer -F '{files}' {attributes}{cookies_attr} {request}"
-        output = _cmd_run(cmd, LONG_TIMEOUT)
-        # clean up pipe
-        _cmd_run("rm pipe")
-    else:
-        files = f"file=@{filepath};filename={os.path.basename(filepath)}"
-        cmd = f"curl --silent -F '{files}' {attributes}{cookies_attr} {request}"
-        output = _cmd_run(cmd)
+    files = f"file=@{filepath};filename={os.path.basename(filepath)}"
+    cmd = f"curl --silent -F '{files}' {attributes} {request}"
+    output = _cmd_run(cmd)
 
     if error_pattern:
         match = error_pattern.casefold() in str(output).casefold()
@@ -245,23 +239,6 @@ def upload_via_http_gate_curl(
     if "object_id" not in response_json:
         raise AssertionError(f'Could not find "object_id" in JSON response: {output}')
     return response_json["object_id"]
-
-
-@allure.step("Get via HTTP Gate using Curl")
-def get_via_http_curl(cid: str, oid: str, endpoint: str) -> str:
-    """
-    This function gets given object from HTTP gate using curl utility.
-    cid:      CID to get object from
-    oid:      object OID
-    endpoint: http gate endpoint
-    """
-    request = f"{endpoint}/get/{cid}/{oid}"
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}_{str(uuid.uuid4())}")
-
-    cmd = f"curl {request} > {file_path}"
-    _cmd_run(cmd)
-
-    return file_path
 
 
 def _attach_allure_step(request: str, status_code: int, req_type="GET"):
@@ -342,6 +319,11 @@ def assert_hashes_are_equal(orig_file_name: str, got_file_1: str, got_file_2: st
 
 def attr_into_header(attrs: dict) -> dict:
     return {f"X-Attribute-{_key}": _value for _key, _value in attrs.items()}
+
+
+@allure.step("Convert each attribute (Key=Value) to the following format: 'X-Attribute-Key: Value'")
+def attr_into_str_header(attrs: dict) -> list:
+    return {f"X-Attribute-{k}": {v} for k, v in attrs.items()}
 
 
 @allure.step(

@@ -11,10 +11,12 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.http_gate import (
+    attr_into_str_header,
     attr_into_str_header_curl,
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_and_expect_error,
     try_to_get_object_via_passed_request_and_expect_error,
+    upload_via_http_gate,
     upload_via_http_gate_curl,
 )
 from helpers.neofs_verbs import delete_object
@@ -65,11 +67,11 @@ class Test_rest_headers(NeofsEnvTestBase):
         )
         file_path = generate_file(request.param)
         for attributes in self.OBJECT_ATTRIBUTES:
-            storage_object_id = upload_via_http_gate_curl(
+            storage_object_id = upload_via_http_gate(
                 cid=cid,
-                filepath=file_path,
+                path=file_path,
                 endpoint=gw_endpoint,
-                headers=attr_into_str_header_curl(attributes),
+                headers=attr_into_str_header(attributes),
             )
             storage_object = StorageObjectInfo(cid, storage_object_id)
             storage_object.size = os.path.getsize(file_path)
@@ -167,9 +169,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             )
 
     @allure.title("[Negative] Try to put object and get right after container is deleted")
-    def test_negative_put_and_get_object3(
-        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
-    ):
+    def test_negative_put_and_get_object3(self, simple_object_size, gw_endpoint):
         """
         Test to attempt to put object and try to download it right after the container has been deleted
 
@@ -180,18 +180,31 @@ class Test_rest_headers(NeofsEnvTestBase):
         3. [Negative] Try to download object with attributes [peace=peace]
             Expected: "HTTP request sent, awaiting response... 404 Not Found"
         """
-        storage_object_1 = storage_objects_with_attributes[0]
+        cid = create_container(
+            wallet=self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=self.PLACEMENT_RULE,
+            basic_acl=PUBLIC_ACL,
+        )
+        file_path = generate_file(simple_object_size)
+        upload_via_http_gate(
+            cid=cid,
+            path=file_path,
+            endpoint=gw_endpoint,
+            headers=attr_into_str_header(self.OBJECT_ATTRIBUTES[0]),
+        )
 
         with allure.step(
             "[Negative] Allocate and attemt to put object#3 via http with attributes: [Writer=Leo Tolstoy, Writer=peace, peace=peace]"
         ):
-            file_path_3 = generate_file(storage_object_1.size)
+            file_path_3 = generate_file(simple_object_size)
             attrs_obj3 = {"Writer": "Leo Tolstoy", "peace": "peace"}
             headers = attr_into_str_header_curl(attrs_obj3)
             headers.append(" ".join(attr_into_str_header_curl({"Writer": "peace"})))
             error_pattern = f"key duplication error: X-Attribute-Writer"
             upload_via_http_gate_curl(
-                cid=storage_object_1.cid,
+                cid=cid,
                 filepath=file_path_3,
                 endpoint=gw_endpoint,
                 headers=headers,
@@ -200,18 +213,18 @@ class Test_rest_headers(NeofsEnvTestBase):
         with allure.step("Delete container and verify container deletion"):
             delete_container(
                 wallet=self.wallet.path,
-                cid=storage_object_1.cid,
+                cid=cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
             self.tick_epochs_and_wait(1)
             wait_for_container_deletion(
                 self.wallet.path,
-                storage_object_1.cid,
+                cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
-            assert storage_object_1.cid not in list_containers(
+            assert cid not in list_containers(
                 self.wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
             )
         with allure.step(
@@ -219,7 +232,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         ):
             error_pattern = "404 Not Found"
             try_to_get_object_via_passed_request_and_expect_error(
-                cid=storage_object_1.cid,
+                cid=cid,
                 oid="",
                 error_pattern=error_pattern,
                 attrs=attrs_obj3,

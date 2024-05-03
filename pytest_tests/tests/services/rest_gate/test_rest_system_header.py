@@ -10,9 +10,9 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import OBJECT_NOT_FOUND
 from helpers.http_gate import (
-    attr_into_str_header_curl,
+    attr_into_str_header,
     try_to_get_object_and_expect_error,
-    upload_via_http_gate_curl,
+    upload_via_http_gate,
 )
 from helpers.neofs_verbs import get_netmap_netinfo, get_object_from_random_node, head_object
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -113,11 +113,11 @@ class Test_rest_system_header(NeofsEnvTestBase):
     def oid_header_info_for_object(
         self, file_path: str, attributes: dict, user_container: str, gw_endpoint: str
     ):
-        oid = upload_via_http_gate_curl(
+        oid = upload_via_http_gate(
             cid=user_container,
-            filepath=file_path,
+            path=file_path,
             endpoint=gw_endpoint,
-            headers=attr_into_str_header_curl(attributes),
+            headers=attr_into_str_header(attributes),
         )
         get_object_and_verify_hashes(
             oid=oid,
@@ -141,16 +141,16 @@ class Test_rest_system_header(NeofsEnvTestBase):
     def test_unable_put_expired_epoch(
         self, user_container: str, simple_object_size: int, gw_endpoint
     ):
-        headers = attr_into_str_header_curl(
+        headers = attr_into_str_header(
             {"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)}
         )
         file_path = generate_file(simple_object_size)
         with allure.step(
             "Put object using HTTP with attribute Expiration-Epoch where epoch is expired"
         ):
-            upload_via_http_gate_curl(
+            upload_via_http_gate(
                 cid=user_container,
-                filepath=file_path,
+                path=file_path,
                 endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern="object has expired",
@@ -160,14 +160,14 @@ class Test_rest_system_header(NeofsEnvTestBase):
     def test_unable_put_negative_duration(
         self, user_container: str, simple_object_size: int, gw_endpoint
     ):
-        headers = attr_into_str_header_curl({"Neofs-Expiration-Duration": "-1h"})
+        headers = attr_into_str_header({"Neofs-Expiration-Duration": "-1h"})
         file_path = generate_file(simple_object_size)
         with allure.step(
             "Put object using HTTP with attribute Neofs-Expiration-Duration where duration is negative"
         ):
-            upload_via_http_gate_curl(
+            upload_via_http_gate(
                 cid=user_container,
-                filepath=file_path,
+                path=file_path,
                 endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern=f"{EXPIRATION_DURATION_HEADER} must be positive",
@@ -179,14 +179,14 @@ class Test_rest_system_header(NeofsEnvTestBase):
     def test_unable_put_expired_timestamp(
         self, user_container: str, simple_object_size: int, gw_endpoint
     ):
-        headers = attr_into_str_header_curl({"Neofs-Expiration-Timestamp": "1635075727"})
+        headers = attr_into_str_header({"Neofs-Expiration-Timestamp": "1635075727"})
         file_path = generate_file(simple_object_size)
         with allure.step(
             "Put object using HTTP with attribute Neofs-Expiration-Timestamp where duration is in the past"
         ):
-            upload_via_http_gate_curl(
+            upload_via_http_gate(
                 cid=user_container,
-                filepath=file_path,
+                path=file_path,
                 endpoint=gw_endpoint,
                 headers=headers,
                 error_pattern=f"{EXPIRATION_TIMESTAMP_HEADER} must be in the future",
@@ -198,11 +198,11 @@ class Test_rest_system_header(NeofsEnvTestBase):
     def test_unable_put_expired_rfc(
         self, user_container: str, simple_object_size: int, gw_endpoint
     ):
-        headers = attr_into_str_header_curl({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
+        headers = attr_into_str_header({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
         file_path = generate_file(simple_object_size)
-        upload_via_http_gate_curl(
+        upload_via_http_gate(
             cid=user_container,
-            filepath=file_path,
+            path=file_path,
             endpoint=gw_endpoint,
             headers=headers,
             error_pattern=f"{EXPIRATION_EXPIRATION_RFC} must be in the future",
