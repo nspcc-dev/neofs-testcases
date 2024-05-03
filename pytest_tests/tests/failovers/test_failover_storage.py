@@ -57,12 +57,8 @@ class TestFailoverStorage(NeofsEnvTestBase):
             rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
-        oid = put_object_to_random_node(
-            wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
-        nodes = wait_object_replication(
-            cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-        )
+        oid = put_object_to_random_node(wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
+        nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
 
         for node in nodes:
             stopped_nodes.append(node)
@@ -80,21 +76,15 @@ class TestFailoverStorage(NeofsEnvTestBase):
         assert all(old_node not in new_nodes for old_node in nodes)
 
         with allure.step("Check object data is not corrupted"):
-            got_file_path = get_object(
-                wallet, cid, oid, endpoint=new_nodes[0].get_rpc_endpoint(), shell=self.shell
-            )
+            got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0].get_rpc_endpoint(), shell=self.shell)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         with allure.step("Return all hosts"):
             return_stopped_hosts(self.neofs_env)
 
         with allure.step("Check object data is not corrupted"):
-            new_nodes = wait_object_replication(
-                cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-            )
-            got_file_path = get_object(
-                wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint
-            )
+            new_nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @allure.title("Panic storage node's host")
@@ -111,13 +101,9 @@ class TestFailoverStorage(NeofsEnvTestBase):
             rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
-        oid = put_object_to_random_node(
-            wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
 
-        nodes = wait_object_replication(
-            cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-        )
+        nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
         allure.attach(
             "\n".join([str(node) for node in nodes]),
             "Current nodes with object",
@@ -153,16 +139,12 @@ class TestFailoverStorage(NeofsEnvTestBase):
                     )
 
         if not sequence:
-            new_nodes = wait_object_replication(
-                cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-            )
+            new_nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
             allure.attach(
                 "\n".join([str(new_node) for new_node in new_nodes]),
                 "Nodes with object after nodes fail",
                 allure.attachment_type.TEXT,
             )
 
-        got_file_path = get_object(
-            wallet, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint
-        )
+        got_file_path = get_object(wallet, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
         assert get_file_hash(source_file_path) == get_file_hash(got_file_path)

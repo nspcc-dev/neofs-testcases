@@ -32,30 +32,20 @@ class TestS3GateMultipart(TestNeofsS3GateBase):
         parts = []
 
         with allure.step("Upload first part"):
-            upload_id = s3_gate_object.create_multipart_upload_s3(
-                self.s3_client, bucket, object_key
-            )
+            upload_id = s3_gate_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
-            etag = s3_gate_object.upload_part_s3(
-                self.s3_client, bucket, object_key, upload_id, 1, part_files[0]
-            )
+            etag = s3_gate_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 1, part_files[0])
             parts.append((1, etag))
             got_parts = s3_gate_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
             assert len(got_parts) == 1, f"Expected {1} parts, got\n{got_parts}"
 
         with allure.step("Upload last parts"):
             for part_id, file_path in enumerate(part_files[1:], start=2):
-                etag = s3_gate_object.upload_part_s3(
-                    self.s3_client, bucket, object_key, upload_id, part_id, file_path
-                )
+                etag = s3_gate_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
                 parts.append((part_id, etag))
             got_parts = s3_gate_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            s3_gate_object.complete_multipart_upload_s3(
-                self.s3_client, bucket, object_key, upload_id, parts
-            )
-            assert len(got_parts) == len(
-                part_files
-            ), f"Expected {parts_count} parts, got\n{got_parts}"
+            s3_gate_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+            assert len(got_parts) == len(part_files), f"Expected {parts_count} parts, got\n{got_parts}"
 
         with allure.step("Check upload list is empty"):
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
@@ -76,13 +66,9 @@ class TestS3GateMultipart(TestNeofsS3GateBase):
         parts = []
 
         with allure.step("Upload first part"):
-            upload_id = s3_gate_object.create_multipart_upload_s3(
-                self.s3_client, bucket, object_key
-            )
+            upload_id = s3_gate_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
-            etag = s3_gate_object.upload_part_s3(
-                self.s3_client, bucket, object_key, upload_id, 1, part_files[0]
-            )
+            etag = s3_gate_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 1, part_files[0])
             parts.append((1, etag))
             got_parts = s3_gate_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
             assert len(got_parts) == 1, f"Expected {1} parts, got\n{got_parts}"
@@ -111,9 +97,7 @@ class TestS3GateMultipart(TestNeofsS3GateBase):
             check_objects_in_bucket(self.s3_client, bucket, objs)
 
         with allure.step("Create multipart upload object"):
-            upload_id = s3_gate_object.create_multipart_upload_s3(
-                self.s3_client, bucket, object_key
-            )
+            upload_id = s3_gate_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
             assert uploads, f"Expected there are uploads in bucket {bucket}"
 
@@ -124,12 +108,8 @@ class TestS3GateMultipart(TestNeofsS3GateBase):
                 )
                 parts.append((part_id, etag))
             got_parts = s3_gate_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            s3_gate_object.complete_multipart_upload_s3(
-                self.s3_client, bucket, object_key, upload_id, parts
-            )
-            assert len(got_parts) == len(
-                part_files
-            ), f"Expected {parts_count} parts, got\n{got_parts}"
+            s3_gate_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+            assert len(got_parts) == len(part_files), f"Expected {parts_count} parts, got\n{got_parts}"
 
         with allure.step("Check we can get whole object from bucket"):
             got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, object_key)

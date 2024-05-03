@@ -27,9 +27,7 @@ class NeoGoWallet(CliCommand):
             Command's result.
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "wallet claim",
@@ -57,11 +55,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet init",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def convert(
@@ -85,11 +79,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet convert",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def create(
@@ -111,11 +101,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet create",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump(
@@ -139,11 +125,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet dump",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_keys(
@@ -167,11 +149,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet dump-keys",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def export(
@@ -195,11 +173,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet export",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def import_wif(
@@ -227,11 +201,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet import",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def import_multisig(
@@ -259,11 +229,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet import-multisig",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def import_deployed(
@@ -292,9 +258,7 @@ class NeoGoWallet(CliCommand):
             Command's result.
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "wallet import-deployed",
@@ -324,11 +288,7 @@ class NeoGoWallet(CliCommand):
 
         return self._execute(
             "wallet remove",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def sign(
@@ -367,9 +327,7 @@ class NeoGoWallet(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value
-            for param, param_value in locals().items()
-            if param not in ["self", "wallet_password"]
+            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
         }
         exec_param["timeout"] = f"{timeout}s"
         if wallet_password is not None:

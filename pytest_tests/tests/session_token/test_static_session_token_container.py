@@ -48,9 +48,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
         temp_directory: str,
     ) -> dict[ContainerVerb, str]:
         return {
-            verb: get_container_signed_token(
-                owner_wallet, user_wallet, verb, client_shell, temp_directory
-            )
+            verb: get_container_signed_token(owner_wallet, user_wallet, verb, client_shell, temp_directory)
             for verb in ContainerVerb
         }
 
@@ -77,12 +75,8 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
         )
         assert container_info["ownerID"] == owner_wallet.address
 
-        assert cid not in list_containers(
-            user_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-        )
-        assert cid in list_containers(
-            owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-        )
+        assert cid not in list_containers(user_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        assert cid in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_static_session_token_container_create_with_other_verb(
         self,
@@ -147,9 +141,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 await_mode=True,
             )
 
-        assert cid not in list_containers(
-            owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-        )
+        assert cid not in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner user can NOT delete container")
@@ -170,12 +162,8 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        user_token = self.static_session_token(
-            owner_wallet, user_wallet, self.shell, temp_directory
-        )
-        stranger_token = self.static_session_token(
-            user_wallet, stranger_wallet, self.shell, temp_directory
-        )
+        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
+        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
 
         with allure.step("Try to delete container using stranger token"):
             with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
@@ -219,12 +207,8 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        user_token = self.static_session_token(
-            owner_wallet, user_wallet, self.shell, temp_directory
-        )
-        stranger_token = self.static_session_token(
-            user_wallet, stranger_wallet, self.shell, temp_directory
-        )
+        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
+        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
 
         with allure.step("Try to delete container using scammer token"):
             with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
@@ -289,15 +273,10 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
         file_path = generate_file(simple_object_size)
-        assert can_put_object(
-            stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env
-        )
+        assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
-        with allure.step(f"Deny all operations for other via eACL"):
-            eacl_deny = [
-                EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op)
-                for op in EACLOperation
-            ]
+        with allure.step("Deny all operations for other via eACL"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
             set_eacl(
                 user_wallet.path,
                 cid,
@@ -308,9 +287,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
             )
             wait_for_cache_expired()
 
-        assert not can_put_object(
-            stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env
-        )
+        assert not can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT set eacl")
@@ -332,19 +309,12 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        user_token = self.static_session_token(
-            owner_wallet, user_wallet, self.shell, temp_directory
-        )
-        stranger_token = self.static_session_token(
-            user_wallet, stranger_wallet, self.shell, temp_directory
-        )
+        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
+        stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
 
-        new_eacl = [
-            EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op)
-            for op in EACLOperation
-        ]
+        new_eacl = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
 
-        with allure.step(f"Try to deny all operations for other via eACL"):
+        with allure.step("Try to deny all operations for other via eACL"):
             with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
                 set_eacl(
                     user_wallet.path,
@@ -355,8 +325,8 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     session_token=stranger_token[ContainerVerb.SETEACL],
                 )
 
-        with allure.step(f"Try to deny all operations for other via eACL using scammer wallet"):
-            with allure.step(f"Using user token"):
+        with allure.step("Try to deny all operations for other via eACL using scammer wallet"):
+            with allure.step("Using user token"):
                 with pytest.raises(RuntimeError, match=EACL_TIMED_OUT):
                     set_eacl(
                         scammer_wallet.path,
@@ -366,7 +336,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                         endpoint=self.neofs_env.sn_rpc,
                         session_token=user_token[ContainerVerb.SETEACL],
                     )
-            with allure.step(f"Using scammer token"):
+            with allure.step("Using scammer token"):
                 with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
                     set_eacl(
                         scammer_wallet.path,

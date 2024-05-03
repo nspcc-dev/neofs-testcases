@@ -48,9 +48,7 @@ check_nodes: list[StorageNode] = []
 class TestNodeManagement(NeofsEnvTestBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
-    def create_container_and_pick_node(
-        self, default_wallet: NodeWallet, simple_object_size
-    ) -> Tuple[str, StorageNode]:
+    def create_container_and_pick_node(self, default_wallet: NodeWallet, simple_object_size) -> Tuple[str, StorageNode]:
         file_path = generate_file(simple_object_size)
         placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
         endpoint = self.neofs_env.sn_rpc
@@ -62,9 +60,7 @@ class TestNodeManagement(NeofsEnvTestBase):
             rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
-        oid = put_object_to_random_node(
-            default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
 
         nodes = get_nodes_with_object(
             cid, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
@@ -143,20 +139,14 @@ class TestNodeManagement(NeofsEnvTestBase):
         storage_nodes = self.neofs_env.storage_nodes
         random_node = random.choice(storage_nodes[1:])
         alive_node = random.choice(
-            [
-                storage_node
-                for storage_node in storage_nodes
-                if storage_node.sn_number != random_node.sn_number
-            ]
+            [storage_node for storage_node in storage_nodes if storage_node.sn_number != random_node.sn_number]
         )
 
         check_node_in_map(random_node, shell=self.shell, alive_node=alive_node)
 
         # Add node to recovery list before messing with it
         check_nodes.append(random_node)
-        exclude_node_from_network_map(
-            random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env
-        )
+        exclude_node_from_network_map(random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env)
         delete_node_data(random_node)
 
         cid = create_container(
@@ -173,9 +163,7 @@ class TestNodeManagement(NeofsEnvTestBase):
             shell=self.shell,
             endpoint=alive_node.endpoint,
         )
-        wait_object_replication(
-            cid, oid, 3, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env
-        )
+        wait_object_replication(cid, oid, 3, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env)
 
         self.return_nodes(alive_node)
 
@@ -183,9 +171,7 @@ class TestNodeManagement(NeofsEnvTestBase):
             random_node = random.choice(list(set(storage_nodes) - {random_node, alive_node}))
             # Add node to recovery list before messing with it
             check_nodes.append(random_node)
-            exclude_node_from_network_map(
-                random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env
-            )
+            exclude_node_from_network_map(random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env)
 
             wait_object_replication(
                 cid,
@@ -195,9 +181,7 @@ class TestNodeManagement(NeofsEnvTestBase):
                 nodes=list(set(storage_nodes) - {random_node}),
                 neofs_env=self.neofs_env,
             )
-            include_node_to_network_map(
-                random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env
-            )
+            include_node_to_network_map(random_node, alive_node, shell=self.shell, neofs_env=self.neofs_env)
             wait_object_replication(
                 cid,
                 oid,
@@ -222,9 +206,7 @@ class TestNodeManagement(NeofsEnvTestBase):
                 shell=self.shell,
                 endpoint=alive_node.endpoint,
             )
-            wait_object_replication(
-                cid, oid, 4, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env
-            )
+            wait_object_replication(cid, oid, 4, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env)
 
     @pytest.mark.parametrize(
         "placement_rule,expected_copies",
@@ -240,9 +222,7 @@ class TestNodeManagement(NeofsEnvTestBase):
     )
     @pytest.mark.node_mgmt
     @allure.title("Test object copies based on placement policy")
-    def test_placement_policy(
-        self, default_wallet, placement_rule, expected_copies, simple_object_size
-    ):
+    def test_placement_policy(self, default_wallet, placement_rule, expected_copies, simple_object_size):
         """
         This test checks object's copies based on container's placement policy.
         """
@@ -315,13 +295,9 @@ class TestNodeManagement(NeofsEnvTestBase):
         """
         wallet = default_wallet
         file_path = generate_file(simple_object_size)
-        cid, oid, found_nodes = self.validate_object_copies(
-            wallet.path, placement_rule, file_path, expected_copies
-        )
+        cid, oid, found_nodes = self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
-        assert (
-            found_nodes == expected_nodes_id
-        ), f"Expected nodes {expected_nodes_id}, got {found_nodes}"
+        assert found_nodes == expected_nodes_id, f"Expected nodes {expected_nodes_id}, got {found_nodes}"
 
     @pytest.mark.parametrize(
         "placement_rule,expected_copies",
@@ -331,9 +307,7 @@ class TestNodeManagement(NeofsEnvTestBase):
     )
     @pytest.mark.node_mgmt
     @allure.title("Negative cases for placement policy")
-    def test_placement_policy_negative(
-        self, default_wallet, placement_rule, expected_copies, simple_object_size
-    ):
+    def test_placement_policy_negative(self, default_wallet, placement_rule, expected_copies, simple_object_size):
         """
         Negative test for placement policy.
         """
@@ -352,9 +326,7 @@ class TestNodeManagement(NeofsEnvTestBase):
         """
         wallet = default_wallet
         endpoint = self.neofs_env.sn_rpc
-        file_path_simple, file_path_complex = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_complex = generate_file(simple_object_size), generate_file(complex_object_size)
 
         locode = get_locode_from_random_node(self.neofs_env)
         rule = f"REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '{locode}' AS LOC"
@@ -367,9 +339,7 @@ class TestNodeManagement(NeofsEnvTestBase):
         )
 
         for oid in (oid_simple, oid_complex):
-            get_object_from_random_node(
-                wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env
-            )
+            get_object_from_random_node(wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env)
             head_object(wallet.path, cid, oid, shell=self.shell, endpoint=endpoint)
 
         nodes_with_object = get_nodes_with_object(
@@ -383,9 +353,7 @@ class TestNodeManagement(NeofsEnvTestBase):
 
         for oid in (oid_simple, oid_complex):
             with allure.step(f"Drop object {oid}"):
-                get_object_from_random_node(
-                    wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env
-                )
+                get_object_from_random_node(wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env)
                 head_object(wallet.path, cid, oid, shell=self.shell, endpoint=endpoint)
                 drop_object(random_node, cid, oid)
                 self.wait_for_obj_dropped(wallet.path, cid, oid, endpoint, get_object)
@@ -404,9 +372,7 @@ class TestNodeManagement(NeofsEnvTestBase):
         file_path = generate_file(simple_object_size)
 
         cid, node = create_container_and_pick_node
-        original_oid = put_object_to_random_node(
-            wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-        )
+        original_oid = put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
 
         # for mode in ('read-only', 'degraded'):
         for mode in ("degraded",):
@@ -433,9 +399,7 @@ class TestNodeManagement(NeofsEnvTestBase):
             shards = node_shard_list(node)
             assert shards
 
-            oid = put_object_to_random_node(
-                wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-            )
+            oid = put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
             delete_object(wallet.path, cid, oid, self.shell, self.neofs_env.sn_rpc)
 
     @allure.step("Validate object has {expected_copies} copies")
@@ -443,18 +407,14 @@ class TestNodeManagement(NeofsEnvTestBase):
         self, wallet: str, placement_rule: str, file_path: str, expected_copies: int
     ) -> set[int]:
         endpoint = self.neofs_env.sn_rpc
-        cid = create_container(
-            wallet, rule=placement_rule, basic_acl=PUBLIC_ACL, shell=self.shell, endpoint=endpoint
-        )
+        cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL, shell=self.shell, endpoint=endpoint)
         got_policy = placement_policy_from_container(
             get_container(wallet, cid, json_mode=False, shell=self.shell, endpoint=endpoint)
         )
         assert got_policy == placement_rule.replace(
             "'", ""
         ), f"Expected \n{placement_rule} and got policy \n{got_policy} are the same"
-        oid = put_object_to_random_node(
-            wallet, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(wallet, file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
         nodes = get_nodes_with_object(
             cid, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
         )

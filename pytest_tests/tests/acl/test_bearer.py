@@ -67,9 +67,7 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
         with allure.step(f"Set deny all operations for {role.value} via eACL"):
-            eacl = [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation
-            ]
+            eacl = [EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation]
             eacl_file = create_eacl(cid, eacl, shell=self.shell)
             set_eacl(user_wallet.wallet_path, cid, eacl_file, shell=self.shell, endpoint=endpoint)
             wait_for_cache_expired()
@@ -78,17 +76,12 @@ class TestACLBearer(NeofsEnvTestBase):
             bearer = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
-                [
-                    EACLRule(operation=op, access=EACLAccess.ALLOW, role=role)
-                    for op in EACLOperation
-                ],
+                [EACLRule(operation=op, access=EACLAccess.ALLOW, role=role) for op in EACLOperation],
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        with allure.step(
-            f"Check {role.value} without token has no access to all operations with container"
-        ):
+        with allure.step(f"Check {role.value} without token has no access to all operations with container"):
             check_no_access_to_container(
                 deny_wallet.wallet_path,
                 cid,
@@ -99,9 +92,7 @@ class TestACLBearer(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
-        with allure.step(
-            f"Check {role.value} with token has access to all operations with container"
-        ):
+        with allure.step(f"Check {role.value} with token has access to all operations with container"):
             check_full_access_to_container(
                 deny_wallet.wallet_path,
                 cid,
@@ -114,16 +105,12 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
         with allure.step(f"Set allow all operations for {role.value} via eACL"):
-            eacl = [
-                EACLRule(access=EACLAccess.ALLOW, role=role, operation=op) for op in EACLOperation
-            ]
+            eacl = [EACLRule(access=EACLAccess.ALLOW, role=role, operation=op) for op in EACLOperation]
             eacl_file = create_eacl(cid, eacl, shell=self.shell)
             set_eacl(user_wallet.wallet_path, cid, eacl_file, shell=self.shell, endpoint=endpoint)
             wait_for_cache_expired()
 
-        with allure.step(
-            f"Check {role.value} without token has access to all operations with container"
-        ):
+        with allure.step(f"Check {role.value} without token has access to all operations with container"):
             check_full_access_to_container(
                 deny_wallet.wallet_path,
                 cid,
@@ -166,19 +153,13 @@ class TestACLBearer(NeofsEnvTestBase):
         }
 
         deny_map_with_bearer = {
-            EACLRole.USER: [
-                op for op in deny_map[EACLRole.USER] if op not in bearer_map[EACLRole.USER]
-            ],
-            EACLRole.OTHERS: [
-                op for op in deny_map[EACLRole.OTHERS] if op not in bearer_map[EACLRole.OTHERS]
-            ],
+            EACLRole.USER: [op for op in deny_map[EACLRole.USER] if op not in bearer_map[EACLRole.USER]],
+            EACLRole.OTHERS: [op for op in deny_map[EACLRole.OTHERS] if op not in bearer_map[EACLRole.OTHERS]],
         }
 
         eacl_deny = []
         for role, operations in deny_map.items():
-            eacl_deny += [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in operations
-            ]
+            eacl_deny += [EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in operations]
         set_eacl(
             user_wallet.wallet_path,
             cid,
@@ -264,14 +245,9 @@ class TestACLBearer(NeofsEnvTestBase):
         user_wallet = wallets.get_wallet()
 
         with allure.step("Create and sign bearer token via cli"):
-            eacl = [
-                EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op)
-                for op in EACLOperation
-            ]
+            eacl = [EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op) for op in EACLOperation]
 
-            path_to_bearer = os.path.join(
-                os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}"
-            )
+            path_to_bearer = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
 
             create_bearer_token(
                 self.shell,
@@ -295,9 +271,7 @@ class TestACLBearer(NeofsEnvTestBase):
 
         self.tick_epochs_and_wait(1)
 
-        with allure.step(
-            f"Check {EACLRole.USER.value} with token has access to all operations with container"
-        ):
+        with allure.step(f"Check {EACLRole.USER.value} with token has access to all operations with container"):
             check_full_access_to_container(
                 user_wallet.wallet_path,
                 cid,
@@ -311,9 +285,7 @@ class TestACLBearer(NeofsEnvTestBase):
 
         self.tick_epochs_and_wait(1)
 
-        with allure.step(
-            f"Check {EACLRole.USER.value} has no access to all operations with container"
-        ):
+        with allure.step(f"Check {EACLRole.USER.value} has no access to all operations with container"):
             check_no_access_to_container(
                 user_wallet.wallet_path,
                 cid,
@@ -326,9 +298,7 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
     @allure.title("Check bearer token with ContainerID specified")
-    def test_bearer_token_with_container_id(
-        self, wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str
-    ):
+    def test_bearer_token_with_container_id(self, wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str):
         user_wallet = wallets.get_wallet()
         container1, container2 = self._create_containers_with_objects(
             containers_count=2,
@@ -339,16 +309,11 @@ class TestACLBearer(NeofsEnvTestBase):
             file_path=file_path,
         )
 
-        with allure.step(
-            f"Create bearer token with all operations allowed for cid: {container1.cid}"
-        ):
+        with allure.step(f"Create bearer token with all operations allowed for cid: {container1.cid}"):
             bearer = form_bearertoken_file(
                 user_wallet.wallet_path,
                 container1.cid,
-                [
-                    EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER)
-                    for op in EACLOperation
-                ],
+                [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER) for op in EACLOperation],
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
@@ -382,9 +347,7 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
     @allure.title("Check bearer token without ContainerID specified")
-    def test_bearer_token_without_container_id(
-        self, wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str
-    ):
+    def test_bearer_token_without_container_id(self, wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str):
         user_wallet = wallets.get_wallet()
         container1, container2 = self._create_containers_with_objects(
             containers_count=2,
@@ -395,14 +358,11 @@ class TestACLBearer(NeofsEnvTestBase):
             file_path=file_path,
         )
 
-        with allure.step(f"Create bearer token with all operations allowed for all containers"):
+        with allure.step("Create bearer token with all operations allowed for all containers"):
             bearer = form_bearertoken_file(
                 user_wallet.wallet_path,
                 None,
-                [
-                    EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER)
-                    for op in EACLOperation
-                ],
+                [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER) for op in EACLOperation],
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
@@ -436,24 +396,18 @@ class TestACLBearer(NeofsEnvTestBase):
             )
 
     @pytest.mark.parametrize("operation", list(EACLOperation))
-    def test_bearer_token_separate_operations(
-        self, wallets, eacl_container_with_objects, operation
-    ):
+    def test_bearer_token_separate_operations(self, wallets, eacl_container_with_objects, operation):
         role = EACLRole.USER
         not_allowed_operations = [op for op in EACLOperation if op != operation]
 
-        allure.dynamic.title(
-            f"Testcase to validate NeoFS {operation.value} with {role.value} BearerToken"
-        )
+        allure.dynamic.title(f"Testcase to validate NeoFS {operation.value} with {role.value} BearerToken")
         cid, objects_oids, file_path = eacl_container_with_objects
         user_wallet = wallets.get_wallet()
         deny_wallet = wallets.get_wallet(role)
         endpoint = self.neofs_env.sn_rpc
 
         with allure.step(f"Set deny all operations for {role.value} via eACL"):
-            eacl = [
-                EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation
-            ]
+            eacl = [EACLRule(access=EACLAccess.DENY, role=role, operation=op) for op in EACLOperation]
             eacl_file = create_eacl(cid, eacl, shell=self.shell)
             set_eacl(user_wallet.wallet_path, cid, eacl_file, shell=self.shell, endpoint=endpoint)
             wait_for_cache_expired()
@@ -467,9 +421,7 @@ class TestACLBearer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        with allure.step(
-            f"Check {role.value} with token has access to {operation.value} within container"
-        ):
+        with allure.step(f"Check {role.value} with token has access to {operation.value} within container"):
             if operation == EACLOperation.PUT:
                 assert can_put_object(
                     deny_wallet.wallet_path,
@@ -541,9 +493,7 @@ class TestACLBearer(NeofsEnvTestBase):
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
 
-        with allure.step(
-            f"Check {role.value} with token has no access to all other operations within container"
-        ):
+        with allure.step(f"Check {role.value} with token has no access to all other operations within container"):
             for not_allowed_op in not_allowed_operations:
                 if not_allowed_op == EACLOperation.PUT:
                     assert not can_put_object(

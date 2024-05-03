@@ -10,9 +10,7 @@ class ParsedAttributes:
     def parse(cls, attributes: dict[str, Any]):
         # Pick attributes supported by the class
         field_names = set(field.name for field in fields(cls))
-        supported_attributes = {
-            key: value for key, value in attributes.items() if key in field_names
-        }
+        supported_attributes = {key: value for key, value in attributes.items() if key in field_names}
         return cls(**supported_attributes)
 
 

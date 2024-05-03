@@ -92,8 +92,7 @@ class EACLFilters:
         return (
             ",".join(
                 [
-                    f"{filter.header_type.value}:"
-                    f"{filter.key}{filter.match_type.value}{filter.value}"
+                    f"{filter.header_type.value}:" f"{filter.key}{filter.match_type.value}{filter.value}"
                     for filter in self.filters
                 ]
             )
@@ -171,12 +170,8 @@ def _encode_cid_for_eacl(cid: str) -> str:
     return base64.b64encode(cid_base58).decode("utf-8")
 
 
-def create_eacl(
-    cid: str, rules_list: List[EACLRule], shell: Shell, wallet_config: str = None
-) -> str:
-    table_file_path = os.path.join(
-        os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json"
-    )
+def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell, wallet_config: str = None) -> str:
+    table_file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG if not wallet_config else wallet_config)
     cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
@@ -275,9 +270,7 @@ def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     return rules
 
 
-def sign_bearer(
-    shell: Shell, wallet_path: str, eacl_rules_file_from: str, eacl_rules_file_to: str, json: bool
-) -> None:
+def sign_bearer(shell: Shell, wallet_path: str, eacl_rules_file_from: str, eacl_rules_file_to: str, json: bool) -> None:
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
     neofscli.util.sign_bearer_token(
         wallet=wallet_path, from_file=eacl_rules_file_from, to_file=eacl_rules_file_to, json=json

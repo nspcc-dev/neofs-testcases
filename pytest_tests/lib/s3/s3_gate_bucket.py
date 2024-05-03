@@ -49,9 +49,7 @@ def create_bucket_s3(
             elif grant_full_control:
                 params.update({"GrantFullControl": grant_full_control})
         if bucket_configuration:
-            params.update(
-                {"CreateBucketConfiguration": {"LocationConstraint": bucket_configuration}}
-            )
+            params.update({"CreateBucketConfiguration": {"LocationConstraint": bucket_configuration}})
 
         s3_bucket = s3_client.create_bucket(**params)
         log_command_execution(f"Created S3 bucket {bucket_name}", s3_bucket)
@@ -117,9 +115,7 @@ def head_bucket(s3_client, bucket: str):
 @allure.step("Set bucket versioning status")
 def set_bucket_versioning(s3_client, bucket_name: str, status: VersioningStatus) -> None:
     try:
-        response = s3_client.put_bucket_versioning(
-            Bucket=bucket_name, VersioningConfiguration={"Status": status.value}
-        )
+        response = s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={"Status": status.value})
         log_command_execution("S3 Set bucket versioning to", response)
 
     except ClientError as err:

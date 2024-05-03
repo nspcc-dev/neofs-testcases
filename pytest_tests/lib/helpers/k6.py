@@ -56,9 +56,7 @@ LOAD_TIME = [int(ld) for ld in os.getenv("LOAD_TIME", "200").split(",")]
 LOAD_TYPE = os.getenv("LOAD_TYPE", "grpc").split(",")
 LOAD_NODES_COUNT = [int(ldc) for ldc in os.getenv("LOAD_NODES_COUNT", "1").split(",")]
 STORAGE_NODE_COUNT = [int(s) for s in os.getenv("STORAGE_NODE_COUNT", "4").split(",")]
-CONTAINER_PLACEMENT_POLICY = os.getenv(
-    "CONTAINER_PLACEMENT_POLICY", "REP 1 IN X CBF 1 SELECT 1  FROM * AS X"
-)
+CONTAINER_PLACEMENT_POLICY = os.getenv("CONTAINER_PLACEMENT_POLICY", "REP 1 IN X CBF 1 SELECT 1  FROM * AS X")
 
 
 @dataclass
@@ -88,7 +86,6 @@ class LoadResults:
 
 class K6:
     def __init__(self, load_params: LoadParams, shell: Shell):
-
         self.load_params = load_params
         self.shell = shell
         self.k6_dir = "/xk6-neofs"
@@ -152,9 +149,7 @@ class K6:
             "K6 ENV variables",
             allure.attachment_type.TEXT,
         )
-        return " ".join(
-            [f"-e {param}={value}" for param, value in env_vars.items() if value is not None]
-        )
+        return " ".join([f"-e {param}={value}" for param, value in env_vars.items() if value is not None])
 
     @allure.step("Start K6 on initiator")
     def start(self) -> None:
@@ -179,14 +174,12 @@ class K6:
         raise TimeoutError(f"Expected K6 finished in {timeout} sec.")
 
     @contextmanager
-    def start_context(
-        self, warm_up_time: int = 0, expected_finish: bool = False, expected_fail: bool = False
-    ) -> None:
+    def start_context(self, warm_up_time: int = 0, expected_finish: bool = False, expected_fail: bool = False) -> None:
         self.start()
         sleep(warm_up_time)
         try:
             yield self
-        except Exception as err:
+        except Exception:
             if self._k6_process.running():
                 self._kill_k6()
             raise
@@ -267,9 +260,7 @@ class K6:
 
 
 @allure.title("Get services endpoints")
-def get_services_endpoints(
-    hosting: Hosting, service_name_regex: str, endpoint_attribute: str
-) -> list[str]:
+def get_services_endpoints(hosting: Hosting, service_name_regex: str, endpoint_attribute: str) -> list[str]:
     service_configs = hosting.find_service_configs(service_name_regex)
     return [service_config.attributes[endpoint_attribute] for service_config in service_configs]
 
@@ -309,9 +300,7 @@ def init_s3_client(
     # prompt_pattern doesn't work at the moment
     for load_node in load_nodes:
         ssh_client = SSHShell(host=load_node, port=ssh_port, login=login, private_key_path=pkey)
-        path = ssh_client.exec(r"sudo find . -name 'k6' -exec dirname {} \; -quit").stdout.strip(
-            "\n"
-        )
+        path = ssh_client.exec(r"sudo find . -name 'k6' -exec dirname {} \; -quit").stdout.strip("\n")
         neofs_authmate_exec = NeofsAuthmate(ssh_client, NEOFS_AUTHMATE_PATH)
         issue_secret_output = neofs_authmate_exec.secret.issue(
             wallet=f"{path}/scenarios/files/wallet.json",
@@ -323,21 +312,17 @@ def init_s3_client(
             wallet_password="",
         ).stdout
         aws_access_key_id = str(
-            re.search(r"access_key_id.*:\s.(?P<aws_access_key_id>\w*)", issue_secret_output).group(
-                "aws_access_key_id"
-            )
+            re.search(r"access_key_id.*:\s.(?P<aws_access_key_id>\w*)", issue_secret_output).group("aws_access_key_id")
         )
         aws_secret_access_key = str(
-            re.search(
-                r"secret_access_key.*:\s.(?P<aws_secret_access_key>\w*)", issue_secret_output
-            ).group("aws_secret_access_key")
+            re.search(r"secret_access_key.*:\s.(?P<aws_secret_access_key>\w*)", issue_secret_output).group(
+                "aws_secret_access_key"
+            )
         )
         # prompt_pattern doesn't work at the moment
         configure_input = [
             InteractiveInput(prompt_pattern=r"AWS Access Key ID.*", input=aws_access_key_id),
-            InteractiveInput(
-                prompt_pattern=r"AWS Secret Access Key.*", input=aws_secret_access_key
-            ),
+            InteractiveInput(prompt_pattern=r"AWS Secret Access Key.*", input=aws_secret_access_key),
             InteractiveInput(prompt_pattern=r".*", input=""),
             InteractiveInput(prompt_pattern=r".*", input=""),
         ]

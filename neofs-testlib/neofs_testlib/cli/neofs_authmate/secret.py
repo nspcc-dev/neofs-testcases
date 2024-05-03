@@ -32,11 +32,7 @@ class NeofsAuthmateSecret(CliCommand):
         return self._execute_with_password(
             "obtain-secret",
             wallet_password,
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def issue(
@@ -83,9 +79,5 @@ class NeofsAuthmateSecret(CliCommand):
         return self._execute_with_password(
             "issue-secret",
             wallet_password,
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

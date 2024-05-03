@@ -20,16 +20,11 @@ from pytest import FixtureRequest
 
 @pytest.fixture(scope="module")
 @allure.title("Create bearer token for OTHERS with all operations allowed for all containers")
-def bearer_token_file_all_allow(
-    default_wallet: str, client_shell: Shell, neofs_env: NeoFSEnv
-) -> str:
+def bearer_token_file_all_allow(default_wallet: str, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
     bearer = form_bearertoken_file(
         default_wallet.path,
         "",
-        [
-            EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
-            for op in EACLOperation
-        ],
+        [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS) for op in EACLOperation],
         shell=client_shell,
         endpoint=neofs_env.sn_rpc,
     )

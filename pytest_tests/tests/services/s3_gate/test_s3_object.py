@@ -63,19 +63,13 @@ class TestS3GateObject(TestNeofsS3GateBase):
         assert not objects_list, f"Expected empty bucket, got {objects_list}"
 
         with allure.step("Copy object from first bucket into second"):
-            copy_obj_path_b2 = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket_1, file_name, bucket_dst=bucket_2
-            )
+            copy_obj_path_b2 = s3_gate_object.copy_object_s3(self.s3_client, bucket_1, file_name, bucket_dst=bucket_2)
             check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
             check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
         with allure.step("Check copied object has the same content"):
-            got_copied_file_b2 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket_2, copy_obj_path_b2
-            )
-            assert get_file_hash(file_path) == get_file_hash(
-                got_copied_file_b2
-            ), "Hashes must be the same"
+            got_copied_file_b2 = s3_gate_object.get_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
+            assert get_file_hash(file_path) == get_file_hash(got_copied_file_b2), "Hashes must be the same"
 
         with allure.step("Delete one object from first bucket"):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_1, file_name)
@@ -108,9 +102,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
         set_bucket_versioning(self.s3_client, bucket_2, s3_gate_bucket.VersioningStatus.ENABLED)
         with allure.step("Copy object from first bucket into second"):
-            copy_obj_path_b2 = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket_1, obj_key, bucket_dst=bucket_2
-            )
+            copy_obj_path_b2 = s3_gate_object.copy_object_s3(self.s3_client, bucket_1, obj_key, bucket_dst=bucket_2)
             check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
             check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
@@ -152,9 +144,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put object into bucket"):
-            s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path, Metadata=object_metadata
-            )
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path, Metadata=object_metadata)
             bucket_1_objects = [file_name]
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
 
@@ -163,19 +153,13 @@ class TestS3GateObject(TestNeofsS3GateBase):
             bucket_1_objects.append(copy_obj_path)
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
             obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert (
-                obj_head.get("Metadata") == object_metadata
-            ), f"Metadata must be {object_metadata}"
+            assert obj_head.get("Metadata") == object_metadata, f"Metadata must be {object_metadata}"
 
         with allure.step("Copy one object with metadata"):
-            copy_obj_path = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket, file_name, metadata_directive="COPY"
-            )
+            copy_obj_path = s3_gate_object.copy_object_s3(self.s3_client, bucket, file_name, metadata_directive="COPY")
             bucket_1_objects.append(copy_obj_path)
             obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert (
-                obj_head.get("Metadata") == object_metadata
-            ), f"Metadata must be {object_metadata}"
+            assert obj_head.get("Metadata") == object_metadata, f"Metadata must be {object_metadata}"
 
         with allure.step("Copy one object with new metadata"):
             object_metadata_1 = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
@@ -188,9 +172,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             )
             bucket_1_objects.append(copy_obj_path)
             obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert (
-                obj_head.get("Metadata") == object_metadata_1
-            ), f"Metadata must be {object_metadata_1}"
+            assert obj_head.get("Metadata") == object_metadata_1, f"Metadata must be {object_metadata_1}"
 
     @allure.title("Test S3: Copy object with tagging")
     def test_s3_copy_tagging(self, bucket, simple_object_size):
@@ -262,35 +244,25 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
         with allure.step("Check bucket shows all versions"):
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == obj_key}
             assert obj_versions == {
                 version_id_1,
                 version_id_2,
             }, f"Expected object has versions: {version_id_1, version_id_2}"
 
         with allure.step("Delete 1 version of object"):
-            delete_obj = s3_gate_object.delete_object_s3(
-                self.s3_client, bucket, obj_key, version_id=version_id_1
-            )
+            delete_obj = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key, version_id=version_id_1)
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == obj_key}
             assert obj_versions == {version_id_2}, f"Expected object has versions: {version_id_2}"
-            assert not "DeleteMarkers" in delete_obj.keys(), "Delete markes not found"
+            assert "DeleteMarkers" not in delete_obj.keys(), "Delete markes not found"
 
         with allure.step("Delete second version of object"):
-            delete_obj = s3_gate_object.delete_object_s3(
-                self.s3_client, bucket, obj_key, version_id=version_id_2
-            )
+            delete_obj = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key, version_id=version_id_2)
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == obj_key}
             assert not obj_versions, "Expected object not found"
-            assert not "DeleteMarkers" in delete_obj.keys(), "Delete markes not found"
+            assert "DeleteMarkers" not in delete_obj.keys(), "Delete markes not found"
 
         with allure.step("Put new object into bucket"):
             file_name_simple = generate_file(complex_object_size)
@@ -300,8 +272,8 @@ class TestS3GateObject(TestNeofsS3GateBase):
         with allure.step("Delete last object"):
             delete_obj = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key)
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket, True)
-            assert versions.get("DeleteMarkers", None), f"Expected delete Marker"
-            assert "DeleteMarker" in delete_obj.keys(), f"Expected delete Marker"
+            assert versions.get("DeleteMarkers", None), "Expected delete Marker"
+            assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
     @allure.title("Test S3: bulk delete version of object")
     def test_s3_bulk_delete_versioning(self, bucket, simple_object_size):
@@ -332,27 +304,19 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
         with allure.step("Check bucket shows all versions"):
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == obj_key}
             assert obj_versions == version_ids, f"Expected object has versions: {version_ids}"
 
         with allure.step("Delete two objects from bucket one by one"):
-            version_to_delete_b1 = sample(
-                [version_id_1, version_id_2, version_id_3, version_id_4], k=2
-            )
+            version_to_delete_b1 = sample([version_id_1, version_id_2, version_id_3, version_id_4], k=2)
             version_to_save = list(set(version_ids) - set(version_to_delete_b1))
             for ver in version_to_delete_b1:
                 s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key, ver)
 
         with allure.step("Check bucket shows all versions"):
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = [
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            ]
-            assert (
-                obj_versions.sort() == version_to_save.sort()
-            ), f"Expected object has versions: {version_to_save}"
+            obj_versions = [version.get("VersionId") for version in versions if version.get("Key") == obj_key]
+            assert obj_versions.sort() == version_to_save.sort(), f"Expected object has versions: {version_to_save}"
 
     @allure.title("Test S3: Get versions of object")
     def test_s3_get_versioning(self, bucket, simple_object_size):
@@ -370,28 +334,16 @@ class TestS3GateObject(TestNeofsS3GateBase):
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
         with allure.step("Get first version of object"):
-            object_1 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, obj_key, version_id_1, full_output=True
-            )
-            assert (
-                object_1.get("VersionId") == version_id_1
-            ), f"Get object with version {version_id_1}"
+            object_1 = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key, version_id_1, full_output=True)
+            assert object_1.get("VersionId") == version_id_1, f"Get object with version {version_id_1}"
 
         with allure.step("Get second version of object"):
-            object_2 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, obj_key, version_id_2, full_output=True
-            )
-            assert (
-                object_2.get("VersionId") == version_id_2
-            ), f"Get object with version {version_id_2}"
+            object_2 = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key, version_id_2, full_output=True)
+            assert object_2.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
 
         with allure.step("Get object"):
-            object_3 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, obj_key, full_output=True
-            )
-            assert (
-                object_3.get("VersionId") == version_id_2
-            ), f"Get object with version {version_id_2}"
+            object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key, full_output=True)
+            assert object_3.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
 
     @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3: Get range")
@@ -453,9 +405,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 range=[2 * int(simple_object_size / 3) + 1, simple_object_size],
             )
             con_file_1 = concat_files([object_2_part_1, object_2_part_2, object_2_part_3])
-            assert get_file_hash(con_file_1) == get_file_hash(
-                file_name_1
-            ), "Hashes must be the same"
+            assert get_file_hash(con_file_1) == get_file_hash(file_name_1), "Hashes must be the same"
 
         with allure.step("Get object"):
             object_3_part_1 = s3_gate_object.get_object_s3(
@@ -485,9 +435,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put several versions of object into bucket"):
-            version_id_1 = s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path, Metadata=object_metadata
-            )
+            version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path, Metadata=object_metadata)
             file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
@@ -496,23 +444,15 @@ class TestS3GateObject(TestNeofsS3GateBase):
             assert "LastModified" in response, "Expected LastModified field"
             assert "ETag" in response, "Expected ETag field"
             assert response.get("Metadata") == {}, "Expected Metadata empty"
-            assert (
-                response.get("VersionId") == version_id_2
-            ), f"Expected VersionId is {version_id_2}"
+            assert response.get("VersionId") == version_id_2, f"Expected VersionId is {version_id_2}"
             assert response.get("ContentLength") != 0, "Expected ContentLength is not zero"
 
         with allure.step("Get head ob first version of object"):
-            response = s3_gate_object.head_object_s3(
-                self.s3_client, bucket, file_name, version_id=version_id_1
-            )
+            response = s3_gate_object.head_object_s3(self.s3_client, bucket, file_name, version_id=version_id_1)
             assert "LastModified" in response, "Expected LastModified field"
             assert "ETag" in response, "Expected ETag field"
-            assert (
-                response.get("Metadata") == object_metadata
-            ), f"Expected Metadata is {object_metadata}"
-            assert (
-                response.get("VersionId") == version_id_1
-            ), f"Expected VersionId is {version_id_1}"
+            assert response.get("Metadata") == object_metadata, f"Expected Metadata is {object_metadata}"
+            assert response.get("VersionId") == version_id_1, f"Expected VersionId is {version_id_1}"
             assert response.get("ContentLength") != 0, "Expected ContentLength is not zero"
 
     @allure.title("Test S3: list of object with versions")
@@ -533,7 +473,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 list_obj = s3_gate_object.list_objects_s3(self.s3_client, bucket)
             elif list_type == "v2":
                 list_obj = s3_gate_object.list_objects_s3_v2(self.s3_client, bucket)
-            assert len(list_obj) == 2, f"bucket have 2 objects"
+            assert len(list_obj) == 2, "bucket have 2 objects"
             assert (
                 list_obj.sort() == [file_name, file_name_2].sort()
             ), f"bucket have object key {file_name, file_name_2}"
@@ -541,17 +481,13 @@ class TestS3GateObject(TestNeofsS3GateBase):
         with allure.step("Delete object"):
             delete_obj = s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name)
             if list_type == "v1":
-                list_obj_1 = s3_gate_object.list_objects_s3(
-                    self.s3_client, bucket, full_output=True
-                )
+                list_obj_1 = s3_gate_object.list_objects_s3(self.s3_client, bucket, full_output=True)
             elif list_type == "v2":
-                list_obj_1 = s3_gate_object.list_objects_s3_v2(
-                    self.s3_client, bucket, full_output=True
-                )
+                list_obj_1 = s3_gate_object.list_objects_s3_v2(self.s3_client, bucket, full_output=True)
             contents = list_obj_1.get("Contents", [])
-            assert len(contents) == 1, f"bucket have only 1 object"
+            assert len(contents) == 1, "bucket have only 1 object"
             assert contents[0].get("Key") == file_name_2, f"bucket has object key {file_name_2}"
-            assert "DeleteMarker" in delete_obj.keys(), f"Expected delete Marker"
+            assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
     @allure.title("Test S3: put object")
     def test_s3_put_object(self, bucket, complex_object_size, simple_object_size):
@@ -568,29 +504,21 @@ class TestS3GateObject(TestNeofsS3GateBase):
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.SUSPENDED)
 
         with allure.step("Put first object into bucket"):
-            s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path_1, Metadata=object_1_metadata, Tagging=tag_1
-            )
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1, Metadata=object_1_metadata, Tagging=tag_1)
             obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, file_name)
             assert obj_head.get("Metadata") == object_1_metadata, "Matadata must be the same"
             got_tags = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name)
             assert got_tags, f"Expected tags, got {got_tags}"
-            assert got_tags == [
-                {"Key": tag_key_1, "Value": str(tag_value_1)}
-            ], "Tags must be the same"
+            assert got_tags == [{"Key": tag_key_1, "Value": str(tag_value_1)}], "Tags must be the same"
 
         with allure.step("Rewrite file into bucket"):
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
-            s3_gate_object.put_object_s3(
-                self.s3_client, bucket, file_path_2, Metadata=object_2_metadata, Tagging=tag_2
-            )
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_2, Metadata=object_2_metadata, Tagging=tag_2)
             obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, file_name)
             assert obj_head.get("Metadata") == object_2_metadata, "Matadata must be the same"
             got_tags_1 = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name)
             assert got_tags_1, f"Expected tags, got {got_tags_1}"
-            assert got_tags_1 == [
-                {"Key": tag_key_2, "Value": str(tag_value_2)}
-            ], "Tags must be the same"
+            assert got_tags_1 == [{"Key": tag_key_2, "Value": str(tag_value_2)}], "Tags must be the same"
 
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
@@ -610,58 +538,36 @@ class TestS3GateObject(TestNeofsS3GateBase):
             assert obj_head_3.get("Metadata") == object_3_metadata, "Matadata must be the same"
             got_tags_3 = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name_3)
             assert got_tags_3, f"Expected tags, got {got_tags_3}"
-            assert got_tags_3 == [
-                {"Key": tag_key_3, "Value": str(tag_value_3)}
-            ], "Tags must be the same"
+            assert got_tags_3 == [{"Key": tag_key_3, "Value": str(tag_value_3)}], "Tags must be the same"
 
         with allure.step("Put new version of file into bucket"):
             file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_3)
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_4)
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId")
-                for version in versions
-                if version.get("Key") == file_name_3
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == file_name_3}
             assert obj_versions == {
                 version_id_1,
                 version_id_2,
             }, f"Expected object has versions: {version_id_1, version_id_2}"
             got_tags_4 = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name_3)
-            assert not got_tags_4, f"No expected tags"
+            assert not got_tags_4, "No expected tags"
 
         with allure.step("Get object"):
-            object_3 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name_3, full_output=True
-            )
-            assert (
-                object_3.get("VersionId") == version_id_2
-            ), f"get object with version {version_id_2}"
+            object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_3, full_output=True)
+            assert object_3.get("VersionId") == version_id_2, f"get object with version {version_id_2}"
             object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_3)
             assert get_file_hash(file_path_4) == get_file_hash(object_3), "Hashes must be the same"
 
         with allure.step("Get first version of object"):
-            object_4 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name_3, version_id_1, full_output=True
-            )
-            assert (
-                object_4.get("VersionId") == version_id_1
-            ), f"get object with version {version_id_1}"
-            object_4 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket, file_name_3, version_id_1
-            )
+            object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_3, version_id_1, full_output=True)
+            assert object_4.get("VersionId") == version_id_1, f"get object with version {version_id_1}"
+            object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_3, version_id_1)
             assert file_hash == get_file_hash(object_4), "Hashes must be the same"
-            obj_head_3 = s3_gate_object.head_object_s3(
-                self.s3_client, bucket, file_name_3, version_id_1
-            )
+            obj_head_3 = s3_gate_object.head_object_s3(self.s3_client, bucket, file_name_3, version_id_1)
             assert obj_head_3.get("Metadata") == object_3_metadata, "Matadata must be the same"
-            got_tags_3 = s3_gate_object.get_object_tagging(
-                self.s3_client, bucket, file_name_3, version_id_1
-            )
+            got_tags_3 = s3_gate_object.get_object_tagging(self.s3_client, bucket, file_name_3, version_id_1)
             assert got_tags_3, f"Expected tags, got {got_tags_3}"
-            assert got_tags_3 == [
-                {"Key": tag_key_3, "Value": str(tag_value_3)}
-            ], "Tags must be the same"
+            assert got_tags_3 == [{"Key": tag_key_3, "Value": str(tag_value_3)}], "Tags must be the same"
 
     @pytest.fixture
     def prepare_two_wallets(self, default_wallet, client_shell):
@@ -669,9 +575,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         self.main_public_key = get_wallet_public_key(self.main_wallet.path, WALLET_PASS)
         other_wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
         other_wallet_address = init_wallet(other_wallet_path, WALLET_PASS)
-        self.other_wallet = NodeWallet(
-            path=other_wallet_path, address=other_wallet_address, password=WALLET_PASS
-        )
+        self.other_wallet = NodeWallet(path=other_wallet_path, address=other_wallet_address, password=WALLET_PASS)
         self.other_public_key = get_wallet_public_key(self.other_wallet.path, WALLET_PASS)
 
     @allure.title("Test S3: put object with ACL")
@@ -743,9 +647,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             object_4 = s3_gate_object.get_object_s3(self.s3_client, bucket, file_name_5)
             assert get_file_hash(file_path_5) == get_file_hash(object_4), "Hashes must be the same"
 
-        with allure.step(
-            "Put object with --grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"
-        ):
+        with allure.step("Put object with --grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"):
             file_path_7 = generate_file_with_content(simple_object_size, file_path=file_path_5)
             s3_gate_object.put_object_s3(
                 self.s3_client,
@@ -765,9 +667,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, True)
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
-        with allure.step(
-            "Put object with lock-mode GOVERNANCE lock-retain-until-date +1day, lock-legal-hold-status"
-        ):
+        with allure.step("Put object with lock-mode GOVERNANCE lock-retain-until-date +1day, lock-legal-hold-status"):
             date_obj = datetime.utcnow() + timedelta(days=1)
             s3_gate_object.put_object_s3(
                 self.s3_client,
@@ -777,9 +677,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 ObjectLockRetainUntilDate=date_obj.strftime("%Y-%m-%dT%H:%M:%S"),
                 ObjectLockLegalHoldStatus="OFF",
             )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF"
-            )
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
@@ -793,9 +691,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 ObjectLockMode="COMPLIANCE",
                 ObjectLockRetainUntilDate=date_obj,
             )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF"
-            )
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
@@ -818,9 +714,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 match=r".*must both be supplied*",
             ):
                 # x-amz-object-lock-retain-until-date and x-amz-object-lock-mode must both be supplied
-                s3_gate_object.put_object_s3(
-                    self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE"
-                )
+                s3_gate_object.put_object_s3(self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE")
 
         with allure.step("Put object with lock-mode and past date"):
             date_obj = datetime.utcnow() - timedelta(days=3)
@@ -867,9 +761,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
         with allure.step("Check objects are synced"):
             objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
-            assert set(key_to_path.keys()) == set(
-                objects
-            ), f"Expected all abjects saved. Got {objects}"
+            assert set(key_to_path.keys()) == set(objects), f"Expected all abjects saved. Got {objects}"
 
         with allure.step("Check these are the same objects"):
             for obj_key in objects:
@@ -878,9 +770,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                     key_to_path.get(obj_key)
                 ), "Expected hashes are the same"
                 obj_head = s3_gate_object.head_object_s3(self.s3_client, bucket, obj_key)
-                assert (
-                    obj_head.get("Metadata") == object_metadata
-                ), f"Metadata of object is {object_metadata}"
+                assert obj_head.get("Metadata") == object_metadata, f"Metadata of object is {object_metadata}"
                 # Uncomment after https://github.com/nspcc-dev/neofs-s3-gw/issues/685 is solved
                 # obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, obj_key)
                 # assert_s3_acl(acl_grants = obj_acl, permitted_users = "AllUsers")

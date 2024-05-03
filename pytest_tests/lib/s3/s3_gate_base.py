@@ -59,9 +59,13 @@ class TestNeofsS3GateBase(NeofsEnvTestBase):
         wallet = default_wallet
         s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
         policy = None if isinstance(request.param, str) else request.param[1]
-        (cid, bucket, access_key_id, secret_access_key, owner_private_key,) = init_s3_credentials(
-            wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file, policy=policy
-        )
+        (
+            cid,
+            bucket,
+            access_key_id,
+            secret_access_key,
+            owner_private_key,
+        ) = init_s3_credentials(wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file, policy=policy)
 
         cli = neofs_env.neofs_cli(neofs_env.generate_cli_config(wallet))
         result = cli.container.list(rpc_endpoint=neofs_env.sn_rpc, wallet=wallet.path)
@@ -69,13 +73,9 @@ class TestNeofsS3GateBase(NeofsEnvTestBase):
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
         if "aws cli" in request.param:
-            client = configure_cli_client(
-                access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}"
-            )
+            client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
         else:
-            client = configure_boto3_client(
-                access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}"
-            )
+            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
         TestNeofsS3GateBase.s3_client = client
         TestNeofsS3GateBase.wallet = wallet
 
@@ -101,29 +101,19 @@ class TestNeofsS3GateBase(NeofsEnvTestBase):
             # From versioned bucket we should delete all versions and delete markers of all objects
             objects_versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
             if objects_versions:
-                s3_gate_object.delete_object_versions_s3_without_dm(
-                    self.s3_client, bucket, objects_versions
-                )
-            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(
-                self.s3_client, bucket
-            )
+                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_versions)
+            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(self.s3_client, bucket)
             if objects_delete_markers:
-                s3_gate_object.delete_object_versions_s3_without_dm(
-                    self.s3_client, bucket, objects_delete_markers
-                )
+                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
 
         else:
             # From non-versioned bucket it's sufficient to delete objects by key
             objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
             if objects:
                 s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
-            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(
-                self.s3_client, bucket
-            )
+            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(self.s3_client, bucket)
             if objects_delete_markers:
-                s3_gate_object.delete_object_versions_s3_without_dm(
-                    self.s3_client, bucket, objects_delete_markers
-                )
+                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
 
         # Delete the bucket itself
         s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
@@ -140,9 +130,7 @@ def init_s3_credentials(
     s3_bearer_rules = s3_bearer_rules_file or "pytest_tests/data/s3_bearer_rules.json"
     policy = policy or "pytest_tests/data/container_policy.json"
 
-    gate_public_key = get_last_public_key_from_wallet(
-        neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password
-    )
+    gate_public_key = get_last_public_key_from_wallet(neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password)
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "

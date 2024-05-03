@@ -36,9 +36,7 @@ class HostIsNotAvailable(Exception):
 
 def log_command(func):
     @wraps(func)
-    def wrapper(
-        shell: "SSHShell", command: str, options: CommandOptions, *args, **kwargs
-    ) -> CommandResult:
+    def wrapper(shell: "SSHShell", command: str, options: CommandOptions, *args, **kwargs) -> CommandResult:
         command_info = command.removeprefix("$ProgressPreference='SilentlyContinue'\n")
         with reporter.step(command_info):
             logger.info(f'Execute command "{command}" on "{shell.host}"')
@@ -135,16 +133,12 @@ class SSHShell(Shell):
             result = self._exec_non_interactive(command, options)
 
         if options.check and result.return_code != 0:
-            raise RuntimeError(
-                f"Command: {command}\nreturn code: {result.return_code}\nOutput: {result.stdout}"
-            )
+            raise RuntimeError(f"Command: {command}\nreturn code: {result.return_code}\nOutput: {result.stdout}")
         return result
 
     @log_command
     def _exec_interactive(self, command: str, options: CommandOptions) -> CommandResult:
-        stdin, stdout, stderr = self._connection.exec_command(
-            command, timeout=options.timeout, get_pty=True
-        )
+        stdin, stdout, stderr = self._connection.exec_command(command, timeout=options.timeout, get_pty=True)
         for interactive_input in options.interactive_inputs:
             input = interactive_input.input
             if not input.endswith("\n"):
@@ -268,8 +262,7 @@ class SSHShell(Shell):
                     )
                 else:
                     logger.info(
-                        f"Trying to connect to host {self.host} as {self.login} using password "
-                        f"(attempt {attempt})"
+                        f"Trying to connect to host {self.host} as {self.login} using password " f"(attempt {attempt})"
                     )
                     connection.connect(
                         hostname=self.host,

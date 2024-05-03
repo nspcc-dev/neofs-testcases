@@ -73,7 +73,6 @@ class TestS3GateBucket(TestNeofsS3GateBase):
     @pytest.mark.acl
     @allure.title("Test S3: Create Bucket with different ACL by grand")
     def test_s3_create_bucket_with_grands(self):
-
         with allure.step("Create bucket with  --grant-read"):
             bucket = s3_gate_bucket.create_bucket_s3(
                 self.s3_client,
@@ -114,9 +113,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
                 self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
             )
             date_obj = datetime.utcnow() + timedelta(days=1)
-            with pytest.raises(
-                Exception, match=r".*Object Lock configuration does not exist for this bucket.*"
-            ):
+            with pytest.raises(Exception, match=r".*Object Lock configuration does not exist for this bucket.*"):
                 # An error occurred (ObjectLockConfigurationNotFoundError) when calling the PutObject operation (reached max retries: 0):
                 # Object Lock configuration does not exist for this bucket
                 s3_gate_object.put_object_s3(
@@ -139,9 +136,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
                 ObjectLockRetainUntilDate=date_obj_1.strftime("%Y-%m-%dT%H:%M:%S"),
                 ObjectLockLegalHoldStatus="ON",
             )
-            assert_object_lock_mode(
-                self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON"
-            )
+            assert_object_lock_mode(self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON")
 
     @allure.title("Test S3: delete bucket")
     def test_s3_delete_bucket(self, simple_object_size):
@@ -165,7 +160,7 @@ class TestS3GateBucket(TestNeofsS3GateBase):
             s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name_2)
             check_objects_in_bucket(self.s3_client, bucket, [])
 
-        with allure.step(f"Delete empty bucket"):
+        with allure.step("Delete empty bucket"):
             s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
             with pytest.raises(Exception, match=r".*Not Found.*"):
                 s3_gate_bucket.head_bucket(self.s3_client, bucket)

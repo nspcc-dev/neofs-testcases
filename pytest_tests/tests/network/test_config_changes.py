@@ -41,9 +41,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
             ("MaintenanceModeAllowed", True),
         ],
     )
-    def test_config_update_single_value(
-        self, key: str, value: Union[str, int, bool], clean_config: None
-    ):
+    def test_config_update_single_value(self, key: str, value: Union[str, int, bool], clean_config: None):
         allure.dynamic.title(f"Set '{key}' to '{value}'")
         self._set_and_verify_config_keys(**{key: value})
 
@@ -65,9 +63,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
         ],
     )
     @allure.title("Set network config key to invalid value")
-    def test_config_set_invalid_value(
-        self, key: str, value: Union[str, int, bool], expected_type: type
-    ):
+    def test_config_set_invalid_value(self, key: str, value: Union[str, int, bool], expected_type: type):
         with pytest.raises(
             RuntimeError,
             match=f"Error: invalid value for {key} key, "
@@ -81,13 +77,11 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
             RuntimeError,
             match="Error: invalid value for MaxObjectSize key, " "expected int, got 'verybigsize'",
         ):
-            self._set_and_verify_config_keys(
-                **{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True
-            )
+            self._set_and_verify_config_keys(**{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True)
 
     @allure.title("Set network config unknown key")
     def test_config_set_unknown_key(self):
-        with pytest.raises(RuntimeError, match=f".*key is not well-known.*"):
+        with pytest.raises(RuntimeError, match=".*key is not well-known.*"):
             self._set_and_verify_config_keys(**{"unknown_key": 120})
 
     @allure.title("Set network config unknown key with force")
@@ -112,10 +106,8 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
         neofsadm = self.neofs_env.neofs_adm()
 
         with allure.step(f"Set {key_value_pairs} via neofs-adm"):
-            force_str = f"--force " if force else ""
-            keys_values_str = " ".join(
-                [f"{key}={str(value).lower()}" for key, value in key_value_pairs.items()]
-            )
+            force_str = "--force " if force else ""
+            keys_values_str = " ".join([f"{key}={str(value).lower()}" for key, value in key_value_pairs.items()])
 
             neofsadm.morph.set_config(
                 rpc_endpoint=f"http://{ir_node.rpc_address}",
@@ -136,7 +128,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
 
     @pytest.fixture(scope="function")
     def clean_config(self):
-        with allure.step(f"Get config contents before test"):
+        with allure.step("Get config contents before test"):
             storage_node = self.neofs_env.storage_nodes[0]
             net_info = get_netmap_netinfo(
                 wallet=storage_node.wallet.path,
@@ -150,5 +142,5 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
 
         yield
 
-        with allure.step(f"Change config contents back to original via neofs-adm"):
+        with allure.step("Change config contents back to original via neofs-adm"):
             self._set_and_verify_config_keys(**original_key_value_pairs)

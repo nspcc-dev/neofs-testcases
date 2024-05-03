@@ -34,11 +34,7 @@ class NeoGoContract(CliCommand):
         """
         return self._execute(
             "contract compile",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def deploy(
@@ -80,9 +76,7 @@ class NeoGoContract(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value
-            for param, param_value in locals().items()
-            if param not in ["self", "wallet_password"]
+            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
         }
         exec_param["timeout"] = f"{timeout}s"
 
@@ -120,11 +114,7 @@ class NeoGoContract(CliCommand):
         """
         return self._execute(
             "contract generate-wrapper",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def invokefunction(
@@ -194,9 +184,7 @@ class NeoGoContract(CliCommand):
         exec_param["timeout"] = f"{timeout}s"
         exec_param["post_data"] = post_data
         if wallet_password is not None:
-            return self._execute_with_password(
-                "contract invokefunction", wallet_password, **exec_param
-            )
+            return self._execute_with_password("contract invokefunction", wallet_password, **exec_param)
         if wallet_config:
             return self._execute("contract invokefunction", **exec_param)
 
@@ -255,9 +243,7 @@ class NeoGoContract(CliCommand):
         exec_param["timeout"] = f"{timeout}s"
         exec_param["post_data"] = post_data
         if wallet_password is not None:
-            return self._execute_with_password(
-                "contract testinvokefunction", wallet_password, **exec_param
-            )
+            return self._execute_with_password("contract testinvokefunction", wallet_password, **exec_param)
 
         return self._execute("contract testinvokefunction", **exec_param)
 
@@ -280,9 +266,7 @@ class NeoGoContract(CliCommand):
         Returns:
             Command's result.
         """
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "contract testinvokescript",
@@ -301,11 +285,7 @@ class NeoGoContract(CliCommand):
         """
         return self._execute(
             "contract init",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def inspect(
@@ -324,11 +304,7 @@ class NeoGoContract(CliCommand):
         """
         return self._execute(
             "contract inspect",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def calc_hash(
@@ -349,11 +325,7 @@ class NeoGoContract(CliCommand):
         """
         return self._execute(
             "contract calc-hash",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def add_group(
@@ -384,14 +356,10 @@ class NeoGoContract(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value
-            for param, param_value in locals().items()
-            if param not in ["self", "wallet_password"]
+            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
         }
         if wallet_password is not None:
-            return self._execute_with_password(
-                "contract manifest add-group", wallet_password, **exec_param
-            )
+            return self._execute_with_password("contract manifest add-group", wallet_password, **exec_param)
         if wallet_config:
             return self._execute("contract manifest add-group", **exec_param)
 

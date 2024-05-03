@@ -198,9 +198,7 @@ def exclude_node_from_network_map(
     neofs_epoch.tick_epoch_and_wait(neofs_env)
 
     snapshot = get_netmap_snapshot(node=alive_node, shell=shell)
-    assert (
-        f"{node_netmap_key}" not in snapshot
-    ), f"Expected node with key {node_netmap_key} to be absent in network map"
+    assert f"{node_netmap_key}" not in snapshot, f"Expected node with key {node_netmap_key} to be absent in network map"
 
 
 @allure.step("Include node {node_to_include} into network map")
@@ -223,20 +221,14 @@ def include_node_to_network_map(
 
 
 @allure.step("Check node {node} in network map")
-def check_node_in_map(
-    node: StorageNode, shell: Shell, alive_node: Optional[StorageNode] = None
-) -> None:
+def check_node_in_map(node: StorageNode, shell: Shell, alive_node: Optional[StorageNode] = None) -> None:
     alive_node = alive_node or node
 
-    node_netmap_key = wallet_utils.get_last_public_key_from_wallet(
-        node.wallet.path, node.wallet.password
-    )
+    node_netmap_key = wallet_utils.get_last_public_key_from_wallet(node.wallet.path, node.wallet.password)
     logger.info(f"Node ({node}) netmap key: {node_netmap_key}")
 
     snapshot = get_netmap_snapshot(alive_node, shell)
-    assert (
-        f"{node_netmap_key}" in snapshot
-    ), f"Expected node with key {node_netmap_key} to be in network map"
+    assert f"{node_netmap_key}" in snapshot, f"Expected node with key {node_netmap_key} to be in network map"
 
 
 @allure.step("Wait for storage nodes returned to cluster")

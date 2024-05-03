@@ -29,11 +29,7 @@ class NeoGoDb(CliCommand):
         return self._execute(
             "db dump",
             **{network.value: True},
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def restore(
@@ -61,9 +57,5 @@ class NeoGoDb(CliCommand):
         return self._execute(
             "db restore",
             **{network.value: True},
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

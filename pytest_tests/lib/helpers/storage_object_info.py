@@ -43,9 +43,7 @@ class StorageObjectInfo(ObjectRef):
 
 
 @allure.step("Verify Head Tombstone")
-def verify_head_tombstone(
-    wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell, endpoint: str
-):
+def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell, endpoint: str):
     header = head_object(wallet_path, cid, oid_ts, shell=shell, endpoint=endpoint)["header"]
 
     s_oid = header["sessionToken"]["body"]["object"]["target"]["objects"]
@@ -61,21 +59,13 @@ def verify_head_tombstone(
 
     assert header["ownerID"] == addr, "Tombstone Owner ID is wrong"
     assert header["objectType"] == "TOMBSTONE", "Header Type isn't Tombstone"
-    assert (
-        header["sessionToken"]["body"]["object"]["verb"] == "DELETE"
-    ), "Header Session Type isn't DELETE"
-    assert (
-        header["sessionToken"]["body"]["object"]["target"]["container"] == cid
-    ), "Header Session ID is wrong"
-    assert (
-        oid in header["sessionToken"]["body"]["object"]["target"]["objects"]
-    ), "Header Session OID is wrong"
+    assert header["sessionToken"]["body"]["object"]["verb"] == "DELETE", "Header Session Type isn't DELETE"
+    assert header["sessionToken"]["body"]["object"]["target"]["container"] == cid, "Header Session ID is wrong"
+    assert oid in header["sessionToken"]["body"]["object"]["target"]["objects"], "Header Session OID is wrong"
 
 
 @allure.step("Delete Objects")
-def delete_objects(
-    storage_objects: list[StorageObjectInfo], shell: Shell, neofs_env: NeoFSEnv
-) -> None:
+def delete_objects(storage_objects: list[StorageObjectInfo], shell: Shell, neofs_env: NeoFSEnv) -> None:
     """
     Deletes given storage objects.
 

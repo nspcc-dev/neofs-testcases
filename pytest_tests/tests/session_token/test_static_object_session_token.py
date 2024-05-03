@@ -46,9 +46,7 @@ RANGE_OFFSET_FOR_COMPLEX_OBJECT = 200
 
 
 @pytest.fixture(scope="module")
-def storage_containers(
-    owner_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv
-) -> list[str]:
+def storage_containers(owner_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> list[str]:
     cid = create_container(owner_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
     other_cid = create_container(owner_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
     yield [cid, other_cid]
@@ -94,9 +92,7 @@ def storage_objects(
 
 
 @allure.step("Get ranges for test")
-def get_ranges(
-    storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, endpoint: str
-) -> list[str]:
+def get_ranges(storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, endpoint: str) -> list[str]:
     """
     Returns ranges to test range/hash methods via static session
     """
@@ -107,8 +103,7 @@ def get_ranges(
         return [
             "0:10",
             f"{object_size-10}:10",
-            f"{max_object_size - RANGE_OFFSET_FOR_COMPLEX_OBJECT}:"
-            f"{RANGE_OFFSET_FOR_COMPLEX_OBJECT * 2}",
+            f"{max_object_size - RANGE_OFFSET_FOR_COMPLEX_OBJECT}:" f"{RANGE_OFFSET_FOR_COMPLEX_OBJECT * 2}",
         ]
     else:
         return ["0:10", f"{object_size-10}:10"]
@@ -163,9 +158,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with read operations
         """
-        allure.dynamic.title(
-            f"Validate static session with read operations for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with read operations for {request.node.callspec.id}")
 
         for node in self.neofs_env.storage_nodes:
             for storage_object in storage_objects[0:2]:
@@ -197,13 +190,9 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with range operations
         """
-        allure.dynamic.title(
-            f"Validate static session with range operations for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with range operations for {request.node.callspec.id}")
         storage_object = storage_objects[0]
-        ranges_to_test = get_ranges(
-            storage_object, max_object_size, self.shell, self.neofs_env.sn_rpc
-        )
+        ranges_to_test = get_ranges(storage_object, max_object_size, self.shell, self.neofs_env.sn_rpc)
 
         for range_to_test in ranges_to_test:
             with allure.step(f"Check range {range_to_test}"):
@@ -256,9 +245,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with object id not in session
         """
-        allure.dynamic.title(
-            f"Validate static session with object id not in session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with object id not in session for {request.node.callspec.id}")
         with pytest.raises(Exception, match=UNRELATED_OBJECT):
             head_object(
                 user_wallet.path,
@@ -281,9 +268,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with user id not in session
         """
-        allure.dynamic.title(
-            f"Validate static session with user id not in session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with user id not in session for {request.node.callspec.id}")
         storage_object = storage_objects[0]
 
         with pytest.raises(Exception, match=UNRELATED_KEY):
@@ -308,9 +293,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with wrong verb in session
         """
-        allure.dynamic.title(
-            f"Validate static session with wrong verb in session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with wrong verb in session for {request.node.callspec.id}")
         storage_object = storage_objects[0]
 
         with pytest.raises(Exception, match=WRONG_VERB):
@@ -336,9 +319,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session with container id not in session
         """
-        allure.dynamic.title(
-            f"Validate static session with container id not in session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session with container id not in session for {request.node.callspec.id}")
         storage_object = storage_objects[0]
 
         with pytest.raises(Exception, match=UNRELATED_CONTAINER):
@@ -366,9 +347,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session which signed by another wallet
         """
-        allure.dynamic.title(
-            f"Validate static session which signed by another wallet for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session which signed by another wallet for {request.node.callspec.id}")
         storage_object = storage_objects[0]
 
         session_token_file = generate_object_session_token(
@@ -443,9 +422,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session which wasn't signed
         """
-        allure.dynamic.title(
-            f"Validate static session which wasn't signed for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session which wasn't signed for {request.node.callspec.id}")
         storage_object = storage_objects[0]
 
         session_token_file = generate_object_session_token(
@@ -480,9 +457,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session which expires at next epoch
         """
-        allure.dynamic.title(
-            f"Validate static session which expires at next epoch for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session which expires at next epoch for {request.node.callspec.id}")
         epoch = neofs_epoch.ensure_fresh_epoch(self.neofs_env)
 
         container = storage_containers[0]
@@ -600,9 +575,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session which is already expired
         """
-        allure.dynamic.title(
-            f"Validate static session which is already expired for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session which is already expired for {request.node.callspec.id}")
         epoch = neofs_epoch.ensure_fresh_epoch(self.neofs_env)
 
         container = storage_containers[0]
@@ -641,9 +614,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Delete verb should be restricted for static session
         """
-        allure.dynamic.title(
-            f"Delete verb should be restricted for static session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Delete verb should be restricted for static session for {request.node.callspec.id}")
         storage_object = storage_objects[0]
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             delete_object(
@@ -666,9 +637,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Put verb should be restricted for static session
         """
-        allure.dynamic.title(
-            f"Put verb should be restricted for static session for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Put verb should be restricted for static session for {request.node.callspec.id}")
         storage_object = storage_objects[0]
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_object_to_random_node(
@@ -694,9 +663,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         """
         Validate static session which is issued in future epoch
         """
-        allure.dynamic.title(
-            f"Validate static session which is issued in future epoch for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate static session which is issued in future epoch for {request.node.callspec.id}")
         epoch = neofs_epoch.ensure_fresh_epoch(self.neofs_env)
 
         container = storage_containers[0]

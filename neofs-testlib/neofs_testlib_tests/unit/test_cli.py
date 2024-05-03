@@ -60,9 +60,7 @@ class TestCli(TestCase):
 
     def test_bad_wallet_argument(self):
         shell = Mock()
-        neo_go = NeoGo(
-            shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path
-        )
+        neo_go = NeoGo(shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path)
         with self.assertRaises(Exception) as exc_msg:
             neo_go.contract.add_group(
                 address=self.address,
@@ -91,9 +89,7 @@ class TestCli(TestCase):
 
     def test_wallet_sign(self):
         shell = Mock()
-        neo_go = NeoGo(
-            shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path
-        )
+        neo_go = NeoGo(shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path)
         neo_go.wallet.sign(
             input_file=self.file1,
             out=self.file2,
@@ -114,9 +110,7 @@ class TestCli(TestCase):
         shell.exec.assert_called_once_with(
             expected_command,
             options=CommandOptions(
-                interactive_inputs=[
-                    InteractiveInput(prompt_pattern="assword", input=self.wallet_password)
-                ]
+                interactive_inputs=[InteractiveInput(prompt_pattern="assword", input=self.wallet_password)]
             ),
         )
 
@@ -144,9 +138,7 @@ class TestCli(TestCase):
 
     def test_wallet_nep17_multitransfer(self):
         shell = Mock()
-        neo_go = NeoGo(
-            shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path
-        )
+        neo_go = NeoGo(shell=shell, config_path=self.config_file, neo_go_exec_path=self.neofs_go_exec_path)
         neo_go.nep17.multitransfer(
             wallet=self.wallet,
             token=self.token,

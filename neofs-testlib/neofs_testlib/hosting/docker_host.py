@@ -131,13 +131,13 @@ class DockerHost(Host):
 
     def delete_storage_node_data(self, service_name: str, cache_only: bool = False) -> None:
         client = self._get_docker_client(api_client=False)
-        meta_files = 'meta0', 'meta1'
-        data_files = 'blobovnicza0', 'blobovnicza1', 'fstree0', 'fstree1', 'pilorama0', 'pilorama1'
+        meta_files = "meta0", "meta1"
+        data_files = "blobovnicza0", "blobovnicza1", "fstree0", "fstree1", "pilorama0", "pilorama1"
         for meta_file in meta_files:
-            client.containers.run('alpine', f'rm -rf /storage/{meta_file}', volumes_from=[service_name])
+            client.containers.run("alpine", f"rm -rf /storage/{meta_file}", volumes_from=[service_name])
         if not cache_only:
             for data_file in data_files:
-                client.containers.run('alpine', f'rm -rf /storage/{data_file}', volumes_from=[service_name])
+                client.containers.run("alpine", f"rm -rf /storage/{data_file}", volumes_from=[service_name])
 
     def attach_disk(self, device: str, disk_info: DiskInfo) -> None:
         raise NotImplementedError("Not supported for docker")
@@ -203,9 +203,9 @@ class DockerHost(Host):
     def get_service_pid(self, service_name: str) -> str:
         client = self._get_docker_client()
         top_info = client.top(service_name)
-        pid_index = top_info['Titles'].index('PID')
+        pid_index = top_info["Titles"].index("PID")
         # In the current configuration, only one service runs in each container
-        pid = top_info['Processes'][0][pid_index]
+        pid = top_info["Processes"][0][pid_index]
         return pid
 
     def _get_service_attributes(self, service_name) -> ServiceAttributes:
@@ -235,9 +235,7 @@ class DockerHost(Host):
                 return container
         return None
 
-    def _wait_for_container_to_be_in_state(
-        self, container_name: str, expected_state: str, timeout: int
-    ) -> None:
+    def _wait_for_container_to_be_in_state(self, container_name: str, expected_state: str, timeout: int) -> None:
         iterations = 10
         iteration_wait_time = timeout / iterations
 

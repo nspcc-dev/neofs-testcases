@@ -35,9 +35,7 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
         file_name_2 = object_key_from_file_path(file_path_2)
 
         with allure.step("Create two buckets with different bucket configuration"):
-            bucket_1 = s3_gate_bucket.create_bucket_s3(
-                self.s3_client, bucket_configuration="complex"
-            )
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="complex")
             set_bucket_versioning(self.s3_client, bucket_1, s3_gate_bucket.VersioningStatus.ENABLED)
             bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-3")
             set_bucket_versioning(self.s3_client, bucket_2, s3_gate_bucket.VersioningStatus.ENABLED)
@@ -147,9 +145,7 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
             }
             s3_gate_bucket.put_bucket_cors(self.s3_client, bucket, cors)
             bucket_cors = s3_gate_bucket.get_bucket_cors(self.s3_client, bucket)
-            assert bucket_cors == cors.get(
-                "CORSRules"
-            ), f"Expected corsrules must be {cors.get('CORSRules')}"
+            assert bucket_cors == cors.get("CORSRules"), f"Expected corsrules must be {cors.get('CORSRules')}"
 
         with allure.step("delete bucket cors"):
             s3_gate_bucket.delete_bucket_cors(self.s3_client, bucket)

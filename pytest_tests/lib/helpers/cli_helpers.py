@@ -3,6 +3,7 @@
 """
 Helper functions to use with `neofs-cli`, `neo-go` and other CLIs.
 """
+
 import json
 import logging
 import subprocess
@@ -47,9 +48,7 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
-        logger.info(
-            f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode} " f"\nOutput: {exc.output}"
-        )
+        logger.info(f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode} " f"\nOutput: {exc.output}")
         end_time = datetime.now()
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
@@ -108,9 +107,7 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
     return cmd.decode()
 
 
-def _attach_allure_log(
-    cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime
-) -> None:
+def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime) -> None:
     command_attachment = (
         f"COMMAND: '{cmd}'\n"
         f"OUTPUT:\n {output}\n"

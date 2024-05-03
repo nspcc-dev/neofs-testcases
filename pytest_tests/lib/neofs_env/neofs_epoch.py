@@ -30,9 +30,7 @@ def wait_for_epochs_align(neofs_env: NeoFSEnv, epoch_number: Optional[int] = Non
         ), f"Epoch {current_epoch} wasn't ticked yet. Expected epoch > {epoch_number}"
         epochs.append(current_epoch)
     unique_epochs = list(set(epochs))
-    assert (
-        len(unique_epochs) == 1
-    ), f"unaligned epochs found,  {epochs}, count of unique epochs {len(unique_epochs)}"
+    assert len(unique_epochs) == 1, f"unaligned epochs found,  {epochs}, count of unique epochs {len(unique_epochs)}"
 
 
 @allure.step("Get Epoch")

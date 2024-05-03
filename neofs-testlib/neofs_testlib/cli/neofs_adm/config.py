@@ -14,9 +14,5 @@ class NeofsAdmConfig(CliCommand):
         """
         return self._execute(
             "config init",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

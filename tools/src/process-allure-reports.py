@@ -21,12 +21,14 @@ def parse_args():
     parser.add_argument("--wallet", required=True, type=str, help="Path to the wallet")
     parser.add_argument("--cid", required=True, type=str, help="Container ID")
     parser.add_argument("--run_id", required=True, type=str, help="GitHub run ID")
-    parser.add_argument(
-        "--allure_report",
-        type=str,
-        help="Path to generated allure report directory",
-        default="allure_report",
-    ),
+    (
+        parser.add_argument(
+            "--allure_report",
+            type=str,
+            help="Path to generated allure report directory",
+            default="allure_report",
+        ),
+    )
     parser.add_argument(
         "--expire-at",
         type=int,
@@ -147,6 +149,4 @@ if __name__ == "__main__":
         neofs_password,
     )
 
-    print(
-        f"See report: https://http.{args.neofs_domain}/{args.cid}/{args.run_id}/{COMPLETE_FILE_NAME}"
-    )
+    print(f"See report: https://http.{args.neofs_domain}/{args.cid}/{args.run_id}/{COMPLETE_FILE_NAME}")

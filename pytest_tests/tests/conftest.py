@@ -25,9 +25,7 @@ logger = logging.getLogger("NeoLogger")
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        "--persist-env", action="store_true", default=False, help="persist deployed env"
-    )
+    parser.addoption("--persist-env", action="store_true", default=False, help="persist deployed env")
     parser.addoption("--load-env", action="store", help="load persisted env from file")
 
 
@@ -41,7 +39,7 @@ def neofs_env(request):
     neofs_env.neofs_adm().morph.set_config(
         rpc_endpoint=f"http://{neofs_env.morph_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data=f"ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
+        post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
     )
     time.sleep(30)
 
@@ -114,7 +112,7 @@ def temp_directory() -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@allure.title(f"Prepare test files directories")
+@allure.title("Prepare test files directories")
 def artifacts_directory(temp_directory: str) -> None:
     dirs = [TEST_FILES_DIR, TEST_OBJECTS_DIR]
     for dir_name in dirs:

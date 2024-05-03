@@ -5,7 +5,7 @@ from neofs_testlib.shell import Shell
 
 
 class NeofsLens:
-	object: Optional[NeofsLensObject] = None
+    object: Optional[NeofsLensObject] = None
 
-	def __init__(self, shell: Shell, neofs_lens_exec_path: str):
-		self.object = NeofsLensObject(shell, neofs_lens_exec_path)
+    def __init__(self, shell: Shell, neofs_lens_exec_path: str):
+        self.object = NeofsLensObject(shell, neofs_lens_exec_path)

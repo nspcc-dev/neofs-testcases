@@ -129,9 +129,7 @@ class RemoteProcess:
         if "No such process" in kill_res.stderr:
             return
         if kill_res.return_code:
-            raise AssertionError(
-                f"Signal {signal} not sent. Return code of kill: {kill_res.return_code}"
-            )
+            raise AssertionError(f"Signal {signal} not sent. Return code of kill: {kill_res.return_code}")
 
     @allure.step("Stop process")
     def stop(self) -> None:

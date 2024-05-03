@@ -47,9 +47,7 @@ class Test_rest_bearer(NeofsEnvTestBase):
     @pytest.fixture(scope="class")
     def eacl_deny_for_others(self, user_container: str) -> None:
         with allure.step(f"Set deny all operations for {EACLRole.OTHERS} via eACL"):
-            eacl = EACLRule(
-                access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=EACLOperation.PUT
-            )
+            eacl = EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=EACLOperation.PUT)
             set_eacl(
                 self.wallet.path,
                 user_container,
@@ -65,10 +63,7 @@ class Test_rest_bearer(NeofsEnvTestBase):
             bearer = form_bearertoken_file(
                 self.wallet.path,
                 user_container,
-                [
-                    EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
-                    for op in EACLOperation
-                ],
+                [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS) for op in EACLOperation],
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
                 sign=False,
@@ -113,9 +108,7 @@ class Test_rest_bearer(NeofsEnvTestBase):
         eacl_deny_for_others
         bearer = bearer_token_no_limit_for_others
         file_path = generate_file(object_size)
-        with allure.step(
-            f"Put object with bearer token for {EACLRole.OTHERS}, then get and verify hashes"
-        ):
+        with allure.step(f"Put object with bearer token for {EACLRole.OTHERS}, then get and verify hashes"):
             headers = None
             cookies = None
             if bearer_type == "header":

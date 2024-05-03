@@ -51,12 +51,7 @@ def get_object_chunks(
         )
 
         link_obj_path = get_object(
-            wallet=wallet_file_path,
-            cid=cid,
-            oid=link_object_id,
-            shell=shell,
-            endpoint=neofs_env.sn_rpc,
-            bearer=bearer
+            wallet=wallet_file_path, cid=cid, oid=link_object_id, shell=shell, endpoint=neofs_env.sn_rpc, bearer=bearer
         )
 
         resp = neofs_env.neofs_lens().object.link(link_obj_path)
@@ -89,7 +84,9 @@ def get_complex_object_split_ranges(
 
     ranges: list = []
     offset = 0
-    chunks = get_object_chunks(storage_object.wallet_file_path, storage_object.cid, storage_object.oid, shell, neofs_env)
+    chunks = get_object_chunks(
+        storage_object.wallet_file_path, storage_object.cid, storage_object.oid, shell, neofs_env
+    )
     for chunk in chunks:
         head = head_object(
             storage_object.wallet_file_path,
@@ -158,9 +155,7 @@ def get_link_object(
 
 
 @allure.step("Get Last Object")
-def get_last_object(
-    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
-) -> Optional[str]:
+def get_last_object(wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]) -> Optional[str]:
     """
     Args:
         wallet (str): path to the wallet on whose behalf the Storage Nodes
@@ -177,9 +172,7 @@ def get_last_object(
     for node in nodes:
         endpoint = node.endpoint
         try:
-            resp = head_object(
-                wallet, cid, oid, shell=shell, endpoint=endpoint, is_raw=True, is_direct=True
-            )
+            resp = head_object(wallet, cid, oid, shell=shell, endpoint=endpoint, is_raw=True, is_direct=True)
             if resp["lastPart"]:
                 return resp["lastPart"]
         except Exception:
@@ -189,9 +182,7 @@ def get_last_object(
 
 
 @allure.step("Get Object Copies")
-def get_object_copies(
-    complexity: str, wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
-) -> int:
+def get_object_copies(complexity: str, wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]) -> int:
     """
     The function performs requests to all nodes of the container and
     finds out if they store a copy of the object. The procedure is
@@ -216,9 +207,7 @@ def get_object_copies(
 
 
 @allure.step("Get Simple Object Copies")
-def get_simple_object_copies(
-    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
-) -> int:
+def get_simple_object_copies(wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]) -> int:
     """
     To figure out the number of a simple object copies, only direct
     HEAD requests should be made to the every node of the container.
@@ -236,9 +225,7 @@ def get_simple_object_copies(
     copies = 0
     for node in nodes:
         try:
-            response = head_object(
-                wallet, cid, oid, shell=shell, endpoint=node.endpoint, is_direct=True
-            )
+            response = head_object(wallet, cid, oid, shell=shell, endpoint=node.endpoint, is_direct=True)
             if response:
                 logger.info(f"Found object {oid} on node {node}")
                 copies += 1
@@ -249,9 +236,7 @@ def get_simple_object_copies(
 
 
 @allure.step("Get Complex Object Copies")
-def get_complex_object_copies(
-    wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]
-) -> int:
+def get_complex_object_copies(wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]) -> int:
     """
     To figure out the number of a complex object copies, we firstly
     need to retrieve its Last object. We consider that the number of
@@ -353,9 +338,7 @@ def wait_object_replication(
     sleep_interval, attempts = 15, 20
     nodes_with_object = []
     for _ in range(attempts):
-        nodes_with_object = get_nodes_with_object(
-            cid, oid, shell=shell, nodes=nodes, neofs_env=neofs_env
-        )
+        nodes_with_object = get_nodes_with_object(cid, oid, shell=shell, nodes=nodes, neofs_env=neofs_env)
         if len(nodes_with_object) >= expected_copies:
             return nodes_with_object
         time.sleep(sleep_interval)
