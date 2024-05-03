@@ -1,10 +1,12 @@
 import logging
+import string
 import time
 from typing import Optional, Tuple
 
 import allure
 from helpers.common import WALLET_CONFIG
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
+from helpers.neofs_verbs import get_object
 from helpers.neofs_verbs import head_object
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
@@ -13,43 +15,58 @@ from neofs_testlib.shell import Shell
 logger = logging.getLogger("NeoLogger")
 
 
-def get_storage_object_chunks(
-    storage_object: StorageObjectInfo, shell: Shell, neofs_env: NeoFSEnv
-) -> list[str]:
+def get_object_chunks(
+    wallet_file_path: string,
+    cid: string,
+    oid: string,
+    shell: Shell,
+    neofs_env: NeoFSEnv,
+    bearer: str = None,
+) -> list[Tuple[str, int]]:
     """
-    Get complex object split objects ids (no linker object)
+    Get complex objects' IDs and sizes (no link object)
 
     Args:
+    wallet_file_path: wallet to use
+    cid: object's container
+    oid: object's ID
     storage_object: storage_object to get it's chunks
     shell: client shell to do cmd requests
+    bearer: bearer token to access chunks
     cluster: cluster object under test
 
     Returns:
-    list of object ids of complex object chunks
+    list of tuples (object_id, object_size) of complex object chunks
     """
 
-    with allure.step(f"Get complex object chunks (f{storage_object.oid})"):
-        split_object_id = get_link_object(
-            storage_object.wallet_file_path,
-            storage_object.cid,
-            storage_object.oid,
+    with allure.step(f"Get complex object chunks (f{oid})"):
+        link_object_id = get_link_object(
+            wallet_file_path,
+            cid,
+            oid,
             shell,
             neofs_env.storage_nodes,
+            bearer=bearer,
             is_direct=False,
         )
-        head = head_object(
-            storage_object.wallet_file_path,
-            storage_object.cid,
-            split_object_id,
-            shell,
-            neofs_env.sn_rpc,
+
+        link_obj_path = get_object(
+            wallet=wallet_file_path,
+            cid=cid,
+            oid=link_object_id,
+            shell=shell,
+            endpoint=neofs_env.sn_rpc,
+            bearer=bearer
         )
 
-        chunks_object_ids = []
-        if "split" in head["header"] and "children" in head["header"]["split"]:
-            chunks_object_ids = head["header"]["split"]["children"]
+        resp = neofs_env.neofs_lens().object.link(link_obj_path)
 
-        return chunks_object_ids
+        # exclude helper prompt
+        raw_children = resp.stdout.splitlines()[1:]
+        # exclude punctuation
+        children = [x.translate(str.maketrans("", "", string.punctuation)) for x in raw_children]
+
+        return [(x.split()[-1], int(x.split()[1])) for x in children]
 
 
 def get_complex_object_split_ranges(
@@ -72,12 +89,12 @@ def get_complex_object_split_ranges(
 
     ranges: list = []
     offset = 0
-    chunks_ids = get_storage_object_chunks(storage_object, shell, neofs_env)
-    for chunk_id in chunks_ids:
+    chunks = get_object_chunks(storage_object.wallet_file_path, storage_object.cid, storage_object.oid, shell, neofs_env)
+    for chunk in chunks:
         head = head_object(
             storage_object.wallet_file_path,
             storage_object.cid,
-            chunk_id,
+            chunk[0],
             shell,
             neofs_env.sn_rpc,
         )
