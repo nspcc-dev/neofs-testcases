@@ -205,7 +205,7 @@ def test_node_metabase_resync(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee)
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(True)
         node.set_metabase_resync(False)
-    test_http_gw_put_get(neofs_env, wallet, zero_fee)
+    test_gateways_put_get(neofs_env, wallet, zero_fee, "HTTP")
 
 
 @pytest.mark.parametrize("data_type", ["meta", "all"])
@@ -217,5 +217,4 @@ def test_node_delete_metadata_and_data(neofs_env: NeoFSEnv, wallet: NodeWallet, 
         else:
             node.delete_data()
         node.start(fresh=False)
-    test_http_gw_put_get(neofs_env, wallet, zero_fee)
-    
+    test_gateways_put_get(neofs_env, wallet, zero_fee, "HTTP")
