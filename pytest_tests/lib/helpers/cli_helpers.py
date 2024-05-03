@@ -65,7 +65,7 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
         logger.info(
             f"Command: {cmd}\n"
             f"Error:\nreturn code: {return_code}\n"
-            f"Output: {exc.output.decode('utf-8') if type(exc.output) is bytes else exc.output}"
+            f"Output: {exc.output.decode('utf-8') if isinstance(exc.output, bytes) else exc.output}"
         )
         raise
 

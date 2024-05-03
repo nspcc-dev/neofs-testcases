@@ -47,8 +47,8 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
             # with allure.step("Check head buckets"):
             head_1 = s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
             head_2 = s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
-            assert head_1 == {} or head_1.get("HEAD") == None, "Expected head is empty"
-            assert head_2 == {} or head_2.get("HEAD") == None, "Expected head is empty"
+            assert head_1 == {} or head_1.get("HEAD") is None, "Expected head is empty"
+            assert head_2 == {} or head_2.get("HEAD") is None, "Expected head is empty"
 
         with allure.step("Put objects into buckets"):
             version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path_1)

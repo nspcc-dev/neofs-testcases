@@ -162,7 +162,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        user_token = self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
+        self.static_session_token(owner_wallet, user_wallet, self.shell, temp_directory)
         stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
 
         with allure.step("Try to delete container using stranger token"):

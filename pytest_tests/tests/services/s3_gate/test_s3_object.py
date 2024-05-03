@@ -125,7 +125,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         set_bucket_versioning(self.s3_client, bucket, s3_gate_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put several versions of object into bucket"):
-            version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
             check_objects_in_bucket(self.s3_client, bucket, [obj_key])
 
         with allure.step("Copy object and check acl attribute"):
@@ -185,9 +185,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
 
         with allure.step("Put several versions of object into bucket"):
             s3_gate_object.put_object_s3(self.s3_client, bucket, file_path)
-            version_id_1 = s3_gate_object.put_object_tagging(
-                self.s3_client, bucket, file_name_simple, tags=object_tagging
-            )
+            s3_gate_object.put_object_tagging(self.s3_client, bucket, file_name_simple, tags=object_tagging)
             bucket_1_objects = [file_name_simple]
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
 
@@ -267,7 +265,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
         with allure.step("Put new object into bucket"):
             file_name_simple = generate_file(complex_object_size)
             obj_key = os.path.basename(file_name_simple)
-            version_id = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 
         with allure.step("Delete last object"):
             delete_obj = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key)
@@ -683,7 +681,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
         ):
             date_obj = datetime.utcnow() + timedelta(days=2)
-            file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -697,7 +695,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
         ):
             date_obj = datetime.utcnow() + timedelta(days=3)
-            file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_gate_object.put_object_s3(
                 self.s3_client,
                 bucket,

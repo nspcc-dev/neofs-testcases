@@ -289,7 +289,6 @@ class TestS3Gate(TestNeofsS3GateBase):
         """
         Test checks S3 Object tagging API (Put tag/Get tag/Update tag).
         """
-        key_value_pair_bucket = [("some-key", "some-value"), ("some-key-2", "some-value-2")]
         key_value_pair_obj = [
             ("some-key-obj", "some-value-obj"),
             ("some-key--obj2", "some-value--obj2"),
