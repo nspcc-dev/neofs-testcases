@@ -381,28 +381,6 @@ class AwsCliClient:
         return self._to_json(output)
 
     def put_object_retention(
-        self, Bucket: str, Key: str, Retention: dict, VersionId: Optional[str] = None
-    ) -> dict:
-        version = f" --version-id {VersionId}" if VersionId else ""
-        cmd = (
-            f"aws {self.common_flags} s3api put-object-retention --bucket {Bucket} --key {Key} "
-            f"{version} --retention '{json.dumps(Retention, indent=4, sort_keys=True, default=str)}' --endpoint {self.s3gate_endpoint}"
-        )
-        output = _cmd_run(cmd)
-        return self._to_json(output)
-
-    def put_object_legal_hold(
-        self, Bucket: str, Key: str, LegalHold: dict, VersionId: Optional[str] = None
-    ) -> dict:
-        version = f" --version-id {VersionId}" if VersionId else ""
-        cmd = (
-            f"aws {self.common_flags} s3api  put-object-legal-hold --bucket {Bucket} --key {Key} "
-            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {self.s3gate_endpoint}"
-        )
-        output = _cmd_run(cmd)
-        return self._to_json(output)
-
-    def put_object_retention(
         self,
         Bucket: str,
         Key: str,
