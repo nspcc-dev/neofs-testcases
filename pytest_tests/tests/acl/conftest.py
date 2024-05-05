@@ -69,9 +69,7 @@ def wallets(default_wallet, temp_directory, neofs_env: NeoFSEnv) -> Wallets:
 
     yield Wallets(
         wallets={
-            EACLRole.USER: [
-                Wallet(wallet_path=default_wallet.path, config_path=default_wallet_config_path)
-            ],
+            EACLRole.USER: [Wallet(wallet_path=default_wallet.path, config_path=default_wallet_config_path)],
             EACLRole.OTHERS: [
                 Wallet(wallet_path=other_wallet1.path, config_path=other_wallet1_config_path),
                 Wallet(wallet_path=other_wallet2.path, config_path=other_wallet2_config_path),
@@ -85,9 +83,7 @@ def wallets(default_wallet, temp_directory, neofs_env: NeoFSEnv) -> Wallets:
 
 
 @pytest.fixture(scope="function")
-def eacl_container_with_objects(
-    wallets: Wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str
-):
+def eacl_container_with_objects(wallets: Wallets, client_shell: Shell, neofs_env: NeoFSEnv, file_path: str):
     user_wallet = wallets.get_wallet()
     with allure.step("Create eACL public container"):
         cid = create_container(

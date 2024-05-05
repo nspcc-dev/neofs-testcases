@@ -66,9 +66,7 @@ class TestACLBasic(NeofsEnvTestBase):
     @pytest.mark.sanity
     @pytest.mark.test_basic_acl_public
     @allure.title("Test basic ACL on public container")
-    def test_basic_acl_public(
-        self, not_owner_wallet: NodeWallet, user_wallet: NodeWallet, public_container, file_path
-    ):
+    def test_basic_acl_public(self, not_owner_wallet: NodeWallet, user_wallet: NodeWallet, public_container, file_path):
         """
         Test basic ACL set during public container creation.
         """
@@ -332,9 +330,7 @@ class TestACLBasic(NeofsEnvTestBase):
                     endpoint=endpoint,
                     wallet_config=ir_wallet_config,
                 )
-            with allure.step(
-                "STORAGE node should NOT be able to GET range of object from container"
-            ):
+            with allure.step("STORAGE node should NOT be able to GET range of object from container"):
                 assert not can_get_range_of_object(
                     wallet=storage_wallet.path,
                     cid=cid,
@@ -353,9 +349,7 @@ class TestACLBasic(NeofsEnvTestBase):
                     endpoint=endpoint,
                     wallet_config=ir_wallet_config,
                 )
-            with allure.step(
-                "STORAGE node should be able to GET range hash of object from container"
-            ):
+            with allure.step("STORAGE node should be able to GET range hash of object from container"):
                 assert can_get_range_hash_of_object(
                     wallet=storage_wallet.path,
                     cid=cid,

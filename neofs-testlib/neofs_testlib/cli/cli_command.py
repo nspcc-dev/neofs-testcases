@@ -4,7 +4,6 @@ from neofs_testlib.shell import CommandOptions, CommandResult, InteractiveInput,
 
 
 class CliCommand:
-
     WALLET_SOURCE_ERROR_MSG = "Provide either wallet or wallet_config to specify wallet location"
     WALLET_PASSWD_ERROR_MSG = "Provide either wallet_password or wallet_config to specify password"
 
@@ -27,9 +26,7 @@ class CliCommand:
     def __init__(self, shell: Shell, cli_exec_path: str, **base_params):
         self.shell = shell
         self.cli_exec_path = cli_exec_path
-        self.__base_params = " ".join(
-            [f"--{param} {value}" for param, value in base_params.items() if value]
-        )
+        self.__base_params = " ".join([f"--{param} {value}" for param, value in base_params.items() if value])
 
     def _format_command(self, command: str, **params) -> str:
         param_str = []
@@ -51,9 +48,7 @@ class CliCommand:
                     val_str = str(value_item).replace("'", "\\'")
                     param_str.append(f"--{param} '{val_str}'")
             elif isinstance(value, dict):
-                param_str.append(
-                    f'--{param} \'{",".join(f"{key}={val}" for key, val in value.items())}\''
-                )
+                param_str.append(f'--{param} \'{",".join(f"{key}={val}" for key, val in value.items())}\'')
             else:
                 if "'" in str(value):
                     value_str = str(value).replace('"', '\\"')
@@ -71,7 +66,5 @@ class CliCommand:
     def _execute_with_password(self, command: Optional[str], password, **params) -> CommandResult:
         return self.shell.exec(
             self._format_command(command, **params),
-            options=CommandOptions(
-                interactive_inputs=[InteractiveInput(prompt_pattern="assword", input=password)]
-            ),
+            options=CommandOptions(interactive_inputs=[InteractiveInput(prompt_pattern="assword", input=password)]),
         )

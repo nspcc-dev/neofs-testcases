@@ -102,9 +102,7 @@ class RoleDesignation:
     ) -> None:
         keys = [f"bytes:{k}" for k in pubkeys]
         keys_str = " ".join(keys)
-        multisig = Multisig(
-            self.neogo, invoke_tx_file=invoke_tx_file, block_period=self.block_period
-        )
+        multisig = Multisig(self.neogo, invoke_tx_file=invoke_tx_file, block_period=self.block_period)
         multisig.create_and_send(
             self.designate_contract,
             f"designateAsRole int:32 [ {keys_str} ]",
@@ -128,9 +126,7 @@ class RoleDesignation:
     ) -> None:
         keys = [f"bytes:{k}" for k in pubkeys]
         keys_str = " ".join(keys)
-        multisig = Multisig(
-            self.neogo, invoke_tx_file=invoke_tx_file, block_period=self.block_period
-        )
+        multisig = Multisig(self.neogo, invoke_tx_file=invoke_tx_file, block_period=self.block_period)
         multisig.create_and_send(
             self.designate_contract,
             f"designateAsRole int:16 [ {keys_str} ]",

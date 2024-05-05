@@ -47,9 +47,7 @@ def user_wallet():
 @pytest.fixture(scope="module")
 def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv):
     container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
-    return StorageContainer(
-        StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env
-    )
+    return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
 
 
 @pytest.fixture(
@@ -80,9 +78,7 @@ def locked_storage_object(
             lifetime=FIXTURE_LOCK_LIFETIME,
         )
         storage_object.locks = [
-            LockObjectInfo(
-                storage_object.cid, lock_object_id, FIXTURE_LOCK_LIFETIME, expiration_epoch
-            )
+            LockObjectInfo(storage_object.cid, lock_object_id, FIXTURE_LOCK_LIFETIME, expiration_epoch)
         ]
 
     yield storage_object
@@ -106,9 +102,7 @@ def locked_storage_object(
         except Exception as ex:
             ex_message = str(ex)
             # It's okay if object already removed
-            if not re.search(OBJECT_NOT_FOUND, ex_message) and not re.search(
-                OBJECT_ALREADY_REMOVED, ex_message
-            ):
+            if not re.search(OBJECT_NOT_FOUND, ex_message) and not re.search(OBJECT_ALREADY_REMOVED, ex_message):
                 raise ex
             logger.debug(ex_message)
 
@@ -116,9 +110,7 @@ def locked_storage_object(
 @pytest.mark.grpc_object_lock
 class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.fixture()
-    def new_locked_storage_object(
-        self, user_container: StorageContainer, request: FixtureRequest
-    ) -> StorageObjectInfo:
+    def new_locked_storage_object(self, user_container: StorageContainer, request: FixtureRequest) -> StorageObjectInfo:
         """
         Intention of this fixture is to provide new storage object for tests which may delete or corrupt the object or it's complementary objects
         So we need a new one each time we ask for it
@@ -155,9 +147,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         """
         Locked object should be protected from deletion
         """
-        allure.dynamic.title(
-            f"Locked object should be protected from deletion for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Locked object should be protected from deletion for {request.node.callspec.id}")
 
         with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
             delete_object(
@@ -170,9 +160,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Lock object of a simple object should be protected from deletion")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize(
-        "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
-    )
+    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
     def test_lock_object_itself_cannot_be_deleted(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -195,9 +183,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Lock object of a simple object cannot be locked")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize(
-        "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
-    )
+    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
     def test_lock_object_cannot_be_locked(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -221,9 +207,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Cannot lock simple object without lifetime and expire_at fields")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize(
-        "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
-    )
+    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
     @pytest.mark.parametrize(
         "wrong_lifetime,wrong_expire_at,expected_error",
         [
@@ -279,9 +263,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         """
         Expired object should be deleted after locks are expired
         """
-        allure.dynamic.title(
-            f"Expired object should be deleted after locks are expired for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Expired object should be deleted after locks are expired for {request.node.callspec.id}")
 
         current_epoch = self.ensure_fresh_epoch()
         storage_object = user_container.generate_object(object_size, expire_at=current_epoch + 1)
@@ -347,18 +329,14 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         """
         Should be possible to lock multiple objects at once
         """
-        allure.dynamic.title(
-            f"Should be possible to lock multiple objects at once for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Should be possible to lock multiple objects at once for {request.node.callspec.id}")
 
         current_epoch = self.ensure_fresh_epoch()
         storage_objects: list[StorageObjectInfo] = []
 
         with allure.step("Generate three objects"):
             for _ in range(3):
-                storage_objects.append(
-                    user_container.generate_object(object_size, expire_at=current_epoch + 5)
-                )
+                storage_objects.append(user_container.generate_object(object_size, expire_at=current_epoch + 5))
 
         lock_object(
             storage_objects[0].wallet_file_path,
@@ -401,9 +379,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         """
         Already outdated lock should not be applied
         """
-        allure.dynamic.title(
-            f"Already outdated lock should not be applied for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Already outdated lock should not be applied for {request.node.callspec.id}")
 
         current_epoch = self.ensure_fresh_epoch()
 
@@ -412,9 +388,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         expiration_epoch = current_epoch - 1
         with pytest.raises(
             Exception,
-            match=LOCK_OBJECT_EXPIRATION.format(
-                expiration_epoch=expiration_epoch, current_epoch=current_epoch
-            ),
+            match=LOCK_OBJECT_EXPIRATION.format(expiration_epoch=expiration_epoch, current_epoch=current_epoch),
         ):
             lock_object(
                 storage_object.wallet_file_path,
@@ -558,7 +532,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
             new_locked_storage_object.cid,
             new_locked_storage_object.oid,
             self.shell,
-            self.neofs_env
+            self.neofs_env,
         )
 
         for chunk in chunk_objects:
@@ -601,12 +575,8 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 drop_object(node, new_locked_storage_object.cid, new_locked_storage_object.oid)
 
     @allure.title("Lock object of a simple object can be dropped via control")
-    @pytest.mark.parametrize(
-        "locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True
-    )
-    def test_lock_object_can_be_dropped(
-        self, locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv
-    ):
+    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
+    def test_lock_object_can_be_dropped(self, locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv):
         lock_object_info = locked_storage_object.locks[0]
 
         nodes_with_object = get_nodes_with_object(
@@ -651,9 +621,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 neofs_env=neofs_env,
             )
 
-        with allure.step(
-            f"Try to delete object {new_locked_storage_object.oid} before metabase deletion"
-        ):
+        with allure.step(f"Try to delete object {new_locked_storage_object.oid} before metabase deletion"):
             with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
                 delete_object(
                     new_locked_storage_object.wallet_file_path,
@@ -688,13 +656,9 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 neofs_env=neofs_env,
             )
 
-        assert len(nodes_with_object_after_metabase_deletion) >= len(
-            nodes_with_object_after_first_try
-        )
+        assert len(nodes_with_object_after_metabase_deletion) >= len(nodes_with_object_after_first_try)
 
-        with allure.step(
-            f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"
-        ):
+        with allure.step(f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"):
             with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
                 delete_object(
                     new_locked_storage_object.wallet_file_path,

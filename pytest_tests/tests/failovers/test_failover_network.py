@@ -31,9 +31,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
         not_empty = len(blocked_nodes) != 0
         for node in list(blocked_nodes):
             with allure.step(f"Restore network at host for {node}"):
-                IpTablesHelper.restore_input_traffic_to_port(
-                    self.shell, [node.endpoint.split(":")[1]]
-                )
+                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
             blocked_nodes.remove(node)
         if not_empty:
             wait_all_storage_nodes_returned(self.neofs_env)
@@ -56,13 +54,9 @@ class TestFailoverNetwork(NeofsEnvTestBase):
             rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
-        oid = put_object_to_random_node(
-            wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
 
-        nodes = wait_object_replication(
-            cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-        )
+        nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
 
         logger.info(f"Nodes are {nodes}")
         nodes_to_block = nodes
@@ -72,9 +66,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
 
         excluded_nodes = []
         for node in nodes_to_block:
-            with allure.step(
-                f"Block incoming traffic at node {node} on port {[node.endpoint.split(':')[1]]}"
-            ):
+            with allure.step(f"Block incoming traffic at node {node} on port {[node.endpoint.split(':')[1]]}"):
                 blocked_nodes.append(node)
                 excluded_nodes.append(node)
                 IpTablesHelper.drop_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
@@ -90,30 +82,20 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                 )
                 assert node not in new_nodes
 
-            with allure.step(f"Check object data is not corrupted"):
-                got_file_path = get_object(
-                    wallet, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell
-                )
+            with allure.step("Check object data is not corrupted"):
+                got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         for node in nodes_to_block:
-            with allure.step(
-                f"Unblock incoming traffic at host {node} on port {[node.endpoint.split(':')[1]]}"
-            ):
-                IpTablesHelper.restore_input_traffic_to_port(
-                    self.shell, [node.endpoint.split(":")[1]]
-                )
+            with allure.step(f"Unblock incoming traffic at host {node} on port {[node.endpoint.split(':')[1]]}"):
+                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
                 blocked_nodes.remove(node)
                 sleep(wakeup_node_timeout)
 
-        with allure.step(f"Check object data is not corrupted"):
-            new_nodes = wait_object_replication(
-                cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes
-            )
+        with allure.step("Check object data is not corrupted"):
+            new_nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
 
-            got_file_path = get_object(
-                wallet, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint
-            )
+            got_file_path = get_object(wallet, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @pytest.mark.sanity
@@ -148,8 +130,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
             morph_chain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
 
             with allure.step(
-                f"Disconnecting storage node {storage_node.name} "
-                f"from {morph_chain_addr} {dport_repeat} times"
+                f"Disconnecting storage node {storage_node.name} " f"from {morph_chain_addr} {dport_repeat} times"
             ):
                 for repeat in range(dport_repeat):
                     with allure.step(f"Disconnect number {repeat}"):
@@ -180,14 +161,10 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                     )
 
             for node in self.neofs_env.storage_nodes:
-
                 with allure.step(f"Checking if node {node} is alive"):
                     try:
                         health_check = storage_node_healthcheck(node)
-                        assert (
-                            health_check.health_status == "READY"
-                            and health_check.network_status == "ONLINE"
-                        )
+                        assert health_check.health_status == "READY" and health_check.network_status == "ONLINE"
                     except Exception as err:
                         logger.warning(f"Node {node} is not online:\n{err}")
                         raise AssertionError(

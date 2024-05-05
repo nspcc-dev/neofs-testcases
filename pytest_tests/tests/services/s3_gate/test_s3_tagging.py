@@ -55,9 +55,7 @@ class TestS3GateTagging(TestNeofsS3GateBase):
             check_tags_by_object(self.s3_client, bucket, file_name, tags_3, tags_2)
 
         with allure.step("Copy one object with tag"):
-            copy_obj_path_1 = s3_gate_object.copy_object_s3(
-                self.s3_client, bucket, file_name, tagging_directive="COPY"
-            )
+            copy_obj_path_1 = s3_gate_object.copy_object_s3(self.s3_client, bucket, file_name, tagging_directive="COPY")
             check_tags_by_object(self.s3_client, bucket, copy_obj_path_1, tags_3, tags_2)
 
         with allure.step("Put 11 new tags to object and expect an error"):
@@ -82,7 +80,6 @@ class TestS3GateTagging(TestNeofsS3GateBase):
 
     @allure.title("Test S3: bucket tagging")
     def test_s3_bucket_tagging(self, bucket):
-
         with allure.step("Put 10 bucket tags"):
             tags_1 = self.create_tags(10)
             s3_gate_bucket.put_bucket_tagging(self.s3_client, bucket, tags_1)

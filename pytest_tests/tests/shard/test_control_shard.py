@@ -63,8 +63,7 @@ class Shard:
 
         blobstor_count = Shard._get_blobstor_count_from_section(config_object, shard_id)
         blobstors = [
-            Blobstor.from_config_object(config_object, shard_id, blobstor_id)
-            for blobstor_id in range(blobstor_count)
+            Blobstor.from_config_object(config_object, shard_id, blobstor_id) for blobstor_id in range(blobstor_count)
         ]
 
         write_cache_enabled = config_object[f"{var_prefix}_WRITECACHE_ENABLED"].lower() in (
@@ -87,17 +86,10 @@ class Shard:
         if "enabled" in shard["writecache"]:
             writecache = shard["writecache"]["path"] if shard["writecache"]["enabled"] else ""
         else:
-            writecache = (
-                shard["writecache"]["path"]
-                if "path" in shard["writecache"]
-                else shard["writecache"]
-            )
+            writecache = shard["writecache"]["path"] if "path" in shard["writecache"] else shard["writecache"]
 
         return Shard(
-            blobstor=[
-                Blobstor(path=blobstor["path"], path_type=blobstor["type"])
-                for blobstor in shard["blobstor"]
-            ],
+            blobstor=[Blobstor(path=blobstor["path"], path_type=blobstor["type"]) for blobstor in shard["blobstor"]],
             metabase=metabase,
             writecache=writecache,
         )

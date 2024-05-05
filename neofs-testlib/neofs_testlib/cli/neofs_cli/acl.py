@@ -8,7 +8,6 @@ class NeofsCliACL(CliCommand):
     def extended_create(
         self, cid: str, out: str, file: Optional[str] = None, rule: Optional[list] = None
     ) -> CommandResult:
-
         """Create extended ACL from the text representation.
 
         Rule consist of these blocks: <action> <operation> [<filter1> ...] [<target1> ...]

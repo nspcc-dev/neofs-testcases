@@ -68,9 +68,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
         return f"{mins}m"
 
     @allure.title("Return future timestamp after N epochs are passed")
-    def epoch_count_into_timestamp(
-        self, epoch_duration: int, epoch: int, rfc3339: Optional[bool] = False
-    ) -> str:
+    def epoch_count_into_timestamp(self, epoch_duration: int, epoch: int, rfc3339: Optional[bool] = False) -> str:
         current_datetime = datetime.datetime.utcnow()
         epoch_count_in_seconds = epoch_duration * epoch
         future_datetime = current_datetime + datetime.timedelta(seconds=epoch_count_in_seconds)
@@ -88,9 +86,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
                 return False
         return True
 
-    @allure.title(
-        f"Validate that only {EXPIRATION_EPOCH_HEADER} exists in header and other headers are abesent"
-    )
+    @allure.title(f"Validate that only {EXPIRATION_EPOCH_HEADER} exists in header and other headers are abesent")
     def validation_for_http_header_attr(self, head_info: dict, expected_epoch: int) -> None:
         # check that __NEOFS__EXPIRATION_EPOCH attribute has corresponding epoch
         assert self.check_key_value_presented_header(
@@ -110,9 +106,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
         ), f"Only {EXPIRATION_EXPIRATION_RFC} can be displayed in header attributes"
 
     @allure.title("Put / get / verify object and return head command result to invoker")
-    def oid_header_info_for_object(
-        self, file_path: str, attributes: dict, user_container: str, gw_endpoint: str
-    ):
+    def oid_header_info_for_object(self, file_path: str, attributes: dict, user_container: str, gw_endpoint: str):
         oid = upload_via_http_gate_curl(
             cid=user_container,
             filepath=file_path,
@@ -138,16 +132,10 @@ class Test_rest_system_header(NeofsEnvTestBase):
         return oid, head
 
     @allure.title("[negative] attempt to put object with expired epoch")
-    def test_unable_put_expired_epoch(
-        self, user_container: str, simple_object_size: int, gw_endpoint
-    ):
-        headers = attr_into_str_header_curl(
-            {"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)}
-        )
+    def test_unable_put_expired_epoch(self, user_container: str, simple_object_size: int, gw_endpoint):
+        headers = attr_into_str_header_curl({"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)})
         file_path = generate_file(simple_object_size)
-        with allure.step(
-            "Put object using HTTP with attribute Expiration-Epoch where epoch is expired"
-        ):
+        with allure.step("Put object using HTTP with attribute Expiration-Epoch where epoch is expired"):
             upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
@@ -157,14 +145,10 @@ class Test_rest_system_header(NeofsEnvTestBase):
             )
 
     @allure.title("[negative] attempt to put object with negative Neofs-Expiration-Duration")
-    def test_unable_put_negative_duration(
-        self, user_container: str, simple_object_size: int, gw_endpoint
-    ):
+    def test_unable_put_negative_duration(self, user_container: str, simple_object_size: int, gw_endpoint):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Duration": "-1h"})
         file_path = generate_file(simple_object_size)
-        with allure.step(
-            "Put object using HTTP with attribute Neofs-Expiration-Duration where duration is negative"
-        ):
+        with allure.step("Put object using HTTP with attribute Neofs-Expiration-Duration where duration is negative"):
             upload_via_http_gate_curl(
                 cid=user_container,
                 filepath=file_path,
@@ -173,12 +157,8 @@ class Test_rest_system_header(NeofsEnvTestBase):
                 error_pattern=f"{EXPIRATION_DURATION_HEADER} must be positive",
             )
 
-    @allure.title(
-        "[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past"
-    )
-    def test_unable_put_expired_timestamp(
-        self, user_container: str, simple_object_size: int, gw_endpoint
-    ):
+    @allure.title("[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past")
+    def test_unable_put_expired_timestamp(self, user_container: str, simple_object_size: int, gw_endpoint):
         headers = attr_into_str_header_curl({"Neofs-Expiration-Timestamp": "1635075727"})
         file_path = generate_file(simple_object_size)
         with allure.step(
@@ -195,9 +175,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     @allure.title(
         "[negative] Put object using HTTP with attribute Neofs-Expiration-RFC3339 where duration is in the past"
     )
-    def test_unable_put_expired_rfc(
-        self, user_container: str, simple_object_size: int, gw_endpoint
-    ):
+    def test_unable_put_expired_rfc(self, user_container: str, simple_object_size: int, gw_endpoint):
         headers = attr_into_str_header_curl({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
         file_path = generate_file(simple_object_size)
         upload_via_http_gate_curl(
@@ -278,12 +256,8 @@ class Test_rest_system_header(NeofsEnvTestBase):
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
         )
         attributes = {
-            NEOFS_EXPIRATION_DURATION: self.epoch_count_into_mins(
-                epoch_duration=epoch_duration, epoch=2
-            ),
-            NEOFS_EXPIRATION_TIMESTAMP: self.epoch_count_into_timestamp(
-                epoch_duration=epoch_duration, epoch=1
-            ),
+            NEOFS_EXPIRATION_DURATION: self.epoch_count_into_mins(epoch_duration=epoch_duration, epoch=2),
+            NEOFS_EXPIRATION_TIMESTAMP: self.epoch_count_into_timestamp(epoch_duration=epoch_duration, epoch=1),
         }
         file_path = generate_file(object_size)
         with allure.step(
@@ -338,9 +312,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
         )
         attributes = {
-            NEOFS_EXPIRATION_TIMESTAMP: self.epoch_count_into_timestamp(
-                epoch_duration=epoch_duration, epoch=2
-            ),
+            NEOFS_EXPIRATION_TIMESTAMP: self.epoch_count_into_timestamp(epoch_duration=epoch_duration, epoch=2),
             NEOFS_EXIPRATION_RFC3339: self.epoch_count_into_timestamp(
                 epoch_duration=epoch_duration, epoch=1, rfc3339=True
             ),

@@ -53,9 +53,7 @@ class TestBalanceAccounting(NeofsEnvTestBase):
         result = self.neofs_env.neofs_cli().accounting.balance(
             wallet=main_wallet.path,
             rpc_endpoint=self.neofs_env.sn_rpc,
-            address=wallet_utils.get_last_address_from_wallet(
-                main_wallet.path, main_wallet.password
-            ),
+            address=wallet_utils.get_last_address_from_wallet(main_wallet.path, main_wallet.password),
         )
 
         self.check_amount(result)
@@ -73,9 +71,7 @@ class TestBalanceAccounting(NeofsEnvTestBase):
             self.neofs_env.neofs_cli().accounting.balance(
                 wallet=main_wallet.path,
                 rpc_endpoint=self.neofs_env.sn_rpc,
-                address=wallet_utils.get_last_address_from_wallet(
-                    other_wallet.path, other_wallet.password
-                ),
+                address=wallet_utils.get_last_address_from_wallet(other_wallet.path, other_wallet.password),
             )
 
     @allure.title("Test balance request with config file")

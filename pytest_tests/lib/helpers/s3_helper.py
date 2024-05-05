@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 from datetime import datetime, timedelta
@@ -79,13 +78,9 @@ def check_objects_in_bucket(
 ) -> None:
     unexpected_objects = unexpected_objects or []
     bucket_objects = s3_gate_object.list_objects_s3(s3_client, bucket)
-    assert len(bucket_objects) == len(
-        expected_objects
-    ), f"Expected {len(expected_objects)} objects in the bucket"
+    assert len(bucket_objects) == len(expected_objects), f"Expected {len(expected_objects)} objects in the bucket"
     for bucket_object in expected_objects:
-        assert (
-            bucket_object in bucket_objects
-        ), f"Expected object {bucket_object} in objects list {bucket_objects}"
+        assert bucket_object in bucket_objects, f"Expected object {bucket_object} in objects list {bucket_objects}"
 
     for bucket_object in unexpected_objects:
         assert (
@@ -100,9 +95,7 @@ def try_to_get_objects_and_expect_error(s3_client, bucket: str, object_keys: lis
             s3_gate_object.get_object_s3(s3_client, bucket, obj)
             raise AssertionError(f"Object {obj} found in bucket {bucket}")
         except Exception as err:
-            assert "The specified key does not exist" in str(
-                err
-            ), f"Expected error in exception {err}"
+            assert "The specified key does not exist" in str(err), f"Expected error in exception {err}"
 
 
 @allure.step("Set versioning enable for bucket")
@@ -120,12 +113,8 @@ def object_key_from_file_path(full_path: str) -> str:
 def assert_tags(
     actual_tags: list, expected_tags: Optional[list] = None, unexpected_tags: Optional[list] = None
 ) -> None:
-    expected_tags = (
-        [{"Key": key, "Value": value} for key, value in expected_tags] if expected_tags else []
-    )
-    unexpected_tags = (
-        [{"Key": key, "Value": value} for key, value in unexpected_tags] if unexpected_tags else []
-    )
+    expected_tags = [{"Key": key, "Value": value} for key, value in expected_tags] if expected_tags else []
+    unexpected_tags = [{"Key": key, "Value": value} for key, value in unexpected_tags] if unexpected_tags else []
     if expected_tags == []:
         assert not actual_tags, f"Expected there is no tags, got {actual_tags}"
     assert len(expected_tags) == len(actual_tags)
@@ -144,19 +133,13 @@ def check_tags_by_object(
     unexpected_tags: Optional[list] = None,
 ) -> None:
     actual_tags = s3_gate_object.get_object_tagging(s3_client, bucket, key_name)
-    assert_tags(
-        expected_tags=expected_tags, unexpected_tags=unexpected_tags, actual_tags=actual_tags
-    )
+    assert_tags(expected_tags=expected_tags, unexpected_tags=unexpected_tags, actual_tags=actual_tags)
 
 
 @allure.step("Expected all tags are presented in bucket")
-def check_tags_by_bucket(
-    s3_client, bucket: str, expected_tags: list, unexpected_tags: Optional[list] = None
-) -> None:
+def check_tags_by_bucket(s3_client, bucket: str, expected_tags: list, unexpected_tags: Optional[list] = None) -> None:
     actual_tags = s3_gate_bucket.get_bucket_tagging(s3_client, bucket)
-    assert_tags(
-        expected_tags=expected_tags, unexpected_tags=unexpected_tags, actual_tags=actual_tags
-    )
+    assert_tags(expected_tags=expected_tags, unexpected_tags=unexpected_tags, actual_tags=actual_tags)
 
 
 def assert_object_lock_mode(
@@ -169,25 +152,19 @@ def assert_object_lock_mode(
     retain_period: Optional[int] = None,
 ):
     object_dict = s3_gate_object.get_object_s3(s3_client, bucket, file_name, full_output=True)
-    assert (
-        object_dict.get("ObjectLockMode") == object_lock_mode
-    ), f"Expected Object Lock Mode is {object_lock_mode}"
+    assert object_dict.get("ObjectLockMode") == object_lock_mode, f"Expected Object Lock Mode is {object_lock_mode}"
     assert (
         object_dict.get("ObjectLockLegalHoldStatus") == legal_hold_status
     ), f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
     object_retain_date = object_dict.get("ObjectLockRetainUntilDate")
-    retain_date = (
-        parse(object_retain_date) if isinstance(object_retain_date, str) else object_retain_date
-    )
+    retain_date = parse(object_retain_date) if isinstance(object_retain_date, str) else object_retain_date
     if retain_untile_date:
         assert retain_date.strftime("%Y-%m-%dT%H:%M:%S") == retain_untile_date.strftime(
             "%Y-%m-%dT%H:%M:%S"
         ), f'Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"))}'
     elif retain_period:
         last_modify_date = object_dict.get("LastModified")
-        last_modify = (
-            parse(last_modify_date) if isinstance(last_modify_date, str) else last_modify_date
-        )
+        last_modify = parse(last_modify_date) if isinstance(last_modify_date, str) else last_modify_date
         assert (
             retain_date - last_modify + timedelta(seconds=1)
         ).days == retain_period, f"Expected retention period is {retain_period} days"
@@ -220,17 +197,13 @@ def verify_acls(raw_acls: list[dict], acl_type: ACLType):
 
 
 def verify_private_permissions(raw_acls: list[dict]):
-    canonical_grantee = _get_grantee(
-        raw_acls, GranteeType.CANONICAL_USER, PermissionType.FULL_CONTROL
-    )
+    canonical_grantee = _get_grantee(raw_acls, GranteeType.CANONICAL_USER, PermissionType.FULL_CONTROL)
     assert (
         canonical_grantee
     ), f"Grantee {GranteeType.CANONICAL_USER.value} with {PermissionType.FULL_CONTROL.value} was not found"
 
 
-def verify_group_permissions(
-    raw_acls: list[dict], grantee_type: GranteeType, permission_type: PermissionType
-):
+def verify_group_permissions(raw_acls: list[dict], grantee_type: GranteeType, permission_type: PermissionType):
     group_grantee = _get_grantee(raw_acls, grantee_type, permission_type)
     assert group_grantee, f"No {grantee_type.value} with {permission_type.value} in grantee's list "
 

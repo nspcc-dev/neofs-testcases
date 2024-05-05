@@ -104,9 +104,7 @@ def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
 
 
 @allure.step("Get via HTTP Gate by attribute")
-def get_via_http_gate_by_attribute(
-    cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None
-):
+def get_via_http_gate_by_attribute(cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None):
     """
     This function gets given object from HTTP gate
     cid:          CID to get object from
@@ -271,9 +269,7 @@ def _attach_allure_step(request: str, status_code: int, req_type="GET"):
 
 
 @allure.step("Try to get object and expect error")
-def try_to_get_object_and_expect_error(
-    cid: str, oid: str, error_pattern: str, endpoint: str
-) -> None:
+def try_to_get_object_and_expect_error(cid: str, oid: str, error_pattern: str, endpoint: str) -> None:
     try:
         get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint)
         raise AssertionError(f"Expected error on getting object with cid: {cid}")
@@ -283,13 +279,9 @@ def try_to_get_object_and_expect_error(
 
 
 @allure.step("Verify object can be get using HTTP header attribute")
-def get_object_by_attr_and_verify_hashes(
-    oid: str, file_name: str, cid: str, attrs: dict, endpoint: str
-) -> None:
+def get_object_by_attr_and_verify_hashes(oid: str, file_name: str, cid: str, attrs: dict, endpoint: str) -> None:
     got_file_path_http = get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint)
-    got_file_path_http_attr = get_via_http_gate_by_attribute(
-        cid=cid, attribute=attrs, endpoint=endpoint
-    )
+    got_file_path_http_attr = get_via_http_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint)
     assert_hashes_are_equal(file_name, got_file_path_http, got_file_path_http_attr)
 
 
@@ -303,7 +295,6 @@ def get_object_and_verify_hashes(
     endpoint: str,
     object_getter=None,
 ) -> None:
-
     nodes_list = get_nodes_without_object(
         wallet=wallet,
         cid=cid,
@@ -335,18 +326,14 @@ def assert_hashes_are_equal(orig_file_name: str, got_file_1: str, got_file_2: st
     msg = "Expected hashes are equal for files {f1} and {f2}"
     got_file_hash_http = get_file_hash(got_file_1)
     assert get_file_hash(got_file_2) == got_file_hash_http, msg.format(f1=got_file_2, f2=got_file_1)
-    assert get_file_hash(orig_file_name) == got_file_hash_http, msg.format(
-        f1=orig_file_name, f2=got_file_1
-    )
+    assert get_file_hash(orig_file_name) == got_file_hash_http, msg.format(f1=orig_file_name, f2=got_file_1)
 
 
 def attr_into_header(attrs: dict) -> dict:
     return {f"X-Attribute-{_key}": _value for _key, _value in attrs.items()}
 
 
-@allure.step(
-    "Convert each attribute (Key=Value) to the following format: -H 'X-Attribute-Key: Value'"
-)
+@allure.step("Convert each attribute (Key=Value) to the following format: -H 'X-Attribute-Key: Value'")
 def attr_into_str_header_curl(attrs: dict) -> list:
     headers = []
     for k, v in attrs.items():
@@ -355,9 +342,7 @@ def attr_into_str_header_curl(attrs: dict) -> list:
     return headers
 
 
-@allure.step(
-    "Try to get object via http (pass http_request and optional attributes) and expect error"
-)
+@allure.step("Try to get object via http (pass http_request and optional attributes) and expect error")
 def try_to_get_object_via_passed_request_and_expect_error(
     cid: str,
     oid: str,
@@ -370,9 +355,7 @@ def try_to_get_object_via_passed_request_and_expect_error(
         if attrs is None:
             get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=http_request_path)
         else:
-            get_via_http_gate_by_attribute(
-                cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path
-            )
+            get_via_http_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path)
         raise AssertionError(f"Expected error on getting object with cid: {cid}")
     except Exception as err:
         match = error_pattern.casefold() in str(err).casefold()

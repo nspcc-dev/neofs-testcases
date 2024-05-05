@@ -24,9 +24,7 @@ logger = logging.getLogger("NeoLogger")
 )
 def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv):
     container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
-    return StorageContainer(
-        StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env
-    )
+    return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
 
 
 @pytest.mark.failover_part
@@ -62,9 +60,7 @@ class TestFailoverNodePart(NeofsEnvTestBase):
                         wallet_config=user_container.get_wallet_config_path(),
                     )
 
-    @allure.title(
-        "Delete metadata without resync metabase enabling, delete metadata try to get object"
-    )
+    @allure.title("Delete metadata without resync metabase enabling, delete metadata try to get object")
     @pytest.mark.delete_metadata
     def test_delete_metadata(self, user_container: StorageContainer, simple_object_size: int):
         storage_object = user_container.generate_object(simple_object_size)

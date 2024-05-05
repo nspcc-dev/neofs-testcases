@@ -50,9 +50,7 @@ class TestContainer(NeofsEnvTestBase):
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
-        container_info = (
-            container_info.casefold()
-        )  # To ignore case when comparing with expected values
+        container_info = container_info.casefold()  # To ignore case when comparing with expected values
 
         info_to_check = {
             f"basic ACL: {PRIVATE_ACL_F} (private)",
@@ -71,22 +69,16 @@ class TestContainer(NeofsEnvTestBase):
 
             for info in info_to_check:
                 expected_info = info.casefold()
-                assert (
-                    expected_info in container_info
-                ), f"Expected {expected_info} in container info:\n{container_info}"
+                assert expected_info in container_info, f"Expected {expected_info} in container info:\n{container_info}"
 
         with allure.step("Delete container and check it was deleted"):
             delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             self.tick_epochs_and_wait(1)
-            wait_for_container_deletion(
-                wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-            )
+            wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT delete container")
-    def test_only_owner_can_delete_container(
-        self, not_owner_wallet: NodeWallet, default_wallet: str
-    ):
+    def test_only_owner_can_delete_container(self, not_owner_wallet: NodeWallet, default_wallet: str):
         cid = create_container(
             wallet=default_wallet.path,
             shell=self.shell,
@@ -134,7 +126,7 @@ class TestContainer(NeofsEnvTestBase):
                     )
                 )
 
-        with allure.step(f"Wait for containers occur in container list"):
+        with allure.step("Wait for containers occur in container list"):
             for cid in cids:
                 wait_for_container_creation(
                     wallet.path,
@@ -148,6 +140,4 @@ class TestContainer(NeofsEnvTestBase):
             for cid in cids:
                 delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             self.tick_epochs_and_wait(1)
-            wait_for_container_deletion(
-                wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-            )
+            wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)

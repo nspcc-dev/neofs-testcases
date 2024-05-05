@@ -1,10 +1,10 @@
 """
-    When doing requests to NeoFS, we get JSON output as an automatically decoded
-    structure from protobuf. Some fields are decoded with boilerplates and binary
-    values are Base64-encoded.
+When doing requests to NeoFS, we get JSON output as an automatically decoded
+structure from protobuf. Some fields are decoded with boilerplates and binary
+values are Base64-encoded.
 
-    This module contains functions which rearrange the structure and reencode binary
-    data from Base64 to Base58.
+This module contains functions which rearrange the structure and reencode binary
+data from Base64 to Base58.
 """
 
 import base64
@@ -20,9 +20,7 @@ def decode_simple_header(data: dict) -> dict:
         data = decode_common_fields(data)
 
         # Normalize object attributes
-        data["header"]["attributes"] = {
-            attr["key"]: attr["value"] for attr in data["header"]["attributes"]
-        }
+        data["header"]["attributes"] = {attr["key"]: attr["value"] for attr in data["header"]["attributes"]}
     except Exception as exc:
         raise ValueError(f"failed to decode JSON output: {exc}") from exc
 

@@ -27,11 +27,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph deposit-notary",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_balances(
@@ -56,11 +52,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph dump-balances",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_config(self, rpc_endpoint: str) -> CommandResult:
@@ -74,11 +66,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph dump-config",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_containers(
@@ -101,11 +89,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph dump-containers",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_hashes(self, rpc_endpoint: str, domain: str) -> CommandResult:
@@ -120,11 +104,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph dump-hashes",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def force_new_epoch(
@@ -141,11 +121,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph force-new-epoch",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def generate_alphabet(
@@ -164,11 +140,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph generate-alphabet",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def generate_storage_wallet(
@@ -191,11 +163,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph generate-storage-wallet",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def init(
@@ -231,11 +199,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph init",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def refill_gas(
@@ -258,11 +222,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph refill-gas",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def restore_containers(
@@ -285,11 +245,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph restore-containers",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def set_policy(
@@ -347,11 +303,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph update-contracts",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def set_config(self, rpc_endpoint: str, alphabet_wallets: str, post_data: str) -> CommandResult:
@@ -367,11 +319,7 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph set-config",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def deploy(
@@ -398,9 +346,5 @@ class NeofsAdmMorph(CliCommand):
         """
         return self._execute(
             "morph deploy",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

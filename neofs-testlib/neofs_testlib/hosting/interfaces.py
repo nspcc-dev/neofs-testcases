@@ -18,9 +18,7 @@ class Host(ABC):
 
     def __init__(self, config: HostConfig) -> None:
         self._config = config
-        self._service_config_by_name = {
-            service_config.name: service_config for service_config in config.services
-        }
+        self._service_config_by_name = {service_config.name: service_config for service_config in config.services}
         self._cli_config_by_name = {cli_config.name: cli_config for cli_config in config.clis}
 
     @property

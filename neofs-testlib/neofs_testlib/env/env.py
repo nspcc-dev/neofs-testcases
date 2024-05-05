@@ -101,14 +101,14 @@ class NeoFSEnv:
     def neofs_cli(self, cli_config_path: str) -> NeofsCli:
         return NeofsCli(self.shell, self.neofs_cli_path, cli_config_path)
 
-    def neofs_lens(self,) -> NeofsLens:
+    def neofs_lens(
+        self,
+    ) -> NeofsLens:
         return NeofsLens(self.shell, self.neofs_lens_path)
 
     def generate_cli_config(self, wallet: NodeWallet):
         cli_config_path = NeoFSEnv._generate_temp_file(extension="yml", prefix="cli_config")
-        NeoFSEnv.generate_config_file(
-            config_template="cli_cfg.yaml", config_path=cli_config_path, wallet=wallet
-        )
+        NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=cli_config_path, wallet=wallet)
         return cli_config_path
 
     @allure.step("Deploy inner ring node")
@@ -127,12 +127,10 @@ class NeoFSEnv:
                 node_attrs_list = node_attrs.get(idx, None)
             new_storage_node = StorageNode(self, len(self.storage_nodes) + 1, node_attrs=node_attrs_list)
             self.storage_nodes.append(new_storage_node)
-            deploy_threads.append(
-                threading.Thread(target=new_storage_node.start)
-            )
+            deploy_threads.append(threading.Thread(target=new_storage_node.start))
         for t in deploy_threads:
             t.start()
-        logger.info(f"Wait until storage nodes are deployed")
+        logger.info("Wait until storage nodes are deployed")
         self._wait_until_all_storage_nodes_are_ready()
         # tick epoch to speed up storage nodes bootstrap
         self.neofs_adm().morph.force_new_epoch(
@@ -141,7 +139,7 @@ class NeoFSEnv:
         )
         for t in deploy_threads:
             t.join()
-            
+
     @retry(wait=wait_fixed(2), stop=stop_after_attempt(60), reraise=True)
     def _wait_until_all_storage_nodes_are_ready(self):
         ready_counter = 0
@@ -151,7 +149,7 @@ class NeoFSEnv:
             if "Health status: READY" in result.stdout:
                 ready_counter += 1
         assert ready_counter == len(self.storage_nodes)
-            
+
     @allure.step("Deploy s3 gateway")
     def deploy_s3_gw(self):
         self.s3_gw = S3_GW(self)
@@ -218,22 +216,22 @@ class NeoFSEnv:
             pickle.dump(self, fp)
         logger.info(f"Persist env at: {persisted_path}")
         return persisted_path
-    
+
     def log_env_details_to_file(self):
         with open("env_details", "w") as fp:
             env_details = ""
-            
+
             for ir_node in self.inner_ring_nodes:
                 env_details += f"{ir_node}\n"
-                
+
             for sn_node in self.storage_nodes:
                 env_details += f"{sn_node}\n"
-                
+
             env_details += f"{self.s3_gw}\n"
             env_details += f"{self.rest_gw}\n"
-            
+
             fp.write(env_details)
-            
+
     def log_versions_to_allure(self):
         versions = ""
         versions += NeoFSEnv._run_single_command(self.neofs_adm_path, "--version")
@@ -244,11 +242,11 @@ class NeoFSEnv:
         versions += NeoFSEnv._run_single_command(self.neofs_s3_authmate_path, "--version")
         versions += NeoFSEnv._run_single_command(self.neofs_s3_gw_path, "--version")
         versions += NeoFSEnv._run_single_command(self.neofs_rest_gw_path, "--version")
-        allure.attach(versions, f"neofs env versions", allure.attachment_type.TEXT, ".txt")
+        allure.attach(versions, "neofs env versions", allure.attachment_type.TEXT, ".txt")
 
     @allure.step("Download binaries")
     def download_binaries(self):
-        logger.info(f"Going to download missing binaries, if any")
+        logger.info("Going to download missing binaries, if any")
         deploy_threads = []
 
         binaries = [
@@ -289,7 +287,7 @@ class NeoFSEnv:
         if len(deploy_threads) > 0:
             for t in deploy_threads:
                 t.start()
-            logger.info(f"Wait until all binaries are downloaded")
+            logger.info("Wait until all binaries are downloaded")
             for t in deploy_threads:
                 t.join()
 
@@ -309,13 +307,13 @@ class NeoFSEnv:
         neofs_env.download_binaries()
         neofs_env.deploy_inner_ring_node()
         neofs_env.deploy_storage_nodes(
-            count=4, 
+            count=4,
             node_attrs={
                 0: ["UN-LOCODE:RU MOW", "Price:22"],
                 1: ["UN-LOCODE:RU LED", "Price:33"],
                 2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"]
-            }
+                3: ["UN-LOCODE:FI HEL", "Price:44"],
+            },
         )
         neofs_env.deploy_s3_gw()
         neofs_env.deploy_rest_gw()
@@ -329,21 +327,15 @@ class NeoFSEnv:
         if custom:
             config_template = Path(config_template).read_text()
         else:
-            config_template = (
-                files("neofs_testlib.env.templates").joinpath(config_template).read_text()
-            )
+            config_template = files("neofs_testlib.env.templates").joinpath(config_template).read_text()
         jinja_template = jinja_env.from_string(config_template)
         rendered_config = jinja_template.render(**kwargs)
         with open(config_path, mode="w") as fp:
             fp.write(rendered_config)
-      
-    @staticmethod      
+
+    @staticmethod
     def _run_single_command(binary: str, command: str) -> str:
-        result = subprocess.run(
-            [binary, command],
-            capture_output = True,
-            text = True
-        )
+        result = subprocess.run([binary, command], capture_output=True, text=True)
         return f"{result.stdout}\n{result.stderr}\n"
 
     @classmethod
@@ -395,9 +387,7 @@ class InnerRing:
         self.network_config = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_network_config")
         self.cli_config = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_cli_config")
         self.alphabet_wallet = NodeWallet(
-            path=NeoFSEnv._generate_temp_dir(prefix="ir_alphabet"), 
-            address="", 
-            password=self.neofs_env.default_password
+            path=NeoFSEnv._generate_temp_dir(prefix="ir_alphabet"), address="", password=self.neofs_env.default_password
         )
         self.ir_node_config_path = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_node_config")
         self.ir_storage_path = NeoFSEnv._generate_temp_file(extension="db", prefix="ir_storage")
@@ -431,7 +421,7 @@ class InnerRing:
 
     def start(self):
         if self.process is not None:
-            raise RuntimeError(f"This inner ring node instance has already been started")
+            raise RuntimeError("This inner ring node instance has already been started")
         logger.info(f"Generating network config at: {self.network_config}")
 
         network_config_template = "network.yaml"
@@ -444,10 +434,8 @@ class InnerRing:
             alphabet_wallets_path=self.alphabet_wallet.path,
             default_password=self.neofs_env.default_password,
         )
-        logger.info(f"Generating alphabet wallets")
-        self.neofs_env.generate_wallet(
-            WalletType.ALPHABET, self.alphabet_wallet, network_config=self.network_config
-        )
+        logger.info("Generating alphabet wallets")
+        self.neofs_env.generate_wallet(WalletType.ALPHABET, self.alphabet_wallet, network_config=self.network_config)
         logger.info(f"Generating IR config at: {self.ir_node_config_path}")
 
         ir_config_template = "ir.yaml"
@@ -473,7 +461,7 @@ class InnerRing:
         )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
-        logger.info(f"Wait until IR is READY")
+        logger.info("Wait until IR is READY")
         self._wait_until_ready()
 
         self.neofs_env.neofs_adm
@@ -507,11 +495,7 @@ class Shard:
 
 class StorageNode:
     def __init__(
-        self, 
-        neofs_env: NeoFSEnv, 
-        sn_number: int,
-        node_attrs: Optional[list] = None, 
-        attrs: Optional[dict] = None
+        self, neofs_env: NeoFSEnv, sn_number: int, node_attrs: Optional[list] = None, attrs: Optional[dict] = None
     ):
         self.neofs_env = neofs_env
         self.wallet = NodeWallet(
@@ -553,7 +537,7 @@ class StorageNode:
     @allure.step("Start storage node")
     def start(self, fresh=True):
         if fresh:
-            logger.info(f"Generating wallet for storage node")
+            logger.info("Generating wallet for storage node")
             self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
@@ -574,14 +558,14 @@ class StorageNode:
             )
         logger.info(f"Launching Storage Node:{self}")
         self._launch_process()
-        logger.info(f"Wait until storage node is READY")
+        logger.info("Wait until storage node is READY")
         self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
-        
+
     @allure.step("Stop storage node")
     def stop(self):
         self.process.terminate()
-        
+
     @allure.step("Delete storage node data")
     def delete_data(self):
         self.stop()
@@ -606,13 +590,13 @@ class StorageNode:
             state_file=self.state_file,
         )
         time.sleep(1)
-        
+
     @allure.step("Delete storage node metadata")
     def delete_metadata(self):
         self.stop()
         for shard in self.shards:
             os.remove(shard.metabase_path)
-            shard.metabase_path = NeoFSEnv._generate_temp_file(prefix=f"shard_metabase")
+            shard.metabase_path = NeoFSEnv._generate_temp_file(prefix="shard_metabase")
 
         sn_config_template = "sn.yaml"
 
@@ -626,7 +610,7 @@ class StorageNode:
             state_file=self.state_file,
         )
         time.sleep(1)
-        
+
     @allure.step("Set metabase resync")
     def set_metabase_resync(self, resync_state: bool):
         self.stop()
@@ -695,7 +679,7 @@ class S3_GW:
     def start(self):
         if self.process is not None:
             raise RuntimeError(f"This s3 gw instance has already been started:\n{self}")
-        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label=f"s3")
+        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label="s3")
         logger.info(f"Generating config for s3 gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching S3 GW: {self}")
@@ -779,7 +763,7 @@ class REST_GW:
     def start(self):
         if self.process is not None:
             raise RuntimeError(f"This rest gw instance has already been started:\n{self}")
-        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label=f"rest")
+        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label="rest")
         logger.info(f"Generating config for rest gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching REST GW: {self}")

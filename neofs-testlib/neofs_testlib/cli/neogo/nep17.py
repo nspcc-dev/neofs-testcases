@@ -29,9 +29,7 @@ class NeoGoNep17(CliCommand):
             Command's result.
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "wallet nep17 balance",
@@ -62,9 +60,7 @@ class NeoGoNep17(CliCommand):
             Command's result.
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "wallet nep17 import",
@@ -92,11 +88,7 @@ class NeoGoNep17(CliCommand):
 
         return self._execute(
             "wallet nep17 info",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def remove(
@@ -120,11 +112,7 @@ class NeoGoNep17(CliCommand):
         """
         return self._execute(
             "wallet nep17 remove",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def transfer(
@@ -173,9 +161,7 @@ class NeoGoNep17(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value
-            for param, param_value in locals().items()
-            if param not in ["self", "wallet_password"]
+            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
         }
         exec_param["timeout"] = f"{timeout}s"
 
@@ -230,9 +216,7 @@ class NeoGoNep17(CliCommand):
             Command's result.
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
-        exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self"]
-        }
+        exec_param = {param: param_value for param, param_value in locals().items() if param not in ["self"]}
         exec_param["timeout"] = f"{timeout}s"
         return self._execute(
             "wallet nep17 multitransfer",

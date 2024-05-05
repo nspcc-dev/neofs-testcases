@@ -27,7 +27,7 @@ class NeofsCliShards(CliCommand):
             Command's result.
         """
         return self._execute(
-            f"control shards flush-cache",
+            "control shards flush-cache",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
@@ -57,12 +57,8 @@ class NeofsCliShards(CliCommand):
             Command's result.
         """
         return self._execute(
-            f"control shards set-mode",
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self"]
-            },
+            "control shards set-mode",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
     def dump(
@@ -89,12 +85,8 @@ class NeofsCliShards(CliCommand):
             Command's result.
         """
         return self._execute(
-            f"control shards dump",
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self"]
-            },
+            "control shards dump",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
     def list(
@@ -117,23 +109,19 @@ class NeofsCliShards(CliCommand):
             Command's result.
         """
         return self._execute(
-            f"control shards list",
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self"]
-            },
+            "control shards list",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
     def evacuate(
-            self,
-            endpoint: str,
-            wallet: str,
-            shards_id: List[str],
-            all_shards: bool = False,
-            no_errors: bool = False,
-            address: Optional[str] = None,
-            timeout: Optional[str] = None,
+        self,
+        endpoint: str,
+        wallet: str,
+        shards_id: List[str],
+        all_shards: bool = False,
+        no_errors: bool = False,
+        address: Optional[str] = None,
+        timeout: Optional[str] = None,
     ) -> CommandResult:
         """
         Evacuate objects from shard to other shards.
@@ -152,23 +140,19 @@ class NeofsCliShards(CliCommand):
         """
 
         return self._execute(
-            f"control shards evacuate",
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self"]
-            },
+            "control shards evacuate",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
     def restore(
-            self,
-            endpoint: str,
-            wallet: str,
-            shard_id: str,
-            path: str,
-            no_errors: bool = False,
-            address: Optional[str] = None,
-            timeout: Optional[str] = None,
+        self,
+        endpoint: str,
+        wallet: str,
+        shard_id: str,
+        path: str,
+        no_errors: bool = False,
+        address: Optional[str] = None,
+        timeout: Optional[str] = None,
     ) -> CommandResult:
         """
         Restore objects from shard to a file.
@@ -187,10 +171,6 @@ class NeofsCliShards(CliCommand):
         """
 
         return self._execute(
-            f"control shards restore",
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self"]
-            },
+            "control shards restore",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
         )

@@ -46,30 +46,24 @@ class TestS3GateLocking(TestNeofsS3GateBase):
                 "Mode": "COMPLIANCE",
                 "RetainUntilDate": date_obj,
             }
-            s3_gate_object.put_object_retention(
-                self.s3_client, bucket, file_name, retention, version_id
-            )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF"
-            )
+            s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
 
         with allure.step(f"Put legal hold to object {file_name}"):
-            s3_gate_object.put_object_legal_hold(
-                self.s3_client, bucket, file_name, "ON", version_id
-            )
+            s3_gate_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
 
-        with allure.step(f"Fail with deleting object with legal hold and retention period"):
+        with allure.step("Fail with deleting object with legal hold and retention period"):
             if version_id:
                 with pytest.raises(Exception):
                     # An error occurred (AccessDenied) when calling the DeleteObject operation (reached max retries: 0): Access Denied.
                     s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name, version_id)
 
-        with allure.step(f"Check retention period is no longer set on the uploaded object"):
+        with allure.step("Check retention period is no longer set on the uploaded object"):
             time.sleep((retention_period + 1) * 60)
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
 
-        with allure.step(f"Fail with deleting object with legal hold and retention period"):
+        with allure.step("Fail with deleting object with legal hold and retention period"):
             if version_id:
                 with pytest.raises(Exception):
                     # An error occurred (AccessDenied) when calling the DeleteObject operation (reached max retries: 0): Access Denied.
@@ -100,25 +94,17 @@ class TestS3GateLocking(TestNeofsS3GateBase):
                 "Mode": "COMPLIANCE",
                 "RetainUntilDate": date_obj,
             }
-            s3_gate_object.put_object_retention(
-                self.s3_client, bucket, file_name, retention, version_id
-            )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF"
-            )
+            s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
 
-        with allure.step(
-            f"Try to change retention period {retention_period_1}min to object {file_name}"
-        ):
+        with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
             date_obj = datetime.utcnow() + timedelta(minutes=retention_period_1)
             retention = {
                 "Mode": "COMPLIANCE",
                 "RetainUntilDate": date_obj,
             }
             with pytest.raises(Exception):
-                s3_gate_object.put_object_retention(
-                    self.s3_client, bucket, file_name, retention, version_id
-                )
+                s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
 
     @allure.title("Test S3: Checking the ability to change retention mode GOVERNANCE")
     def test_s3_mode_governance(self, version_id, simple_object_size):
@@ -144,38 +130,26 @@ class TestS3GateLocking(TestNeofsS3GateBase):
                 "Mode": "GOVERNANCE",
                 "RetainUntilDate": date_obj,
             }
-            s3_gate_object.put_object_retention(
-                self.s3_client, bucket, file_name, retention, version_id
-            )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF"
-            )
+            s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
-        with allure.step(
-            f"Try to change retention period {retention_period_1}min to object {file_name}"
-        ):
+        with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
             date_obj = datetime.utcnow() + timedelta(minutes=retention_period_1)
             retention = {
                 "Mode": "GOVERNANCE",
                 "RetainUntilDate": date_obj,
             }
             with pytest.raises(Exception):
-                s3_gate_object.put_object_retention(
-                    self.s3_client, bucket, file_name, retention, version_id
-                )
+                s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
 
-        with allure.step(
-            f"Try to change retention period {retention_period_1}min to object {file_name}"
-        ):
+        with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
             date_obj = datetime.utcnow() + timedelta(minutes=retention_period_1)
             retention = {
                 "Mode": "GOVERNANCE",
                 "RetainUntilDate": date_obj,
             }
             with pytest.raises(Exception):
-                s3_gate_object.put_object_retention(
-                    self.s3_client, bucket, file_name, retention, version_id
-                )
+                s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
 
         with allure.step(f"Put new retention period {retention_period_2}min to object {file_name}"):
             date_obj = datetime.utcnow() + timedelta(minutes=retention_period_2)
@@ -183,12 +157,8 @@ class TestS3GateLocking(TestNeofsS3GateBase):
                 "Mode": "GOVERNANCE",
                 "RetainUntilDate": date_obj,
             }
-            s3_gate_object.put_object_retention(
-                self.s3_client, bucket, file_name, retention, version_id, True
-            )
-            assert_object_lock_mode(
-                self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF"
-            )
+            s3_gate_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id, True)
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
     @allure.title("Test S3: Checking if an Object Cannot Be Locked")
     def test_s3_legal_hold(self, version_id, simple_object_size):
@@ -207,9 +177,7 @@ class TestS3GateLocking(TestNeofsS3GateBase):
 
         with allure.step(f"Put legal hold to object {file_name}"):
             with pytest.raises(Exception):
-                s3_gate_object.put_object_legal_hold(
-                    self.s3_client, bucket, file_name, "ON", version_id
-                )
+                s3_gate_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
 
 
 @pytest.mark.s3_gate

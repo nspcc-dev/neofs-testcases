@@ -141,9 +141,7 @@ def head_object_s3(s3_client, bucket: str, object_key: str, version_id: Optional
 
 
 @allure.step("Delete object S3")
-def delete_object_s3(
-    s3_client, bucket: str, object_key: str, version_id: Optional[str] = None
-) -> dict:
+def delete_object_s3(s3_client, bucket: str, object_key: str, version_id: Optional[str] = None) -> dict:
     try:
         params = {"Bucket": bucket, "Key": object_key}
         if version_id:
@@ -250,9 +248,7 @@ def put_object_acl_s3(
 
 
 @allure.step("Get object ACL")
-def get_object_acl_s3(
-    s3_client, bucket: str, object_key: str, version_id: Optional[str] = None
-) -> list:
+def get_object_acl_s3(s3_client, bucket: str, object_key: str, version_id: Optional[str] = None) -> list:
     params = {"Bucket": bucket, "Key": object_key}
     try:
         if version_id:
@@ -269,9 +265,7 @@ def get_object_acl_s3(
 
 
 @allure.step("Copy object S3")
-def copy_object_s3(
-    s3_client, bucket: str, object_key: str, bucket_dst: Optional[str] = None, **kwargs
-) -> str:
+def copy_object_s3(s3_client, bucket: str, object_key: str, bucket_dst: Optional[str] = None, **kwargs) -> str:
     filename = os.path.join(os.getcwd(), str(uuid.uuid4()))
     try:
         params = {
@@ -373,9 +367,7 @@ def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[list[dict
 @allure.step("Abort multipart upload S3")
 def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upload_id: str):
     try:
-        response = s3_client.abort_multipart_upload(
-            Bucket=bucket_name, Key=object_key, UploadId=upload_id
-        )
+        response = s3_client.abort_multipart_upload(Bucket=bucket_name, Key=object_key, UploadId=upload_id)
         log_command_execution("S3 Abort multipart upload", response)
 
     except ClientError as err:
@@ -386,9 +378,7 @@ def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upl
 
 
 @allure.step("Upload part S3")
-def upload_part_s3(
-    s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, filepath: str
-) -> str:
+def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, filepath: str) -> str:
     if isinstance(s3_client, AwsCliClient):
         file_content = filepath
     else:
@@ -418,7 +408,6 @@ def upload_part_s3(
 def upload_part_copy_s3(
     s3_client, bucket_name: str, object_key: str, upload_id: str, part_num: int, copy_source: str
 ) -> str:
-
     try:
         response = s3_client.upload_part_copy(
             UploadId=upload_id,
@@ -454,9 +443,7 @@ def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) 
 
 
 @allure.step("Complete multipart upload S3")
-def complete_multipart_upload_s3(
-    s3_client, bucket_name: str, object_key: str, upload_id: str, parts: list
-):
+def complete_multipart_upload_s3(s3_client, bucket_name: str, object_key: str, upload_id: str, parts: list):
     try:
         parts = [{"ETag": etag, "PartNumber": part_num} for part_num, etag in parts]
         response = s3_client.complete_multipart_upload(
@@ -484,7 +471,7 @@ def put_object_retention(
         params = {"Bucket": bucket_name, "Key": object_key, "Retention": retention}
         if version_id:
             params.update({"VersionId": version_id})
-        if not bypass_governance_retention is None:
+        if bypass_governance_retention is not None:
             params.update({"BypassGovernanceRetention": bypass_governance_retention})
         s3_client.put_object_retention(**params)
         log_command_execution("S3 Put object retention ", str(retention))
@@ -521,9 +508,7 @@ def put_object_tagging(s3_client, bucket_name: str, object_key: str, tags: list)
 
 
 @allure.step("Get object tagging")
-def get_object_tagging(
-    s3_client, bucket_name: str, object_key: str, version_id: Optional[str] = None
-) -> list:
+def get_object_tagging(s3_client, bucket_name: str, object_key: str, version_id: Optional[str] = None) -> list:
     try:
         params = {"Bucket": bucket_name, "Key": object_key}
         if version_id:

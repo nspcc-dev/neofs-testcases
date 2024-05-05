@@ -35,9 +35,7 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
         file_name_2 = object_key_from_file_path(file_path_2)
 
         with allure.step("Create two buckets with different bucket configuration"):
-            bucket_1 = s3_gate_bucket.create_bucket_s3(
-                self.s3_client, bucket_configuration="complex"
-            )
+            bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="complex")
             set_bucket_versioning(self.s3_client, bucket_1, s3_gate_bucket.VersioningStatus.ENABLED)
             bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-3")
             set_bucket_versioning(self.s3_client, bucket_2, s3_gate_bucket.VersioningStatus.ENABLED)
@@ -49,8 +47,8 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
             # with allure.step("Check head buckets"):
             head_1 = s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
             head_2 = s3_gate_bucket.head_bucket(self.s3_client, bucket_2)
-            assert head_1 == {} or head_1.get("HEAD") == None, "Expected head is empty"
-            assert head_2 == {} or head_2.get("HEAD") == None, "Expected head is empty"
+            assert head_1 == {} or head_1.get("HEAD") is None, "Expected head is empty"
+            assert head_2 == {} or head_2.get("HEAD") is None, "Expected head is empty"
 
         with allure.step("Put objects into buckets"):
             version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket_1, file_path_1)
@@ -147,9 +145,7 @@ class TestS3GatePolicy(TestNeofsS3GateBase):
             }
             s3_gate_bucket.put_bucket_cors(self.s3_client, bucket, cors)
             bucket_cors = s3_gate_bucket.get_bucket_cors(self.s3_client, bucket)
-            assert bucket_cors == cors.get(
-                "CORSRules"
-            ), f"Expected corsrules must be {cors.get('CORSRules')}"
+            assert bucket_cors == cors.get("CORSRules"), f"Expected corsrules must be {cors.get('CORSRules')}"
 
         with allure.step("delete bucket cors"):
             s3_gate_bucket.delete_bucket_cors(self.s3_client, bucket)

@@ -53,9 +53,7 @@ class Test_rest_streaming(NeofsEnvTestBase):
             # Generate file
             file_path = generate_file(object_size)
 
-        with allure.step(
-            "Put objects using curl utility and Get object and verify hashes [ get/$CID/$OID ]"
-        ):
+        with allure.step("Put objects using curl utility and Get object and verify hashes [ get/$CID/$OID ]"):
             oid = upload_via_http_gate_curl(cid=cid, filepath=file_path, endpoint=gw_endpoint)
             get_object_and_verify_hashes(
                 oid=oid,

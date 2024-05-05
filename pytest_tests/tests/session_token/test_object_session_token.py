@@ -147,9 +147,7 @@ class TestDynamicObjectSession(NeofsEnvTestBase):
 
     @allure.title("Verify session token expiration flags")
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
-    def test_session_token_expiration_flags(
-        self, default_wallet, simple_object_size, expiration_flag
-    ):
+    def test_session_token_expiration_flags(self, default_wallet, simple_object_size, expiration_flag):
         rpc_endpoint = self.neofs_env.storage_nodes[0].endpoint
 
         with allure.step("Create Session Token with Lifetime param"):

@@ -47,9 +47,8 @@ If you want to exit from the current venv for any reason, use the `deactivate` c
 $ pre-commit install
 ```
 
-Optionally you might want to integrate code formatters with your code editor to apply formatters to code files as you go:
-* isort is supported by [PyCharm](https://plugins.jetbrains.com/plugin/15434-isortconnect), [VS Code](https://cereblanco.medium.com/setup-black-and-isort-in-vscode-514804590bf9). Plugins exist for other IDEs/editors as well.
-* black can be integrated with multiple editors, please, instructions are available [here](https://black.readthedocs.io/en/stable/integrations/editors.html).
+We use ruff linter - https://github.com/astral-sh/ruff, please install it in your IDE to properly format the code. 
+In any case, there is a github workflow that will check your formatting.
 
 4. Install Allure CLI
 

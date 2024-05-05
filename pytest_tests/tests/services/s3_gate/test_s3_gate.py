@@ -71,9 +71,7 @@ class TestS3Gate(TestNeofsS3GateBase):
             s3_gate_object.head_object_s3(self.s3_client, bucket_1, file_name)
 
             bucket_objects = s3_gate_object.list_objects_s3(self.s3_client, bucket_1)
-            assert (
-                file_name in bucket_objects
-            ), f"Expected file {file_name} in objects list {bucket_objects}"
+            assert file_name in bucket_objects, f"Expected file {file_name} in objects list {bucket_objects}"
 
         with allure.step("Try to delete not empty bucket and expect error"):
             with pytest.raises(Exception, match=r".*The bucket you tried to delete is not empty.*"):
@@ -106,16 +104,12 @@ class TestS3Gate(TestNeofsS3GateBase):
                 s3_gate_bucket.head_bucket(self.s3_client, bucket_1)
 
     @allure.title("Test S3 Object API")
-    @pytest.mark.parametrize(
-        "file_type", ["simple", "large"], ids=["Simple object", "Large object"]
-    )
+    @pytest.mark.parametrize("file_type", ["simple", "large"], ids=["Simple object", "Large object"])
     def test_s3_api_object(self, file_type, two_buckets, simple_object_size, complex_object_size):
         """
         Test base S3 Object API (Put/Head/List) for simple and large objects.
         """
-        file_path = generate_file(
-            simple_object_size if file_type == "simple" else complex_object_size
-        )
+        file_path = generate_file(simple_object_size if file_type == "simple" else complex_object_size)
         file_name = self.object_key_from_file_path(file_path)
 
         bucket_1, bucket_2 = two_buckets
@@ -129,9 +123,7 @@ class TestS3Gate(TestNeofsS3GateBase):
             s3_gate_object.head_object_s3(self.s3_client, bucket, file_name)
 
             bucket_objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
-            assert (
-                file_name in bucket_objects
-            ), f"Expected file {file_name} in objects list {bucket_objects}"
+            assert file_name in bucket_objects, f"Expected file {file_name} in objects list {bucket_objects}"
 
         with allure.step("Check object's attributes"):
             for attrs in (["ETag"], ["ObjectSize", "StorageClass"]):
@@ -156,9 +148,7 @@ class TestS3Gate(TestNeofsS3GateBase):
             objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
 
         with allure.step("Check these are the same objects"):
-            assert set(key_to_path.keys()) == set(
-                objects
-            ), f"Expected exact objects saved. Got {objects}"
+            assert set(key_to_path.keys()) == set(objects), f"Expected exact objects saved. Got {objects}"
             for obj_key in objects:
                 got_object = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key)
                 assert get_file_hash(got_object) == get_file_hash(
@@ -178,16 +168,12 @@ class TestS3Gate(TestNeofsS3GateBase):
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
-            generate_file_with_content(
-                simple_object_size, file_path=file_name_simple, content=version_2_content
-            )
+            generate_file_with_content(simple_object_size, file_path=file_name_simple, content=version_2_content)
             version_id_2 = s3_gate_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 
         with allure.step("Check bucket shows all versions"):
             versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
-            obj_versions = {
-                version.get("VersionId") for version in versions if version.get("Key") == obj_key
-            }
+            obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == obj_key}
             assert obj_versions == {
                 version_id_1,
                 version_id_2,
@@ -195,14 +181,10 @@ class TestS3Gate(TestNeofsS3GateBase):
 
         with allure.step("Show information about particular version"):
             for version_id in (version_id_1, version_id_2):
-                response = s3_gate_object.head_object_s3(
-                    self.s3_client, bucket, obj_key, version_id=version_id
-                )
+                response = s3_gate_object.head_object_s3(self.s3_client, bucket, obj_key, version_id=version_id)
                 assert "LastModified" in response, "Expected LastModified field"
                 assert "ETag" in response, "Expected ETag field"
-                assert (
-                    response.get("VersionId") == version_id
-                ), f"Expected VersionId is {version_id}"
+                assert response.get("VersionId") == version_id, f"Expected VersionId is {version_id}"
                 assert response.get("ContentLength") != 0, "Expected ContentLength is not zero"
 
         with allure.step("Check object's attributes"):
@@ -211,9 +193,7 @@ class TestS3Gate(TestNeofsS3GateBase):
                     self.s3_client, bucket, obj_key, "ETag", version_id=version_id
                 )
                 if got_attrs:
-                    assert (
-                        got_attrs.get("VersionId") == version_id
-                    ), f"Expected VersionId is {version_id}"
+                    assert got_attrs.get("VersionId") == version_id, f"Expected VersionId is {version_id}"
 
         with allure.step("Delete object and check it was deleted"):
             response = s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key)
@@ -227,18 +207,12 @@ class TestS3Gate(TestNeofsS3GateBase):
                 (version_id_2, version_2_content),
                 (version_id_1, version_1_content),
             ):
-                file_name = s3_gate_object.get_object_s3(
-                    self.s3_client, bucket, obj_key, version_id=version
-                )
+                file_name = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key, version_id=version)
                 got_content = get_file_content(file_name)
-                assert (
-                    got_content == content
-                ), f"Expected object content is\n{content}\nGot\n{got_content}"
+                assert got_content == content, f"Expected object content is\n{content}\nGot\n{got_content}"
 
         with allure.step("Restore previous object version"):
-            s3_gate_object.delete_object_s3(
-                self.s3_client, bucket, obj_key, version_id=version_id_delete
-            )
+            s3_gate_object.delete_object_s3(self.s3_client, bucket, obj_key, version_id=version_id_delete)
 
             file_name = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key)
             got_content = get_file_content(file_name)
@@ -255,9 +229,7 @@ class TestS3Gate(TestNeofsS3GateBase):
         Upload part/List parts/Complete multipart upload).
         """
         parts_count = 3
-        file_name_large = generate_file(
-            simple_object_size * 1024 * 6 * parts_count
-        )  # 5Mb - min part
+        file_name_large = generate_file(simple_object_size * 1024 * 6 * parts_count)  # 5Mb - min part
         object_key = self.object_key_from_file_path(file_name_large)
         part_files = split_file(file_name_large, parts_count)
         parts = []
@@ -266,41 +238,27 @@ class TestS3Gate(TestNeofsS3GateBase):
         assert not uploads, f"Expected there is no uploads in bucket {bucket}"
 
         with allure.step("Create and abort multipart upload"):
-            upload_id = s3_gate_object.create_multipart_upload_s3(
-                self.s3_client, bucket, object_key
-            )
+            upload_id = s3_gate_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
             assert uploads, f"Expected there one upload in bucket {bucket}"
-            assert (
-                uploads[0].get("Key") == object_key
-            ), f"Expected correct key {object_key} in upload {uploads}"
-            assert (
-                uploads[0].get("UploadId") == upload_id
-            ), f"Expected correct UploadId {upload_id} in upload {uploads}"
+            assert uploads[0].get("Key") == object_key, f"Expected correct key {object_key} in upload {uploads}"
+            assert uploads[0].get("UploadId") == upload_id, f"Expected correct UploadId {upload_id} in upload {uploads}"
 
             s3_gate_object.abort_multipart_uploads_s3(self.s3_client, bucket, object_key, upload_id)
             uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
             assert not uploads, f"Expected there is no uploads in bucket {bucket}"
 
         with allure.step("Create new multipart upload and upload several parts"):
-            upload_id = s3_gate_object.create_multipart_upload_s3(
-                self.s3_client, bucket, object_key
-            )
+            upload_id = s3_gate_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             for part_id, file_path in enumerate(part_files, start=1):
-                etag = s3_gate_object.upload_part_s3(
-                    self.s3_client, bucket, object_key, upload_id, part_id, file_path
-                )
+                etag = s3_gate_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
                 parts.append((part_id, etag))
 
         with allure.step("Check all parts are visible in bucket"):
             got_parts = s3_gate_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            assert len(got_parts) == len(
-                part_files
-            ), f"Expected {parts_count} parts, got\n{got_parts}"
+            assert len(got_parts) == len(part_files), f"Expected {parts_count} parts, got\n{got_parts}"
 
-        s3_gate_object.complete_multipart_upload_s3(
-            self.s3_client, bucket, object_key, upload_id, parts
-        )
+        s3_gate_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
 
         uploads = s3_gate_object.list_multipart_uploads_s3(self.s3_client, bucket)
         assert not uploads, f"Expected there is no uploads in bucket {bucket}"
@@ -331,7 +289,6 @@ class TestS3Gate(TestNeofsS3GateBase):
         """
         Test checks S3 Object tagging API (Put tag/Get tag/Update tag).
         """
-        key_value_pair_bucket = [("some-key", "some-value"), ("some-key-2", "some-value-2")]
         key_value_pair_obj = [
             ("some-key-obj", "some-value-obj"),
             ("some-key--obj2", "some-value--obj2"),
@@ -416,9 +373,7 @@ class TestS3Gate(TestNeofsS3GateBase):
         Test object can be copied to the same bucket.
         #TODO: delete after test_s3_copy_object will be merge
         """
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
         file_name_simple = self.object_key_from_file_path(file_path_simple)
         file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_objects = [file_name_simple, file_name_large]
@@ -439,9 +394,7 @@ class TestS3Gate(TestNeofsS3GateBase):
 
         with allure.step("Check copied object has the same content"):
             got_copied_file = s3_gate_object.get_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert get_file_hash(file_path_simple) == get_file_hash(
-                got_copied_file
-            ), "Hashes must be the same"
+            assert get_file_hash(file_path_simple) == get_file_hash(got_copied_file), "Hashes must be the same"
 
         with allure.step("Delete one object from bucket"):
             s3_gate_object.delete_object_s3(self.s3_client, bucket, file_name_simple)
@@ -460,9 +413,7 @@ class TestS3Gate(TestNeofsS3GateBase):
         Test object can be copied to another bucket.
         #TODO: delete after test_s3_copy_object will be merge
         """
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
         file_name_simple = self.object_key_from_file_path(file_path_simple)
         file_name_large = self.object_key_from_file_path(file_path_large)
         bucket_1_objects = [file_name_simple, file_name_large]
@@ -486,12 +437,8 @@ class TestS3Gate(TestNeofsS3GateBase):
         check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
         with allure.step("Check copied object has the same content"):
-            got_copied_file_b2 = s3_gate_object.get_object_s3(
-                self.s3_client, bucket_2, copy_obj_path_b2
-            )
-            assert get_file_hash(file_path_large) == get_file_hash(
-                got_copied_file_b2
-            ), "Hashes must be the same"
+            got_copied_file_b2 = s3_gate_object.get_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
+            assert get_file_hash(file_path_large) == get_file_hash(got_copied_file_b2), "Hashes must be the same"
 
         with allure.step("Delete one object from first bucket"):
             s3_gate_object.delete_object_s3(self.s3_client, bucket_1, file_name_simple)
@@ -513,12 +460,8 @@ class TestS3Gate(TestNeofsS3GateBase):
             obj_parts = s3_gate_object.get_object_attributes(
                 self.s3_client, bucket, object_key, "ObjectParts", get_full_resp=False
             )
-            assert (
-                obj_parts.get("TotalPartsCount") == parts_count
-            ), f"Expected TotalPartsCount is {parts_count}"
-            assert (
-                len(obj_parts.get("Parts")) == parts_count
-            ), f"Expected Parts cunt is {parts_count}"
+            assert obj_parts.get("TotalPartsCount") == parts_count, f"Expected TotalPartsCount is {parts_count}"
+            assert len(obj_parts.get("Parts")) == parts_count, f"Expected Parts cunt is {parts_count}"
 
         with allure.step("Check object's attribute max-parts"):
             max_parts = 2
@@ -530,13 +473,9 @@ class TestS3Gate(TestNeofsS3GateBase):
                 max_parts=max_parts,
                 get_full_resp=False,
             )
-            assert (
-                obj_parts.get("TotalPartsCount") == parts_count
-            ), f"Expected TotalPartsCount is {parts_count}"
+            assert obj_parts.get("TotalPartsCount") == parts_count, f"Expected TotalPartsCount is {parts_count}"
             assert obj_parts.get("MaxParts") == max_parts, f"Expected MaxParts is {parts_count}"
-            assert (
-                len(obj_parts.get("Parts")) == max_parts
-            ), f"Expected Parts count is {parts_count}"
+            assert len(obj_parts.get("Parts")) == max_parts, f"Expected Parts count is {parts_count}"
 
         with allure.step("Check object's attribute part-number-marker"):
             part_number_marker = 3
@@ -548,9 +487,7 @@ class TestS3Gate(TestNeofsS3GateBase):
                 part_number=part_number_marker,
                 get_full_resp=False,
             )
-            assert (
-                obj_parts.get("TotalPartsCount") == parts_count
-            ), f"Expected TotalPartsCount is {parts_count}"
+            assert obj_parts.get("TotalPartsCount") == parts_count, f"Expected TotalPartsCount is {parts_count}"
             assert (
                 obj_parts.get("PartNumberMarker") == part_number_marker
             ), f"Expected PartNumberMarker is {part_number_marker}"

@@ -15,11 +15,7 @@ class NeoGoQuery(CliCommand):
         """
         return self._execute(
             "query candidates",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def committee(self, rpc_endpoint: str, timeout: str = "10s") -> CommandResult:
@@ -34,11 +30,7 @@ class NeoGoQuery(CliCommand):
         """
         return self._execute(
             "query committee",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def height(self, rpc_endpoint: str, timeout: str = "10s") -> CommandResult:
@@ -53,11 +45,7 @@ class NeoGoQuery(CliCommand):
         """
         return self._execute(
             "query height",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def tx(self, tx_hash: str, rpc_endpoint: str, timeout: str = "10s") -> CommandResult:
@@ -73,11 +61,7 @@ class NeoGoQuery(CliCommand):
         """
         return self._execute(
             f"query tx {tx_hash}",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self", "hash"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self", "hash"]},
         )
 
     def voter(self, rpc_endpoint: str, timeout: str = "10s") -> CommandResult:
@@ -92,9 +76,5 @@ class NeoGoQuery(CliCommand):
         """
         return self._execute(
             "query voter",
-            **{
-                param: param_value
-                for param, param_value in locals().items()
-                if param not in ["self"]
-            },
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

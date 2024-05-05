@@ -1,7 +1,7 @@
 #!/usr/bin/python3.9
 
 """
-    This module contains keywords that utilize `neofs-cli container` commands.
+This module contains keywords that utilize `neofs-cli container` commands.
 """
 
 import json
@@ -69,7 +69,7 @@ def create_container(
         wallet=session_wallet if session_wallet else wallet,
     ).stdout
 
-    with allure.step(f"COMMAND: cli.netmap.snapshot"):
+    with allure.step("COMMAND: cli.netmap.snapshot"):
         allure.attach(result, "Command execution", allure.attachment_type.TEXT)
 
     result = cli.netmap.netinfo(
@@ -77,7 +77,7 @@ def create_container(
         wallet=session_wallet if session_wallet else wallet,
     ).stdout
 
-    with allure.step(f"COMMAND: cli.netmap.netinfo"):
+    with allure.step("COMMAND: cli.netmap.netinfo"):
         allure.attach(result, "Command execution", allure.attachment_type.TEXT)
 
     result = cli.container.create(
@@ -111,9 +111,7 @@ def wait_for_container_creation(
             return
         logger.info(f"There is no {cid} in {containers} yet; sleep {sleep_interval} and continue")
         sleep(sleep_interval)
-    raise RuntimeError(
-        f"After {attempts * sleep_interval} seconds container {cid} hasn't been persisted; exiting"
-    )
+    raise RuntimeError(f"After {attempts * sleep_interval} seconds container {cid} hasn't been persisted; exiting")
 
 
 def wait_for_container_deletion(

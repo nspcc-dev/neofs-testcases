@@ -70,9 +70,7 @@ class TestHomomorphicHash(NeofsEnvTestBase):
             new_oid = put_object_to_random_node(
                 default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
             )
-            new_object_has_hash = self.object_has_homomorphic_hash_value(
-                default_wallet, cid, new_oid
-            )
+            new_object_has_hash = self.object_has_homomorphic_hash_value(default_wallet, cid, new_oid)
             assert current_object_has_hash == new_object_has_hash
 
     @pytest.fixture(scope="function")
@@ -81,9 +79,7 @@ class TestHomomorphicHash(NeofsEnvTestBase):
         with allure.step("Delete containers and check they were deleted"):
             list_cids = list_containers(default_wallet.path, self.shell, self.neofs_env.sn_rpc)
             for cid in list_cids:
-                cont_info = get_container(
-                    default_wallet.path, cid, self.shell, self.neofs_env.sn_rpc, True
-                )
+                cont_info = get_container(default_wallet.path, cid, self.shell, self.neofs_env.sn_rpc, True)
                 if cont_info.get("attributes").get("Name", "").startswith(CONTAINERS_NAME_PREFIX):
                     delete_container(
                         default_wallet.path,
@@ -144,9 +140,7 @@ class TestHomomorphicHash(NeofsEnvTestBase):
         self, default_wallet: NodeWallet, simple_object_size: int
     ) -> tuple[int, int]:
         placement_rule = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
-        container_name = (
-            f"{CONTAINERS_NAME_PREFIX}{''.join(random.choices(string.ascii_lowercase, k=5))}"
-        )
+        container_name = f"{CONTAINERS_NAME_PREFIX}{''.join(random.choices(string.ascii_lowercase, k=5))}"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -156,15 +150,11 @@ class TestHomomorphicHash(NeofsEnvTestBase):
         )
 
         file_path = generate_file(simple_object_size)
-        oid = put_object_to_random_node(
-            default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
         return cid, oid
 
     @allure.step("Get object homomorphic hash value")
-    def object_has_homomorphic_hash_value(
-        self, default_wallet: NodeWallet, cid: int, oid: int
-    ) -> bool:
+    def object_has_homomorphic_hash_value(self, default_wallet: NodeWallet, cid: int, oid: int) -> bool:
         meta = head_object(
             default_wallet.path,
             cid,

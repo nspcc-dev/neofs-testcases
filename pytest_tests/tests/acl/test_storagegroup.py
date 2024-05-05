@@ -47,13 +47,9 @@ class TestStorageGroup(NeofsEnvTestBase):
 
     @allure.title("Test Storage Group in Private Container")
     def test_storagegroup_basic_private_container(self, object_size, max_object_size):
-        cid = create_container(
-            self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-        )
+        cid = create_container(self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
         file_path = generate_file(object_size)
-        oid = put_object_to_random_node(
-            self.main_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-        )
+        oid = put_object_to_random_node(self.main_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
         objects = [oid]
         storage_group = put_storagegroup(
             shell=self.shell,
@@ -176,9 +172,7 @@ class TestStorageGroup(NeofsEnvTestBase):
             object_size=object_size,
             max_object_size=max_object_size,
         )
-        storage_group = put_storagegroup(
-            self.shell, self.neofs_env.sn_rpc, self.main_wallet.path, cid, objects
-        )
+        storage_group = put_storagegroup(self.shell, self.neofs_env.sn_rpc, self.main_wallet.path, cid, objects)
         eacl_deny = [
             EACLRule(access=EACLAccess.DENY, role=role, operation=op)
             for op in EACLOperation
@@ -192,16 +186,11 @@ class TestStorageGroup(NeofsEnvTestBase):
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
-        self.expect_failure_for_storagegroup_operations(
-            self.main_wallet.path, cid, objects, storage_group
-        )
+        self.expect_failure_for_storagegroup_operations(self.main_wallet.path, cid, objects, storage_group)
         bearer_file = form_bearertoken_file(
             self.main_wallet.path,
             cid,
-            [
-                EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER)
-                for op in EACLOperation
-            ],
+            [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.USER) for op in EACLOperation],
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
@@ -217,9 +206,7 @@ class TestStorageGroup(NeofsEnvTestBase):
     @allure.title("Test to check Storage Group lifetime")
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_storagegroup_lifetime(self, object_size, expiration_flag):
-        cid = create_container(
-            self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-        )
+        cid = create_container(self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
         file_path = generate_file(object_size)
         oid = put_object_to_random_node(
             self.main_wallet.path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
@@ -261,9 +248,7 @@ class TestStorageGroup(NeofsEnvTestBase):
         Put, List, Get and Delete the Storage Group which contains
         the Object.
         """
-        storage_group = put_storagegroup(
-            self.shell, self.neofs_env.sn_rpc, wallet, cid, obj_list, bearer
-        )
+        storage_group = put_storagegroup(self.shell, self.neofs_env.sn_rpc, wallet, cid, obj_list, bearer)
         verify_list_storage_group(
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
@@ -293,9 +278,7 @@ class TestStorageGroup(NeofsEnvTestBase):
         )
 
     @allure.step("Run Storage Group Operations And Expect Failure")
-    def expect_failure_for_storagegroup_operations(
-        self, wallet: str, cid: str, obj_list: list, gid: str
-    ):
+    def expect_failure_for_storagegroup_operations(self, wallet: str, cid: str, obj_list: list, gid: str):
         """
         This func verifies if the Object's owner isn't allowed to
         Put, List, Get and Delete the Storage Group which contains
@@ -310,9 +293,7 @@ class TestStorageGroup(NeofsEnvTestBase):
                 objects=obj_list,
             )
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
-            list_storagegroup(
-                shell=self.shell, endpoint=self.neofs_env.sn_rpc, wallet=wallet, cid=cid
-            )
+            list_storagegroup(shell=self.shell, endpoint=self.neofs_env.sn_rpc, wallet=wallet, cid=cid)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             get_storagegroup(
                 shell=self.shell,
@@ -340,9 +321,7 @@ class TestStorageGroup(NeofsEnvTestBase):
         object_size: int,
         max_object_size: int,
     ):
-        storage_group = put_storagegroup(
-            self.shell, self.neofs_env.sn_rpc, owner_wallet, cid, obj_list
-        )
+        storage_group = put_storagegroup(self.shell, self.neofs_env.sn_rpc, owner_wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
             put_storagegroup(
                 shell=self.shell,

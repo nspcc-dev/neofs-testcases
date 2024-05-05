@@ -37,9 +37,7 @@ class TestS3GateACL(TestNeofsS3GateBase):
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PRIVATE)
 
-        with allure.step(
-            "Put object with grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"
-        ):
+        with allure.step("Put object with grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"):
             s3_gate_object.put_object_acl_s3(
                 self.s3_client,
                 bucket,
@@ -68,9 +66,7 @@ class TestS3GateACL(TestNeofsS3GateBase):
             bucket_acl = s3_gate_bucket.get_bucket_acl(self.s3_client, bucket)
             verify_acls(bucket_acl, ACLType.PRIVATE)
 
-        with allure.step(
-            "Change bucket acl to --grant-write uri=http://acs.amazonaws.com/groups/global/AllUsers"
-        ):
+        with allure.step("Change bucket acl to --grant-write uri=http://acs.amazonaws.com/groups/global/AllUsers"):
             s3_gate_bucket.put_bucket_acl_s3(
                 self.s3_client,
                 bucket,

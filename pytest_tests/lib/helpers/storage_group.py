@@ -1,6 +1,6 @@
 """
-    This module contains keywords for work with Storage Groups.
-    It contains wrappers for `neofs-cli storagegroup` verbs.
+This module contains keywords for work with Storage Groups.
+It contains wrappers for `neofs-cli storagegroup` verbs.
 """
 
 import logging

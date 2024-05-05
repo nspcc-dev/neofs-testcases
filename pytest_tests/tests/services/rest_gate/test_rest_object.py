@@ -117,9 +117,7 @@ class Test_rest_object(NeofsEnvTestBase):
                 endpoint=gw_attributes["endpoint"],
             )
 
-        with allure.step(
-            "Download the object with attribute [get_by_attribute/$CID/chapter1/peace]"
-        ):
+        with allure.step("Download the object with attribute [get_by_attribute/$CID/chapter1/peace]"):
             get_object_by_attr_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,
@@ -137,9 +135,7 @@ class Test_rest_object(NeofsEnvTestBase):
                 endpoint=gw_attributes["endpoint"],
             )
 
-        with allure.step(
-            "[Negative] Try to get object with invalid attribute [get_by_attribute/$CID/chapter1/war]"
-        ):
+        with allure.step("[Negative] Try to get object with invalid attribute [get_by_attribute/$CID/chapter1/war]"):
             with pytest.raises(Exception, match=".*object not found.*"):
                 get_object_by_attr_and_verify_hashes(
                     oid=oid,

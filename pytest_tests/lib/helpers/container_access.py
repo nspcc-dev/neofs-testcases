@@ -253,11 +253,7 @@ def check_custom_access_to_container(
         f"allowed {action} failed"
         for action, success in checks.items()
         if not success and action not in deny_operations
-    ] + [
-        f"denied {action} succeeded"
-        for action, success in checks.items()
-        if success and action in deny_operations
-    ]
+    ] + [f"denied {action} succeeded" for action, success in checks.items() if success and action in deny_operations]
 
     assert not failed_checks, ", ".join(failed_checks)
 

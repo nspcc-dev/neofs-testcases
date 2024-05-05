@@ -32,9 +32,7 @@ class RPCClient:
         params: Optional[list] = None,
         signers: Optional[list] = None,
     ) -> Dict[str, Any]:
-        return self._call_endpoint(
-            "invokefunction", params=[sc_hash, function, params or [], signers or []]
-        )
+        return self._call_endpoint("invokefunction", params=[sc_hash, function, params or [], signers or []])
 
     def get_transaction_height(self, txid: str):
         return self._call_endpoint("gettransactionheight", params=[txid])
@@ -69,9 +67,7 @@ class RPCClient:
             return response.json()
         except Exception as exc:
             raise NeoRPCException(
-                f"Could not call method {method} "
-                f"with endpoint: {self.endpoint}: {exc}"
-                f"\nRequest sent: {payload}"
+                f"Could not call method {method} " f"with endpoint: {self.endpoint}: {exc}" f"\nRequest sent: {payload}"
             ) from exc
 
 

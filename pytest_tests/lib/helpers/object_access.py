@@ -43,9 +43,7 @@ def can_get_object(
                 neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
         assert get_file_hash(file_name) == get_file_hash(
             got_file_path
@@ -78,9 +76,7 @@ def can_put_object(
                 neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
     return True
 
@@ -108,9 +104,7 @@ def can_delete_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
     return True
 
@@ -138,9 +132,7 @@ def can_get_head_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
     return True
 
@@ -176,9 +168,7 @@ def can_get_range_of_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
     return True
 
@@ -207,9 +197,7 @@ def can_get_range_hash_of_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
     return True
 
@@ -236,9 +224,7 @@ def can_search_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(
-                err, OBJECT_ACCESS_DENIED
-            ), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
             return False
         if oid:
             return oid in oids

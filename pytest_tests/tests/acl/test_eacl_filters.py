@@ -41,18 +41,14 @@ class TestEACLFilters(NeofsEnvTestBase):
         "x_key": "other_value",
         "check_key": "other_value",
     }
-    REQ_EQUAL_FILTER = EACLFilter(
-        key="check_key", value="check_value", header_type=EACLHeaderType.REQUEST
-    )
+    REQ_EQUAL_FILTER = EACLFilter(key="check_key", value="check_value", header_type=EACLHeaderType.REQUEST)
     NOT_REQ_EQUAL_FILTER = EACLFilter(
         key="check_key",
         value="other_value",
         match_type=EACLMatchType.STRING_NOT_EQUAL,
         header_type=EACLHeaderType.REQUEST,
     )
-    OBJ_EQUAL_FILTER = EACLFilter(
-        key="check_key", value="check_value", header_type=EACLHeaderType.OBJECT
-    )
+    OBJ_EQUAL_FILTER = EACLFilter(key="check_key", value="check_value", header_type=EACLHeaderType.OBJECT)
     NOT_OBJ_EQUAL_FILTER = EACLFilter(
         key="check_key",
         value="other_value",
@@ -152,9 +148,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-    @pytest.mark.parametrize(
-        "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
-    )
+    @pytest.mark.parametrize("match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL])
     def test_extended_acl_filters_request(self, wallets, eacl_container_with_objects, match_type):
         allure.dynamic.title(f"Validate NeoFS operations with request filter: {match_type.name}")
         user_wallet = wallets.get_wallet()
@@ -191,12 +185,8 @@ class TestEACLFilters(NeofsEnvTestBase):
         # Filter denies requests where "check_key {match_type} ATTRIBUTE", so when match_type
         # is STRING_EQUAL, then requests with "check_key=OTHER_ATTRIBUTE" will be allowed while
         # requests with "check_key=ATTRIBUTE" will be denied, and vice versa
-        allow_headers = (
-            self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
-        )
-        deny_headers = (
-            self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
-        )
+        allow_headers = self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
+        deny_headers = self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
         # We test on 3 groups of objects with various headers,
         # but eACL rule should ignore object headers and
         # work only based on request headers
@@ -215,9 +205,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     neofs_env=self.neofs_env,
                 )
 
-            with allure.step(
-                "Check other has full access when sending request with allowed headers"
-            ):
+            with allure.step("Check other has full access when sending request with allowed headers"):
                 check_full_access_to_container(
                     other_wallet.wallet_path,
                     cid,
@@ -240,16 +228,12 @@ class TestEACLFilters(NeofsEnvTestBase):
                 )
 
             with allure.step(
-                "Check other has full access when sending request "
-                "with denied headers and using bearer token"
+                "Check other has full access when sending request " "with denied headers and using bearer token"
             ):
                 bearer_other = form_bearertoken_file(
                     user_wallet.wallet_path,
                     cid,
-                    [
-                        EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS)
-                        for op in EACLOperation
-                    ],
+                    [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS) for op in EACLOperation],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
                 )
@@ -264,15 +248,9 @@ class TestEACLFilters(NeofsEnvTestBase):
                     bearer=bearer_other,
                 )
 
-    @pytest.mark.parametrize(
-        "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
-    )
-    def test_extended_acl_deny_filters_object(
-        self, wallets, eacl_container_with_objects, match_type
-    ):
-        allure.dynamic.title(
-            f"Validate NeoFS operations with deny user headers filter: {match_type.name}"
-        )
+    @pytest.mark.parametrize("match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL])
+    def test_extended_acl_deny_filters_object(self, wallets, eacl_container_with_objects, match_type):
+        allure.dynamic.title(f"Validate NeoFS operations with deny user headers filter: {match_type.name}")
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
         (
@@ -304,16 +282,8 @@ class TestEACLFilters(NeofsEnvTestBase):
             )
             wait_for_cache_expired()
 
-        allow_objects = (
-            objects_with_other_header
-            if match_type == EACLMatchType.STRING_EQUAL
-            else objects_with_header
-        )
-        deny_objects = (
-            objects_with_header
-            if match_type == EACLMatchType.STRING_EQUAL
-            else objects_with_other_header
-        )
+        allow_objects = objects_with_other_header if match_type == EACLMatchType.STRING_EQUAL else objects_with_header
+        deny_objects = objects_with_header if match_type == EACLMatchType.STRING_EQUAL else objects_with_other_header
 
         # We will attempt requests with various headers,
         # but eACL rule should ignore request headers and validate
@@ -362,9 +332,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                         xhdr=xhdr,
                     )
 
-            with allure.step(
-                "Check other have access to objects with deny attribute and using bearer token"
-            ):
+            with allure.step("Check other have access to objects with deny attribute and using bearer token"):
                 bearer_other = form_bearertoken_file(
                     user_wallet.wallet_path,
                     cid,
@@ -390,9 +358,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     bearer=bearer_other,
                 )
 
-        allow_attribute = (
-            self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
-        )
+        allow_attribute = self.OTHER_ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.ATTRIBUTE
         with allure.step("Check other can PUT objects without denied attribute"):
             assert can_put_object(
                 other_wallet.wallet_path,
@@ -402,13 +368,9 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
                 attributes=allow_attribute,
             )
-            assert can_put_object(
-                other_wallet.wallet_path, cid, file_path, shell=self.shell, neofs_env=self.neofs_env
-            )
+            assert can_put_object(other_wallet.wallet_path, cid, file_path, shell=self.shell, neofs_env=self.neofs_env)
 
-        deny_attribute = (
-            self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
-        )
+        deny_attribute = self.ATTRIBUTE if match_type == EACLMatchType.STRING_EQUAL else self.OTHER_ATTRIBUTE
         with allure.step("Check other can not PUT objects with denied attribute"):
             with pytest.raises(AssertionError):
                 assert can_put_object(
@@ -420,9 +382,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     attributes=deny_attribute,
                 )
 
-        with allure.step(
-            "Check other can PUT objects with denied attribute and using bearer token"
-        ):
+        with allure.step("Check other can PUT objects with denied attribute and using bearer token"):
             bearer_other_for_put = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
@@ -446,15 +406,10 @@ class TestEACLFilters(NeofsEnvTestBase):
                 bearer=bearer_other_for_put,
             )
 
-    @pytest.mark.parametrize(
-        "match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL]
-    )
-    def test_extended_acl_allow_filters_object(
-        self, wallets, eacl_container_with_objects, match_type
-    ):
+    @pytest.mark.parametrize("match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL])
+    def test_extended_acl_allow_filters_object(self, wallets, eacl_container_with_objects, match_type):
         allure.dynamic.title(
-            "Testcase to validate NeoFS operation with allow eACL user headers filters:"
-            f"{match_type.name}"
+            "Testcase to validate NeoFS operation with allow eACL user headers filters:" f"{match_type.name}"
         )
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
@@ -466,9 +421,7 @@ class TestEACLFilters(NeofsEnvTestBase):
             file_path,
         ) = eacl_container_with_objects
 
-        with allure.step(
-            "Deny all operations for others except few operations allowed by object filter"
-        ):
+        with allure.step("Deny all operations for others except few operations allowed by object filter"):
             equal_filter = EACLFilter(**self.OBJ_EQUAL_FILTER.__dict__)
             equal_filter.match_type = match_type
             eacl = [
@@ -503,7 +456,7 @@ class TestEACLFilters(NeofsEnvTestBase):
             allow_attribute = self.OTHER_ATTRIBUTE
             deny_attribute = self.ATTRIBUTE
 
-        with allure.step(f"Check other cannot get and put objects without attributes"):
+        with allure.step("Check other cannot get and put objects without attributes"):
             oid = objects_without_header.pop()
             with pytest.raises(AssertionError):
                 assert can_get_head_object(
@@ -531,9 +484,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     neofs_env=self.neofs_env,
                 )
 
-        with allure.step(
-            "Check other can get and put objects without attributes and using bearer token"
-        ):
+        with allure.step("Check other can get and put objects without attributes and using bearer token"):
             bearer_other = form_bearertoken_file(
                 user_wallet.wallet_path,
                 cid,
@@ -574,7 +525,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 bearer=bearer_other,
             )
 
-        with allure.step(f"Check other can get objects with attributes matching the filter"):
+        with allure.step("Check other can get objects with attributes matching the filter"):
             oid = allow_objects.pop()
             assert can_get_head_object(
                 other_wallet.wallet_path,
@@ -629,8 +580,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 )
 
         with allure.step(
-            "Check other can get objects without attributes matching the filter "
-            "and using bearer token"
+            "Check other can get objects without attributes matching the filter " "and using bearer token"
         ):
             oid = deny_objects.pop()
             assert can_get_head_object(
@@ -699,7 +649,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     }
                 )
 
-        with allure.step(f"GET objects with any numeric value attribute should be allowed"):
+        with allure.step("GET objects with any numeric value attribute should be allowed"):
             for obj in objects:
                 assert can_get_object(
                     user_wallet.wallet_path,
@@ -805,7 +755,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 attributes={self.OBJECT_NUMERIC_KEY_ATTR_NAME: 0},
             )
 
-        with allure.step(f"GET object with numeric value attribute should be allowed"):
+        with allure.step("GET object with numeric value attribute should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -836,9 +786,7 @@ class TestEACLFilters(NeofsEnvTestBase):
             with pytest.raises(Exception, match=INVALID_RULES):
                 create_eacl(cid, eacl_deny, shell=self.shell)
 
-    def test_extended_acl_numeric_values_attr_str_filter_numeric(
-        self, wallets, eacl_container, simple_object_size
-    ):
+    def test_extended_acl_numeric_values_attr_str_filter_numeric(self, wallets, eacl_container, simple_object_size):
         operator = EACLMatchType.NUM_GT
         user_wallet = wallets.get_wallet()
 
@@ -857,7 +805,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 attributes={self.OBJECT_NUMERIC_KEY_ATTR_NAME: "abc"},
             )
 
-        with allure.step(f"GET object with numeric value attribute should be allowed"):
+        with allure.step("GET object with numeric value attribute should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -900,7 +848,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        with allure.step(f"GET object with numeric value attribute should be allowed"):
+        with allure.step("GET object with numeric value attribute should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -910,9 +858,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_expiration_attr(
-        self, wallets, eacl_container, complex_object_size
-    ):
+    def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, complex_object_size):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
@@ -920,7 +866,7 @@ class TestEACLFilters(NeofsEnvTestBase):
 
         epoch = self.get_epoch()
 
-        with allure.step(f"Set EACLs for GET/PUT to restrict operations with expiration attribute"):
+        with allure.step("Set EACLs for GET/PUT to restrict operations with expiration attribute"):
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
@@ -995,7 +941,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 expire_at=epoch + 2,
             )
 
-            with allure.step(f"PUT object should not be allowed because value is GT epoch + 2"):
+            with allure.step("PUT object should not be allowed because value is GT epoch + 2"):
                 with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
                     put_object_to_random_node(
                         user_wallet.wallet_path,
@@ -1006,7 +952,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                         expire_at=epoch + 3,
                     )
 
-            with allure.step(f"PUT object should not be allowed because value is LT epoch + 2"):
+            with allure.step("PUT object should not be allowed because value is LT epoch + 2"):
                 with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
                     put_object_to_random_node(
                         user_wallet.wallet_path,
@@ -1017,7 +963,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                         expire_at=epoch + 1,
                     )
 
-        with allure.step(f"GET object should not be allowed due to the value of expiration"):
+        with allure.step("GET object should not be allowed due to the value of expiration"):
             assert not can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -1027,14 +973,12 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_payload_attr(
-        self, wallets, eacl_container, complex_object_size
-    ):
+    def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, complex_object_size):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
 
-        with allure.step(f"Set EACLs for PUT to restrict small objects"):
+        with allure.step("Set EACLs for PUT to restrict small objects"):
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
@@ -1069,9 +1013,7 @@ class TestEACLFilters(NeofsEnvTestBase):
 
         small_file_path = generate_file(complex_object_size)
 
-        with allure.step(
-            f"PUT object should not be allowed because size is LT {complex_object_size + 1}"
-        ):
+        with allure.step(f"PUT object should not be allowed because size is LT {complex_object_size + 1}"):
             with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
                 put_object_to_random_node(
                     user_wallet.wallet_path,
@@ -1083,9 +1025,7 @@ class TestEACLFilters(NeofsEnvTestBase):
 
         big_file_path = generate_file(complex_object_size + 1)
 
-        with allure.step(
-            f"PUT object should be allowed because size is EQ {complex_object_size + 1}"
-        ):
+        with allure.step(f"PUT object should be allowed because size is EQ {complex_object_size + 1}"):
             oid1 = put_object_to_random_node(
                 user_wallet.wallet_path,
                 big_file_path,
@@ -1094,7 +1034,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
-        with allure.step(f"GET object should be allowed"):
+        with allure.step("GET object should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -1106,9 +1046,7 @@ class TestEACLFilters(NeofsEnvTestBase):
 
         very_big_file_path = generate_file(complex_object_size * 2)
 
-        with allure.step(
-            f"PUT object should be allowed because value is GT {complex_object_size + 1}"
-        ):
+        with allure.step(f"PUT object should be allowed because value is GT {complex_object_size + 1}"):
             oid2 = put_object_to_random_node(
                 user_wallet.wallet_path,
                 very_big_file_path,
@@ -1117,7 +1055,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
-        with allure.step(f"GET object should be allowed"):
+        with allure.step("GET object should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -1127,16 +1065,14 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_epoch_attr(
-        self, wallets, eacl_container, complex_object_size
-    ):
+    def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, complex_object_size):
         user_wallet = wallets.get_wallet()
 
         epoch = self.get_epoch()
 
         cid = eacl_container
 
-        with allure.step(f"Set EACLs for GET to restrict old objects"):
+        with allure.step("Set EACLs for GET to restrict old objects"):
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
@@ -1180,7 +1116,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
-        with allure.step(f"GET object should not be allowed"):
+        with allure.step("GET object should not be allowed"):
             assert not can_get_object(
                 user_wallet.wallet_path,
                 cid,
@@ -1203,7 +1139,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
-        with allure.step(f"GET object should be allowed"):
+        with allure.step("GET object should be allowed"):
             assert can_get_object(
                 user_wallet.wallet_path,
                 cid,

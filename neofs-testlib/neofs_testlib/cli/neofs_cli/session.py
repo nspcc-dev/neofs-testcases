@@ -35,9 +35,5 @@ class NeofsCliSession(CliCommand):
         return self._execute_with_password(
             "session create",
             wallet_password,
-            **{
-                param: value
-                for param, value in locals().items()
-                if param not in ["self", "wallet_password"]
-            },
+            **{param: value for param, value in locals().items() if param not in ["self", "wallet_password"]},
         )

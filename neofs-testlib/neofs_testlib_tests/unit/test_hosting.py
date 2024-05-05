@@ -53,18 +53,14 @@ class TestHosting(TestCase):
         self.assertEqual(host1.config.plugin_name, self.HOST1_PLUGIN)
         self.assertDictEqual(host1.config.attributes, self.HOST1_ATTRIBUTES)
         self.assertListEqual(host1.config.clis, [CLIConfig(**cli) for cli in self.HOST1_CLIS])
-        self.assertListEqual(
-            host1.config.services, [ServiceConfig(**service) for service in self.HOST1_SERVICES]
-        )
+        self.assertListEqual(host1.config.services, [ServiceConfig(**service) for service in self.HOST1_SERVICES])
 
         host2 = hosting.get_host_by_address(self.HOST2_ADDRESS)
         self.assertEqual(host2.config.address, self.HOST2_ADDRESS)
         self.assertEqual(host2.config.plugin_name, self.HOST2_PLUGIN)
         self.assertDictEqual(host2.config.attributes, self.HOST2_ATTRIBUTES)
         self.assertListEqual(host2.config.clis, [CLIConfig(**cli) for cli in self.HOST2_CLIS])
-        self.assertListEqual(
-            host2.config.services, [ServiceConfig(**service) for service in self.HOST2_SERVICES]
-        )
+        self.assertListEqual(host2.config.services, [ServiceConfig(**service) for service in self.HOST2_SERVICES])
 
     def test_get_host_by_service(self):
         hosting = Hosting()
@@ -105,9 +101,7 @@ class TestHosting(TestCase):
         services = hosting.find_service_configs(rf"^{self.SERVICE_NAME_PREFIX}")
         self.assertEqual(len(services), 2)
         for service in services:
-            self.assertEqual(
-                service.name[: len(self.SERVICE_NAME_PREFIX)], self.SERVICE_NAME_PREFIX
-            )
+            self.assertEqual(service.name[: len(self.SERVICE_NAME_PREFIX)], self.SERVICE_NAME_PREFIX)
 
         service1 = hosting.find_service_configs(self.SERVICE1["name"])
         self.assertEqual(len(service1), 1)

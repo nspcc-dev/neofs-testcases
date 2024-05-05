@@ -276,7 +276,5 @@ def sign_session_token(shell: Shell, session_token_file: str, wlt: NodeWallet) -
     """
     signed_token_file = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
-    neofscli.util.sign_session_token(
-        wallet=wlt.path, from_file=session_token_file, to_file=signed_token_file
-    )
+    neofscli.util.sign_session_token(wallet=wlt.path, from_file=session_token_file, to_file=signed_token_file)
     return signed_token_file

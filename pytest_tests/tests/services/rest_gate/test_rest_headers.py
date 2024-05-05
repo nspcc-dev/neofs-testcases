@@ -51,9 +51,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         ids=["simple object", "complex object"],
         scope="class",
     )
-    def storage_objects_with_attributes(
-        self, request: FixtureRequest, gw_endpoint
-    ) -> list[StorageObjectInfo]:
+    def storage_objects_with_attributes(self, request: FixtureRequest, gw_endpoint) -> list[StorageObjectInfo]:
         storage_objects = []
         wallet = self.wallet.path
         cid = create_container(
@@ -82,9 +80,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         yield storage_objects
 
     @allure.title("Get object1 by attribute")
-    def test_object1_can_be_get_by_attr(
-        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
-    ):
+    def test_object1_can_be_get_by_attr(self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint):
         """
         Test to get object#1 by attribute and comapre hashes
 
@@ -106,9 +102,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             )
 
     @allure.title("Test get object2 with different attributes, then delete object2 and get object1")
-    def test_object2_can_be_get_by_attr(
-        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
-    ):
+    def test_object2_can_be_get_by_attr(self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint):
         """
         Test to get object2 with different attributes, then delete object2 and get object1 using 1st attribute. Note: obj1 and obj2 have the same attribute#1,
         and when obj2 is deleted you can get obj1 by 1st attribute
@@ -167,9 +161,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             )
 
     @allure.title("[Negative] Try to put object and get right after container is deleted")
-    def test_negative_put_and_get_object3(
-        self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint
-    ):
+    def test_negative_put_and_get_object3(self, storage_objects_with_attributes: list[StorageObjectInfo], gw_endpoint):
         """
         Test to attempt to put object and try to download it right after the container has been deleted
 
@@ -189,7 +181,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             attrs_obj3 = {"Writer": "Leo Tolstoy", "peace": "peace"}
             headers = attr_into_str_header_curl(attrs_obj3)
             headers.append(" ".join(attr_into_str_header_curl({"Writer": "peace"})))
-            error_pattern = f"key duplication error: X-Attribute-Writer"
+            error_pattern = "key duplication error: X-Attribute-Writer"
             upload_via_http_gate_curl(
                 cid=storage_object_1.cid,
                 filepath=file_path_3,
@@ -214,9 +206,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             assert storage_object_1.cid not in list_containers(
                 self.wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc
             )
-        with allure.step(
-            "[Negative] Try to download (wget) object via wget with attributes [peace=peace]"
-        ):
+        with allure.step("[Negative] Try to download (wget) object via wget with attributes [peace=peace]"):
             error_pattern = "404 Not Found"
             try_to_get_object_via_passed_request_and_expect_error(
                 cid=storage_object_1.cid,

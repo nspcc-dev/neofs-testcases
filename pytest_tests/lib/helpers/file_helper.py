@@ -99,9 +99,7 @@ def concat_files(file_paths: list, resulting_file_path: Optional[str] = None) ->
         Path to the resulting file.
     """
     if not resulting_file_path:
-        resulting_file_path = os.path.join(
-            os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4())
-        )
+        resulting_file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
     with open(resulting_file_path, "wb") as f:
         for file in file_paths:
             with open(file, "rb") as part_file:

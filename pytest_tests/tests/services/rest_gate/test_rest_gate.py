@@ -72,9 +72,7 @@ class TestRestGate(NeofsEnvTestBase):
             rule=self.PLACEMENT_RULE_1,
             basic_acl=PUBLIC_ACL,
         )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
 
         with allure.step("Put objects using gRPC"):
             oid_simple = put_object_to_random_node(
@@ -305,17 +303,11 @@ class TestRestGate(NeofsEnvTestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
 
         with allure.step("Put objects using HTTP"):
-            oid_simple = upload_via_http_gate(
-                cid=cid, path=file_path_simple, endpoint=gw_params["endpoint"]
-            )
-            oid_large = upload_via_http_gate(
-                cid=cid, path=file_path_large, endpoint=gw_params["endpoint"]
-            )
+            oid_simple = upload_via_http_gate(cid=cid, path=file_path_simple, endpoint=gw_params["endpoint"])
+            oid_large = upload_via_http_gate(cid=cid, path=file_path_large, endpoint=gw_params["endpoint"])
 
         for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
             get_object_and_verify_hashes(
@@ -328,9 +320,7 @@ class TestRestGate(NeofsEnvTestBase):
                 endpoint=gw_params["endpoint"],
             )
 
-    @allure.link(
-        "https://github.com/nspcc-dev/neofs-http-gw#by-attributes", name="download by attributes"
-    )
+    @allure.link("https://github.com/nspcc-dev/neofs-http-gw#by-attributes", name="download by attributes")
     @allure.title("Test Put over HTTP, Get over HTTP with headers")
     @pytest.mark.parametrize(
         "attributes",
@@ -339,15 +329,11 @@ class TestRestGate(NeofsEnvTestBase):
             {"FileName": "simple obj filename"},
             pytest.param(
                 {"cat%jpeg": "cat%jpeg"},
-                marks=pytest.mark.skip(
-                    reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/195"
-                ),
+                marks=pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/195"),
             ),
             pytest.param(
                 {"Filename": "simple_obj_filename"},
-                marks=pytest.mark.skip(
-                    reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/168"
-                ),
+                marks=pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/168"),
             ),
         ],
         ids=["simple", "hyphen", "special", "percent"],
@@ -413,9 +399,7 @@ class TestRestGate(NeofsEnvTestBase):
 
             with allure.step("Put objects using HTTP with attribute Expiration-Epoch"):
                 oids.append(
-                    upload_via_http_gate(
-                        cid=cid, path=file_path, headers=headers, endpoint=gw_params["endpoint"]
-                    )
+                    upload_via_http_gate(cid=cid, path=file_path, headers=headers, endpoint=gw_params["endpoint"])
                 )
 
         assert len(oids) == len(epochs), "Expected all objects have been put successfully"
@@ -500,9 +484,7 @@ class TestRestGate(NeofsEnvTestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(
-            complex_object_size
-        )
+        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
 
         with allure.step("Put objects using curl utility"):
             oid_simple = upload_via_http_gate_curl(

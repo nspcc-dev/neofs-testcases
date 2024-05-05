@@ -124,9 +124,7 @@ class NeofsCliObject(CliCommand):
         """
         return self._execute(
             "object hash",
-            **{
-                param: value for param, value in locals().items() if param not in ["self", "params"]
-            },
+            **{param: value for param, value in locals().items() if param not in ["self", "params"]},
         )
 
     def head(

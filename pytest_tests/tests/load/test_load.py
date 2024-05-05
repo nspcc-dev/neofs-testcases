@@ -55,9 +55,7 @@ class TestLoad(NeofsEnvTestBase):
             f"load_time = {load_time}"
         )
         with allure.step("Get endpoints"):
-            endpoints = ",".join(
-                [node.control_grpc_endpoint for node in self.neofs_env.storage_nodes]
-            )
+            endpoints = ",".join([node.control_grpc_endpoint for node in self.neofs_env.storage_nodes])
         load_params = LoadParams(
             endpoint=endpoints,
             obj_size=obj_size,

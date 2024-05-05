@@ -59,7 +59,7 @@ RANGE_MIN_LEN = 10
 RANGE_MAX_LEN = 500
 # Used for static ranges found with issues
 STATIC_RANGES = {}
-OBJECT_NUMERIC_VALUES = [-2**64-1, -1, 0, 1, 10, 2**64+1]
+OBJECT_NUMERIC_VALUES = [-(2**64) - 1, -1, 0, 1, 10, 2**64 + 1]
 NUMERIC_VALUE_ATTR_NAME = "numeric_value"
 
 
@@ -91,9 +91,7 @@ def generate_ranges(
             storage_object.size >= RANGE_MAX_LEN + max_object_size
         ), f"Complex object size should be at least {max_object_size + RANGE_MAX_LEN}. Current: {storage_object.size}"
         file_ranges_to_test.append((RANGE_MAX_LEN, max_object_size - RANGE_MAX_LEN))
-        file_ranges_to_test.extend(
-            get_complex_object_split_ranges(storage_object, shell, neofs_env)
-        )
+        file_ranges_to_test.extend(get_complex_object_split_ranges(storage_object, shell, neofs_env))
 
     # Special cases to read some bytes from start and some bytes from end of object
     file_ranges_to_test.append((0, RANGE_MIN_LEN))
@@ -103,9 +101,7 @@ def generate_ranges(
         range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
         range_start = random.randint(offset, offset + length)
 
-        file_ranges_to_test.append(
-            (range_start, min(range_length, storage_object.size - range_start))
-        )
+        file_ranges_to_test.append((range_start, min(range_length, storage_object.size - range_start)))
 
     file_ranges_to_test.extend(STATIC_RANGES.get(storage_object.size, []))
 
@@ -175,9 +171,7 @@ class TestObjectApi(NeofsEnvTestBase):
         """
         Validate object storage policy
         """
-        allure.dynamic.title(
-            f"Validate object storage policy by native API for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate object storage policy by native API for {request.node.callspec.id}")
 
         with allure.step("Validate storage policy for objects"):
             for storage_object in storage_objects:
@@ -200,9 +194,7 @@ class TestObjectApi(NeofsEnvTestBase):
                 assert copies == 2, "Expected 2 copies"
 
     @allure.title("Validate get object native API")
-    def test_get_object_api(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
-    ):
+    def test_get_object_api(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
         Validate get object native API
         """
@@ -221,9 +213,7 @@ class TestObjectApi(NeofsEnvTestBase):
                 assert storage_object.file_hash == file_hash
 
     @allure.title("Validate head object native API")
-    def test_head_object_api(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
-    ):
+    def test_head_object_api(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
         Validate head object native API
         """
@@ -250,9 +240,7 @@ class TestObjectApi(NeofsEnvTestBase):
             self.check_header_is_presented(head_info, storage_object_2.attributes)
 
     @allure.title("Validate object search by native API")
-    def test_search_object_api(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]
-    ):
+    def test_search_object_api(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
         Validate object search by native API
         """
@@ -263,9 +251,7 @@ class TestObjectApi(NeofsEnvTestBase):
         cid = storage_objects[0].cid
 
         def _generate_filters_expressions(attrib_dict: dict[str, str]):
-            return [
-                f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()
-            ]
+            return [f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()]
 
         test_table = [
             (_generate_filters_expressions(OBJECT_ATTRIBUTES[1]), oids[1:2]),
@@ -399,20 +385,20 @@ class TestObjectApi(NeofsEnvTestBase):
             root=True,
         )
 
-        assert oid in result, f"Object was not found, while it should be"
-        
+        assert oid in result, "Object was not found, while it should be"
+
     def test_object_search_numeric_with_attr_as_string(
         self, default_wallet: NodeWallet, container: str, simple_object_size: int
     ):
         file_path = generate_file(simple_object_size)
-        string_attr = 'cool_string_attribute'
+        string_attr = "cool_string_attribute"
         oid = put_object_to_random_node(
             default_wallet.path,
             file_path,
             container,
             shell=self.shell,
             neofs_env=self.neofs_env,
-            attributes={string_attr: 'xyz'},
+            attributes={string_attr: "xyz"},
         )
         result = search_object(
             default_wallet.path,
@@ -423,7 +409,7 @@ class TestObjectApi(NeofsEnvTestBase):
             root=True,
         )
 
-        assert not oid in result, f"Object was found, while it should not be"
+        assert oid not in result, "Object was found, while it should not be"
 
     @allure.title("Validate object search with removed items")
     @pytest.mark.parametrize(
@@ -437,9 +423,7 @@ class TestObjectApi(NeofsEnvTestBase):
         """
         Validate object search with removed items
         """
-        allure.dynamic.title(
-            f"Validate object search with removed items for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate object search with removed items for {request.node.callspec.id}")
 
         wallet = default_wallet
         cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc)
@@ -450,9 +434,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
             storage_object = StorageObjectInfo(
                 cid=cid,
-                oid=put_object_to_random_node(
-                    wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
-                ),
+                oid=put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env),
                 size=object_size,
                 wallet_file_path=wallet.path,
                 file_path=file_path,
@@ -461,9 +443,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
         with allure.step("Search object"):
             # Root Search object should return root object oid
-            result = search_object(
-                wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True
-            )
+            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True)
             assert result == [storage_object.oid]
 
         with allure.step("Delete file"):
@@ -471,22 +451,14 @@ class TestObjectApi(NeofsEnvTestBase):
 
         with allure.step("Search deleted object with --root"):
             # Root Search object should return nothing
-            result = search_object(
-                wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True
-            )
+            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True)
             assert len(result) == 0
 
         with allure.step("Search deleted object with --phy should return only tombstones"):
             # Physical Search object should return only tombstones
-            result = search_object(
-                wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, phy=True
-            )
-            assert (
-                storage_object.tombstone in result
-            ), "Search result should contain tombstone of removed object"
-            assert (
-                storage_object.oid not in result
-            ), "Search result should not contain ObjectId of removed object"
+            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, phy=True)
+            assert storage_object.tombstone in result, "Search result should contain tombstone of removed object"
+            assert storage_object.oid not in result, "Search result should not contain ObjectId of removed object"
             for tombstone_oid in result:
                 header = head_object(
                     wallet.path,
@@ -501,9 +473,7 @@ class TestObjectApi(NeofsEnvTestBase):
                 ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
 
     @allure.title("Validate objects search by common prefix")
-    def test_search_object_api_common_prefix(
-        self, default_wallet: NodeWallet, simple_object_size: int, container: str
-    ):
+    def test_search_object_api_common_prefix(self, default_wallet: NodeWallet, simple_object_size: int, container: str):
         FILEPATH_ATTR_NAME = "FilePath"
         NUMBER_OF_OBJECTS = 5
         wallet = default_wallet
@@ -563,18 +533,14 @@ class TestObjectApi(NeofsEnvTestBase):
         """
         Validate get_range_hash for object by native gRPC API
         """
-        allure.dynamic.title(
-            f"Validate native get_range_hash object API for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate native get_range_hash object API for {request.node.callspec.id}")
 
         wallet = storage_objects[0].wallet_file_path
         cid = storage_objects[0].cid
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_path = storage_objects[0].file_path
 
-        file_ranges_to_test = generate_ranges(
-            storage_objects[0], max_object_size, self.shell, self.neofs_env
-        )
+        file_ranges_to_test = generate_ranges(storage_objects[0], max_object_size, self.shell, self.neofs_env)
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
         for range_start, range_len in file_ranges_to_test:
@@ -595,9 +561,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
     @allure.title("Validate native object API get_range")
     @pytest.mark.grpc_api
-    def test_object_get_range(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size
-    ):
+    def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
         """
         Validate get_range for object by native gRPC API
         """
@@ -608,9 +572,7 @@ class TestObjectApi(NeofsEnvTestBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_path = storage_objects[0].file_path
 
-        file_ranges_to_test = generate_ranges(
-            storage_objects[0], max_object_size, self.shell, self.neofs_env
-        )
+        file_ranges_to_test = generate_ranges(storage_objects[0], max_object_size, self.shell, self.neofs_env)
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
         for range_start, range_len in file_ranges_to_test:
@@ -626,9 +588,7 @@ class TestObjectApi(NeofsEnvTestBase):
                         range_cut=range_cut,
                     )
                     assert (
-                        get_file_content(
-                            file_path, content_len=range_len, mode="rb", offset=range_start
-                        )
+                        get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start)
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
 
@@ -642,9 +602,7 @@ class TestObjectApi(NeofsEnvTestBase):
         """
         Validate get_range negative for object by native gRPC API
         """
-        allure.dynamic.title(
-            f"Validate native get_range negative object API for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate native get_range negative object API for {request.node.callspec.id}")
 
         wallet = storage_objects[0].wallet_file_path
         cid = storage_objects[0].cid
@@ -671,11 +629,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
         for range_start, range_len, expected_error in file_ranges_to_test:
             range_cut = f"{range_start}:{range_len}"
-            expected_error = (
-                expected_error.format(range=range_cut)
-                if "{range}" in expected_error
-                else expected_error
-            )
+            expected_error = expected_error.format(range=range_cut) if "{range}" in expected_error else expected_error
             with allure.step(f"Get range ({range_cut})"):
                 for oid in oids:
                     with pytest.raises(Exception, match=expected_error):
@@ -697,9 +651,7 @@ class TestObjectApi(NeofsEnvTestBase):
         """
         Validate get_range_hash negative for object by native gRPC API
         """
-        allure.dynamic.title(
-            f"Validate native get_range_hash negative object API for {request.node.callspec.id}"
-        )
+        allure.dynamic.title(f"Validate native get_range_hash negative object API for {request.node.callspec.id}")
 
         wallet = storage_objects[0].wallet_file_path
         cid = storage_objects[0].cid
@@ -726,11 +678,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
         for range_start, range_len, expected_error in file_ranges_to_test:
             range_cut = f"{range_start}:{range_len}"
-            expected_error = (
-                expected_error.format(range=range_cut)
-                if "{range}" in expected_error
-                else expected_error
-            )
+            expected_error = expected_error.format(range=range_cut) if "{range}" in expected_error else expected_error
             with allure.step(f"Get range hash ({range_cut})"):
                 for oid in oids:
                     with pytest.raises(Exception, match=expected_error):
@@ -742,13 +690,11 @@ class TestObjectApi(NeofsEnvTestBase):
                             endpoint=self.neofs_env.sn_rpc,
                             range_cut=range_cut,
                         )
-                        
-    def test_put_object_header_limitation(
-        self, default_wallet: NodeWallet, container: str, simple_object_size: int
-    ):
+
+    def test_put_object_header_limitation(self, default_wallet: NodeWallet, container: str, simple_object_size: int):
         file_path = generate_file(simple_object_size)
         attr_key = "a" * (NEOFS_API_HEADER_LIMIT // 2)
-        attr_val = "b"  * (NEOFS_API_HEADER_LIMIT // 2)
+        attr_val = "b" * (NEOFS_API_HEADER_LIMIT // 2)
         with pytest.raises(Exception, match=OBJECT_HEADER_LENGTH_LIMIT):
             put_object_to_random_node(
                 default_wallet.path,
@@ -756,7 +702,7 @@ class TestObjectApi(NeofsEnvTestBase):
                 container,
                 shell=self.shell,
                 neofs_env=self.neofs_env,
-                attributes={attr_key: attr_val}
+                attributes={attr_key: attr_val},
             )
 
     @allure.title("Finished objects (with link object found) cannot be deleted")
@@ -771,11 +717,7 @@ class TestObjectApi(NeofsEnvTestBase):
         )
 
         link_oid = get_link_object(
-            default_wallet.path,
-            container,
-            oid,
-            shell=self.shell,
-            nodes=self.neofs_env.storage_nodes
+            default_wallet.path, container, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes
         )
 
         with allure.step(f"Trying to delete link object {link_oid}"):
@@ -788,7 +730,7 @@ class TestObjectApi(NeofsEnvTestBase):
                     self.neofs_env.sn_rpc,
                 )
 
-        with allure.step(f"Trying to delete children"):
+        with allure.step("Trying to delete children"):
             parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
             for part in parts:
                 with pytest.raises(Exception, match=LINK_OBJECT_FOUND):
@@ -802,9 +744,7 @@ class TestObjectApi(NeofsEnvTestBase):
 
     def check_header_is_presented(self, head_info: dict, object_header: dict) -> None:
         for key_to_check, val_to_check in object_header.items():
-            assert (
-                key_to_check in head_info["header"]["attributes"]
-            ), f"Key {key_to_check} is found in {head_object}"
+            assert key_to_check in head_info["header"]["attributes"], f"Key {key_to_check} is found in {head_object}"
             assert head_info["header"]["attributes"].get(key_to_check) == str(
                 val_to_check
             ), f"Value {val_to_check} is equal"

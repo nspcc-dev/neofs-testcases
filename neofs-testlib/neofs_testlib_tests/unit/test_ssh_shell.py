@@ -36,9 +36,7 @@ class TestSSHShellInteractive(TestCase):
         script = "password = input('Password: '); print('\\n' + password)"
 
         inputs = [InteractiveInput(prompt_pattern="Password", input="test")]
-        result = self.shell.exec(
-            f'python3 -c "{script}"', CommandOptions(interactive_inputs=inputs)
-        )
+        result = self.shell.exec(f'python3 -c "{script}"', CommandOptions(interactive_inputs=inputs))
 
         self.assertEqual(0, result.return_code)
         self.assertEqual(["Password: test", "test"], get_output_lines(result))
@@ -46,22 +44,17 @@ class TestSSHShellInteractive(TestCase):
 
     def test_command_with_several_prompts(self):
         script = (
-            "input1 = input('Input1: '); print('\\n' + input1); "
-            "input2 = input('Input2: '); print('\\n' + input2)"
+            "input1 = input('Input1: '); print('\\n' + input1); " "input2 = input('Input2: '); print('\\n' + input2)"
         )
         inputs = [
             InteractiveInput(prompt_pattern="Input1", input="test1"),
             InteractiveInput(prompt_pattern="Input2", input="test2"),
         ]
 
-        result = self.shell.exec(
-            f'python3 -c "{script}"', CommandOptions(interactive_inputs=inputs)
-        )
+        result = self.shell.exec(f'python3 -c "{script}"', CommandOptions(interactive_inputs=inputs))
 
         self.assertEqual(0, result.return_code)
-        self.assertEqual(
-            ["Input1: test1", "test1", "Input2: test2", "test2"], get_output_lines(result)
-        )
+        self.assertEqual(["Input1: test1", "test1", "Input2: test2", "test2"], get_output_lines(result))
         self.assertEqual("", result.stderr)
 
     def test_invalid_command_with_check(self):

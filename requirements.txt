@@ -17,4 +17,5 @@ python-dateutil==2.9.0
 pytest-lazy-fixture==0.6.3
 requests==2.31.0
 tenacity==8.2.3
+ruff==0.4.2
 urllib3==2.2.1

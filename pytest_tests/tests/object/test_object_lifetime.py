@@ -55,9 +55,7 @@ class TestObjectApiLifetime(NeofsEnvTestBase):
             expire_at=epoch + 1 if expiration_flag == "expire_at" else None,
             lifetime=1 if expiration_flag == "lifetime" else None,
         )
-        got_file = get_object_from_random_node(
-            wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env
-        )
+        got_file = get_object_from_random_node(wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env)
         assert get_file_hash(got_file) == file_hash
 
         with allure.step("Tick two epochs"):
@@ -68,6 +66,4 @@ class TestObjectApiLifetime(NeofsEnvTestBase):
 
         with allure.step("Check object deleted because it expires-on epoch"):
             with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
-                get_object_from_random_node(
-                    wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env
-                )
+                get_object_from_random_node(wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env)

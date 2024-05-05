@@ -54,9 +54,7 @@ def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
     bucket = str(uuid.uuid4())
     s3_bearer_rules = "pytest_tests/s3_bearer_rules.json"
 
-    gate_public_key = get_last_public_key_from_wallet(
-        neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password
-    )
+    gate_public_key = get_last_public_key_from_wallet(neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password)
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
@@ -88,7 +86,7 @@ def zero_fee(neofs_env: NeoFSEnv):
     neofs_env.neofs_adm().morph.set_config(
         rpc_endpoint=f"http://{neofs_env.morph_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data=f"ContainerFee=0 ContainerAliasFee=0",
+        post_data="ContainerFee=0 ContainerAliasFee=0",
     )
 
 
@@ -139,6 +137,7 @@ def test_s3_gw_put_get(neofs_env: NeoFSEnv, s3_creds, wallet: NodeWallet):
     filekey = os.path.basename(filename)
     s3_client.put_object(**{"Body": file_content, "Bucket": bucket_name, "Key": filekey})
     s3_client.get_object(**{"Bucket": bucket_name, "Key": filekey})
+
 
 @pytest.mark.parametrize("gw_type", ["HTTP", "REST"])
 def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_type):
@@ -205,7 +204,7 @@ def test_node_metabase_resync(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee)
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(True)
         node.set_metabase_resync(False)
-    test_http_gw_put_get(neofs_env, wallet, zero_fee)
+    test_gateways_put_get(neofs_env, wallet, zero_fee, "HTTP")
 
 
 @pytest.mark.parametrize("data_type", ["meta", "all"])
@@ -217,5 +216,4 @@ def test_node_delete_metadata_and_data(neofs_env: NeoFSEnv, wallet: NodeWallet, 
         else:
             node.delete_data()
         node.start(fresh=False)
-    test_http_gw_put_get(neofs_env, wallet, zero_fee)
-    
+    test_gateways_put_get(neofs_env, wallet, zero_fee, "HTTP")

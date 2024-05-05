@@ -50,9 +50,7 @@ class TestWallet(TestCase):
             json.dump(wallet.to_json(), out)
 
         with open(wallet_file_path, "r") as wallet_file:
-            wallet = Wallet.from_json(
-                json.load(wallet_file), passwords=[self.DEFAULT_PASSWORD, self.DEFAULT_PASSWORD]
-            )
+            wallet = Wallet.from_json(json.load(wallet_file), passwords=[self.DEFAULT_PASSWORD, self.DEFAULT_PASSWORD])
 
         last_address = wallet.accounts[-1].address
         self.assertEqual(

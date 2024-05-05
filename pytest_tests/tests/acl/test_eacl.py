@@ -66,9 +66,7 @@ class TestEACLContainer(NeofsEnvTestBase):
         yield cid, oid, file_path
 
     @pytest.mark.parametrize("deny_role", [EACLRole.USER, EACLRole.OTHERS])
-    def test_extended_acl_deny_all_operations(
-        self, wallets, eacl_container_with_objects, deny_role
-    ):
+    def test_extended_acl_deny_all_operations(self, wallets, eacl_container_with_objects, deny_role):
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
         deny_role_wallet = other_wallet if deny_role == EACLRole.OTHERS else user_wallet
@@ -79,25 +77,18 @@ class TestEACLContainer(NeofsEnvTestBase):
         cid, object_oids, file_path = eacl_container_with_objects
 
         with allure.step(f"Deny all operations for {deny_role_str} via eACL"):
-            eacl_deny = [
-                EACLRule(access=EACLAccess.DENY, role=deny_role, operation=op)
-                for op in EACLOperation
-            ]
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=deny_role, operation=op) for op in EACLOperation]
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(
-                    cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
-                ),
+                create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path),
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
             wait_for_cache_expired()
 
         with allure.step(f"Check only {not_deny_role_str} has full access to container"):
-            with allure.step(
-                f"Check {deny_role_str} has not access to any operations with container"
-            ):
+            with allure.step(f"Check {deny_role_str} has not access to any operations with container"):
                 check_no_access_to_container(
                     deny_role_wallet.wallet_path,
                     cid,
@@ -107,9 +98,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                     neofs_env=self.neofs_env,
                 )
 
-            with allure.step(
-                f"Check {not_deny_role_wallet} has full access to eACL public container"
-            ):
+            with allure.step(f"Check {not_deny_role_wallet} has full access to eACL public container"):
                 check_full_access_to_container(
                     not_deny_role_wallet.wallet_path,
                     cid,
@@ -120,16 +109,11 @@ class TestEACLContainer(NeofsEnvTestBase):
                 )
 
         with allure.step(f"Allow all operations for {deny_role_str} via eACL"):
-            eacl_deny = [
-                EACLRule(access=EACLAccess.ALLOW, role=deny_role, operation=op)
-                for op in EACLOperation
-            ]
+            eacl_deny = [EACLRule(access=EACLAccess.ALLOW, role=deny_role, operation=op) for op in EACLOperation]
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(
-                    cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
-                ),
+                create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path),
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
@@ -154,9 +138,7 @@ class TestEACLContainer(NeofsEnvTestBase):
             )
 
     @pytest.mark.parametrize("operation", list(EACLOperation))
-    def test_extended_acl_operations_enforcement(
-        self, wallets, eacl_container_with_objects, operation
-    ):
+    def test_extended_acl_operations_enforcement(self, wallets, eacl_container_with_objects, operation):
         user_wallet = wallets.get_wallet()
         cid, object_oids, file_path = eacl_container_with_objects
 
@@ -295,9 +277,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
 
     @allure.title("Testcase to allow NeoFS operations for only one other pubkey.")
-    def test_extended_acl_deny_all_operations_exclude_pubkey(
-        self, wallets, eacl_container_with_objects
-    ):
+    def test_extended_acl_deny_all_operations_exclude_pubkey(self, wallets, eacl_container_with_objects):
         user_wallet = wallets.get_wallet()
         other_wallet, other_wallet_allow = wallets.get_wallets_list(EACLRole.OTHERS)[0:2]
         cid, object_oids, file_path = eacl_container_with_objects
@@ -312,10 +292,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                 )
                 for op in EACLOperation
             ]
-            eacl += [
-                EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op)
-                for op in EACLOperation
-            ]
+            eacl += [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
@@ -368,20 +345,12 @@ class TestEACLContainer(NeofsEnvTestBase):
         storage_node = self.neofs_env.storage_nodes[0]
 
         with allure.step("Deny all operations for user via eACL"):
-            eacl_deny = [
-                EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op)
-                for op in EACLOperation
-            ]
-            eacl_deny += [
-                EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op)
-                for op in EACLOperation
-            ]
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op) for op in EACLOperation]
+            eacl_deny += [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
             set_eacl(
                 user_wallet.wallet_path,
                 cid,
-                create_eacl(
-                    cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
-                ),
+                create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path),
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
@@ -391,9 +360,7 @@ class TestEACLContainer(NeofsEnvTestBase):
             drop_object(storage_node, cid=cid, oid=oid)
 
         with allure.step("Wait for dropped object replicated"):
-            wait_object_replication(
-                cid, oid, len(storage_nodes), self.shell, storage_nodes, self.neofs_env
-            )
+            wait_object_replication(cid, oid, len(storage_nodes), self.shell, storage_nodes, self.neofs_env)
 
     @pytest.mark.trusted_party_proved
     @pytest.mark.system_eacl
@@ -411,8 +378,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                     create_eacl(
                         cid=cid,
                         rules_list=[
-                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
-                            for op in EACLOperation
+                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op) for op in EACLOperation
                         ],
                         shell=self.shell,
                         wallet_config=user_wallet.config_path,
@@ -447,12 +413,8 @@ class TestEACLContainer(NeofsEnvTestBase):
 
     @pytest.mark.trusted_party_proved
     @pytest.mark.system_eacl
-    @allure.title(
-        "Test case for verifying the impossible to change system extended ACL if eACL already set"
-    )
-    def test_deprecated_change_system_eacl_if_eacl_already_set(
-        self, wallets, eacl_container_with_objects
-    ):
+    @allure.title("Test case for verifying the impossible to change system extended ACL if eACL already set")
+    def test_deprecated_change_system_eacl_if_eacl_already_set(self, wallets, eacl_container_with_objects):
         user_wallet = wallets.get_wallet()
         cid, object_oids, file_path = eacl_container_with_objects
         endpoint = self.neofs_env.sn_rpc
@@ -464,8 +426,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                 create_eacl(
                     cid=cid,
                     rules_list=[
-                        EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op)
-                        for op in EACLOperation
+                        EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op) for op in EACLOperation
                     ],
                     shell=self.shell,
                     wallet_config=user_wallet.config_path,
@@ -485,8 +446,7 @@ class TestEACLContainer(NeofsEnvTestBase):
                     create_eacl(
                         cid=cid,
                         rules_list=[
-                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op)
-                            for op in EACLOperation
+                            EACLRule(access=EACLAccess.DENY, role=EACLRole.SYSTEM, operation=op) for op in EACLOperation
                         ],
                         shell=self.shell,
                         wallet_config=user_wallet.config_path,
@@ -651,10 +611,7 @@ class TestEACLContainer(NeofsEnvTestBase):
 
         cid, oid, file_path = eacl_full_placement_container_with_object
 
-        eacl = [
-            EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op)
-            for op in EACLOperation
-        ]
+        eacl = [EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op) for op in EACLOperation]
 
         with allure.step("Try to change EACL"):
             with pytest.raises(RuntimeError, match=NOT_CONTAINER_OWNER):

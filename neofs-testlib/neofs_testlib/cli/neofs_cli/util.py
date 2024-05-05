@@ -6,12 +6,12 @@ from neofs_testlib.shell import CommandResult
 
 class NeofsCliUtil(CliCommand):
     def sign_bearer_token(
-            self,
-            wallet: str,
-            from_file: str,
-            to_file: str,
-            address: Optional[str] = None,
-            json: Optional[bool] = False,
+        self,
+        wallet: str,
+        from_file: str,
+        to_file: str,
+        address: Optional[str] = None,
+        json: Optional[bool] = False,
     ) -> CommandResult:
         """
         Sign bearer token to use it in requests.
