@@ -6,7 +6,7 @@ botocore==1.34.72
 boto3==1.34.72
 docker==7.0.0
 isort==5.13.2
-jinja2==3.1.3
+jinja2==3.1.4
 neo-mamba==2.6.0
 paramiko==3.4.0
 pexpect==4.9.0
