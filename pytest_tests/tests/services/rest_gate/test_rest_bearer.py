@@ -16,7 +16,7 @@ from helpers.acl import (
 )
 from helpers.container import create_container
 from helpers.file_helper import generate_file
-from helpers.http_gate import upload_via_http_gate_curl
+from helpers.http_gate import upload_via_http_gate
 from helpers.wellknown_acl import PUBLIC_ACL
 from http_gw.http_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
@@ -83,9 +83,9 @@ class Test_rest_bearer(NeofsEnvTestBase):
         self, simple_object_size: int, user_container: str, eacl_deny_for_others, gw_endpoint
     ):
         eacl_deny_for_others
-        upload_via_http_gate_curl(
+        upload_via_http_gate(
             cid=user_container,
-            filepath=generate_file(simple_object_size),
+            path=generate_file(simple_object_size),
             endpoint=gw_endpoint,
             error_pattern="access to object operation denied",
         )
@@ -112,13 +112,13 @@ class Test_rest_bearer(NeofsEnvTestBase):
             headers = None
             cookies = None
             if bearer_type == "header":
-                headers = [f" -H 'Authorization: Bearer {bearer}'"]
+                headers = {"Authorization": f"Bearer {bearer}"}
             if bearer_type == "cookie":
                 cookies = {"Bearer": bearer}
 
-            oid = upload_via_http_gate_curl(
+            oid = upload_via_http_gate(
                 cid=user_container,
-                filepath=file_path,
+                path=file_path,
                 endpoint=gw_endpoint,
                 headers=headers,
                 cookies=cookies,

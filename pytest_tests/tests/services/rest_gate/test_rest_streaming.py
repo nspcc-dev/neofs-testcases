@@ -4,7 +4,7 @@ import allure
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file
-from helpers.http_gate import upload_via_http_gate_curl
+from helpers.http_gate import upload_via_http_gate
 from helpers.wellknown_acl import PUBLIC_ACL
 from http_gw.http_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
@@ -53,8 +53,8 @@ class Test_rest_streaming(NeofsEnvTestBase):
             # Generate file
             file_path = generate_file(object_size)
 
-        with allure.step("Put objects using curl utility and Get object and verify hashes [ get/$CID/$OID ]"):
-            oid = upload_via_http_gate_curl(cid=cid, filepath=file_path, endpoint=gw_endpoint)
+        with allure.step("Put objects and Get object and verify hashes [ get/$CID/$OID ]"):
+            oid = upload_via_http_gate(cid=cid, path=file_path, endpoint=gw_endpoint)
             get_object_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,

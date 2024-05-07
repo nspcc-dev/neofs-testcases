@@ -6,16 +6,13 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.container import create_container
-from helpers.file_helper import generate_file, generate_file_with_content, get_file_hash
+from helpers.file_helper import generate_file, generate_file_with_content
 from helpers.http_gate import (
     attr_into_header,
     get_object_by_attr_and_verify_hashes,
-    get_via_http_curl,
     get_via_http_gate,
-    get_via_zip_http_gate,
     try_to_get_object_and_expect_error,
     upload_via_http_gate,
-    upload_via_http_gate_curl,
 )
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
@@ -427,10 +424,10 @@ class TestRestGate(NeofsEnvTestBase):
                     get_via_http_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
     @pytest.mark.long
-    @allure.title("Test Put over HTTP/Curl, Get over HTTP/Curl for large object")
+    @allure.title("Test Put over HTTP, Get over HTTP for large object")
     def test_put_http_get_http_large_file(self, complex_object_size, gw_params):
         """
-        This test checks upload and download using curl with 'large' object.
+        This test checks upload and download with 'large' object.
         Large is object with size up to 20Mb.
         """
         cid = create_container(
@@ -446,11 +443,6 @@ class TestRestGate(NeofsEnvTestBase):
 
         with allure.step("Put objects using HTTP"):
             oid_gate = upload_via_http_gate(cid=cid, path=file_path, endpoint=gw_params["endpoint"])
-            oid_curl = upload_via_http_gate_curl(
-                cid=cid,
-                filepath=file_path,
-                endpoint=gw_params["endpoint"],
-            )
 
         get_object_and_verify_hashes(
             oid=oid_gate,
@@ -461,51 +453,3 @@ class TestRestGate(NeofsEnvTestBase):
             nodes=self.neofs_env.storage_nodes,
             endpoint=gw_params["endpoint"],
         )
-        get_object_and_verify_hashes(
-            oid=oid_curl,
-            file_name=file_path,
-            wallet=self.wallet.path,
-            cid=cid,
-            shell=self.shell,
-            nodes=self.neofs_env.storage_nodes,
-            endpoint=gw_params["endpoint"],
-            object_getter=get_via_http_curl,
-        )
-
-    @allure.title("Test Put/Get over HTTP using Curl utility")
-    def test_put_http_get_http_curl(self, complex_object_size, simple_object_size, gw_params):
-        """
-        Test checks upload and download over HTTP using curl utility.
-        """
-        cid = create_container(
-            self.wallet.path,
-            shell=self.shell,
-            endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
-            basic_acl=PUBLIC_ACL,
-        )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
-
-        with allure.step("Put objects using curl utility"):
-            oid_simple = upload_via_http_gate_curl(
-                cid=cid,
-                filepath=file_path_simple,
-                endpoint=gw_params["endpoint"],
-            )
-            oid_large = upload_via_http_gate_curl(
-                cid=cid,
-                filepath=file_path_large,
-                endpoint=gw_params["endpoint"],
-            )
-
-        for oid, file_path in ((oid_simple, file_path_simple), (oid_large, file_path_large)):
-            get_object_and_verify_hashes(
-                oid=oid,
-                file_name=file_path,
-                wallet=self.wallet.path,
-                cid=cid,
-                shell=self.shell,
-                nodes=self.neofs_env.storage_nodes,
-                endpoint=gw_params["endpoint"],
-                object_getter=get_via_http_curl,
-            )
