@@ -183,7 +183,7 @@ def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell, wallet_confi
 
 
 def form_bearertoken_file(
-    wif: str,
+    wallet_path: str,
     cid: str,
     eacl_rule_list: List[Union[EACLRule, EACLPubKey]],
     shell: Shell,
@@ -198,7 +198,7 @@ def form_bearertoken_file(
     enc_cid = _encode_cid_for_eacl(cid) if cid else None
     file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
 
-    eacl = get_eacl(wif, cid, shell, endpoint)
+    eacl = get_eacl(wallet_path, cid, shell, endpoint)
     json_eacl = dict()
     if eacl:
         eacl = eacl.replace("eACL: ", "").split("Signature")[0]
@@ -239,7 +239,7 @@ def form_bearertoken_file(
     if sign:
         sign_bearer(
             shell=shell,
-            wallet_path=wif,
+            wallet_path=wallet_path,
             eacl_rules_file_from=file_path,
             eacl_rules_file_to=file_path,
             json=True,
@@ -270,6 +270,7 @@ def eacl_rules(access: str, verbs: list, user: str) -> list[str]:
     return rules
 
 
+@allure.step("Sign bearer token")
 def sign_bearer(shell: Shell, wallet_path: str, eacl_rules_file_from: str, eacl_rules_file_to: str, json: bool) -> None:
     neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
     neofscli.util.sign_bearer_token(
