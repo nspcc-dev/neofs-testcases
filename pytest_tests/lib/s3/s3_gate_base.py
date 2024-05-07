@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import sys
 import uuid
 from typing import Any, Optional
 
@@ -39,8 +40,12 @@ def _run_with_passwd(cmd: str, password: str) -> str:
     child.delaybeforesend = 1
     child.expect(".*")
     child.sendline(f"{password}\r")
-    child.wait()
-    cmd = child.read()
+    if sys.platform == "darwin":
+        child.expect(pexpect.EOF)
+        cmd = child.before
+    else:
+        child.wait()
+        cmd = child.read()
     return cmd.decode()
 
 
