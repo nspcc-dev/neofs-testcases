@@ -140,13 +140,25 @@ jobs:
           file: 'neofs-s3-authmate-linux-amd64'
           target: 'neofs-testcases/neofs-s3-authmate'
 
-      - name: Download latest stable neofs-rest-gw
-        uses: dsaltares/fetch-gh-release-asset@1.1.1
+      - name: Checkout neofs-rest-gw repository
+        uses: actions/checkout@v4
         with:
-          repo: 'nspcc-dev/neofs-rest-gw'
-          version: 'tags/v0.7.2'
-          file: 'neofs-rest-gw-linux-amd64'
-          target: 'neofs-testcases/neofs-rest-gw'
+          repository: nspcc-dev/neofs-rest-gw
+          ref: f024e798a5bfc5d3183bac417c8a6713e9e756b0
+          path: neofs-rest-gw
+
+      - name: Build neofs-rest-gw
+        timeout-minutes: 5
+        run: |
+          make all
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+        working-directory: neofs-rest-gw
+
+      - name: Copy built binaries
+        timeout-minutes: 30
+        run: |
+          cp ../neofs-rest-gw/bin/neofs-rest-gw .
+        working-directory: neofs-testcases
 
       - name: Download latest stable neo-go
         uses: dsaltares/fetch-gh-release-asset@1.1.1
