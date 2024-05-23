@@ -61,6 +61,7 @@ class NeoFSEnv:
         self.neofs_s3_authmate_path = os.getenv("NEOFS_S3_AUTHMATE_BIN", "./neofs-s3-authmate")
         self.neofs_s3_gw_path = os.getenv("NEOFS_S3_GW_BIN", "./neofs-s3-gw")
         self.neofs_rest_gw_path = os.getenv("NEOFS_REST_GW_BIN", "./neofs-rest-gw")
+        self.alphabet_wallets_dir = NeoFSEnv._generate_temp_dir(prefix="ir_alphabet")
         # nodes inside env
         self.storage_nodes = []
         self.inner_ring_nodes = []
@@ -78,14 +79,6 @@ class NeoFSEnv:
         if len(self.storage_nodes) > 0:
             return self.storage_nodes[0].endpoint
         raise ValueError("No storage nodes configured in this env")
-
-    @property
-    def alphabet_wallets_dir(self):
-        if len(self.inner_ring_nodes) > 0:
-            if self.inner_ring_nodes[0].alphabet_wallet.address == "":
-                raise ValueError("Alphabet Wallets has not beet initialized")
-            return os.path.dirname(self.inner_ring_nodes[0].alphabet_wallet.path)
-        raise ValueError("No Inner Ring nodes configured in this env")
 
     @property
     def network_config(self):
@@ -114,11 +107,25 @@ class NeoFSEnv:
         NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=cli_config_path, wallet=wallet)
         return cli_config_path
 
-    @allure.step("Deploy inner ring node")
-    def deploy_inner_ring_node(self):
-        new_inner_ring_node = InnerRing(self)
-        new_inner_ring_node.start()
-        self.inner_ring_nodes.append(new_inner_ring_node)
+    @allure.step("Deploy inner ring nodes")
+    def deploy_inner_ring_nodes(self, count=1):
+        for _ in range(count):
+            new_inner_ring_node = InnerRing(self)
+            new_inner_ring_node.generate_network_config()
+            self.inner_ring_nodes.append(new_inner_ring_node)
+
+        alphabet_wallets = self.generate_alphabet_wallets(self.inner_ring_nodes[0].network_config, size=count)
+
+        for ir_node in reversed(self.inner_ring_nodes):
+            ir_node.alphabet_wallet = alphabet_wallets.pop()
+
+        for ir_node in self.inner_ring_nodes:
+            ir_node.start(wait_until_ready=False)
+
+        with allure.step("Wait until all IR nodes are READY"):
+            for ir_node in self.inner_ring_nodes:
+                logger.info(f"Wait until IR: {ir_node} is READY")
+                ir_node._wait_until_ready()
 
     @allure.step("Deploy storage node")
     def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None):
@@ -165,28 +172,21 @@ class NeoFSEnv:
         self.rest_gw.start()
         allure.attach(str(self.rest_gw), "rest_gw", allure.attachment_type.TEXT, ".txt")
 
-    @allure.step("Generate wallet")
-    def generate_wallet(
+    @allure.step("Generate storage wallet")
+    def generate_storage_wallet(
         self,
-        wallet_type: WalletType,
         prepared_wallet: NodeWallet,
         network_config: Optional[str] = None,
         label: Optional[str] = None,
     ):
         neofs_adm = self.neofs_adm(network_config)
 
-        if wallet_type == WalletType.STORAGE:
-            neofs_adm.morph.generate_storage_wallet(
-                alphabet_wallets=self.alphabet_wallets_dir,
-                storage_wallet=prepared_wallet.path,
-                initial_gas="10",
-                label=label,
-            )
-        elif wallet_type == WalletType.ALPHABET:
-            neofs_adm.morph.generate_alphabet(alphabet_wallets=prepared_wallet.path, size=1)
-            prepared_wallet.path += "/az.json"
-        else:
-            raise ValueError(f"Unsupported wallet type: {wallet_type}")
+        neofs_adm.morph.generate_storage_wallet(
+            alphabet_wallets=self.alphabet_wallets_dir,
+            storage_wallet=prepared_wallet.path,
+            initial_gas="10",
+            label=label,
+        )
 
         # neo-go requires some attributes to be set
         with open(prepared_wallet.path, "r") as wallet_file:
@@ -203,6 +203,41 @@ class NeoFSEnv:
         prepared_wallet.address = wallet_utils.get_last_address_from_wallet(
             prepared_wallet.path, prepared_wallet.password
         )
+
+    @allure.step("Generate alphabet wallets")
+    def generate_alphabet_wallets(
+        self,
+        network_config: Optional[str] = None,
+        size: Optional[int] = 1,
+    ) -> list[NodeWallet]:
+        neofs_adm = self.neofs_adm(network_config)
+
+        neofs_adm.morph.generate_alphabet(alphabet_wallets=self.alphabet_wallets_dir, size=size)
+
+        generated_wallets = []
+
+        for generated_wallet in os.listdir(self.alphabet_wallets_dir):
+            # neo3 package requires some attributes to be set
+            with open(os.path.join(self.alphabet_wallets_dir, generated_wallet), "r") as wallet_file:
+                wallet_json = json.load(wallet_file)
+
+            wallet_json["name"] = None
+            for acc in wallet_json["accounts"]:
+                acc["extra"] = None
+
+            with open(os.path.join(self.alphabet_wallets_dir, generated_wallet), "w") as wallet_file:
+                json.dump(wallet_json, wallet_file)
+
+            generated_wallets.append(
+                NodeWallet(
+                    path=os.path.join(self.alphabet_wallets_dir, generated_wallet),
+                    password=self.default_password,
+                    address=wallet_utils.get_last_address_from_wallet(
+                        os.path.join(self.alphabet_wallets_dir, generated_wallet), self.default_password
+                    ),
+                )
+            )
+        return generated_wallets
 
     @allure.step("Kill current neofs env")
     def kill(self):
@@ -308,7 +343,7 @@ class NeoFSEnv:
             )
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
-        neofs_env.deploy_inner_ring_node()
+        neofs_env.deploy_inner_ring_nodes()
         neofs_env.deploy_storage_nodes(
             count=4,
             node_attrs={
@@ -389,12 +424,9 @@ class InnerRing:
         self.neofs_env = neofs_env
         self.network_config = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_network_config")
         self.cli_config = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_cli_config")
-        self.alphabet_wallet = NodeWallet(
-            path=NeoFSEnv._generate_temp_dir(prefix="ir_alphabet"), address="", password=self.neofs_env.default_password
-        )
+        self.alphabet_wallet = None
         self.ir_node_config_path = NeoFSEnv._generate_temp_file(extension="yml", prefix="ir_node_config")
         self.ir_storage_path = NeoFSEnv._generate_temp_file(extension="db", prefix="ir_storage")
-        self.seed_nodes_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.grpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
@@ -408,7 +440,6 @@ class InnerRing:
             Inner Ring:
             - Alphabet wallet: {self.alphabet_wallet}
             - IR Config path: {self.ir_node_config_path}
-            - Seed nodes address: {self.seed_nodes_address}
             - RPC address: {self.rpc_address}
             - P2P address: {self.p2p_address}
             - GRPC address: {self.grpc_address}
@@ -422,9 +453,7 @@ class InnerRing:
         del attributes["process"]
         return attributes
 
-    def start(self):
-        if self.process is not None:
-            raise RuntimeError("This inner ring node instance has already been started")
+    def generate_network_config(self):
         logger.info(f"Generating network config at: {self.network_config}")
 
         network_config_template = "network.yaml"
@@ -434,29 +463,43 @@ class InnerRing:
             config_path=self.network_config,
             custom=Path(network_config_template).is_file(),
             morph_endpoint=self.rpc_address,
-            alphabet_wallets_path=self.alphabet_wallet.path,
+            alphabet_wallets_path=self.neofs_env.alphabet_wallets_dir,
             default_password=self.neofs_env.default_password,
         )
-        logger.info("Generating alphabet wallets")
-        self.neofs_env.generate_wallet(WalletType.ALPHABET, self.alphabet_wallet, network_config=self.network_config)
-        logger.info(f"Generating IR config at: {self.ir_node_config_path}")
 
+    @allure.step("Start Inner Ring node")
+    def start(self, wait_until_ready=True):
+        if self.process is not None:
+            raise RuntimeError("This inner ring node instance has already been started")
+        logger.info(f"Generating IR config at: {self.ir_node_config_path}")
         ir_config_template = "ir.yaml"
+
+        pub_keys_of_existing_ir_nodes = [
+            wallet_utils.get_last_public_key_from_wallet(ir_node.alphabet_wallet.path, ir_node.alphabet_wallet.password)
+            for ir_node in self.neofs_env.inner_ring_nodes
+        ]
+
+        seed_node_addresses_of_existing_ir_nodes = [ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes]
 
         NeoFSEnv.generate_config_file(
             config_template=ir_config_template,
             config_path=self.ir_node_config_path,
             custom=Path(ir_config_template).is_file(),
             wallet=self.alphabet_wallet,
-            public_key=wallet_utils.get_last_public_key_from_wallet(
-                self.alphabet_wallet.path, self.alphabet_wallet.password
-            ),
+            public_keys=pub_keys_of_existing_ir_nodes,
             ir_storage_path=self.ir_storage_path,
-            seed_nodes_address=self.seed_nodes_address,
+            seed_nodes_addresses=seed_node_addresses_of_existing_ir_nodes,
             rpc_address=self.rpc_address,
             p2p_address=self.p2p_address,
             grpc_address=self.grpc_address,
             ir_state_file=self.ir_state_file,
+            peers_min_number=int(
+                len(self.neofs_env.inner_ring_nodes) - (len(self.neofs_env.inner_ring_nodes) - 1) / 3 - 1
+            ),
+            set_roles_in_genesis=str(False if len(self.neofs_env.inner_ring_nodes) == 1 else True).lower(),
+            control_public_key=wallet_utils.get_last_public_key_from_wallet(
+                self.alphabet_wallet.path, self.alphabet_wallet.password
+            ),
         )
         logger.info(f"Generating CLI config at: {self.cli_config}")
         NeoFSEnv.generate_config_file(
@@ -464,10 +507,10 @@ class InnerRing:
         )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
-        logger.info("Wait until IR is READY")
-        self._wait_until_ready()
-
-        self.neofs_env.neofs_adm
+        logger.info(f"Launched Inner Ring Node:{self}")
+        if wait_until_ready:
+            logger.info("Wait until IR is READY")
+            self._wait_until_ready()
 
     def _launch_process(self):
         self.stdout = NeoFSEnv._generate_temp_file(prefix="ir_stdout")
@@ -480,7 +523,7 @@ class InnerRing:
             stderr=stderr_fp,
         )
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.grpc_address, post_data="--ir")
@@ -541,7 +584,7 @@ class StorageNode:
     def start(self, fresh=True):
         if fresh:
             logger.info("Generating wallet for storage node")
-            self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label=f"sn{self.sn_number}")
+            self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
             sn_config_template = "sn.yaml"
@@ -682,7 +725,7 @@ class S3_GW:
     def start(self):
         if self.process is not None:
             raise RuntimeError(f"This s3 gw instance has already been started:\n{self}")
-        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label="s3")
+        self.neofs_env.generate_storage_wallet(self.wallet, label="s3")
         logger.info(f"Generating config for s3 gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching S3 GW: {self}")
@@ -766,7 +809,7 @@ class REST_GW:
     def start(self):
         if self.process is not None:
             raise RuntimeError(f"This rest gw instance has already been started:\n{self}")
-        self.neofs_env.generate_wallet(WalletType.STORAGE, self.wallet, label="rest")
+        self.neofs_env.generate_storage_wallet(self.wallet, label="rest")
         logger.info(f"Generating config for rest gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching REST GW: {self}")
