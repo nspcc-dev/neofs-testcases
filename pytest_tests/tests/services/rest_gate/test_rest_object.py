@@ -107,7 +107,7 @@ class Test_rest_object(NeofsEnvTestBase):
         with allure.step("[Negative] try to get object: [get/$CID/chapter1/peace]"):
             attrs = {obj_key1: obj_value1, obj_key2: obj_value2}
             request = f"/get/{cid}/{obj_key1}/{obj_value1}"
-            expected_err_msg = "Failed to get object via HTTP gate:"
+            expected_err_msg = "Failed to get object via REST gate:"
             try_to_get_object_via_passed_request_and_expect_error(
                 cid=cid,
                 oid=oid,
