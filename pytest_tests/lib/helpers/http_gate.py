@@ -342,3 +342,59 @@ def try_to_get_object_via_passed_request_and_expect_error(
     except Exception as err:
         match = error_pattern.casefold() in str(err).casefold()
         assert match, f"Expected {err} to match {error_pattern}"
+
+
+@allure.step("New Upload via REST Gate")
+def new_upload_via_rest_gate(
+    cid: str,
+    path: str,
+    endpoint: str,
+    headers: dict = None,
+    cookies: dict = None,
+    file_content_type: str = None,
+    error_pattern: Optional[str] = None,
+) -> str:
+    """
+    This function upload given object through REST gate
+    cid:      CID to get object from
+    path:     File path to upload
+    endpoint: REST gate endpoint
+    headers:  Object header
+    file_content_type: Content-Type header
+    """
+    request = f"{endpoint}/objects/{cid}"
+
+    with open(path, "rb") as file:
+        file_content = file.read()
+
+    if headers is None:
+        headers = {}
+
+    if file_content_type:
+        headers["Content-Type"] = file_content_type
+
+    resp = requests.post(request, data=file_content, headers=headers, cookies=cookies)
+
+    if not resp.ok:
+        if error_pattern:
+            match = error_pattern.casefold() in str(resp.text).casefold()
+            assert match, f"Expected {resp.text} to match {error_pattern}"
+            return ""
+        raise Exception(
+            f"""Failed to get object via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.json(), req_type="POST")
+
+    assert resp.json().get("object_id"), f"OID found in response {resp}"
+
+    return resp.json().get("object_id")
+
+
+def new_attr_into_header(attrs: dict) -> dict:
+    json_string = json.dumps(attrs)
+    return {"X-Attributes": json_string}
