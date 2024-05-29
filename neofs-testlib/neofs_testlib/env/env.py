@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -42,6 +43,7 @@ class WalletType(Enum):
 
 
 class NeoFSEnv:
+    _id = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     _busy_ports = []
 
     def __init__(self, neofs_env_config: dict = None):
@@ -365,9 +367,9 @@ class NeoFSEnv:
         current_perm = os.stat(target)
         os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
 
-    @staticmethod
-    def _generate_temp_file(extension: str = "", prefix: str = "tmp_file") -> str:
-        file_path = f"env_files/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
+    @classmethod
+    def _generate_temp_file(cls, extension: str = "", prefix: str = "tmp_file") -> str:
+        file_path = f"env_files/neofs-env-{cls._id}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         if extension:
             file_path += f".{extension}"
         file_path = Path(file_path)
@@ -375,9 +377,9 @@ class NeoFSEnv:
         file_path.touch()
         return file_path
 
-    @staticmethod
-    def _generate_temp_dir(prefix: str = "tmp_dir") -> str:
-        dir_path = f"env_files/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
+    @classmethod
+    def _generate_temp_dir(cls, prefix: str = "tmp_dir") -> str:
+        dir_path = f"env_files/neofs-env-{cls._id}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         return dir_path
 
