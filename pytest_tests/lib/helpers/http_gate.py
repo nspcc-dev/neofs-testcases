@@ -37,7 +37,7 @@ def get_via_rest_gate(
     cid:          container id to get object from
     oid:          object ID
     endpoint:     REST gate endpoint
-    request_path: (optional) REST request, if ommited - use default [{endpoint}/get/{cid}/{oid}]
+    request_path: (optional) REST request, if ommited - use default [{endpoint}/objects/{cid}/by_id/{oid}]
     return_response: (optional) either return internal requests.Response object or not
     """
 
@@ -46,7 +46,7 @@ def get_via_rest_gate(
     if download:
         download_attribute = "?download=true"
     if request_path is None:
-        request = f"{endpoint}/get/{cid}/{oid}{download_attribute}"
+        request = f"{endpoint}/objects/{cid}/by_id/{oid}{download_attribute}"
     else:
         request = f"{endpoint}{request_path}{download_attribute}"
 
@@ -110,13 +110,13 @@ def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, req
     cid:          CID to get object from
     attribute:    attribute {name: attribute} value pair
     endpoint:     REST gate endpoint
-    request_path: (optional) REST request path, if ommited - use default [{endpoint}/get_by_attribute/{Key}/{Value}]
+    request_path: (optional) REST request path, if ommited - use default [{endpoint}/objects/{Key}/by_attribute/{Value}]
     """
     attr_name = list(attribute.keys())[0]
     attr_value = quote(str(attribute.get(attr_name)))
     # if `request_path` parameter ommited, use default
     if request_path is None:
-        request = f"{endpoint}/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}"
+        request = f"{endpoint}/objects/{cid}/by_attribute/{quote(str(attr_name))}/{attr_value}"
     else:
         request = f"{endpoint}{request_path}"
 
