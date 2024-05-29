@@ -398,3 +398,29 @@ def new_upload_via_rest_gate(
 def new_attr_into_header(attrs: dict) -> dict:
     json_string = json.dumps(attrs)
     return {"X-Attributes": json_string}
+
+
+@allure.step("Get epoch duration via REST Gate")
+def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
+    """
+    This function gets network info from REST gate and extracts "epochDuration" from the response
+    endpoint:     REST gate endpoint
+    """
+
+    request = f"{endpoint}/network-info"
+
+    resp = requests.get(request, stream=True)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get network info via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.status_code)
+
+    epoch_duration = resp.json().get("epochDuration")
+    return epoch_duration
