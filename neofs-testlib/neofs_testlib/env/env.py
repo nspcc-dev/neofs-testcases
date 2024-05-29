@@ -9,6 +9,7 @@ import string
 import subprocess
 import threading
 import time
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from importlib.resources import files
@@ -695,6 +696,12 @@ class S3_GW:
 
         s3_config_template = "s3.yaml"
 
+        S3peer = namedtuple("S3peer", ["address", "priority", "weight"])
+
+        peers = []
+        for sn in self.neofs_env.storage_nodes:
+            peers.append(S3peer(sn.endpoint, 1, 1))
+
         NeoFSEnv.generate_config_file(
             config_template=s3_config_template,
             config_path=self.config_path,
@@ -704,6 +711,9 @@ class S3_GW:
             key_file_path=self.tls_key_path,
             wallet=self.wallet,
             morph_endpoint=self.neofs_env.morph_rpc,
+            peers=peers,
+            tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
+            listen_domain=self.neofs_env.domain,
         )
 
     def _launch_process(self):
@@ -711,20 +721,11 @@ class S3_GW:
         self.stderr = NeoFSEnv._generate_temp_file(prefix="s3gw_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
-        s3_gw_env = {
-            "S3_GW_LISTEN_DOMAINS": self.neofs_env.domain,
-            "S3_GW_TREE_SERVICE": self.neofs_env.storage_nodes[0].endpoint,
-        }
-
-        for index, sn in enumerate(self.neofs_env.storage_nodes):
-            s3_gw_env[f"S3_GW_PEERS_{index}_ADDRESS"] = sn.endpoint
-            s3_gw_env[f"S3_GW_PEERS_{index}_WEIGHT"] = "0.2"
 
         self.process = subprocess.Popen(
             [self.neofs_env.neofs_s3_gw_path, "--config", self.config_path],
             stdout=stdout_fp,
             stderr=stderr_fp,
-            env=s3_gw_env,
         )
 
 

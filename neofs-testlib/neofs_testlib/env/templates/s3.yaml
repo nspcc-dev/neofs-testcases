@@ -30,3 +30,17 @@ wallet:
 
 # RPC endpoint
 rpc_endpoint: http://{{ morph_endpoint }}
+
+peers:
+  {%- for peer in peers %}
+  {{ loop.index0 }}:
+    address: {{ peer.address }}
+    priority: {{ peer.priority }}
+    weight: {{ peer.weight }}
+  {%- endfor %}
+
+tree:
+  service: {{ tree_service_endpoint }}
+
+listen_domains:
+  - {{ listen_domain }}
