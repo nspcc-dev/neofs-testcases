@@ -18,7 +18,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.rest_gate import upload_via_rest_gate
 from helpers.wellknown_acl import PUBLIC_ACL
-from http_gw.http_utils import get_object_and_verify_hashes
+from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 
 logger = logging.getLogger("NeoLogger")
