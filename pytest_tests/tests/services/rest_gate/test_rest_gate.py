@@ -7,7 +7,7 @@ import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file, generate_file_with_content
-from helpers.http_gate import (
+from helpers.rest_gate import (
     attr_into_header,
     get_object_by_attr_and_verify_hashes,
     get_via_rest_gate,

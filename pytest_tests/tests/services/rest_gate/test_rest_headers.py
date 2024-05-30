@@ -10,7 +10,7 @@ from helpers.container import (
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
-from helpers.http_gate import (
+from helpers.rest_gate import (
     attr_into_str_header,
     attr_into_str_header_curl,
     get_object_by_attr_and_verify_hashes,

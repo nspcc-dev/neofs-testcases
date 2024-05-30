@@ -9,7 +9,7 @@ import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import OBJECT_NOT_FOUND
-from helpers.http_gate import (
+from helpers.rest_gate import (
     attr_into_str_header,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,

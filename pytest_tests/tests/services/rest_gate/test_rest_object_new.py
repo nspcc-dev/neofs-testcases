@@ -5,7 +5,7 @@ import allure
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file
-from helpers.http_gate import (
+from helpers.rest_gate import (
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_via_passed_request_and_expect_error,
 )
