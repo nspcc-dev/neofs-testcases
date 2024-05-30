@@ -144,7 +144,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nspcc-dev/neofs-rest-gw
-          ref: f024e798a5bfc5d3183bac417c8a6713e9e756b0
+          ref: v0.9.0
           path: neofs-rest-gw
 
       - name: Build neofs-rest-gw
