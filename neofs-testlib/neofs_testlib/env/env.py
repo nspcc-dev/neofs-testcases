@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -9,6 +10,7 @@ import string
 import subprocess
 import threading
 import time
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from importlib.resources import files
@@ -41,6 +43,7 @@ class WalletType(Enum):
 
 
 class NeoFSEnv:
+    _id = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     _busy_ports = []
 
     def __init__(self, neofs_env_config: dict = None):
@@ -364,9 +367,9 @@ class NeoFSEnv:
         current_perm = os.stat(target)
         os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
 
-    @staticmethod
-    def _generate_temp_file(extension: str = "", prefix: str = "tmp_file") -> str:
-        file_path = f"env_files/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
+    @classmethod
+    def _generate_temp_file(cls, extension: str = "", prefix: str = "tmp_file") -> str:
+        file_path = f"env_files/neofs-env-{cls._id}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         if extension:
             file_path += f".{extension}"
         file_path = Path(file_path)
@@ -374,9 +377,9 @@ class NeoFSEnv:
         file_path.touch()
         return file_path
 
-    @staticmethod
-    def _generate_temp_dir(prefix: str = "tmp_dir") -> str:
-        dir_path = f"env_files/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
+    @classmethod
+    def _generate_temp_dir(cls, prefix: str = "tmp_dir") -> str:
+        dir_path = f"env_files/neofs-env-{cls._id}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         return dir_path
 
@@ -695,6 +698,12 @@ class S3_GW:
 
         s3_config_template = "s3.yaml"
 
+        S3peer = namedtuple("S3peer", ["address", "priority", "weight"])
+
+        peers = []
+        for sn in self.neofs_env.storage_nodes:
+            peers.append(S3peer(sn.endpoint, 1, 1))
+
         NeoFSEnv.generate_config_file(
             config_template=s3_config_template,
             config_path=self.config_path,
@@ -704,6 +713,9 @@ class S3_GW:
             key_file_path=self.tls_key_path,
             wallet=self.wallet,
             morph_endpoint=self.neofs_env.morph_rpc,
+            peers=peers,
+            tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
+            listen_domain=self.neofs_env.domain,
         )
 
     def _launch_process(self):
@@ -711,20 +723,11 @@ class S3_GW:
         self.stderr = NeoFSEnv._generate_temp_file(prefix="s3gw_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
-        s3_gw_env = {
-            "S3_GW_LISTEN_DOMAINS": self.neofs_env.domain,
-            "S3_GW_TREE_SERVICE": self.neofs_env.storage_nodes[0].endpoint,
-        }
-
-        for index, sn in enumerate(self.neofs_env.storage_nodes):
-            s3_gw_env[f"S3_GW_PEERS_{index}_ADDRESS"] = sn.endpoint
-            s3_gw_env[f"S3_GW_PEERS_{index}_WEIGHT"] = "0.2"
 
         self.process = subprocess.Popen(
             [self.neofs_env.neofs_s3_gw_path, "--config", self.config_path],
             stdout=stdout_fp,
             stderr=stderr_fp,
-            env=s3_gw_env,
         )
 
 
