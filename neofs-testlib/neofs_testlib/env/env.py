@@ -241,8 +241,10 @@ class NeoFSEnv:
 
     @allure.step("Kill current neofs env")
     def kill(self):
-        self.rest_gw.process.kill()
-        self.s3_gw.process.kill()
+        if self.rest_gw:
+            self.rest_gw.process.kill()
+        if self.s3_gw:
+            self.s3_gw.process.kill()
         for sn in self.storage_nodes:
             sn.process.kill()
         for ir in self.inner_ring_nodes:
