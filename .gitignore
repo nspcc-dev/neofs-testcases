@@ -25,3 +25,16 @@ artifacts/*
 docs/*
 venv.*/*
 /*wallet_config.yml
+env_files/*
+neofs_logs.zip
+env_details
+blobovnicza-to-peapod
+neo-go
+neofs-adm
+neofs-cli
+neofs-ir
+neofs-lens
+neofs-node
+neofs-rest-gw
+neofs-s3-authmate
+neofs-s3-gw

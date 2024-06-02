@@ -14,12 +14,12 @@ morph:
   dial_timeout: 5s # Timeout for RPC client connection to sidechain
   reconnections_number: 5  # number of reconnection attempts
   reconnections_delay: 5s  # time delay b/w reconnection attempts
-  validators: # List of hex-encoded 33-byte public keys of sidechain validators to vote for at application startup; can be omitted if equals `consensus.committee`
-    - {{ public_key }}
   consensus: # Local consensus launch mode activated only when 'endpoint.client' is unset.
     magic: 15405 # Network magic. Must be unsigned integer in range [1:4294967295]
     committee: # Initial committee
+      {%- for public_key in public_keys %}
       - {{ public_key }} # Hex-encoded public key
+      {%- endfor %}
     storage: # Blockchain storage
       type: boltdb # One of following storage types:
         # boltdb (local BoltDB)
@@ -31,31 +31,20 @@ morph:
     time_per_block: 1s # Optional time period (approximate) between two adjacent blocks. Defaults to 15s.
       # Must not be negative
     seed_nodes:
+      {%- for seed_nodes_address in seed_nodes_addresses %}
       - {{ seed_nodes_address }}
-    max_traceable_blocks: 2102400 # Optional length of the chain accessible to smart contracts. Defaults to 2102400.
-      # Must not be greater than 4294967295
+      {%- endfor %}
     rpc: # Optional RPC settings
       listen: # Optional list of network addresses to listen Neo RPC on. By default, protocol is not served
         # TCP addresses in 'host:port' format
         - {{ rpc_address }}
     p2p: # Optional P2P settings
-      dial_timeout: 5s # Optional maximum duration a single peer dial may take. Defaults to 5s. Must not be negative
-      proto_tick_interval: 2s # Optional time period between protocol ticks with each connected peer. Defaults to 2s.
-        # Must not be negative
       listen: # Optional list of network addresses to listen Neo P2P on. By default, protocol is not served
         # TCP addresses in 'host:port' format
         - {{ p2p_address }}
-      peers: # Optional peer settings
-        min: 0 # Optional minimum number of peers a node needs for normal operation. Defaults to consensus minimum
-          # of 'committee' size (ceil of 2/3N-1). Must not be greater than 2147483647. Note that consensus service
-          # won't start until at least 'min' number of peers are connected
-        max: 10 # Optional limits of maximum number of peers dealing with the node. Defaults to 100. Must not be
-          # greater than 2147483647
-        attempts: 5 # How many peers node should try to dial after falling under 'min' count. Defaults to 'min'+10.
-          # Must not be greater than 2147483647
-      ping: # Optional settings of pinging mechanism
-        interval: 30s # Optional time period between pings. Defaults to 30s. Must not be negative
-        timeout: 90s # Optional time period to wait for pong. Defaults to 1m. Must not be negative
+      peers:
+        min: {{ peers_min_number }}
+    set_roles_in_genesis: {{ set_roles_in_genesis }}
 
 fschain_autodeploy: true
 
@@ -69,7 +58,7 @@ mainnet:
 
 control:
   authorized_keys:  # List of hex-encoded 33-byte public keys that have rights to use the control service
-    - {{ public_key }}
+    - {{ control_public_key }}
   grpc:
     endpoint: {{ grpc_address }}  # Endpoint that is listened by the control service; disabled by default
 

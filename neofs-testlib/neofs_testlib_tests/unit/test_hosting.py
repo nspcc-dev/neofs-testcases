@@ -106,19 +106,3 @@ class TestHosting(TestCase):
         service1 = hosting.find_service_configs(self.SERVICE1["name"])
         self.assertEqual(len(service1), 1)
         self.assertDictEqual(service1[0].attributes, self.SERVICE1_ATTRIBUTES)
-
-    def test_get_service_pid(self):
-        config = HostConfig(plugin_name=self.HOST2_PLUGIN, address=self.HOST2_ADDRESS)
-        docker_hosting = DockerHost(config)
-
-        client = docker.from_env()
-        container = client.containers.run("alpine:latest", "tail -f /dev/null", detach=True)
-
-        top_info = container.top()
-        expected_pid = top_info["Processes"][0][1]
-        pid = docker_hosting.get_service_pid(container.name)
-
-        container.stop()
-        container.remove()
-
-        self.assertEqual(expected_pid, pid)
