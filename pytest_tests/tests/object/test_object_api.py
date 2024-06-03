@@ -9,9 +9,9 @@ from helpers.common import ASSETS_DIR, TEST_FILES_DIR
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
-    get_simple_object_copies,
-    get_object_chunks,
     get_link_object,
+    get_object_chunks,
+    get_simple_object_copies,
 )
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file, get_file_content, get_file_hash
@@ -21,19 +21,19 @@ from helpers.grpc_responses import (
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
     INVALID_SEARCH_QUERY,
+    LINK_OBJECT_FOUND,
     OBJECT_HEADER_LENGTH_LIMIT,
     OUT_OF_RANGE,
-    LINK_OBJECT_FOUND,
 )
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
+    delete_object,
     get_object_from_random_node,
     get_range,
     get_range_hash,
     head_object,
     put_object_to_random_node,
     search_object,
-    delete_object,
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
