@@ -8,6 +8,7 @@ from helpers.file_helper import generate_file
 from helpers.rest_gate import (
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_via_passed_request_and_expect_error,
+    quote,
 )
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -118,12 +119,16 @@ class Test_rest_object(NeofsEnvTestBase):
             )
 
         with allure.step("Download the object with attribute [get_by_attribute/$CID/chapter1/peace]"):
+            attr_name = list(attrs.keys())[0]
+            attr_value = quote(str(attrs.get(attr_name)))
             get_object_by_attr_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,
                 cid=cid,
                 attrs=attrs,
                 endpoint=gw_attributes["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
+                request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
             )
         with allure.step("[Negative] try to get object: get_by_attribute/$CID/$OID"):
             request = f"/get_by_attribute/{cid}/{oid}"
@@ -136,11 +141,16 @@ class Test_rest_object(NeofsEnvTestBase):
             )
 
         with allure.step("[Negative] Try to get object with invalid attribute [get_by_attribute/$CID/chapter1/war]"):
+            attrs = {obj_key1: obj_value2}
+            attr_name = list(attrs.keys())[0]
+            attr_value = quote(str(attrs.get(attr_name)))
             with pytest.raises(Exception, match=".*object not found.*"):
                 get_object_by_attr_and_verify_hashes(
                     oid=oid,
                     file_name=file_path,
                     cid=cid,
-                    attrs={obj_key1: obj_value2},
+                    attrs=attrs,
                     endpoint=gw_attributes["endpoint"],
+                    request_path=f"/get/{cid}/{oid}",
+                    request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
                 )

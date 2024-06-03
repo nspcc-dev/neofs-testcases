@@ -13,6 +13,7 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
+    quote,
 )
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
@@ -120,6 +121,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
             )
             content_disposition_type, filename = resp.headers["Content-Disposition"].split(";")
@@ -138,6 +140,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
                 download=True,
             )
@@ -168,6 +171,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "application/octet-stream"
@@ -185,6 +189,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "text/plain; charset=utf-8"
@@ -214,6 +219,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "CoolContentType"
@@ -242,6 +248,7 @@ class TestRestGate(NeofsEnvTestBase):
                 cid=cid,
                 oid=oid,
                 endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oid}",
                 return_response=True,
             )
             assert resp.headers["Content-Type"] == "application/json"
@@ -267,6 +274,7 @@ class TestRestGate(NeofsEnvTestBase):
             cid=cid,
             oid=oid,
             endpoint=gw_params["endpoint"],
+            request_path=f"/get/{cid}/{oid}",
             return_response=True,
         )
         with open(gw_params["wallet_path"]) as wallet_file:
@@ -366,12 +374,16 @@ class TestRestGate(NeofsEnvTestBase):
                 endpoint=gw_params["endpoint"],
             )
 
+        attr_name = list(attributes.keys())[0]
+        attr_value = quote(str(attributes.get(attr_name)))
         get_object_by_attr_and_verify_hashes(
             oid=oid,
             file_name=file_path,
             cid=cid,
             attrs=attributes,
             endpoint=gw_params["endpoint"],
+            request_path=f"/get/{cid}/{oid}",
+            request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
         )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
@@ -403,7 +415,12 @@ class TestRestGate(NeofsEnvTestBase):
 
         with allure.step("All objects can be get"):
             for oid in oids:
-                get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
+                get_via_rest_gate(
+                    cid=cid,
+                    oid=oid,
+                    endpoint=gw_params["endpoint"],
+                    request_path=f"/get/{cid}/{oid}",
+                )
 
         for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
             self.tick_epochs_and_wait(1)
@@ -421,7 +438,9 @@ class TestRestGate(NeofsEnvTestBase):
 
             with allure.step("Other objects can be get"):
                 for oid in not_expired_objects:
-                    get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
+                    get_via_rest_gate(
+                        cid=cid, oid=oid, endpoint=gw_params["endpoint"], request_path=f"/get/{cid}/{oid}"
+                    )
 
     @pytest.mark.long
     @allure.title("Test Put over HTTP, Get over HTTP for large object")
