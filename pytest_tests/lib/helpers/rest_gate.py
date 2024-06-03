@@ -256,9 +256,19 @@ def try_to_get_object_and_expect_error(cid: str, oid: str, error_pattern: str, e
 
 
 @allure.step("Verify object can be get using REST header attribute")
-def get_object_by_attr_and_verify_hashes(oid: str, file_name: str, cid: str, attrs: dict, endpoint: str) -> None:
-    got_file_path_rest = get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint)
-    got_file_path_rest_attr = get_via_rest_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint)
+def get_object_by_attr_and_verify_hashes(
+    oid: str,
+    file_name: str,
+    cid: str,
+    attrs: dict,
+    endpoint: str,
+    request_path: Optional[str] = None,
+    request_path_attr: Optional[str] = None,
+) -> None:
+    got_file_path_rest = get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=request_path)
+    got_file_path_rest_attr = get_via_rest_gate_by_attribute(
+        cid=cid, attribute=attrs, endpoint=endpoint, request_path=request_path_attr
+    )
     assert_hashes_are_equal(file_name, got_file_path_rest, got_file_path_rest_attr)
 
 
