@@ -218,8 +218,8 @@ class TestRestGate(NeofsEnvTestBase):
             )
             assert resp.headers["Content-Type"] == "CoolContentType"
 
-    @allure.title("Verify Content-Type if uploaded with multipart Content-Type")
-    def test_put_http_get_http_with_multipart_content_type(self, gw_params):
+    @allure.title("Verify Content-Type if uploaded with Content-Type")
+    def test_put_http_get_http_with_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -228,7 +228,7 @@ class TestRestGate(NeofsEnvTestBase):
             basic_acl=PUBLIC_ACL,
         )
 
-        with allure.step("Upload object with multipart content type"):
+        with allure.step("Upload object with content type"):
             file_path = generate_file_with_content(0, content="123")
 
             oid = new_upload_via_rest_gate(
