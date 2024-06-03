@@ -592,6 +592,56 @@ class TestObjectApi(NeofsEnvTestBase):
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
 
+    @allure.title("Validate native object API get_range for a complex object")
+    @pytest.mark.grpc_api
+    def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
+        """
+        Validate get_range for object by native gRPC API for a complex object
+        """
+        four_chunked_size = complex_object_size
+        file_path = generate_file(four_chunked_size)
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            container,
+            shell=self.shell,
+            neofs_env=self.neofs_env,
+        )
+
+        file_ranges_to_test = []
+
+        parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+
+        # range is inside one child
+        file_ranges_to_test.append((0, parts[0][1] - 1))
+        # range matches child
+        file_ranges_to_test.append((parts[0][1], parts[1][1]))
+        # range requires more than one child and includes the first child
+        file_ranges_to_test.append((0, parts[0][1] + parts[1][1] - 1))
+        # range requires more than one child and includes the last child
+        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - 1))
+        # range requires more than one child and does not include the first and the last child
+        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - parts[-1][1] - 1))
+        # range requires more than two children and includes the first and the last child
+        file_ranges_to_test.append((0, complex_object_size - 1))
+
+        logging.info(f"Ranges used in test {file_ranges_to_test}")
+
+        for range_start, range_len in file_ranges_to_test:
+            range_cut = f"{range_start}:{range_len}"
+            with allure.step(f"Get range ({range_cut})"):
+                _, range_content = get_range(
+                    default_wallet.path,
+                    container,
+                    oid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    range_cut=range_cut,
+                )
+                assert (
+                    get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start) == range_content
+                ), f"Expected range content to match {range_cut} slice of file payload"
+
     @allure.title("Validate native object API get_range negative cases")
     @pytest.mark.grpc_api
     def test_object_get_range_negatives(
