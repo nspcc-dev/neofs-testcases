@@ -99,7 +99,7 @@ def generate_ranges(
 
     for offset, length in file_ranges:
         range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
-        range_start = random.randint(offset, offset + length)
+        range_start = random.randint(offset, offset + length - 1)
 
         file_ranges_to_test.append((range_start, min(range_length, storage_object.size - range_start)))
 
