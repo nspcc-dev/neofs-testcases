@@ -343,7 +343,6 @@ class TestS3GateObject(TestNeofsS3GateBase):
             object_3 = s3_gate_object.get_object_s3(self.s3_client, bucket, obj_key, full_output=True)
             assert object_3.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
 
-    @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3: Get range")
     def test_s3_get_range(self, bucket, complex_object_size: int, simple_object_size: int):
         file_path = generate_file(complex_object_size)
