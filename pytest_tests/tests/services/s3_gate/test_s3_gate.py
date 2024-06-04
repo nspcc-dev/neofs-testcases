@@ -221,7 +221,6 @@ class TestS3Gate(TestNeofsS3GateBase):
             ), f"Expected object content is\n{version_2_content}\nGot\n{got_content}"
 
     @pytest.mark.s3_gate_multipart
-    @pytest.mark.skip("Requires further investigation. S3 gate returns 500 on this test")
     @allure.title("Test S3 Object Multipart API")
     def test_s3_api_multipart(self, bucket, simple_object_size):
         """
