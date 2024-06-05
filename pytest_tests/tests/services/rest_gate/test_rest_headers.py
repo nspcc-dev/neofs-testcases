@@ -10,14 +10,14 @@ from helpers.container import (
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
-from helpers.http_gate import (
+from helpers.rest_gate import (
     attr_into_str_header,
     attr_into_str_header_curl,
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_and_expect_error,
     try_to_get_object_via_passed_request_and_expect_error,
-    upload_via_http_gate,
-    upload_via_http_gate_curl,
+    upload_via_rest_gate,
+    upload_via_rest_gate_curl,
 )
 from helpers.neofs_verbs import delete_object
 from helpers.storage_object_info import StorageObjectInfo
@@ -65,7 +65,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         )
         file_path = generate_file(request.param)
         for attributes in self.OBJECT_ATTRIBUTES:
-            storage_object_id = upload_via_http_gate(
+            storage_object_id = upload_via_rest_gate(
                 cid=cid,
                 path=file_path,
                 endpoint=gw_endpoint,
@@ -182,7 +182,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(simple_object_size)
-        upload_via_http_gate(
+        upload_via_rest_gate(
             cid=cid,
             path=file_path,
             endpoint=gw_endpoint,
@@ -197,7 +197,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             headers = attr_into_str_header_curl(attrs_obj3)
             headers.append(" ".join(attr_into_str_header_curl({"Writer": "peace"})))
             error_pattern = "key duplication error: X-Attribute-Writer"
-            upload_via_http_gate_curl(
+            upload_via_rest_gate_curl(
                 cid=cid,
                 filepath=file_path_3,
                 endpoint=gw_endpoint,

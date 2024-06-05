@@ -8,7 +8,6 @@ from helpers.file_helper import generate_file
 from helpers.rest_gate import (
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_via_passed_request_and_expect_error,
-    quote,
 )
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -55,10 +54,10 @@ class Test_rest_object(NeofsEnvTestBase):
         2. Put objects using gRPC (neofs-cli) with attributes [--attributes chapter1=peace,chapter2=war];
         3. Download object using HTTP gate (https://github.com/nspcc-dev/neofs-http-gw#downloading);
         4. Compare hashes between original and downloaded object;
-        5. [Negative] Try to the get object with specified attributes and `get` request: [get/$CID/chapter1/peace];
-        6. Download the object with specified attributes and `get_by_attribute` request: [get_by_attribute/$CID/chapter1/peace];
+        5. [Negative] Try to the get object with specified attributes and `by_id` request: [objects/$CID/by_id/chapter1/peace];
+        6. Download the object with specified attributes and `by_attribute` request: [objects/$CID/by_attribute/chapter1/peace];
         7. Compare hashes between original and downloaded object;
-        8. [Negative] Try to the get object via `get_by_attribute` request: [get_by_attribute/$CID/$OID];
+        8. [Negative] Try to the get object via `by_attribute` request: [objects/$CID/by_attribute/$OID];
 
 
         Expected result:
@@ -95,7 +94,7 @@ class Test_rest_object(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
                 attributes=f"{key_value1},{key_value2}",
             )
-        with allure.step("Get object and verify hashes [ get/$CID/$OID ]"):
+        with allure.step("Get object and verify hashes [ objects/$CID/by_id/$OID ]"):
             get_object_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,
@@ -105,9 +104,9 @@ class Test_rest_object(NeofsEnvTestBase):
                 nodes=self.neofs_env.storage_nodes,
                 endpoint=gw_attributes["endpoint"],
             )
-        with allure.step("[Negative] try to get object: [get/$CID/chapter1/peace]"):
+        with allure.step("[Negative] try to get object: [objects/$CID/by_id/chapter1/peace]"):
             attrs = {obj_key1: obj_value1, obj_key2: obj_value2}
-            request = f"/get/{cid}/{obj_key1}/{obj_value1}"
+            request = f"/objects/{cid}/by_id/{obj_key1}/{obj_value1}"
             expected_err_msg = "Failed to get object via REST gate:"
             try_to_get_object_via_passed_request_and_expect_error(
                 cid=cid,
@@ -118,20 +117,16 @@ class Test_rest_object(NeofsEnvTestBase):
                 endpoint=gw_attributes["endpoint"],
             )
 
-        with allure.step("Download the object with attribute [get_by_attribute/$CID/chapter1/peace]"):
-            attr_name = list(attrs.keys())[0]
-            attr_value = quote(str(attrs.get(attr_name)))
+        with allure.step("Download the object with attribute [objects/$CID/by_attribute/chapter1/peace]"):
             get_object_by_attr_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,
                 cid=cid,
                 attrs=attrs,
                 endpoint=gw_attributes["endpoint"],
-                request_path=f"/get/{cid}/{oid}",
-                request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
             )
-        with allure.step("[Negative] try to get object: get_by_attribute/$CID/$OID"):
-            request = f"/get_by_attribute/{cid}/{oid}"
+        with allure.step("[Negative] try to get object: objects/$CID/by_attribute/$OID"):
+            request = f"/objects/{cid}/by_attribute/{oid}"
             try_to_get_object_via_passed_request_and_expect_error(
                 cid=cid,
                 oid=oid,
@@ -140,17 +135,14 @@ class Test_rest_object(NeofsEnvTestBase):
                 endpoint=gw_attributes["endpoint"],
             )
 
-        with allure.step("[Negative] Try to get object with invalid attribute [get_by_attribute/$CID/chapter1/war]"):
-            attrs = {obj_key1: obj_value2}
-            attr_name = list(attrs.keys())[0]
-            attr_value = quote(str(attrs.get(attr_name)))
+        with allure.step(
+            "[Negative] Try to get object with invalid attribute [objects/$CID/by_attribute/chapter1/war]"
+        ):
             with pytest.raises(Exception, match=".*object not found.*"):
                 get_object_by_attr_and_verify_hashes(
                     oid=oid,
                     file_name=file_path,
                     cid=cid,
-                    attrs=attrs,
+                    attrs={obj_key1: obj_value2},
                     endpoint=gw_attributes["endpoint"],
-                    request_path=f"/get/{cid}/{oid}",
-                    request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
                 )

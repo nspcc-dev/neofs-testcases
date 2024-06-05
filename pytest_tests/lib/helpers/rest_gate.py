@@ -23,8 +23,8 @@ logger = logging.getLogger("NeoLogger")
 ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
-@allure.step("Get via HTTP Gate")
-def get_via_http_gate(
+@allure.step("Get via REST Gate")
+def get_via_rest_gate(
     cid: str,
     oid: str,
     endpoint: str,
@@ -33,11 +33,11 @@ def get_via_http_gate(
     download=False,
 ) -> Union[str, requests.Response]:
     """
-    This function gets given object from HTTP gate
+    This function gets given object from REST gate
     cid:          container id to get object from
     oid:          object ID
-    endpoint:     http gate endpoint
-    request_path: (optional) http request, if ommited - use default [{endpoint}/get/{cid}/{oid}]
+    endpoint:     REST gate endpoint
+    request_path: (optional) REST request, if ommited - use default [{endpoint}/objects/{cid}/by_id/{oid}]
     return_response: (optional) either return internal requests.Response object or not
     """
 
@@ -46,7 +46,7 @@ def get_via_http_gate(
     if download:
         download_attribute = "?download=true"
     if request_path is None:
-        request = f"{endpoint}/get/{cid}/{oid}{download_attribute}"
+        request = f"{endpoint}/objects/{cid}/by_id/{oid}{download_attribute}"
     else:
         request = f"{endpoint}{request_path}{download_attribute}"
 
@@ -54,7 +54,7 @@ def get_via_http_gate(
 
     if not resp.ok:
         raise Exception(
-            f"""Failed to get object via HTTP gate:
+            f"""Failed to get object via REST gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}"""
@@ -103,20 +103,20 @@ def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
     return os.path.join(os.getcwd(), ASSETS_DIR, prefix)
 
 
-@allure.step("Get via HTTP Gate by attribute")
-def get_via_http_gate_by_attribute(cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None):
+@allure.step("Get via REST Gate by attribute")
+def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None):
     """
-    This function gets given object from HTTP gate
+    This function gets given object from REST gate
     cid:          CID to get object from
     attribute:    attribute {name: attribute} value pair
-    endpoint:     http gate endpoint
-    request_path: (optional) http request path, if ommited - use default [{endpoint}/get_by_attribute/{Key}/{Value}]
+    endpoint:     REST gate endpoint
+    request_path: (optional) REST request path, if ommited - use default [{endpoint}/objects/{Key}/by_attribute/{Value}]
     """
     attr_name = list(attribute.keys())[0]
     attr_value = quote(str(attribute.get(attr_name)))
     # if `request_path` parameter ommited, use default
     if request_path is None:
-        request = f"{endpoint}/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}"
+        request = f"{endpoint}/objects/{cid}/by_attribute/{quote(str(attr_name))}/{attr_value}"
     else:
         request = f"{endpoint}{request_path}"
 
@@ -124,7 +124,7 @@ def get_via_http_gate_by_attribute(cid: str, attribute: dict, endpoint: str, req
 
     if not resp.ok:
         raise Exception(
-            f"""Failed to get object via HTTP gate:
+            f"""Failed to get object via REST gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}"""
@@ -139,8 +139,8 @@ def get_via_http_gate_by_attribute(cid: str, attribute: dict, endpoint: str, req
     return file_path
 
 
-@allure.step("Upload via HTTP Gate")
-def upload_via_http_gate(
+@allure.step("Upload via REST Gate")
+def upload_via_rest_gate(
     cid: str,
     path: str,
     endpoint: str,
@@ -150,10 +150,10 @@ def upload_via_http_gate(
     error_pattern: Optional[str] = None,
 ) -> str:
     """
-    This function upload given object through HTTP gate
+    This function upload given object through REST gate
     cid:      CID to get object from
     path:     File path to upload
-    endpoint: http gate endpoint
+    endpoint: REST gate endpoint
     headers:  Object header
     file_content_type: Special Multipart Content-Type header
     """
@@ -171,7 +171,7 @@ def upload_via_http_gate(
             assert match, f"Expected {resp.text} to match {error_pattern}"
             return ""
         raise Exception(
-            f"""Failed to get object via HTTP gate:
+            f"""Failed to get object via REST gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}"""
@@ -199,8 +199,8 @@ def is_object_large(filepath: str) -> bool:
         return False
 
 
-@allure.step("Upload via HTTP Gate using Curl")
-def upload_via_http_gate_curl(
+@allure.step("Upload via REST Gate using Curl")
+def upload_via_rest_gate_curl(
     cid: str,
     filepath: str,
     endpoint: str,
@@ -208,11 +208,11 @@ def upload_via_http_gate_curl(
     error_pattern: Optional[str] = None,
 ) -> str:
     """
-    This function upload given object through HTTP gate using curl utility.
+    This function upload given object through REST gate using curl utility.
     cid: CID to get object from
     filepath: File path to upload
     headers: Object header
-    endpoint: http gate endpoint
+    endpoint: REST gate endpoint
     error_pattern: [optional] expected error message from the command
     """
     request = f"{endpoint}/upload/{cid}"
@@ -248,18 +248,28 @@ def _attach_allure_step(request: str, status_code: int, req_type="GET"):
 @allure.step("Try to get object and expect error")
 def try_to_get_object_and_expect_error(cid: str, oid: str, error_pattern: str, endpoint: str) -> None:
     try:
-        get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint)
+        get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint)
         raise AssertionError(f"Expected error on getting object with cid: {cid}")
     except Exception as err:
         match = error_pattern.casefold() in str(err).casefold()
         assert match, f"Expected {err} to match {error_pattern}"
 
 
-@allure.step("Verify object can be get using HTTP header attribute")
-def get_object_by_attr_and_verify_hashes(oid: str, file_name: str, cid: str, attrs: dict, endpoint: str) -> None:
-    got_file_path_http = get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint)
-    got_file_path_http_attr = get_via_http_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint)
-    assert_hashes_are_equal(file_name, got_file_path_http, got_file_path_http_attr)
+@allure.step("Verify object can be get using REST header attribute")
+def get_object_by_attr_and_verify_hashes(
+    oid: str,
+    file_name: str,
+    cid: str,
+    attrs: dict,
+    endpoint: str,
+    request_path: Optional[str] = None,
+    request_path_attr: Optional[str] = None,
+) -> None:
+    got_file_path_rest = get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=request_path)
+    got_file_path_rest_attr = get_via_rest_gate_by_attribute(
+        cid=cid, attribute=attrs, endpoint=endpoint, request_path=request_path_attr
+    )
+    assert_hashes_are_equal(file_name, got_file_path_rest, got_file_path_rest_attr)
 
 
 def get_object_and_verify_hashes(
@@ -285,7 +295,7 @@ def get_object_and_verify_hashes(
     else:
         random_node = random.choice(nodes)
 
-    object_getter = object_getter or get_via_http_gate
+    object_getter = object_getter or get_via_rest_gate
 
     got_file_path = get_object(
         wallet=wallet,
@@ -294,16 +304,16 @@ def get_object_and_verify_hashes(
         shell=shell,
         endpoint=random_node.get_rpc_endpoint(),
     )
-    got_file_path_http = object_getter(cid=cid, oid=oid, endpoint=endpoint)
+    got_file_path_rest = object_getter(cid=cid, oid=oid, endpoint=endpoint)
 
-    assert_hashes_are_equal(file_name, got_file_path, got_file_path_http)
+    assert_hashes_are_equal(file_name, got_file_path, got_file_path_rest)
 
 
 def assert_hashes_are_equal(orig_file_name: str, got_file_1: str, got_file_2: str) -> None:
     msg = "Expected hashes are equal for files {f1} and {f2}"
-    got_file_hash_http = get_file_hash(got_file_1)
-    assert get_file_hash(got_file_2) == got_file_hash_http, msg.format(f1=got_file_2, f2=got_file_1)
-    assert get_file_hash(orig_file_name) == got_file_hash_http, msg.format(f1=orig_file_name, f2=got_file_1)
+    got_file_hash_rest = get_file_hash(got_file_1)
+    assert get_file_hash(got_file_2) == got_file_hash_rest, msg.format(f1=got_file_2, f2=got_file_1)
+    assert get_file_hash(orig_file_name) == got_file_hash_rest, msg.format(f1=orig_file_name, f2=got_file_1)
 
 
 def attr_into_header(attrs: dict) -> dict:
@@ -324,7 +334,7 @@ def attr_into_str_header(attrs: dict) -> list:
     return {f"X-Attribute-{k}": f"{v}" for k, v in attrs.items()}
 
 
-@allure.step("Try to get object via http (pass http_request and optional attributes) and expect error")
+@allure.step("Try to get object via REST gate (pass http_request and optional attributes) and expect error")
 def try_to_get_object_via_passed_request_and_expect_error(
     cid: str,
     oid: str,
@@ -335,10 +345,92 @@ def try_to_get_object_via_passed_request_and_expect_error(
 ) -> None:
     try:
         if attrs is None:
-            get_via_http_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=http_request_path)
+            get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=http_request_path)
         else:
-            get_via_http_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path)
+            get_via_rest_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path)
         raise AssertionError(f"Expected error on getting object with cid: {cid}")
     except Exception as err:
         match = error_pattern.casefold() in str(err).casefold()
         assert match, f"Expected {err} to match {error_pattern}"
+
+
+@allure.step("New Upload via REST Gate")
+def new_upload_via_rest_gate(
+    cid: str,
+    path: str,
+    endpoint: str,
+    headers: dict = None,
+    cookies: dict = None,
+    file_content_type: str = None,
+    error_pattern: Optional[str] = None,
+) -> str:
+    """
+    This function upload given object through REST gate
+    cid:      CID to get object from
+    path:     File path to upload
+    endpoint: REST gate endpoint
+    headers:  Object header
+    file_content_type: Content-Type header
+    """
+    request = f"{endpoint}/objects/{cid}"
+
+    with open(path, "rb") as file:
+        file_content = file.read()
+
+    if headers is None:
+        headers = {}
+
+    if file_content_type:
+        headers["Content-Type"] = file_content_type
+
+    resp = requests.post(request, data=file_content, headers=headers, cookies=cookies)
+
+    if not resp.ok:
+        if error_pattern:
+            match = error_pattern.casefold() in str(resp.text).casefold()
+            assert match, f"Expected {resp.text} to match {error_pattern}"
+            return ""
+        raise Exception(
+            f"""Failed to get object via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.json(), req_type="POST")
+
+    assert resp.json().get("object_id"), f"OID found in response {resp}"
+
+    return resp.json().get("object_id")
+
+
+def new_attr_into_header(attrs: dict) -> dict:
+    json_string = json.dumps(attrs)
+    return {"X-Attributes": json_string}
+
+
+@allure.step("Get epoch duration via REST Gate")
+def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
+    """
+    This function gets network info from REST gate and extracts "epochDuration" from the response
+    endpoint:     REST gate endpoint
+    """
+
+    request = f"{endpoint}/network-info"
+
+    resp = requests.get(request, stream=True)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get network info via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.status_code)
+
+    epoch_duration = resp.json().get("epochDuration")
+    return epoch_duration

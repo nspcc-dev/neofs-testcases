@@ -2,7 +2,7 @@ import random
 
 from neofs_testlib.env.env import StorageNode
 from neofs_testlib.shell import Shell
-from helpers.http_gate import assert_hashes_are_equal, get_via_http_gate
+from helpers.rest_gate import assert_hashes_are_equal, get_via_rest_gate
 from helpers.neofs_verbs import get_object
 from helpers.complex_object_actions import get_nodes_without_object
 
@@ -30,7 +30,7 @@ def get_object_and_verify_hashes(
     else:
         random_node = random.choice(nodes)
 
-    object_getter = object_getter or get_via_http_gate
+    object_getter = object_getter or get_via_rest_gate
 
     got_file_path = get_object(
         wallet=wallet,
