@@ -9,9 +9,9 @@ from helpers.common import ASSETS_DIR, TEST_FILES_DIR
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
-    get_simple_object_copies,
-    get_object_chunks,
     get_link_object,
+    get_object_chunks,
+    get_simple_object_copies,
 )
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file, get_file_content, get_file_hash
@@ -21,19 +21,19 @@ from helpers.grpc_responses import (
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
     INVALID_SEARCH_QUERY,
+    LINK_OBJECT_FOUND,
     OBJECT_HEADER_LENGTH_LIMIT,
     OUT_OF_RANGE,
-    LINK_OBJECT_FOUND,
 )
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
+    delete_object,
     get_object_from_random_node,
     get_range,
     get_range_hash,
     head_object,
     put_object_to_random_node,
     search_object,
-    delete_object,
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
@@ -99,7 +99,7 @@ def generate_ranges(
 
     for offset, length in file_ranges:
         range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
-        range_start = random.randint(offset, offset + length)
+        range_start = random.randint(offset, offset + length - 1)
 
         file_ranges_to_test.append((range_start, min(range_length, storage_object.size - range_start)))
 
@@ -591,6 +591,56 @@ class TestObjectApi(NeofsEnvTestBase):
                         get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start)
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
+
+    @allure.title("Validate native object API get_range for a complex object")
+    @pytest.mark.grpc_api
+    def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
+        """
+        Validate get_range for object by native gRPC API for a complex object
+        """
+        four_chunked_size = complex_object_size
+        file_path = generate_file(four_chunked_size)
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            container,
+            shell=self.shell,
+            neofs_env=self.neofs_env,
+        )
+
+        file_ranges_to_test = []
+
+        parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+
+        # range is inside one child
+        file_ranges_to_test.append((0, parts[0][1] - 1))
+        # range matches child
+        file_ranges_to_test.append((parts[0][1], parts[1][1]))
+        # range requires more than one child and includes the first child
+        file_ranges_to_test.append((0, parts[0][1] + parts[1][1] - 1))
+        # range requires more than one child and includes the last child
+        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - 1))
+        # range requires more than one child and does not include the first and the last child
+        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - parts[-1][1] - 1))
+        # range requires more than two children and includes the first and the last child
+        file_ranges_to_test.append((0, complex_object_size - 1))
+
+        logging.info(f"Ranges used in test {file_ranges_to_test}")
+
+        for range_start, range_len in file_ranges_to_test:
+            range_cut = f"{range_start}:{range_len}"
+            with allure.step(f"Get range ({range_cut})"):
+                _, range_content = get_range(
+                    default_wallet.path,
+                    container,
+                    oid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    range_cut=range_cut,
+                )
+                assert (
+                    get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start) == range_content
+                ), f"Expected range content to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range negative cases")
     @pytest.mark.grpc_api
