@@ -30,7 +30,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def neofs_env(request):
+def neofs_env(temp_directory, artifacts_directory, request):
     if request.config.getoption("--load-env"):
         neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
     else:
@@ -51,18 +51,14 @@ def neofs_env(request):
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
 
-    logs_path = os.path.join(os.getcwd(), ASSETS_DIR, "logs")
-    os.makedirs(logs_path, exist_ok=True)
+    if request.session.testsfailed:
+        env_files_path = os.path.join(os.getcwd(), neofs_env._env_dir)
+        env_files_archived = shutil.make_archive(f"neofs_env_{neofs_env._id}", "zip", env_files_path)
+        allure.attach.file(env_files_archived, name="neofs env files", extension="zip")
 
-    shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
-    shutil.copyfile(neofs_env.rest_gw.stderr, f"{logs_path}/rest_gw_log.txt")
-    for idx, ir in enumerate(neofs_env.inner_ring_nodes):
-        shutil.copyfile(ir.stderr, f"{logs_path}/ir_{idx}_log.txt")
-    for idx, sn in enumerate(neofs_env.storage_nodes):
-        shutil.copyfile(sn.stderr, f"{logs_path}/sn_{idx}_log.txt")
-
-    logs_zip_file_path = shutil.make_archive("neofs_logs", "zip", logs_path)
-    allure.attach.file(logs_zip_file_path, name="neofs logs", extension="zip")
+        temp_files_path = os.path.join(os.getcwd(), ASSETS_DIR)
+        temp_files_archived = shutil.make_archive("temp_files", "zip", temp_files_path)
+        allure.attach.file(temp_files_archived, name="tests temp files", extension="zip")
 
 
 @pytest.fixture(scope="session")
@@ -100,20 +96,21 @@ def complex_object_size(max_object_size: int) -> int:
 
 @pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
-def temp_directory() -> str:
+def temp_directory(request) -> str:
     with allure.step("Prepare tmp directory"):
         full_path = os.path.join(os.getcwd(), ASSETS_DIR)
         create_dir(full_path)
 
     yield full_path
 
-    with allure.step("Remove tmp directory"):
-        remove_dir(full_path)
+    if not request.config.getoption("--persist-env"):
+        with allure.step("Remove tmp directory"):
+            remove_dir(full_path)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 @allure.title("Prepare test files directories")
-def artifacts_directory(temp_directory: str) -> None:
+def artifacts_directory(request, temp_directory: str) -> None:
     dirs = [TEST_FILES_DIR, TEST_OBJECTS_DIR]
     for dir_name in dirs:
         with allure.step(f"Prepare {dir_name} directory"):
@@ -122,9 +119,10 @@ def artifacts_directory(temp_directory: str) -> None:
 
     yield
 
-    for dir_name in dirs:
-        with allure.step(f"Remove {dir_name} directory"):
-            remove_dir(full_path)
+    if not request.config.getoption("--persist-env"):
+        for dir_name in dirs:
+            with allure.step(f"Remove {dir_name} directory"):
+                remove_dir(full_path)
 
 
 @pytest.fixture(scope="module")
