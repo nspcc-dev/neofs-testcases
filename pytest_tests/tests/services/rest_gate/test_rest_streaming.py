@@ -2,12 +2,12 @@ import logging
 
 import allure
 import pytest
+import requests
 from helpers.container import create_container
 from helpers.file_helper import generate_file
-from helpers.rest_gate import upload_via_rest_gate
 from helpers.wellknown_acl import PUBLIC_ACL
-from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from rest_gw.rest_utils import get_object_and_verify_hashes
 
 logger = logging.getLogger("NeoLogger")
 
@@ -54,7 +54,22 @@ class Test_rest_streaming(NeofsEnvTestBase):
             file_path = generate_file(object_size)
 
         with allure.step("Put objects and Get object and verify hashes [ get/$CID/$OID ]"):
-            oid = upload_via_rest_gate(cid=cid, path=file_path, endpoint=gw_endpoint)
+            # https://docs.python-requests.org/en/latest/user/advanced/#streaming-uploads
+            with open(file_path, "rb") as file:
+                resp = requests.post(f"{gw_endpoint}/objects/{cid}", data=file)
+
+            if not resp.ok:
+                raise Exception(
+                    f"""Failed to stream object via REST gate:
+                        request: {resp.request.path_url},
+                        response: {resp.text},
+                        status code: {resp.status_code} {resp.reason}"""
+                )
+
+            assert resp.json().get("object_id"), f"OID found in response {resp}"
+
+            oid = resp.json().get("object_id")
+
             get_object_and_verify_hashes(
                 oid=oid,
                 file_name=file_path,
