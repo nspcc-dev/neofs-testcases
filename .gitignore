@@ -38,3 +38,5 @@ neofs-node
 neofs-rest-gw
 neofs-s3-authmate
 neofs-s3-gw
+neofs_env_*.zip
+temp_files.zip
