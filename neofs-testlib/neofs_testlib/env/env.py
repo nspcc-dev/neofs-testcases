@@ -126,7 +126,11 @@ class NeoFSEnv:
         with allure.step("Wait until all IR nodes are READY"):
             for ir_node in self.inner_ring_nodes:
                 logger.info(f"Wait until IR: {ir_node} is READY")
-                ir_node._wait_until_ready()
+                try:
+                    ir_node._wait_until_ready()
+                except Exception as e:
+                    allure.attach.file(ir_node.stderr, name="ir node logs", extension="txt")
+                    raise e
 
     @allure.step("Deploy storage node")
     def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None):
