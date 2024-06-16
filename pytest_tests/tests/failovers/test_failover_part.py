@@ -28,7 +28,6 @@ def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoF
 
 
 @pytest.mark.failover_part
-@pytest.mark.skip(reason="Processes restarts currently affects other tests")
 class TestFailoverNodePart(NeofsEnvTestBase):
     @allure.title("Enable resync metabase, delete metadata and get object")
     @pytest.mark.delete_metadata
