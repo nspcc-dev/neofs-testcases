@@ -169,10 +169,7 @@ def not_owner_wallet(temp_directory) -> NodeWallet:
 @allure.title("Enable metabase resync on start")
 def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
     for node in neofs_env.storage_nodes:
-        try:
-            node.set_metabase_resync(True)
-        except Exception:
-            node.set_metabase_resync(True)
+        node.set_metabase_resync(True)
     yield
     for node in neofs_env.storage_nodes:
         node.set_metabase_resync(False)

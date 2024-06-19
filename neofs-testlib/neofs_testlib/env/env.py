@@ -617,7 +617,13 @@ class StorageNode:
 
     @allure.step("Stop storage node")
     def stop(self):
+        logger.info(f"Stopping Storage Node:{self}")
         self.process.terminate()
+
+    @allure.step("Kill storage node")
+    def kill(self):
+        logger.info(f"Killing Storage Node:{self}")
+        self.process.kill()
 
     @allure.step("Delete storage node data")
     def delete_data(self):

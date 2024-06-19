@@ -275,17 +275,15 @@ def get_nodes_with_object(
 
     nodes_list = []
     for node in nodes:
-        wallet = node.wallet.path
-        wallet_config = neofs_env.generate_cli_config(node.wallet)
         try:
             res = head_object(
-                wallet,
+                node.wallet.path,
                 cid,
                 oid,
                 shell=shell,
                 endpoint=node.endpoint,
                 is_direct=True,
-                wallet_config=wallet_config,
+                wallet_config=node.cli_config,
             )
             if res is not None:
                 logger.info(f"Found object {oid} on node {node}")
