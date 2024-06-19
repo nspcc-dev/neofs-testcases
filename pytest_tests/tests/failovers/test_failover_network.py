@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import sys
 from random import choices
 from time import sleep
 
@@ -21,10 +22,10 @@ blocked_nodes: list[StorageNode] = []
 
 @pytest.mark.failover
 @pytest.mark.failover_network
-@pytest.mark.skip(reason="These tests require multiple hosts/inner rings to run")
+@pytest.mark.skipif(sys.platform == "darwin", reason="not supported on macos runners")
 class TestFailoverNetwork(NeofsEnvTestBase):
-    @pytest.fixture(autouse=True)
     @allure.step("Restore network")
+    @pytest.fixture
     def restore_network(self):
         yield
 
@@ -36,8 +37,15 @@ class TestFailoverNetwork(NeofsEnvTestBase):
         if not_empty:
             wait_all_storage_nodes_returned(self.neofs_env)
 
+        for node in self.neofs_env.storage_nodes:
+            node.kill()
+        for node in self.neofs_env.storage_nodes:
+            node.start(fresh=False)
+
+        wait_all_storage_nodes_returned(self.neofs_env)
+
     @allure.title("Block Storage node traffic")
-    def test_block_storage_node_traffic(self, default_wallet, simple_object_size):
+    def test_block_storage_node_traffic(self, default_wallet, simple_object_size, restore_network):
         """
         Block storage nodes traffic using iptables and wait for replication for objects.
         """
@@ -56,7 +64,9 @@ class TestFailoverNetwork(NeofsEnvTestBase):
         )
         oid = put_object_to_random_node(wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
 
-        nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
+        nodes = wait_object_replication(
+            cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
+        )
 
         logger.info(f"Nodes are {nodes}")
         nodes_to_block = nodes
@@ -79,11 +89,12 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                     2,
                     shell=self.shell,
                     nodes=list(set(self.neofs_env.storage_nodes) - set(excluded_nodes)),
+                    neofs_env=self.neofs_env,
                 )
                 assert node not in new_nodes
 
             with allure.step("Check object data is not corrupted"):
-                got_file_path = get_object(wallet, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell)
+                got_file_path = get_object(wallet.path, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         for node in nodes_to_block:
@@ -93,14 +104,16 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                 sleep(wakeup_node_timeout)
 
         with allure.step("Check object data is not corrupted"):
-            new_nodes = wait_object_replication(cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes)
+            new_nodes = wait_object_replication(
+                cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
+            )
 
-            got_file_path = get_object(wallet, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @pytest.mark.sanity
     @allure.title("RPC reconnection test")
-    def test_rpc_reconnection(self, default_wallet):
+    def test_rpc_reconnection(self, default_wallet, restore_network):
         """
         When RPC connection fails (and it can), storage node reconnects to some other node and continues to operate.
         """
@@ -118,7 +131,6 @@ class TestFailoverNetwork(NeofsEnvTestBase):
             "inner_ring_candidate_fee",
             "maximum_object_size",
             "withdrawal_fee",
-            "systemdns",
             "homomorphic_hashing_disabled",
             "maintenance_mode_allowed",
         ]
@@ -130,7 +142,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
             morph_chain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
 
             with allure.step(
-                f"Disconnecting storage node {storage_node.name} " f"from {morph_chain_addr} {dport_repeat} times"
+                f"Disconnecting storage node {storage_node} " f"from {morph_chain_addr} {dport_repeat} times"
             ):
                 for repeat in range(dport_repeat):
                     with allure.step(f"Disconnect number {repeat}"):
@@ -156,8 +168,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                             # Delay between shutdown attempts, emulates a real disconnection
                             sleep(1)
                     logger.info(
-                        f"Disconnected storage node {storage_node.name} "
-                        f"from {morph_chain_addr} {dport_repeat} times"
+                        f"Disconnected storage node {storage_node} " f"from {morph_chain_addr} {dport_repeat} times"
                     )
 
             for node in self.neofs_env.storage_nodes:
