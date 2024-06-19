@@ -26,12 +26,12 @@ binaries:
 
     neofs_s3_gw:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.30.0'
+        version: 'v0.30.1'
         file: 'neofs-s3-gw-linux-amd64'
 
     neofs_s3_authmate:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.30.0'
+        version: 'v0.30.1'
         file: 'neofs-s3-authmate-linux-amd64'
 
     neofs_rest_gw:
