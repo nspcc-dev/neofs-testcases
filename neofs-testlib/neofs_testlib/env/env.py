@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import random
+import shutil
 import socket
 import stat
 import string
@@ -865,3 +866,84 @@ class REST_GW:
             stderr=stderr_fp,
             env=rest_gw_env,
         )
+
+
+class XK6:
+    def __init__(self, neofs_env: NeoFSEnv):
+        self.neofs_env = neofs_env
+        self.xk6_dir = os.getenv("XK6_DIR", "../xk6-neofs")
+        self.wallet = NodeWallet(
+            path=NeoFSEnv._generate_temp_file(prefix="xk6_wallet"),
+            address="",
+            password=self.neofs_env.default_password,
+        )
+        self.neofs_env.generate_storage_wallet(self.wallet, label="xk6")
+        self.config = neofs_env.generate_cli_config(self.wallet)
+
+    @allure.step("Run K6 Loader")
+    def run(
+        self,
+        endpoints: list[str],
+        out="grpc.json",
+        duration=30,
+        write_obj_size=8192,
+        readers=2,
+        writers=2,
+        registry_file="registry.bolt",
+        scenario="grpc.js",
+    ):
+        if not os.path.exists(self.xk6_dir):
+            raise RuntimeError("Invalid xk6 directory")
+        command = (
+            f"{self.xk6_dir}/xk6-neofs "
+            f"run "
+            f"-e DURATION={duration} "
+            f"-e WRITE_OBJ_SIZE={write_obj_size} "
+            f"-e READERS={readers} "
+            f"-e WRITERS={writers} "
+            f"-e REGISTRY_FILE={registry_file} "
+            f"-e GRPC_ENDPOINTS={endpoints[0]} "
+            f"-e PREGEN_JSON={out} "
+            f"{self.xk6_dir}/scenarios/{scenario} "
+        )
+        result = self.neofs_env.shell.exec(command)
+        assert not result.return_code, "RC after k6 load is not zero"
+        assert "neofs_obj_get_fails" not in result.stdout, "some GET requests failed, see logs"
+        assert "neofs_obj_put_fails" not in result.stdout, "some PUT requests failed, see logs"
+
+    @allure.step("Prepare containers and objects for k6 load run")
+    def prepare(
+        self,
+        endpoints: list[str],
+        size=1024,
+        containers=1,
+        out="grpc.json",
+        preload_obj=250,
+        policy="REP 2 IN X CBF 1 SELECT 2 FROM * AS X",
+        workers=2,
+    ):
+        if not os.path.exists(self.xk6_dir):
+            raise RuntimeError("Invalid xk6 directory")
+
+        command = (
+            f"{self.xk6_dir}/scenarios/preset/preset_grpc.py "
+            f"--size {size}  "
+            f"--containers {containers} "
+            f"--out {out} "
+            f"--endpoint {endpoints[0]} "
+            f"--preload_obj {preload_obj} "
+            f'--policy "{policy}" '
+            f"--wallet {self.wallet.path} "
+            f"--config {self.config} "
+            f"--workers {workers} "
+        )
+        result = self.neofs_env.shell.exec(command)
+        assert not result.return_code, "RC after k6 prepare script is not zero"
+        assert (
+            f"Total Containers has been created: {containers}" in result.stdout
+        ), "Prepare script didn't create requested containers"
+        assert (
+            f"Total Objects has been created: {preload_obj}" in result.stdout
+        ), "Prepare script didn't create requested objects"
+
+        shutil.copy(out, os.path.join(self.xk6_dir, "scenarios"))

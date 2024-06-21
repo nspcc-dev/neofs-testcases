@@ -28,3 +28,4 @@ storage:
   s3: {{ default_password }}
   http: {{ default_password }}
   rest: {{ default_password }}
+  xk6: {{ default_password }}
