@@ -36,13 +36,6 @@ def neofs_env(temp_directory, artifacts_directory, request):
     else:
         neofs_env = NeoFSEnv.simple()
 
-    neofs_env.neofs_adm().morph.set_config(
-        rpc_endpoint=f"http://{neofs_env.morph_rpc}",
-        alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
-    )
-    time.sleep(30)
-
     yield neofs_env
 
     if request.config.getoption("--persist-env"):

@@ -360,6 +360,12 @@ class NeoFSEnv:
                 3: ["UN-LOCODE:FI HEL", "Price:44"],
             },
         )
+        neofs_env.neofs_adm().morph.set_config(
+            rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+            post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
+        )
+        time.sleep(30)
         neofs_env.deploy_s3_gw()
         neofs_env.deploy_rest_gw()
         neofs_env.log_env_details_to_file()
