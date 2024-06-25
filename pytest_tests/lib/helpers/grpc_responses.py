@@ -34,6 +34,7 @@ NOT_CONTAINER_OWNER = "provided account differs with the container owner"
 NOT_SESSION_CONTAINER_OWNER = "session issuer differs with the container owner"
 TIMED_OUT = "timed out after \\d+ seconds"
 CONTAINER_DELETION_TIMED_OUT = "container deletion: await timeout expired"
+CONTAINER_NOT_FOUND = "code = 3072.*message = container not found"
 
 EACL_TIMED_OUT = "eACL setting: await timeout expired"
 EACL_TABLE_IS_NOT_SET = "extended ACL table is not set for this container"
