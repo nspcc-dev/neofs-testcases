@@ -28,3 +28,21 @@ class NeofsCliControl(CliCommand):
             "control healthcheck",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def object_status(self, address: str, endpoint: str, object: str, wallet: str) -> CommandResult:
+        """
+        Get object status.
+
+        Args:
+            address: Address of wallet account
+            endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
+            object: Object address
+            wallet: Path to the wallet
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "control object status",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
