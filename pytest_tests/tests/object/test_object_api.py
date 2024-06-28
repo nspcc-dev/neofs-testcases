@@ -22,12 +22,15 @@ from helpers.grpc_responses import (
     INVALID_RANGE_ZERO_LENGTH,
     INVALID_SEARCH_QUERY,
     LINK_OBJECT_FOUND,
+    OBJECT_ALREADY_REMOVED,
     OBJECT_HEADER_LENGTH_LIMIT,
+    OBJECT_NOT_FOUND,
     OUT_OF_RANGE,
 )
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
     delete_object,
+    get_object,
     get_object_from_random_node,
     get_range,
     get_range_hash,
@@ -37,6 +40,7 @@ from helpers.neofs_verbs import (
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
+from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -785,6 +789,86 @@ class TestObjectApi(NeofsEnvTestBase):
             for part in parts:
                 with pytest.raises(Exception, match=LINK_OBJECT_FOUND):
                     delete_object(
+                        default_wallet.path,
+                        container,
+                        part[0],
+                        self.shell,
+                        self.neofs_env.sn_rpc,
+                    )
+
+    @allure.title("Big object parts are removed after deletion")
+    def test_object_parts_are_unavailable_after_deletion(
+        self, default_wallet: NodeWallet, container: str, complex_object_size: int
+    ):
+        with allure.step("Upload big object"):
+            file_path = generate_file(complex_object_size)
+            oid = put_object_to_random_node(
+                default_wallet.path,
+                file_path,
+                container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+        with allure.step("Get object parts"):
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+
+        with allure.step("Delete big object"):
+            delete_object(
+                default_wallet.path,
+                container,
+                oid,
+                self.shell,
+                self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("Check big object is deleted"):
+            with pytest.raises(Exception, match=OBJECT_ALREADY_REMOVED):
+                get_object_from_random_node(default_wallet.path, container, oid, self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Try to get object parts"):
+            for part in parts:
+                with pytest.raises(Exception, match=OBJECT_ALREADY_REMOVED):
+                    get_object(
+                        default_wallet.path,
+                        container,
+                        part[0],
+                        self.shell,
+                        self.neofs_env.sn_rpc,
+                    )
+
+    @allure.title("Big object parts are removed after expiration")
+    def test_object_parts_are_unavailable_after_expiration(
+        self, default_wallet: NodeWallet, container: str, complex_object_size: int
+    ):
+        with allure.step("Get current epoch"):
+            epoch = self.get_epoch()
+
+        with allure.step("Upload big object"):
+            file_path = generate_file(complex_object_size)
+            oid = put_object_to_random_node(
+                default_wallet.path,
+                file_path,
+                container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+                expire_at=epoch + 1,
+            )
+        with allure.step("Get object parts"):
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+
+        with allure.step("Tick two epochs"):
+            self.tick_epochs_and_wait(2)
+
+        wait_for_gc_pass_on_storage_nodes()
+
+        with allure.step("Check big object is deleted"):
+            with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
+                get_object_from_random_node(default_wallet.path, container, oid, self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Try to get object parts"):
+            for part in parts:
+                with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
+                    get_object(
                         default_wallet.path,
                         container,
                         part[0],
