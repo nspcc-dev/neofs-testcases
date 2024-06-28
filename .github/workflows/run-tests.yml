@@ -169,6 +169,20 @@ jobs:
           sudo chmod a+x neofs-s3-gw
         working-directory: neofs-testcases
 
+      - name: Checkout xk6-neofs repository
+        uses: actions/checkout@v4
+        with:
+          repository: nspcc-dev/xk6-neofs
+          ref: master
+          path: xk6-neofs
+
+      - name: Build xk6-neofs
+        timeout-minutes: 5
+        run: |
+          make install_xk6
+          make build
+        working-directory: xk6-neofs
+
       - name: Prepare venv
         id: prepare_venv
         timeout-minutes: 30
