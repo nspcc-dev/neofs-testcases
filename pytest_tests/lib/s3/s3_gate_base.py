@@ -54,7 +54,7 @@ class TestNeofsS3GateBase(NeofsEnvTestBase):
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
-    def s3_client(
+    def s3_client_fixture(
         self,
         default_wallet: NodeWallet,
         client_shell: Shell,
