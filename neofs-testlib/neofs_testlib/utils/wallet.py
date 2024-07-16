@@ -3,6 +3,7 @@ import logging
 
 from neo3.wallet import account as neo3_account
 from neo3.wallet import wallet as neo3_wallet
+from neofs_testlib.cli.neogo import NeoGo
 
 logger = logging.getLogger("neofs.testlib.utils")
 
@@ -69,5 +70,11 @@ def get_last_public_key_from_wallet(
             wallet_passwords = [wallet_password] * len(wallet_json["accounts"])
         wallet = neo3_wallet.Wallet.from_json(wallet_json, passwords=wallet_passwords)
     public_key = wallet.accounts[-1].public_key
+    logger.info(f"got public_key: {public_key}")
+    return public_key
+
+
+def get_last_public_key_from_wallet_with_neogo(neo_go: NeoGo, wallet_path: str) -> str:
+    public_key = neo_go.wallet.dump_keys(wallet=wallet_path).stdout.split(":")[-1].strip()
     logger.info(f"got public_key: {public_key}")
     return public_key

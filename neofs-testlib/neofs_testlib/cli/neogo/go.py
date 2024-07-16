@@ -6,6 +6,7 @@ from neofs_testlib.cli.neogo.db import NeoGoDb
 from neofs_testlib.cli.neogo.nep17 import NeoGoNep17
 from neofs_testlib.cli.neogo.node import NeoGoNode
 from neofs_testlib.cli.neogo.query import NeoGoQuery
+from neofs_testlib.cli.neogo.util import NeoGoUtil
 from neofs_testlib.cli.neogo.version import NeoGoVersion
 from neofs_testlib.cli.neogo.wallet import NeoGoWallet
 from neofs_testlib.shell import Shell
@@ -20,6 +21,7 @@ class NeoGo:
     query: Optional[NeoGoQuery] = None
     version: Optional[NeoGoVersion] = None
     wallet: Optional[NeoGoWallet] = None
+    util: Optional[NeoGoUtil] = None
 
     def __init__(
         self,
@@ -35,3 +37,4 @@ class NeoGo:
         self.query = NeoGoQuery(shell, neo_go_exec_path, config_path=config_path)
         self.version = NeoGoVersion(shell, neo_go_exec_path, config_path=config_path)
         self.wallet = NeoGoWallet(shell, neo_go_exec_path, config_path=config_path)
+        self.util = NeoGoUtil(shell, neo_go_exec_path, config_path=config_path)

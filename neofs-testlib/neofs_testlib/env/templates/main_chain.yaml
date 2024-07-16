@@ -1,0 +1,59 @@
+ProtocolConfiguration:
+  Magic: 56753
+  MaxTraceableBlocks: 200000
+  TimePerBlock: 1s
+  MemPoolSize: 50000
+  StandbyCommittee:
+    - {{ public_key }}
+  ValidatorsCount: 1
+  VerifyTransactions: true
+  P2PSigExtensions: false
+
+ApplicationConfiguration:
+  SkipBlockVerification: false
+  DBConfiguration:
+    Type: "boltdb"
+    BoltDBOptions:
+      FilePath: "{{ main_chain_boltdb }}"
+  P2P:
+    Addresses:
+      - "{{ p2p_address }}"
+    DialTimeout: 3s
+    ProtoTickInterval: 2s
+    PingInterval: 30s
+    PingTimeout: 90s
+    MaxPeers: 10
+    AttemptConnPeers: 5
+    MinPeers: 0
+  Relay: true
+  RPC:
+    Addresses:
+      - "{{ rpc_address }}"
+    Enabled: true
+    SessionEnabled: true
+    EnableCORSWorkaround: false
+    MaxGasInvoke: 1500000000
+  Prometheus:
+    Enabled: false
+  Pprof:
+    Enabled: false
+  Consensus:
+    Enabled: true
+    UnlockWallet:
+      Path: "{{ wallet.path }}"
+      Password: "{{ wallet.password }}"
+  Oracle:
+    Enabled: true
+    NeoFS:
+      Nodes:
+        {%- for sn_address in sn_addresses %}
+        - {{ sn_address }}
+        {%- endfor %}
+    UnlockWallet:
+        Path: "{{ wallet.path }}"
+        Password: "{{ wallet.password }}"
+  P2PNotary:
+    Enabled: false
+    UnlockWallet:
+        Path: "{{ wallet.path }}"
+        Password: "{{ wallet.password }}"
