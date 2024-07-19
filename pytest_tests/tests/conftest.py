@@ -193,3 +193,10 @@ def datadir(tmpdir, request):
         shutil.copytree(test_dir, str(tmpdir), dirs_exist_ok=True)
 
     return tmpdir
+
+
+@pytest.fixture
+def neofs_env_with_mainchain():
+    neofs_env = NeoFSEnv.simple(with_main_chain=True)
+    yield neofs_env
+    neofs_env.kill()

@@ -1,38 +1,9 @@
 import time
 
 import allure
-import pytest
-from neofs_testlib.cli import NeofsCli, NeoGo
+from helpers.wallet_helpers import get_neofs_balance, get_wallet_balance
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils import wallet as wallet_utils
-
-
-@pytest.fixture
-def neofs_env_with_mainchain():
-    neofs_env = NeoFSEnv.simple(with_main_chain=True)
-    yield neofs_env
-    neofs_env.kill()
-
-
-def get_wallet_balance(neofs_env: NeoFSEnv, neo_go: NeoGo, wallet: NodeWallet, wallet_config: str) -> float:
-    result = neo_go.nep17.balance(
-        wallet.address, "GAS", f"http://{neofs_env.main_chain.rpc_address}", wallet_config=wallet_config
-    )
-    balance = 0.0
-    for line in result.stdout.splitlines():
-        if "Amount" in line:
-            balance = float(line.split("Amount :")[-1].strip())
-    return balance
-
-
-def get_neofs_balance(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWallet) -> float:
-    return float(
-        neofs_cli.accounting.balance(
-            wallet=wallet.path,
-            rpc_endpoint=neofs_env.sn_rpc,
-            address=wallet_utils.get_last_address_from_wallet(wallet.path, wallet.password),
-        ).stdout.strip()
-    )
 
 
 class TestDepositWithdrawal:

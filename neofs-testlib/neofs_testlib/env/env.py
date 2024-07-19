@@ -36,6 +36,8 @@ class NodeWallet:
     path: str
     address: str
     password: str
+    cli_config: str = None
+    neo_go_config: str = None
 
 
 class WalletType(Enum):
