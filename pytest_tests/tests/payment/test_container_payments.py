@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 
 import allure
@@ -69,6 +70,12 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
 
 
 class TestContainerPayments:
+    @pytest.fixture
+    def _cleanup_files(self):
+        yield
+        for f in self.files:
+            os.remove(f)
+
     @pytest.mark.parametrize(
         "replicas_number, objects_count_multiplier",
         [
@@ -83,6 +90,7 @@ class TestContainerPayments:
         wallet_with_money: NodeWallet,
         replicas_number: int,
         objects_count_multiplier: int,
+        _cleanup_files,
     ):
         neofs_env = neofs_env_with_mainchain
         GAS = 10**12
@@ -130,9 +138,9 @@ class TestContainerPayments:
                 }
 
             created_objects = []
-            files = [generate_file(MAX_OBJECT_SIZE) for _ in range(objects_count)]
+            self.files = [generate_file(MAX_OBJECT_SIZE) for _ in range(objects_count)]
 
-            for f in files:
+            for f in self.files:
                 created_objects.append(
                     put_object(
                         wallet_with_money.path,
