@@ -196,7 +196,33 @@ def datadir(tmpdir, request):
 
 
 @pytest.fixture
-def neofs_env_with_mainchain():
-    neofs_env = NeoFSEnv.simple(with_main_chain=True)
+def neofs_env_with_mainchain(request):
+    if request.config.getoption("--load-env"):
+        neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
+    else:
+        neofs_env = NeoFSEnv.simple(with_main_chain=True)
+
     yield neofs_env
-    neofs_env.kill()
+
+    if request.config.getoption("--persist-env"):
+        neofs_env.persist()
+    else:
+        if not request.config.getoption("--load-env"):
+            neofs_env.kill()
+
+    if request.session.testsfailed:
+        logs_path = os.path.join(os.getcwd(), ASSETS_DIR, "neofs_env_with_mainchain_logs")
+        os.makedirs(logs_path, exist_ok=True)
+
+        shutil.copyfile(neofs_env.main_chain.stderr, f"{logs_path}/main_chain_log.txt")
+        shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
+        shutil.copyfile(neofs_env.rest_gw.stderr, f"{logs_path}/rest_gw_log.txt")
+        for idx, ir in enumerate(neofs_env.inner_ring_nodes):
+            shutil.copyfile(ir.stderr, f"{logs_path}/ir_{idx}_log.txt")
+        for idx, sn in enumerate(neofs_env.storage_nodes):
+            shutil.copyfile(sn.stderr, f"{logs_path}/sn_{idx}_log.txt")
+
+        logs_zip_file_path = shutil.make_archive("neofs_env_with_mainchain_logs", "zip", logs_path)
+        allure.attach.file(logs_zip_file_path, name="neofs env with main chain files", extension="zip")
+    logger.info(f"Cleaning up dir {neofs_env}")
+    shutil.rmtree(os.path.join(os.getcwd(), neofs_env._env_dir), ignore_errors=True)
