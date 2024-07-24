@@ -226,3 +226,11 @@ def neofs_env_with_mainchain(request):
         allure.attach.file(logs_zip_file_path, name="neofs env with main chain files", extension="zip")
     logger.info(f"Cleaning up dir {neofs_env}")
     shutil.rmtree(os.path.join(os.getcwd(), neofs_env._env_dir), ignore_errors=True)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def cleanup_temp_files():
+    yield
+    for f in os.listdir(os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR)):
+        if f.startswith("temp_file"):
+            os.remove(os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f))

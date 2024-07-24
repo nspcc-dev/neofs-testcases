@@ -19,7 +19,7 @@ def generate_file(size: int) -> str:
     Returns:
         The path to the generated file.
     """
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
+    file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"temp_file_{uuid.uuid4()}")
     with open(file_path, "wb") as file:
         file.write(os.urandom(size))
     logger.info(f"File with size {size} bytes has been generated: {file_path}")
@@ -49,7 +49,7 @@ def generate_file_with_content(
         mode = "wb"
 
     if not file_path:
-        file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
+        file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"temp_file_{uuid.uuid4()}")
     else:
         if not os.path.exists(os.path.dirname(file_path)):
             os.makedirs(os.path.dirname(file_path))
