@@ -41,7 +41,7 @@ binaries:
 
     neo_go:
         repo: 'nspcc-dev/neo-go'
-        version: 'v0.106.0'
+        version: 'v0.106.2'
         file: 'neo-go-linux-amd64'
 
     neofs_contract:
