@@ -39,10 +39,10 @@ WALLET_PASS = os.getenv("WALLET_PASS", "")
 
 
 # Paths to CLI executables on machine that runs tests
-NEOGO_EXECUTABLE = os.getenv("NEOGO_EXECUTABLE", "neo-go")
-NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "neofs-cli")
-NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "neofs-s3-authmate")
-NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC", "neofs-adm")
+NEOGO_EXECUTABLE = os.getenv("NEOGO_EXECUTABLE", "./neo-go")
+NEOFS_CLI_EXEC = os.getenv("NEOFS_CLI_EXEC", "./neofs-cli")
+NEOFS_AUTHMATE_EXEC = os.getenv("NEOFS_AUTHMATE_EXEC", "./neofs-s3-authmate")
+NEOFS_ADM_EXEC = os.getenv("NEOFS_ADM_EXEC", "./neofs-adm")
 
 NEOFS_ADM_CONFIG_PATH = os.getenv("NEOFS_ADM_CONFIG_PATH", os.path.join(DEVENV_PATH, "neofs-adm.yml"))
 
