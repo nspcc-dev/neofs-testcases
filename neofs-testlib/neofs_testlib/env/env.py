@@ -215,11 +215,11 @@ class NeoFSEnv:
             amount=9000,
             force=True,
             wallet_config=self.main_chain.neo_go_config,
+            await_=True,
         )
         ir_alphabet_pubkey_from_neogo = wallet_utils.get_last_public_key_from_wallet_with_neogo(
             self.neo_go(), self.inner_ring_nodes[-1].alphabet_wallet.path
         )
-        time.sleep(10)
         result = neo_go.contract.deploy(
             input_file=f"{self.neofs_contract_dir}/neofs/neofs_contract.nef",
             manifest=f"{self.neofs_contract_dir}/neofs/config.json",

@@ -130,6 +130,7 @@ class NeoGoNep17(CliCommand):
         gas: Optional[float] = None,
         amount: float = 0,
         timeout: int = 10,
+        await_: bool = False,
     ) -> CommandResult:
         """Transfers specified NEP-17 token amount.
 
@@ -161,9 +162,12 @@ class NeoGoNep17(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
+            param: param_value
+            for param, param_value in locals().items()
+            if param not in ["self", "wallet_password", "await_"]
         }
         exec_param["timeout"] = f"{timeout}s"
+        exec_param["await"] = await_
 
         if wallet_password is not None:
             return self._execute_with_password(

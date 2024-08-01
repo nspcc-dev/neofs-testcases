@@ -41,8 +41,8 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
             amount=1000,
             force=True,
             wallet_config=neofs_env.main_chain.neo_go_config,
+            await_=True,
         )
-        time.sleep(10)
         assert (
             get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) == 1000.0
         ), "Money transfer from alphabet to test wallet didn't succeed"
@@ -56,8 +56,8 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
             amount=100,
             force=True,
             wallet_config=wallet.neo_go_config,
+            await_=True,
         )
-        time.sleep(10)
         assert (
             get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900
         ), "Wallet balance is not correct after deposit"

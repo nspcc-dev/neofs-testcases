@@ -31,8 +31,8 @@ class TestDepositWithdrawal:
                 amount=1000,
                 force=True,
                 wallet_config=neofs_env.main_chain.neo_go_config,
+                await_=True,
             )
-            time.sleep(10)
             assert (
                 get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) == 1000.0
             ), "Money transfer from alphabet to test wallet didn't succeed"
@@ -46,8 +46,8 @@ class TestDepositWithdrawal:
                 amount=100,
                 force=True,
                 wallet_config=neo_go_wallet_config,
+                await_=True,
             )
-            time.sleep(10)
             assert (
                 get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) <= 900
             ), "Wallet balance is not correct after deposit"
