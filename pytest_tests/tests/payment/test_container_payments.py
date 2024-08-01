@@ -22,7 +22,7 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
 
     with allure.step("Create wallet for deposit"):
         wallet = NodeWallet(
-            path=NeoFSEnv._generate_temp_file(prefix="deposit_withdrawal_test_wallet"),
+            path=neofs_env_with_mainchain._generate_temp_file(prefix="deposit_withdrawal_test_wallet"),
             address="",
             password=neofs_env.default_password,
         )
