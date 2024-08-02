@@ -2,8 +2,8 @@ import logging
 from typing import Optional
 
 import allure
-from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from helpers.test_control import wait_for_success
+from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
 logger = logging.getLogger("NeoLogger")
 
@@ -31,6 +31,15 @@ def wait_for_epochs_align(neofs_env: NeoFSEnv, epoch_number: Optional[int] = Non
         epochs.append(current_epoch)
     unique_epochs = list(set(epochs))
     assert len(unique_epochs) == 1, f"unaligned epochs found,  {epochs}, count of unique epochs {len(unique_epochs)}"
+
+
+@allure.step("Wait until new epoch arrives")
+@wait_for_success(60, 5)
+def wait_until_new_epoch(neofs_env: NeoFSEnv, current_epoch: int) -> int:
+    for node in neofs_env.storage_nodes:
+        next_epoch = get_epoch(neofs_env, node)
+        assert next_epoch == current_epoch + 1, "Next epoch didn't arrive during timeout"
+    return next_epoch
 
 
 @allure.step("Get Epoch")

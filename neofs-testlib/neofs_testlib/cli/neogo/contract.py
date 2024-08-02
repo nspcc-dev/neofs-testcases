@@ -39,10 +39,10 @@ class NeoGoContract(CliCommand):
 
     def deploy(
         self,
-        address: str,
         input_file: str,
         manifest: str,
         rpc_endpoint: str,
+        address: Optional[str] = None,
         sysgas: Optional[float] = None,
         wallet: Optional[str] = None,
         wallet_config: Optional[str] = None,
@@ -51,6 +51,7 @@ class NeoGoContract(CliCommand):
         out: Optional[str] = None,
         force: bool = False,
         timeout: int = 10,
+        post_data: Optional[str] = None,
     ) -> CommandResult:
         """Deploy a smart contract (.nef with description)
 
@@ -76,8 +77,11 @@ class NeoGoContract(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
+            param: param_value
+            for param, param_value in locals().items()
+            if param not in ["self", "wallet_password", "input_file"]
         }
+        exec_param["in"] = input_file
         exec_param["timeout"] = f"{timeout}s"
 
         if wallet_password is not None:
@@ -323,9 +327,13 @@ class NeoGoContract(CliCommand):
         Returns:
             Command's result.
         """
+        exec_param = {
+            param: param_value for param, param_value in locals().items() if param not in ["self", "input_file"]
+        }
+        exec_param["in"] = input_file
         return self._execute(
             "contract calc-hash",
-            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+            **exec_param,
         )
 
     def add_group(

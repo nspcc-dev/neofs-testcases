@@ -602,7 +602,7 @@ class TestEACLContainer(NeofsEnvTestBase):
         eacl_full_placement_container_with_object: tuple[str, str, str],
         not_owner_wallet: str,
     ):
-        not_owner_wallet_config_path = NeoFSEnv._generate_temp_file(extension="yml")
+        not_owner_wallet_config_path = self.neofs_env._generate_temp_file(extension="yml")
         NeoFSEnv.generate_config_file(
             config_template="cli_cfg.yaml",
             config_path=not_owner_wallet_config_path,

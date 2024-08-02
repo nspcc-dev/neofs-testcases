@@ -39,7 +39,7 @@ class Wallets:
 
 @pytest.fixture(scope="module")
 def wallets(default_wallet, temp_directory, neofs_env: NeoFSEnv) -> Wallets:
-    default_wallet_config_path = NeoFSEnv._generate_temp_file(extension="yml")
+    default_wallet_config_path = neofs_env._generate_temp_file(extension="yml")
     NeoFSEnv.generate_config_file(
         config_template="cli_cfg.yaml",
         config_path=default_wallet_config_path,
@@ -47,13 +47,13 @@ def wallets(default_wallet, temp_directory, neofs_env: NeoFSEnv) -> Wallets:
     )
 
     other_wallet1 = create_wallet()
-    other_wallet1_config_path = NeoFSEnv._generate_temp_file(extension="yml")
+    other_wallet1_config_path = neofs_env._generate_temp_file(extension="yml")
     NeoFSEnv.generate_config_file(
         config_template="cli_cfg.yaml", config_path=other_wallet1_config_path, wallet=other_wallet1
     )
 
     other_wallet2 = create_wallet()
-    other_wallet2_config_path = NeoFSEnv._generate_temp_file(extension="yml")
+    other_wallet2_config_path = neofs_env._generate_temp_file(extension="yml")
     NeoFSEnv.generate_config_file(
         config_template="cli_cfg.yaml", config_path=other_wallet2_config_path, wallet=other_wallet2
     )

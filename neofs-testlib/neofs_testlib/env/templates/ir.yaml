@@ -8,9 +8,22 @@ wallet:
   address: {{ wallet.address }} # Account address in the wallet; ignore to use default address
   password: {{ wallet.password }}                            # Account password in the wallet
 
-without_mainnet: true # Run application in single chain environment without mainchain
+# Toggling the sidechain-only mode
+without_mainnet: {{ without_mainnet }}
+
+# Neo main chain RPC settings
+mainnet:
+  endpoints: # List of websocket RPC endpoints in mainchain; ignore if mainchain is disabled
+    - ws://{{ main_chain_rpc }}/ws
+  dial_timeout: 5s # Timeout for RPC client connection to mainchain; ignore if mainchain is disabled
+  reconnections_number: 5  # number of reconnection attempts
+  reconnections_delay: 5s  # time delay b/w reconnection attempts
 
 morph:
+  validators:  # List of hex-encoded 33-byte public keys of sidechain validators to vote for at application startup
+    {%- for public_key in public_keys %}
+    - {{ public_key }} # Hex-encoded public key
+    {%- endfor %}
   dial_timeout: 5s # Timeout for RPC client connection to sidechain
   reconnections_number: 5  # number of reconnection attempts
   reconnections_delay: 5s  # time delay b/w reconnection attempts
@@ -50,11 +63,6 @@ fschain_autodeploy: true
 
 nns:
   system_email: usr@domain.io
-
-mainnet:
-  dial_timeout: 5s # Timeout for RPC client connection to mainchain; ignore if mainchain is disabled
-  reconnections_number: 5  # number of reconnection attempts
-  reconnections_delay: 5s  # time delay b/w reconnection attempts
 
 control:
   authorized_keys:  # List of hex-encoded 33-byte public keys that have rights to use the control service
@@ -127,3 +135,6 @@ netmap_cleaner:
 settlement:
   basic_income_rate: 0 # Optional: override basic income rate value from network config; applied only in debug mode
   audit_fee: 0         # Optional: override audit fee value from network config; applied only in debug mode
+
+contracts:
+  neofs: {{ neofs_contract_hash }}      # Address of NeoFS contract in mainchain; ignore if mainchain is disabled

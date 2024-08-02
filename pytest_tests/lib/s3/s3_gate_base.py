@@ -50,11 +50,11 @@ def _run_with_passwd(cmd: str, password: str) -> str:
 
 
 class TestNeofsS3GateBase(NeofsEnvTestBase):
-    s3_client: Any = None
+    s3_client: Any = None  # noqa
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
-    def s3_client_fixture(
+    def s3_client(  # noqa
         self,
         default_wallet: NodeWallet,
         client_shell: Shell,
