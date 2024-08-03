@@ -237,7 +237,7 @@ jobs:
         env:
           ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
         run: |
-          source venv.pytest/bin/activate && pytest --alluredir=${GITHUB_WORKSPACE}/allure-results pytest_tests/tests
+          source venv.pytest/bin/activate && pytest --log-cli-level error --alluredir=${GITHUB_WORKSPACE}/allure-results pytest_tests/tests
         working-directory: neofs-testcases
 
 ################################################################
