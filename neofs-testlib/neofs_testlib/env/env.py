@@ -976,7 +976,15 @@ class S3_GW:
             peers=peers,
             tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
             listen_domain=self.neofs_env.domain,
+            s3_gw_version=self._get_version(),
         )
+
+    def _get_version(self) -> str:
+        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_s3_gw_path, "--version")
+        for line in raw_version_output.splitlines():
+            if "Version:" in line:
+                return line.split("Version:")[1].strip()
+        return ""
 
     def _launch_process(self):
         self.stdout = self.neofs_env._generate_temp_file(prefix="s3gw_stdout")
