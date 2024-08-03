@@ -348,3 +348,28 @@ class NeofsAdmMorph(CliCommand):
             "morph deploy",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
+
+    def mint_balance(
+        self,
+        alphabet_wallets: str,
+        amount: str,
+        deposit_tx: str,
+        rpc_endpoint: str,
+        wallet_address: str,
+    ) -> CommandResult:
+        """Mint new NEOFS tokens in the morph network
+
+        Args:
+            alphabet_wallets: Path to alphabet wallets dir
+            amount: Amount of NEOFS token to issue (fixed12, GAS * 10000)
+            deposit_tx: Deposit transaction hash
+            rpc_endpoint: N3 RPC node endpoint
+            wallet_address: Address of recipient
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "morph mint-balance",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
