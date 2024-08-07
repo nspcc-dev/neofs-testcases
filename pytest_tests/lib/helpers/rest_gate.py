@@ -31,6 +31,7 @@ def get_via_rest_gate(
     request_path: Optional[str] = None,
     return_response=False,
     download=False,
+    skip_options_verify=False,
 ) -> Union[str, requests.Response]:
     """
     This function gets given object from REST gate
@@ -50,6 +51,8 @@ def get_via_rest_gate(
     else:
         request = f"{endpoint}{request_path}{download_attribute}"
 
+    if not skip_options_verify:
+        verify_options_request(request)
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -104,7 +107,9 @@ def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
 
 
 @allure.step("Get via REST Gate by attribute")
-def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None):
+def get_via_rest_gate_by_attribute(
+    cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None, skip_options_verify=False
+):
     """
     This function gets given object from REST gate
     cid:          CID to get object from
@@ -120,6 +125,8 @@ def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, req
     else:
         request = f"{endpoint}{request_path}"
 
+    if not skip_options_verify:
+        verify_options_request(request)
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -163,6 +170,7 @@ def upload_via_rest_gate(
     else:
         files = {"upload_file": (path, open(path, "rb"), file_content_type)}
     body = {"filename": path}
+    verify_options_request(request)
     resp = requests.post(request, files=files, data=body, headers=headers, cookies=cookies)
 
     if not resp.ok:
@@ -345,9 +353,13 @@ def try_to_get_object_via_passed_request_and_expect_error(
 ) -> None:
     try:
         if attrs is None:
-            get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=http_request_path)
+            get_via_rest_gate(
+                cid=cid, oid=oid, endpoint=endpoint, request_path=http_request_path, skip_options_verify=True
+            )
         else:
-            get_via_rest_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path)
+            get_via_rest_gate_by_attribute(
+                cid=cid, attribute=attrs, endpoint=endpoint, request_path=http_request_path, skip_options_verify=True
+            )
         raise AssertionError(f"Expected error on getting object with cid: {cid}")
     except Exception as err:
         match = error_pattern.casefold() in str(err).casefold()
@@ -383,6 +395,7 @@ def new_upload_via_rest_gate(
     if file_content_type:
         headers["Content-Type"] = file_content_type
 
+    verify_options_request(request)
     resp = requests.post(request, data=file_content, headers=headers, cookies=cookies)
 
     if not resp.ok:
@@ -419,6 +432,7 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
 
     request = f"{endpoint}/network-info"
 
+    verify_options_request(request)
     resp = requests.get(request, stream=True)
 
     if not resp.ok:
@@ -434,3 +448,10 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
 
     epoch_duration = resp.json().get("epochDuration")
     return epoch_duration
+
+
+def verify_options_request(request):
+    options_resp = requests.options(request)
+    assert options_resp.status_code == 200, "Invalid status code for OPTIONS request"
+    for cors_header in ("Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin"):
+        assert cors_header in options_resp.headers, f"Not CORS header {cors_header} in OPTIONS response"
