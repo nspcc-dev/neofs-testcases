@@ -43,7 +43,7 @@ def start_storage_nodes(nodes: list[StorageNode]) -> None:
     """
     start_threads = []
     for node in nodes:
-        start_threads.append(threading.Thread(target=node._launch_process))
+        start_threads.append(threading.Thread(target=node.start, kwargs={"fresh": False}))
     for t in start_threads:
         t.start()
     for t in start_threads:

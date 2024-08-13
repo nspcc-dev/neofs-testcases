@@ -823,6 +823,7 @@ class StorageNode:
     def stop(self):
         logger.info(f"Stopping Storage Node:{self}")
         self.process.terminate()
+        self.process.wait()
 
     @allure.step("Kill storage node")
     def kill(self):
