@@ -66,4 +66,4 @@ def get_wif_from_private_key(priv_key: bytes) -> str:
 def load_wallet(path: str, passwd: str = "") -> neo3_wallet.Wallet:
     with open(path, "r") as wallet_file:
         wlt_data = wallet_file.read()
-    return neo3_wallet.Wallet.from_json(json.loads(wlt_data), password=passwd)
+    return neo3_wallet.Wallet.from_json(json.loads(wlt_data), passwords=[passwd])
