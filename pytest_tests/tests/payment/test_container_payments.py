@@ -9,6 +9,7 @@ from helpers.complex_object_actions import get_nodes_with_object
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
+from helpers.node_management import restart_storage_nodes
 from helpers.wallet_helpers import get_neofs_balance, get_wallet_balance
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils import wallet as wallet_utils
@@ -106,6 +107,9 @@ class TestContainerPayments:
                 alphabet_wallets=neofs_env.alphabet_wallets_dir,
                 post_data=f"MaxObjectSize={MAX_OBJECT_SIZE} ContainerFee={CONTAINER_FEE} BasicIncomeRate={STORAGE_FEE} EpochDuration={EPOCH_DURATION}",
             )
+
+            # Temporary workaround for a problem with propagading MaxObjectSize between storage nodes
+            restart_storage_nodes(neofs_env.storage_nodes)
 
             objects_count = int(GB / MAX_OBJECT_SIZE) * objects_count_multiplier
 
