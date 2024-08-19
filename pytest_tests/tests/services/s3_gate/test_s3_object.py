@@ -637,7 +637,7 @@ class TestS3GateObject(TestNeofsS3GateBase):
                 self.s3_client,
                 bucket,
                 file_path_6,
-                GrantFullControl=f"id={self.other_public_key}",
+                GrantFullControl=f"id={self.other_wallet.address}",
             )
             obj_acl = s3_gate_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
             verify_acls(obj_acl, ACLType.PRIVATE)
