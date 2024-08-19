@@ -2,6 +2,7 @@ import json
 
 import allure
 import pytest
+from helpers.complex_object_actions import wait_object_replication
 from helpers.container import (
     create_container,
     delete_container,
@@ -10,11 +11,39 @@ from helpers.container import (
     wait_for_container_creation,
     wait_for_container_deletion,
 )
+from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
+from helpers.neofs_verbs import put_object_to_random_node
+from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import placement_policy_from_container
-from helpers.wellknown_acl import PRIVATE_ACL_F
+from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
-from neofs_testlib.env.env import NodeWallet
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
+from tenacity import retry, stop_after_attempt, wait_fixed
+
+stopped_nodes: list[StorageNode] = []
+
+
+@pytest.fixture
+@allure.step("Return all stopped hosts")
+def after_run_return_all_stopped_storage_nodes(neofs_env: NeoFSEnv):
+    yield
+    for node in list(stopped_nodes):
+        with allure.step(f"Start {node}"):
+            node.start(fresh=False)
+        stopped_nodes.remove(node)
+
+    wait_all_storage_nodes_returned(neofs_env)
+
+
+def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
+    response = neofs_env.neofs_cli(node.cli_config).control.object_status(
+        address=node.wallet.address,
+        endpoint=node.control_grpc_endpoint,
+        object=f"{cid}/{oid}",
+        wallet=node.wallet.path,
+    )
+    assert "GC MARKED" in response.stdout, "Unexected output from control object status command"
 
 
 @pytest.mark.container
@@ -141,3 +170,48 @@ class TestContainer(NeofsEnvTestBase):
                 delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             self.tick_epochs_and_wait(1)
             wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+    @allure.title("Container deletion while some storage nodes down")
+    def test_container_deletion_while_sn_down(
+        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes
+    ):
+        with allure.step("Create container"):
+            wallet = default_wallet
+            placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
+            source_file_path = generate_file(simple_object_size)
+            cid = create_container(
+                wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                rule=placement_rule,
+                basic_acl=PUBLIC_ACL,
+            )
+        with allure.step("Put object"):
+            oid = put_object_to_random_node(
+                wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+            nodes_with_object = wait_object_replication(
+                cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
+            )
+
+        with allure.step("Down storage node that stores the object"):
+            node_to_stop = nodes_with_object[0]
+            alive_node_with_object = nodes_with_object[1]
+
+            node_to_stop.stop()
+            stopped_nodes.append(node_to_stop)
+
+        with allure.step("Delete container"):
+            delete_container(
+                wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
+            )
+
+        with allure.step("Alive node should return GC MARKED for the created object from the deleted container"):
+            object_should_be_gc_marked(self.neofs_env, alive_node_with_object, cid, oid)
+
+        with allure.step("Start storage node"):
+            node_to_stop.start(fresh=False)
+            wait_all_storage_nodes_returned(self.neofs_env)
+
+        with allure.step("Previously stopped node should return GC MARKED for the created object"):
+            object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
