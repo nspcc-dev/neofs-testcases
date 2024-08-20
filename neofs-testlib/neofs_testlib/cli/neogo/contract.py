@@ -79,10 +79,11 @@ class NeoGoContract(CliCommand):
         exec_param = {
             param: param_value
             for param, param_value in locals().items()
-            if param not in ["self", "wallet_password", "input_file"]
+            if param not in ["self", "wallet_password", "input_file", "post_data"]
         }
-        exec_param["in"] = input_file
         exec_param["timeout"] = f"{timeout}s"
+        exec_param["in"] = input_file
+        exec_param["post_data"] = post_data
 
         if wallet_password is not None:
             return self._execute_with_password(
