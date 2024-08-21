@@ -1,27 +1,27 @@
 binaries:
     neofs_cli:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-cli-linux-amd64'
 
     neofs_adm:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-adm-linux-amd64'
 
     neofs_ir:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-ir-linux-amd64'
 
     neofs_lens:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-lens-linux-amd64'
 
     neofs_node:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-node-linux-amd64'
 
     neofs_s3_gw:
