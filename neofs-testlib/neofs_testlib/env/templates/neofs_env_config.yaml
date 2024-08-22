@@ -1,47 +1,47 @@
 binaries:
     neofs_cli:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-cli-linux-amd64'
 
     neofs_adm:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-adm-linux-amd64'
 
     neofs_ir:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-ir-linux-amd64'
 
     neofs_lens:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-lens-linux-amd64'
 
     neofs_node:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.42.1'
+        version: 'v0.43.0'
         file: 'neofs-node-linux-amd64'
 
     neofs_s3_gw:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.30.1'
+        version: 'v0.31.0'
         file: 'neofs-s3-gw-linux-amd64'
 
     neofs_s3_authmate:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.30.1'
+        version: 'v0.31.0'
         file: 'neofs-s3-authmate-linux-amd64'
 
     neofs_rest_gw:
         repo: 'nspcc-dev/neofs-rest-gw'
-        version: 'v0.10.0'
+        version: 'v0.10.1'
         file: 'neofs-rest-gw-linux-amd64'
 
     neo_go:
         repo: 'nspcc-dev/neo-go'
-        version: 'v0.106.2'
+        version: 'v0.106.3'
         file: 'neo-go-linux-amd64'
 
     neofs_contract:
