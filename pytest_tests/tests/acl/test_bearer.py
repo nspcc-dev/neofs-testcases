@@ -10,6 +10,8 @@ from helpers.acl import (
     EACLAccess,
     EACLOperation,
     EACLRole,
+    EACLRoleExtended,
+    EACLRoleExtendedType,
     EACLRule,
     create_bearer_token,
     create_eacl,
@@ -237,15 +239,21 @@ class TestACLBearer(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             )
 
+    @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
-    def test_bearer_token_expiration(self, wallets, eacl_container_with_objects, expiration_flag):
+    def test_bearer_token_expiration(self, wallets, eacl_container_with_objects, expiration_flag, address):
         self.tick_epochs_and_wait(1)
         current_epoch = neofs_epoch.get_epoch(self.neofs_env)
         cid, objects_oids, file_path = eacl_container_with_objects
         user_wallet = wallets.get_wallet()
 
         with allure.step("Create and sign bearer token via cli"):
-            eacl = [EACLRule(access=EACLAccess.ALLOW, role=EACLRole.USER, operation=op) for op in EACLOperation]
+            user_role = EACLRole.USER
+            if address:
+                user_role = EACLRoleExtended(
+                    address, address.get_value(user_wallet.wallet_path, self.neofs_env.default_password)
+                )
+            eacl = [EACLRule(access=EACLAccess.ALLOW, role=user_role, operation=op) for op in EACLOperation]
 
             path_to_bearer = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
 
