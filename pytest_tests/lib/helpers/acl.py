@@ -15,6 +15,7 @@ from helpers.data_formatters import get_wallet_public_key
 from helpers.grpc_responses import EACL_NOT_FOUND, EACL_TABLE_IS_NOT_SET
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
+from neofs_testlib.utils.wallet import get_last_address_from_wallet
 
 logger = logging.getLogger("NeoLogger")
 EACL_LIFETIME = 100500
@@ -40,6 +41,26 @@ class EACLRole(Enum):
     OTHERS = "others"
     USER = "user"
     SYSTEM = "system"
+
+
+class EACLRoleExtendedType(Enum):
+    PUBKEY = "pubkey"
+    ADDRESS = "address"
+
+    def get_value(self, wallet_path: str, wallet_password: str) -> str:
+        match self:
+            case EACLRoleExtendedType.PUBKEY:
+                return get_wallet_public_key(wallet_path, wallet_password)
+            case EACLRoleExtendedType.ADDRESS:
+                return get_last_address_from_wallet(wallet_path, wallet_password)
+            case _:
+                raise RuntimeError(f"Invalid EACLRoleExtendedType: {self}")
+
+
+@dataclass
+class EACLRoleExtended:
+    role_type: EACLRoleExtendedType
+    value: str
 
 
 class EACLHeaderType(Enum):
@@ -102,15 +123,10 @@ class EACLFilters:
 
 
 @dataclass
-class EACLPubKey:
-    keys: Optional[List[str]] = None
-
-
-@dataclass
 class EACLRule:
     operation: Optional[EACLOperation] = None
     access: Optional[EACLAccess] = None
-    role: Optional[Union[EACLRole, str]] = None
+    role: Optional[Union[EACLRole, EACLRoleExtended]] = None
     filters: Optional[EACLFilters] = None
     password: str = ""
 
@@ -123,11 +139,7 @@ class EACLRule:
         }
 
     def __str__(self):
-        role = (
-            self.role.value
-            if isinstance(self.role, EACLRole)
-            else f"pubkey:{get_wallet_public_key(self.role, self.password)}"
-        )
+        role = self.role.value if isinstance(self.role, EACLRole) else f"{self.role.role_type.value}:{self.role.value}"
         return f'{self.access.value} {self.operation.value} {self.filters or ""} {role}'
 
 
@@ -185,7 +197,7 @@ def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell, wallet_confi
 def form_bearertoken_file(
     wallet_path: str,
     cid: str,
-    eacl_rule_list: List[Union[EACLRule, EACLPubKey]],
+    eacl_rule_list: List[Union[EACLRule, EACLRoleExtended]],
     shell: Shell,
     endpoint: str,
     sign: Optional[bool] = True,
@@ -222,8 +234,8 @@ def form_bearertoken_file(
 
         if isinstance(rule.role, EACLRole):
             op_data["targets"] = [{"role": rule.role.value.upper()}]
-        elif isinstance(rule.role, EACLPubKey):
-            op_data["targets"] = [{"keys": rule.role.keys}]
+        elif isinstance(rule.role, EACLRoleExtended):
+            op_data["targets"] = [{"keys": rule.role.value}]
 
         eacl_result["body"]["eaclTable"]["records"].append(op_data)
 

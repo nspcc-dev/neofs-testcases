@@ -8,6 +8,8 @@ from helpers.acl import (
     EACLMatchType,
     EACLOperation,
     EACLRole,
+    EACLRoleExtended,
+    EACLRoleExtendedType,
     EACLRule,
     create_eacl,
     form_bearertoken_file,
@@ -786,7 +788,10 @@ class TestEACLFilters(NeofsEnvTestBase):
             with pytest.raises(Exception, match=INVALID_RULES):
                 create_eacl(cid, eacl_deny, shell=self.shell)
 
-    def test_extended_acl_numeric_values_attr_str_filter_numeric(self, wallets, eacl_container, simple_object_size):
+    @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    def test_extended_acl_numeric_values_attr_str_filter_numeric(
+        self, wallets, eacl_container, simple_object_size, address
+    ):
         operator = EACLMatchType.NUM_GT
         user_wallet = wallets.get_wallet()
 
@@ -816,10 +821,15 @@ class TestEACLFilters(NeofsEnvTestBase):
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
         with allure.step(f"Deny GET for all objects {operator.value} 0"):
+            users_role = EACLRole.USER
+            if address:
+                users_role = EACLRoleExtended(
+                    address, address.get_value(user_wallet.wallet_path, self.neofs_env.default_password)
+                )
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
@@ -858,7 +868,8 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, complex_object_size):
+    @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, complex_object_size, address):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
@@ -867,10 +878,15 @@ class TestEACLFilters(NeofsEnvTestBase):
         epoch = self.get_epoch()
 
         with allure.step("Set EACLs for GET/PUT to restrict operations with expiration attribute"):
+            users_role = EACLRole.USER
+            if address:
+                users_role = EACLRoleExtended(
+                    address, address.get_value(user_wallet.wallet_path, self.neofs_env.default_password)
+                )
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
@@ -885,7 +901,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 ),
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
@@ -900,7 +916,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 ),
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
@@ -973,16 +989,23 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, complex_object_size):
+    @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, complex_object_size, address):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
+
+        users_role = EACLRole.USER
+        if address:
+            users_role = EACLRoleExtended(
+                address, address.get_value(user_wallet.wallet_path, self.neofs_env.default_password)
+            )
 
         with allure.step("Set EACLs for PUT to restrict small objects"):
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
@@ -1065,18 +1088,25 @@ class TestEACLFilters(NeofsEnvTestBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
-    def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, complex_object_size):
+    @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, complex_object_size, address):
         user_wallet = wallets.get_wallet()
 
         epoch = self.get_epoch()
 
         cid = eacl_container
 
+        users_role = EACLRole.USER
+        if address:
+            users_role = EACLRoleExtended(
+                address, address.get_value(user_wallet.wallet_path, self.neofs_env.default_password)
+            )
+
         with allure.step("Set EACLs for GET to restrict old objects"):
             eacl_deny = [
                 EACLRule(
                     access=EACLAccess.DENY,
-                    role=EACLRole.USER,
+                    role=users_role,
                     filters=EACLFilters(
                         [
                             EACLFilter(
