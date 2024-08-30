@@ -43,6 +43,10 @@ EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = "table validation: it is prohibited to
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
 INVALID_RULES = ".*unable to parse provided rules.*"
 
+INVALID_IAT = ".*put container rpc error: status: code = 1024 message = token should not be issued yet.*"
+INVALID_EXP = ".*put container rpc error: status: code = 4097 message = expired session token.*"
+INVALID_NBF = ".*put container rpc error: status: code = 1024 message = token is not valid yet.*"
+
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """

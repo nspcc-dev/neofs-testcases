@@ -14,11 +14,20 @@ from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     CONTAINER_DELETION_TIMED_OUT,
     EACL_TIMED_OUT,
+    INVALID_EXP,
+    INVALID_IAT,
+    INVALID_NBF,
     NOT_SESSION_CONTAINER_OWNER,
     SESSION_NOT_ISSUED_BY_OWNER,
 )
 from helpers.object_access import can_put_object
-from helpers.session_token import ContainerVerb, get_container_signed_token
+from helpers.session_token import (
+    ContainerVerb,
+    Lifetime,
+    generate_container_session_token,
+    get_container_signed_token,
+    sign_session_token,
+)
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
@@ -77,6 +86,78 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
 
         assert cid not in list_containers(user_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
         assert cid in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+    def test_static_session_token_container_create_invalid_lifetime(
+        self,
+        owner_wallet: NodeWallet,
+        user_wallet: NodeWallet,
+        temp_directory: str,
+    ):
+        epoch = self.get_epoch()
+
+        with allure.step(
+            'IAt is bigger than current epoch should lead to a 1024 error with "token should not be issued yet" message'
+        ):
+            session_token_file = generate_container_session_token(
+                owner_wallet=owner_wallet,
+                session_wallet=user_wallet,
+                verb=ContainerVerb.CREATE,
+                tokens_dir=temp_directory,
+                lifetime=Lifetime(exp=epoch + 2, nbf=epoch, iat=epoch + 2),
+            )
+            signed_token = sign_session_token(self.shell, session_token_file, owner_wallet)
+
+            with allure.step("Try to create container with invalid IAt"):
+                with pytest.raises(Exception, match=INVALID_IAT):
+                    create_container(
+                        user_wallet.path,
+                        session_token=signed_token,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        wait_for_creation=False,
+                    )
+
+        with allure.step(
+            'NBf is bigger than current epoch should lead to a 1024 error with "token "token is not valid yet" message'
+        ):
+            session_token_file = generate_container_session_token(
+                owner_wallet=owner_wallet,
+                session_wallet=user_wallet,
+                verb=ContainerVerb.CREATE,
+                tokens_dir=temp_directory,
+                lifetime=Lifetime(exp=epoch + 2, nbf=epoch + 2, iat=epoch - 1),
+            )
+            signed_token = sign_session_token(self.shell, session_token_file, owner_wallet)
+
+            with allure.step("Try to create container with invalid NBf"):
+                with pytest.raises(Exception, match=INVALID_NBF):
+                    create_container(
+                        user_wallet.path,
+                        session_token=signed_token,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        wait_for_creation=False,
+                    )
+
+        with allure.step("Exp is smaller than current epoch should lead to a 4097 error"):
+            session_token_file = generate_container_session_token(
+                owner_wallet=owner_wallet,
+                session_wallet=user_wallet,
+                verb=ContainerVerb.CREATE,
+                tokens_dir=temp_directory,
+                lifetime=Lifetime(exp=epoch - 1, nbf=epoch + 1, iat=epoch - 1),
+            )
+            signed_token = sign_session_token(self.shell, session_token_file, owner_wallet)
+
+            with allure.step("Try to create container with invalid Exp"):
+                with pytest.raises(Exception, match=INVALID_EXP):
+                    create_container(
+                        user_wallet.path,
+                        session_token=signed_token,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        wait_for_creation=False,
+                    )
 
     def test_static_session_token_container_create_with_other_verb(
         self,
