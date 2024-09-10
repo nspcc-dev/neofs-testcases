@@ -51,3 +51,11 @@ tree:
 
 listen_domains:
   - {{ listen_domain }}
+
+pprof:
+  enabled: true
+  address: {{ pprof_address }}
+
+prometheus:
+  enabled: true
+  address: {{ prometheus_address }}

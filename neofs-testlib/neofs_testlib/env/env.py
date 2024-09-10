@@ -542,6 +542,8 @@ class MainChain:
         self.main_chain_boltdb = self.neofs_env._generate_temp_file(extension="db", prefix="main_chain_bolt_db")
         self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -555,6 +557,8 @@ class MainChain:
             - BoltDB path: {self.main_chain_boltdb}
             - RPC address: {self.rpc_address}
             - P2P address: {self.p2p_address}
+            - Pprof address: {self.pprof_address}
+            - Prometheus address: {self.prometheus_address}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
@@ -588,6 +592,8 @@ class MainChain:
             p2p_address=self.p2p_address,
             rpc_address=self.rpc_address,
             sn_addresses=[sn.endpoint for sn in self.neofs_env.storage_nodes],
+            pprof_address=self.pprof_address,
+            prometheus_address=self.prometheus_address,
         )
         logger.info(f"Generating CLI config at: {self.cli_config}")
         NeoFSEnv.generate_config_file(
@@ -634,6 +640,8 @@ class InnerRing:
         self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.grpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(prefix="ir_state_file")
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
@@ -647,6 +655,8 @@ class InnerRing:
             - RPC address: {self.rpc_address}
             - P2P address: {self.p2p_address}
             - GRPC address: {self.grpc_address}
+            - Pprof address: {self.pprof_address}
+            - Prometheus address: {self.prometheus_address}
             - IR State file path: {self.ir_state_file}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
@@ -713,6 +723,8 @@ class InnerRing:
             without_mainnet=f"{not with_main_chain}".lower(),
             main_chain_rpc="localhost:1234" if not with_main_chain else self.neofs_env.main_chain.rpc_address,
             neofs_contract_hash="123" if not with_main_chain else self.neofs_env.main_chain.neofs_contract_hash,
+            pprof_address=self.pprof_address,
+            prometheus_address=self.prometheus_address,
         )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
@@ -766,6 +778,8 @@ class StorageNode:
         self.shards = [Shard(neofs_env), Shard(neofs_env)]
         self.endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.control_grpc_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.sn_number = sn_number
@@ -781,6 +795,8 @@ class StorageNode:
             Storage node:
             - Endpoint: {self.endpoint}
             - Control gRPC endpoint: {self.control_grpc_endpoint}
+            - Pprof address: {self.pprof_address}
+            - Prometheus address: {self.prometheus_address}
             - Attributes: {self.attrs}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
@@ -808,6 +824,8 @@ class StorageNode:
                 shards=self.shards,
                 wallet=self.wallet,
                 state_file=self.state_file,
+                pprof_address=self.pprof_address,
+                prometheus_address=self.prometheus_address,
             )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
@@ -852,6 +870,8 @@ class StorageNode:
             shards=self.shards,
             wallet=self.wallet,
             state_file=self.state_file,
+            pprof_address=self.pprof_address,
+            prometheus_address=self.prometheus_address,
         )
         time.sleep(1)
 
@@ -872,6 +892,8 @@ class StorageNode:
             shards=self.shards,
             wallet=self.wallet,
             state_file=self.state_file,
+            pprof_address=self.pprof_address,
+            prometheus_address=self.prometheus_address,
         )
         time.sleep(1)
 
@@ -920,6 +942,8 @@ class S3_GW:
             password=self.neofs_env.default_password,
         )
         self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.tls_cert_path = self.neofs_env._generate_temp_file(prefix="s3gw_tls_cert")
         self.tls_key_path = self.neofs_env._generate_temp_file(prefix="s3gw_tls_key")
         self.stdout = "Not initialized"
@@ -931,6 +955,8 @@ class S3_GW:
             S3 Gateway:
             - Address: {self.address}
             - S3 GW Config path: {self.config_path}
+            - Pprof address: {self.pprof_address}
+            - Prometheus address: {self.prometheus_address}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
@@ -978,6 +1004,8 @@ class S3_GW:
             tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
             listen_domain=self.neofs_env.domain,
             s3_gw_version=self._get_version(),
+            pprof_address=self.pprof_address,
+            prometheus_address=self.prometheus_address,
         )
 
     def _get_version(self) -> str:

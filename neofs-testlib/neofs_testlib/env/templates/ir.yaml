@@ -138,3 +138,13 @@ settlement:
 
 contracts:
   neofs: {{ neofs_contract_hash }}      # Address of NeoFS contract in mainchain; ignore if mainchain is disabled
+
+pprof:
+  enabled: true
+  address: {{ pprof_address }}
+  shutdown_timeout: 30s
+
+prometheus:
+  enabled: true
+  address: {{ prometheus_address }}
+  shutdown_timeout: 30s
