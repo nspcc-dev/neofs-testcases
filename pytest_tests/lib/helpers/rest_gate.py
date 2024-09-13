@@ -12,15 +12,13 @@ import allure
 import requests
 from helpers.aws_cli_client import LONG_TIMEOUT
 from helpers.cli_helpers import _cmd_run
-from helpers.common import SIMPLE_OBJECT_SIZE
+from helpers.common import ASSETS_DIR, SIMPLE_OBJECT_SIZE
 from helpers.complex_object_actions import get_nodes_without_object
 from helpers.file_helper import get_file_hash
 from helpers.neofs_verbs import get_object
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
-
-ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
 @allure.step("Get via REST Gate")

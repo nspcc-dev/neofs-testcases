@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import random
 import re
+import string
 import sys
 import uuid
 from typing import Any, Optional
@@ -201,8 +203,9 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str, s3gate_en
 @allure.step("Configure S3 client (aws cli)")
 def configure_cli_client(access_key_id: str, secret_access_key: str, s3gate_endpoint: str):
     try:
-        client = AwsCliClient(s3gate_endpoint)
-        _configure_aws_cli("aws configure", access_key_id, secret_access_key)
+        profile = _generate_random_profile()
+        client = AwsCliClient(s3gate_endpoint, profile)
+        _configure_aws_cli(f"aws configure --profile {profile}", access_key_id, secret_access_key)
         _cmd_run(f"aws configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
         _cmd_run(f"aws configure set retry_mode {RETRY_MODE}")
         return client
@@ -211,3 +214,8 @@ def configure_cli_client(access_key_id: str, secret_access_key: str, s3gate_endp
             pytest.skip("AWS CLI was not found")
         else:
             raise RuntimeError("Error while configuring AwsCliClient") from err
+
+
+def _generate_random_profile():
+    random_postfix = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+    return f"profile__{random_postfix}"

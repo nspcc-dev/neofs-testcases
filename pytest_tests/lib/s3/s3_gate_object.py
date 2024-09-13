@@ -9,6 +9,7 @@ import urllib3
 from botocore.exceptions import ClientError
 from helpers.aws_cli_client import AwsCliClient
 from helpers.cli_helpers import log_command_execution
+from helpers.common import ASSETS_DIR
 from s3.s3_gate_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
@@ -27,8 +28,6 @@ ACL_COPY = [
     "bucket-owner-read",
     "bucket-owner-full-control",
 ]
-
-ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir/")
 
 
 @allure.step("List objects S3 v2")

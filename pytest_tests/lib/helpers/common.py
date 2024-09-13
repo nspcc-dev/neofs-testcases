@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import yaml
 
@@ -22,7 +23,7 @@ GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
-ASSETS_DIR = os.getenv("ASSETS_DIR", "TemporaryDir")
+ASSETS_DIR = f"TemporaryDir-{uuid.uuid4()}"
 TEST_FILES_DIR = os.getenv("TEST_FILES_DIR", "TestFilesDir")
 TEST_OBJECTS_DIR = os.getenv("TEST_OBJECTS_DIR", "TestObjectsDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
