@@ -14,13 +14,13 @@ LONG_TIMEOUT = 240
 
 
 class AwsCliClient:
-    # Flags that we use for all S3 commands: disable SSL verification (as we use self-signed
-    # certificate in devenv) and disable automatic pagination in CLI output
-    common_flags = "--no-verify-ssl --no-paginate"
-    s3gate_endpoint: str
-
-    def __init__(self, s3gate_endpoint) -> None:
+    def __init__(self, s3gate_endpoint, profile="") -> None:
         self.s3gate_endpoint = s3gate_endpoint
+        # Flags that we use for all S3 commands: disable SSL verification (as we use self-signed
+        # certificate in devenv) and disable automatic pagination in CLI output
+        self.common_flags = "--no-verify-ssl --no-paginate"
+        if profile != "":
+            self.common_flags += f" --profile {profile}"
         os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
     def create_bucket(

@@ -19,3 +19,4 @@ requests==2.32.0
 tenacity==8.2.3
 ruff==0.4.2
 urllib3==2.2.2
+pytest-xdist==3.6.1
