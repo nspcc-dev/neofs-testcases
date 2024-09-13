@@ -5,14 +5,14 @@ logger:
 
 # Profiler section
 pprof:
-  enabled: false
-  address: :6060  # Server address
+  enabled: true
+  address: {{ pprof_address }}  # Server address
   shutdown_timeout: 15s  # Timeout for profiling HTTP server graceful shutdown
 
 # Application metrics section
 prometheus:
-  enabled: false
-  address: :9090  # Server address
+  enabled: true
+  address: {{ prometheus_address }}  # Server address
   shutdown_timeout: 15s  # Timeout for metrics HTTP server graceful shutdown
 
 # Morph section
