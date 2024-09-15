@@ -453,3 +453,180 @@ def verify_options_request(request):
     assert options_resp.status_code == 200, "Invalid status code for OPTIONS request"
     for cors_header in ("Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin"):
         assert cors_header in options_resp.headers, f"Not CORS header {cors_header} in OPTIONS response"
+
+
+@allure.step("Create container via REST GW")
+def create_container(
+    endpoint: str,
+    container_name: str,
+    placement_policy: str,
+    basic_acl: str,
+    bearer_token: str,
+    bearer_signature: str,
+    bearer_signature_key: str,
+    wallet_connect=False,
+) -> str:
+    request = f"{endpoint}/containers"
+    body = {
+        "containerName": container_name,
+        "placementPolicy": placement_policy,
+        "basicAcl": basic_acl,
+    }
+    headers = {
+        "Authorization": f"Bearer {bearer_token}",
+        "X-Bearer-Signature": bearer_signature,
+        "X-Bearer-Signature-Key": bearer_signature_key,
+    }
+    params = {}
+
+    if wallet_connect:
+        params["walletConnect"] = "true"
+
+    resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to create container via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.json(), req_type="PUT")
+
+    assert resp.json().get("containerId"), f"CID not found in response {resp.json()}"
+
+    return resp.json().get("containerId")
+
+
+@allure.step("Get token for container operations via REST GW")
+def get_container_token(
+    endpoint: str, bearer_owner_id: str, bearer_lifetime: int = 100, bearer_for_all_users: bool = True, verb="PUT"
+) -> str:
+    request = f"{endpoint}/auth"
+    body = [
+        {"container": {"verb": verb}, "name": str(uuid.uuid4())},
+    ]
+    resp = requests.post(
+        request,
+        json=body,
+        headers={
+            "X-Bearer-Owner-Id": bearer_owner_id,
+            "X-Bearer-Lifetime": str(bearer_lifetime),
+            "X-Bearer-For-All-Users": str(bearer_for_all_users),
+        },
+        timeout=60,
+    )
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get auth token via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="POST")
+
+    return resp.json()[0]["token"]
+
+
+@allure.step("Get containers list via REST GW")
+def get_containers_list(endpoint: str) -> dict:
+    request = f"{endpoint}/containers"
+    resp = requests.get(request, timeout=60)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get containers list via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="GET")
+
+    return resp.json()
+
+
+@allure.step("Get container info via REST GW")
+def get_container_info(endpoint: str, container_id: str) -> dict:
+    request = f"{endpoint}/containers/{container_id}"
+    resp = requests.get(request, timeout=60)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get container info via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="GET")
+
+    return resp.json()
+
+
+@allure.step("Get container eacl via REST GW")
+def get_container_eacl(endpoint: str, container_id: str) -> dict:
+    request = f"{endpoint}/containers/{container_id}/eacl"
+    resp = requests.get(request, timeout=60)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to get container eacl via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="GET")
+
+    return resp.json()
+
+
+@allure.step("Delete container via REST GW")
+def delete_container(
+    endpoint: str,
+    container_id: str,
+    bearer_token: str,
+    bearer_signature: str,
+    bearer_signature_key: str,
+    wallet_connect=False,
+) -> dict:
+    request = f"{endpoint}/containers/{container_id}"
+
+    headers = {
+        "Authorization": f"Bearer {bearer_token}",
+        "X-Bearer-Signature": bearer_signature,
+        "X-Bearer-Signature-Key": bearer_signature_key,
+    }
+    params = {}
+
+    if wallet_connect:
+        params["walletConnect"] = "true"
+
+    resp = requests.delete(request, headers=headers, params=params, timeout=60)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to delete container via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="DELETE")
+
+    return resp.json()

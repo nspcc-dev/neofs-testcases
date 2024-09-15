@@ -23,14 +23,19 @@ CONTAINERS_NAME_PREFIX = "homo_hash_container_"
 @allure.title("Homomorphic hash disabling/enabling")
 @pytest.mark.homo_hash
 class TestHomomorphicHash(NeofsEnvTestBase):
+    @pytest.fixture(scope="class")
+    def set_homomorphic_hash_to_default(self):
+        yield
+        self.set_homomorphic_hash(False)
+
     @allure.title("Verify homomorphic hash disabling/enabling")
-    def test_homomorphic_hash_enable_disable(self):
+    def test_homomorphic_hash_enable_disable(self, set_homomorphic_hash_to_default):
         self.switch_homomorphic_hash_value()
         self.switch_homomorphic_hash_value()
 
     @allure.title("New containers should have specified homomorphic hash value")
     def test_new_containers_created_with_specified_homomorphic_hash_value(
-        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup
+        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup, set_homomorphic_hash_to_default
     ):
         with allure.step("Set homomorphic hash value to the opposite one "):
             new_hash_value = self.switch_homomorphic_hash_value()
@@ -58,7 +63,7 @@ class TestHomomorphicHash(NeofsEnvTestBase):
 
     @allure.title("Old containers should not be affected by new hash value")
     def test_old_containers_have_old_homomorphic_hash_value(
-        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup
+        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup, set_homomorphic_hash_to_default
     ):
         cid, oid = self.create_container_with_single_object(default_wallet, simple_object_size)
         current_object_has_hash = self.object_has_homomorphic_hash_value(default_wallet, cid, oid)
