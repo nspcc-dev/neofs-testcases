@@ -1,28 +1,29 @@
 #!/usr/bin/make -f
 
-.DEFAULT_GOAL := help
+VENV_DIR := venv.pytest
+PYTHON := python3.12
+PIP := pip3.12
+ENV_FILE := .env
 
 SHELL ?= bash
 
-VENVS = $(shell ls -1d venv/*/ | sort -u | xargs basename -a)
-
 .PHONY: all
-all: venvs
+all: venv.pytest
 
-include venv_template.mk
-
-.PHONY: venvs
-venvs:
-	$(foreach venv,$(VENVS),venv.$(venv))
-
-$(foreach venv,$(VENVS),$(eval $(call VENV_template,$(venv))))
+.PHONY: venv.pytest
+venv.pytest:
+	@echo "Creating virtual environment in $(VENV_DIR)..."
+	$(PYTHON) -m venv $(VENV_DIR)
+	@echo "Modifying activate script to add custom environment variables..."
+	@while read -r line; do \
+		echo "export $$line" >> $(VENV_DIR)/bin/activate; \
+	done < $(ENV_FILE)
+	@echo "Installing dependencies"
+	. $(VENV_DIR)/bin/activate && \
+	$(PIP) install --upgrade pip && \
+	$(PIP) install -U setuptools && \
+	$(PIP) install -Ur requirements.txt
+	@echo "Virtual environment created and customized."
 
 clean:
 	rm -rf venv.*
-
-pytest-local:
-	@echo "⇒ Run Pytest"
-	python -m pytest pytest_tests/tests/
-
-help:
-	@echo "⇒ run          Run testcases ${R}"
