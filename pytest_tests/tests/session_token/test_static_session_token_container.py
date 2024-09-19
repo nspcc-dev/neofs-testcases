@@ -17,17 +17,23 @@ from helpers.grpc_responses import (
     INVALID_EXP,
     INVALID_IAT,
     INVALID_NBF,
+    INVALID_TOKEN_FORMAT,
+    INVALID_VERB,
     NOT_SESSION_CONTAINER_OWNER,
     SESSION_NOT_ISSUED_BY_OWNER,
 )
+from helpers.neofs_verbs import put_object_to_random_node
 from helpers.object_access import can_put_object
 from helpers.session_token import (
     ContainerVerb,
     Lifetime,
+    ObjectVerb,
     generate_container_session_token,
     get_container_signed_token,
+    get_object_signed_token,
     sign_session_token,
 )
+from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
@@ -196,6 +202,27 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     wait_for_creation=False,
                 )
 
+    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2947")
+    def test_static_session_token_container_create_signed_with_wrong_wallet(
+        self, owner_wallet: NodeWallet, user_wallet: NodeWallet, stranger_wallet: NodeWallet, temp_directory: str
+    ):
+        session_token_file = generate_container_session_token(
+            owner_wallet=user_wallet,
+            session_wallet=user_wallet,
+            verb=ContainerVerb.CREATE,
+            tokens_dir=temp_directory,
+        )
+        container_token = sign_session_token(self.shell, session_token_file, stranger_wallet)
+
+        with pytest.raises(RuntimeError):
+            create_container(
+                user_wallet.path,
+                session_token=container_token,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                wait_for_creation=False,
+            )
+
     def test_static_session_token_container_delete(
         self,
         owner_wallet: NodeWallet,
@@ -223,6 +250,35 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
             )
 
         assert cid not in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+    def test_static_session_token_container_delete_with_other_verb(
+        self,
+        owner_wallet: NodeWallet,
+        user_wallet: NodeWallet,
+        static_sessions: dict[ContainerVerb, str],
+    ):
+        """
+        Validate static session without delete operation
+        """
+        with allure.step("Create container"):
+            cid = create_container(
+                owner_wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                wait_for_creation=False,
+            )
+        with allure.step("Try to delete container with static session token without DELETE rule"):
+            for verb in [verb for verb in ContainerVerb if verb != ContainerVerb.DELETE]:
+                with pytest.raises(RuntimeError, match=INVALID_VERB):
+                    delete_container(
+                        wallet=user_wallet.path,
+                        cid=cid,
+                        session_token=static_sessions[verb],
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        await_mode=False,
+                    )
+                assert cid in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner user can NOT delete container")
@@ -370,6 +426,43 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
 
         assert not can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
+    def test_static_session_token_container_set_eacl_with_other_verb(
+        self,
+        owner_wallet: NodeWallet,
+        user_wallet: NodeWallet,
+        stranger_wallet: NodeWallet,
+        static_sessions: dict[ContainerVerb, str],
+        simple_object_size,
+    ):
+        """
+        Validate static session without seteacl operation
+        """
+        with allure.step("Create container"):
+            cid = create_container(
+                owner_wallet.path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+        file_path = generate_file(simple_object_size)
+        assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Try to seteacl with static session token without seteacl rule"):
+            for verb in [verb for verb in ContainerVerb if verb != ContainerVerb.SETEACL]:
+                with pytest.raises(RuntimeError, match=INVALID_VERB):
+                    eacl_deny = [
+                        EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation
+                    ]
+                    set_eacl(
+                        user_wallet.path,
+                        cid,
+                        create_eacl(cid, eacl_deny, shell=self.shell),
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        session_token=static_sessions[verb],
+                    )
+                assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
+
     @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT set eacl")
     def test_static_session_token_container_set_eacl_only_trusted_party_proved_by_the_container_owner(
@@ -427,3 +520,52 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                         endpoint=self.neofs_env.sn_rpc,
                         session_token=stranger_token[ContainerVerb.SETEACL],
                     )
+
+    def test_use_object_session_token_for_container_operation(
+        self,
+        owner_wallet: NodeWallet,
+        user_wallet: NodeWallet,
+        temp_directory: str,
+        simple_object_size,
+    ):
+        with allure.step("Prepare object session token"):
+            cid = create_container(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+            storage_objects = []
+
+            with allure.step("Put object"):
+                file_path = generate_file(simple_object_size)
+
+                storage_object_id = put_object_to_random_node(
+                    wallet=owner_wallet.path,
+                    path=file_path,
+                    cid=cid,
+                    shell=self.shell,
+                    neofs_env=self.neofs_env,
+                )
+
+                storage_object = StorageObjectInfo(cid, storage_object_id)
+                storage_object.size = simple_object_size
+                storage_object.wallet_file_path = owner_wallet.path
+                storage_object.file_path = file_path
+                storage_objects.append(storage_object)
+
+            object_token = get_object_signed_token(
+                owner_wallet,
+                user_wallet,
+                cid,
+                storage_objects,
+                ObjectVerb.PUT,
+                self.shell,
+                temp_directory,
+            )
+
+        with allure.step("Try to create container with object static session token"):
+            with pytest.raises(RuntimeError, match=INVALID_TOKEN_FORMAT):
+                create_container(
+                    user_wallet.path,
+                    session_token=object_token,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    wait_for_creation=False,
+                )

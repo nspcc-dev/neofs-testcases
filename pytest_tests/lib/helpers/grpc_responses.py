@@ -49,6 +49,9 @@ INVALID_IAT = ".*put container rpc error: status: code = 1024 message = token sh
 INVALID_EXP = ".*put container rpc error: status: code = 4097 message = expired session token.*"
 INVALID_NBF = ".*put container rpc error: status: code = 1024 message = token is not valid yet.*"
 
+INVALID_TOKEN_FORMAT = ".*read container session: invalid format.*"
+INVALID_VERB = ".*wrong container session operation.*"
+
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """
