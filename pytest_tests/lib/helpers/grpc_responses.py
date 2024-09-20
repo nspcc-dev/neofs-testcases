@@ -39,6 +39,8 @@ EACL_TIMED_OUT = "eACL setting: await timeout expired"
 EACL_TABLE_IS_NOT_SET = "extended ACL table is not set for this container"
 EACL_NOT_FOUND = "code = 3073.*message = eACL not found"
 EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = "table validation: it is prohibited to modify system access"
+EACL_CHANGE_PROHIBITED = ".*container ACL is immutable.*"
+EACL_CHANGE_TIMEOUT = ".*eACL setting: await timeout expired.*"
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
 INVALID_RULES = ".*unable to parse provided rules.*"

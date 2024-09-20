@@ -238,6 +238,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        force: Optional[bool] = None,
     ) -> CommandResult:
         """
         Set a new extended ACL table for the container.

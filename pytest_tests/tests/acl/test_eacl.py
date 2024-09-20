@@ -17,7 +17,12 @@ from helpers.acl import (
 from helpers.complex_object_actions import wait_object_replication
 from helpers.container import create_container
 from helpers.container_access import check_full_access_to_container, check_no_access_to_container
-from helpers.grpc_responses import EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS, NOT_CONTAINER_OWNER
+from helpers.grpc_responses import (
+    EACL_CHANGE_PROHIBITED,
+    EACL_CHANGE_TIMEOUT,
+    EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS,
+    NOT_CONTAINER_OWNER,
+)
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.node_management import drop_object
 from helpers.object_access import (
@@ -29,7 +34,7 @@ from helpers.object_access import (
     can_put_object,
     can_search_object,
 )
-from helpers.wellknown_acl import PUBLIC_ACL
+from helpers.wellknown_acl import PUBLIC_ACL, PUBLIC_ACL_F
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv
 
@@ -66,6 +71,51 @@ class TestEACLContainer(NeofsEnvTestBase):
             )
 
         yield cid, oid, file_path
+
+    def test_eacl_can_not_be_set_with_final_bit(self, wallets):
+        with allure.step("Create container with the final bit set"):
+            user_wallet = wallets.get_wallet()
+            node_count = len(self.neofs_env.storage_nodes)
+            full_placement_rule = f"REP {node_count} IN X CBF 1 SELECT {node_count} FROM * AS X"
+
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                rule=full_placement_rule,
+                basic_acl=PUBLIC_ACL_F,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("Try to set eacl for such container"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op) for op in EACLOperation]
+
+            with pytest.raises(RuntimeError, match=EACL_CHANGE_PROHIBITED):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path),
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+
+        with allure.step("eACL must be empty"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc) is None
+
+        with allure.step("Try to set eacl for such container with force"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op) for op in EACLOperation]
+
+            with pytest.raises(RuntimeError, match=EACL_CHANGE_TIMEOUT):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path),
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    force=True,
+                )
+
+        with allure.step("eACL must be empty"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc) is None
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
     @pytest.mark.parametrize("deny_role", [EACLRole.USER, EACLRole.OTHERS])
