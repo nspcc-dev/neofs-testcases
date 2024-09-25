@@ -19,7 +19,7 @@ from neofs_testlib.utils.wallet import get_last_address_from_wallet
 
 logger = logging.getLogger("NeoLogger")
 EACL_LIFETIME = 100500
-NEOFS_CONTRACT_CACHE_TIMEOUT = 30
+NEOFS_CONTRACT_CACHE_TIMEOUT = 2
 
 
 class EACLOperation(Enum):
