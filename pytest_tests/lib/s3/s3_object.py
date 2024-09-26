@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from helpers.aws_cli_client import AwsCliClient
 from helpers.cli_helpers import log_command_execution
 from helpers.common import ASSETS_DIR
-from s3.s3_gate_bucket import S3_SYNC_WAIT_TIME
+from s3.s3_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the

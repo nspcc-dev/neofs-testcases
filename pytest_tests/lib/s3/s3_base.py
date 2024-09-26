@@ -22,7 +22,7 @@ from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_public_key_from_wallet
 from pytest import FixtureRequest
-from s3 import s3_gate_bucket, s3_gate_object
+from s3 import s3_bucket, s3_object
 
 # Disable warnings on self-signed certificate which the
 # boto library produces on requests to S3-gate in dev-env
@@ -51,7 +51,7 @@ def _run_with_passwd(cmd: str, password: str) -> str:
     return cmd.decode()
 
 
-class TestNeofsS3GateBase(NeofsEnvTestBase):
+class TestNeofsS3Base(NeofsEnvTestBase):
     s3_client: Any = None  # noqa
 
     @pytest.fixture(scope="class", autouse=True)
@@ -83,47 +83,47 @@ class TestNeofsS3GateBase(NeofsEnvTestBase):
             client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
         else:
             client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
-        TestNeofsS3GateBase.s3_client = client
-        TestNeofsS3GateBase.wallet = wallet
+        TestNeofsS3Base.s3_client = client
+        TestNeofsS3Base.wallet = wallet
 
     @pytest.fixture
     @allure.title("Create/delete bucket")
     def bucket(self):
-        bucket = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
         yield bucket
         self.delete_all_object_in_bucket(bucket)
 
     @pytest.fixture
     @allure.title("Create two buckets")
     def two_buckets(self):
-        bucket_1 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
-        bucket_2 = s3_gate_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        bucket_1 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        bucket_2 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
         yield bucket_1, bucket_2
         for bucket in [bucket_1, bucket_2]:
             self.delete_all_object_in_bucket(bucket)
 
     def delete_all_object_in_bucket(self, bucket):
-        versioning_status = s3_gate_bucket.get_bucket_versioning_status(self.s3_client, bucket)
-        if versioning_status == s3_gate_bucket.VersioningStatus.ENABLED.value:
+        versioning_status = s3_bucket.get_bucket_versioning_status(self.s3_client, bucket)
+        if versioning_status == s3_bucket.VersioningStatus.ENABLED.value:
             # From versioned bucket we should delete all versions and delete markers of all objects
-            objects_versions = s3_gate_object.list_objects_versions_s3(self.s3_client, bucket)
+            objects_versions = s3_object.list_objects_versions_s3(self.s3_client, bucket)
             if objects_versions:
-                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_versions)
-            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(self.s3_client, bucket)
+                s3_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_versions)
+            objects_delete_markers = s3_object.list_objects_delete_markers_s3(self.s3_client, bucket)
             if objects_delete_markers:
-                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
+                s3_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
 
         else:
             # From non-versioned bucket it's sufficient to delete objects by key
-            objects = s3_gate_object.list_objects_s3(self.s3_client, bucket)
+            objects = s3_object.list_objects_s3(self.s3_client, bucket)
             if objects:
-                s3_gate_object.delete_objects_s3(self.s3_client, bucket, objects)
-            objects_delete_markers = s3_gate_object.list_objects_delete_markers_s3(self.s3_client, bucket)
+                s3_object.delete_objects_s3(self.s3_client, bucket, objects)
+            objects_delete_markers = s3_object.list_objects_delete_markers_s3(self.s3_client, bucket)
             if objects_delete_markers:
-                s3_gate_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
+                s3_object.delete_object_versions_s3_without_dm(self.s3_client, bucket, objects_delete_markers)
 
         # Delete the bucket itself
-        s3_gate_bucket.delete_bucket_s3(self.s3_client, bucket)
+        s3_bucket.delete_bucket_s3(self.s3_client, bucket)
 
 
 @allure.step("Init S3 Credentials")
