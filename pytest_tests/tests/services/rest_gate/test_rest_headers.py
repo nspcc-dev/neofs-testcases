@@ -10,6 +10,7 @@ from helpers.container import (
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
+from helpers.neofs_verbs import delete_object
 from helpers.rest_gate import (
     attr_into_str_header,
     attr_into_str_header_curl,
@@ -19,7 +20,6 @@ from helpers.rest_gate import (
     upload_via_rest_gate,
     upload_via_rest_gate_curl,
 )
-from helpers.neofs_verbs import delete_object
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase

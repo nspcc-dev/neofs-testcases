@@ -6,16 +6,16 @@ import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.acl import (
     EACLAccess,
+    EACLFilter,
+    EACLFilters,
+    EACLHeaderType,
     EACLOperation,
     EACLRole,
     EACLRule,
-    EACLFilters,
-    EACLFilter,
-    EACLHeaderType,
+    create_bearer_token,
+    create_eacl,
     form_bearertoken_file,
     set_eacl,
-    create_eacl,
-    create_bearer_token,
     sign_bearer,
 )
 from helpers.common import ASSETS_DIR, TEST_FILES_DIR

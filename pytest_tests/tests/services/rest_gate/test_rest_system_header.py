@@ -9,16 +9,16 @@ import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import OBJECT_NOT_FOUND
+from helpers.neofs_verbs import get_netmap_netinfo, get_object_from_random_node, head_object
 from helpers.rest_gate import (
     attr_into_str_header,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
-from helpers.neofs_verbs import get_netmap_netinfo, get_object_from_random_node, head_object
 from helpers.wellknown_acl import PUBLIC_ACL
-from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest_lazy_fixtures import lf
+from rest_gw.rest_utils import get_object_and_verify_hashes
 
 logger = logging.getLogger("NeoLogger")
 EXPIRATION_TIMESTAMP_HEADER = "__NEOFS__EXPIRATION_TIMESTAMP"

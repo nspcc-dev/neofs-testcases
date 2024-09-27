@@ -5,11 +5,7 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import STORAGE_GC_TIME
-from helpers.complex_object_actions import (
-    get_link_object,
-    get_nodes_with_object,
-    get_object_chunks,
-)
+from helpers.complex_object_actions import get_link_object, get_nodes_with_object, get_object_chunks
 from helpers.container import create_container
 from helpers.grpc_responses import (
     LIFETIME_REQUIRED,

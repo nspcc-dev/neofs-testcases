@@ -5,16 +5,16 @@ import allure
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file
+from helpers.neofs_verbs import put_object_to_random_node
 from helpers.rest_gate import (
     get_object_by_attr_and_verify_hashes,
-    try_to_get_object_via_passed_request_and_expect_error,
     quote,
+    try_to_get_object_via_passed_request_and_expect_error,
 )
-from helpers.neofs_verbs import put_object_to_random_node
 from helpers.wellknown_acl import PUBLIC_ACL
-from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest_lazy_fixtures import lf
+from rest_gw.rest_utils import get_object_and_verify_hashes
 
 logger = logging.getLogger("NeoLogger")
 
