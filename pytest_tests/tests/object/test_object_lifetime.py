@@ -10,6 +10,7 @@ from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -20,8 +21,8 @@ class TestObjectApiLifetime(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "object_size,expiration_flag",
         [
-            (pytest.lazy_fixture("simple_object_size"), "lifetime"),
-            (pytest.lazy_fixture("complex_object_size"), "expire_at"),
+            (lf("simple_object_size"), "lifetime"),
+            (lf("complex_object_size"), "expire_at"),
         ],
         ids=["simple object, lifetime", "complex object, expire_at"],
     )

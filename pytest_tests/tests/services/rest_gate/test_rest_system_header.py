@@ -18,6 +18,7 @@ from helpers.neofs_verbs import get_netmap_netinfo, get_object_from_random_node,
 from helpers.wellknown_acl import PUBLIC_ACL
 from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 EXPIRATION_TIMESTAMP_HEADER = "__NEOFS__EXPIRATION_TIMESTAMP"
@@ -190,7 +191,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     @allure.title("priority of attributes epoch>duration")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_epoch_duration(
@@ -243,7 +244,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_dur_timestamp(
@@ -299,7 +300,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_timestamp_rfc(
@@ -355,7 +356,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     @allure.title("Test that object is automatically delete when expiration passed")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_http_rfc_object_unavailable_after_expir(

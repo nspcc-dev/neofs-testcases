@@ -45,6 +45,7 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -113,7 +114,7 @@ def generate_ranges(
 
 
 @pytest.fixture(
-    params=[pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+    params=[lf("simple_object_size"), lf("complex_object_size")],
     ids=["simple object", "complex object"],
     # Scope session to upload/delete each files set only once
     scope="function",
@@ -291,7 +292,7 @@ class TestObjectApi(NeofsEnvTestBase):
     @pytest.mark.parametrize("operator", ["GT", "GE", "LT", "LE"])
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_object_search_with_numeric_queries(
@@ -418,7 +419,7 @@ class TestObjectApi(NeofsEnvTestBase):
     @allure.title("Validate object search with removed items")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_object_search_should_return_tombstone_items(

@@ -20,6 +20,7 @@ from helpers.rest_gate import upload_via_rest_gate
 from helpers.wellknown_acl import PUBLIC_ACL
 from rest_gw.rest_utils import get_object_and_verify_hashes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -93,7 +94,7 @@ class Test_rest_bearer(NeofsEnvTestBase):
     @pytest.mark.parametrize("bearer_type", ("header", "cookie"))
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_put_with_bearer_when_eacl_restrict(

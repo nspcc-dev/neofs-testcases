@@ -37,6 +37,7 @@ from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 
 @pytest.fixture(scope="module")
@@ -105,7 +106,7 @@ class TestObjectApiWithBearerToken(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "storage_objects",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -156,7 +157,7 @@ class TestObjectApiWithBearerToken(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "file_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_get_object_with_s3_wallet_bearer_from_all_nodes(
@@ -197,7 +198,7 @@ class TestObjectApiWithBearerToken(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "file_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_attributes_bearer_rules(

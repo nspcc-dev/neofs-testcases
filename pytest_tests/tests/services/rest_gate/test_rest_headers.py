@@ -24,6 +24,7 @@ from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -47,8 +48,8 @@ class Test_rest_headers(NeofsEnvTestBase):
 
     @pytest.fixture(
         params=[
-            pytest.lazy_fixture("simple_object_size"),
-            pytest.lazy_fixture("complex_object_size"),
+            lf("simple_object_size"),
+            lf("complex_object_size"),
         ],
         ids=["simple object", "complex object"],
         scope="class",
