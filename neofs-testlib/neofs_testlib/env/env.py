@@ -1152,7 +1152,7 @@ class XK6:
         size=1024,
         containers=1,
         out="grpc.json",
-        preload_obj=250,
+        preload_obj=100,
         policy="REP 2 IN X CBF 1 SELECT 2 FROM * AS X",
         workers=2,
     ):

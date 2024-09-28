@@ -10,6 +10,7 @@ from helpers.container import (
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
+from helpers.neofs_verbs import delete_object
 from helpers.rest_gate import (
     attr_into_str_header,
     attr_into_str_header_curl,
@@ -19,11 +20,11 @@ from helpers.rest_gate import (
     upload_via_rest_gate,
     upload_via_rest_gate_curl,
 )
-from helpers.neofs_verbs import delete_object
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -47,8 +48,8 @@ class Test_rest_headers(NeofsEnvTestBase):
 
     @pytest.fixture(
         params=[
-            pytest.lazy_fixture("simple_object_size"),
-            pytest.lazy_fixture("complex_object_size"),
+            lf("simple_object_size"),
+            lf("complex_object_size"),
         ],
         ids=["simple object", "complex object"],
         scope="class",

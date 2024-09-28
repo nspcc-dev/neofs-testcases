@@ -10,6 +10,7 @@ from helpers.neofs_verbs import delete_object, put_object, put_object_to_random_
 from helpers.session_token import create_session_token
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
+from pytest_lazy_fixtures import lf
 
 
 @pytest.mark.session_token
@@ -17,7 +18,7 @@ class TestDynamicObjectSession(NeofsEnvTestBase):
     @allure.title("Test Object Operations with Session Token")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_object_session_token(self, default_wallet, object_size):

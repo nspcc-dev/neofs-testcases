@@ -5,11 +5,7 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import STORAGE_GC_TIME
-from helpers.complex_object_actions import (
-    get_link_object,
-    get_nodes_with_object,
-    get_object_chunks,
-)
+from helpers.complex_object_actions import get_link_object, get_nodes_with_object, get_object_chunks
 from helpers.container import create_container
 from helpers.grpc_responses import (
     LIFETIME_REQUIRED,
@@ -31,6 +27,7 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -135,7 +132,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("Locked object should be protected from deletion")
     @pytest.mark.parametrize(
         "locked_storage_object",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -160,7 +157,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Lock object of a simple object should be protected from deletion")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
     def test_lock_object_itself_cannot_be_deleted(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -183,7 +180,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Lock object of a simple object cannot be locked")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
     def test_lock_object_cannot_be_locked(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -207,7 +204,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
     @allure.title("Cannot lock simple object without lifetime and expire_at fields")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
     @pytest.mark.parametrize(
         "wrong_lifetime,wrong_expire_at,expected_error",
         [
@@ -250,7 +247,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("Expired object should be deleted after locks are expired")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     @pytest.mark.nspcc_dev__neofs_testcases__issue_537
@@ -317,7 +314,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("Should be possible to lock multiple objects at once")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_should_be_possible_to_lock_multiple_objects_at_once(
@@ -367,7 +364,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("Already outdated lock should not be applied")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_already_outdated_lock_should_not_be_applied(
@@ -402,7 +399,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("After lock expiration with lifetime user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     @expect_not_raises()
@@ -444,7 +441,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @allure.title("After lock expiration with expire_at user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     @expect_not_raises()
@@ -490,7 +487,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
-        [pytest.lazy_fixture("complex_object_size")],
+        [lf("complex_object_size")],
         indirect=True,
     )
     def test_link_object_of_locked_complex_object_can_be_dropped(
@@ -521,7 +518,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
-        [pytest.lazy_fixture("complex_object_size")],
+        [lf("complex_object_size")],
         indirect=True,
     )
     def test_chunks_of_locked_complex_object_can_be_dropped(
@@ -551,7 +548,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -575,7 +572,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                 drop_object(node, new_locked_storage_object.cid, new_locked_storage_object.oid)
 
     @allure.title("Lock object of a simple object can be dropped via control")
-    @pytest.mark.parametrize("locked_storage_object", [pytest.lazy_fixture("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
     def test_lock_object_can_be_dropped(self, locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv):
         lock_object_info = locked_storage_object.locks[0]
 
@@ -599,7 +596,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.mark.skip(reason="Unknown issue")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
         indirect=True,
     )

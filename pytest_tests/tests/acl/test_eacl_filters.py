@@ -25,6 +25,7 @@ from helpers.neofs_verbs import put_object_to_random_node
 from helpers.object_access import can_get_head_object, can_get_object, can_put_object
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from pytest_lazy_fixtures import lf
 
 
 @pytest.mark.acl
@@ -623,7 +624,7 @@ class TestEACLFilters(NeofsEnvTestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+        [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
     def test_extended_acl_numeric_values(self, wallets, operator, eacl_container, object_size):

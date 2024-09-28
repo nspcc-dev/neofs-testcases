@@ -27,6 +27,7 @@ from helpers.storage_group import (
 )
 from helpers.wallet_helpers import create_wallet
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 deposit = 30
@@ -34,7 +35,7 @@ deposit = 30
 
 @pytest.mark.parametrize(
     "object_size",
-    [pytest.lazy_fixture("simple_object_size"), pytest.lazy_fixture("complex_object_size")],
+    [lf("simple_object_size"), lf("complex_object_size")],
     ids=["simple object", "complex object"],
 )
 @pytest.mark.acl
