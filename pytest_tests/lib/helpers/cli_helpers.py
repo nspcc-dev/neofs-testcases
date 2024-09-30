@@ -9,7 +9,7 @@ import logging
 import subprocess
 import sys
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from textwrap import shorten
 from typing import Union
 
@@ -27,10 +27,10 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
     in case of failure returns error message.
     """
     compl_proc = None
-    start_time = datetime.now()
+    start_time = datetime.now(UTC)
     try:
         logger.info(f"{COLOR_GREEN}Executing command: {cmd}{COLOR_OFF}")
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         compl_proc = subprocess.run(
             cmd,
             check=True,
@@ -42,14 +42,14 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
         )
         output = compl_proc.stdout
         return_code = compl_proc.returncode
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         logger.info(f"{COLOR_GREEN}Output: {output}{COLOR_OFF}")
         _attach_allure_log(cmd, output, return_code, start_time, end_time)
 
         return output
     except subprocess.CalledProcessError as exc:
         logger.info(f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode} " f"\nOutput: {exc.output}")
-        end_time = datetime.now()
+        end_time = datetime.now(UTC)
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
 
@@ -60,7 +60,7 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
         raise RuntimeError(f"Command: {cmd}\n" f"Output: {exc.strerror}") from exc
     except Exception as exc:
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
-        end_time = datetime.now()
+        end_time = datetime.now(UTC)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
         logger.info(
             f"Command: {cmd}\n"

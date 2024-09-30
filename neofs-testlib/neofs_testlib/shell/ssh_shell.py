@@ -1,7 +1,7 @@
 import logging
 import socket
 import textwrap
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import lru_cache, wraps
 from time import sleep
 from typing import ClassVar, Optional, Tuple
@@ -41,9 +41,9 @@ def log_command(func):
         with reporter.step(command_info):
             logger.info(f'Execute command "{command}" on "{shell.host}"')
 
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
             result = func(shell, command, options, *args, **kwargs)
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
 
             elapsed_time = end_time - start_time
             log_message = (

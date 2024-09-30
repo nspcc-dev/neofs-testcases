@@ -49,7 +49,7 @@ class NeoFSEnv:
     _busy_ports = []
 
     def __init__(self, neofs_env_config: dict = None):
-        self._id = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        self._id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
         self._env_dir = f"env_files/neofs-env-{self._id}"
 
         self.domain = "localhost"
