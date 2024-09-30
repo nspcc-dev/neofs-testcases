@@ -23,9 +23,6 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
 
 
-@pytest.mark.smoke
-@pytest.mark.acl
-@pytest.mark.acl_basic
 class TestACLBasic(NeofsEnvTestBase):
     @pytest.fixture(scope="function")
     def public_container(self, user_wallet: NodeWallet):
@@ -64,7 +61,6 @@ class TestACLBasic(NeofsEnvTestBase):
         yield cid_read_only
 
     @pytest.mark.sanity
-    @pytest.mark.test_basic_acl_public
     @allure.title("Test basic ACL on public container")
     def test_basic_acl_public(self, not_owner_wallet: NodeWallet, user_wallet: NodeWallet, public_container, file_path):
         """

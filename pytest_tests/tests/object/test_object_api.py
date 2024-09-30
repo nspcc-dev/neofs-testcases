@@ -166,7 +166,6 @@ def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSE
     delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
 
-@pytest.mark.grpc_api
 class TestObjectApi(NeofsEnvTestBase):
     @pytest.mark.sanity
     @allure.title("Validate object storage policy by native API")
@@ -531,7 +530,6 @@ class TestObjectApi(NeofsEnvTestBase):
                     )
 
     @allure.title("Validate native object API get_range_hash")
-    @pytest.mark.grpc_api
     def test_object_get_range_hash(
         self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size
     ):
@@ -565,7 +563,6 @@ class TestObjectApi(NeofsEnvTestBase):
                     ), f"Expected range hash to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range")
-    @pytest.mark.grpc_api
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
         """
         Validate get_range for object by native gRPC API
@@ -598,7 +595,6 @@ class TestObjectApi(NeofsEnvTestBase):
                     ), f"Expected range content to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range for a complex object")
-    @pytest.mark.grpc_api
     def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
         """
         Validate get_range for object by native gRPC API for a complex object
@@ -648,7 +644,6 @@ class TestObjectApi(NeofsEnvTestBase):
                 ), f"Expected range content to match {range_cut} slice of file payload"
 
     @allure.title("Validate native object API get_range negative cases")
-    @pytest.mark.grpc_api
     def test_object_get_range_negatives(
         self,
         request: FixtureRequest,

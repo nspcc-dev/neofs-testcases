@@ -22,7 +22,6 @@ CONFIG_KEYS_MAPPING = {
 
 
 @allure.title("Network configuration changes via neofs-adm")
-@pytest.mark.network_config
 class TestNetworkConfigChange(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "key, value",

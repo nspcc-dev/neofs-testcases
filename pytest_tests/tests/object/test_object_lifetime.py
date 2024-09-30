@@ -15,7 +15,6 @@ from pytest_lazy_fixtures import lf
 logger = logging.getLogger("NeoLogger")
 
 
-@pytest.mark.grpc_api
 class TestObjectApiLifetime(NeofsEnvTestBase):
     @allure.title("Test object life time")
     @pytest.mark.parametrize(

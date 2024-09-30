@@ -13,7 +13,6 @@ from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from pytest_lazy_fixtures import lf
 
 
-@pytest.mark.session_token
 class TestDynamicObjectSession(NeofsEnvTestBase):
     @allure.title("Test Object Operations with Session Token")
     @pytest.mark.parametrize(

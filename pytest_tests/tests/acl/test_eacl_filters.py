@@ -28,8 +28,6 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest_lazy_fixtures import lf
 
 
-@pytest.mark.acl
-@pytest.mark.acl_filters
 class TestEACLFilters(NeofsEnvTestBase):
     #  SPEC: https://github.com/nspcc-dev/neofs-spec/blob/master/01-arch/07-acl.md
     ATTRIBUTE = {"check_key": "check_value"}

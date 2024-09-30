@@ -104,7 +104,6 @@ def locked_storage_object(
             logger.debug(ex_message)
 
 
-@pytest.mark.grpc_object_lock
 class TestObjectLockWithGrpc(NeofsEnvTestBase):
     @pytest.fixture()
     def new_locked_storage_object(self, user_container: StorageContainer, request: FixtureRequest) -> StorageObjectInfo:
@@ -250,7 +249,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         [lf("simple_object_size"), lf("complex_object_size")],
         ids=["simple object", "complex object"],
     )
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_537
     def test_expired_object_should_be_deleted_after_locks_are_expired(
         self,
         request: FixtureRequest,
@@ -483,7 +481,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
             )
 
     @allure.title("Link object of locked complex object can be dropped via control")
-    @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
@@ -514,7 +511,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                     drop_object(node, new_locked_storage_object.cid, link_object_id)
 
     @allure.title("Chunks of locked complex object can be dropped via control")
-    @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
@@ -545,7 +541,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                     with expect_not_raises():
                         drop_object(node, new_locked_storage_object.cid, chunk[0])
 
-    @pytest.mark.grpc_control
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         [lf("simple_object_size"), lf("complex_object_size")],
@@ -588,7 +583,6 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
             with expect_not_raises():
                 drop_object(node, lock_object_info.cid, lock_object_info.oid)
 
-    @pytest.mark.delete_metadata
     @allure.title(
         "The locked object must be protected from deletion after metabase deletion "
         "(metabase resynchronization must be enabled), and after restarting storage nodes"

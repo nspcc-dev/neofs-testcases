@@ -39,8 +39,6 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv
 
 
-@pytest.mark.acl
-@pytest.mark.acl_extended
 class TestEACLContainer(NeofsEnvTestBase):
     @pytest.fixture(scope="function")
     def eacl_full_placement_container_with_object(self, wallets, file_path) -> tuple[str, str, str]:
@@ -441,8 +439,6 @@ class TestEACLContainer(NeofsEnvTestBase):
         with allure.step("Wait for dropped object replicated"):
             wait_object_replication(cid, oid, len(storage_nodes), self.shell, storage_nodes, self.neofs_env)
 
-    @pytest.mark.trusted_party_proved
-    @pytest.mark.system_eacl
     @allure.title("Test case for verifying the impossible to change system extended ACL")
     def test_deprecated_change_system_eacl(self, wallets, eacl_container_with_objects):
         user_wallet = wallets.get_wallet()
@@ -490,8 +486,6 @@ class TestEACLContainer(NeofsEnvTestBase):
             with allure.step("The eACL must be empty"):
                 assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) is None
 
-    @pytest.mark.trusted_party_proved
-    @pytest.mark.system_eacl
     @allure.title("Test case for verifying the impossible to change system extended ACL if eACL already set")
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
     def test_deprecated_change_system_eacl_if_eacl_already_set(self, wallets, eacl_container_with_objects, address):
@@ -543,7 +537,6 @@ class TestEACLContainer(NeofsEnvTestBase):
         with allure.step("The eACL should not be changed"):
             assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) == old_eacl
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Test case to check compliance with Check IR and STORAGE rules")
     def test_compliance_ir_and_storage_rules(self, wallets, eacl_container_with_objects):
         ir_wallet = wallets.get_ir_wallet()
@@ -679,7 +672,6 @@ class TestEACLContainer(NeofsEnvTestBase):
                     wallet_config=storage_wallet.config_path,
                 )
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT set eacl")
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
     def test_only_owner_can_set_eacl(

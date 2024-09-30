@@ -95,8 +95,6 @@ def storage_objects(
     return storage_objects
 
 
-@pytest.mark.smoke
-@pytest.mark.bearer
 class TestObjectApiWithBearerToken(NeofsEnvTestBase):
     @pytest.mark.parametrize(
         "user_container",

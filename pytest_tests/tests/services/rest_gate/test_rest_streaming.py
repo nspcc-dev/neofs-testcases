@@ -14,7 +14,6 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-@pytest.mark.rest_gate
 class Test_rest_streaming(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 

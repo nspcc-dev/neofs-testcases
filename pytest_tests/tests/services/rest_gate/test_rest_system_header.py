@@ -31,7 +31,6 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.rest_gate
 class Test_rest_system_header(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 

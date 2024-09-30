@@ -38,8 +38,6 @@ deposit = 30
     [lf("simple_object_size"), lf("complex_object_size")],
     ids=["simple object", "complex object"],
 )
-@pytest.mark.acl
-@pytest.mark.storage_group
 class TestStorageGroup(NeofsEnvTestBase):
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, default_wallet):

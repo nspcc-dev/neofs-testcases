@@ -20,8 +20,6 @@ logger = logging.getLogger("NeoLogger")
 blocked_nodes: list[StorageNode] = []
 
 
-@pytest.mark.failover
-@pytest.mark.failover_network
 @pytest.mark.skipif(sys.platform == "darwin", reason="not supported on macos runners")
 class TestFailoverNetwork(NeofsEnvTestBase):
     @allure.step("Restore network")

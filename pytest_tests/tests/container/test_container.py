@@ -46,11 +46,8 @@ def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str,
     assert "GC MARKED" in response.stdout, "Unexected output from control object status command"
 
 
-@pytest.mark.container
-@pytest.mark.container
 class TestContainer(NeofsEnvTestBase):
     @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
-    @pytest.mark.smoke
     @pytest.mark.sanity
     def test_container_creation(self, default_wallet, name):
         scenario_title = f"with name {name}" if name else "without name"
@@ -105,7 +102,6 @@ class TestContainer(NeofsEnvTestBase):
             self.tick_epochs_and_wait(1)
             wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT delete container")
     def test_only_owner_can_delete_container(self, not_owner_wallet: NodeWallet, default_wallet: str):
         cid = create_container(

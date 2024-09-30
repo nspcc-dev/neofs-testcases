@@ -109,7 +109,6 @@ def shards_from_env(contents: str) -> list[Shard]:
     return [Shard.from_config_object(configObj, shard_id) for shard_id in range(num_shards)]
 
 
-@pytest.mark.shard
 class TestControlShard:
     @staticmethod
     def get_shards_from_config(neofs_env: NeoFSEnv, node: StorageNode) -> list[Shard]:

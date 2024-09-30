@@ -8,7 +8,6 @@ from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 
 
-@pytest.mark.additional_contracts
 class TestContract(NeofsEnvTestBase):
     @allure.title("Test operations with external smart contracts")
     def test_contract(self, datadir, client_shell: Shell, neofs_env: NeoFSEnv):
