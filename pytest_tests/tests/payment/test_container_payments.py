@@ -111,6 +111,8 @@ class TestContainerPayments:
             # Temporary workaround for a problem with propagading MaxObjectSize between storage nodes
             restart_storage_nodes(neofs_env.storage_nodes)
 
+            neofs_epoch.tick_epoch_and_wait(neofs_env=neofs_env)
+
             objects_count = int(GB / MAX_OBJECT_SIZE) * objects_count_multiplier
 
         with allure.step("Create container and validate that a user was charged with the required amount of GAS"):
@@ -165,8 +167,9 @@ class TestContainerPayments:
                 ):
                     storage_nodes_info[sn]["objects_count"] += 1
 
-        with allure.step("Wait until a new epoch arrives"):
+        with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
 
         with allure.step("Get balances in the beginning of a new epoch"):
             user_wallet_balance_before_new_epoch = get_neofs_balance(
