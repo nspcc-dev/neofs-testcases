@@ -3,15 +3,18 @@ import json
 import logging
 import os
 import pickle
+import platform
 import random
 import shutil
 import socket
 import stat
 import string
 import subprocess
+import sys
 import tarfile
 import threading
 import time
+import uuid
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
@@ -66,6 +69,7 @@ class NeoFSEnv:
         self.neofs_s3_authmate_path = os.getenv("NEOFS_S3_AUTHMATE_BIN", "./neofs-s3-authmate")
         self.neofs_s3_gw_path = os.getenv("NEOFS_S3_GW_BIN", "./neofs-s3-gw")
         self.neofs_rest_gw_path = os.getenv("NEOFS_REST_GW_BIN", "./neofs-rest-gw")
+        self.warp_path = os.getenv("WARP_BIN", "./warp")
         self.alphabet_wallets_dir = self._generate_temp_dir(prefix="ir_alphabet")
         self.neofs_contract_dir = os.getenv("NEOFS_CONTRACT_DIR", "./neofs-contract")
         self._init_default_wallet()
@@ -370,12 +374,17 @@ class NeoFSEnv:
             (self.neofs_s3_gw_path, "neofs_s3_gw"),
             (self.neofs_rest_gw_path, "neofs_rest_gw"),
             (self.neofs_contract_dir, "neofs_contract"),
+            (self.warp_path, "warp_linux_x86_64"),
+            (self.warp_path, "warp_darwin_arm64"),
         ]
 
         for binary in binaries:
             binary_path, binary_name = binary
             if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
                 neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
+                if not self._is_binary_compatible(neofs_binary_params.get("platform"), neofs_binary_params.get("arch")):
+                    logger.info(f"Skip '{binary_name}' because of unsupported platform/architecture")
+                    continue
                 allure_step_name = "Downloading "
                 allure_step_name += f" {neofs_binary_params['repo']}/"
                 allure_step_name += f"{neofs_binary_params['version']}/"
@@ -393,7 +402,7 @@ class NeoFSEnv:
                         )
                     )
             else:
-                logger.info(f"'{binary_name}' already exists, will not be downloaded")
+                logger.info(f"'{binary_path}' already exists, will not be downloaded")
 
         if len(deploy_threads) > 0:
             for t in deploy_threads:
@@ -401,6 +410,11 @@ class NeoFSEnv:
             logger.info("Wait until all binaries are downloaded")
             for t in deploy_threads:
                 t.join()
+
+    def _is_binary_compatible(self, expected_platform: str = None, expected_arch: str = None) -> bool:
+        if expected_platform is None or expected_arch is None:
+            return True
+        return expected_platform == sys.platform and expected_arch == platform.machine()
 
     def _init_default_wallet(self):
         self.default_wallet = NodeWallet(
@@ -513,6 +527,16 @@ class NeoFSEnv:
             os.remove(target)
             logger.info(f"rename: {file.rstrip(".tar.gz")} into {target}")
             os.rename(file.rstrip(".tar.gz"), target)
+        elif "warp" in file:
+            temp_dir = f"temp_dir_{uuid.uuid4()}"
+            with tarfile.open(target) as tar_file:
+                tar_file.extractall(
+                    path=temp_dir, filter=lambda tarinfo, _: tarinfo if tarinfo.name == "warp" else None
+                )
+            os.remove(target)
+            shutil.move(f"{temp_dir}/warp", target)
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC)
         else:
             # make binary executable
             current_perm = os.stat(target)
@@ -948,6 +972,7 @@ class S3_GW:
         self.tls_key_path = self.neofs_env._generate_temp_file(prefix="s3gw_tls_key")
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
+        self.tls_enabled = True
         self.process = None
 
     def __str__(self):
@@ -966,14 +991,29 @@ class S3_GW:
         del attributes["process"]
         return attributes
 
-    def start(self):
+    def start(self, fresh=True):
         if self.process is not None:
             raise RuntimeError(f"This s3 gw instance has already been started:\n{self}")
-        self.neofs_env.generate_storage_wallet(self.wallet, label="s3")
+        if fresh:
+            self.neofs_env.generate_storage_wallet(self.wallet, label="s3")
         logger.info(f"Generating config for s3 gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching S3 GW: {self}")
         self._launch_process()
+        self._wait_until_ready()
+
+    @allure.step("Stop s3 gw")
+    def stop(self):
+        logger.info(f"Stopping s3 gw:{self}")
+        self.process.terminate()
+        self.process.wait()
+        self.process = None
+
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(2), reraise=True)
+    def _wait_until_ready(self):
+        endpoint = f"https://{self.address}" if self.tls_enabled else f"http://{self.address}"
+        resp = requests.get(endpoint, verify=False)
+        assert resp.status_code == 200
 
     def _generate_config(self):
         tls_crt_template = files("neofs_testlib.env.templates").joinpath("tls.crt").read_text()
@@ -996,6 +1036,7 @@ class S3_GW:
             config_path=self.config_path,
             custom=Path(s3_config_template).is_file(),
             address=self.address,
+            tls_enabled=str(self.tls_enabled).lower(),
             cert_file_path=self.tls_cert_path,
             key_file_path=self.tls_key_path,
             wallet=self.wallet,
