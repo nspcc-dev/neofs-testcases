@@ -43,8 +43,6 @@ check_nodes: list[StorageNode] = []
 
 
 @allure.title("Add one node to cluster")
-@pytest.mark.add_nodes
-@pytest.mark.node_mgmt
 class TestNodeManagement(NeofsEnvTestBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
@@ -120,7 +118,6 @@ class TestNodeManagement(NeofsEnvTestBase):
 
     @allure.title("Add one node to cluster")
     @pytest.mark.skip(reason="Problems with nodes addition on new dev env")
-    @pytest.mark.add_nodes
     def test_add_nodes(
         self,
         default_wallet,
@@ -220,7 +217,6 @@ class TestNodeManagement(NeofsEnvTestBase):
             ("REP 2 IN X CBF 1 SELECT 4 FROM * AS X", 2),
         ],
     )
-    @pytest.mark.node_mgmt
     @allure.title("Test object copies based on placement policy")
     def test_placement_policy(self, default_wallet, placement_rule, expected_copies, simple_object_size):
         """
@@ -279,7 +275,6 @@ class TestNodeManagement(NeofsEnvTestBase):
             ),
         ],
     )
-    @pytest.mark.node_mgmt
     @allure.title("Test object copies and storage nodes based on placement policy")
     def test_placement_policy_with_nodes(
         self,
@@ -305,7 +300,6 @@ class TestNodeManagement(NeofsEnvTestBase):
             ("REP 2 IN X CBF 2 SELECT 6 FROM * AS X", 2),
         ],
     )
-    @pytest.mark.node_mgmt
     @allure.title("Negative cases for placement policy")
     def test_placement_policy_negative(self, default_wallet, placement_rule, expected_copies, simple_object_size):
         """
@@ -316,10 +310,8 @@ class TestNodeManagement(NeofsEnvTestBase):
         with pytest.raises(RuntimeError, match=".*not enough nodes to SELECT from.*"):
             self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
-    @pytest.mark.node_mgmt
     @allure.title("NeoFS object could be dropped using control command")
     @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/537")
-    @pytest.mark.nspcc_dev__neofs_testcases__issue_537
     def test_drop_object(self, default_wallet, complex_object_size, simple_object_size):
         """
         Test checks object could be dropped using `neofs-cli control drop-objects` command.
@@ -359,7 +351,6 @@ class TestNodeManagement(NeofsEnvTestBase):
                 self.wait_for_obj_dropped(wallet.path, cid, oid, endpoint, get_object)
                 self.wait_for_obj_dropped(wallet.path, cid, oid, endpoint, head_object)
 
-    @pytest.mark.node_mgmt
     @pytest.mark.skip(reason="Need to clarify scenario")
     @allure.title("Control Operations with storage nodes")
     def test_shards(

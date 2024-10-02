@@ -31,7 +31,6 @@ def return_stopped_storage_nodes(neofs_env: NeoFSEnv) -> None:
     wait_all_storage_nodes_returned(neofs_env)
 
 
-@pytest.mark.failover
 class TestFailoverStorage(NeofsEnvTestBase):
     @allure.title("Lose and return storage node's process")
     @pytest.mark.parametrize("hard_restart", [True, False])

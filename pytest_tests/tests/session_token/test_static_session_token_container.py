@@ -40,7 +40,6 @@ from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.shell import Shell
 
 
-@pytest.mark.static_session_container
 class TestSessionTokenContainer(NeofsEnvTestBase):
     @pytest.fixture(scope="module")
     def static_sessions(
@@ -280,7 +279,6 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     )
                 assert cid in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Not owner user can NOT delete container")
     def test_not_owner_user_can_not_delete_container(
         self,
@@ -325,7 +323,6 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     force=True,
                 )
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Not trusted party user can NOT delete container")
     def test_not_trusted_party_user_can_not_delete_container(
         self,
@@ -463,7 +460,6 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     )
                 assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
-    @pytest.mark.trusted_party_proved
     @allure.title("Not owner and not trusted party can NOT set eacl")
     def test_static_session_token_container_set_eacl_only_trusted_party_proved_by_the_container_owner(
         self,

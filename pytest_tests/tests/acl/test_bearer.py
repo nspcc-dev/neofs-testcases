@@ -46,8 +46,6 @@ from neofs_testlib.utils.wallet import get_last_address_from_wallet
 ContainerTuple = namedtuple("ContainerTuple", ["cid", "objects_oids"])
 
 
-@pytest.mark.acl
-@pytest.mark.acl_bearer
 class TestACLBearer(NeofsEnvTestBase):
     @pytest.mark.parametrize("role", [EACLRole.USER, EACLRole.OTHERS])
     def test_bearer_token_operations(self, wallets, eacl_container_with_objects, role):

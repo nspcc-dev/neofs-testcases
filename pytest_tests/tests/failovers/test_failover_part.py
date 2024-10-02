@@ -27,10 +27,8 @@ def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoF
     return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
 
 
-@pytest.mark.failover_part
 class TestFailoverNodePart(NeofsEnvTestBase):
     @allure.title("Enable resync metabase, delete metadata and get object")
-    @pytest.mark.delete_metadata
     def test_enable_resync_metabase_delete_metadata(
         self,
         enable_metabase_resync_on_start,
@@ -60,7 +58,6 @@ class TestFailoverNodePart(NeofsEnvTestBase):
                     )
 
     @allure.title("Delete metadata without resync metabase enabling, delete metadata try to get object")
-    @pytest.mark.delete_metadata
     def test_delete_metadata(self, user_container: StorageContainer, simple_object_size: int):
         storage_object = user_container.generate_object(simple_object_size)
 

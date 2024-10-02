@@ -31,7 +31,6 @@ OBJECT_NOT_FOUND_ERROR = "not found"
     name="neofs-rest-gateway",
 )
 @pytest.mark.sanity
-@pytest.mark.rest_gate
 class TestRestGate(NeofsEnvTestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
@@ -278,7 +277,6 @@ class TestRestGate(NeofsEnvTestBase):
 
     @allure.link("https://github.com/nspcc-dev/neofs-rest-gw#docs", name="docs")
     @allure.title("Test Put over REST, Get over REST")
-    @pytest.mark.smoke
     def test_put_rest_get_rest(self, complex_object_size, simple_object_size, gw_params):
         """
         Test that object can be put and get using REST interface.
@@ -492,7 +490,6 @@ class TestRestGate(NeofsEnvTestBase):
                 endpoint=gw_params["endpoint"],
             )
 
-    @pytest.mark.long
     @allure.title("Test Put over REST, Get over REST for large object")
     def test_put_rest_get_rest_large_file(self, complex_object_size, gw_params):
         """

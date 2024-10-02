@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import allure
 import pytest
@@ -109,7 +109,7 @@ class TestS3Bucket(TestNeofsS3Base):
             bucket = s3_bucket.create_bucket_s3(
                 self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
             )
-            date_obj = datetime.utcnow() + timedelta(days=1)
+            date_obj = datetime.now(UTC) + timedelta(days=1)
             with pytest.raises(Exception, match=r".*Object Lock configuration does not exist for this bucket.*"):
                 # An error occurred (ObjectLockConfigurationNotFoundError) when calling the PutObject operation (reached max retries: 0):
                 # Object Lock configuration does not exist for this bucket
@@ -124,7 +124,7 @@ class TestS3Bucket(TestNeofsS3Base):
             bucket_1 = s3_bucket.create_bucket_s3(
                 self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
             )
-            date_obj_1 = datetime.utcnow() + timedelta(days=1)
+            date_obj_1 = datetime.now(UTC) + timedelta(days=1)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket_1,

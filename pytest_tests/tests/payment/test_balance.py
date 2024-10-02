@@ -14,7 +14,6 @@ logger = logging.getLogger("NeoLogger")
 DEPOSIT_AMOUNT = 30
 
 
-@pytest.mark.payments
 @pytest.mark.skip("Unsupported of current version of NeoFSEnv")
 class TestBalanceAccounting(NeofsEnvTestBase):
     @pytest.fixture(scope="class")

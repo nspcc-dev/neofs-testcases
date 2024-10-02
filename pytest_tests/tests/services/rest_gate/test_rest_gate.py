@@ -30,7 +30,6 @@ OBJECT_NOT_FOUND_ERROR = "not found"
     name="neofs-rest-gateway",
 )
 @pytest.mark.sanity
-@pytest.mark.rest_gate
 class TestRestGate(NeofsEnvTestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
@@ -287,7 +286,6 @@ class TestRestGate(NeofsEnvTestBase):
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
     @allure.title("Test Put over HTTP, Get over HTTP")
-    @pytest.mark.smoke
     def test_put_http_get_http(self, complex_object_size, simple_object_size, gw_params):
         """
         Test that object can be put and get using HTTP interface.
@@ -442,7 +440,6 @@ class TestRestGate(NeofsEnvTestBase):
                         cid=cid, oid=oid, endpoint=gw_params["endpoint"], request_path=f"/get/{cid}/{oid}"
                     )
 
-    @pytest.mark.long
     @allure.title("Test Put over HTTP, Get over HTTP for large object")
     def test_put_http_get_http_large_file(self, complex_object_size, gw_params):
         """

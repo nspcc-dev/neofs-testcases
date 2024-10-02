@@ -548,9 +548,9 @@ def get_netmap_netinfo(
             raise ValueError(f"Invalid value: {val}")
 
     patterns = [
-        (re.compile("(.*): (\d+)"), int),
+        (re.compile(r"(.*): (\d+)"), int),
         (re.compile("(.*): (false|true)"), str_to_bool),
-        (re.compile("(.*): (\d+\.\d+)"), float),
+        (re.compile(r"(.*): (\d+\.\d+)"), float),
     ]
     for pattern, func in patterns:
         for setting, value in re.findall(pattern, output.stdout):

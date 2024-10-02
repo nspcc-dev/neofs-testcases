@@ -21,7 +21,6 @@ CONTAINERS_NAME_PREFIX = "homo_hash_container_"
 
 
 @allure.title("Homomorphic hash disabling/enabling")
-@pytest.mark.homo_hash
 class TestHomomorphicHash(NeofsEnvTestBase):
     @pytest.fixture(scope="class")
     def set_homomorphic_hash_to_default(self):

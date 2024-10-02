@@ -137,7 +137,6 @@ def static_sessions(
     }
 
 
-@pytest.mark.static_session
 class TestObjectStaticSession(NeofsEnvTestBase):
     @allure.title("Validate static session with read operations")
     @pytest.mark.parametrize(
@@ -173,7 +172,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
                 )
 
     @allure.title("Validate static session with range operations")
-    @pytest.mark.static_session
     @pytest.mark.parametrize(
         "method_under_test,verb",
         [(get_range, ObjectVerb.RANGE), (get_range_hash, ObjectVerb.RANGEHASH)],
@@ -209,7 +207,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
                     )
 
     @allure.title("Validate static session with search operation")
-    @pytest.mark.static_session
     def test_static_session_search(
         self,
         user_wallet: NodeWallet,
@@ -235,7 +232,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         assert set(expected_object_ids) == set(actual_object_ids)
 
     @allure.title("Validate static session with object id not in session")
-    @pytest.mark.static_session
     def test_static_session_unrelated_object(
         self,
         user_wallet: NodeWallet,
@@ -258,7 +254,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session with user id not in session")
-    @pytest.mark.static_session
     def test_static_session_head_unrelated_user(
         self,
         stranger_wallet: NodeWallet,
@@ -283,7 +278,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session with wrong verb in session")
-    @pytest.mark.static_session
     def test_static_session_head_wrong_verb(
         self,
         user_wallet: NodeWallet,
@@ -308,7 +302,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session with container id not in session")
-    @pytest.mark.static_session
     def test_static_session_unrelated_container(
         self,
         user_wallet: NodeWallet,
@@ -334,7 +327,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which signed by another wallet")
-    @pytest.mark.static_session
     def test_static_session_signed_by_other(
         self,
         owner_wallet: NodeWallet,
@@ -371,7 +363,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which signed for another container")
-    @pytest.mark.static_session
     def test_static_session_signed_for_other_container(
         self,
         owner_wallet: NodeWallet,
@@ -410,7 +401,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which wasn't signed")
-    @pytest.mark.static_session
     def test_static_session_without_sign(
         self,
         owner_wallet: NodeWallet,
@@ -445,7 +435,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which expires at next epoch")
-    @pytest.mark.static_session
     def test_static_session_expiration_at_next(
         self,
         owner_wallet: NodeWallet,
@@ -498,7 +487,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which is valid starting from next epoch")
-    @pytest.mark.static_session
     def test_static_session_start_at_next(
         self,
         owner_wallet: NodeWallet,
@@ -563,7 +551,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which is already expired")
-    @pytest.mark.static_session
     def test_static_session_already_expired(
         self,
         owner_wallet: NodeWallet,
@@ -651,7 +638,6 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             )
 
     @allure.title("Validate static session which is issued in future epoch")
-    @pytest.mark.static_session
     def test_static_session_invalid_issued_epoch(
         self,
         owner_wallet: NodeWallet,

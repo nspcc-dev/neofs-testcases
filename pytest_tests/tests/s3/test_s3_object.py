@@ -1,7 +1,7 @@
 import os
 import string
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from random import choices, sample
 
 import allure
@@ -661,7 +661,7 @@ class TestS3Object(TestNeofsS3Base):
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put object with lock-mode GOVERNANCE lock-retain-until-date +1day, lock-legal-hold-status"):
-            date_obj = datetime.utcnow() + timedelta(days=1)
+            date_obj = datetime.now(UTC) + timedelta(days=1)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -675,7 +675,7 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
         ):
-            date_obj = datetime.utcnow() + timedelta(days=2)
+            date_obj = datetime.now(UTC) + timedelta(days=2)
             generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_object.put_object_s3(
                 self.s3_client,
@@ -689,7 +689,7 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
         ):
-            date_obj = datetime.utcnow() + timedelta(days=3)
+            date_obj = datetime.now(UTC) + timedelta(days=3)
             generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_object.put_object_s3(
                 self.s3_client,
@@ -710,7 +710,7 @@ class TestS3Object(TestNeofsS3Base):
                 s3_object.put_object_s3(self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE")
 
         with allure.step("Put object with lock-mode and past date"):
-            date_obj = datetime.utcnow() - timedelta(days=3)
+            date_obj = datetime.now(UTC) - timedelta(days=3)
             with pytest.raises(
                 Exception,
                 match=r".*until date must be in the future*",

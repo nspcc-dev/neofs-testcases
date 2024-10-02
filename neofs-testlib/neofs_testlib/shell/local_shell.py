@@ -1,7 +1,7 @@
 import logging
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import IO, Optional
 
 import pexpect
@@ -33,7 +33,7 @@ class LocalShell(Shell):
         return self._exec_non_interactive(command, options)
 
     def _exec_interactive(self, command: str, options: CommandOptions) -> CommandResult:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         log_file = tempfile.TemporaryFile()  # File is reliable cross-platform way to capture output
 
         try:
@@ -54,7 +54,7 @@ class LocalShell(Shell):
         finally:
             result = self._get_pexpect_process_result(command_process)
             log_file.close()
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
             self._report_command_result(command, start_time, end_time, result)
 
         if options.check and result.return_code != 0:
@@ -62,7 +62,7 @@ class LocalShell(Shell):
         return result
 
     def _exec_non_interactive(self, command: str, options: CommandOptions) -> CommandResult:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         result = None
 
         try:
@@ -94,7 +94,7 @@ class LocalShell(Shell):
         except (OSError, subprocess.SubprocessError) as exc:
             raise RuntimeError(f"Command: {command}\nOutput: {exc.strerror}") from exc
         finally:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
             self._report_command_result(command, start_time, end_time, result)
         return result
 

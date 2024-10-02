@@ -1,6 +1,6 @@
 import calendar
-import datetime
 import logging
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 
 import allure
@@ -31,7 +31,6 @@ NEOFS_EXPIRATION_TIMESTAMP = "Neofs-Expiration-Timestamp"
 NEOFS_EXIPRATION_RFC3339 = "Neofs-Expiration-RFC3339"
 
 
-@pytest.mark.rest_gate
 class Test_rest_system_header(NeofsEnvTestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 2 FROM * AS X"
 
@@ -70,9 +69,9 @@ class Test_rest_system_header(NeofsEnvTestBase):
 
     @allure.title("Return future timestamp after N epochs are passed")
     def epoch_count_into_timestamp(self, epoch_duration: int, epoch: int, rfc3339: Optional[bool] = False) -> str:
-        current_datetime = datetime.datetime.utcnow()
+        current_datetime = datetime.now()
         epoch_count_in_seconds = epoch_duration * epoch
-        future_datetime = current_datetime + datetime.timedelta(seconds=epoch_count_in_seconds)
+        future_datetime = current_datetime + timedelta(seconds=epoch_count_in_seconds)
         if rfc3339:
             return future_datetime.isoformat("T") + "Z"
         else:
