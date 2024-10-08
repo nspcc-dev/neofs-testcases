@@ -7,6 +7,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     EXPIRED_SESSION_TOKEN,
+    INVALID_SESSION_TOKEN_OWNER,
     MALFORMED_REQUEST,
     OBJECT_ACCESS_DENIED,
     OBJECT_NOT_FOUND,
@@ -352,7 +353,10 @@ class TestObjectStaticSession(NeofsEnvTestBase):
             temp_directory,
         )
         signed_token_file = sign_session_token(self.shell, session_token_file, stranger_wallet)
-        with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
+        expected_error = INVALID_SESSION_TOKEN_OWNER
+        if self.neofs_env.storage_nodes[0]._get_version() <= "0.43.0":
+            expected_error = OBJECT_ACCESS_DENIED
+        with pytest.raises(Exception, match=expected_error):
             head_object(
                 user_wallet.path,
                 storage_object.cid,
