@@ -19,7 +19,7 @@ max_clients_deadline: 30s
 server:
   - address: {{ address }}
     tls:
-      enabled: true
+      enabled: {{ tls_enabled }}
       cert_file: {{ cert_file_path }}
       key_file:  {{ key_file_path }}
 

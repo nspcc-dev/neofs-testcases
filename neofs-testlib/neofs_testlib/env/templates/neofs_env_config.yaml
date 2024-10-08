@@ -48,3 +48,17 @@ binaries:
         repo: 'nspcc-dev/neofs-contract'
         version: 'v0.19.1'
         file: 'neofs-contract-v0.19.1.tar.gz'
+
+    warp_linux_x86_64:
+        platform: 'linux'
+        arch: 'x86_64'
+        repo: 'minio/warp'
+        version: 'v1.0.2'
+        file: 'warp_Linux_x86_64.tar.gz'
+
+    warp_darwin_arm64:
+        platform: 'darwin'
+        arch: 'arm64'
+        repo: 'minio/warp'
+        version: 'v1.0.2'
+        file: 'warp_Darwin_arm64.tar.gz'

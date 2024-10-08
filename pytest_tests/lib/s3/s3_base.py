@@ -53,6 +53,8 @@ def _run_with_passwd(cmd: str, password: str) -> str:
 
 class TestNeofsS3Base(NeofsEnvTestBase):
     s3_client: Any = None  # noqa
+    access_key_id: str = None
+    secret_access_key: str = None
 
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
@@ -85,6 +87,8 @@ class TestNeofsS3Base(NeofsEnvTestBase):
             client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
         TestNeofsS3Base.s3_client = client
         TestNeofsS3Base.wallet = wallet
+        TestNeofsS3Base.access_key_id = access_key_id
+        TestNeofsS3Base.secret_access_key = secret_access_key
 
     @pytest.fixture
     @allure.title("Create/delete bucket")
