@@ -12,6 +12,7 @@ from helpers.acl import (
 from helpers.container import create_container, delete_container, get_container, list_containers
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
+    CONTAINER_CREATION_TIMED_OUT,
     CONTAINER_DELETION_TIMED_OUT,
     EACL_TIMED_OUT,
     INVALID_EXP,
@@ -201,10 +202,11 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
                     wait_for_creation=False,
                 )
 
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/2947")
     def test_static_session_token_container_create_signed_with_wrong_wallet(
         self, owner_wallet: NodeWallet, user_wallet: NodeWallet, stranger_wallet: NodeWallet, temp_directory: str
     ):
+        if self.neofs_env.storage_nodes[0]._get_version() <= "0.43.0":
+            pytest.skip("This test runs only on post 0.43.0 neofs-node version")
         session_token_file = generate_container_session_token(
             owner_wallet=user_wallet,
             session_wallet=user_wallet,
@@ -213,7 +215,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
         )
         container_token = sign_session_token(self.shell, session_token_file, stranger_wallet)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(Exception, match=CONTAINER_CREATION_TIMED_OUT):
             create_container(
                 user_wallet.path,
                 session_token=container_token,

@@ -955,6 +955,13 @@ class StorageNode:
         assert "Health status: READY" in result.stdout, "Health is not ready"
         assert "Network status: ONLINE" in result.stdout, "Network is not online"
 
+    def _get_version(self) -> str:
+        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_node_path, "--version")
+        for line in raw_version_output.splitlines():
+            if "Version:" in line:
+                return line.split("Version:")[1].strip()
+        return ""
+
 
 class S3_GW:
     def __init__(self, neofs_env: NeoFSEnv):
