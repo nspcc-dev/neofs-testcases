@@ -790,7 +790,7 @@ class InnerRing:
             stderr=stderr_fp,
         )
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.grpc_address, post_data="--ir")
