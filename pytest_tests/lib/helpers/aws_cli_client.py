@@ -6,7 +6,7 @@ from typing import Optional
 
 import allure
 from helpers.cli_helpers import _cmd_run
-from helpers.common import ASSETS_DIR
+from helpers.common import get_assets_dir_path
 
 logger = logging.getLogger("NeoLogger")
 REGULAR_TIMEOUT = 90
@@ -258,7 +258,7 @@ class AwsCliClient:
         return self._to_json(output)
 
     def delete_objects(self, Bucket: str, Delete: dict) -> dict:
-        file_path = os.path.join(os.getcwd(), ASSETS_DIR, "delete.json")
+        file_path = os.path.join(get_assets_dir_path(), "delete.json")
         with open(file_path, "w") as out_file:
             out_file.write(json.dumps(Delete))
         logger.info(f"Input file for delete-objects: {json.dumps(Delete)}")
@@ -505,7 +505,7 @@ class AwsCliClient:
         return self._to_json(output)
 
     def complete_multipart_upload(self, Bucket: str, Key: str, UploadId: str, MultipartUpload: dict) -> dict:
-        file_path = os.path.join(os.getcwd(), ASSETS_DIR, "parts.json")
+        file_path = os.path.join(get_assets_dir_path(), "parts.json")
         with open(file_path, "w") as out_file:
             out_file.write(json.dumps(MultipartUpload))
         logger.info(f"Input file for complete-multipart-upload: {json.dumps(MultipartUpload)}")

@@ -13,7 +13,7 @@ class TestWallet(TestCase):
     EMPTY_PASSWORD = ""
 
     def test_init_wallet(self):
-        wallet_file_path = f"{str(uuid4())}.json"
+        wallet_file_path = f"wallet-{str(uuid4())}.json"
         for password in (self.EMPTY_PASSWORD, self.DEFAULT_PASSWORD):
             wrong_password = "wrong_password"
             init_wallet(wallet_file_path, password)
@@ -26,7 +26,7 @@ class TestWallet(TestCase):
             os.unlink(wallet_file_path)
 
     def test_get_last_address_from_wallet(self):
-        wallet_file_path = f"{str(uuid4())}.json"
+        wallet_file_path = f"wallet-{str(uuid4())}.json"
         init_wallet(wallet_file_path, self.DEFAULT_PASSWORD)
         with open(wallet_file_path, "r") as wallet_file:
             wallet = Wallet.from_json(json.load(wallet_file), passwords=[self.DEFAULT_PASSWORD])
@@ -38,7 +38,7 @@ class TestWallet(TestCase):
         os.unlink(wallet_file_path)
 
     def test_get_last_address_from_wallet_with_multiple_accounts(self):
-        wallet_file_path = f"{str(uuid4())}.json"
+        wallet_file_path = f"wallet-{str(uuid4())}.json"
 
         wallet = Wallet()
         account1 = neo3_account.Account.create_new(self.DEFAULT_PASSWORD)

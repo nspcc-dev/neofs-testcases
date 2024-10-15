@@ -18,7 +18,7 @@ from helpers.acl import (
     set_eacl,
     sign_bearer,
 )
-from helpers.common import ASSETS_DIR, TEST_FILES_DIR
+from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.container import (
     DEFAULT_PLACEMENT_RULE,
     REP_2_FOR_3_NODES_PLACEMENT_RULE,
@@ -263,7 +263,7 @@ class TestObjectApiWithBearerToken(NeofsEnvTestBase):
                 shell=self.shell,
             )
 
-        path_to_bearer = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
+        path_to_bearer = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
 
         create_bearer_token(
             self.shell,

@@ -5,7 +5,7 @@ import sys
 
 import allure
 import pytest
-from helpers.common import ASSETS_DIR, TEST_FILES_DIR
+from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
@@ -499,8 +499,8 @@ class TestObjectApi(NeofsEnvTestBase):
 
         for common_prefix, expected_oids in (
             ("/", all_oids),
-            (os.path.join(os.getcwd(), ASSETS_DIR), all_oids),
-            (os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR), all_oids),
+            (os.path.join(get_assets_dir_path()), all_oids),
+            (os.path.join(get_assets_dir_path(), TEST_FILES_DIR), all_oids),
             (file_path, [objects[file_path]]),
         ):
             with allure.step(f"Search objects by path: {common_prefix}"):

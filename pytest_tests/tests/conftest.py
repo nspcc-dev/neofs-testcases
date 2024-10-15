@@ -3,16 +3,17 @@ import logging
 import os
 import shutil
 import time
+from pathlib import Path
 
 import allure
 import pytest
 from helpers.common import (
-    ASSETS_DIR,
     COMPLEX_OBJECT_CHUNKS_COUNT,
     COMPLEX_OBJECT_TAIL_SIZE,
     SIMPLE_OBJECT_SIZE,
     TEST_FILES_DIR,
     TEST_OBJECTS_DIR,
+    get_assets_dir_path,
 )
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import get_netmap_netinfo
@@ -47,11 +48,15 @@ def neofs_env(temp_directory, artifacts_directory, request):
 
     if request.session.testsfailed:
         env_files_path = os.path.join(os.getcwd(), neofs_env._env_dir)
-        env_files_archived = shutil.make_archive(f"neofs_env_{neofs_env._id}", "zip", env_files_path)
+        env_files_archived = shutil.make_archive(
+            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", env_files_path
+        )
         allure.attach.file(env_files_archived, name="neofs env files", extension="zip")
 
-        temp_files_path = os.path.join(os.getcwd(), ASSETS_DIR)
-        temp_files_archived = shutil.make_archive("temp_files", "zip", temp_files_path)
+        temp_files_path = os.path.join(get_assets_dir_path())
+        temp_files_archived = shutil.make_archive(
+            os.path.join(get_assets_dir_path(), "temp_files"), "zip", temp_files_path
+        )
         allure.attach.file(temp_files_archived, name="tests temp files", extension="zip")
 
 
@@ -92,7 +97,7 @@ def complex_object_size(max_object_size: int) -> int:
 @allure.title("Prepare tmp directory")
 def temp_directory(request) -> str:
     with allure.step("Prepare tmp directory"):
-        full_path = os.path.join(os.getcwd(), ASSETS_DIR)
+        full_path = get_assets_dir_path()
         create_dir(full_path)
 
     yield full_path
@@ -177,7 +182,7 @@ def file_path(simple_object_size, artifacts_directory):
 def create_dir(dir_path: str) -> None:
     with allure.step("Create directory"):
         remove_dir(dir_path)
-        os.mkdir(dir_path)
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
 
 
 def remove_dir(dir_path: str) -> None:
@@ -213,7 +218,7 @@ def neofs_env_with_mainchain(request):
 
     if request.session.testsfailed:
         logs_id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
-        logs_path = os.path.join(os.getcwd(), ASSETS_DIR, f"neofs_env_with_mainchain_logs_{logs_id}")
+        logs_path = os.path.join(get_assets_dir_path(), f"neofs_env_with_mainchain_logs_{logs_id}")
         os.makedirs(logs_path, exist_ok=True)
 
         shutil.copyfile(neofs_env.main_chain.stderr, f"{logs_path}/main_chain_log.txt")
@@ -224,15 +229,17 @@ def neofs_env_with_mainchain(request):
         for idx, sn in enumerate(neofs_env.storage_nodes):
             shutil.copyfile(sn.stderr, f"{logs_path}/sn_{idx}_log.txt")
 
-        logs_zip_file_path = shutil.make_archive(f"neofs_env_with_mainchain_logs_{logs_id}", "zip", logs_path)
+        logs_zip_file_path = shutil.make_archive(
+            os.path.join(get_assets_dir_path(), f"neofs_env_with_mainchain_logs_{logs_id}"), "zip", logs_path
+        )
         allure.attach.file(logs_zip_file_path, name="neofs env with main chain files", extension="zip")
     logger.info(f"Cleaning up dir {neofs_env}")
-    shutil.rmtree(os.path.join(os.getcwd(), neofs_env._env_dir), ignore_errors=True)
+    shutil.rmtree(os.path.join(get_assets_dir_path(), neofs_env._env_dir), ignore_errors=True)
 
 
 @pytest.fixture(scope="module", autouse=True)
 def cleanup_temp_files():
     yield
-    for f in os.listdir(os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR)):
+    for f in os.listdir(os.path.join(get_assets_dir_path(), TEST_FILES_DIR)):
         if f.startswith("temp_file"):
-            os.remove(os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f))
+            os.remove(os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f))

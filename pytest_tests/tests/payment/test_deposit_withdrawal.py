@@ -12,7 +12,7 @@ class TestDepositWithdrawal:
 
         with allure.step("Create wallet for deposits/withdrawals"):
             wallet = NodeWallet(
-                path=neofs_env._generate_temp_file(prefix="deposit_withdrawal_test_wallet"),
+                path=neofs_env._generate_temp_file(neofs_env._env_dir, prefix="deposit_withdrawal_test_wallet"),
                 address="",
                 password=neofs_env.default_password,
             )

@@ -5,7 +5,7 @@ from random import choice, choices
 import allure
 import pytest
 from helpers.aws_cli_client import AwsCliClient
-from helpers.common import ASSETS_DIR
+from helpers.common import get_assets_dir_path
 from helpers.file_helper import (
     generate_file,
     generate_file_with_content,
@@ -133,8 +133,8 @@ class TestS3(TestNeofsS3Base):
         """
         Test checks sync directory with AWS CLI utility.
         """
-        file_path_1 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_1")
-        file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
+        file_path_1 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_1")
+        file_path_2 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_2")
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
         generate_file_with_content(simple_object_size, file_path=file_path_1)

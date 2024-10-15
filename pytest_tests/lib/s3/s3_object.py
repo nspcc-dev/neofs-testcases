@@ -9,7 +9,7 @@ import urllib3
 from botocore.exceptions import ClientError
 from helpers.aws_cli_client import AwsCliClient
 from helpers.cli_helpers import log_command_execution
-from helpers.common import ASSETS_DIR
+from helpers.common import get_assets_dir_path
 from s3.s3_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
@@ -302,7 +302,7 @@ def get_object_s3(
     range: Optional[list] = None,
     full_output: bool = False,
 ):
-    filename = os.path.join(os.getcwd(), ASSETS_DIR, str(uuid.uuid4()))
+    filename = os.path.join(get_assets_dir_path(), str(uuid.uuid4()))
     try:
         params = {"Bucket": bucket, "Key": object_key}
         if version_id:

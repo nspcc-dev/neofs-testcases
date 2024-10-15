@@ -20,7 +20,7 @@ from helpers.acl import (
     sign_bearer,
     wait_for_cache_expired,
 )
-from helpers.common import ASSETS_DIR, TEST_FILES_DIR
+from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.container import create_container
 from helpers.container_access import (
     check_custom_access_to_container,
@@ -253,7 +253,7 @@ class TestACLBearer(NeofsEnvTestBase):
                 )
             eacl = [EACLRule(access=EACLAccess.ALLOW, role=user_role, operation=op) for op in EACLOperation]
 
-            path_to_bearer = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
+            path_to_bearer = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"bearer_token_{str(uuid.uuid4())}")
 
             create_bearer_token(
                 self.shell,

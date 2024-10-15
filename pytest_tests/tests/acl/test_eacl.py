@@ -677,7 +677,7 @@ class TestEACLContainer(NeofsEnvTestBase):
     def test_only_owner_can_set_eacl(
         self, wallets, eacl_full_placement_container_with_object: tuple[str, str, str], not_owner_wallet: str, address
     ):
-        not_owner_wallet_config_path = self.neofs_env._generate_temp_file(extension="yml")
+        not_owner_wallet_config_path = self.neofs_env._generate_temp_file(self.neofs_env._env_dir, extension="yml")
         NeoFSEnv.generate_config_file(
             config_template="cli_cfg.yaml",
             config_path=not_owner_wallet_config_path,

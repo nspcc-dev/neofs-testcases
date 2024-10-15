@@ -42,7 +42,7 @@ def neofs_env(request):
 
 @pytest.fixture
 def wallet() -> NodeWallet:
-    wallet_name = f"{str(uuid.uuid4())}.json"
+    wallet_name = f"wallet-{str(uuid.uuid4())}.json"
     wallet_path = os.path.join(os.getcwd(), wallet_name)
     wallet_password = "password"
     wallet_address = init_wallet(wallet_path, wallet_password)
@@ -126,7 +126,7 @@ def test_s3_gw_put_get(neofs_env: NeoFSEnv, s3_creds, wallet: NodeWallet):
     s3_client.create_bucket(**params)
     sleep(5)
 
-    filename = neofs_env._generate_temp_file()
+    filename = neofs_env._generate_temp_file(neofs_env._env_dir)
 
     with open(filename, "w") as file:
         file.write("123456789")
@@ -160,7 +160,7 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
     containers = result.stdout.split()
     assert cid in containers
 
-    filename = neofs_env._generate_temp_file()
+    filename = neofs_env._generate_temp_file(neofs_env._env_dir)
 
     with open(filename, "w") as file:
         file.write("123456789")
