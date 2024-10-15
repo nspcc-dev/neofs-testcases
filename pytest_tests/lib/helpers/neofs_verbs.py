@@ -239,6 +239,7 @@ def put_object(
     no_progress: bool = True,
     session: Optional[str] = None,
     lifetime: Optional[int] = None,
+    timeout: Optional[str] = "60s",
 ):
     """
     PUT of given file.
@@ -274,6 +275,7 @@ def put_object(
         no_progress=no_progress,
         xhdr=xhdr,
         session=session,
+        timeout=timeout,
     )
 
     # splitting CLI output to lines and taking the penultimate line
