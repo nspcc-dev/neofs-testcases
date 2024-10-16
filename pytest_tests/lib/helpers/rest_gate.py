@@ -12,7 +12,7 @@ import allure
 import requests
 from helpers.aws_cli_client import LONG_TIMEOUT
 from helpers.cli_helpers import _cmd_run
-from helpers.common import ASSETS_DIR, SIMPLE_OBJECT_SIZE
+from helpers.common import SIMPLE_OBJECT_SIZE, get_assets_dir_path
 from helpers.complex_object_actions import get_nodes_without_object
 from helpers.file_helper import get_file_hash
 from helpers.neofs_verbs import get_object
@@ -64,7 +64,7 @@ def get_via_rest_gate(
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{oid}")
+    file_path = os.path.join(get_assets_dir_path(), f"{cid}_{oid}")
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
     if not return_response:
@@ -94,14 +94,14 @@ def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_archive.zip")
+    file_path = os.path.join(get_assets_dir_path(), f"{cid}_archive.zip")
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
 
     with zipfile.ZipFile(file_path, "r") as zip_ref:
-        zip_ref.extractall(ASSETS_DIR)
+        zip_ref.extractall(get_assets_dir_path())
 
-    return os.path.join(os.getcwd(), ASSETS_DIR, prefix)
+    return os.path.join(get_assets_dir_path(), prefix)
 
 
 @allure.step("Get via REST Gate by attribute")
@@ -138,7 +138,7 @@ def get_via_rest_gate_by_attribute(
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{cid}_{str(uuid.uuid4())}")
+    file_path = os.path.join(get_assets_dir_path(), f"{cid}_{str(uuid.uuid4())}")
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
     return file_path

@@ -42,3 +42,4 @@ neofs-contract
 /warp.*
 neofs_env_*.zip
 temp_files.zip
+test-run-*/

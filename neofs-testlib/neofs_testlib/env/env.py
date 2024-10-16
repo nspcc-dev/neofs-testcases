@@ -26,6 +26,8 @@ import allure
 import jinja2
 import requests
 import yaml
+from helpers.common import get_assets_dir_path
+
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
@@ -53,7 +55,7 @@ class NeoFSEnv:
 
     def __init__(self, neofs_env_config: dict = None):
         self._id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
-        self._env_dir = f"env_files/neofs-env-{self._id}"
+        self._env_dir = f"{get_assets_dir_path()}/env_files/neofs-env-{self._id}"
 
         self.domain = "localhost"
         self.default_password = "password"
@@ -118,12 +120,14 @@ class NeoFSEnv:
         return NeoGo(self.shell, self.neo_go_path)
 
     def generate_cli_config(self, wallet: NodeWallet):
-        cli_config_path = self._generate_temp_file(extension="yml", prefix="cli_config")
+        cli_config_path = self._generate_temp_file(os.path.dirname(wallet.path), extension="yml", prefix="cli_config")
         NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=cli_config_path, wallet=wallet)
         return cli_config_path
 
     def generate_neo_go_config(self, wallet: NodeWallet):
-        neo_go_config_path = self._generate_temp_file(extension="yml", prefix="neo_go_config")
+        neo_go_config_path = self._generate_temp_file(
+            os.path.dirname(wallet.path), extension="yml", prefix="neo_go_config"
+        )
         NeoFSEnv.generate_config_file(config_template="neo_go_cfg.yaml", config_path=neo_go_config_path, wallet=wallet)
         return neo_go_config_path
 
@@ -323,14 +327,14 @@ class NeoFSEnv:
             ir.process.kill()
 
     def persist(self) -> str:
-        persisted_path = self._generate_temp_file(prefix="persisted_env")
+        persisted_path = self._generate_temp_file(self._env_dir, prefix="persisted_env")
         with open(persisted_path, "wb") as fp:
             pickle.dump(self, fp)
         logger.info(f"Persist env at: {persisted_path}")
         return persisted_path
 
     def log_env_details_to_file(self):
-        with open("env_details", "w") as fp:
+        with open(f"{get_assets_dir_path()}/env_details", "w") as fp:
             env_details = ""
 
             env_details += f"{self.main_chain}\n"
@@ -418,7 +422,7 @@ class NeoFSEnv:
 
     def _init_default_wallet(self):
         self.default_wallet = NodeWallet(
-            path=self._generate_temp_file(prefix="default_neofs_env_wallet"),
+            path=self._generate_temp_file(self._env_dir, prefix="default_neofs_env_wallet"),
             address="",
             password=self.default_password,
         )
@@ -542,8 +546,8 @@ class NeoFSEnv:
             current_perm = os.stat(target)
             os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
 
-    def _generate_temp_file(self, extension: str = "", prefix: str = "tmp_file") -> str:
-        file_path = f"{self._env_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
+    def _generate_temp_file(self, base_dir: str, extension: str = "", prefix: str = "tmp_file") -> str:
+        file_path = f"{base_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         if extension:
             file_path += f".{extension}"
         file_path = Path(file_path)
@@ -560,10 +564,19 @@ class NeoFSEnv:
 class MainChain:
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
-        self.cli_config = self.neofs_env._generate_temp_file(extension="yml", prefix="main_chain_cli_config")
-        self.neo_go_config = self.neofs_env._generate_temp_file(extension="yml", prefix="main_chain_neo_go_config")
-        self.main_chain_config_path = self.neofs_env._generate_temp_file(extension="yml", prefix="main_chain_config")
-        self.main_chain_boltdb = self.neofs_env._generate_temp_file(extension="db", prefix="main_chain_bolt_db")
+        self.main_chain_dir = self.neofs_env._generate_temp_dir("main_chain")
+        self.cli_config = self.neofs_env._generate_temp_file(
+            self.main_chain_dir, extension="yml", prefix="main_chain_cli_config"
+        )
+        self.neo_go_config = self.neofs_env._generate_temp_file(
+            self.main_chain_dir, extension="yml", prefix="main_chain_neo_go_config"
+        )
+        self.main_chain_config_path = self.neofs_env._generate_temp_file(
+            self.main_chain_dir, extension="yml", prefix="main_chain_config"
+        )
+        self.main_chain_boltdb = self.neofs_env._generate_temp_file(
+            self.main_chain_dir, extension="db", prefix="main_chain_bolt_db"
+        )
         self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
@@ -635,8 +648,8 @@ class MainChain:
             self._wait_until_ready()
 
     def _launch_process(self):
-        self.stdout = self.neofs_env._generate_temp_file(prefix="main_chain_stdout")
-        self.stderr = self.neofs_env._generate_temp_file(prefix="main_chain_stderr")
+        self.stdout = self.neofs_env._generate_temp_file(self.main_chain_dir, prefix="main_chain_stdout")
+        self.stderr = self.neofs_env._generate_temp_file(self.main_chain_dir, prefix="main_chain_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
         self.process = subprocess.Popen(
@@ -656,17 +669,26 @@ class MainChain:
 class InnerRing:
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
-        self.network_config = self.neofs_env._generate_temp_file(extension="yml", prefix="ir_network_config")
-        self.cli_config = self.neofs_env._generate_temp_file(extension="yml", prefix="ir_cli_config")
+        self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
+        self.network_config = self.neofs_env._generate_temp_file(
+            self.inner_ring_dir, extension="yml", prefix="ir_network_config"
+        )
+        self.cli_config = self.neofs_env._generate_temp_file(
+            self.inner_ring_dir, extension="yml", prefix="ir_cli_config"
+        )
         self.alphabet_wallet = None
-        self.ir_node_config_path = self.neofs_env._generate_temp_file(extension="yml", prefix="ir_node_config")
-        self.ir_storage_path = self.neofs_env._generate_temp_file(extension="db", prefix="ir_storage")
+        self.ir_node_config_path = self.neofs_env._generate_temp_file(
+            self.inner_ring_dir, extension="yml", prefix="ir_node_config"
+        )
+        self.ir_storage_path = self.neofs_env._generate_temp_file(
+            self.inner_ring_dir, extension="db", prefix="ir_storage"
+        )
         self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.grpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
-        self.ir_state_file = self.neofs_env._generate_temp_file(prefix="ir_state_file")
+        self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -758,8 +780,8 @@ class InnerRing:
             self._wait_until_ready()
 
     def _launch_process(self):
-        self.stdout = self.neofs_env._generate_temp_file(prefix="ir_stdout")
-        self.stderr = self.neofs_env._generate_temp_file(prefix="ir_stderr")
+        self.stdout = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_stdout")
+        self.stderr = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
         self.process = subprocess.Popen(
@@ -768,7 +790,7 @@ class InnerRing:
             stderr=stderr_fp,
         )
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.grpc_address, post_data="--ir")
@@ -776,12 +798,12 @@ class InnerRing:
 
 
 class Shard:
-    def __init__(self, neofs_env: NeoFSEnv):
-        self.metabase_path = neofs_env._generate_temp_file(prefix="shard_metabase")
-        self.blobovnicza_path = neofs_env._generate_temp_file(prefix="shard_blobovnicza")
-        self.fstree_path = neofs_env._generate_temp_dir(prefix="shard_fstree")
-        self.pilorama_path = neofs_env._generate_temp_file(prefix="shard_pilorama")
-        self.wc_path = neofs_env._generate_temp_file(prefix="shard_wc")
+    def __init__(self, neofs_env: NeoFSEnv, sn_dir: str):
+        self.metabase_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_metabase")
+        self.blobovnicza_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_blobovnicza")
+        self.fstree_path = neofs_env._generate_temp_dir(prefix="shards/shard_fstree")
+        self.pilorama_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_pilorama")
+        self.wc_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_wc")
 
 
 class StorageNode:
@@ -789,17 +811,20 @@ class StorageNode:
         self, neofs_env: NeoFSEnv, sn_number: int, node_attrs: Optional[list] = None, attrs: Optional[dict] = None
     ):
         self.neofs_env = neofs_env
+        self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
         self.wallet = NodeWallet(
-            path=self.neofs_env._generate_temp_file(prefix=f"sn_{sn_number}_wallet"),
+            path=self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{sn_number}_wallet"),
             address="",
             password=self.neofs_env.default_password,
         )
-        self.cli_config = self.neofs_env._generate_temp_file(extension="yml", prefix=f"sn_{sn_number}_cli_config")
-        self.storage_node_config_path = self.neofs_env._generate_temp_file(
-            extension="yml", prefix=f"sn_{sn_number}_config"
+        self.cli_config = self.neofs_env._generate_temp_file(
+            self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_cli_config"
         )
-        self.state_file = self.neofs_env._generate_temp_file(prefix=f"sn_{sn_number}_state")
-        self.shards = [Shard(neofs_env), Shard(neofs_env)]
+        self.storage_node_config_path = self.neofs_env._generate_temp_file(
+            self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_config"
+        )
+        self.state_file = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{sn_number}_state")
+        self.shards = [Shard(neofs_env, self.sn_dir), Shard(neofs_env, self.sn_dir)]
         self.endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.control_grpc_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
@@ -904,7 +929,7 @@ class StorageNode:
         self.stop()
         for shard in self.shards:
             os.remove(shard.metabase_path)
-            shard.metabase_path = self.neofs_env._generate_temp_file(prefix="shard_metabase")
+            shard.metabase_path = self.neofs_env._generate_temp_file(self.sn_dir, prefix="shard_metabase")
 
         sn_config_template = "sn.yaml"
 
@@ -929,8 +954,8 @@ class StorageNode:
         self.start(fresh=False)
 
     def _launch_process(self):
-        self.stdout = self.neofs_env._generate_temp_file(prefix=f"sn_{self.sn_number}_stdout")
-        self.stderr = self.neofs_env._generate_temp_file(prefix=f"sn_{self.sn_number}_stderr")
+        self.stdout = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{self.sn_number}_stdout")
+        self.stderr = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{self.sn_number}_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
         env_dict = {
@@ -966,17 +991,18 @@ class StorageNode:
 class S3_GW:
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
-        self.config_path = self.neofs_env._generate_temp_file(extension="yml", prefix="s3gw_config")
+        self.s3_gw_dir = self.neofs_env._generate_temp_dir("s3-gw")
+        self.config_path = self.neofs_env._generate_temp_file(self.s3_gw_dir, extension="yml", prefix="s3gw_config")
         self.wallet = NodeWallet(
-            path=self.neofs_env._generate_temp_file(prefix="s3gw_wallet"),
+            path=self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_wallet"),
             address="",
             password=self.neofs_env.default_password,
         )
         self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
-        self.tls_cert_path = self.neofs_env._generate_temp_file(prefix="s3gw_tls_cert")
-        self.tls_key_path = self.neofs_env._generate_temp_file(prefix="s3gw_tls_key")
+        self.tls_cert_path = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_tls_cert")
+        self.tls_key_path = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_tls_key")
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.tls_enabled = True
@@ -1064,8 +1090,8 @@ class S3_GW:
         return ""
 
     def _launch_process(self):
-        self.stdout = self.neofs_env._generate_temp_file(prefix="s3gw_stdout")
-        self.stderr = self.neofs_env._generate_temp_file(prefix="s3gw_stderr")
+        self.stdout = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_stdout")
+        self.stderr = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
 
@@ -1079,9 +1105,12 @@ class S3_GW:
 class REST_GW:
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
-        self.config_path = self.neofs_env._generate_temp_file(extension="yml", prefix="rest_gw_config")
+        self.rest_gw_dir = self.neofs_env._generate_temp_dir("rest-gw")
+        self.config_path = self.neofs_env._generate_temp_file(
+            self.rest_gw_dir, extension="yml", prefix="rest_gw_config"
+        )
         self.wallet = NodeWallet(
-            path=self.neofs_env._generate_temp_file(prefix="rest_gw_wallet"),
+            path=self.neofs_env._generate_temp_file(self.rest_gw_dir, prefix="rest_gw_wallet"),
             address="",
             password=self.neofs_env.default_password,
         )
@@ -1132,8 +1161,8 @@ class REST_GW:
         )
 
     def _launch_process(self):
-        self.stdout = self.neofs_env._generate_temp_file(prefix="rest_gw_stdout")
-        self.stderr = self.neofs_env._generate_temp_file(prefix="rest_gw_stderr")
+        self.stdout = self.neofs_env._generate_temp_file(self.rest_gw_dir, prefix="rest_gw_stdout")
+        self.stderr = self.neofs_env._generate_temp_file(self.rest_gw_dir, prefix="rest_gw_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
         rest_gw_env = {}
@@ -1155,7 +1184,7 @@ class XK6:
         self.neofs_env = neofs_env
         self.xk6_dir = os.getenv("XK6_DIR", "../xk6-neofs")
         self.wallet = NodeWallet(
-            path=neofs_env._generate_temp_file(prefix="xk6_wallet"),
+            path=neofs_env._generate_temp_file(self.xk6_dir, prefix="xk6_wallet"),
             address="",
             password=self.neofs_env.default_password,
         )

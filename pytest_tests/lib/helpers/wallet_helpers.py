@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 import allure
-from helpers.common import ASSETS_DIR
+from helpers.common import get_assets_dir_path
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils.wallet import init_wallet, get_last_address_from_wallet
 from neofs_testlib.cli import NeofsCli, NeoGo
@@ -12,11 +12,11 @@ from neofs_testlib.cli import NeofsCli, NeoGo
 @allure.title("Prepare wallet and deposit")
 def create_wallet(name: Optional[str] = None) -> NodeWallet:
     if name is None:
-        wallet_name = f"{str(uuid.uuid4())}.json"
+        wallet_name = f"wallet-{str(uuid.uuid4())}.json"
     else:
         wallet_name = f"{name}.json"
 
-    wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, wallet_name)
+    wallet_path = os.path.join(get_assets_dir_path(), wallet_name)
     wallet_password = "password"
     wallet_address = init_wallet(wallet_path, wallet_password)
 

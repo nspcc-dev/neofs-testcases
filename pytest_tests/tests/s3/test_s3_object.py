@@ -6,7 +6,7 @@ from random import choices, sample
 
 import allure
 import pytest
-from helpers.common import ASSETS_DIR, WALLET_PASS
+from helpers.common import WALLET_PASS, get_assets_dir_path
 from helpers.data_formatters import get_wallet_public_key
 from helpers.file_helper import (
     concat_files,
@@ -566,7 +566,7 @@ class TestS3Object(TestNeofsS3Base):
     def prepare_two_wallets(self, default_wallet, client_shell):
         self.main_wallet = default_wallet
         self.main_public_key = get_wallet_public_key(self.main_wallet.path, WALLET_PASS)
-        other_wallet_path = os.path.join(os.getcwd(), ASSETS_DIR, f"{str(uuid.uuid4())}.json")
+        other_wallet_path = os.path.join(get_assets_dir_path(), f"{str(uuid.uuid4())}.json")
         other_wallet_address = init_wallet(other_wallet_path, WALLET_PASS)
         self.other_wallet = NodeWallet(path=other_wallet_path, address=other_wallet_address, password=WALLET_PASS)
         self.other_public_key = get_wallet_public_key(self.other_wallet.path, WALLET_PASS)
@@ -728,8 +728,8 @@ class TestS3Object(TestNeofsS3Base):
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
     @pytest.mark.aws_cli_only
     def test_s3_sync_dir(self, sync_type, bucket, simple_object_size):
-        file_path_1 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_1")
-        file_path_2 = os.path.join(os.getcwd(), ASSETS_DIR, "test_sync", "test_file_2")
+        file_path_1 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_1")
+        file_path_2 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_2")
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 

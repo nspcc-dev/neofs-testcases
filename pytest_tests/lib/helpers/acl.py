@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import allure
 import base58
-from helpers.common import ASSETS_DIR, NEOFS_CLI_EXEC, TEST_FILES_DIR, WALLET_CONFIG
+from helpers.common import NEOFS_CLI_EXEC, TEST_FILES_DIR, WALLET_CONFIG, get_assets_dir_path
 from helpers.data_formatters import get_wallet_public_key
 from helpers.grpc_responses import EACL_NOT_FOUND, EACL_TABLE_IS_NOT_SET
 from neofs_testlib.cli import NeofsCli
@@ -185,7 +185,7 @@ def _encode_cid_for_eacl(cid: str) -> str:
 
 
 def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell, wallet_config: str = None) -> str:
-    table_file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
+    table_file_path = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG if not wallet_config else wallet_config)
     cli.acl.extended_create(cid=cid, out=table_file_path, rule=rules_list)
 
@@ -210,7 +210,7 @@ def form_bearertoken_file(
     with bearer token and writes to file
     """
     enc_cid = _encode_cid_for_eacl(cid) if cid else None
-    file_path = os.path.join(os.getcwd(), ASSETS_DIR, TEST_FILES_DIR, str(uuid.uuid4()))
+    file_path = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"eacl-{uuid.uuid4()}")
 
     eacl = get_eacl(wallet_path, cid, shell, endpoint)
     json_eacl = dict()
