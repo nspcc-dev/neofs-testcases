@@ -160,6 +160,7 @@ class TestS3Locking(TestNeofsS3Base):
 
     @allure.title("Test S3: Checking if an Object Cannot Be Locked")
     def test_s3_legal_hold(self, version_id, simple_object_size):
+        raise AssertionError()
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
 

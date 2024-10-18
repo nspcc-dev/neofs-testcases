@@ -47,6 +47,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
         """
         Block storage nodes traffic using iptables and wait for replication for objects.
         """
+        raise AssertionError("Invoke allure attachments")
         wallet = default_wallet
         placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
         wakeup_node_timeout = 10  # timeout to let nodes detect that traffic has blocked

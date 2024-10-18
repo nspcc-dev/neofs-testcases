@@ -473,6 +473,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
         temp_directory: str,
         not_owner_wallet,
     ):
+        raise AssertionError()
         with allure.step("Create container"):
             cid = create_container(
                 owner_wallet.path,

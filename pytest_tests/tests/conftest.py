@@ -46,18 +46,66 @@ def neofs_env(temp_directory, artifacts_directory, request):
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
 
-    if request.session.testsfailed:
-        env_files_path = os.path.join(os.getcwd(), neofs_env._env_dir)
-        env_files_archived = shutil.make_archive(
-            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", env_files_path
-        )
-        allure.attach.file(env_files_archived, name="neofs env files", extension="zip")
+    if request.session.testsfailed and not request.config.getoption("--persist-env"):
+        neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec("df -h /tmp")
+        neofs_env.shell.exec("df -i")
+        neofs_env.shell.exec(f"du -h {neofs_env._env_dir}")
+        neofs_env.shell.exec(f"ls -lah {neofs_env._env_dir}")
+        
+        for ir in neofs_env.inner_ring_nodes:
+            os.remove(ir.ir_storage_path)
+        for sn in neofs_env.storage_nodes:
+            for shard in sn.shards:
+                os.remove(shard.metabase_path)
+                os.remove(shard.blobovnicza_path)
+                shutil.rmtree(shard.fstree_path, ignore_errors=True)
+                os.remove(shard.pilorama_path)
+                os.remove(shard.wc_path)
 
-        temp_files_path = os.path.join(get_assets_dir_path())
-        temp_files_archived = shutil.make_archive(
-            os.path.join(get_assets_dir_path(), "temp_files"), "zip", temp_files_path
+        neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec("df -i")
+        neofs_env.shell.exec(f"du -h {neofs_env._env_dir}")
+        neofs_env.shell.exec(f"ls -lah {neofs_env._env_dir}")
+        
+        shutil.make_archive(
+            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
         )
-        allure.attach.file(temp_files_archived, name="tests temp files", extension="zip")
+        
+        neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec("df -i")
+        neofs_env.shell.exec(f"du -h {neofs_env._env_dir}")
+        neofs_env.shell.exec(f"ls -lah {neofs_env._env_dir}")
+        allure.attach.file(os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}.zip"), name="neofs env files", extension="zip")
+        
+        # allure.attach.file(neofs_env.inner_ring_nodes[0].stderr, name=os.path.basename(ir.stderr), extension="txt")
+        
+        # for ir in neofs_env.inner_ring_nodes:
+        #     allure.attach.file(ir.stderr, name=os.path.basename(ir.stderr), extension="txt")
+        #     allure.attach.file(ir.stdout, name=os.path.basename(ir.stdout), extension="txt")
+        
+        # for sn in neofs_env.storage_nodes:
+        #     allure.attach.file(sn.stderr, name=os.path.basename(sn.stderr), extension="txt")
+        #     allure.attach.file(sn.stdout, name=os.path.basename(sn.stdout), extension="txt")
+            
+        # allure.attach.file(neofs_env.s3_gw.stderr, name=os.path.basename(neofs_env.s3_gw.stderr), extension="txt")
+        # allure.attach.file(neofs_env.s3_gw.stdout, name=os.path.basename(neofs_env.s3_gw.stdout), extension="txt")
+        
+        # allure.attach.file(neofs_env.rest_gw.stderr, name=os.path.basename(neofs_env.rest_gw.stderr), extension="txt")
+        # allure.attach.file(neofs_env.rest_gw.stdout, name=os.path.basename(neofs_env.rest_gw.stdout), extension="txt")
+        
+        shutil.rmtree(neofs_env._env_dir, ignore_errors=True)
+        
+        neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec(f"du -h {get_assets_dir_path()}")
+        neofs_env.shell.exec(f"ls -lah {get_assets_dir_path()}")
+
+        # temp_files_archived = shutil.make_archive(
+        #     os.path.join(get_assets_dir_path(), "temp_files"), "zip", get_assets_dir_path()
+        # )
+        # neofs_env.shell.exec(f"ls -lah {get_assets_dir_path()}")
+        # neofs_env.shell.exec("df -h")
+        # allure.attach.file(temp_files_archived, name="tests temp files", extension="zip")
 
 
 @pytest.fixture(scope="session")
@@ -249,6 +297,8 @@ def cleanup_temp_files():
 def file_system_monitor(neofs_env: NeoFSEnv):
     with allure.step("Get fs usage before test"):
         neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec("df -i")
     yield
     with allure.step("Get fs usage after test"):
         neofs_env.shell.exec("df -h")
+        neofs_env.shell.exec("df -i")
