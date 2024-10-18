@@ -46,18 +46,26 @@ def neofs_env(temp_directory, artifacts_directory, request):
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
 
-    if request.session.testsfailed:
-        env_files_path = os.path.join(os.getcwd(), neofs_env._env_dir)
-        env_files_archived = shutil.make_archive(
-            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", env_files_path
-        )
-        allure.attach.file(env_files_archived, name="neofs env files", extension="zip")
+    if request.session.testsfailed and not request.config.getoption("--persist-env"):
+        for ir in neofs_env.inner_ring_nodes:
+            os.remove(ir.ir_storage_path)
+        for sn in neofs_env.storage_nodes:
+            for shard in sn.shards:
+                os.remove(shard.metabase_path)
+                os.remove(shard.blobovnicza_path)
+                shutil.rmtree(shard.fstree_path, ignore_errors=True)
+                os.remove(shard.pilorama_path)
+                os.remove(shard.wc_path)
 
-        temp_files_path = os.path.join(get_assets_dir_path())
-        temp_files_archived = shutil.make_archive(
-            os.path.join(get_assets_dir_path(), "temp_files"), "zip", temp_files_path
+        shutil.make_archive(
+            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
         )
-        allure.attach.file(temp_files_archived, name="tests temp files", extension="zip")
+        shutil.rmtree(neofs_env._env_dir, ignore_errors=True)
+        allure.attach.file(
+            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}.zip"),
+            name="neofs env files",
+            extension="zip",
+        )
 
 
 @pytest.fixture(scope="session")

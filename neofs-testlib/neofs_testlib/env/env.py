@@ -327,7 +327,7 @@ class NeoFSEnv:
             ir.process.kill()
 
     def persist(self) -> str:
-        persisted_path = self._generate_temp_file(self._env_dir, prefix="persisted_env")
+        persisted_path = self._generate_temp_file(os.path.dirname(self._env_dir), prefix="persisted_env")
         with open(persisted_path, "wb") as fp:
             pickle.dump(self, fp)
         logger.info(f"Persist env at: {persisted_path}")
