@@ -155,12 +155,13 @@ class NeoFSEnv:
             ir_node.start(wait_until_ready=False, with_main_chain=with_main_chain)
 
         with allure.step("Wait until all IR nodes are READY"):
-            for ir_node in self.inner_ring_nodes:
+            for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
                 logger.info(f"Wait until IR: {ir_node} is READY")
                 try:
                     ir_node._wait_until_ready()
                 except Exception as e:
-                    allure.attach.file(ir_node.stderr, name="ir node logs", extension="txt")
+                    allure.attach.file(ir_node.stderr, name=f"ir{ir_node_idx} node stderr", extension="txt")
+                    allure.attach.file(ir_node.stdout, name=f"ir{ir_node_idx} node stdout", extension="txt")
                     raise e
 
     @allure.step("Deploy storage node")
@@ -177,7 +178,13 @@ class NeoFSEnv:
         for t in deploy_threads:
             t.start()
         logger.info("Wait until storage nodes are deployed")
-        self._wait_until_all_storage_nodes_are_ready()
+        try:
+            self._wait_until_all_storage_nodes_are_ready()
+        except Exception as e:
+            for sn in self.storage_nodes:
+                allure.attach.file(sn.stderr, name=f"sn{sn.sn_number} stderr", extension="txt")
+                allure.attach.file(sn.stdout, name=f"sn{sn.sn_number} stdout", extension="txt")
+            raise e
         # tick epoch to speed up storage nodes bootstrap
         self.neofs_adm().morph.force_new_epoch(
             rpc_endpoint=f"http://{self.morph_rpc}",
