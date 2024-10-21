@@ -25,7 +25,6 @@ GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 NEOFS_CONTRACT = os.getenv("NEOFS_IR_CONTRACTS_NEOFS")
 
 TEST_RUN_DIR = f"test-run-{datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S-%f")}"
-ASSETS_DIR = f"TemporaryDir-{datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S-%f")}"
 TEST_FILES_DIR = os.getenv("TEST_FILES_DIR", "TestFilesDir")
 TEST_OBJECTS_DIR = os.getenv("TEST_OBJECTS_DIR", "TestObjectsDir")
 DEVENV_PATH = os.getenv("DEVENV_PATH", os.path.join("..", "neofs-dev-env"))
@@ -60,6 +59,9 @@ S3_GATE_SERVICE_NAME_REGEX = r"s3-gate\d\d"
 
 ENDPOINT_INTERNAL0 = "endpoint_internal0"
 
+ALLOCATED_PORTS_LOCK_FILE = "/tmp/allocated_ports.lock"
+ALLOCATED_PORTS_FILE = "/tmp/allocated_ports.txt"
+
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures
 WALLET_CONFIG = os.path.join(os.getcwd(), "wallet_config.yml")
@@ -68,4 +70,4 @@ with open(WALLET_CONFIG, "w") as file:
 
 
 def get_assets_dir_path() -> str:
-    return os.path.join(os.getcwd(), TEST_RUN_DIR, ASSETS_DIR)
+    return os.path.join(os.getcwd(), TEST_RUN_DIR)

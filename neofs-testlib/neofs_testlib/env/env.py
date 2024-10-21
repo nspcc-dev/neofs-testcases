@@ -1,4 +1,5 @@
 import datetime
+import fcntl
 import json
 import logging
 import os
@@ -26,7 +27,7 @@ import allure
 import jinja2
 import requests
 import yaml
-from helpers.common import get_assets_dir_path
+from helpers.common import ALLOCATED_PORTS_FILE, ALLOCATED_PORTS_LOCK_FILE, get_assets_dir_path
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
@@ -34,6 +35,7 @@ from neofs_testlib.utils import wallet as wallet_utils
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
+_thread_lock = threading.Lock()
 
 
 @dataclass
@@ -51,8 +53,6 @@ class WalletType(Enum):
 
 
 class NeoFSEnv:
-    _busy_ports = []
-
     def __init__(self, neofs_env_config: dict = None):
         self._id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
         self._env_dir = f"{get_assets_dir_path()}/env_files/neofs-env-{self._id}"
@@ -155,12 +155,13 @@ class NeoFSEnv:
             ir_node.start(wait_until_ready=False, with_main_chain=with_main_chain)
 
         with allure.step("Wait until all IR nodes are READY"):
-            for ir_node in self.inner_ring_nodes:
+            for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
                 logger.info(f"Wait until IR: {ir_node} is READY")
                 try:
                     ir_node._wait_until_ready()
                 except Exception as e:
-                    allure.attach.file(ir_node.stderr, name="ir node logs", extension="txt")
+                    allure.attach.file(ir_node.stderr, name=f"ir{ir_node_idx} node stderr", extension="txt")
+                    allure.attach.file(ir_node.stdout, name=f"ir{ir_node_idx} node stdout", extension="txt")
                     raise e
 
     @allure.step("Deploy storage node")
@@ -177,7 +178,13 @@ class NeoFSEnv:
         for t in deploy_threads:
             t.start()
         logger.info("Wait until storage nodes are deployed")
-        self._wait_until_all_storage_nodes_are_ready()
+        try:
+            self._wait_until_all_storage_nodes_are_ready()
+        except Exception as e:
+            for sn in self.storage_nodes:
+                allure.attach.file(sn.stderr, name=f"sn{sn.sn_number} stderr", extension="txt")
+                allure.attach.file(sn.stdout, name=f"sn{sn.sn_number} stdout", extension="txt")
+            raise e
         # tick epoch to speed up storage nodes bootstrap
         self.neofs_adm().morph.force_new_epoch(
             rpc_endpoint=f"http://{self.morph_rpc}",
@@ -327,7 +334,7 @@ class NeoFSEnv:
             ir.process.kill()
 
     def persist(self) -> str:
-        persisted_path = self._generate_temp_file(self._env_dir, prefix="persisted_env")
+        persisted_path = self._generate_temp_file(os.path.dirname(self._env_dir), prefix="persisted_env")
         with open(persisted_path, "wb") as fp:
             pickle.dump(self, fp)
         logger.info(f"Persist env at: {persisted_path}")
@@ -501,17 +508,69 @@ class NeoFSEnv:
         result = subprocess.run([binary, command], capture_output=True, text=True)
         return f"{result.stdout}\n{result.stderr}\n"
 
-    @classmethod
-    def get_available_port(cls) -> str:
-        for _ in range(len(cls._busy_ports) + 2):
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.bind(("", 0))
-            addr = s.getsockname()
+    @staticmethod
+    def get_available_port() -> str:
+        with _thread_lock:
+            with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
+                fcntl.flock(lock_file, fcntl.LOCK_EX)
+                try:
+                    if os.path.exists(ALLOCATED_PORTS_FILE):
+                        with open(ALLOCATED_PORTS_FILE, "r") as f:
+                            reserved_ports = set(map(int, f.read().splitlines()))
+                    else:
+                        reserved_ports = set()
+
+                    while True:
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.bind(("", 0))
+                        port = s.getsockname()[1]
+                        s.close()
+
+                        if port not in reserved_ports:
+                            reserved_ports.add(port)
+                            break
+
+                    with open(ALLOCATED_PORTS_FILE, "w") as f:
+                        for p in reserved_ports:
+                            f.write(f"{p}\n")
+                finally:
+                    fcntl.flock(lock_file, fcntl.LOCK_UN)
+        return port
+
+    @staticmethod
+    def cleanup_unused_ports():
+        with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+
+            try:
+                if os.path.exists(ALLOCATED_PORTS_FILE):
+                    with open(ALLOCATED_PORTS_FILE, "r") as f:
+                        reserved_ports = set(map(int, f.read().splitlines()))
+                else:
+                    reserved_ports = set()
+
+                still_used_ports = set()
+
+                for port in reserved_ports:
+                    if NeoFSEnv.is_port_in_use(port):
+                        still_used_ports.add(port)
+
+                with open(ALLOCATED_PORTS_FILE, "w") as f:
+                    for port in still_used_ports:
+                        f.write(f"{port}\n")
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+    @staticmethod
+    def is_port_in_use(port: str):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.bind(("", port))
+        except OSError:
+            return True
+        finally:
             s.close()
-            if addr[1] not in cls._busy_ports:
-                cls._busy_ports.append(addr[1])
-                return addr[1]
-        raise AssertionError("Can not find an available port")
+        return False
 
     @staticmethod
     def download_binary(repo: str, version: str, file: str, target: str):
