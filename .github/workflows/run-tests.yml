@@ -23,126 +23,18 @@ on:
 
 permissions: write-all
 
-env:
-  ALLURE_RESULTS_DIR: ${{ github.workspace }}/allure-results
-
 jobs:
   run_system_tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 500
-    steps:
-      - name: Get the current date
-        id: date
-        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Set RUN_ID
-        env:
-          TIMESTAMP: ${{ steps.date.outputs.timestamp }}
-        run: echo "RUN_ID=${{ github.run_number }}-$TIMESTAMP" >> $GITHUB_ENV
-
-      - name: Checkout neofs-testcases repository
-        uses: actions/checkout@v4
-        with:
-          path: neofs-testcases
-  
-  #################################################################
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          cache: true
-          go-version: '1.22'
-      - run: go version
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - run: python --version
-
-# Hashlib uses OpenSSL for ripemd160 and apparently OpenSSL disabled some older crypto algos around version 3.0
-# in November 2021. All the functions are still there but require manual enabling.
-# See https://github.com/openssl/openssl/issues/16994
-# But we use ripemd160 for tests.
-# For ripemd160 to be supported, we need the openssl configuration file to contain the following lines:
-# openssl_conf = openssl_init
-#
-# [openssl_init]
-# providers = provider_sect
-#
-# [provider_sect]
-# default = default_sect
-# legacy = legacy_sect
-#
-# [default_sect]
-# activate = 1
-#
-# [legacy_sect]
-# activate = 1
-
-      - name: Fix OpenSSL ripemd160
-        run: |
-          sudo python ./tools/src/openssl_config_fix.py
-        working-directory: neofs-testcases
-
-      - name: Checkout xk6-neofs repository
-        uses: actions/checkout@v4
-        with:
-          repository: nspcc-dev/xk6-neofs
-          ref: master
-          path: xk6-neofs
-
-      - name: Build xk6-neofs
-        timeout-minutes: 5
-        run: |
-          make install_xk6
-          make build
-        working-directory: xk6-neofs
-
-      - name: Prepare venv
-        id: prepare_venv
-        timeout-minutes: 30
-        run: |
-          make venv.pytest
-          echo "$(pwd)" >> $GITHUB_PATH
-        working-directory: neofs-testcases
-
-################################################################
-      - name: Run tests
-        timeout-minutes: 240
-        env:
-          ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
-        run: |
-          source venv.pytest/bin/activate && pytest -n 3 --log-cli-level error --alluredir=${GITHUB_WORKSPACE}/allure-results pytest_tests/tests
-        working-directory: neofs-testcases
-
-################################################################
-      - name: Publish to NeoFS
-        id: put_report
-        if: always() && steps.prepare_venv.outcome == 'success'
-        uses: nspcc-dev/gh-push-allure-report-to-neofs@master
-        with:
-          NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
-          NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
-          NEOFS_NETWORK_DOMAIN: ${{ vars.TEST_RESULTS_NEOFS_NETWORK_DOMAIN }}
-          NEOFS_HTTP_GATE: ${{ vars.TEST_RESULTS_HTTP_GATE }}
-          STORE_OBJECTS_CID: ${{ vars.TEST_RESULTS_CID }}
-          PR_LIFETIME: ${{ vars.PR_EXPIRATION_PERIOD }}
-          MASTER_LIFETIME: ${{ vars.MASTER_EXPIRATION_PERIOD }}
-          MANUAL_RUN_LIFETIME: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
-          OTHER_LIFETIME: ${{ vars.OTHER_EXPIRATION_PERIOD }}
-          ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
-          ALLURE_GENERATED_DIR: 'neofs-test-allure-generated-report'
-
-      - name: Post the link to the report
-        id: post_report_link
-        timeout-minutes: 60
-        if: always() && steps.put_report.outcome == 'success'
-        env:
-          REPORT_NEOFS_URL: ${{ steps.put_report.outputs.REPORT_NEOFS_URL }}index.html
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
-          context: 'Test report'
-          state: 'success'
-          sha: ${{github.event.pull_request.head.sha || github.sha}}
-          target_url: ${{ env.REPORT_NEOFS_URL }}
+    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@master
+    with:
+      neofs_network_domain: ${{ vars.TEST_RESULTS_NEOFS_NETWORK_DOMAIN }}
+      neofs_http_gate: ${{ vars.TEST_RESULTS_HTTP_GATE }}
+      neofs_store_objects_cid: ${{ vars.TEST_RESULTS_CID }}
+      neofs_pr_expiration_period: ${{ vars.PR_EXPIRATION_PERIOD }}
+      neofs_master_expiration_period: ${{ vars.MASTER_EXPIRATION_PERIOD }}
+      neofs_manual_expiration_period: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
+      neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
+      neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
+      tests_parallel_level: 3
+      os: '[{runner: "ubuntu-latest", binary: "linux-amd64"}, {runner: "macos-14", binary: "darwin-arm64"}]'
+    secrets: inherit
