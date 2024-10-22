@@ -385,17 +385,13 @@ class NeoFSEnv:
             (self.neofs_s3_gw_path, "neofs_s3_gw"),
             (self.neofs_rest_gw_path, "neofs_rest_gw"),
             (self.neofs_contract_dir, "neofs_contract"),
-            (self.warp_path, "warp_linux_x86_64"),
-            (self.warp_path, "warp_darwin_arm64"),
+            (self.warp_path, "warp"),
         ]
 
         for binary in binaries:
             binary_path, binary_name = binary
             if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
                 neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
-                if not self._is_binary_compatible(neofs_binary_params.get("platform"), neofs_binary_params.get("arch")):
-                    logger.info(f"Skip '{binary_name}' because of unsupported platform/architecture")
-                    continue
                 allure_step_name = "Downloading "
                 allure_step_name += f" {neofs_binary_params['repo']}/"
                 allure_step_name += f"{neofs_binary_params['version']}/"
@@ -449,9 +445,21 @@ class NeoFSEnv:
     @allure.step("Deploy simple neofs env")
     def simple(cls, neofs_env_config: dict = None, with_main_chain=False) -> "NeoFSEnv":
         if not neofs_env_config:
-            neofs_env_config = yaml.safe_load(
-                files("neofs_testlib.env.templates").joinpath("neofs_env_config.yaml").read_text()
-            )
+            jinja_env = jinja2.Environment()
+            config_template = files("neofs_testlib.env.templates").joinpath("neofs_env_config.yaml").read_text()
+            jinja_template = jinja_env.from_string(config_template)
+            arch = platform.machine()
+            if arch == "x86_64":
+                config_arch = "linux-amd64"
+                warp_binary_name = "warp_Linux_x86_64.tar.gz"
+            elif arch == "arm64":
+                config_arch = "darwin-arm64"
+                warp_binary_name = "warp_Darwin_arm64.tar.gz"
+            else:
+                raise RuntimeError(f"Unsupported arch: {arch}")
+            neofs_env_config = jinja_template.render(arch=config_arch, warp_binary_name=warp_binary_name)
+            neofs_env_config = yaml.safe_load(str(neofs_env_config))
+
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
         neofs_env.deploy_inner_ring_nodes(with_main_chain=with_main_chain)
