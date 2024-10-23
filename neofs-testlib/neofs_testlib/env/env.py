@@ -1110,7 +1110,13 @@ class S3_GW:
         self._generate_config()
         logger.info(f"Launching S3 GW: {self}")
         self._launch_process()
-        self._wait_until_ready()
+        try:
+            self._wait_until_ready()
+        except Exception as e:
+            allure.attach.file(self.stderr, name="s3 gw stderr", extension="txt")
+            allure.attach.file(self.stdout, name="s3 gw stdout", extension="txt")
+            allure.attach.file(self.config_path, name="s3 gw config", extension="txt")
+            raise e
 
     @allure.step("Stop s3 gw")
     def stop(self):
@@ -1119,7 +1125,7 @@ class S3_GW:
         self.process.wait()
         self.process = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(2), reraise=True)
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"https://{self.address}" if self.tls_enabled else f"http://{self.address}"
         resp = requests.get(endpoint, verify=False)
