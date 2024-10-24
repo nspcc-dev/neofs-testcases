@@ -442,7 +442,7 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code)
+    _attach_allure_step(request, resp.json())
 
     epoch_duration = resp.json().get("epochDuration")
     return epoch_duration

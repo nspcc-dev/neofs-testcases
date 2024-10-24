@@ -12,6 +12,7 @@ from helpers.grpc_responses import OBJECT_NOT_FOUND
 from helpers.neofs_verbs import get_netmap_netinfo, get_object_from_random_node, head_object
 from helpers.rest_gate import (
     attr_into_str_header,
+    get_epoch_duration_via_rest_gate,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
@@ -251,6 +252,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
+        get_epoch_duration_via_rest_gate(gw_endpoint)
         expected_epoch = neofs_epoch.get_epoch(self.neofs_env) + epoch_count
         logger.info(
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
@@ -307,6 +309,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
+        get_epoch_duration_via_rest_gate(gw_endpoint)
         expected_epoch = neofs_epoch.get_epoch(self.neofs_env) + epoch_count
         logger.info(
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
@@ -363,6 +366,7 @@ class Test_rest_system_header(NeofsEnvTestBase):
     ):
         self.tick_epochs_and_wait(1)
         epoch_count = 2
+        get_epoch_duration_via_rest_gate(gw_endpoint)
         expected_epoch = neofs_epoch.get_epoch(self.neofs_env) + epoch_count
         logger.info(
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
