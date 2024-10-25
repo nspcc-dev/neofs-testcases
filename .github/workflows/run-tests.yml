@@ -98,6 +98,25 @@ jobs:
           make build
         working-directory: xk6-neofs
 
+      - name: Checkout neofs-rest-gw repository
+        uses: actions/checkout@v4
+        with:
+          repository: nspcc-dev/neofs-rest-gw
+          ref: master
+          path: neofs-rest-gw
+
+      - name: Build neofs-rest-gw
+        run: |
+          make all
+        working-directory: neofs-rest-gw
+
+      - name: Copy and chmod built neofs-rest-gw
+        timeout-minutes: 30
+        run: |
+          cp ../neofs-rest-gw/bin/* .
+          sudo chmod a+x neofs-rest-gw
+        working-directory: neofs-testcases
+
       - name: Prepare venv
         id: prepare_venv
         timeout-minutes: 30

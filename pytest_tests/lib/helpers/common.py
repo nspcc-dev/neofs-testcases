@@ -61,6 +61,7 @@ ENDPOINT_INTERNAL0 = "endpoint_internal0"
 
 ALLOCATED_PORTS_LOCK_FILE = "/tmp/allocated_ports.lock"
 ALLOCATED_PORTS_FILE = "/tmp/allocated_ports.txt"
+BINARY_DOWNLOADS_LOCK_FILE = "/tmp/binary_downloads.lock"
 
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures
