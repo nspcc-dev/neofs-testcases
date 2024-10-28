@@ -6,6 +6,7 @@ from typing import IO, Optional
 
 import pexpect
 
+from neofs_testlib.defaults import Options
 from neofs_testlib.reporter import get_reporter
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
@@ -37,7 +38,9 @@ class LocalShell(Shell):
         log_file = tempfile.TemporaryFile()  # File is reliable cross-platform way to capture output
 
         try:
-            command_process = pexpect.spawn(command, timeout=options.timeout)
+            command_process = pexpect.spawn(
+                command, timeout=options.timeout if options.timeout else Options.get_default_shell_timeout()
+            )
         except (pexpect.ExceptionPexpect, OSError) as exc:
             raise RuntimeError(f"Command: {command}") from exc
 
@@ -46,7 +49,10 @@ class LocalShell(Shell):
 
         try:
             for interactive_input in options.interactive_inputs:
-                command_process.expect(interactive_input.prompt_pattern)
+                command_process.expect(
+                    interactive_input.prompt_pattern,
+                    timeout=options.timeout if options.timeout else Options.get_default_shell_timeout(),
+                )
                 command_process.sendline(interactive_input.input)
         except (pexpect.ExceptionPexpect, OSError) as exc:
             if options.check:
@@ -72,7 +78,7 @@ class LocalShell(Shell):
                 universal_newlines=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                timeout=options.timeout,
+                timeout=options.timeout if options.timeout else Options.get_default_shell_timeout(),
                 shell=True,
             )
 
@@ -104,7 +110,7 @@ class LocalShell(Shell):
         """
         # Wait for child process to end it's work
         if command_process.isalive():
-            command_process.expect(pexpect.EOF)
+            command_process.expect(pexpect.EOF, timeout=Options.get_default_shell_timeout())
 
         # Close the process to obtain the exit code
         command_process.close()

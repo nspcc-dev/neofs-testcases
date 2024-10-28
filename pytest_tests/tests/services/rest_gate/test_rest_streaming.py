@@ -3,6 +3,7 @@ import logging
 import allure
 import pytest
 import requests
+from helpers.common import DEFAULT_OBJECT_OPERATION_TIMEOUT
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -56,7 +57,9 @@ class Test_rest_streaming(NeofsEnvTestBase):
         with allure.step("Put objects and Get object and verify hashes [ get/$CID/$OID ]"):
             # https://docs.python-requests.org/en/latest/user/advanced/#streaming-uploads
             with open(file_path, "rb") as file:
-                resp = requests.post(f"{gw_endpoint}/objects/{cid}", data=file)
+                resp = requests.post(
+                    f"{gw_endpoint}/objects/{cid}", data=file, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT
+                )
 
             if not resp.ok:
                 raise Exception(

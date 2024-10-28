@@ -9,7 +9,7 @@ import pexpect
 import pytest
 import requests
 from botocore.config import Config
-
+from helpers.common import DEFAULT_OBJECT_OPERATION_TIMEOUT, DEFAULT_REST_OPERATION_TIMEOUT
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils.wallet import get_last_public_key_from_wallet, init_wallet
 
@@ -171,7 +171,7 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
         request = f"http://{neofs_env.rest_gw.address}/v1/upload/{cid}"
     files = {"upload_file": open(filename, "rb")}
     body = {"filename": filename}
-    resp = requests.post(request, files=files, data=body)
+    resp = requests.post(request, files=files, data=body, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(
@@ -189,7 +189,7 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
     else:
         request = f"http://{neofs_env.rest_gw.address}/v1/get/{cid}/{oid}{download_attribute}"
 
-    resp = requests.get(request, stream=True)
+    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(

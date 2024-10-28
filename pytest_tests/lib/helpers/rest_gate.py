@@ -12,7 +12,12 @@ import allure
 import requests
 from helpers.aws_cli_client import LONG_TIMEOUT
 from helpers.cli_helpers import _cmd_run
-from helpers.common import SIMPLE_OBJECT_SIZE, get_assets_dir_path
+from helpers.common import (
+    DEFAULT_OBJECT_OPERATION_TIMEOUT,
+    DEFAULT_REST_OPERATION_TIMEOUT,
+    SIMPLE_OBJECT_SIZE,
+    get_assets_dir_path,
+)
 from helpers.complex_object_actions import get_nodes_without_object
 from helpers.file_helper import get_file_hash
 from helpers.neofs_verbs import get_object
@@ -51,7 +56,7 @@ def get_via_rest_gate(
 
     if not skip_options_verify:
         verify_options_request(request)
-    resp = requests.get(request, stream=True)
+    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(
@@ -81,7 +86,7 @@ def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
     endpoint: http gate endpoint
     """
     request = f"{endpoint}/zip/{cid}/{prefix}"
-    resp = requests.get(request, stream=True)
+    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(
@@ -125,7 +130,7 @@ def get_via_rest_gate_by_attribute(
 
     if not skip_options_verify:
         verify_options_request(request)
-    resp = requests.get(request, stream=True)
+    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(
@@ -169,7 +174,9 @@ def upload_via_rest_gate(
         files = {"upload_file": (path, open(path, "rb"), file_content_type)}
     body = {"filename": path}
     verify_options_request(request)
-    resp = requests.post(request, files=files, data=body, headers=headers, cookies=cookies)
+    resp = requests.post(
+        request, files=files, data=body, headers=headers, cookies=cookies, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT
+    )
 
     if not resp.ok:
         if error_pattern:
@@ -394,7 +401,9 @@ def new_upload_via_rest_gate(
         headers["Content-Type"] = file_content_type
 
     verify_options_request(request)
-    resp = requests.post(request, data=file_content, headers=headers, cookies=cookies)
+    resp = requests.post(
+        request, data=file_content, headers=headers, cookies=cookies, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT
+    )
 
     if not resp.ok:
         if error_pattern:
@@ -431,7 +440,7 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
     request = f"{endpoint}/network-info"
 
     verify_options_request(request)
-    resp = requests.get(request, stream=True)
+    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
         raise Exception(
@@ -449,7 +458,7 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
 
 
 def verify_options_request(request):
-    options_resp = requests.options(request)
+    options_resp = requests.options(request, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
     assert options_resp.status_code == 200, "Invalid status code for OPTIONS request"
     for cors_header in ("Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin"):
         assert cors_header in options_resp.headers, f"Not CORS header {cors_header} in OPTIONS response"
