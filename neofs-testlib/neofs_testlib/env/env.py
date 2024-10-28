@@ -27,7 +27,12 @@ import allure
 import jinja2
 import requests
 import yaml
-from helpers.common import ALLOCATED_PORTS_FILE, ALLOCATED_PORTS_LOCK_FILE, get_assets_dir_path
+from helpers.common import (
+    ALLOCATED_PORTS_FILE,
+    ALLOCATED_PORTS_LOCK_FILE,
+    BINARY_DOWNLOADS_LOCK_FILE,
+    get_assets_dir_path,
+)
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
@@ -371,52 +376,57 @@ class NeoFSEnv:
 
     @allure.step("Download binaries")
     def download_binaries(self):
-        logger.info("Going to download missing binaries and contracts, if needed")
-        deploy_threads = []
+        with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                logger.info("Going to download missing binaries and contracts, if needed")
+                deploy_threads = []
 
-        binaries = [
-            (self.neofs_adm_path, "neofs_adm"),
-            (self.neofs_cli_path, "neofs_cli"),
-            (self.neofs_lens_path, "neofs_lens"),
-            (self.neo_go_path, "neo_go"),
-            (self.neofs_ir_path, "neofs_ir"),
-            (self.neofs_node_path, "neofs_node"),
-            (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
-            (self.neofs_s3_gw_path, "neofs_s3_gw"),
-            (self.neofs_rest_gw_path, "neofs_rest_gw"),
-            (self.neofs_contract_dir, "neofs_contract"),
-            (self.warp_path, "warp"),
-        ]
+                binaries = [
+                    (self.neofs_adm_path, "neofs_adm"),
+                    (self.neofs_cli_path, "neofs_cli"),
+                    (self.neofs_lens_path, "neofs_lens"),
+                    (self.neo_go_path, "neo_go"),
+                    (self.neofs_ir_path, "neofs_ir"),
+                    (self.neofs_node_path, "neofs_node"),
+                    (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
+                    (self.neofs_s3_gw_path, "neofs_s3_gw"),
+                    (self.neofs_rest_gw_path, "neofs_rest_gw"),
+                    (self.neofs_contract_dir, "neofs_contract"),
+                    (self.warp_path, "warp"),
+                ]
 
-        for binary in binaries:
-            binary_path, binary_name = binary
-            if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
-                neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
-                allure_step_name = "Downloading "
-                allure_step_name += f" {neofs_binary_params['repo']}/"
-                allure_step_name += f"{neofs_binary_params['version']}/"
-                allure_step_name += f"{neofs_binary_params['file']}"
-                with allure.step(allure_step_name):
-                    deploy_threads.append(
-                        threading.Thread(
-                            target=NeoFSEnv.download_binary,
-                            args=(
-                                neofs_binary_params["repo"],
-                                neofs_binary_params["version"],
-                                neofs_binary_params["file"],
-                                binary_path,
-                            ),
-                        )
-                    )
-            else:
-                logger.info(f"'{binary_path}' already exists, will not be downloaded")
+                for binary in binaries:
+                    binary_path, binary_name = binary
+                    if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
+                        neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
+                        allure_step_name = "Downloading "
+                        allure_step_name += f" {neofs_binary_params['repo']}/"
+                        allure_step_name += f"{neofs_binary_params['version']}/"
+                        allure_step_name += f"{neofs_binary_params['file']}"
+                        with allure.step(allure_step_name):
+                            deploy_threads.append(
+                                threading.Thread(
+                                    target=NeoFSEnv.download_binary,
+                                    args=(
+                                        neofs_binary_params["repo"],
+                                        neofs_binary_params["version"],
+                                        neofs_binary_params["file"],
+                                        binary_path,
+                                    ),
+                                )
+                            )
+                    else:
+                        logger.info(f"'{binary_path}' already exists, will not be downloaded")
 
-        if len(deploy_threads) > 0:
-            for t in deploy_threads:
-                t.start()
-            logger.info("Wait until all binaries are downloaded")
-            for t in deploy_threads:
-                t.join()
+                if len(deploy_threads) > 0:
+                    for t in deploy_threads:
+                        t.start()
+                    logger.info("Wait until all binaries are downloaded")
+                    for t in deploy_threads:
+                        t.join()
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
 
     def _is_binary_compatible(self, expected_platform: str = None, expected_arch: str = None) -> bool:
         if expected_platform is None or expected_arch is None:
@@ -1100,7 +1110,13 @@ class S3_GW:
         self._generate_config()
         logger.info(f"Launching S3 GW: {self}")
         self._launch_process()
-        self._wait_until_ready()
+        try:
+            self._wait_until_ready()
+        except Exception as e:
+            allure.attach.file(self.stderr, name="s3 gw stderr", extension="txt")
+            allure.attach.file(self.stdout, name="s3 gw stdout", extension="txt")
+            allure.attach.file(self.config_path, name="s3 gw config", extension="txt")
+            raise e
 
     @allure.step("Stop s3 gw")
     def stop(self):
@@ -1109,7 +1125,7 @@ class S3_GW:
         self.process.wait()
         self.process = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(2), reraise=True)
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"https://{self.address}" if self.tls_enabled else f"http://{self.address}"
         resp = requests.get(endpoint, verify=False)
