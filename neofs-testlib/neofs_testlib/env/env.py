@@ -31,6 +31,8 @@ from helpers.common import (
     ALLOCATED_PORTS_FILE,
     ALLOCATED_PORTS_LOCK_FILE,
     BINARY_DOWNLOADS_LOCK_FILE,
+    DEFAULT_OBJECT_OPERATION_TIMEOUT,
+    DEFAULT_REST_OPERATION_TIMEOUT,
     get_assets_dir_path,
 )
 
@@ -593,7 +595,7 @@ class NeoFSEnv:
     @staticmethod
     def download_binary(repo: str, version: str, file: str, target: str):
         download_url = f"https://github.com/{repo}/releases/download/{version}/{file}"
-        resp = requests.get(download_url)
+        resp = requests.get(download_url, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
         if not resp.ok:
             raise AssertionError(
                 f"Can not download binary from url: {download_url}: {resp.status_code}/{resp.reason}/{resp.json()}"
@@ -1128,7 +1130,7 @@ class S3_GW:
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"https://{self.address}" if self.tls_enabled else f"http://{self.address}"
-        resp = requests.get(endpoint, verify=False)
+        resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
         assert resp.status_code == 200
 
     def _generate_config(self):
