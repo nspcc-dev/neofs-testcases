@@ -52,6 +52,48 @@ class TestS3Multipart(TestNeofsS3Base):
             got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
+    def test_s3_object_multipart_non_sequential(self):
+        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+            pytest.skip("This test runs only on post 0.32.0 S3 gw version")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
+        parts_count = 5
+        file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
+        object_key = object_key_from_file_path(file_name_large)
+        part_files = split_file(file_name_large, parts_count)
+        parts = []
+
+        with allure.step("Upload second part"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
+            with pytest.raises(
+                Exception,
+                match=".*A conflicting conditional operation is currently in progress against this resource.*",
+            ):
+                s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 2, part_files[0])
+
+        with allure.step("Upload first part"):
+            etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 1, part_files[0])
+            parts.append((1, etag))
+            got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
+            assert len(got_parts) == 1, f"Expected {1} parts, got\n{got_parts}"
+
+        with allure.step("Upload last parts"):
+            for part_id, file_path in enumerate(part_files[1:], start=2):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
+                parts.append((part_id, etag))
+            got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
+            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+            assert len(got_parts) == len(part_files), f"Expected {parts_count} parts, got\n{got_parts}"
+
+        with allure.step("Check upload list is empty"):
+            uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
+            assert not uploads, f"Expected there is no uploads in bucket {bucket}"
+
+        with allure.step("Check we can get whole object from bucket"):
+            got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
+            assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
     @allure.title("Test S3 Multipart abord")
     def test_s3_abort_multipart(self):
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
