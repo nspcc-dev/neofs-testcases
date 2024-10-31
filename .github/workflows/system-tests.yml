@@ -248,7 +248,7 @@ jobs:
             working-directory: neofs-s3-gw
 
           - name: Copy built neofs-s3-gw
-            if: ${{ inputs.neofs_rest_gw_commit != 'from_tests' }}
+            if: ${{ inputs.neofs_s3_gw_commit != 'from_tests' }}
             timeout-minutes: 30
             run: |
               cp ../neofs-s3-gw/bin/* .
