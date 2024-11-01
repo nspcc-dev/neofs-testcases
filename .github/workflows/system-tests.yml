@@ -180,7 +180,7 @@ jobs:
 
           - name: Download neofs-cli
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
@@ -189,7 +189,7 @@ jobs:
 
           - name: Download neofs-adm
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
@@ -198,7 +198,7 @@ jobs:
 
           - name: Download neofs-ir
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
@@ -207,7 +207,7 @@ jobs:
 
           - name: Download neofs-lens
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
@@ -216,7 +216,7 @@ jobs:
 
           - name: Download neofs-node
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
@@ -258,7 +258,7 @@ jobs:
 
           - name: Download neofs-s3-gw
             if: ${{ inputs.neofs_s3_gw_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-s3-gw'
               version: 'tags/${{ inputs.neofs_s3_gw_tag }}'
@@ -267,7 +267,7 @@ jobs:
 
           - name: Download neofs-s3-authmate
             if: ${{ inputs.neofs_s3_gw_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-s3-gw'
               version: 'tags/${{ inputs.neofs_s3_gw_tag }}'
@@ -305,7 +305,7 @@ jobs:
 
           - name: Download neofs-rest-gw
             if: ${{ inputs.neofs_rest_gw_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-rest-gw'
               version: 'tags/${{ inputs.neofs_rest_gw_tag }}'
@@ -320,7 +320,7 @@ jobs:
 
           - name: Download neo-go
             if: ${{ inputs.neo_go_tag != 'from_tests' }}
-            uses: dsaltares/fetch-gh-release-asset@1.1.1
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neo-go'
               version: 'tags/${{ inputs.neo_go_tag }}'
@@ -346,7 +346,7 @@ jobs:
             env:
               ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
             run: |
-              source venv.pytest/bin/activate && pytest -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
+              source venv.pytest/bin/activate && pytest --timeout=720 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
           - name: Publish to NeoFS
@@ -372,7 +372,7 @@ jobs:
             if: always() && steps.put_report.outcome == 'success'
             env:
               REPORT_NEOFS_URL: ${{ steps.put_report.outputs.REPORT_NEOFS_URL }}index.html
-            uses: Sibz/github-status-action@v1
+            uses: guibranco/github-status-action-v2@v1.1.13
             with:
               authToken: ${{ secrets.GITHUB_TOKEN }}
               context: 'Test report ${{ matrix.runner }}'
