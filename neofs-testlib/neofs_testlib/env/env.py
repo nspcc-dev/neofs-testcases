@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from enum import Enum
 from importlib.resources import files
 from pathlib import Path
+from subprocess import Popen, TimeoutExpired
 from typing import Optional
 
 import allure
@@ -57,6 +58,16 @@ class NodeWallet:
 class WalletType(Enum):
     STORAGE = 1
     ALPHABET = 2
+
+
+def terminate_process(process: Popen):
+    process.terminate()
+    try:
+        process.wait(timeout=60)
+    except TimeoutExpired as e:
+        logger.info(f"Didn't manage to terminate process gracefully: {e}")
+        process.kill()
+        process.wait(timeout=60)
 
 
 class NeoFSEnv:
@@ -968,8 +979,8 @@ class StorageNode:
     @allure.step("Stop storage node")
     def stop(self):
         logger.info(f"Stopping Storage Node:{self}")
-        self.process.terminate()
-        self.process.wait()
+        terminate_process(self.process)
+        self.process = None
 
     @allure.step("Kill storage node")
     def kill(self):
@@ -1124,7 +1135,7 @@ class S3_GW:
     def stop(self):
         logger.info(f"Stopping s3 gw:{self}")
         self.process.terminate()
-        self.process.wait()
+        terminate_process(self.process)
         self.process = None
 
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
