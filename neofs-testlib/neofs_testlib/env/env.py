@@ -60,14 +60,17 @@ class WalletType(Enum):
     ALPHABET = 2
 
 
-def terminate_process(process: Popen):
+def terminate_process(process: Popen, force=True):
     process.terminate()
     try:
         process.wait(timeout=60)
     except TimeoutExpired as e:
         logger.info(f"Didn't manage to terminate process gracefully: {e}")
-        process.kill()
-        process.wait(timeout=60)
+        if force:
+            process.kill()
+            process.wait(timeout=60)
+        else:
+            raise AssertionError("Process was not terminated by SIGTERM")
 
 
 class NeoFSEnv:
@@ -977,9 +980,9 @@ class StorageNode:
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
     @allure.step("Stop storage node")
-    def stop(self):
+    def stop(self, force=True):
         logger.info(f"Stopping Storage Node:{self}")
-        terminate_process(self.process)
+        terminate_process(self.process, force=force)
         self.process = None
 
     @allure.step("Kill storage node")
@@ -1132,10 +1135,10 @@ class S3_GW:
             raise e
 
     @allure.step("Stop s3 gw")
-    def stop(self):
+    def stop(self, force=True):
         logger.info(f"Stopping s3 gw:{self}")
         self.process.terminate()
-        terminate_process(self.process)
+        terminate_process(self.process, force=force)
         self.process = None
 
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)

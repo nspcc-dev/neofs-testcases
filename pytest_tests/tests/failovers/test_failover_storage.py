@@ -56,7 +56,7 @@ class TestFailoverStorage(NeofsEnvTestBase):
             if hard_restart:
                 node_to_stop.kill()
             else:
-                node_to_stop.stop()
+                node_to_stop.stop(force=False)
             stopped_nodes.append(node_to_stop)
 
             object_nodes_after_stop = wait_object_replication(
