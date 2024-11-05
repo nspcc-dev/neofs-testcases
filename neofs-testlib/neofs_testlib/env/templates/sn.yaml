@@ -49,8 +49,6 @@ storage:
       blobstor:
         - type: peapod
           path: {{ shards[0].blobovnicza_path }}  # Blobovnicza root directory
-          depth: 2
-          width: 4
         - type: fstree
           path: {{ shards[0].fstree_path }}  # FSTree root directory
           depth: 2
@@ -69,8 +67,6 @@ storage:
       blobstor:
         - type: peapod
           path: {{ shards[1].blobovnicza_path }}  # Blobovnicza root directory
-          depth: 2
-          width: 4
         - type: fstree
           path: {{ shards[1].fstree_path }}  # FSTree root directory
           depth: 2
