@@ -23,6 +23,12 @@ class VersioningStatus(Enum):
     SUSPENDED = "Suspended"
 
 
+class ObjectOwnership(Enum):
+    BUCKET_OWNER_PREFERRED = "BucketOwnerPreferred"
+    BUCKET_OWNER_ENFORCED = "BucketOwnerEnforced"
+    OBJECT_WRITER = "ObjectWriter"
+
+
 @allure.step("Create bucket S3")
 def create_bucket_s3(
     s3_client,
@@ -304,6 +310,19 @@ def delete_bucket_cors(s3_client, bucket: str):
         response = s3_client.delete_bucket_cors(**params)
         log_command_execution("S3 delete_bucket_cors result", response)
         return response.get("ObjectLockConfiguration")
+    except ClientError as err:
+        raise Exception(
+            f'Error Message: {err.response["Error"]["Message"]}\n'
+            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+        ) from err
+
+
+def put_bucket_ownership_controls(s3_client, bucket: str, object_ownership: ObjectOwnership):
+    params = {"Bucket": bucket, "OwnershipControls": {"Rules": [{"ObjectOwnership": object_ownership.value}]}}
+    try:
+        response = s3_client.put_bucket_ownership_controls(**params)
+        log_command_execution("S3 put_bucket_ownership_controls result", response)
+        return response
     except ClientError as err:
         raise Exception(
             f'Error Message: {err.response["Error"]["Message"]}\n'
