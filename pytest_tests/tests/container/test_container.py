@@ -211,3 +211,38 @@ class TestContainer(NeofsEnvTestBase):
 
         with allure.step("Previously stopped node should return GC MARKED for the created object"):
             object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
+
+    def test_container_global_name(self, default_wallet, simple_object_size):
+        if self.neofs_env.storage_nodes[0]._get_version() <= "0.43.0":
+            pytest.skip("This test runs only on post 0.43.0 node version")
+
+        with allure.step("Create container"):
+            wallet = default_wallet
+            placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
+            create_container(
+                wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                rule=placement_rule,
+                name="foo",
+                basic_acl=PUBLIC_ACL,
+                global_name=True,
+            )
+
+        with allure.step("Get NNS names"):
+            raw_dumped_names = self.neofs_env.neofs_adm().morph.dump_names(f"http://{self.neofs_env.morph_rpc}").stdout
+            assert "foo.container" in raw_dumped_names, "Updated name not found"
+
+        with allure.step("Try to create container with same name"):
+            wallet = default_wallet
+            placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
+            with pytest.raises(RuntimeError, match=".*name is already taken.*"):
+                create_container(
+                    wallet.path,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    rule=placement_rule,
+                    name="foo",
+                    basic_acl=PUBLIC_ACL,
+                    global_name=True,
+                )

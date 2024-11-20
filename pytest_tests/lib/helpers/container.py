@@ -36,6 +36,7 @@ def create_container(
     options: dict = None,
     await_mode: bool = True,
     wait_for_creation: bool = True,
+    global_name: bool = False,
 ) -> str:
     """
     A wrapper for `neofs-cli container create` call.
@@ -89,6 +90,7 @@ def create_container(
         name=name,
         session=session_token,
         await_mode=await_mode,
+        global_name=global_name,
         **options or {},
     )
 
