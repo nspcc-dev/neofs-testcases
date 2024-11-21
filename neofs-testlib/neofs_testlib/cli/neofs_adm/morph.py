@@ -107,6 +107,21 @@ class NeofsAdmMorph(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
+    def dump_names(self, rpc_endpoint: str, domain: Optional[str] = None) -> CommandResult:
+        """Dump known registred NNS names and expirations
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint.
+            domain: Filter by domain
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "morph dump-names",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
+
     def force_new_epoch(
         self, rpc_endpoint: Optional[str] = None, alphabet_wallets: Optional[str] = None
     ) -> CommandResult:

@@ -14,6 +14,7 @@ class NeofsCliContainer(CliCommand):
         basic_acl: Optional[str] = None,
         await_mode: bool = False,
         disable_timestamp: bool = False,
+        global_name: bool = False,
         name: Optional[str] = None,
         nonce: Optional[str] = None,
         policy: Optional[str] = None,
