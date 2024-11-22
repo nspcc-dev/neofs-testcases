@@ -6,7 +6,8 @@ import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import STORAGE_GC_TIME
 from helpers.complex_object_actions import get_link_object, get_nodes_with_object, get_object_chunks
-from helpers.container import create_container
+from helpers.container import create_container, get_container
+from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     LIFETIME_REQUIRED,
     LOCK_NON_REGULAR_OBJECT,
@@ -16,13 +17,14 @@ from helpers.grpc_responses import (
     OBJECT_IS_LOCKED,
     OBJECT_NOT_FOUND,
 )
-from helpers.neofs_verbs import delete_object, head_object, lock_object
+from helpers.neofs_verbs import delete_object, head_object, lock_object, put_object_to_random_node
 from helpers.node_management import delete_node_metadata, drop_object, start_storage_nodes
 from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.storage_object_info import LockObjectInfo, StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises, wait_for_success
 from helpers.utility import parse_time, wait_for_gc_pass_on_storage_nodes
 from helpers.wallet_helpers import create_wallet
+from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -658,3 +660,51 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
                     self.shell,
                     self.neofs_env.sn_rpc,
                 )
+
+    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet, simple_object_size: int):
+        with allure.step("Create container"):
+            wallet = default_wallet
+            source_file_path = generate_file(simple_object_size)
+            cid = create_container(
+                wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                rule="REP 1 CBF 1",
+                basic_acl=PUBLIC_ACL,
+            )
+
+        with allure.step("Put object"):
+            oid = put_object_to_random_node(
+                wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step("Lock object"):
+            lock_object(
+                wallet.path,
+                cid,
+                oid,
+                self.shell,
+                self.neofs_env.sn_rpc,
+                lifetime=FIXTURE_LOCK_LIFETIME,
+            )
+
+        with allure.step("Get nodes with object"):
+            nodes_with_object = get_nodes_with_object(
+                cid,
+                oid,
+                shell=self.shell,
+                nodes=self.neofs_env.storage_nodes,
+                neofs_env=self.neofs_env,
+            )
+
+        with allure.step(f"Try to delete object {oid} from other node"):
+            for node in self.neofs_env.storage_nodes:
+                if node not in nodes_with_object:
+                    with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
+                        delete_object(
+                            wallet.path,
+                            cid,
+                            oid,
+                            self.shell,
+                            node.endpoint,
+                        )
