@@ -1,12 +1,10 @@
-## Testcases structure
+This repo contains functional integration tests for [NeoFS](https://github.com/nspcc-dev). 
+Tests can be found under `pytest_tests/tests` directory.
+We use [pytest](https://docs.pytest.org/en/stable/).
 
-Tests are located under `pytest_tests` directory.
+## How to get started?
 
-## Testcases execution
-
-### Initial preparation
-
-1. Fix OpenSSL ripemd160
+0. Fix OpenSSL ripemd160
 
 Hashlib uses OpenSSL for ripemd160 and apparently OpenSSL disabled some older crypto algos around version 3.0
 in November 2021.
@@ -14,6 +12,7 @@ All the functions are still there but require manual enabling. See https://githu
 
 But we use ripemd160 for tests.
 For ripemd160 to be supported, make sure that the config file `/usr/lib/ssl/openssl.cnf` contains following lines:
+
 ```
 openssl_conf = openssl_init
 
@@ -31,68 +30,50 @@ activate = 1
 activate = 1
 ```
 
+There is also a script that does this for you - `sudo python ./tools/src/openssl_config_fix.py`
 
-2. Prepare and activate virtualenv
-
+1. Create and activate venv with dependencies from requirements.txt. We've put some basics into the makefile target:
 ```shell
 $ make venv.pytest
 $ . venv.pytest/bin/activate
 ```
+But you can use any other way you want to create venv. 
+If you don't know what venv is, please, check - https://docs.python.org/3/library/venv.html
 
-If you want to exit from the current venv for any reason, use the `deactivate` command.
+2. Just run the test - `pytest -s -k test_get_object_api pytest_tests/tests/object/test_object_api.py`
 
-3. Setup pre-commit hooks to run code formatters on staged files before you run a `git commit` command:
+3. Everything should work out of the box, if not - check the rest of this README. If nothing useful there - feel free to open a github issue. 
+
+## Allure report
+
+For reporting we use allure report and if you want to get it, take the following steps:
+
+1. Run a test with `--alluredir` parameter to specify a dir where allure report json files will be saved.
 
 ```shell
-$ pre-commit install
+pytest --alluredir my-allure-234 -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py 
 ```
 
-We use ruff linter - https://github.com/astral-sh/ruff, please install it in your IDE to properly format the code. 
-In any case, there is a github workflow that will check your formatting.
+2. After the test you will see a bunch of json files inside a directory from `--alluredir`. 
+Now we need to convert them into nice and pretty web page. To do this you need allure cli:
 
-4. Install Allure CLI
+Installation for Linux: [instruction](https://allurereport.org/docs/install-for-linux/#install-from-a-deb-package)
+Installation for macOS: [instruction](https://allurereport.org/docs/install-for-linux/#install-from-homebrew)
 
-Allure CLI installation is not an easy task, so a better option might be to run allure from
-docker container (please, refer to p.2 of the next section for instructions).
+3. To generate the report:
 
-To install Allure CLI you may take one of the following ways:
-
-- Follow the [instruction](https://docs.qameta.io/allure/#_linux) from the official website
-- Consult [the thread](https://github.com/allure-framework/allure2/issues/989)
-- Download release from the Github
 ```shell
-$ wget https://github.com/allure-framework/allure2/releases/download/2.18.1/allure_2.18.1-1_all.deb
-$ sudo apt install ./allure_2.18.1-1_all.deb
+$ allure serve my-allure-123
 ```
-You also need the `default-jre` package installed.
+You will be redirected to your browser and a web page with allure report will be opened.
 
-If none of the options worked for you, please complete the instruction with your approach.
+## Working with a test NeoFS environment
 
-### Run and get report
-
-1. Binaries
-
-By default binaries are downloaded automatically by tests, but if you place binaries under current directory, 
-they will be taken from there.
-
-Following binaries are needed:
-- neofs-cli
-- neofs-adm
-- neofs-ir
-- neofs-lens
-- neofs-node
-- neofs-rest-gw
-- neofs-http-gw
-- neo-go
-- neofs-s3-authmate
-- neofs-s3-gw
-
-2. Run tests
-
-Make sure that the virtualenv is activated, then execute the following command to run a specific test
-```shell
-$ pytest --alluredir my-allure-123 -s -k test_get_object_api pytest_tests/tests/object/test_object_api.py
-```
+Tests deploy test environment out of a set of binaries and run them as a separate processes. 
+By default these binaries are downloaded automatically. 
+List of all required binaries with corresponding URLs can be found here - `neofs-testlib/neofs_testlib/env/templates/neofs_env_config.yaml`.
+To use a patched binary for tests just place it to the repo root directory. 
+Config files for binaries are located here - `neofs-testlib/neofs_testlib/env/templates`.
 
 If you are going to run tests several times in the same dev environment, 
 you can use the `--persist-env` key to initiate keeping the test environment. 
@@ -105,36 +86,38 @@ After that, you can run tests faster by adding the `--load-env` flag along with
 the received value. This way you won't waste time redeploy the environment.
 For example:
 ```shell
-pytest --alluredir my-allure-234 -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py --load-env env_files/persisted_env_awxyrbxdwu 
+pytest -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py --load-env env_files/persisted_env_awxyrbxdwu 
 ```
-If anything goes wrong, first advice is to check .github/workflows/run-tests.yml, to ensure you've done all required steps.
 
-3. Generate report
+## pytest marks
 
-If you opted to install Allure CLI, you can generate a report using the command `allure generate`. The web representation of the report will be under `allure-report` directory:
+Custom pytest marks used in tests:
+* `sanity` - a short subset of tests to ensure basic NeoFS functionality works.
+
+## Tests/Libraries structure
+
+Tests are located under `pytest_tests/tests`.
+
+Different libraries used by tests are located under `pytest_tests/lib/` and `neofs_testlib/`.
+
+At this moment, there is no logic behind libraries location. 
+But it was assumed that common python libraries that can be useful in other projects should be placed under `neofs_testlib/`.
+Other projects (e.g. [s3-tests](https://github.com/nspcc-dev/s3-tests/)) use git submodules to copy the whole repo.
+
+## Code formatter/linter
+
+We use [ruff](https://docs.astral.sh/ruff/). All PRs are automatically checked. 
+So, please, install it in your IDE to properly format the code.
+We also have some pre-commit hooks to run ruff on staged files before you run a `git commit` command, install them with:
+
 ```shell
-$ allure generate my-allure-123
-$ ls allure-report/
-app.js  data  export  favicon.ico  history  index.html  plugins  styles.css  widgets
+$ pre-commit install
 ```
 
-To inspect the report in a browser, run
-```shell
-$ allure serve my-allure-123
-```
+## Github Actions
 
-If you prefer to run allure from Docker, you can use the following command:
-```shell
-$ mkdir -p $PWD/allure-reports 
-$ docker run -p 5050:5050 -e CHECK_RESULTS_EVERY_SECONDS=30 -e KEEP_HISTORY=1 \
-    -v $PWD/my-allure-123:/app/allure-results \
-    -v $PWD/allure-reports:/app/default-reports \
-    frankescobar/allure-docker-service
-```
-
-Then, you can check the allure report in your browser [by this link](http://localhost:5050/allure-docker-service/projects/default/reports/latest/index.html?redirect=false)
-
-NOTE: feel free to select a different location for `allure-reports` directory, there is no requirement to have it inside `neofs-testcases`. For example, you can place it under `/tmp` path.
+Main action is located here - `.github/workflows/system-tests.yml`.
+Be careful with updating since it is used throughout `https://github.com/nspcc-dev`. Be sure that all dependent workflows work. 
 
 # Contributing
 
@@ -144,14 +127,6 @@ guidelines](CONTRIBUTING.md).
 Before starting to work on a certain topic, create a new issue first, describing
 the feature/topic you are going to implement.
 
-
 # License
 
 - [GNU General Public License v3.0](LICENSE)
-
-## Pytest marks
-
-Custom pytest marks used in tests:
-* `sanity` - Tests must be runs in sanity testruns.
-* `smoke` - Tests must be runs in smoke testruns.
-
