@@ -83,8 +83,8 @@ def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
 
 @pytest.fixture
 def zero_fee(neofs_env: NeoFSEnv):
-    neofs_env.neofs_adm().morph.set_config(
-        rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+    neofs_env.neofs_adm().fschain.set_config(
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
         post_data="ContainerFee=0 ContainerAliasFee=0",
     )

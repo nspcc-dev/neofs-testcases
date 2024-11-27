@@ -15,11 +15,11 @@ prometheus:
   address: {{ prometheus_address }}  # Server address
   shutdown_timeout: 15s  # Timeout for metrics HTTP server graceful shutdown
 
-# Morph section
-morph:
+# FS chain section
+fschain:
   dial_timeout: 30s  # Timeout for side chain NEO RPC client connection
   endpoints:  # Side chain NEO RPC endpoints
-    - ws://{{ morph_endpoint }}/ws
+    - ws://{{ fschain_endpoint }}/ws
 
 
 # Tree section

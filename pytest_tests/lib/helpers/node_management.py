@@ -8,7 +8,7 @@ from typing import Optional
 
 import allure
 import neofs_env.neofs_epoch as neofs_epoch
-from helpers.common import MORPH_BLOCK_TIME, NEOFS_CLI_EXEC
+from helpers.common import FSCHAIN_BLOCK_TIME, NEOFS_CLI_EXEC
 from helpers.utility import parse_time
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
@@ -194,7 +194,7 @@ def exclude_node_from_network_map(
 
     storage_node_set_status(node_to_exclude, status="offline")
 
-    time.sleep(parse_time(MORPH_BLOCK_TIME))
+    time.sleep(parse_time(FSCHAIN_BLOCK_TIME))
     neofs_epoch.tick_epoch_and_wait(neofs_env)
 
     snapshot = get_netmap_snapshot(node=alive_node, shell=shell)
@@ -213,9 +213,9 @@ def include_node_to_network_map(
     # Per suggestion of @fyrchik we need to wait for 2 blocks after we set status and after tick epoch.
     # First sleep can be omitted after https://github.com/nspcc-dev/neofs-node/issues/1790 complete.
 
-    time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
+    time.sleep(parse_time(FSCHAIN_BLOCK_TIME) * 2)
     neofs_epoch.tick_epoch_and_wait(neofs_env)
-    time.sleep(parse_time(MORPH_BLOCK_TIME) * 2)
+    time.sleep(parse_time(FSCHAIN_BLOCK_TIME) * 2)
 
     check_node_in_map(node_to_include, shell, alive_node)
 

@@ -136,12 +136,10 @@ class TestFailoverNetwork(NeofsEnvTestBase):
         for storage_node in self.neofs_env.storage_nodes:
             pid = storage_node.process.pid
 
-            morph_chain_addr = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[0]
-            morph_chain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
+            fschain_addr = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[0]
+            fschain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
 
-            with allure.step(
-                f"Disconnecting storage node {storage_node} " f"from {morph_chain_addr} {dport_repeat} times"
-            ):
+            with allure.step(f"Disconnecting storage node {storage_node} " f"from {fschain_addr} {dport_repeat} times"):
                 for repeat in range(dport_repeat):
                     with allure.step(f"Disconnect number {repeat}"):
                         try:
@@ -153,7 +151,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                             But we face the limitations of the ubuntu-latest runner:
                             And using setfacl is not possible due to GitHub ubuntu-latest runner limitations.
                             """
-                            command = f"ss -K dst {morph_chain_addr} dport {morph_chain_port}"
+                            command = f"ss -K dst {fschain_addr} dport {fschain_port}"
                             sudo_command = f"sudo nsenter -t {pid} -n {command}"
                             output = subprocess.check_output(sudo_command, shell=True)
                             logger.info(f"Output of the command {sudo_command}: {output}")
@@ -166,7 +164,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                             # Delay between shutdown attempts, emulates a real disconnection
                             sleep(1)
                     logger.info(
-                        f"Disconnected storage node {storage_node} " f"from {morph_chain_addr} {dport_repeat} times"
+                        f"Disconnected storage node {storage_node} " f"from {fschain_addr} {dport_repeat} times"
                     )
 
             for node in self.neofs_env.storage_nodes:

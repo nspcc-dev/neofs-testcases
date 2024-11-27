@@ -104,8 +104,8 @@ class TestContainerPayments:
         STORAGE_FEE = GAS
 
         with allure.step("Set more convenient network config values"):
-            neofs_env.neofs_adm().morph.set_config(
-                rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+            neofs_env.neofs_adm().fschain.set_config(
+                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
                 alphabet_wallets=neofs_env.alphabet_wallets_dir,
                 post_data=f"MaxObjectSize={MAX_OBJECT_SIZE} ContainerFee={CONTAINER_FEE} BasicIncomeRate={STORAGE_FEE} EpochDuration={EPOCH_DURATION}",
             )

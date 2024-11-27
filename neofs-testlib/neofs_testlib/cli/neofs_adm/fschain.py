@@ -4,7 +4,7 @@ from neofs_testlib.cli.cli_command import CliCommand
 from neofs_testlib.shell import CommandResult
 
 
-class NeofsAdmMorph(CliCommand):
+class NeofsAdmFSChain(CliCommand):
     def deposit_notary(
         self,
         rpc_endpoint: str,
@@ -26,7 +26,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph deposit-notary",
+            "fschain deposit-notary",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -51,12 +51,12 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph dump-balances",
+            "fschain dump-balances",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
     def dump_config(self, rpc_endpoint: str) -> CommandResult:
-        """Section for morph network configuration commands.
+        """Section for FS chain network configuration commands.
 
         Args:
             rpc_endpoint: N3 RPC node endpoint
@@ -65,7 +65,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph dump-config",
+            "fschain dump-config",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -88,7 +88,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph dump-containers",
+            "fschain dump-containers",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -103,7 +103,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph dump-hashes",
+            "fschain dump-hashes",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -118,7 +118,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph dump-names",
+            "fschain dump-names",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -135,7 +135,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph force-new-epoch",
+            "fschain force-new-epoch",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -144,7 +144,7 @@ class NeofsAdmMorph(CliCommand):
         alphabet_wallets: str,
         size: int = 7,
     ) -> CommandResult:
-        """Generate alphabet wallets for consensus nodes of the morph network.
+        """Generate alphabet wallets for consensus nodes of the FS chain network.
 
         Args:
             alphabet_wallets: Path to alphabet wallets dir.
@@ -154,7 +154,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph generate-alphabet",
+            "fschain generate-alphabet",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -165,7 +165,7 @@ class NeofsAdmMorph(CliCommand):
         label: str,
         initial_gas: Optional[str] = None,
     ) -> CommandResult:
-        """Generate storage node wallet for the morph network.
+        """Generate storage node wallet for the FS chain network.
 
         Args:
             alphabet_wallets: Path to alphabet wallets dir.
@@ -177,7 +177,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph generate-storage-wallet",
+            "fschain generate-storage-wallet",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -194,7 +194,7 @@ class NeofsAdmMorph(CliCommand):
         local_dump: Optional[str] = None,
         max_object_size: int = 67108864,
     ) -> CommandResult:
-        """Section for morph network configuration commands.
+        """Section for FS chain network configuration commands.
 
         Args:
             alphabet_wallets: Path to alphabet wallets dir.
@@ -213,7 +213,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph init",
+            "fschain init",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -224,7 +224,7 @@ class NeofsAdmMorph(CliCommand):
         storage_wallet: str,
         gas: Optional[str] = None,
     ) -> CommandResult:
-        """Refill GAS of storage node's wallet in the morph network
+        """Refill GAS of storage node's wallet in the FS chain network
 
         Args:
             alphabet_wallets: Path to alphabet wallets dir.
@@ -236,7 +236,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph refill-gas",
+            "fschain refill-gas",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -259,7 +259,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph restore-containers",
+            "fschain restore-containers",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -291,7 +291,7 @@ class NeofsAdmMorph(CliCommand):
         if fee_per_byte:
             non_param_attribute += f"FeePerByte={fee_per_byte} "
         return self._execute(
-            f"morph restore-containers {non_param_attribute}",
+            f"fschain restore-containers {non_param_attribute}",
             **{
                 param: param_value
                 for param, param_value in locals().items()
@@ -317,7 +317,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph update-contracts",
+            "fschain update-contracts",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -333,7 +333,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph set-config",
+            "fschain set-config",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -360,7 +360,7 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph deploy",
+            "fschain deploy",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -372,7 +372,7 @@ class NeofsAdmMorph(CliCommand):
         rpc_endpoint: str,
         wallet_address: str,
     ) -> CommandResult:
-        """Mint new NEOFS tokens in the morph network
+        """Mint new NEOFS tokens in the FS chain network
 
         Args:
             alphabet_wallets: Path to alphabet wallets dir
@@ -385,6 +385,6 @@ class NeofsAdmMorph(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph mint-balance",
+            "fschain mint-balance",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

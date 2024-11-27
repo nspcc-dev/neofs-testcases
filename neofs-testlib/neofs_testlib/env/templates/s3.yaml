@@ -31,11 +31,11 @@ wallet:
 # RPC endpoint
 
 {% if s3_gw_version <= "0.30.1" %}
-rpc_endpoint: http://{{ morph_endpoint }}
+rpc_endpoint: http://{{ fschain_endpoint }}
 {% else %}
 fschain:
   endpoints:
-    - http://{{ morph_endpoint }}
+    - http://{{ fschain_endpoint }}
 {% endif %}
 
 peers:
