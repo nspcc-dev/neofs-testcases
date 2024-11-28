@@ -1,4 +1,4 @@
-rpc-endpoint: http://{{ morph_endpoint }}
+rpc-endpoint: http://{{ fschain_endpoint }}
 alphabet-wallets: {{ alphabet_wallets_path }}
 network:
   max_object_size: 67108864

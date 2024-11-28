@@ -121,7 +121,7 @@ class TestHomomorphicHash(NeofsEnvTestBase):
 
         neofsadm = self.neofs_env.neofs_adm()
 
-        neofsadm.morph.set_config(
+        neofsadm.fschain.set_config(
             rpc_endpoint=f"http://{ir_node.rpc_address}",
             alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
             post_data=f"HomomorphicHashingDisabled={str(value).lower()}",

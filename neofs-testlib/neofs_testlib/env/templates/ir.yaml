@@ -19,7 +19,7 @@ mainnet:
   reconnections_number: 5  # number of reconnection attempts
   reconnections_delay: 5s  # time delay b/w reconnection attempts
 
-morph:
+fschain:
   validators:  # List of hex-encoded 33-byte public keys of sidechain validators to vote for at application startup
     {%- for public_key in public_keys %}
     - {{ public_key }} # Hex-encoded public key

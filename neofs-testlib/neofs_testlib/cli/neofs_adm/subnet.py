@@ -4,7 +4,7 @@ from neofs_testlib.cli.cli_command import CliCommand
 from neofs_testlib.shell import CommandResult
 
 
-class NeofsAdmMorphSubnet(CliCommand):
+class NeofsAdmFSChainSubnet(CliCommand):
     def create(self, rpc_endpoint: str, address: str, wallet: str, notary: bool = False) -> CommandResult:
         """Create NeoFS subnet.
 
@@ -18,7 +18,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet create",
+            "fschain subnet create",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -33,7 +33,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet get",
+            "fschain subnet get",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -50,7 +50,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet remove",
+            "fschain subnet remove",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -79,7 +79,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet admin add",
+            "fschain subnet admin add",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -106,7 +106,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet admin remove",
+            "fschain subnet admin remove",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -133,7 +133,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet client add",
+            "fschain subnet client add",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -160,7 +160,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet client remove",
+            "fschain subnet client remove",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -177,7 +177,7 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet node add",
+            "fschain subnet node add",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
@@ -194,6 +194,6 @@ class NeofsAdmMorphSubnet(CliCommand):
             Command's result.
         """
         return self._execute(
-            "morph subnet node remove",
+            "fschain subnet node remove",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )

@@ -108,7 +108,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
             force_str = "--force " if force else ""
             keys_values_str = " ".join([f"{key}={str(value).lower()}" for key, value in key_value_pairs.items()])
 
-            neofsadm.morph.set_config(
+            neofsadm.fschain.set_config(
                 rpc_endpoint=f"http://{ir_node.rpc_address}",
                 alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
                 post_data=f"{force_str}{keys_values_str}",

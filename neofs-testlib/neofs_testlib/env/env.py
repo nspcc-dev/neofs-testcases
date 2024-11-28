@@ -101,7 +101,7 @@ class NeoFSEnv:
         self.main_chain = None
 
     @property
-    def morph_rpc(self):
+    def fschain_rpc(self):
         if len(self.inner_ring_nodes) > 0:
             return self.inner_ring_nodes[0].rpc_address
         raise ValueError("No Inner Ring nodes configured in this env")
@@ -204,8 +204,8 @@ class NeoFSEnv:
                 allure.attach.file(sn.stdout, name=f"sn{sn.sn_number} stdout", extension="txt")
             raise e
         # tick epoch to speed up storage nodes bootstrap
-        self.neofs_adm().morph.force_new_epoch(
-            rpc_endpoint=f"http://{self.morph_rpc}",
+        self.neofs_adm().fschain.force_new_epoch(
+            rpc_endpoint=f"http://{self.fschain_rpc}",
             alphabet_wallets=self.alphabet_wallets_dir,
         )
         for t in deploy_threads:
@@ -280,7 +280,7 @@ class NeoFSEnv:
     ):
         neofs_adm = self.neofs_adm(network_config)
 
-        neofs_adm.morph.generate_storage_wallet(
+        neofs_adm.fschain.generate_storage_wallet(
             alphabet_wallets=self.alphabet_wallets_dir,
             storage_wallet=prepared_wallet.path,
             initial_gas="10",
@@ -311,7 +311,7 @@ class NeoFSEnv:
     ) -> list[NodeWallet]:
         neofs_adm = self.neofs_adm(network_config)
 
-        neofs_adm.morph.generate_alphabet(alphabet_wallets=self.alphabet_wallets_dir, size=size)
+        neofs_adm.fschain.generate_alphabet(alphabet_wallets=self.alphabet_wallets_dir, size=size)
 
         generated_wallets = []
 
@@ -498,20 +498,20 @@ class NeoFSEnv:
         if with_main_chain:
             neofs_adm = neofs_env.neofs_adm()
             for sn in neofs_env.storage_nodes:
-                neofs_adm.morph.refill_gas(
-                    rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+                neofs_adm.fschain.refill_gas(
+                    rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
                     alphabet_wallets=neofs_env.alphabet_wallets_dir,
                     storage_wallet=sn.wallet.path,
                     gas="10.0",
                 )
-            neofs_env.neofs_adm().morph.set_config(
-                rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+            neofs_env.neofs_adm().fschain.set_config(
+                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
                 alphabet_wallets=neofs_env.alphabet_wallets_dir,
                 post_data="WithdrawFee=5",
             )
         else:
-            neofs_env.neofs_adm().morph.set_config(
-                rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+            neofs_env.neofs_adm().fschain.set_config(
+                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
                 alphabet_wallets=neofs_env.alphabet_wallets_dir,
                 post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
             )
@@ -812,7 +812,7 @@ class InnerRing:
             config_template=network_config_template,
             config_path=self.network_config,
             custom=Path(network_config_template).is_file(),
-            morph_endpoint=self.rpc_address,
+            fschain_endpoint=self.rpc_address,
             alphabet_wallets_path=self.neofs_env.alphabet_wallets_dir,
             default_password=self.neofs_env.default_password,
         )
@@ -959,7 +959,7 @@ class StorageNode:
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
                 custom=Path(sn_config_template).is_file(),
-                morph_endpoint=self.neofs_env.morph_rpc,
+                fschain_endpoint=self.neofs_env.fschain_rpc,
                 shards=self.shards,
                 wallet=self.wallet,
                 state_file=self.state_file,
@@ -1005,7 +1005,7 @@ class StorageNode:
             config_template=sn_config_template,
             config_path=self.storage_node_config_path,
             custom=Path(sn_config_template).is_file(),
-            morph_endpoint=self.neofs_env.morph_rpc,
+            fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             wallet=self.wallet,
             state_file=self.state_file,
@@ -1027,7 +1027,7 @@ class StorageNode:
             config_template=sn_config_template,
             config_path=self.storage_node_config_path,
             custom=Path(sn_config_template).is_file(),
-            morph_endpoint=self.neofs_env.morph_rpc,
+            fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             wallet=self.wallet,
             state_file=self.state_file,
@@ -1169,7 +1169,7 @@ class S3_GW:
             cert_file_path=self.tls_cert_path,
             key_file_path=self.tls_key_path,
             wallet=self.wallet,
-            morph_endpoint=self.neofs_env.morph_rpc,
+            fschain_endpoint=self.neofs_env.fschain_rpc,
             peers=peers,
             tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
             listen_domain=self.neofs_env.domain,

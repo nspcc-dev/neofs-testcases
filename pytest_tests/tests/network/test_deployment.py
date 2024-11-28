@@ -80,8 +80,8 @@ def test_multiple_ir_node_deployment(ir_nodes_count: int, clear_neofs_env: NeoFS
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
 
-        neofs_env.neofs_adm().morph.set_config(
-            rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+        neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
             alphabet_wallets=neofs_env.alphabet_wallets_dir,
             post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
         )

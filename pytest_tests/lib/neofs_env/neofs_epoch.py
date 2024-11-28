@@ -60,8 +60,8 @@ def tick_epoch(neofs_env: NeoFSEnv, alive_node: Optional[StorageNode] = None):
     """
 
     alive_node = alive_node if alive_node else neofs_env.storage_nodes[0]
-    neofs_env.neofs_adm().morph.force_new_epoch(
-        rpc_endpoint=f"http://{neofs_env.morph_rpc}",
+    neofs_env.neofs_adm().fschain.force_new_epoch(
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
         alphabet_wallets=neofs_env.alphabet_wallets_dir,
     )
 

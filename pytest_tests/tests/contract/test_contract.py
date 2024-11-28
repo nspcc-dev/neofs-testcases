@@ -24,7 +24,7 @@ class TestContract(NeofsEnvTestBase):
 
         with allure.step("Try to deploy contract with wrong arguments"):
             with pytest.raises(RuntimeError, match=".*deploy has failed.*"):
-                neofsadm.morph.deploy(
+                neofsadm.fschain.deploy(
                     rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
                     alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                     domain="myzone",
@@ -33,7 +33,7 @@ class TestContract(NeofsEnvTestBase):
                 )
 
         with allure.step("Try to deploy contract with valid arguments"):
-            neofsadm.morph.deploy(
+            neofsadm.fschain.deploy(
                 rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
                 alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                 domain="myzone",
@@ -52,7 +52,7 @@ class TestContract(NeofsEnvTestBase):
 
             with allure.step("Try to deploy updated contract with wrong arguments"):
                 with pytest.raises(RuntimeError, match=".*update has failed.*"):
-                    neofsadm.morph.deploy(
+                    neofsadm.fschain.deploy(
                         rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
                         alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                         domain="myzone",
@@ -62,7 +62,7 @@ class TestContract(NeofsEnvTestBase):
                     )
 
             with allure.step("Try to deploy updated contract with valid arguments"):
-                neofsadm.morph.deploy(
+                neofsadm.fschain.deploy(
                     rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
                     alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                     domain="myzone",
@@ -71,7 +71,7 @@ class TestContract(NeofsEnvTestBase):
                     post_data="string:ok",
                 )
 
-        hashes = neofsadm.morph.dump_hashes(
+        hashes = neofsadm.fschain.dump_hashes(
             rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
             domain="myzone",
         )

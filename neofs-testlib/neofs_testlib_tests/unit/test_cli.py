@@ -129,7 +129,7 @@ class TestCli(TestCase):
         )
 
         expected_command = (
-            f"{self.neofs_adm_exec_path} --config {self.config_file} morph subnet create "
+            f"{self.neofs_adm_exec_path} --config {self.config_file} fschain subnet create "
             f"--rpc-endpoint '{self.rpc_endpoint}' --address '{self.address}' "
             f"--wallet '{self.wallet}' --notary"
         )

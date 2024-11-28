@@ -230,7 +230,9 @@ class TestContainer(NeofsEnvTestBase):
             )
 
         with allure.step("Get NNS names"):
-            raw_dumped_names = self.neofs_env.neofs_adm().morph.dump_names(f"http://{self.neofs_env.morph_rpc}").stdout
+            raw_dumped_names = (
+                self.neofs_env.neofs_adm().fschain.dump_names(f"http://{self.neofs_env.fschain_rpc}").stdout
+            )
             assert "foo.container" in raw_dumped_names, "Updated name not found"
 
         with allure.step("Try to create container with same name"):

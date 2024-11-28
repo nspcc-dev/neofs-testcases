@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 import allure
 import pytest
-from helpers.common import MORPH_BLOCK_TIME
+from helpers.common import FSCHAIN_BLOCK_TIME
 from helpers.complex_object_actions import get_nodes_with_object, wait_object_replication
 from helpers.container import create_container, get_container
 from helpers.file_helper import generate_file
@@ -104,15 +104,15 @@ class TestNodeManagement(NeofsEnvTestBase):
             with allure.step(f"Start node {node}"):
                 node.start(fresh=False)
 
-            # We need to wait for node to establish notifications from morph-chain
+            # We need to wait for node to establish notifications from FS chain
             # Otherwise it will hang up when we will try to set status
-            sleep(parse_time(MORPH_BLOCK_TIME))
+            sleep(parse_time(FSCHAIN_BLOCK_TIME))
 
             with allure.step(f"Move node {node} to online state"):
                 storage_node_set_status(node, status="online", retries=2)
 
             check_nodes.remove(node)
-            sleep(parse_time(MORPH_BLOCK_TIME))
+            sleep(parse_time(FSCHAIN_BLOCK_TIME))
             self.tick_epoch_with_retries(3)
             check_node_in_map(node, shell=self.shell, alive_node=alive_node)
 
