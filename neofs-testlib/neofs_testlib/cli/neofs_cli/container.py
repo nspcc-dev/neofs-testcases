@@ -264,3 +264,25 @@ class NeofsCliContainer(CliCommand):
             "container set-eacl",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def nodes(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+    ) -> CommandResult:
+        """
+        Show nodes taking part in a container at the current epoch.
+
+        Args:
+            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+            wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            cid: Container ID.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "container nodes",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
