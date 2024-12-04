@@ -534,6 +534,15 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
+    def put_bucket_ownership_controls(self, Bucket, OwnershipControls):
+        cmd = (
+            f"aws {self.common_flags} s3api put-bucket-ownership-controls --bucket {Bucket} "
+            f"--ownership-controls '{{\"Rules\": [{{\"ObjectOwnership\": \"{OwnershipControls['Rules'][0]['ObjectOwnership']}\"}}]}}' "
+            f"--endpoint-url {self.s3gate_endpoint}"
+        )
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
     @staticmethod
     def _to_json(output: str) -> dict:
         json_output = {}
