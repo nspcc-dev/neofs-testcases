@@ -66,24 +66,22 @@ class TestS3Multipart(TestNeofsS3Base):
         with allure.step("Upload second part"):
             upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
-            with pytest.raises(
-                Exception,
-                match=".*A conflicting conditional operation is currently in progress against this resource.*",
-            ):
-                s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 2, part_files[0])
+            etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 2, part_files[1])
+            parts.append((2, etag))
 
         with allure.step("Upload first part"):
             etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 1, part_files[0])
             parts.append((1, etag))
             got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            assert len(got_parts) == 1, f"Expected {1} parts, got\n{got_parts}"
+            assert len(got_parts) == 2, f"Expected {1} parts, got\n{got_parts}"
 
         with allure.step("Upload last parts"):
-            for part_id, file_path in enumerate(part_files[1:], start=2):
+            for part_id, file_path in enumerate(part_files[2:], start=3):
                 etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
                 parts.append((part_id, etag))
             got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+            sorted_parts = sorted(parts, key=lambda x: x[0])
+            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, sorted_parts)
             assert len(got_parts) == len(part_files), f"Expected {parts_count} parts, got\n{got_parts}"
 
         with allure.step("Check upload list is empty"):
