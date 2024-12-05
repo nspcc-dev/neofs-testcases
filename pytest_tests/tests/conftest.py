@@ -47,7 +47,11 @@ def neofs_env(temp_directory, artifacts_directory, request):
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
 
-    if request.session.testsfailed and not request.config.getoption("--persist-env"):
+    if (
+        request.session.testsfailed
+        and not request.config.getoption("--persist-env")
+        and not request.config.getoption("--load-env")
+    ):
         for ir in neofs_env.inner_ring_nodes:
             os.remove(ir.ir_storage_path)
         for sn in neofs_env.storage_nodes:
@@ -112,7 +116,7 @@ def temp_directory(request) -> str:
 
     yield full_path
 
-    if not request.config.getoption("--persist-env"):
+    if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
         with allure.step("Remove tmp directory"):
             remove_dir(full_path)
 
@@ -128,7 +132,7 @@ def artifacts_directory(request, temp_directory: str) -> None:
 
     yield
 
-    if not request.config.getoption("--persist-env"):
+    if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
         for dir_name in dirs:
             with allure.step(f"Remove {dir_name} directory"):
                 remove_dir(full_path)
