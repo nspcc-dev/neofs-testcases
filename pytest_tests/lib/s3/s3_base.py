@@ -185,7 +185,8 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str, s3gate_en
             retries={
                 "max_attempts": MAX_REQUEST_ATTEMPTS,
                 "mode": RETRY_MODE,
-            }
+            },
+            signature_version="v4",
         )
 
         s3_client = session.client(

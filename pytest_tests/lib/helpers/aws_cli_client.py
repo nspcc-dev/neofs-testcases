@@ -543,6 +543,13 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
+    def generate_presigned_url(self, ClientMethod: str, Params: dict, ExpiresIn: int, HttpMethod: str):
+        cmd = (
+            f"aws s3 {self.common_flags} --endpoint {self.s3gate_endpoint} presign "
+            f"s3://{Params["Bucket"]}/{Params["Key"]} --expires-in {ExpiresIn}"
+        )
+        return _cmd_run(cmd)
+
     @staticmethod
     def _to_json(output: str) -> dict:
         json_output = {}
