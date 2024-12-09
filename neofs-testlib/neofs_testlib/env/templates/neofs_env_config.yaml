@@ -41,7 +41,7 @@ binaries:
 
     neo_go:
         repo: 'nspcc-dev/neo-go'
-        version: 'v0.107.0'
+        version: 'v0.107.1'
         file: 'neo-go-{{ arch }}'
 
     neofs_contract:
