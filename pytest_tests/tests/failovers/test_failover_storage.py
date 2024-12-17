@@ -5,7 +5,7 @@ import pytest
 from helpers.complex_object_actions import wait_object_replication
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
-from helpers.neofs_verbs import get_object, put_object_to_random_node
+from helpers.neofs_verbs import get_object, put_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
@@ -84,3 +84,46 @@ class TestFailoverStorage(NeofsEnvTestBase):
                 )
                 got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
+
+    def test_put_get_without_storage_node(
+        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes
+    ):
+        with allure.step("Kill one storage node"):
+            dead_node = self.neofs_env.storage_nodes[0]
+            alive_nodes = self.neofs_env.storage_nodes[1:]
+
+            dead_node.kill()
+            stopped_nodes.append(dead_node)
+
+        with allure.step("Create container"):
+            wallet = default_wallet
+            placement_rule = "REP 3"
+            source_file_path = generate_file(simple_object_size)
+            cid = create_container(
+                wallet.path,
+                shell=self.shell,
+                endpoint=alive_nodes[0].endpoint,
+                rule=placement_rule,
+                basic_acl=PUBLIC_ACL,
+            )
+
+        with allure.step("Put object"):
+            oid = put_object(
+                wallet.path,
+                source_file_path,
+                cid,
+                shell=self.shell,
+                endpoint=alive_nodes[0].endpoint,
+            )
+            wait_object_replication(cid, oid, 3, shell=self.shell, nodes=alive_nodes, neofs_env=self.neofs_env)
+
+        with allure.step("Get object"):
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=alive_nodes[0].endpoint)
+            assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
+
+        with allure.step("Return stopped storage node"):
+            return_stopped_storage_nodes(self.neofs_env)
+
+        with allure.step("Get object from previously dead node"):
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=dead_node.endpoint)
+            assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
