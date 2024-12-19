@@ -259,12 +259,3 @@ def cleanup_temp_files():
     for f in os.listdir(os.path.join(get_assets_dir_path(), TEST_FILES_DIR)):
         if f.startswith("temp_file"):
             os.remove(os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f))
-
-
-@pytest.fixture(scope="function", autouse=True)
-def file_system_monitor(neofs_env: NeoFSEnv):
-    with allure.step("Get fs usage before test"):
-        neofs_env.shell.exec("df -h")
-    yield
-    with allure.step("Get fs usage after test"):
-        neofs_env.shell.exec("df -h")
