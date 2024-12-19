@@ -924,8 +924,7 @@ class StorageNode:
         self.sn_number = sn_number
         self.process = None
         self.attrs = {}
-        if node_attrs:
-            self.attrs.update({f"NEOFS_NODE_ATTRIBUTE_{index}": attr for index, attr in enumerate(node_attrs)})
+        self.node_attrs = node_attrs
         if attrs:
             self.attrs.update(attrs)
 
@@ -965,6 +964,7 @@ class StorageNode:
                 state_file=self.state_file,
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
+                attrs=self.node_attrs,
             )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(

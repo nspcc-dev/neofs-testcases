@@ -56,7 +56,7 @@ class TestDynamicObjectSession(NeofsEnvTestBase):
             )
 
         with allure.step("Create Private Container"):
-            un_locode = container_node.attrs["NEOFS_NODE_ATTRIBUTE_0"].split(":")[1].strip()
+            un_locode = container_node.node_attrs[0].split(":")[1].strip()
             locode = "SPB" if un_locode == "RU LED" else un_locode.split()[1]
             placement_policy = (
                 f"REP 1 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
@@ -165,7 +165,7 @@ class TestDynamicObjectSession(NeofsEnvTestBase):
 
         with allure.step("Create Private Container"):
             first_node = self.neofs_env.storage_nodes[0]
-            un_locode = first_node.attrs["NEOFS_NODE_ATTRIBUTE_0"].split(":")[1].strip()
+            un_locode = first_node.node_attrs[0].split(":")[1].strip()
             locode = "SPB" if un_locode == "RU LED" else un_locode.split()[1]
             placement_policy = (
                 f"REP 1 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
