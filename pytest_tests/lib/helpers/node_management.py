@@ -81,7 +81,7 @@ def restart_storage_nodes(nodes: list[StorageNode]) -> None:
 @allure.step("Get Locode from random storage node")
 def get_locode_from_random_node(neofs_env: NeoFSEnv) -> str:
     node = random.choice(neofs_env.storage_nodes)
-    locode = node.attrs["NEOFS_NODE_ATTRIBUTE_0"].split(":")[1].strip()
+    locode = node.node_attrs[0].split(":")[1].strip()
     logger.info(f"Chosen '{locode}' locode from node {node}")
     return locode
 

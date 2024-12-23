@@ -32,6 +32,10 @@ node:
     address: "{{ wallet.address }}"
     password: "{{ wallet.password }}"
 
+  {%- for attr in attrs %}
+  attribute_{{loop.index-1}}: "{{attr}}"
+  {%- endfor %}
+
   persistent_state:
     path: {{ state_file }}  # Path to application state file
 
