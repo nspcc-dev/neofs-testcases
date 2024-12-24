@@ -1021,6 +1021,7 @@ class StorageNode:
             state_file=self.state_file,
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
+            attrs=self.node_attrs,
         )
         time.sleep(1)
 
@@ -1043,6 +1044,7 @@ class StorageNode:
             state_file=self.state_file,
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
+            attrs=self.node_attrs,
         )
         time.sleep(1)
 

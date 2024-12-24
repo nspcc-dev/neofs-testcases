@@ -398,6 +398,13 @@ class TestNodeManagement(NeofsEnvTestBase):
         self, wallet: str, placement_rule: str, file_path: str, expected_copies: int
     ) -> set[int]:
         endpoint = self.neofs_env.sn_rpc
+
+        for sn in self.neofs_env.storage_nodes:
+            self.neofs_env.neofs_cli(sn.cli_config).netmap.nodeinfo(
+                rpc_endpoint=sn.endpoint,
+                wallet=wallet,
+            )
+
         cid = create_container(wallet, rule=placement_rule, basic_acl=PUBLIC_ACL, shell=self.shell, endpoint=endpoint)
         got_policy = placement_policy_from_container(
             get_container(wallet, cid, json_mode=False, shell=self.shell, endpoint=endpoint)
