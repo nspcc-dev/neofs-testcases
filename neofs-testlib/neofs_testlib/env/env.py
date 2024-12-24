@@ -36,7 +36,6 @@ from helpers.common import (
     DEFAULT_REST_OPERATION_TIMEOUT,
     get_assets_dir_path,
 )
-
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
@@ -340,16 +339,18 @@ class NeoFSEnv:
 
     @allure.step("Kill current neofs env")
     def kill(self):
-        if self.rest_gw:
+        if self.rest_gw and self.rest_gw.process:
             self.rest_gw.process.kill()
-        if self.s3_gw:
+        if self.s3_gw and self.s3_gw.process:
             self.s3_gw.process.kill()
-        if self.main_chain:
+        if self.main_chain and self.main_chain.process:
             self.main_chain.process.kill()
         for sn in self.storage_nodes:
-            sn.process.kill()
+            if sn.process:
+                sn.process.kill()
         for ir in self.inner_ring_nodes:
-            ir.process.kill()
+            if ir.process:
+                ir.process.kill()
 
     def persist(self) -> str:
         persisted_path = self._generate_temp_file(os.path.dirname(self._env_dir), prefix="persisted_env")
@@ -979,13 +980,22 @@ class StorageNode:
     @allure.step("Stop storage node")
     def stop(self):
         logger.info(f"Stopping Storage Node:{self}")
-        terminate_process(self.process)
-        self.process = None
+        if self.process:
+            terminate_process(self.process)
+            self.process = None
+            self._wait_until_not_ready()
+        else:
+            AssertionError("Storage node has been already stopped")
 
     @allure.step("Kill storage node")
     def kill(self):
         logger.info(f"Killing Storage Node:{self}")
-        self.process.kill()
+        if self.process:
+            self.process.kill()
+            self.process = None
+            self._wait_until_not_ready()
+        else:
+            AssertionError("Storage node has been already killed")
 
     @allure.step("Delete storage node data")
     def delete_data(self):
@@ -1069,6 +1079,16 @@ class StorageNode:
         result = neofs_cli.control.healthcheck(endpoint=self.control_grpc_endpoint)
         assert "Health status: READY" in result.stdout, "Health is not ready"
         assert "Network status: ONLINE" in result.stdout, "Network is not online"
+
+    @retry(wait=wait_fixed(15), stop=stop_after_attempt(10), reraise=True)
+    def _wait_until_not_ready(self):
+        neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
+        try:
+            result = neofs_cli.control.healthcheck(endpoint=self.control_grpc_endpoint)
+        except Exception:
+            return
+        assert "Health status: READY" not in result.stdout, "Health is ready"
+        assert "Network status: ONLINE" not in result.stdout, "Network is online"
 
     def _get_version(self) -> str:
         raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_node_path, "--version")
