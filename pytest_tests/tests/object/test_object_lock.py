@@ -309,6 +309,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
 
         with allure.step("Wait for object to be deleted after third epoch"):
             self.tick_epochs_and_wait(1)
+            wait_for_gc_pass_on_storage_nodes()
             check_object_not_found()
 
     @allure.title("Should be possible to lock multiple objects at once")
