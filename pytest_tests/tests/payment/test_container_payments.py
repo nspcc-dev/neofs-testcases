@@ -11,10 +11,21 @@ from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
 from helpers.node_management import restart_storage_nodes
 from helpers.wallet_helpers import get_neofs_balance, get_wallet_balance
+from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils import wallet as wallet_utils
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
+
+
+@retry(wait=wait_fixed(5), stop=stop_after_attempt(5), reraise=True)
+def neofs_deposit_balance_should_be_equal(
+    neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWallet, expected_balance: int
+):
+    assert (
+        get_neofs_balance(neofs_env, neofs_cli, wallet) == expected_balance
+    ), "Wallet balance in neofs is not correct after deposit"
 
 
 @pytest.fixture
@@ -65,9 +76,7 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
             get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900
         ), "Wallet balance is not correct after deposit"
         neofs_cli = neofs_env.neofs_cli(wallet.cli_config)
-        assert (
-            get_neofs_balance(neofs_env, neofs_cli, wallet) == 100
-        ), "Wallet balance in neofs is not correct after deposit"
+        neofs_deposit_balance_should_be_equal(neofs_env, neofs_cli, wallet, 100)
 
     return wallet
 
