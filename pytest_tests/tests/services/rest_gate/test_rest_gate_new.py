@@ -47,6 +47,11 @@ class TestRestGate(NeofsEnvTestBase):
             "wallet_path": self.neofs_env.rest_gw.wallet.path,
         }
 
+    @pytest.fixture
+    def fresh_epoch(self):
+        self.ensure_fresh_epoch()
+        yield
+
     @allure.title("Test Put over gRPC, Get over REST")
     def test_put_grpc_get_rest(self, complex_object_size, simple_object_size, gw_endpoint):
         """
@@ -392,7 +397,7 @@ class TestRestGate(NeofsEnvTestBase):
         )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
-    def test_expiration_epoch_in_rest(self, simple_object_size, gw_params):
+    def test_expiration_epoch_in_rest(self, simple_object_size, gw_params, fresh_epoch):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
@@ -441,7 +446,7 @@ class TestRestGate(NeofsEnvTestBase):
                     get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
     @allure.title("Test other Expiration-Epoch settings in HTTP header")
-    def test_expiration_headers_in_rest(self, simple_object_size, gw_params):
+    def test_expiration_headers_in_rest(self, simple_object_size, gw_params, fresh_epoch):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
