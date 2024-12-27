@@ -99,8 +99,9 @@ def list_objects_delete_markers_s3(s3_client, bucket: str, full_output: bool = F
 
 
 @allure.step("Put object S3")
-def put_object_s3(s3_client, bucket: str, filepath: str, **kwargs):
-    filename = os.path.basename(filepath)
+def put_object_s3(s3_client, bucket: str, filepath: str, filename: str = "", **kwargs):
+    if not filename:
+        filename = os.path.basename(filepath)
 
     if isinstance(s3_client, AwsCliClient):
         file_content = filepath
