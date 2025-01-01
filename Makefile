@@ -4,6 +4,7 @@ VENV_DIR := venv.pytest
 PYTHON := python3.12
 PIP := pip3.12
 ENV_FILE := .env
+BINARIES := neo-go neofs-adm neofs-cli neofs-ir neofs-lens neofs-node neofs-rest-gw neofs-s3-authmate neofs-s3-gw
 
 SHELL ?= bash
 
@@ -26,4 +27,7 @@ venv.pytest:
 	@echo "Virtual environment created and customized."
 
 clean:
+	@echo "Removing binaries: $(BINARIES)"
+	rm -f $(BINARIES)
+	@echo "Removing python venv"
 	rm -rf venv.*
