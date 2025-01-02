@@ -342,6 +342,7 @@ jobs:
             working-directory: neofs-testcases
 
           - name: Run tests
+            id: run_tests
             timeout-minutes: 120
             env:
               ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
@@ -376,6 +377,6 @@ jobs:
             with:
               authToken: ${{ secrets.GITHUB_TOKEN }}
               context: 'Test report ${{ matrix.runner }}'
-              state: 'success'
+              state: ${{ steps.run_tests.outcome == 'success' && 'success' || 'failure' }}
               sha: ${{ github.event.pull_request.head.sha || github.sha }}
               target_url: ${{ env.REPORT_NEOFS_URL }}
