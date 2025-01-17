@@ -48,16 +48,14 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
-        logger.info(f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode} " f"\nOutput: {exc.output}")
+        logger.info(f"Command: {cmd}\nError:\nreturn code: {exc.returncode} \nOutput: {exc.output}")
         end_time = datetime.now(UTC)
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
 
-        raise RuntimeError(
-            f"Command: {cmd}\n" f"Error:\nreturn code: {exc.returncode}\n" f"Output: {exc.output}"
-        ) from exc
+        raise RuntimeError(f"Command: {cmd}\nError:\nreturn code: {exc.returncode}\nOutput: {exc.output}") from exc
     except OSError as exc:
-        raise RuntimeError(f"Command: {cmd}\n" f"Output: {exc.strerror}") from exc
+        raise RuntimeError(f"Command: {cmd}\nOutput: {exc.strerror}") from exc
     except Exception as exc:
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         end_time = datetime.now(UTC)
@@ -114,7 +112,7 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
         f"RC: {return_code}\n"
         f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}"
     )
-    with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
+    with allure.step(f"COMMAND: {shorten(cmd, width=60, placeholder='...')}"):
         allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)
 
 
@@ -123,6 +121,6 @@ def log_command_execution(cmd: str, output: Union[str, dict]) -> None:
     with suppress(Exception):
         json_output = json.dumps(output, indent=4, sort_keys=True)
         output = json_output
-    command_attachment = f"COMMAND: '{cmd}'\n" f"OUTPUT:\n {output}\n"
-    with allure.step(f'COMMAND: {shorten(cmd, width=60, placeholder="...")}'):
+    command_attachment = f"COMMAND: '{cmd}'\nOUTPUT:\n {output}\n"
+    with allure.step(f"COMMAND: {shorten(cmd, width=60, placeholder='...')}"):
         allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)

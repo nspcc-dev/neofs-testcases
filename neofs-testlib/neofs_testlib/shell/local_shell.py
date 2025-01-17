@@ -64,7 +64,7 @@ class LocalShell(Shell):
             self._report_command_result(command, start_time, end_time, result)
 
         if options.check and result.return_code != 0:
-            raise RuntimeError(f"Command: {command}\nreturn code: {result.return_code}\n" f"Output: {result.stdout}")
+            raise RuntimeError(f"Command: {command}\nreturn code: {result.return_code}\nOutput: {result.stdout}")
         return result
 
     def _exec_non_interactive(self, command: str, options: CommandOptions) -> CommandResult:
@@ -95,7 +95,7 @@ class LocalShell(Shell):
                 return_code=exc.returncode,
             )
             raise RuntimeError(
-                f"Command: {command}\nError:\n" f"return code: {exc.returncode}\n" f"output: {exc.output}"
+                f"Command: {command}\nError:\nreturn code: {exc.returncode}\noutput: {exc.output}"
             ) from exc
         except (OSError, subprocess.SubprocessError) as exc:
             raise RuntimeError(f"Command: {command}\nOutput: {exc.strerror}") from exc

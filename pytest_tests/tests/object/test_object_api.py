@@ -92,9 +92,9 @@ def generate_ranges(
         file_ranges_to_test.extend(file_ranges)
     # For complex object we need to fetch multiple child objects from different nodes.
     else:
-        assert (
-            storage_object.size >= RANGE_MAX_LEN + max_object_size
-        ), f"Complex object size should be at least {max_object_size + RANGE_MAX_LEN}. Current: {storage_object.size}"
+        assert storage_object.size >= RANGE_MAX_LEN + max_object_size, (
+            f"Complex object size should be at least {max_object_size + RANGE_MAX_LEN}. Current: {storage_object.size}"
+        )
         file_ranges_to_test.append((RANGE_MAX_LEN, max_object_size - RANGE_MAX_LEN))
         file_ranges_to_test.extend(get_complex_object_split_ranges(storage_object, shell, neofs_env))
 
@@ -472,9 +472,9 @@ class TestObjectApi(NeofsEnvTestBase):
                     endpoint=self.neofs_env.sn_rpc,
                 )["header"]
                 object_type = header["objectType"]
-                assert (
-                    object_type == "TOMBSTONE"
-                ), f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
+                assert object_type == "TOMBSTONE", (
+                    f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
+                )
 
     @allure.title("Validate objects search by common prefix")
     def test_search_object_api_common_prefix(self, default_wallet: NodeWallet, simple_object_size: int, container: str):
@@ -515,7 +515,7 @@ class TestObjectApi(NeofsEnvTestBase):
                     fail_on_assert=True,
                 )
 
-        for common_prefix in (f"{file_path}/o123" "/COMMON_PREFIX", "?", "213"):
+        for common_prefix in (f"{file_path}/o123/COMMON_PREFIX", "?", "213"):
             with allure.step(f"Search objects by path: {common_prefix}"):
                 with pytest.raises(AssertionError):
                     search_object(
@@ -558,9 +558,9 @@ class TestObjectApi(NeofsEnvTestBase):
                         endpoint=self.neofs_env.sn_rpc,
                         range_cut=range_cut,
                     )
-                    assert (
-                        get_file_hash(file_path, range_len, range_start) == range_hash
-                    ), f"Expected range hash to match {range_cut} slice of file payload"
+                    assert get_file_hash(file_path, range_len, range_start) == range_hash, (
+                        f"Expected range hash to match {range_cut} slice of file payload"
+                    )
 
     @allure.title("Validate native object API get_range")
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
@@ -659,9 +659,9 @@ class TestObjectApi(NeofsEnvTestBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_size = storage_objects[0].size
 
-        assert (
-            RANGE_MIN_LEN < file_size
-        ), f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+        assert RANGE_MIN_LEN < file_size, (
+            f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+        )
 
         file_ranges_to_test: list[tuple(int, int, str)] = [
             # Offset is bigger than the file size, the length is small.
@@ -708,9 +708,9 @@ class TestObjectApi(NeofsEnvTestBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_size = storage_objects[0].size
 
-        assert (
-            RANGE_MIN_LEN < file_size
-        ), f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+        assert RANGE_MIN_LEN < file_size, (
+            f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
+        )
 
         file_ranges_to_test: list[tuple(int, int, str)] = [
             # Offset is bigger than the file size, the length is small.
@@ -875,6 +875,6 @@ class TestObjectApi(NeofsEnvTestBase):
     def check_header_is_presented(self, head_info: dict, object_header: dict) -> None:
         for key_to_check, val_to_check in object_header.items():
             assert key_to_check in head_info["header"]["attributes"], f"Key {key_to_check} is found in {head_object}"
-            assert head_info["header"]["attributes"].get(key_to_check) == str(
-                val_to_check
-            ), f"Value {val_to_check} is equal"
+            assert head_info["header"]["attributes"].get(key_to_check) == str(val_to_check), (
+                f"Value {val_to_check} is equal"
+            )

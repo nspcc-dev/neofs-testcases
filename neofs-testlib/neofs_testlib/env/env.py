@@ -620,7 +620,7 @@ class NeoFSEnv:
             tar_file.extractall()
             tar_file.close()
             os.remove(target)
-            logger.info(f"rename: {file.rstrip(".tar.gz")} into {target}")
+            logger.info(f"rename: {file.rstrip('.tar.gz')} into {target}")
             os.rename(file.rstrip(".tar.gz"), target)
         elif "warp" in file:
             temp_dir = f"temp_dir_{uuid.uuid4()}"
@@ -1368,11 +1368,11 @@ class XK6:
         )
         result = self.neofs_env.shell.exec(command)
         assert not result.return_code, "RC after k6 prepare script is not zero"
-        assert (
-            f"Total Containers has been created: {containers}" in result.stdout
-        ), "Prepare script didn't create requested containers"
-        assert (
-            f"Total Objects has been created: {preload_obj}" in result.stdout
-        ), "Prepare script didn't create requested objects"
+        assert f"Total Containers has been created: {containers}" in result.stdout, (
+            "Prepare script didn't create requested containers"
+        )
+        assert f"Total Objects has been created: {preload_obj}" in result.stdout, (
+            "Prepare script didn't create requested objects"
+        )
 
         shutil.copy(out, os.path.join(self.xk6_dir, "scenarios"))

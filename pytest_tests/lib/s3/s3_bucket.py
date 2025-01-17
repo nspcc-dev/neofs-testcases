@@ -63,8 +63,8 @@ def create_bucket_s3(
         return bucket_name
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -82,8 +82,8 @@ def list_buckets_s3(s3_client):
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -98,8 +98,8 @@ def delete_bucket_s3(s3_client, bucket: str):
     except ClientError as err:
         log_command_execution("S3 Delete bucket error", str(err))
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -113,8 +113,8 @@ def head_bucket(s3_client, bucket: str):
     except ClientError as err:
         log_command_execution("S3 Head bucket error", str(err))
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -206,8 +206,8 @@ def put_bucket_acl_s3(
         return response.get("Grants")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -220,8 +220,8 @@ def put_object_lock_configuration(s3_client, bucket: str, configuration: dict):
         return response
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -234,8 +234,8 @@ def get_object_lock_configuration(s3_client, bucket: str):
         return response.get("ObjectLockConfiguration")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -247,8 +247,8 @@ def get_bucket_policy(s3_client, bucket: str):
         return response.get("ObjectLockConfiguration")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -260,8 +260,8 @@ def put_bucket_policy(s3_client, bucket: str, policy: dict):
         return response
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -273,8 +273,8 @@ def get_bucket_cors(s3_client, bucket: str):
         return response.get("CORSRules")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -286,8 +286,8 @@ def get_bucket_location(s3_client, bucket: str):
         return response.get("LocationConstraint")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -299,8 +299,8 @@ def put_bucket_cors(s3_client, bucket: str, cors_configuration: dict):
         return response
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -312,8 +312,8 @@ def delete_bucket_cors(s3_client, bucket: str):
         return response.get("ObjectLockConfiguration")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -325,6 +325,6 @@ def put_bucket_ownership_controls(s3_client, bucket: str, object_ownership: Obje
         return response
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err

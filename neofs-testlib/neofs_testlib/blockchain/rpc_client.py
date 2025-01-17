@@ -67,7 +67,7 @@ class RPCClient:
             return response.json()
         except Exception as exc:
             raise NeoRPCException(
-                f"Could not call method {method} " f"with endpoint: {self.endpoint}: {exc}" f"\nRequest sent: {payload}"
+                f"Could not call method {method} with endpoint: {self.endpoint}: {exc}\nRequest sent: {payload}"
             ) from exc
 
 

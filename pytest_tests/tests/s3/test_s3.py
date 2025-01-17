@@ -149,9 +149,9 @@ class TestS3(TestNeofsS3Base):
             assert set(key_to_path.keys()) == set(objects), f"Expected exact objects saved. Got {objects}"
             for obj_key in objects:
                 got_object = s3_object.get_object_s3(self.s3_client, bucket, obj_key)
-                assert get_file_hash(got_object) == get_file_hash(
-                    key_to_path.get(obj_key)
-                ), "Expected hashes are the same"
+                assert get_file_hash(got_object) == get_file_hash(key_to_path.get(obj_key)), (
+                    "Expected hashes are the same"
+                )
 
     @allure.title("Test S3 Object versioning")
     def test_s3_api_versioning(self, bucket, simple_object_size):
@@ -214,9 +214,9 @@ class TestS3(TestNeofsS3Base):
 
             file_name = s3_object.get_object_s3(self.s3_client, bucket, obj_key)
             got_content = get_file_content(file_name)
-            assert (
-                got_content == version_2_content
-            ), f"Expected object content is\n{version_2_content}\nGot\n{got_content}"
+            assert got_content == version_2_content, (
+                f"Expected object content is\n{version_2_content}\nGot\n{got_content}"
+            )
 
     @allure.title("Test S3 Object Multipart API")
     def test_s3_api_multipart(self, bucket, simple_object_size):
@@ -336,9 +336,9 @@ class TestS3(TestNeofsS3Base):
 
             with allure.step(f"Check all objects put in bucket {bucket} successfully"):
                 bucket_objects = s3_object.list_objects_s3_v2(self.s3_client, bucket)
-                assert set(put_objects) == set(
-                    bucket_objects
-                ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
+                assert set(put_objects) == set(bucket_objects), (
+                    f"Expected all objects {put_objects} in objects list {bucket_objects}"
+                )
 
         with allure.step("Delete some objects from bucket_1 one by one"):
             objects_to_delete_b1 = choices(put_objects, k=max_delete_objects)
@@ -347,9 +347,9 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Check deleted objects are not visible in bucket bucket_1"):
             bucket_objects = s3_object.list_objects_s3_v2(self.s3_client, bucket_1)
-            assert set(put_objects).difference(set(objects_to_delete_b1)) == set(
-                bucket_objects
-            ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
+            assert set(put_objects).difference(set(objects_to_delete_b1)) == set(bucket_objects), (
+                f"Expected all objects {put_objects} in objects list {bucket_objects}"
+            )
             try_to_get_objects_and_expect_error(self.s3_client, bucket_1, objects_to_delete_b1)
 
         with allure.step("Delete some objects from bucket_2 at once"):
@@ -358,9 +358,9 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Check deleted objects are not visible in bucket bucket_2"):
             objects_list = s3_object.list_objects_s3_v2(self.s3_client, bucket_2)
-            assert set(put_objects).difference(set(objects_to_delete_b2)) == set(
-                objects_list
-            ), f"Expected all objects {put_objects} in objects list {bucket_objects}"
+            assert set(put_objects).difference(set(objects_to_delete_b2)) == set(objects_list), (
+                f"Expected all objects {put_objects} in objects list {bucket_objects}"
+            )
             try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
     @allure.title("Test S3: Copy object to the same bucket")
@@ -519,9 +519,9 @@ class TestS3(TestNeofsS3Base):
                 get_full_resp=False,
             )
             assert obj_parts.get("TotalPartsCount") == parts_count, f"Expected TotalPartsCount is {parts_count}"
-            assert (
-                obj_parts.get("PartNumberMarker") == part_number_marker
-            ), f"Expected PartNumberMarker is {part_number_marker}"
+            assert obj_parts.get("PartNumberMarker") == part_number_marker, (
+                f"Expected PartNumberMarker is {part_number_marker}"
+            )
             assert len(obj_parts.get("Parts")) == 1, f"Expected Parts count is {parts_count}"
 
     @staticmethod

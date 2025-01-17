@@ -65,8 +65,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
     def test_config_set_invalid_value(self, key: str, value: Union[str, int, bool], expected_type: type):
         with pytest.raises(
             RuntimeError,
-            match=f"Error: invalid value for {key} key, "
-            f"expected {expected_type.__name__}, got '{str(value).lower()}'",
+            match=f"Error: invalid value for {key} key, expected {expected_type.__name__}, got '{str(value).lower()}'",
         ):
             self._set_and_verify_config_keys(**{key: value})
 
@@ -74,7 +73,7 @@ class TestNetworkConfigChange(NeofsEnvTestBase):
     def test_config_set_multiple_invalid_values(self):
         with pytest.raises(
             RuntimeError,
-            match="Error: invalid value for MaxObjectSize key, " "expected int, got 'verybigsize'",
+            match="Error: invalid value for MaxObjectSize key, expected int, got 'verybigsize'",
         ):
             self._set_and_verify_config_keys(**{"MaxObjectSize": "VeryBigSize", "BasicIncomeRate": False}, force=True)
 

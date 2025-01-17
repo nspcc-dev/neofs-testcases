@@ -46,9 +46,9 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
             wallet_config=neofs_env.main_chain.neo_go_config,
             await_=True,
         )
-        assert (
-            get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) == 1000.0
-        ), "Money transfer from alphabet to test wallet didn't succeed"
+        assert get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) == 1000.0, (
+            "Money transfer from alphabet to test wallet didn't succeed"
+        )
 
     with allure.step("Deposit money to neofs contract"):
         neo_go.nep17.transfer(
@@ -61,13 +61,13 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
             wallet_config=wallet.neo_go_config,
             await_=True,
         )
-        assert (
-            get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900
-        ), "Wallet balance is not correct after deposit"
+        assert get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900, (
+            "Wallet balance is not correct after deposit"
+        )
         neofs_cli = neofs_env.neofs_cli(wallet.cli_config)
-        assert (
-            get_neofs_balance(neofs_env, neofs_cli, wallet) == 100
-        ), "Wallet balance in neofs is not correct after deposit"
+        assert get_neofs_balance(neofs_env, neofs_cli, wallet) == 100, (
+            "Wallet balance in neofs is not correct after deposit"
+        )
 
     return wallet
 
@@ -190,9 +190,9 @@ class TestContainerPayments:
             for sn, sn_info in storage_nodes_info.items():
                 new_balance = get_neofs_balance(neofs_env, neofs_env.neofs_cli(sn.cli_config), sn.wallet)
                 if sn_info["objects_count"] > 0:
-                    assert (
-                        abs(new_balance - sn_info["node_balance"] - single_node_gain_per_epoch) <= 1
-                    ), "Invalid storage node balance"
+                    assert abs(new_balance - sn_info["node_balance"] - single_node_gain_per_epoch) <= 1, (
+                        "Invalid storage node balance"
+                    )
                 else:
                     assert new_balance == sn_info["node_balance"], "Invalid storage node balance"
 

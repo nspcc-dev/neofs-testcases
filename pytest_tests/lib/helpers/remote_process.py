@@ -148,9 +148,7 @@ class RemoteProcess:
     @allure.step("Start remote process")
     def _start_process(self) -> None:
         self.shell.exec(
-            f"nohup {self.process_dir}/command.sh </dev/null "
-            f">{self.process_dir}/stdout "
-            f"2>{self.process_dir}/stderr &"
+            f"nohup {self.process_dir}/command.sh </dev/null >{self.process_dir}/stdout 2>{self.process_dir}/stderr &"
         )
 
     @allure.step("Create process directory")

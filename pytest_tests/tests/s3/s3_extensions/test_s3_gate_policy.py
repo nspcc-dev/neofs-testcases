@@ -54,9 +54,9 @@ class TestS3GatePolicy(TestNeofsS3Base):
             bucket_2 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-3")
             set_bucket_versioning(self.s3_client, bucket_2, s3_bucket.VersioningStatus.ENABLED)
             list_buckets = s3_bucket.list_buckets_s3(self.s3_client)
-            assert (
-                bucket_1 in list_buckets and bucket_2 in list_buckets
-            ), f"Expected two buckets {bucket_1, bucket_2}, got {list_buckets}"
+            assert bucket_1 in list_buckets and bucket_2 in list_buckets, (
+                f"Expected two buckets {bucket_1, bucket_2}, got {list_buckets}"
+            )
 
             # with allure.step("Check head buckets"):
             head_1 = s3_bucket.head_bucket(self.s3_client, bucket_1)
@@ -115,9 +115,9 @@ class TestS3GatePolicy(TestNeofsS3Base):
             bucket_2 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
             set_bucket_versioning(self.s3_client, bucket_2, s3_bucket.VersioningStatus.ENABLED)
             list_buckets = s3_bucket.list_buckets_s3(self.s3_client)
-            assert (
-                bucket_1 in list_buckets and bucket_2 in list_buckets
-            ), f"Expected two buckets {bucket_1, bucket_2}, got {list_buckets}"
+            assert bucket_1 in list_buckets and bucket_2 in list_buckets, (
+                f"Expected two buckets {bucket_1, bucket_2}, got {list_buckets}"
+            )
 
             head_1 = s3_bucket.head_bucket(self.s3_client, bucket_1)
             head_2 = s3_bucket.head_bucket(self.s3_client, bucket_2)

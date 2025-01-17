@@ -54,7 +54,7 @@ def test_sighup_fschain_endpoint_reload(clear_neofs_env: NeoFSEnv):
     with allure.step("Update SN to use new IR"):
         sn_config_path = neofs_env.storage_nodes[0].storage_node_config_path
         sn_config = yaml.safe_load(neofs_env.shell.exec(f"cat {sn_config_path}").stdout)
-        sn_config["fschain"]["endpoints"][0] = f"ws://{ neofs_env.fschain_rpc }/ws"
+        sn_config["fschain"]["endpoints"][0] = f"ws://{neofs_env.fschain_rpc}/ws"
         with open(sn_config_path, "w") as config_file:
             yaml.dump(sn_config, config_file)
         os.kill(neofs_env.storage_nodes[0].process.pid, signal.SIGHUP)
