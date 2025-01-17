@@ -200,8 +200,8 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str, s3gate_en
         return s3_client
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 

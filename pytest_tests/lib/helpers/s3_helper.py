@@ -83,9 +83,9 @@ def check_objects_in_bucket(
         assert bucket_object in bucket_objects, f"Expected object {bucket_object} in objects list {bucket_objects}"
 
     for bucket_object in unexpected_objects:
-        assert (
-            bucket_object not in bucket_objects
-        ), f"Expected object {bucket_object} not in objects list {bucket_objects}"
+        assert bucket_object not in bucket_objects, (
+            f"Expected object {bucket_object} not in objects list {bucket_objects}"
+        )
 
 
 @allure.step("Try to get object and got error")
@@ -153,21 +153,21 @@ def assert_object_lock_mode(
 ):
     object_dict = s3_object.get_object_s3(s3_client, bucket, file_name, full_output=True)
     assert object_dict.get("ObjectLockMode") == object_lock_mode, f"Expected Object Lock Mode is {object_lock_mode}"
-    assert (
-        object_dict.get("ObjectLockLegalHoldStatus") == legal_hold_status
-    ), f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
+    assert object_dict.get("ObjectLockLegalHoldStatus") == legal_hold_status, (
+        f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
+    )
     object_retain_date = object_dict.get("ObjectLockRetainUntilDate")
     retain_date = parse(object_retain_date) if isinstance(object_retain_date, str) else object_retain_date
     if retain_untile_date:
-        assert retain_date.strftime("%Y-%m-%dT%H:%M:%S") == retain_untile_date.strftime(
-            "%Y-%m-%dT%H:%M:%S"
-        ), f'Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"))}'
+        assert retain_date.strftime("%Y-%m-%dT%H:%M:%S") == retain_untile_date.strftime("%Y-%m-%dT%H:%M:%S"), (
+            f"Expected Object Lock Retain Until Date is {str(retain_untile_date.strftime('%Y-%m-%dT%H:%M:%S'))}"
+        )
     elif retain_period:
         last_modify_date = object_dict.get("LastModified")
         last_modify = parse(last_modify_date) if isinstance(last_modify_date, str) else last_modify_date
-        assert (
-            retain_date - last_modify + timedelta(seconds=1)
-        ).days == retain_period, f"Expected retention period is {retain_period} days"
+        assert (retain_date - last_modify + timedelta(seconds=1)).days == retain_period, (
+            f"Expected retention period is {retain_period} days"
+        )
 
 
 def parametrize_clients(metafunc):
@@ -198,9 +198,9 @@ def verify_acls(raw_acls: list[dict], acl_type: ACLType):
 
 def verify_private_permissions(raw_acls: list[dict]):
     canonical_grantee = _get_grantee(raw_acls, GranteeType.CANONICAL_USER, PermissionType.FULL_CONTROL)
-    assert (
-        canonical_grantee
-    ), f"Grantee {GranteeType.CANONICAL_USER.value} with {PermissionType.FULL_CONTROL.value} was not found"
+    assert canonical_grantee, (
+        f"Grantee {GranteeType.CANONICAL_USER.value} with {PermissionType.FULL_CONTROL.value} was not found"
+    )
 
 
 def verify_group_permissions(raw_acls: list[dict], grantee_type: GranteeType, permission_type: PermissionType):

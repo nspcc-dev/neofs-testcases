@@ -467,9 +467,9 @@ class TestS3Object(TestNeofsS3Base):
             elif list_type == "v2":
                 list_obj = s3_object.list_objects_s3_v2(self.s3_client, bucket)
             assert len(list_obj) == 2, "bucket have 2 objects"
-            assert (
-                list_obj.sort() == [file_name, file_name_2].sort()
-            ), f"bucket have object key {file_name, file_name_2}"
+            assert list_obj.sort() == [file_name, file_name_2].sort(), (
+                f"bucket have object key {file_name, file_name_2}"
+            )
 
         with allure.step("Delete object"):
             delete_obj = s3_object.delete_object_s3(self.s3_client, bucket, file_name)
@@ -764,9 +764,9 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Check these are the same objects"):
             for obj_key in objects:
                 got_object = s3_object.get_object_s3(self.s3_client, bucket, obj_key)
-                assert get_file_hash(got_object) == get_file_hash(
-                    key_to_path.get(obj_key)
-                ), "Expected hashes are the same"
+                assert get_file_hash(got_object) == get_file_hash(key_to_path.get(obj_key)), (
+                    "Expected hashes are the same"
+                )
                 obj_head = s3_object.head_object_s3(self.s3_client, bucket, obj_key)
                 assert obj_head.get("Metadata") == object_metadata, f"Metadata of object is {object_metadata}"
                 # Uncomment after https://github.com/nspcc-dev/neofs-s3-gw/issues/685 is solved

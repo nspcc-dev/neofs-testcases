@@ -48,7 +48,7 @@ class CliCommand:
                     val_str = str(value_item).replace("'", "\\'")
                     param_str.append(f"--{param} '{val_str}'")
             elif isinstance(value, dict):
-                param_str.append(f'--{param} \'{",".join(f"{key}={val}" for key, val in value.items())}\'')
+                param_str.append(f"--{param} '{','.join(f'{key}={val}' for key, val in value.items())}'")
             else:
                 if "'" in str(value):
                     value_str = str(value).replace('"', '\\"')

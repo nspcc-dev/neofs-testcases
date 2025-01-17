@@ -44,8 +44,8 @@ def list_objects_s3_v2(s3_client, bucket: str, full_output: bool = False) -> lis
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -63,8 +63,8 @@ def list_objects_s3(s3_client, bucket: str, full_output: bool = False) -> list:
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -78,8 +78,8 @@ def list_objects_versions_s3(s3_client, bucket: str, full_output: bool = False) 
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -93,8 +93,8 @@ def list_objects_delete_markers_s3(s3_client, bucket: str, full_output: bool = F
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -118,8 +118,8 @@ def put_object_s3(s3_client, bucket: str, filepath: str, filename: str = "", **k
         return response.get("VersionId")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -135,8 +135,8 @@ def head_object_s3(s3_client, bucket: str, object_key: str, version_id: Optional
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -153,8 +153,8 @@ def delete_object_s3(s3_client, bucket: str, object_key: str, version_id: Option
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -168,8 +168,8 @@ def delete_objects_s3(s3_client, bucket: str, object_keys: list):
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -192,8 +192,8 @@ def delete_object_versions_s3(s3_client, bucket: str, object_versions: list):
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -213,8 +213,8 @@ def delete_object_versions_s3_without_dm(s3_client, bucket: str, object_versions
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -242,8 +242,8 @@ def put_object_acl_s3(
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -259,8 +259,8 @@ def get_object_acl_s3(s3_client, bucket: str, object_key: str, version_id: Optio
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -289,8 +289,8 @@ def copy_object_s3(s3_client, bucket: str, object_key: str, bucket_dst: Optional
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -328,8 +328,8 @@ def get_object_s3(
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -344,8 +344,8 @@ def create_multipart_upload_s3(s3_client, bucket_name: str, object_key: str) -> 
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -359,8 +359,8 @@ def list_multipart_uploads_s3(s3_client, bucket_name: str) -> Optional[list[dict
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -372,8 +372,8 @@ def abort_multipart_uploads_s3(s3_client, bucket_name: str, object_key: str, upl
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -399,8 +399,8 @@ def upload_part_s3(s3_client, bucket_name: str, object_key: str, upload_id: str,
         return response.get("ETag")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -422,8 +422,8 @@ def upload_part_copy_s3(
         return response.get("CopyPartResult").get("ETag")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -437,8 +437,8 @@ def list_parts_s3(s3_client, bucket_name: str, object_key: str, upload_id: str) 
         return response.get("Parts")
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 
@@ -453,8 +453,8 @@ def complete_multipart_upload_s3(s3_client, bucket_name: str, object_key: str, u
 
     except ClientError as err:
         raise Exception(
-            f'Error Message: {err.response["Error"]["Message"]}\n'
-            f'Http status code: {err.response["ResponseMetadata"]["HTTPStatusCode"]}'
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
         ) from err
 
 

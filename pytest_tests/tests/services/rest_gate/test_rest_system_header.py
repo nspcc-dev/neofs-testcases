@@ -90,21 +90,21 @@ class Test_rest_system_header(NeofsEnvTestBase):
     @allure.title(f"Validate that only {EXPIRATION_EPOCH_HEADER} exists in header and other headers are abesent")
     def validation_for_http_header_attr(self, head_info: dict, expected_epoch: int) -> None:
         # check that __NEOFS__EXPIRATION_EPOCH attribute has corresponding epoch
-        assert self.check_key_value_presented_header(
-            head_info, {EXPIRATION_EPOCH_HEADER: str(expected_epoch)}
-        ), f'Expected to find {EXPIRATION_EPOCH_HEADER}: {expected_epoch} in: {head_info["header"]["attributes"]}'
+        assert self.check_key_value_presented_header(head_info, {EXPIRATION_EPOCH_HEADER: str(expected_epoch)}), (
+            f"Expected to find {EXPIRATION_EPOCH_HEADER}: {expected_epoch} in: {head_info['header']['attributes']}"
+        )
         # check that {EXPIRATION_EPOCH_HEADER} absents in header output
-        assert not (
-            self.check_key_value_presented_header(head_info, {EXPIRATION_DURATION_HEADER: ""})
-        ), f"Only {EXPIRATION_EPOCH_HEADER} can be displayed in header attributes"
+        assert not (self.check_key_value_presented_header(head_info, {EXPIRATION_DURATION_HEADER: ""})), (
+            f"Only {EXPIRATION_EPOCH_HEADER} can be displayed in header attributes"
+        )
         # check that {EXPIRATION_TIMESTAMP_HEADER} absents in header output
-        assert not (
-            self.check_key_value_presented_header(head_info, {EXPIRATION_TIMESTAMP_HEADER: ""})
-        ), f"Only {EXPIRATION_TIMESTAMP_HEADER} can be displayed in header attributes"
+        assert not (self.check_key_value_presented_header(head_info, {EXPIRATION_TIMESTAMP_HEADER: ""})), (
+            f"Only {EXPIRATION_TIMESTAMP_HEADER} can be displayed in header attributes"
+        )
         # check that {EXPIRATION_EXPIRATION_RFC} absents in header output
-        assert not (
-            self.check_key_value_presented_header(head_info, {EXPIRATION_EXPIRATION_RFC: ""})
-        ), f"Only {EXPIRATION_EXPIRATION_RFC} can be displayed in header attributes"
+        assert not (self.check_key_value_presented_header(head_info, {EXPIRATION_EXPIRATION_RFC: ""})), (
+            f"Only {EXPIRATION_EXPIRATION_RFC} can be displayed in header attributes"
+        )
 
     @allure.title("Put / get / verify object and return head command result to invoker")
     def oid_header_info_for_object(self, file_path: str, attributes: dict, user_container: str, gw_endpoint: str):
@@ -217,9 +217,9 @@ class Test_rest_system_header(NeofsEnvTestBase):
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
             self.tick_epochs_and_wait(epoch_count + 1)
-            assert (
-                neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1
-            ), f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            assert neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1, (
+                f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            )
 
             with allure.step("Check object deleted because it expires-on epoch"):
                 neofs_epoch.wait_for_epochs_align(self.neofs_env)
@@ -274,9 +274,9 @@ class Test_rest_system_header(NeofsEnvTestBase):
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
             self.tick_epochs_and_wait(epoch_count + 1)
-            assert (
-                neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1
-            ), f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            assert neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1, (
+                f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            )
 
             with allure.step("Check object deleted because it expires-on epoch"):
                 neofs_epoch.wait_for_epochs_align(self.neofs_env)
@@ -333,9 +333,9 @@ class Test_rest_system_header(NeofsEnvTestBase):
             self.validation_for_http_header_attr(head_info=head_info, expected_epoch=expected_epoch)
         with allure.step("Check that object becomes unavailable when epoch is expired"):
             self.tick_epochs_and_wait(epoch_count + 1)
-            assert (
-                neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1
-            ), f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            assert neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1, (
+                f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            )
 
             with allure.step("Check object deleted because it expires-on epoch"):
                 neofs_epoch.wait_for_epochs_align(self.neofs_env)
@@ -390,9 +390,9 @@ class Test_rest_system_header(NeofsEnvTestBase):
         with allure.step("Check that object becomes unavailable when epoch is expired"):
             self.tick_epochs_and_wait(epoch_count + 1)
             # check that {EXPIRATION_EXPIRATION_RFC} absents in header output
-            assert (
-                neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1
-            ), f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            assert neofs_epoch.get_epoch(self.neofs_env) == expected_epoch + 1, (
+                f"Epochs should be equal: {neofs_epoch.get_epoch(self.neofs_env)} != {expected_epoch + 1}"
+            )
 
             with allure.step("Check object deleted because it expires-on epoch"):
                 neofs_epoch.wait_for_epochs_align(self.neofs_env)

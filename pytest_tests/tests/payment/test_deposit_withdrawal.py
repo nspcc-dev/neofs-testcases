@@ -33,9 +33,9 @@ class TestDepositWithdrawal:
                 wallet_config=neofs_env.main_chain.neo_go_config,
                 await_=True,
             )
-            assert (
-                get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) == 1000.0
-            ), "Money transfer from alphabet to test wallet didn't succeed"
+            assert get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) == 1000.0, (
+                "Money transfer from alphabet to test wallet didn't succeed"
+            )
 
         with allure.step("Deposit money to neofs contract"):
             neo_go.nep17.transfer(
@@ -48,13 +48,13 @@ class TestDepositWithdrawal:
                 wallet_config=neo_go_wallet_config,
                 await_=True,
             )
-            assert (
-                get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) <= 900
-            ), "Wallet balance is not correct after deposit"
+            assert get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) <= 900, (
+                "Wallet balance is not correct after deposit"
+            )
             neofs_cli = neofs_env.neofs_cli(cli_wallet_config)
-            assert (
-                get_neofs_balance(neofs_env, neofs_cli, wallet) == 100
-            ), "Wallet balance in neofs is not correct after deposit"
+            assert get_neofs_balance(neofs_env, neofs_cli, wallet) == 100, (
+                "Wallet balance in neofs is not correct after deposit"
+            )
 
         with allure.step("Withdraw some money back to the wallet"):
             neo_go.contract.invokefunction(
@@ -67,9 +67,9 @@ class TestDepositWithdrawal:
                 force=True,
             )
             time.sleep(10)
-            assert (
-                get_neofs_balance(neofs_env, neofs_cli, wallet) == 50
-            ), "Wallet balance in neofs is not correct after withdrawal"
-            assert (
-                get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) > 940
-            ), "Wallet balance is not correct after withdrawal"
+            assert get_neofs_balance(neofs_env, neofs_cli, wallet) == 50, (
+                "Wallet balance in neofs is not correct after withdrawal"
+            )
+            assert get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) > 940, (
+                "Wallet balance is not correct after withdrawal"
+            )

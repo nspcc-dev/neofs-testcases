@@ -139,7 +139,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
             fschain_addr = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[0]
             fschain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
 
-            with allure.step(f"Disconnecting storage node {storage_node} " f"from {fschain_addr} {dport_repeat} times"):
+            with allure.step(f"Disconnecting storage node {storage_node} from {fschain_addr} {dport_repeat} times"):
                 for repeat in range(dport_repeat):
                     with allure.step(f"Disconnect number {repeat}"):
                         try:
@@ -163,9 +163,7 @@ class TestFailoverNetwork(NeofsEnvTestBase):
                         finally:
                             # Delay between shutdown attempts, emulates a real disconnection
                             sleep(1)
-                    logger.info(
-                        f"Disconnected storage node {storage_node} " f"from {fschain_addr} {dport_repeat} times"
-                    )
+                    logger.info(f"Disconnected storage node {storage_node} from {fschain_addr} {dport_repeat} times")
 
             for node in self.neofs_env.storage_nodes:
                 with allure.step(f"Checking if node {node} is alive"):

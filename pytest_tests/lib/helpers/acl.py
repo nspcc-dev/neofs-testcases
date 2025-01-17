@@ -113,7 +113,7 @@ class EACLFilters:
         return (
             ",".join(
                 [
-                    f"{filter.header_type.value}:" f"{filter.key}{filter.match_type.value}{filter.value}"
+                    f"{filter.header_type.value}:{filter.key}{filter.match_type.value}{filter.value}"
                     for filter in self.filters
                 ]
             )
@@ -140,7 +140,7 @@ class EACLRule:
 
     def __str__(self):
         role = self.role.value if isinstance(self.role, EACLRole) else f"{self.role.role_type.value}:{self.role.value}"
-        return f'{self.access.value} {self.operation.value} {self.filters or ""} {role}'
+        return f"{self.access.value} {self.operation.value} {self.filters or ''} {role}"
 
 
 @allure.title("Get extended ACL")

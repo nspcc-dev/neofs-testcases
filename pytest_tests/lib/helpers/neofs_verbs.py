@@ -492,9 +492,7 @@ def search_object(
 
     if expected_objects_list:
         if sorted(found_objects) == sorted(expected_objects_list):
-            logger.info(
-                f"Found objects list '{found_objects}' " f"is equal for expected list '{expected_objects_list}'"
-            )
+            logger.info(f"Found objects list '{found_objects}' is equal for expected list '{expected_objects_list}'")
         else:
             warning = f"Found object list {found_objects} is not equal to expected list '{expected_objects_list}'"
             logger.warning(warning)

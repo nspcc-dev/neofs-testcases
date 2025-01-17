@@ -93,7 +93,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         storage_object_1 = storage_objects_with_attributes[0]
 
         with allure.step(
-            f'Download object#1 via wget with attributes Chapter2: {storage_object_1.attributes["Chapter2"]} and compare hashes'
+            f"Download object#1 via wget with attributes Chapter2: {storage_object_1.attributes['Chapter2']} and compare hashes"
         ):
             get_object_by_attr_and_verify_hashes(
                 oid=storage_object_1.oid,
@@ -119,7 +119,7 @@ class Test_rest_headers(NeofsEnvTestBase):
         storage_object_2 = storage_objects_with_attributes[1]
 
         with allure.step(
-            f'Download object#2 via wget with attributes [Chapter2={storage_object_2.attributes["Chapter2"]}] / [Ch$pter1={storage_object_2.attributes["Ch$pter1"]}]  and compare hashes'
+            f"Download object#2 via wget with attributes [Chapter2={storage_object_2.attributes['Chapter2']}] / [Ch$pter1={storage_object_2.attributes['Ch$pter1']}]  and compare hashes"
         ):
             selected_attributes_object2 = [
                 {"Chapter2": storage_object_2.attributes["Chapter2"]},
@@ -151,7 +151,7 @@ class Test_rest_headers(NeofsEnvTestBase):
             storage_objects_with_attributes.remove(storage_object_2)
 
         with allure.step(
-            f'Download object#1 with attributes [Writer={storage_object_1.attributes["Writer"]}] and compare hashes'
+            f"Download object#1 with attributes [Writer={storage_object_1.attributes['Writer']}] and compare hashes"
         ):
             key_value_pair = {"Writer": storage_object_1.attributes["Writer"]}
             get_object_by_attr_and_verify_hashes(

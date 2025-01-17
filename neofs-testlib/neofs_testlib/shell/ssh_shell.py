@@ -262,7 +262,7 @@ class SSHShell(Shell):
                     )
                 else:
                     logger.info(
-                        f"Trying to connect to host {self.host} as {self.login} using password " f"(attempt {attempt})"
+                        f"Trying to connect to host {self.host} as {self.login} using password (attempt {attempt})"
                     )
                     connection.connect(
                         hostname=self.host,

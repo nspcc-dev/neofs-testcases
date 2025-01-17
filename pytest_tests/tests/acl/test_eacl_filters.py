@@ -229,7 +229,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                 )
 
             with allure.step(
-                "Check other has full access when sending request " "with denied headers and using bearer token"
+                "Check other has full access when sending request with denied headers and using bearer token"
             ):
                 bearer_other = form_bearertoken_file(
                     user_wallet.wallet_path,
@@ -410,7 +410,7 @@ class TestEACLFilters(NeofsEnvTestBase):
     @pytest.mark.parametrize("match_type", [EACLMatchType.STRING_EQUAL, EACLMatchType.STRING_NOT_EQUAL])
     def test_extended_acl_allow_filters_object(self, wallets, eacl_container_with_objects, match_type):
         allure.dynamic.title(
-            "Testcase to validate NeoFS operation with allow eACL user headers filters:" f"{match_type.name}"
+            f"Testcase to validate NeoFS operation with allow eACL user headers filters:{match_type.name}"
         )
         user_wallet = wallets.get_wallet()
         other_wallet = wallets.get_wallet(EACLRole.OTHERS)
@@ -580,9 +580,7 @@ class TestEACLFilters(NeofsEnvTestBase):
                     neofs_env=self.neofs_env,
                 )
 
-        with allure.step(
-            "Check other can get objects without attributes matching the filter " "and using bearer token"
-        ):
+        with allure.step("Check other can get objects without attributes matching the filter and using bearer token"):
             oid = deny_objects.pop()
             assert can_get_head_object(
                 other_wallet.wallet_path,

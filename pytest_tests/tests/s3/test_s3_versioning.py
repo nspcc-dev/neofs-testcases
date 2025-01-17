@@ -44,9 +44,9 @@ class TestS3Versioning(TestNeofsS3Base):
             actual_version = [version.get("VersionId") for version in object_version if version.get("Key") == file_name]
             assert actual_version == ["null"], f"Expected version is null in list-object-versions, got {object_version}"
             object_0 = s3_object.head_object_s3(self.s3_client, bucket, file_name)
-            assert (
-                object_0.get("VersionId") == "null"
-            ), f"Expected version is null in head-object, got {object_0.get('VersionId')}"
+            assert object_0.get("VersionId") == "null", (
+                f"Expected version is null in head-object, got {object_0.get('VersionId')}"
+            )
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
 
@@ -58,9 +58,9 @@ class TestS3Versioning(TestNeofsS3Base):
         with allure.step("Check bucket shows all versions"):
             versions = s3_object.list_objects_versions_s3(self.s3_client, bucket)
             obj_versions = [version.get("VersionId") for version in versions if version.get("Key") == file_name]
-            assert (
-                obj_versions.sort() == [version_id_1, version_id_2, "null"].sort()
-            ), f"Expected object has versions: {version_id_1, version_id_2, 'null'}"
+            assert obj_versions.sort() == [version_id_1, version_id_2, "null"].sort(), (
+                f"Expected object has versions: {version_id_1, version_id_2, 'null'}"
+            )
 
         with allure.step("Get object"):
             object_1 = s3_object.get_object_s3(self.s3_client, bucket, file_name, full_output=True)

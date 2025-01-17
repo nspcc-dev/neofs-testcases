@@ -409,9 +409,9 @@ class TestNodeManagement(NeofsEnvTestBase):
         got_policy = placement_policy_from_container(
             get_container(wallet, cid, json_mode=False, shell=self.shell, endpoint=endpoint)
         )
-        assert got_policy == placement_rule.replace(
-            "'", ""
-        ), f"Expected \n{placement_rule} and got policy \n{got_policy} are the same"
+        assert got_policy == placement_rule.replace("'", ""), (
+            f"Expected \n{placement_rule} and got policy \n{got_policy} are the same"
+        )
         oid = put_object_to_random_node(wallet, file_path, cid, shell=self.shell, neofs_env=self.neofs_env)
         nodes = get_nodes_with_object(
             cid, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env

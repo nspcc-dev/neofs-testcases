@@ -104,11 +104,11 @@ def get_ranges(storage_object: StorageObjectInfo, max_object_size: int, shell: S
         assert object_size >= max_object_size + RANGE_OFFSET_FOR_COMPLEX_OBJECT
         return [
             "0:10",
-            f"{object_size-10}:10",
-            f"{max_object_size - RANGE_OFFSET_FOR_COMPLEX_OBJECT}:" f"{RANGE_OFFSET_FOR_COMPLEX_OBJECT * 2}",
+            f"{object_size - 10}:10",
+            f"{max_object_size - RANGE_OFFSET_FOR_COMPLEX_OBJECT}:{RANGE_OFFSET_FOR_COMPLEX_OBJECT * 2}",
         ]
     else:
-        return ["0:10", f"{object_size-10}:10"]
+        return ["0:10", f"{object_size - 10}:10"]
 
 
 @pytest.fixture(scope="module")

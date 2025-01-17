@@ -253,7 +253,7 @@ def upload_via_rest_gate_curl(
 
 
 def _attach_allure_step(request: str, status_code: int, req_type="GET"):
-    command_attachment = f"REQUEST: '{request}'\n" f"RESPONSE:\n {status_code}\n"
+    command_attachment = f"REQUEST: '{request}'\nRESPONSE:\n {status_code}\n"
     with allure.step(f"{req_type} Request"):
         allure.attach(command_attachment, f"{req_type} Request", allure.attachment_type.TEXT)
 

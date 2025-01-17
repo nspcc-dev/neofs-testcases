@@ -43,9 +43,7 @@ class TestSSHShellInteractive(TestCase):
         self.assertEqual("", result.stderr)
 
     def test_command_with_several_prompts(self):
-        script = (
-            "input1 = input('Input1: '); print('\\n' + input1); " "input2 = input('Input2: '); print('\\n' + input2)"
-        )
+        script = "input1 = input('Input1: '); print('\\n' + input1); input2 = input('Input2: '); print('\\n' + input2)"
         inputs = [
             InteractiveInput(prompt_pattern="Input1", input="test1"),
             InteractiveInput(prompt_pattern="Input2", input="test2"),
