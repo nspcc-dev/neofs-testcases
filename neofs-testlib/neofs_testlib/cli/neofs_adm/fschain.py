@@ -388,3 +388,20 @@ class NeofsAdmFSChain(CliCommand):
             "fschain mint-balance",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
+
+    def netmap_candidates(
+        self,
+        rpc_endpoint: str,
+    ) -> CommandResult:
+        """List netmap candidates nodes
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "fschain netmap-candidates",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )

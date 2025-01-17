@@ -2,23 +2,8 @@ from typing import Optional, Union
 
 import allure
 import pytest
-from helpers.neofs_verbs import get_netmap_netinfo
+from helpers.neofs_verbs import CONFIG_KEYS_MAPPING, get_netmap_netinfo
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
-
-CONFIG_KEYS_MAPPING = {
-    "MaxObjectSize": "maximum_object_size",
-    "BasicIncomeRate": "storage_price",
-    "AuditFee": "audit_fee",
-    "EpochDuration": "epoch_duration",
-    "ContainerFee": "container_fee",
-    # "ContainerAliasFee": "container_alias_fee",
-    "EigenTrustIterations": "number_of_eigentrust_iterations",
-    "EigenTrustAlpha": "eigentrust_alpha",
-    "InnerRingCandidateFee": "inner_ring_candidate_fee",
-    "WithdrawFee": "withdrawal_fee",
-    "HomomorphicHashingDisabled": "homomorphic_hashing_disabled",
-    "MaintenanceModeAllowed": "maintenance_mode_allowed",
-}
 
 
 @allure.title("Network configuration changes via neofs-adm")
