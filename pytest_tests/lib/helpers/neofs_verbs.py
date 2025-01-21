@@ -18,6 +18,20 @@ logger = logging.getLogger("NeoLogger")
 # https://github.com/nspcc-dev/neofs-api/blob/5c3535423c564fe63991812cb84d8334db1c553a/object/service.proto#L319
 NEOFS_API_HEADER_LIMIT = 16384
 
+CONFIG_KEYS_MAPPING = {
+    "MaxObjectSize": "maximum_object_size",
+    "BasicIncomeRate": "storage_price",
+    "AuditFee": "audit_fee",
+    "EpochDuration": "epoch_duration",
+    "ContainerFee": "container_fee",
+    "EigenTrustIterations": "number_of_eigentrust_iterations",
+    "EigenTrustAlpha": "eigentrust_alpha",
+    "InnerRingCandidateFee": "inner_ring_candidate_fee",
+    "WithdrawFee": "withdrawal_fee",
+    "HomomorphicHashingDisabled": "homomorphic_hashing_disabled",
+    "MaintenanceModeAllowed": "maintenance_mode_allowed",
+}
+
 
 @allure.step("Get object from random node")
 def get_object_from_random_node(
