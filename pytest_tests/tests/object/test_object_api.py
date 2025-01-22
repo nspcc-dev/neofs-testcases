@@ -168,6 +168,7 @@ def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSE
 
 class TestObjectApi(NeofsEnvTestBase):
     @pytest.mark.sanity
+    @pytest.mark.debug
     @allure.title("Validate object storage policy by native API")
     def test_object_storage_policies(
         self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], simple_object_size
