@@ -124,6 +124,29 @@ jobs:
                 python-version: '3.12'
           - run: python --version
 
+          - name: Remove existing AWS CLI
+            run: |
+              sudo rm -rf /usr/local/aws-cli
+              sudo rm /usr/local/bin/aws
+            
+          - name: Install AWS CLI 2.22.35 on Linux
+            if: runner.os == 'Linux'
+            run: |
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.22.35.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              rm -rf aws awscliv2.zip
+
+          - name: Install AWS CLI 2.22.35 on Macos
+            if: runner.os == 'macOS'
+            run: |
+              curl "https://awscli.amazonaws.com/AWSCLIV2-2.22.35.pkg" -o "AWSCLIV2.pkg"
+              sudo installer -pkg AWSCLIV2.pkg -target /
+              rm AWSCLIV2.pkg
+          
+          - name: Verify AWS CLI version
+            run: aws --version
+
           - name: Checkout neofs-testcases repository
             uses: actions/checkout@v4
             with:
