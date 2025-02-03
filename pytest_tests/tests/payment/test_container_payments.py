@@ -10,7 +10,11 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
 from helpers.node_management import restart_storage_nodes
-from helpers.wallet_helpers import get_neofs_balance, get_wallet_balance
+from helpers.wallet_helpers import (
+    get_neofs_balance,
+    get_wallet_balance,
+    wait_for_correct_neofs_balance,
+)
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils import wallet as wallet_utils
 
@@ -64,10 +68,7 @@ def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
         assert get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900, (
             "Wallet balance is not correct after deposit"
         )
-        neofs_cli = neofs_env.neofs_cli(wallet.cli_config)
-        assert get_neofs_balance(neofs_env, neofs_cli, wallet) == 100, (
-            "Wallet balance in neofs is not correct after deposit"
-        )
+        wait_for_correct_neofs_balance(neofs_env, wallet, wallet.cli_config, lambda balance: balance == 100)
 
     return wallet
 

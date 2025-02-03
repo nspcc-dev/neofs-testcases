@@ -1,17 +1,11 @@
 import allure
-from helpers.test_control import wait_for_success
-from helpers.wallet_helpers import get_neofs_balance, get_wallet_balance
+from helpers.wallet_helpers import (
+    get_wallet_balance,
+    wait_for_correct_neofs_balance,
+    wait_for_correct_wallet_balance,
+)
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils import wallet as wallet_utils
-
-
-@allure.step("Wait for correct neofs balance")
-@wait_for_success(60, 5)
-def wait_for_correct_neofs_balance(
-    neofs_env: NeoFSEnv, wallet: NodeWallet, cli_wallet_config: str, compare_func: callable
-):
-    neofs_cli = neofs_env.neofs_cli(cli_wallet_config)
-    assert compare_func(get_neofs_balance(neofs_env, neofs_cli, wallet)), "Wallet balance in neofs is not correct"
 
 
 class TestDepositWithdrawal:
@@ -72,6 +66,6 @@ class TestDepositWithdrawal:
                 force=True,
             )
             wait_for_correct_neofs_balance(neofs_env, wallet, cli_wallet_config, lambda balance: balance == 50)
-            assert get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config) > 940, (
-                "Wallet balance is not correct after withdrawal"
+            wait_for_correct_wallet_balance(
+                neofs_env, neo_go, wallet, neo_go_wallet_config, lambda balance: balance > 940
             )

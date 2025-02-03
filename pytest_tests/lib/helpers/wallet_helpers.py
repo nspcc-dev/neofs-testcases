@@ -4,9 +4,10 @@ from typing import Optional
 
 import allure
 from helpers.common import get_assets_dir_path
-from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.utils.wallet import init_wallet, get_last_address_from_wallet
+from helpers.test_control import wait_for_success
 from neofs_testlib.cli import NeofsCli, NeoGo
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.utils.wallet import get_last_address_from_wallet, init_wallet
 
 
 @allure.title("Prepare wallet and deposit")
@@ -43,4 +44,21 @@ def get_neofs_balance(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWall
             rpc_endpoint=neofs_env.sn_rpc,
             address=get_last_address_from_wallet(wallet.path, wallet.password),
         ).stdout.strip()
+    )
+
+
+@allure.step("Wait for correct neofs balance")
+@wait_for_success(60, 5)
+def wait_for_correct_neofs_balance(neofs_env, wallet, cli_wallet_config: str, compare_func: callable):
+    neofs_cli = neofs_env.neofs_cli(cli_wallet_config)
+    assert compare_func(get_neofs_balance(neofs_env, neofs_cli, wallet)), "Wallet balance in neofs is not correct"
+
+
+@allure.step("Wait for correct wallet balance")
+@wait_for_success(60, 5)
+def wait_for_correct_wallet_balance(
+    neofs_env, neo_go: NeoGo, wallet, neo_go_wallet_config: str, compare_func: callable
+):
+    assert compare_func(get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config)), (
+        "Wallet balance is not correct after"
     )
