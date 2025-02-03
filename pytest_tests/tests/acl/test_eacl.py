@@ -344,6 +344,8 @@ class TestEACLContainer(NeofsEnvTestBase):
     def test_extended_acl_deny_all_operations_exclude_extended_role(
         self, wallets, eacl_container_with_objects, role: EACLRoleExtendedType
     ):
+        if self.neofs_env.storage_nodes[0]._get_version() > "0.44.2":
+            pytest.skip("This test runs on 0.44.2 and below neofs-node versions")
         user_wallet = wallets.get_wallet()
         other_wallet, other_wallet_allow = wallets.get_wallets_list(EACLRole.OTHERS)[0:2]
         cid, object_oids, file_path = eacl_container_with_objects
