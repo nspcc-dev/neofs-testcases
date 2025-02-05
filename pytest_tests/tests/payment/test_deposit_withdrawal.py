@@ -29,7 +29,7 @@ class TestDepositWithdrawal:
                 "GAS",
                 wallet.address,
                 f"http://{neofs_env.main_chain.rpc_address}",
-                from_address=neofs_env.inner_ring_nodes[-1].alphabet_wallet.address,
+                from_address=neofs_env.main_chain.wallet.address,
                 amount=1000,
                 force=True,
                 wallet_config=neofs_env.main_chain.neo_go_config,
