@@ -1,24 +1,13 @@
 import time
-from importlib.resources import files
 
 import allure
 import pytest
-import yaml
 from helpers.common import SIMPLE_OBJECT_SIZE
+from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
-from helpers.neofs_verbs import get_object_from_random_node, put_object_to_random_node
-from helpers.wallet_helpers import create_wallet
+from helpers.neofs_verbs import get_object_from_random_node, put_object, put_object_to_random_node
+from helpers.wallet_helpers import create_wallet, create_wallet_with_money
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-
-
-@pytest.fixture
-def clear_neofs_env():
-    neofs_env_config = yaml.safe_load(
-        files("neofs_testlib.env.templates").joinpath("neofs_env_config.yaml").read_text()
-    )
-    neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
-    yield neofs_env
-    neofs_env.kill()
 
 
 def parse_object_info_data(raw_output: str) -> dict:
@@ -189,3 +178,52 @@ def test_sn_deployment_with_writecache(clear_neofs_env: NeoFSEnv):
                 storage_nodes_with_object_in_blobstore += 1
 
         assert storage_nodes_with_object_in_blobstore == 3, "Invalid number of storage nodes with a persisted object"
+
+
+@pytest.mark.parametrize("ir_nodes_count", [4, 7])
+def test_multiple_ir_node_deployment_with_main_chain(ir_nodes_count: int, clear_neofs_env: NeoFSEnv):
+    neofs_env = clear_neofs_env
+    with allure.step(f"Deploy neofs with {ir_nodes_count} ir nodes and main chain"):
+        neofs_env.download_binaries()
+        neofs_env.deploy_inner_ring_nodes(count=ir_nodes_count, with_main_chain=True)
+        neofs_env.deploy_storage_nodes(
+            count=1,
+            node_attrs={
+                0: ["UN-LOCODE:RU MOW", "Price:22"],
+                1: ["UN-LOCODE:RU LED", "Price:33"],
+                2: ["UN-LOCODE:SE STO", "Price:11"],
+                3: ["UN-LOCODE:FI HEL", "Price:44"],
+            },
+        )
+        neofs_env.log_env_details_to_file()
+        neofs_env.log_versions_to_allure()
+
+        neofs_adm = neofs_env.neofs_adm()
+        for sn in neofs_env.storage_nodes:
+            neofs_adm.fschain.refill_gas(
+                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+                alphabet_wallets=neofs_env.alphabet_wallets_dir,
+                storage_wallet=sn.wallet.path,
+                gas="10.0",
+            )
+        neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+            post_data="WithdrawFee=5",
+        )
+
+    with allure.step("Create container and put object"):
+        new_wallet = create_wallet_with_money(neofs_env)
+        cid = create_container(
+            new_wallet.path,
+            rule="REP 1",
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+        put_object(
+            new_wallet.path,
+            generate_file(1000),
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+        )

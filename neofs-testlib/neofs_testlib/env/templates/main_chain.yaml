@@ -4,10 +4,16 @@ ProtocolConfiguration:
   TimePerBlock: 1s
   MemPoolSize: 50000
   StandbyCommittee:
-    - {{ public_key }}
+    - {{ standby_committee }}
   ValidatorsCount: 1
   VerifyTransactions: true
   P2PSigExtensions: false
+  Genesis:
+    Roles:
+      NeoFSAlphabet:
+        {%- for public_key in ir_public_keys %}
+        - {{ public_key }}
+        {%- endfor %}
 
 ApplicationConfiguration:
   SkipBlockVerification: false

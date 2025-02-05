@@ -241,25 +241,49 @@ class NeoFSEnv:
                 "There should be at least a single IR instance configured(not started) to deploy neofs contract"
             )
         neo_go = self.neo_go()
+        neo_go.nep17.balance(
+            self.main_chain.wallet.address,
+            "GAS",
+            f"http://{self.main_chain.rpc_address}",
+            wallet_config=self.main_chain.neo_go_config,
+        )
         neo_go.nep17.transfer(
             "GAS",
             self.default_wallet.address,
             f"http://{self.main_chain.rpc_address}",
-            from_address=self.inner_ring_nodes[-1].alphabet_wallet.address,
+            from_address=self.main_chain.wallet.address,
             amount=9000,
             force=True,
             wallet_config=self.main_chain.neo_go_config,
             await_=True,
         )
-        ir_alphabet_pubkey_from_neogo = wallet_utils.get_last_public_key_from_wallet_with_neogo(
-            self.neo_go(), self.inner_ring_nodes[-1].alphabet_wallet.path
+
+        for ir_node in self.inner_ring_nodes:
+            accounts = wallet_utils.get_accounts_from_wallet(ir_node.alphabet_wallet.path, self.default_password)
+            for acc in accounts:
+                neo_go.nep17.transfer(
+                    "GAS",
+                    acc.address,
+                    f"http://{self.main_chain.rpc_address}",
+                    from_address=self.main_chain.wallet.address,
+                    amount=9000,
+                    force=True,
+                    wallet_config=self.main_chain.neo_go_config,
+                    await_=True,
+                )
+
+        pub_keys_of_existing_ir_nodes = " ".join(
+            wallet_utils.get_last_public_key_from_wallet_with_neogo(
+                self.neo_go(),
+                ir_node.alphabet_wallet.path,
+            ).splitlines()
         )
         result = neo_go.contract.deploy(
             input_file=f"{self.neofs_contract_dir}/neofs/neofs_contract.nef",
             manifest=f"{self.neofs_contract_dir}/neofs/config.json",
             force=True,
             rpc_endpoint=f"http://{self.main_chain.rpc_address}",
-            post_data=f"[ true ffffffffffffffffffffffffffffffffffffffff [ {ir_alphabet_pubkey_from_neogo} ] [ InnerRingCandidateFee 10 WithdrawFee 10 ] ]",
+            post_data=f"[ true ffffffffffffffffffffffffffffffffffffffff [ {pub_keys_of_existing_ir_nodes} ] [ InnerRingCandidateFee 10 WithdrawFee 10 ] ]",
             wallet_config=self.default_wallet_neogo_config,
         )
         contract_hash = result.stdout.split("Contract: ")[-1].strip()
@@ -306,34 +330,34 @@ class NeoFSEnv:
 
     @allure.step("Generate alphabet wallets")
     def generate_alphabet_wallets(
-        self,
-        network_config: Optional[str] = None,
-        size: Optional[int] = 1,
+        self, network_config: Optional[str] = None, size: Optional[int] = 1, alphabet_wallets_dir: Optional[str] = None
     ) -> list[NodeWallet]:
         neofs_adm = self.neofs_adm(network_config)
 
-        neofs_adm.fschain.generate_alphabet(alphabet_wallets=self.alphabet_wallets_dir, size=size)
+        if not alphabet_wallets_dir:
+            alphabet_wallets_dir = self.alphabet_wallets_dir
+        neofs_adm.fschain.generate_alphabet(alphabet_wallets=alphabet_wallets_dir, size=size)
 
         generated_wallets = []
 
-        for generated_wallet in os.listdir(self.alphabet_wallets_dir):
+        for generated_wallet in os.listdir(alphabet_wallets_dir):
             # neo3 package requires some attributes to be set
-            with open(os.path.join(self.alphabet_wallets_dir, generated_wallet), "r") as wallet_file:
+            with open(os.path.join(alphabet_wallets_dir, generated_wallet), "r") as wallet_file:
                 wallet_json = json.load(wallet_file)
 
             wallet_json["name"] = None
             for acc in wallet_json["accounts"]:
                 acc["extra"] = None
 
-            with open(os.path.join(self.alphabet_wallets_dir, generated_wallet), "w") as wallet_file:
+            with open(os.path.join(alphabet_wallets_dir, generated_wallet), "w") as wallet_file:
                 json.dump(wallet_json, wallet_file)
 
             generated_wallets.append(
                 NodeWallet(
-                    path=os.path.join(self.alphabet_wallets_dir, generated_wallet),
+                    path=os.path.join(alphabet_wallets_dir, generated_wallet),
                     password=self.default_password,
                     address=wallet_utils.get_last_address_from_wallet(
-                        os.path.join(self.alphabet_wallets_dir, generated_wallet), self.default_password
+                        os.path.join(alphabet_wallets_dir, generated_wallet), self.default_password
                     ),
                 )
             )
@@ -686,6 +710,8 @@ class MainChain:
         self.p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.wallet_dir = self.neofs_env._generate_temp_dir(prefix="mainchain_wallet")
+        self.wallet = None
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -715,11 +741,20 @@ class MainChain:
         if self.process is not None:
             raise RuntimeError("This main chain instance has already been started")
 
-        alphabet_wallet = self.neofs_env.inner_ring_nodes[-1].alphabet_wallet
+        self.wallet = self.neofs_env.generate_alphabet_wallets(alphabet_wallets_dir=self.wallet_dir)[0]
+
+        standby_committee = wallet_utils.get_last_public_key_from_wallet_with_neogo(
+            self.neofs_env.neo_go(), self.wallet.path
+        )
 
         ir_alphabet_pubkey_from_neogo = wallet_utils.get_last_public_key_from_wallet_with_neogo(
-            self.neofs_env.neo_go(), alphabet_wallet.path
+            self.neofs_env.neo_go(), self.neofs_env.inner_ring_nodes[-1].alphabet_wallet.path
         )
+
+        if len(self.neofs_env.inner_ring_nodes) > 1:
+            ir_public_keys = ir_alphabet_pubkey_from_neogo.splitlines()
+        else:
+            ir_public_keys = [ir_alphabet_pubkey_from_neogo]
 
         logger.info(f"Generating main chain config at: {self.main_chain_config_path}")
         main_chain_config_template = "main_chain.yaml"
@@ -728,8 +763,9 @@ class MainChain:
             config_template=main_chain_config_template,
             config_path=self.main_chain_config_path,
             custom=Path(main_chain_config_template).is_file(),
-            wallet=alphabet_wallet,
-            public_key=ir_alphabet_pubkey_from_neogo,
+            wallet=self.wallet,
+            standby_committee=standby_committee,
+            ir_public_keys=ir_public_keys,
             main_chain_boltdb=self.main_chain_boltdb,
             p2p_address=self.p2p_address,
             rpc_address=self.rpc_address,
@@ -738,12 +774,10 @@ class MainChain:
             prometheus_address=self.prometheus_address,
         )
         logger.info(f"Generating CLI config at: {self.cli_config}")
-        NeoFSEnv.generate_config_file(
-            config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=alphabet_wallet
-        )
+        NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.wallet)
         logger.info(f"Generating NEO GO config at: {self.neo_go_config}")
         NeoFSEnv.generate_config_file(
-            config_template="neo_go_cfg.yaml", config_path=self.neo_go_config, wallet=alphabet_wallet
+            config_template="neo_go_cfg.yaml", config_path=self.neo_go_config, wallet=self.wallet
         )
         logger.info(f"Launching Main Chain:{self}")
         self._launch_process()
@@ -839,18 +873,31 @@ class InnerRing:
         )
 
     @allure.step("Start Inner Ring node")
-    def start(self, wait_until_ready=True, with_main_chain=False):
+    def start(
+        self,
+        wait_until_ready=True,
+        with_main_chain=False,
+        pub_keys_of_existing_ir_nodes=None,
+        seed_node_addresses_of_existing_ir_nodes=None,
+        fschain_autodeploy=True,
+    ):
         if self.process is not None:
             raise RuntimeError("This inner ring node instance has already been started")
         logger.info(f"Generating IR config at: {self.ir_node_config_path}")
         ir_config_template = "ir.yaml"
 
-        pub_keys_of_existing_ir_nodes = [
-            wallet_utils.get_last_public_key_from_wallet(ir_node.alphabet_wallet.path, ir_node.alphabet_wallet.password)
-            for ir_node in self.neofs_env.inner_ring_nodes
-        ]
+        if not pub_keys_of_existing_ir_nodes:
+            pub_keys_of_existing_ir_nodes = [
+                wallet_utils.get_last_public_key_from_wallet(
+                    ir_node.alphabet_wallet.path, ir_node.alphabet_wallet.password
+                )
+                for ir_node in self.neofs_env.inner_ring_nodes
+            ]
 
-        seed_node_addresses_of_existing_ir_nodes = [ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes]
+        if not seed_node_addresses_of_existing_ir_nodes:
+            seed_node_addresses_of_existing_ir_nodes = [
+                ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes
+            ]
 
         NeoFSEnv.generate_config_file(
             config_template=ir_config_template,
@@ -868,6 +915,7 @@ class InnerRing:
                 len(self.neofs_env.inner_ring_nodes) - (len(self.neofs_env.inner_ring_nodes) - 1) / 3 - 1
             ),
             set_roles_in_genesis=str(False if len(self.neofs_env.inner_ring_nodes) == 1 else True).lower(),
+            fschain_autodeploy=fschain_autodeploy,
             control_public_key=wallet_utils.get_last_public_key_from_wallet(
                 self.alphabet_wallet.path, self.alphabet_wallet.password
             ),

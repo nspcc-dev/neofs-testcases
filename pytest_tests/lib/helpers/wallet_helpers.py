@@ -62,3 +62,54 @@ def wait_for_correct_wallet_balance(
     assert compare_func(get_wallet_balance(neofs_env, neo_go, wallet, neo_go_wallet_config)), (
         "Wallet balance is not correct after"
     )
+
+
+def create_wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
+    neofs_env = neofs_env_with_mainchain
+
+    with allure.step("Create wallet for deposit"):
+        wallet = NodeWallet(
+            path=neofs_env_with_mainchain._generate_temp_file(
+                neofs_env._env_dir, prefix="deposit_withdrawal_test_wallet"
+            ),
+            address="",
+            password=neofs_env.default_password,
+        )
+        init_wallet(wallet.path, wallet.password)
+        wallet.address = get_last_address_from_wallet(wallet.path, wallet.password)
+        wallet.neo_go_config = neofs_env.generate_neo_go_config(wallet)
+        wallet.cli_config = neofs_env.generate_cli_config(wallet)
+
+    with allure.step("Transfer some money to created wallet"):
+        neo_go = neofs_env.neo_go()
+        neo_go.nep17.transfer(
+            "GAS",
+            wallet.address,
+            f"http://{neofs_env.main_chain.rpc_address}",
+            from_address=neofs_env.main_chain.wallet.address,
+            amount=1000,
+            force=True,
+            wallet_config=neofs_env.main_chain.neo_go_config,
+            await_=True,
+        )
+        assert get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) == 1000.0, (
+            "Money transfer from alphabet to test wallet didn't succeed"
+        )
+
+    with allure.step("Deposit money to neofs contract"):
+        neo_go.nep17.transfer(
+            "GAS",
+            neofs_env.main_chain.neofs_contract_address,
+            f"http://{neofs_env.main_chain.rpc_address}",
+            from_address=wallet.address,
+            amount=100,
+            force=True,
+            wallet_config=wallet.neo_go_config,
+            await_=True,
+        )
+        assert get_wallet_balance(neofs_env, neo_go, wallet, wallet.neo_go_config) <= 900, (
+            "Wallet balance is not correct after deposit"
+        )
+        wait_for_correct_neofs_balance(neofs_env, wallet, wallet.cli_config, lambda balance: balance == 100)
+
+    return wallet
