@@ -44,7 +44,7 @@ storage:
   shard:
     0:
       writecache:
-        enabled: false
+        enabled: {{ writecache }}
         path: {{ shards[0].wc_path }}  # Write-cache root directory
 
       metabase:
@@ -62,7 +62,7 @@ storage:
 
     1:
       writecache:
-        enabled: false
+        enabled: {{ writecache }}
         path: {{ shards[1].wc_path }}  # Write-cache root directory
 
       metabase:

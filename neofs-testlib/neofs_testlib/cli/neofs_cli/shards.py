@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from neofs_testlib.cli.cli_command import CliCommand
 from neofs_testlib.shell import CommandResult
@@ -8,10 +8,10 @@ class NeofsCliShards(CliCommand):
     def flush_cache(
         self,
         endpoint: str,
-        wallet: str,
-        shards_id: Optional[list[str]],
+        wallet: Optional[str] = None,
+        shards_id: Optional[list[str]] = None,
         address: Optional[str] = None,
-        all_shards: bool = False,
+        all: bool = False,
     ) -> CommandResult:
         """
         Flush objects from the write-cache to the main storage.
@@ -19,7 +19,7 @@ class NeofsCliShards(CliCommand):
         Args:
             address: Address of wallet account.
             shards_id: List of shard IDs in base58 encoding.
-            all_shards: Process all shards.
+            all: Process all shards.
             endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
 

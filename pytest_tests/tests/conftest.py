@@ -60,7 +60,7 @@ def neofs_env(temp_directory, artifacts_directory, request):
                 os.remove(shard.blobovnicza_path)
                 shutil.rmtree(shard.fstree_path, ignore_errors=True)
                 os.remove(shard.pilorama_path)
-                os.remove(shard.wc_path)
+                shutil.rmtree(shard.wc_path, ignore_errors=True)
 
         shutil.make_archive(
             os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
