@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from random import choice, choices
 
 import allure
@@ -166,6 +167,7 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            time.sleep(1)
             generate_file_with_content(simple_object_size, file_path=file_name_simple, content=version_2_content)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 

@@ -1,5 +1,6 @@
 import os
 import string
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
 from random import choices, sample
@@ -90,17 +91,20 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket_1, file_name_simple)
+            time.sleep(1)
             bucket_1_objects = [obj_key]
             check_objects_in_bucket(self.s3_client, bucket_1, [obj_key])
 
         with allure.step("Copy one object into the same bucket"):
             copy_obj_path = s3_object.copy_object_s3(self.s3_client, bucket_1, obj_key)
+            time.sleep(1)
             bucket_1_objects.append(copy_obj_path)
             check_objects_in_bucket(self.s3_client, bucket_1, bucket_1_objects)
 
         set_bucket_versioning(self.s3_client, bucket_2, s3_bucket.VersioningStatus.ENABLED)
         with allure.step("Copy object from first bucket into second"):
             copy_obj_path_b2 = s3_object.copy_object_s3(self.s3_client, bucket_1, obj_key, bucket_dst=bucket_2)
+            time.sleep(1)
             check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
             check_objects_in_bucket(self.s3_client, bucket_2, expected_objects=[copy_obj_path_b2])
 
@@ -111,6 +115,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Copy one object into the same bucket"):
             with pytest.raises(Exception):
+                time.sleep(1)
                 s3_object.copy_object_s3(self.s3_client, bucket_1, obj_key)
 
     @allure.title("Test S3: Checking copy with acl")
@@ -123,6 +128,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            time.sleep(1)
             check_objects_in_bucket(self.s3_client, bucket, [obj_key])
 
         with allure.step("Copy object and check acl attribute"):
@@ -142,11 +148,13 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path, Metadata=object_metadata)
+            time.sleep(1)
             bucket_1_objects = [file_name]
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
 
         with allure.step("Copy one object"):
             copy_obj_path = s3_object.copy_object_s3(self.s3_client, bucket, file_name)
+            time.sleep(1)
             bucket_1_objects.append(copy_obj_path)
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
@@ -154,6 +162,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Copy one object with metadata"):
             copy_obj_path = s3_object.copy_object_s3(self.s3_client, bucket, file_name, metadata_directive="COPY")
+            time.sleep(1)
             bucket_1_objects.append(copy_obj_path)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
             assert obj_head.get("Metadata") == object_metadata, f"Metadata must be {object_metadata}"
@@ -167,6 +176,7 @@ class TestS3Object(TestNeofsS3Base):
                 metadata_directive="REPLACE",
                 metadata=object_metadata_1,
             )
+            time.sleep(1)
             bucket_1_objects.append(copy_obj_path)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, copy_obj_path)
             assert obj_head.get("Metadata") == object_metadata_1, f"Metadata must be {object_metadata_1}"
@@ -182,12 +192,15 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
             s3_object.put_object_tagging(self.s3_client, bucket, file_name_simple, tags=object_tagging)
+            time.sleep(1)
             bucket_1_objects = [file_name_simple]
             check_objects_in_bucket(self.s3_client, bucket, bucket_1_objects)
 
         with allure.step("Copy one object without tag"):
             copy_obj_path = s3_object.copy_object_s3(self.s3_client, bucket, file_name_simple)
+            time.sleep(1)
             got_tags = s3_object.get_object_tagging(self.s3_client, bucket, copy_obj_path)
             assert got_tags, f"Expected tags, got {got_tags}"
             expected_tags = [{"Key": key, "Value": value} for key, value in object_tagging]
@@ -198,6 +211,7 @@ class TestS3Object(TestNeofsS3Base):
             copy_obj_path_1 = s3_object.copy_object_s3(
                 self.s3_client, bucket, file_name_simple, tagging_directive="COPY"
             )
+            time.sleep(1)
             got_tags = s3_object.get_object_tagging(self.s3_client, bucket, copy_obj_path_1)
             assert got_tags, f"Expected tags, got {got_tags}"
             expected_tags = [{"Key": key, "Value": value} for key, value in object_tagging]
@@ -215,6 +229,7 @@ class TestS3Object(TestNeofsS3Base):
                 tagging_directive="REPLACE",
                 tagging=new_tag,
             )
+            time.sleep(1)
             got_tags = s3_object.get_object_tagging(self.s3_client, bucket, copy_obj_path)
             assert got_tags, f"Expected tags, got {got_tags}"
             expected_tags = [{"Key": tag_key, "Value": str(tag_value)}]
@@ -498,6 +513,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put first object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path_1, Metadata=object_1_metadata, Tagging=tag_1)
+            time.sleep(1)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, file_name)
             assert obj_head.get("Metadata") == object_1_metadata, "Matadata must be the same"
             got_tags = s3_object.get_object_tagging(self.s3_client, bucket, file_name)
@@ -507,6 +523,7 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Rewrite file into bucket"):
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_object.put_object_s3(self.s3_client, bucket, file_path_2, Metadata=object_2_metadata, Tagging=tag_2)
+            time.sleep(1)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, file_name)
             assert obj_head.get("Metadata") == object_2_metadata, "Matadata must be the same"
             got_tags_1 = s3_object.get_object_tagging(self.s3_client, bucket, file_name)
@@ -527,6 +544,7 @@ class TestS3Object(TestNeofsS3Base):
             version_id_1 = s3_object.put_object_s3(
                 self.s3_client, bucket, file_path_3, Metadata=object_3_metadata, Tagging=tag_3
             )
+            time.sleep(1)
             obj_head_3 = s3_object.head_object_s3(self.s3_client, bucket, file_name_3)
             assert obj_head_3.get("Metadata") == object_3_metadata, "Matadata must be the same"
             got_tags_3 = s3_object.get_object_tagging(self.s3_client, bucket, file_name_3)
@@ -536,6 +554,7 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Put new version of file into bucket"):
             file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_3)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_path_4)
+            time.sleep(1)
             versions = s3_object.list_objects_versions_s3(self.s3_client, bucket)
             obj_versions = {version.get("VersionId") for version in versions if version.get("Key") == file_name_3}
             assert obj_versions == {

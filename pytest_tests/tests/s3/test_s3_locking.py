@@ -32,8 +32,10 @@ class TestS3Locking(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
             file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
+            time.sleep(1)
             check_objects_in_bucket(self.s3_client, bucket, [file_name])
             if version_id:
                 version_id = version_id_2
@@ -45,10 +47,12 @@ class TestS3Locking(TestNeofsS3Base):
                 "RetainUntilDate": date_obj,
             }
             s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+            time.sleep(1)
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
 
         with allure.step(f"Put legal hold to object {file_name}"):
             s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
+            time.sleep(1)
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
 
         with allure.step("Fail with deleting object with legal hold and retention period"):
@@ -59,9 +63,11 @@ class TestS3Locking(TestNeofsS3Base):
 
         with allure.step("Check retention period is no longer set on the uploaded object"):
             time.sleep((retention_period + 1) * 60)
+            time.sleep(1)
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
 
         with allure.step("Fail with deleting object with legal hold and retention period"):
+            time.sleep(1)
             if version_id:
                 with pytest.raises(Exception):
                     # An error occurred (AccessDenied) when calling the DeleteObject operation (reached max retries: 0): Access Denied.
