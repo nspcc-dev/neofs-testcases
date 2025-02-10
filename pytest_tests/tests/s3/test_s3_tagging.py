@@ -1,6 +1,7 @@
 from random import choice
 from string import ascii_letters
 from typing import Tuple
+import time
 
 import allure
 import pytest
@@ -38,6 +39,7 @@ class TestS3Tagging(TestNeofsS3Base):
         with allure.step("Put with 3 tags object into bucket"):
             tag_1 = "Tag1=Value1"
             s3_object.put_object_s3(self.s3_client, bucket, file_path, Tagging=tag_1)
+            time.sleep(1)
             got_tags = s3_object.get_object_tagging(self.s3_client, bucket, file_name)
             assert got_tags, f"Expected tags, got {got_tags}"
             assert got_tags == [{"Key": "Tag1", "Value": "Value1"}], "Tags must be the same"
@@ -45,15 +47,18 @@ class TestS3Tagging(TestNeofsS3Base):
         with allure.step("Put 10 new tags for object"):
             tags_2 = self.create_tags(10)
             s3_object.put_object_tagging(self.s3_client, bucket, file_name, tags=tags_2)
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, file_name, tags_2, [("Tag1", "Value1")])
 
         with allure.step("Put 10 extra new tags for object"):
             tags_3 = self.create_tags(10)
             s3_object.put_object_tagging(self.s3_client, bucket, file_name, tags=tags_3)
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, file_name, tags_3, tags_2)
 
         with allure.step("Copy one object with tag"):
             copy_obj_path_1 = s3_object.copy_object_s3(self.s3_client, bucket, file_name, tagging_directive="COPY")
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, copy_obj_path_1, tags_3, tags_2)
 
         with allure.step("Put 11 new tags to object and expect an error"):
@@ -65,15 +70,18 @@ class TestS3Tagging(TestNeofsS3Base):
         with allure.step("Put empty tag"):
             tags_5 = []
             s3_object.put_object_tagging(self.s3_client, bucket, file_name, tags=tags_5)
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, file_name, [])
 
         with allure.step("Put 10 object tags"):
             tags_6 = self.create_tags(10)
             s3_object.put_object_tagging(self.s3_client, bucket, file_name, tags=tags_6)
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, file_name, tags_6)
 
         with allure.step("Delete tags by delete-object-tagging"):
             s3_object.delete_object_tagging(self.s3_client, bucket, file_name)
+            time.sleep(1)
             check_tags_by_object(self.s3_client, bucket, file_name, [])
 
     @allure.title("Test S3: bucket tagging")
