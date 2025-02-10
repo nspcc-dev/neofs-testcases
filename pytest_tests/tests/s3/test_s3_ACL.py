@@ -15,7 +15,7 @@ class TestS3ACL(TestNeofsS3Base):
     @pytest.mark.sanity
     @allure.title("Test S3: Object ACL")
     def test_s3_object_ACL(self, bucket, simple_object_size):
-        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.32.0":
             pytest.skip("This test runs only on post 0.32.0 S3 gw version")
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
@@ -74,7 +74,7 @@ class TestS3ACL(TestNeofsS3Base):
         By default with disabled ACLs, user should be able to set object 'private'
         and 'bucket-owner-full-control' ACLs
         """
-        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.32.0":
             pytest.skip("This test runs only on post 0.32.0 S3 gw version")
         file_path = generate_file(simple_object_size)
         file_name = object_key_from_file_path(file_path)
@@ -128,7 +128,7 @@ class TestS3ACL(TestNeofsS3Base):
 
     @allure.title("Test S3: Bucket Enable Disable ACL")
     def test_s3_bucket_disable_enable_ACL(self):
-        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.32.0":
             pytest.skip("This test runs only on post 0.32.0 S3 gw version")
         with allure.step("Create bucket"):
             bucket = s3_bucket.create_bucket_s3(

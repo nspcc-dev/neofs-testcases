@@ -123,6 +123,8 @@ def test_sn_deployment_with_writecache(clear_neofs_env: NeoFSEnv):
     neofs_env = clear_neofs_env
     with allure.step("Deploy neofs with writecache enabled"):
         neofs_env.download_binaries()
+        if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
+            pytest.skip("Test requires fresh node version")
         neofs_env.deploy_inner_ring_nodes()
         neofs_env.deploy_storage_nodes(
             count=4,

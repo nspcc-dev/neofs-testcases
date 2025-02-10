@@ -213,7 +213,7 @@ class TestContainer(NeofsEnvTestBase):
             object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
 
     def test_container_global_name(self, default_wallet, simple_object_size):
-        if self.neofs_env.storage_nodes[0]._get_version() <= "0.43.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) <= "0.43.0":
             pytest.skip("This test runs only on post 0.43.0 node version")
 
         with allure.step("Create container"):

@@ -644,6 +644,13 @@ class NeoFSEnv:
             current_perm = os.stat(target)
             os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
 
+    def get_binary_version(self, binary_path: str) -> str:
+        raw_version_output = self._run_single_command(binary_path, "--version")
+        for line in raw_version_output.splitlines():
+            if "Version:" in line:
+                return line.split("Version:")[1].strip()
+        return ""
+
     def _generate_temp_file(self, base_dir: str, extension: str = "", prefix: str = "tmp_file") -> str:
         file_path = f"{base_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         if extension:
@@ -1108,13 +1115,6 @@ class StorageNode:
         assert "Health status: READY" not in result.stdout, "Health is ready"
         assert "Network status: ONLINE" not in result.stdout, "Network is online"
 
-    def _get_version(self) -> str:
-        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_node_path, "--version")
-        for line in raw_version_output.splitlines():
-            if "Version:" in line:
-                return line.split("Version:")[1].strip()
-        return ""
-
 
 class S3_GW:
     def __init__(self, neofs_env: NeoFSEnv):
@@ -1211,17 +1211,10 @@ class S3_GW:
             peers=peers,
             tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
             listen_domain=self.neofs_env.domain,
-            s3_gw_version=self._get_version(),
+            s3_gw_version=self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path),
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
         )
-
-    def _get_version(self) -> str:
-        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_s3_gw_path, "--version")
-        for line in raw_version_output.splitlines():
-            if "Version:" in line:
-                return line.split("Version:")[1].strip()
-        return ""
 
     def _launch_process(self):
         self.stdout = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_stdout")

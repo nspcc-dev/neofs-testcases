@@ -102,7 +102,7 @@ class TestS3GatePolicy(TestNeofsS3Base):
 
     @allure.title("Test S3: Verify bucket creation with policies from config file")
     def test_s3_bucket_location_from_config_file(self, simple_object_size):
-        if self.neofs_env.s3_gw._get_version() <= "0.31.1":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.31.1":
             pytest.skip("This test runs only on post 0.31.1 S3 gw version")
         file_path_1 = generate_file(simple_object_size)
         file_name_1 = object_key_from_file_path(file_path_1)
