@@ -2,11 +2,12 @@ import json
 import logging
 import re
 from collections import defaultdict
+from typing import Union
 
 import allure
 import requests
 from helpers.test_control import wait_for_success
-from neofs_testlib.env.env import StorageNode
+from neofs_testlib.env.env import S3_GW, InnerRing, StorageNode
 
 logger = logging.getLogger("NeoLogger")
 
@@ -33,8 +34,8 @@ def parse_prometheus_metrics(metrics_lines: str) -> dict:
     return parsed_metrics
 
 
-def get_metrics(sn: StorageNode) -> dict:
-    resp = requests.get(f"http://{sn.prometheus_address}")
+def get_metrics(node: Union[StorageNode | InnerRing | S3_GW]) -> dict:
+    resp = requests.get(f"http://{node.prometheus_address}")
     if resp.status_code != 200:
         raise AssertionError(f"Invalid status code from metrics url: {resp.status_code}; {resp.reason}; {resp.text};")
     return parse_prometheus_metrics(resp.text)
@@ -42,8 +43,8 @@ def get_metrics(sn: StorageNode) -> dict:
 
 @allure.step("Wait for correct metric value")
 @wait_for_success(120, 1)
-def wait_for_metric_to_arrive(sn: StorageNode, metric_name: str, expected_value: float):
-    metrics = get_metrics(sn)
+def wait_for_metric_to_arrive(node: Union[StorageNode | InnerRing | S3_GW], metric_name: str, expected_value: float):
+    metrics = get_metrics(node)
     allure.attach(
         json.dumps(dict(metrics)),
         "metrics",
