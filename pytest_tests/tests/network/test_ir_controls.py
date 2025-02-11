@@ -68,7 +68,7 @@ def multi_ir_neofs_env():
 
 
 def test_control_notary_request_new_epoch(multi_ir_neofs_env: NeoFSEnv):
-    if multi_ir_neofs_env.storage_nodes[0]._get_version() <= "0.44.2":
+    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
     neofs_env = multi_ir_neofs_env
 
@@ -131,7 +131,7 @@ def test_control_notary_request_new_epoch(multi_ir_neofs_env: NeoFSEnv):
     ],
 )
 def test_control_notary_request_new_config_value(multi_ir_neofs_env: NeoFSEnv, key: str, value: Union[str, int, bool]):
-    if multi_ir_neofs_env.storage_nodes[0]._get_version() <= "0.44.2":
+    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
     neofs_env = multi_ir_neofs_env
 
@@ -176,7 +176,7 @@ def test_control_notary_request_new_config_value(multi_ir_neofs_env: NeoFSEnv, k
 
 
 def test_control_notary_request_node_removal(multi_ir_neofs_env: NeoFSEnv):
-    if multi_ir_neofs_env.storage_nodes[0]._get_version() <= "0.44.2":
+    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
     neofs_env = multi_ir_neofs_env
 

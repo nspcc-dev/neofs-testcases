@@ -56,7 +56,7 @@ class TestS3Multipart(TestNeofsS3Base):
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
     def test_s3_object_multipart_non_sequential(self):
-        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.32.0":
             pytest.skip("This test runs only on post 0.32.0 S3 gw version")
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -96,7 +96,7 @@ class TestS3Multipart(TestNeofsS3Base):
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
     def test_s3_object_multipart_random(self):
-        if self.neofs_env.s3_gw._get_version() <= "0.32.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.32.0":
             pytest.skip("This test runs only on post 0.32.0 S3 gw version")
 
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")

@@ -182,14 +182,16 @@ class NeoFSEnv:
                     raise e
 
     @allure.step("Deploy storage node")
-    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None):
+    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
         for idx in range(count):
             node_attrs_list = None
             if node_attrs:
                 node_attrs_list = node_attrs.get(idx, None)
-            new_storage_node = StorageNode(self, len(self.storage_nodes) + 1, node_attrs=node_attrs_list)
+            new_storage_node = StorageNode(
+                self, len(self.storage_nodes) + 1, writecache=writecache, node_attrs=node_attrs_list
+            )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
         for t in deploy_threads:
@@ -642,6 +644,13 @@ class NeoFSEnv:
             current_perm = os.stat(target)
             os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
 
+    def get_binary_version(self, binary_path: str) -> str:
+        raw_version_output = self._run_single_command(binary_path, "--version")
+        for line in raw_version_output.splitlines():
+            if "Version:" in line:
+                return line.split("Version:")[1].strip()
+        return ""
+
     def _generate_temp_file(self, base_dir: str, extension: str = "", prefix: str = "tmp_file") -> str:
         file_path = f"{base_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         if extension:
@@ -899,12 +908,17 @@ class Shard:
         self.blobovnicza_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_blobovnicza")
         self.fstree_path = neofs_env._generate_temp_dir(prefix="shards/shard_fstree")
         self.pilorama_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_pilorama")
-        self.wc_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_wc")
+        self.wc_path = neofs_env._generate_temp_dir(prefix="shards/shard_wc")
 
 
 class StorageNode:
     def __init__(
-        self, neofs_env: NeoFSEnv, sn_number: int, node_attrs: Optional[list] = None, attrs: Optional[dict] = None
+        self,
+        neofs_env: NeoFSEnv,
+        sn_number: int,
+        writecache=False,
+        node_attrs: Optional[list] = None,
+        attrs: Optional[dict] = None,
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
@@ -931,6 +945,7 @@ class StorageNode:
         self.process = None
         self.attrs = {}
         self.node_attrs = node_attrs
+        self.writecache = writecache
         if attrs:
             self.attrs.update(attrs)
 
@@ -966,6 +981,7 @@ class StorageNode:
                 custom=Path(sn_config_template).is_file(),
                 fschain_endpoint=self.neofs_env.fschain_rpc,
                 shards=self.shards,
+                writecache=self.writecache,
                 wallet=self.wallet,
                 state_file=self.state_file,
                 pprof_address=self.pprof_address,
@@ -1010,7 +1026,7 @@ class StorageNode:
             os.remove(shard.blobovnicza_path)
             os.rmdir(shard.fstree_path)
             os.remove(shard.pilorama_path)
-            os.remove(shard.wc_path)
+            shutil.rmtree(shard.wc_path, ignore_errors=True)
         os.remove(self.state_file)
         self.shards = [Shard(), Shard()]
 
@@ -1022,6 +1038,7 @@ class StorageNode:
             custom=Path(sn_config_template).is_file(),
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
+            writecache=self.writecache,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,
@@ -1045,6 +1062,7 @@ class StorageNode:
             custom=Path(sn_config_template).is_file(),
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
+            writecache=self.writecache,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,
@@ -1096,13 +1114,6 @@ class StorageNode:
             return
         assert "Health status: READY" not in result.stdout, "Health is ready"
         assert "Network status: ONLINE" not in result.stdout, "Network is online"
-
-    def _get_version(self) -> str:
-        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_node_path, "--version")
-        for line in raw_version_output.splitlines():
-            if "Version:" in line:
-                return line.split("Version:")[1].strip()
-        return ""
 
 
 class S3_GW:
@@ -1200,17 +1211,10 @@ class S3_GW:
             peers=peers,
             tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
             listen_domain=self.neofs_env.domain,
-            s3_gw_version=self._get_version(),
+            s3_gw_version=self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path),
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
         )
-
-    def _get_version(self) -> str:
-        raw_version_output = self.neofs_env._run_single_command(self.neofs_env.neofs_s3_gw_path, "--version")
-        for line in raw_version_output.splitlines():
-            if "Version:" in line:
-                return line.split("Version:")[1].strip()
-        return ""
 
     def _launch_process(self):
         self.stdout = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_stdout")

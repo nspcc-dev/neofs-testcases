@@ -178,7 +178,7 @@ def test_sn_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
             f"invalid value for {metric}"
         )
 
-    node_version = single_noded_env.storage_nodes[0]._get_version()
+    node_version = single_noded_env.get_binary_version(single_noded_env.neofs_node_path)
     assert after_metrics["neofs_node_version"][0]["params"]["version"] == node_version, (
         "invalid value for neofs_node_version"
     )

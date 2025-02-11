@@ -38,7 +38,7 @@ class TestS3Presigned(TestNeofsS3Base):
             ";cool,name!",
         ]
 
-        if self.neofs_env.s3_gw._get_version() <= "0.33.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) <= "0.33.0":
             file_names_to_check = ["temp_file_12345"]
 
         for file_name in file_names_to_check:

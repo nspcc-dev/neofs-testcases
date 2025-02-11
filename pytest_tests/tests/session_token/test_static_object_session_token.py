@@ -354,7 +354,7 @@ class TestObjectStaticSession(NeofsEnvTestBase):
         )
         signed_token_file = sign_session_token(self.shell, session_token_file, stranger_wallet)
         expected_error = INVALID_SESSION_TOKEN_OWNER
-        if self.neofs_env.storage_nodes[0]._get_version() <= "0.43.0":
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) <= "0.43.0":
             expected_error = OBJECT_ACCESS_DENIED
         with pytest.raises(Exception, match=expected_error):
             head_object(
