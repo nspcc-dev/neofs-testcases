@@ -60,3 +60,10 @@ def wait_for_gc_pass_on_storage_nodes() -> None:
     wait_time = parse_time(STORAGE_GC_TIME)
     with allure.step(f"Wait {wait_time}s until GC completes on storage nodes"):
         time.sleep(wait_time)
+
+
+def parse_node_height(stdout: str) -> tuple[float, float]:
+    lines = stdout.strip().split("\n")
+    block_height = float(lines[0].split(": ")[1].strip())
+    state = float(lines[1].split(": ")[1].strip())
+    return block_height, state
