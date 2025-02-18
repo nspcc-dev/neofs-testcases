@@ -4,11 +4,17 @@ import os
 import random
 import re
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import allure
 from helpers import json_transformers
-from helpers.common import NEOFS_CLI_EXEC, TEST_OBJECTS_DIR, WALLET_CONFIG, get_assets_dir_path
+from helpers.common import (
+    NEOFS_CLI_EXEC,
+    TEST_FILES_DIR,
+    TEST_OBJECTS_DIR,
+    WALLET_CONFIG,
+    get_assets_dir_path,
+)
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
@@ -514,6 +520,122 @@ def search_object(
                 raise AssertionError(warning)
 
     return found_objects
+
+
+def parse_searchv2_output(raw_output: str) -> tuple[list[dict], Union[str, None]]:
+    lines = raw_output.strip().split("\n")[1:]
+
+    objects = []
+    cursor = None
+    current_object = None
+
+    for line in lines:
+        line = line.strip()
+
+        if "Cursor" in line:
+            cursor = line.split(":")[1].strip()
+        elif re.match(r"^[a-zA-Z0-9]{40,}$", line):
+            if current_object:
+                objects.append(current_object)
+            current_object = {"id": line, "attrs": []}
+        elif ":" in line and current_object:
+            splitted_line = line.split(":")
+            if "Timestamp" in line:
+                key = splitted_line[0].strip()
+                value = ":".join(splitted_line[1:]).strip()
+            else:
+                key = ":".join(splitted_line[:-1]).strip()
+                value = splitted_line[-1].strip()
+            current_object["attrs"].append({key.strip(): value.strip()})
+
+    if current_object:
+        objects.append(current_object)
+
+    return objects, cursor
+
+
+def generate_filter_json_file(filters: list[str]) -> str:
+    trasformed_filters = []
+    for f in filters:
+        parts = f.split(" ", 2)  # Split into three parts: key, matchType, value
+        if len(parts) == 3:
+            trasformed_filters.append(
+                {"key": parts[0], "matchType": parts[1], "value": "" if parts[2] == '""' else parts[2]}
+            )
+
+    file_path = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"filter_json_{uuid.uuid4()}")
+    with open(file_path, "w") as file:
+        json.dump(trasformed_filters, file)
+    return file_path
+
+
+@allure.step("Search object")
+def search_objectv2(
+    rpc_endpoint: str,
+    wallet: str,
+    cid: str,
+    shell: Shell,
+    filters: Optional[list] = None,
+    attributes: Optional[list] = None,
+    count: Optional[int] = None,
+    cursor: Optional[str] = None,
+    address: Optional[str] = None,
+    bearer: Optional[str] = None,
+    oid: Optional[str] = None,
+    phy: bool = False,
+    root: bool = False,
+    session: Optional[str] = None,
+    ttl: Optional[int] = None,
+    xhdr: Optional[dict] = None,
+    timeout: Optional[str] = None,
+    wallet_config: Optional[str] = None,
+) -> tuple[list[dict], Union[str, None]]:
+    """
+    SEARCH an Object.
+
+    Args:
+        address: Address of wallet account.
+        bearer: File with signed JSON or binary encoded bearer token.
+        cid: Container ID.
+        filters: Repeated filter expressions or files with protobuf JSON.
+        attributes: Additional attributes to display for suitable objects
+        count: Max number of resulting items. Must not exceed 1000
+        cursor: Cursor to continue previous search
+        oid: Object ID.
+        phy: Search physically stored objects.
+        root: Search for user objects.
+        rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+        session: Filepath to a JSON- or binary-encoded token of the object SEARCH session.
+        ttl: TTL value in request meta header (default 2).
+        wallet: WIF (NEP-2) string or path to the wallet or binary key.
+        xhdr: Dict with request X-Headers.
+        timeout: Timeout for the operation (default 15s).
+
+    Returns:
+        list of found objects as a dict: [{'oid': '123', 'attrs': [{'attr1': '123'}]}]
+    """
+
+    cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
+    result = cli.object.searchv2(
+        rpc_endpoint=rpc_endpoint,
+        wallet=wallet,
+        cid=cid,
+        filters=",".join(filters) if filters else None,
+        attributes=",".join(attributes) if attributes else None,
+        count=count,
+        cursor=cursor,
+        address=address,
+        bearer=bearer,
+        oid=oid,
+        phy=phy,
+        root=root,
+        session=session,
+        ttl=ttl,
+        xhdr=xhdr,
+        timeout=timeout,
+    )
+
+    return parse_searchv2_output(result.stdout)
 
 
 @allure.step("Get netmap netinfo")
