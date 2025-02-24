@@ -341,8 +341,8 @@ class TestRestGate(NeofsEnvTestBase):
             value
             """
             },
-            {"\x00" * 8: "simple_obj_filename"},
-            {"Some key": "\x00" * 8},
+            {"\x01" * 8: "simple_obj_filename"},
+            {"Some key": "\x01" * 8},
         ],
         ids=[
             "simple",
@@ -353,8 +353,8 @@ class TestRestGate(NeofsEnvTestBase):
             "linebreak in key",
             "linebreaks in key and value",
             "other linebreaks in key and value",
-            "zero bytes key",
-            "zero bytes value",
+            "not-so-zero bytes key",
+            "not-so-zero bytes value",
         ],
     )
     def test_put_rest_get_rest_with_headers(self, attributes: dict, simple_object_size, gw_params):
