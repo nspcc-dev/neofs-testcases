@@ -12,22 +12,28 @@ from helpers.node_management import (
 )
 from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.test_control import expect_not_raises
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 
 
-@pytest.fixture(
-    scope="function",
-)
-def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv):
-    container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
-    return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
+class TestFailoverNodePart:
+    @pytest.fixture()
+    @allure.title("Enable metabase resync on start")
+    def enable_metabase_resync_on_start(self, neofs_env_function_scope: NeoFSEnv):
+        for node in neofs_env_function_scope.storage_nodes:
+            node.set_metabase_resync(True)
+        yield
+        for node in neofs_env_function_scope.storage_nodes:
+            node.set_metabase_resync(False)
 
+    @pytest.fixture()
+    def user_container(self, user_wallet: NodeWallet, neofs_env_function_scope: NeoFSEnv):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+        container_id = create_container(user_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        return StorageContainer(StorageContainerInfo(container_id, user_wallet), self.shell, self.neofs_env)
 
-class TestFailoverNodePart(NeofsEnvTestBase):
     @allure.title("Enable resync metabase, delete metadata and get object")
     def test_enable_resync_metabase_delete_metadata(
         self,

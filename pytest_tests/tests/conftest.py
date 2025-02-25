@@ -97,6 +97,13 @@ def neofs_env(temp_directory, artifacts_directory, request):
     neofs_env_finalizer(neofs_env, request)
 
 
+@pytest.fixture(scope="function")
+def neofs_env_function_scope(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request)
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
 @pytest.fixture()
 def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, writecache=True, with_s3_gw=False, with_rest_gw=False)

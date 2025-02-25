@@ -9,39 +9,44 @@ from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object, put_object, put_object_to_random_node
 from helpers.node_management import storage_node_healthcheck, wait_all_storage_nodes_returned
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
 logger = logging.getLogger("NeoLogger")
 
 
-@pytest.fixture
-def after_run_return_all_stopped_storage_nodes(neofs_env: NeoFSEnv):
-    yield
-    unavailable_nodes = []
-    for node in neofs_env.storage_nodes:
-        try:
-            storage_node_healthcheck(node)
-        except Exception:
-            unavailable_nodes.append(node)
-    return_stopped_storage_nodes(neofs_env, unavailable_nodes)
+class TestFailoverStorage:
+    @pytest.fixture
+    def after_run_return_all_stopped_storage_nodes(self, neofs_env_function_scope: NeoFSEnv):
+        yield
+        unavailable_nodes = []
+        for node in neofs_env_function_scope.storage_nodes:
+            try:
+                storage_node_healthcheck(node)
+            except Exception:
+                unavailable_nodes.append(node)
+        self.return_stopped_storage_nodes(neofs_env_function_scope, unavailable_nodes)
 
+    @allure.step("Return all stopped hosts")
+    def return_stopped_storage_nodes(self, neofs_env: NeoFSEnv, stopped_nodes: list[StorageNode]) -> None:
+        for node in stopped_nodes:
+            with allure.step(f"Start {node}"):
+                node.start(fresh=False)
 
-@allure.step("Return all stopped hosts")
-def return_stopped_storage_nodes(neofs_env: NeoFSEnv, stopped_nodes: list[StorageNode]) -> None:
-    for node in stopped_nodes:
-        with allure.step(f"Start {node}"):
-            node.start(fresh=False)
+        wait_all_storage_nodes_returned(neofs_env)
 
-    wait_all_storage_nodes_returned(neofs_env)
-
-
-class TestFailoverStorage(NeofsEnvTestBase):
     @allure.title("Lose and return storage node's process")
     @pytest.mark.parametrize("hard_restart", [True, False])
     def test_storage_node_failover(
-        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes, hard_restart
+        self,
+        default_wallet,
+        neofs_env_function_scope: NeoFSEnv,
+        simple_object_size,
+        after_run_return_all_stopped_storage_nodes,
+        hard_restart,
     ):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+
         wallet = default_wallet
         placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
         source_file_path = generate_file(simple_object_size)
@@ -80,7 +85,7 @@ class TestFailoverStorage(NeofsEnvTestBase):
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
             with allure.step("Return stopped storage nodes"):
-                return_stopped_storage_nodes(self.neofs_env, [node_to_stop])
+                self.return_stopped_storage_nodes(self.neofs_env, [node_to_stop])
 
             with allure.step("Check object data is not corrupted"):
                 new_nodes = wait_object_replication(
@@ -90,8 +95,15 @@ class TestFailoverStorage(NeofsEnvTestBase):
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     def test_put_get_without_storage_node(
-        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes
+        self,
+        default_wallet,
+        neofs_env_function_scope: NeoFSEnv,
+        simple_object_size,
+        after_run_return_all_stopped_storage_nodes,
     ):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+
         with allure.step("Kill one storage node"):
             dead_node = self.neofs_env.storage_nodes[0]
             alive_nodes = self.neofs_env.storage_nodes[1:]
@@ -126,15 +138,22 @@ class TestFailoverStorage(NeofsEnvTestBase):
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         with allure.step("Return stopped storage node"):
-            return_stopped_storage_nodes(self.neofs_env, [dead_node])
+            self.return_stopped_storage_nodes(self.neofs_env, [dead_node])
 
         with allure.step("Get last object from previously dead node"):
             got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=dead_node.endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     def test_put_get_without_storage_nodes(
-        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes
+        self,
+        default_wallet,
+        neofs_env_function_scope: NeoFSEnv,
+        simple_object_size,
+        after_run_return_all_stopped_storage_nodes,
     ):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+
         with allure.step("Kill two storage nodes"):
             dead_nodes = self.neofs_env.storage_nodes[:2]
             alive_nodes = self.neofs_env.storage_nodes[2:]
@@ -165,4 +184,4 @@ class TestFailoverStorage(NeofsEnvTestBase):
                 )
 
         with allure.step("Return stopped storage node"):
-            return_stopped_storage_nodes(self.neofs_env, dead_nodes)
+            self.return_stopped_storage_nodes(self.neofs_env, dead_nodes)
