@@ -349,3 +349,51 @@ class NeofsCliObject(CliCommand):
             "object search",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def searchv2(
+        self,
+        rpc_endpoint: str,
+        wallet: str,
+        cid: str,
+        filters: Optional[list] = None,
+        attributes: Optional[list] = None,
+        count: Optional[int] = None,
+        cursor: Optional[str] = None,
+        address: Optional[str] = None,
+        bearer: Optional[str] = None,
+        oid: Optional[str] = None,
+        phy: bool = False,
+        root: bool = False,
+        session: Optional[str] = None,
+        ttl: Optional[int] = None,
+        xhdr: Optional[dict] = None,
+        timeout: Optional[str] = None,
+    ) -> CommandResult:
+        """
+        Search object.
+
+        Args:
+            address: Address of wallet account.
+            bearer: File with signed JSON or binary encoded bearer token.
+            cid: Container ID.
+            filters: Repeated filter expressions or files with protobuf JSON.
+            attributes: Additional attributes to display for suitable objects
+            count: Max number of resulting items. Must not exceed 1000
+            cursor: Cursor to continue previous search
+            oid: Object ID.
+            phy: Search physically stored objects.
+            root: Search for user objects.
+            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+            session: Filepath to a JSON- or binary-encoded token of the object SEARCH session.
+            ttl: TTL value in request meta header (default 2).
+            wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            xhdr: Dict with request X-Headers.
+            timeout: Timeout for the operation (default 15s).
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "object searchv2",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
