@@ -21,20 +21,6 @@ from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-stopped_nodes: list[StorageNode] = []
-
-
-@pytest.fixture
-@allure.step("Return all stopped hosts")
-def after_run_return_all_stopped_storage_nodes(neofs_env: NeoFSEnv):
-    yield
-    for node in list(stopped_nodes):
-        with allure.step(f"Start {node}"):
-            node.start(fresh=False)
-        stopped_nodes.remove(node)
-
-    wait_all_storage_nodes_returned(neofs_env)
-
 
 def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
     response = neofs_env.neofs_cli(node.cli_config).control.object_status(
@@ -168,9 +154,7 @@ class TestContainer(NeofsEnvTestBase):
             wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @allure.title("Container deletion while some storage nodes down")
-    def test_container_deletion_while_sn_down(
-        self, default_wallet, simple_object_size, after_run_return_all_stopped_storage_nodes
-    ):
+    def test_container_deletion_while_sn_down(self, default_wallet, simple_object_size):
         with allure.step("Create container"):
             wallet = default_wallet
             placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
@@ -190,27 +174,36 @@ class TestContainer(NeofsEnvTestBase):
                 cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
             )
 
-        with allure.step("Down storage node that stores the object"):
-            node_to_stop = nodes_with_object[0]
-            alive_node_with_object = nodes_with_object[1]
+        stopped_nodes = []
+        try:
+            with allure.step("Down storage node that stores the object"):
+                node_to_stop = nodes_with_object[0]
+                alive_node_with_object = nodes_with_object[1]
 
-            node_to_stop.stop()
-            stopped_nodes.append(node_to_stop)
+                node_to_stop.stop()
+                stopped_nodes.append(node_to_stop)
 
-        with allure.step("Delete container"):
-            delete_container(
-                wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
-            )
+            with allure.step("Delete container"):
+                delete_container(
+                    wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
+                )
 
-        with allure.step("Alive node should return GC MARKED for the created object from the deleted container"):
-            object_should_be_gc_marked(self.neofs_env, alive_node_with_object, cid, oid)
+            with allure.step("Alive node should return GC MARKED for the created object from the deleted container"):
+                object_should_be_gc_marked(self.neofs_env, alive_node_with_object, cid, oid)
 
-        with allure.step("Start storage node"):
-            node_to_stop.start(fresh=False)
+            with allure.step("Start storage node"):
+                node_to_stop.start(fresh=False)
+                wait_all_storage_nodes_returned(self.neofs_env)
+
+            with allure.step("Previously stopped node should return GC MARKED for the created object"):
+                object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
+        finally:
+            for node in list(stopped_nodes):
+                with allure.step(f"Start {node}"):
+                    node.start(fresh=False)
+                stopped_nodes.remove(node)
+
             wait_all_storage_nodes_returned(self.neofs_env)
-
-        with allure.step("Previously stopped node should return GC MARKED for the created object"):
-            object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
 
     def test_container_global_name(self, default_wallet, simple_object_size):
         if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) <= "0.43.0":
