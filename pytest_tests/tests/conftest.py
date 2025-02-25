@@ -253,6 +253,13 @@ def neofs_env_with_mainchain(request):
     NeoFSEnv.cleanup_unused_ports()
 
 
+@pytest.fixture
+def clear_neofs_env():
+    neofs_env = NeoFSEnv(neofs_env_config=NeoFSEnv._generate_default_neofs_env_config())
+    yield neofs_env
+    neofs_env.kill()
+
+
 @pytest.fixture(scope="module", autouse=True)
 def cleanup_temp_files():
     yield

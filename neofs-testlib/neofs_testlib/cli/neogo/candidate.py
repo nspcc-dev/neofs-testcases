@@ -14,6 +14,7 @@ class NeoGoCandidate(CliCommand):
         wallet_password: Optional[str] = None,
         gas: Optional[float] = None,
         timeout: int = 10,
+        force=False,
     ) -> CommandResult:
         """Register as a new candidate.
 

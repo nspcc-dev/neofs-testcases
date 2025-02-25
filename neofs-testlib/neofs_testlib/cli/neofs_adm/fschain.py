@@ -223,6 +223,7 @@ class NeofsAdmFSChain(CliCommand):
         alphabet_wallets: str,
         storage_wallet: str,
         gas: Optional[str] = None,
+        wallet_address: Optional[str] = None,
     ) -> CommandResult:
         """Refill GAS of storage node's wallet in the FS chain network
 

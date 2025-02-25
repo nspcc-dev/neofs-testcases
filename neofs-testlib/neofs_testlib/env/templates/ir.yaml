@@ -59,7 +59,7 @@ fschain:
         min: {{ peers_min_number }}
     set_roles_in_genesis: {{ set_roles_in_genesis }}
 
-fschain_autodeploy: true
+fschain_autodeploy: {{ fschain_autodeploy }}
 
 nns:
   system_email: usr@domain.io
