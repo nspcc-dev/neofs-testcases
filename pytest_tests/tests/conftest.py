@@ -31,29 +31,17 @@ def pytest_addoption(parser):
     parser.addoption("--load-env", action="store", help="load persisted env from file")
 
 
-@pytest.fixture(scope="session")
-def neofs_env(temp_directory, artifacts_directory, request):
-    NeoFSEnv.cleanup_unused_ports()
-    if request.config.getoption("--load-env"):
-        neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
-    else:
-        neofs_env = NeoFSEnv.simple()
-
-    yield neofs_env
-
+def neofs_env_finalizer(neofs_env: NeoFSEnv, request):
     if request.config.getoption("--persist-env"):
         neofs_env.persist()
     else:
         if not request.config.getoption("--load-env"):
             neofs_env.kill()
 
-    if (
-        request.session.testsfailed
-        and not request.config.getoption("--persist-env")
-        and not request.config.getoption("--load-env")
-    ):
+    if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
         for ir in neofs_env.inner_ring_nodes:
             os.remove(ir.ir_storage_path)
+
         for sn in neofs_env.storage_nodes:
             for shard in sn.shards:
                 os.remove(shard.metabase_path)
@@ -62,16 +50,139 @@ def neofs_env(temp_directory, artifacts_directory, request):
                 os.remove(shard.pilorama_path)
                 shutil.rmtree(shard.wc_path, ignore_errors=True)
 
-        shutil.make_archive(
-            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
-        )
+        if request.session.testsfailed:
+            shutil.make_archive(
+                os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
+            )
+            allure.attach.file(
+                os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}.zip"),
+                name="neofs env files",
+                extension="zip",
+            )
+
         shutil.rmtree(neofs_env._env_dir, ignore_errors=True)
-        allure.attach.file(
-            os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}.zip"),
-            name="neofs env files",
-            extension="zip",
-        )
+
     NeoFSEnv.cleanup_unused_ports()
+
+
+def get_or_create_neofs_env(
+    request,
+    with_main_chain=False,
+    storage_nodes_count=4,
+    inner_ring_nodes_count=1,
+    writecache=False,
+    with_s3_gw=True,
+    with_rest_gw=True,
+):
+    NeoFSEnv.cleanup_unused_ports()
+    if request.config.getoption("--load-env"):
+        neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
+    else:
+        neofs_env = NeoFSEnv.deploy(
+            with_main_chain=with_main_chain,
+            storage_nodes_count=storage_nodes_count,
+            inner_ring_nodes_count=inner_ring_nodes_count,
+            writecache=writecache,
+            with_s3_gw=with_s3_gw,
+            with_rest_gw=with_rest_gw,
+        )
+
+    return neofs_env
+
+
+@pytest.fixture(scope="session")
+def neofs_env(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request)
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, writecache=True, with_s3_gw=False, with_rest_gw=False)
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_single_sn(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1)
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_4_ir(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=4,
+        inner_ring_nodes_count=4,
+        with_s3_gw=False,
+        with_rest_gw=False,
+    )
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture(scope="module")
+def neofs_env_4_ir_4_sn(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=4,
+        inner_ring_nodes_count=4,
+        with_s3_gw=False,
+        with_rest_gw=False,
+    )
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_7_ir(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=4,
+        inner_ring_nodes_count=7,
+        with_s3_gw=False,
+        with_rest_gw=False,
+    )
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_4_ir_with_mainchain(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        with_main_chain=True,
+        storage_nodes_count=1,
+        inner_ring_nodes_count=4,
+        with_s3_gw=False,
+        with_rest_gw=False,
+    )
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture()
+def neofs_env_7_ir_with_mainchain(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        with_main_chain=True,
+        storage_nodes_count=1,
+        inner_ring_nodes_count=7,
+        with_s3_gw=False,
+        with_rest_gw=False,
+    )
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
+
+
+@pytest.fixture
+def neofs_env_with_mainchain(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, with_main_chain=True)
+    yield neofs_env
+    neofs_env_finalizer(neofs_env, request)
 
 
 @pytest.fixture(scope="session")
@@ -213,51 +324,6 @@ def datadir(tmpdir, request):
         shutil.copytree(test_dir, str(tmpdir), dirs_exist_ok=True)
 
     return tmpdir
-
-
-@pytest.fixture
-def neofs_env_with_mainchain(request):
-    NeoFSEnv.cleanup_unused_ports()
-    if request.config.getoption("--load-env"):
-        neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
-    else:
-        neofs_env = NeoFSEnv.simple(with_main_chain=True)
-
-    yield neofs_env
-
-    if request.config.getoption("--persist-env"):
-        neofs_env.persist()
-    else:
-        if not request.config.getoption("--load-env"):
-            neofs_env.kill()
-
-    if request.session.testsfailed:
-        logs_id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
-        logs_path = os.path.join(get_assets_dir_path(), f"neofs_env_with_mainchain_logs_{logs_id}")
-        os.makedirs(logs_path, exist_ok=True)
-
-        shutil.copyfile(neofs_env.main_chain.stderr, f"{logs_path}/main_chain_log.txt")
-        shutil.copyfile(neofs_env.s3_gw.stderr, f"{logs_path}/s3_gw_log.txt")
-        shutil.copyfile(neofs_env.rest_gw.stderr, f"{logs_path}/rest_gw_log.txt")
-        for idx, ir in enumerate(neofs_env.inner_ring_nodes):
-            shutil.copyfile(ir.stderr, f"{logs_path}/ir_{idx}_log.txt")
-        for idx, sn in enumerate(neofs_env.storage_nodes):
-            shutil.copyfile(sn.stderr, f"{logs_path}/sn_{idx}_log.txt")
-
-        logs_zip_file_path = shutil.make_archive(
-            os.path.join(get_assets_dir_path(), f"neofs_env_with_mainchain_logs_{logs_id}"), "zip", logs_path
-        )
-        allure.attach.file(logs_zip_file_path, name="neofs env with main chain files", extension="zip")
-    logger.info(f"Cleaning up dir {neofs_env}")
-    shutil.rmtree(os.path.join(get_assets_dir_path(), neofs_env._env_dir), ignore_errors=True)
-    NeoFSEnv.cleanup_unused_ports()
-
-
-@pytest.fixture
-def clear_neofs_env():
-    neofs_env = NeoFSEnv(neofs_env_config=NeoFSEnv._generate_default_neofs_env_config())
-    yield neofs_env
-    neofs_env.kill()
 
 
 @pytest.fixture(scope="module", autouse=True)

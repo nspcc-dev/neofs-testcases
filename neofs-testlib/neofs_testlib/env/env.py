@@ -26,6 +26,7 @@ from typing import Optional
 
 import allure
 import jinja2
+import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -36,10 +37,11 @@ from helpers.common import (
     DEFAULT_REST_OPERATION_TIMEOUT,
     get_assets_dir_path,
 )
+from tenacity import retry, stop_after_attempt, wait_fixed
+
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -510,23 +512,35 @@ class NeoFSEnv:
         return neofs_env_config
 
     @classmethod
-    @allure.step("Deploy simple neofs env")
-    def simple(cls, neofs_env_config: dict = None, with_main_chain=False) -> "NeoFSEnv":
+    @allure.step("Deploy NeoFS Environment")
+    def deploy(
+        cls,
+        neofs_env_config: dict = None,
+        with_main_chain=False,
+        storage_nodes_count=4,
+        inner_ring_nodes_count=1,
+        writecache=False,
+        with_s3_gw=True,
+        with_rest_gw=True,
+    ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
 
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
-        neofs_env.deploy_inner_ring_nodes(with_main_chain=with_main_chain)
-        neofs_env.deploy_storage_nodes(
-            count=4,
-            node_attrs={
-                0: ["UN-LOCODE:RU MOW", "Price:22"],
-                1: ["UN-LOCODE:RU LED", "Price:33"],
-                2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"],
-            },
-        )
+        if writecache:
+            if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
+                pytest.skip("Writecache requires fresh node version")
+        neofs_env.deploy_inner_ring_nodes(count=inner_ring_nodes_count, with_main_chain=with_main_chain)
+
+        node_attrs = {
+            0: ["UN-LOCODE:RU MOW", "Price:22"],
+            1: ["UN-LOCODE:RU LED", "Price:33"],
+            2: ["UN-LOCODE:SE STO", "Price:11"],
+            3: ["UN-LOCODE:FI HEL", "Price:44"],
+        }
+        adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
+        neofs_env.deploy_storage_nodes(count=storage_nodes_count, node_attrs=adjusted_node_attrs, writecache=writecache)
         if with_main_chain:
             neofs_adm = neofs_env.neofs_adm()
             for sn in neofs_env.storage_nodes:
@@ -547,9 +561,10 @@ class NeoFSEnv:
                 alphabet_wallets=neofs_env.alphabet_wallets_dir,
                 post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
             )
-        time.sleep(30)
-        neofs_env.deploy_s3_gw()
-        neofs_env.deploy_rest_gw()
+        if with_s3_gw:
+            neofs_env.deploy_s3_gw()
+        if with_rest_gw:
+            neofs_env.deploy_rest_gw()
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
         return neofs_env

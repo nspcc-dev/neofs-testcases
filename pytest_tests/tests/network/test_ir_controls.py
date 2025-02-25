@@ -39,38 +39,10 @@ def wait_until_node_disappears_from_netmap_snapshot(
     assert offline_node_addr not in netmap_snapshot, f"Node {offline_node_addr} is still in network map"
 
 
-@pytest.fixture(scope="module")
-def multi_ir_neofs_env():
-    neofs_env = NeoFSEnv(neofs_env_config=NeoFSEnv._generate_default_neofs_env_config())
-    with allure.step("Deploy neofs with 4 ir nodes"):
-        neofs_env.download_binaries()
-        neofs_env.deploy_inner_ring_nodes(count=4)
-        neofs_env.deploy_storage_nodes(
-            count=4,
-            node_attrs={
-                0: ["UN-LOCODE:RU MOW", "Price:22"],
-                1: ["UN-LOCODE:RU LED", "Price:33"],
-                2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"],
-            },
-        )
-        neofs_env.log_env_details_to_file()
-        neofs_env.log_versions_to_allure()
-
-        neofs_env.neofs_adm().fschain.set_config(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-            post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
-        )
-        time.sleep(30)
-    yield neofs_env
-    neofs_env.kill()
-
-
-def test_control_notary_request_new_epoch(multi_ir_neofs_env: NeoFSEnv):
-    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
+def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
+    if neofs_env_4_ir_4_sn.get_binary_version(neofs_env_4_ir_4_sn.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
-    neofs_env = multi_ir_neofs_env
+    neofs_env = neofs_env_4_ir_4_sn
 
     with allure.step("Create notary request to tick epoch"):
         current_epoch = neofs_epoch.ensure_fresh_epoch(neofs_env)
@@ -130,10 +102,10 @@ def test_control_notary_request_new_epoch(multi_ir_neofs_env: NeoFSEnv):
         ("MaintenanceModeAllowed", True),
     ],
 )
-def test_control_notary_request_new_config_value(multi_ir_neofs_env: NeoFSEnv, key: str, value: Union[str, int, bool]):
-    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
+def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, key: str, value: Union[str, int, bool]):
+    if neofs_env_4_ir_4_sn.get_binary_version(neofs_env_4_ir_4_sn.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
-    neofs_env = multi_ir_neofs_env
+    neofs_env = neofs_env_4_ir_4_sn
 
     with allure.step("Create notary request to update config value"):
         ir_node = neofs_env.inner_ring_nodes[0]
@@ -175,10 +147,10 @@ def test_control_notary_request_new_config_value(multi_ir_neofs_env: NeoFSEnv, k
     wait_until_new_config_value(neofs_env, CONFIG_KEYS_MAPPING[key], value)
 
 
-def test_control_notary_request_node_removal(multi_ir_neofs_env: NeoFSEnv):
-    if multi_ir_neofs_env.get_binary_version(multi_ir_neofs_env.neofs_node_path) <= "0.44.2":
+def test_control_notary_request_node_removal(neofs_env_4_ir_4_sn: NeoFSEnv):
+    if neofs_env_4_ir_4_sn.get_binary_version(neofs_env_4_ir_4_sn.neofs_node_path) <= "0.44.2":
         pytest.skip("Test requires fresh node version")
-    neofs_env = multi_ir_neofs_env
+    neofs_env = neofs_env_4_ir_4_sn
 
     with allure.step("Create notary request to remove node"):
         ir_node = neofs_env.inner_ring_nodes[0]

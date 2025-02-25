@@ -43,38 +43,11 @@ def new_pub_key_in_alphabet_pub_keys(neofs_env: NeoFSEnv, neo_go: NeoGo, expecte
     assert expected_key in fschain_alpabet_keys, "new inner ring pub key not in alphabet keys in fschain"
 
 
-def test_replace_ir_node_from_main_chain(clear_neofs_env: NeoFSEnv):
-    neofs_env = clear_neofs_env
-    with allure.step("Deploy neofs with 4 ir nodes and main chain"):
-        neofs_env.download_binaries()
-        if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
-            pytest.skip("Test requires fresh node version")
-        neofs_env.deploy_inner_ring_nodes(count=4, with_main_chain=True)
-        neofs_env.deploy_storage_nodes(
-            count=1,
-            node_attrs={
-                0: ["UN-LOCODE:RU MOW", "Price:22"],
-                1: ["UN-LOCODE:RU LED", "Price:33"],
-                2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"],
-            },
-        )
-        neofs_env.log_env_details_to_file()
-        neofs_env.log_versions_to_allure()
-
-        neofs_adm = neofs_env.neofs_adm()
-        for sn in neofs_env.storage_nodes:
-            neofs_adm.fschain.refill_gas(
-                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                alphabet_wallets=neofs_env.alphabet_wallets_dir,
-                storage_wallet=sn.wallet.path,
-                gas="10.0",
-            )
-        neofs_env.neofs_adm().fschain.set_config(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-            post_data="WithdrawFee=5",
-        )
+def test_replace_ir_node_from_main_chain(neofs_env_4_ir_with_mainchain: NeoFSEnv):
+    neofs_env = neofs_env_4_ir_with_mainchain
+    if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
+        pytest.skip("Test requires fresh node version")
+    neofs_adm = neofs_env.neofs_adm()
 
     with allure.step("Deploy new inner ring node"):
         new_inner_ring_node = InnerRing(neofs_env)

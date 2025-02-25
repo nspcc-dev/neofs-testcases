@@ -38,48 +38,23 @@ def parse_node_height(stdout: str) -> tuple[float, float]:
 
 
 @pytest.fixture()
-def single_noded_env():
-    neofs_env_config = yaml.safe_load(
-        files("neofs_testlib.env.templates").joinpath("neofs_env_config.yaml").read_text()
-    )
-    neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
-    neofs_env.download_binaries()
-    neofs_env.deploy_inner_ring_nodes()
-    neofs_env.deploy_storage_nodes(
-        count=1,
-        node_attrs={
-            0: ["UN-LOCODE:RU MOW", "Price:22"],
-        },
-    )
-    neofs_env.neofs_adm().fschain.set_config(
-        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-        alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
-    )
-    neofs_env.deploy_s3_gw()
-    neofs_env.deploy_rest_gw()
-    yield neofs_env
-    neofs_env.kill()
-
-
-@pytest.fixture()
-def s3_boto_client(temp_directory, single_noded_env: NeoFSEnv):
+def s3_boto_client(temp_directory, neofs_env_single_sn: NeoFSEnv):
     wallet = create_wallet()
     s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
     _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
-        wallet, single_noded_env, s3_bearer_rules_file=s3_bearer_rules_file
+        wallet, neofs_env_single_sn, s3_bearer_rules_file=s3_bearer_rules_file
     )
-    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{single_noded_env.s3_gw.address}")
+    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.address}")
     yield client
 
 
-def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
+def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet):
     simple_object_size = 1000
-    sn = single_noded_env.storage_nodes[0]
-    ir = single_noded_env.inner_ring_nodes[0]
+    sn = neofs_env_single_sn.storage_nodes[0]
+    ir = neofs_env_single_sn.inner_ring_nodes[0]
 
     cid = create_container(
-        default_wallet.path, shell=single_noded_env.shell, endpoint=single_noded_env.sn_rpc, rule="REP 1"
+        default_wallet.path, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc, rule="REP 1"
     )
 
     file_path = generate_file(simple_object_size)
@@ -88,31 +63,31 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         default_wallet.path,
         file_path,
         cid,
-        single_noded_env.shell,
-        single_noded_env.sn_rpc,
+        neofs_env_single_sn.shell,
+        neofs_env_single_sn.sn_rpc,
     )
 
     get_object(
         default_wallet.path,
         cid,
         oid,
-        single_noded_env.shell,
-        single_noded_env.sn_rpc,
+        neofs_env_single_sn.shell,
+        neofs_env_single_sn.sn_rpc,
     )
 
     head_object(
         default_wallet.path,
         cid,
         oid,
-        shell=single_noded_env.shell,
-        endpoint=single_noded_env.sn_rpc,
+        shell=neofs_env_single_sn.shell,
+        endpoint=neofs_env_single_sn.sn_rpc,
     )
 
     search_object(
         default_wallet.path,
         cid,
-        shell=single_noded_env.shell,
-        endpoint=single_noded_env.sn_rpc,
+        shell=neofs_env_single_sn.shell,
+        endpoint=neofs_env_single_sn.sn_rpc,
         expected_objects_list=[oid],
         root=True,
     )
@@ -121,8 +96,8 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         default_wallet.path,
         cid,
         oid,
-        shell=single_noded_env.shell,
-        endpoint=single_noded_env.sn_rpc,
+        shell=neofs_env_single_sn.shell,
+        endpoint=neofs_env_single_sn.sn_rpc,
         range_cut="0:1",
     )
 
@@ -131,12 +106,12 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         cid,
         oid,
         range_cut="0:1",
-        shell=single_noded_env.shell,
-        endpoint=single_noded_env.sn_rpc,
+        shell=neofs_env_single_sn.shell,
+        endpoint=neofs_env_single_sn.sn_rpc,
     )
 
     block_height, validated_state = parse_node_height(
-        single_noded_env.neo_go().query.height(rpc_endpoint=f"http://{ir.rpc_address}").stdout
+        neofs_env_single_sn.neo_go().query.height(rpc_endpoint=f"http://{ir.rpc_address}").stdout
     )
 
     with allure.step("Get metrics"):
@@ -221,26 +196,26 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
             f"invalid value for {metric}"
         )
 
-    node_version = single_noded_env.get_binary_version(single_noded_env.neofs_node_path)
+    node_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)
     assert after_metrics_sn["neofs_node_version"][0]["params"]["version"] == node_version, (
         "invalid value for neofs_node_version"
     )
-    ir_version = single_noded_env.get_binary_version(single_noded_env.neofs_ir_path)
+    ir_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_ir_path)
     assert after_metrics_ir["neofs_ir_version"][0]["params"]["version"] == ir_version, (
         "invalid value for neofs_ir_version"
     )
 
     fs_size = 0
     if sys.platform == "darwin":
-        fs_size = single_noded_env.shell.exec("df -k . | awk 'NR==2 {print $2 * 1024}'").stdout.strip()
+        fs_size = neofs_env_single_sn.shell.exec("df -k . | awk 'NR==2 {print $2 * 1024}'").stdout.strip()
     else:
-        fs_size = single_noded_env.shell.exec("df --block-size=1 . | awk 'NR==2 {print $2}'").stdout.strip()
+        fs_size = neofs_env_single_sn.shell.exec("df --block-size=1 . | awk 'NR==2 {print $2}'").stdout.strip()
 
     assert after_metrics_sn["neofs_node_engine_capacity"][0]["value"] == float(fs_size), (
         "invalid value for neofs_node_engine_capacity"
     )
 
-    fresh_epoch = neofs_epoch.ensure_fresh_epoch(single_noded_env)
+    fresh_epoch = neofs_epoch.ensure_fresh_epoch(neofs_env_single_sn)
     wait_for_metric_to_arrive(sn, "neofs_node_state_epoch", float(fresh_epoch))
     wait_for_metric_to_arrive(ir, "neofs_ir_state_epoch", float(fresh_epoch))
 
@@ -248,8 +223,8 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         default_wallet.path,
         cid,
         oid,
-        shell=single_noded_env.shell,
-        endpoint=single_noded_env.sn_rpc,
+        shell=neofs_env_single_sn.shell,
+        endpoint=neofs_env_single_sn.sn_rpc,
     )
 
     with allure.step("Get metrics after object deletion"):
@@ -273,8 +248,8 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         default_wallet.path,
         file_path,
         cid,
-        single_noded_env.shell,
-        single_noded_env.sn_rpc,
+        neofs_env_single_sn.shell,
+        neofs_env_single_sn.sn_rpc,
     )
 
     drop_object(sn, cid, oid)
@@ -289,11 +264,11 @@ def test_sn_ir_metrics(single_noded_env: NeoFSEnv, default_wallet: NodeWallet):
         )
 
     delete_container(
-        default_wallet.path, cid, shell=single_noded_env.shell, endpoint=single_noded_env.sn_rpc, await_mode=True
+        default_wallet.path, cid, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc, await_mode=True
     )
 
 
-def test_s3_gw_metrics(single_noded_env: NeoFSEnv, s3_boto_client):
+def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
     simple_object_size = int(SIMPLE_OBJECT_SIZE)
     bucket = s3_bucket.create_bucket_s3(
         s3_boto_client,
@@ -312,7 +287,7 @@ def test_s3_gw_metrics(single_noded_env: NeoFSEnv, s3_boto_client):
     s3_bucket.get_bucket_acl(s3_boto_client, bucket)
 
     with allure.step("Get metrics"):
-        after_metrics_s3_gw = get_metrics(single_noded_env.s3_gw)
+        after_metrics_s3_gw = get_metrics(neofs_env_single_sn.s3_gw)
         allure.attach(json.dumps(dict(after_metrics_s3_gw)), "s3 gw metrics", allure.attachment_type.JSON)
 
     assert after_metrics_s3_gw["neofs_s3_gw_pool_overall_node_requests"][0]["value"] >= 10, (
