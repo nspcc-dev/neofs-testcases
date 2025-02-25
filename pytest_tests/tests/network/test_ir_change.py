@@ -2,6 +2,7 @@ import json
 import logging
 
 import allure
+import pytest
 from helpers.test_control import wait_for_success
 from helpers.utility import parse_node_height
 from neofs_testlib.cli import NeoGo
@@ -46,6 +47,8 @@ def test_replace_ir_node_from_main_chain(clear_neofs_env: NeoFSEnv):
     neofs_env = clear_neofs_env
     with allure.step("Deploy neofs with 4 ir nodes and main chain"):
         neofs_env.download_binaries()
+        if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
+            pytest.skip("Test requires fresh node version")
         neofs_env.deploy_inner_ring_nodes(count=4, with_main_chain=True)
         neofs_env.deploy_storage_nodes(
             count=1,
