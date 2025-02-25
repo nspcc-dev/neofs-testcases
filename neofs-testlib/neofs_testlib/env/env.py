@@ -1046,25 +1046,25 @@ class StorageNode:
         self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
-    @allure.step("Stop storage node")
     def stop(self):
-        logger.info(f"Stopping Storage Node:{self}")
-        if self.process:
-            terminate_process(self.process)
-            self.process = None
-            self._wait_until_not_ready()
-        else:
-            AssertionError("Storage node has been already stopped")
+        with allure.step(f"Stop SN: {self.endpoint}; {self.stderr}"):
+            if self.process:
+                terminate_process(self.process)
+                self.process = None
+                with allure.step("Wait until storage node is not ready"):
+                    self._wait_until_not_ready()
+            else:
+                AssertionError("Storage node has been already stopped")
 
-    @allure.step("Kill storage node")
     def kill(self):
-        logger.info(f"Killing Storage Node:{self}")
-        if self.process:
-            self.process.kill()
-            self.process = None
-            self._wait_until_not_ready()
-        else:
-            AssertionError("Storage node has been already killed")
+        with allure.step(f"Kill SN: {self.endpoint}; {self.stderr}"):
+            if self.process:
+                self.process.kill()
+                self.process = None
+                with allure.step("Wait until storage node is not ready"):
+                    self._wait_until_not_ready()
+            else:
+                AssertionError("Storage node has been already killed")
 
     @allure.step("Delete storage node data")
     def delete_data(self):
@@ -1158,8 +1158,9 @@ class StorageNode:
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         try:
             result = neofs_cli.control.healthcheck(endpoint=self.control_grpc_endpoint)
-        except Exception:
-            return
+        except Exception as e:
+            with allure.step(f"Exception caught: {e}, node is not ready"):
+                return
         assert "Health status: READY" not in result.stdout, "Health is ready"
         assert "Network status: ONLINE" not in result.stdout, "Network is online"
 
