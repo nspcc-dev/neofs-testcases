@@ -29,7 +29,7 @@ def neofs_env(request):
     if request.config.getoption("--load-env"):
         neofs_env = NeoFSEnv.load(request.config.getoption("--load-env"))
     else:
-        neofs_env = NeoFSEnv.simple()
+        neofs_env = NeoFSEnv.deploy()
 
     yield neofs_env
 

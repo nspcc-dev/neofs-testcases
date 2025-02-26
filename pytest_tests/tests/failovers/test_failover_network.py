@@ -13,18 +13,20 @@ from helpers.iptables_helper import IpTablesHelper
 from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object_to_random_node
 from helpers.node_management import storage_node_healthcheck, wait_all_storage_nodes_returned
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
-from neofs_testlib.env.env import StorageNode
+from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
 logger = logging.getLogger("NeoLogger")
 blocked_nodes: list[StorageNode] = []
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="not supported on macos runners")
-class TestFailoverNetwork(NeofsEnvTestBase):
+class TestFailoverNetwork:
     @allure.step("Restore network")
     @pytest.fixture
-    def restore_network(self):
+    def restore_network(self, neofs_env_function_scope: NeoFSEnv):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+
         yield
 
         not_empty = len(blocked_nodes) != 0

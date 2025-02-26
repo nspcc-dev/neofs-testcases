@@ -20,26 +20,8 @@ def is_port_in_use(host: str, port: str) -> bool:
             return False
 
 
-@pytest.fixture
-def clear_neofs_env():
-    neofs_env_config = yaml.safe_load(
-        files("neofs_testlib.env.templates").joinpath("neofs_env_config.yaml").read_text()
-    )
-    neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
-    neofs_env.download_binaries()
-    neofs_env.deploy_inner_ring_nodes()
-    neofs_env.deploy_storage_nodes(
-        count=1,
-        node_attrs={
-            0: ["UN-LOCODE:RU MOW", "Price:22"],
-        },
-    )
-    yield neofs_env
-    neofs_env.kill()
-
-
-def test_sighup_fschain_endpoint_reload(clear_neofs_env: NeoFSEnv):
-    neofs_env = clear_neofs_env
+def test_sighup_fschain_endpoint_reload(neofs_env_single_sn: NeoFSEnv):
+    neofs_env = neofs_env_single_sn
 
     with allure.step("Update IR port"):
         ir_config_path = neofs_env.inner_ring_nodes[0].ir_node_config_path
@@ -62,8 +44,8 @@ def test_sighup_fschain_endpoint_reload(clear_neofs_env: NeoFSEnv):
         neofs_env.storage_nodes[0]._wait_until_ready()
 
 
-def test_sighup_node_attrs_update(clear_neofs_env: NeoFSEnv):
-    neofs_env = clear_neofs_env
+def test_sighup_node_attrs_update(neofs_env_single_sn: NeoFSEnv):
+    neofs_env = neofs_env_single_sn
 
     with allure.step("Get current node attributes"):
         node_info = (
@@ -98,8 +80,8 @@ def test_sighup_node_attrs_update(clear_neofs_env: NeoFSEnv):
         assert "UN-LOCODE=FI HEL" in node_info, "node info doesn't contain required attributes"
 
 
-def test_sighup_disable_metrics(clear_neofs_env: NeoFSEnv):
-    neofs_env = clear_neofs_env
+def test_sighup_disable_metrics(neofs_env_single_sn: NeoFSEnv):
+    neofs_env = neofs_env_single_sn
 
     with allure.step("Disable pprof and prometheus"):
         config_path = neofs_env.storage_nodes[0].storage_node_config_path
