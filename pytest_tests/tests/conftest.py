@@ -71,6 +71,7 @@ def get_or_create_neofs_env(
     storage_nodes_count=4,
     inner_ring_nodes_count=1,
     writecache=False,
+    peapod_required=True,
     with_s3_gw=True,
     with_rest_gw=True,
 ):
@@ -83,6 +84,7 @@ def get_or_create_neofs_env(
             storage_nodes_count=storage_nodes_count,
             inner_ring_nodes_count=inner_ring_nodes_count,
             writecache=writecache,
+            peapod_required=peapod_required,
             with_s3_gw=with_s3_gw,
             with_rest_gw=with_rest_gw,
         )
@@ -106,7 +108,9 @@ def neofs_env_function_scope(temp_directory, artifacts_directory, request):
 
 @pytest.fixture()
 def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
-    neofs_env = get_or_create_neofs_env(request, writecache=True, with_s3_gw=False, with_rest_gw=False)
+    neofs_env = get_or_create_neofs_env(
+        request, writecache=True, peapod_required=False, with_s3_gw=False, with_rest_gw=False
+    )
     yield neofs_env
     neofs_env_finalizer(neofs_env, request)
 
