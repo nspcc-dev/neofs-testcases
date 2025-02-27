@@ -1,7 +1,4 @@
-import time
-
 import allure
-import pytest
 from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash

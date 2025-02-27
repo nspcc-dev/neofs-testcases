@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from neofs_testlib.hosting.config import CLIConfig, HostConfig, ServiceConfig
 from neofs_testlib.shell.interfaces import Shell

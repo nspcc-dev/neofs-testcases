@@ -1,5 +1,3 @@
-from typing import Optional
-
 from neofs_testlib.cli.cli_command import CliCommand
 from neofs_testlib.shell import CommandResult
 

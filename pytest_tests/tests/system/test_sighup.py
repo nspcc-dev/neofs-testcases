@@ -2,10 +2,8 @@ import os
 import signal
 import socket
 import time
-from importlib.resources import files
 
 import allure
-import pytest
 import yaml
 from neofs_testlib.env.env import NeoFSEnv
 
