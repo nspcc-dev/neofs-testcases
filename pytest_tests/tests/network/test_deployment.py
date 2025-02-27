@@ -1,3 +1,4 @@
+import os
 import time
 
 import allure
@@ -102,6 +103,12 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
     with allure.step("Create wallet for test"):
         default_wallet = create_wallet()
 
+    with allure.step("Disable write to blobstore"):
+        for sn in neofs_env.storage_nodes:
+            for shard in sn.shards:
+                os.chmod(shard.fstree_path, 0o444)
+                os.chmod(shard.blobovnicza_path, 0o444)
+
     with allure.step("Run put get to ensure neofs setup is actually working"):
         cid, oid, size = put_get_object(neofs_env, default_wallet)
 
@@ -123,6 +130,12 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
         assert len(storage_nodes_with_cached_object) == 3, (
             "Invalid number of storage nodes with a single shard containing a cached object"
         )
+
+    with allure.step("Enable write to blobstore"):
+        for sn in neofs_env.storage_nodes:
+            for shard in sn.shards:
+                os.chmod(shard.fstree_path, 0o666)
+                os.chmod(shard.blobovnicza_path, 0o666)
 
     with allure.step("Flush cache"):
         for sn in neofs_env.storage_nodes:
