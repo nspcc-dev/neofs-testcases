@@ -562,6 +562,28 @@ class TestObjectApi(NeofsEnvTestBase):
                         f"Expected range hash to match {range_cut} slice of file payload"
                     )
 
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) > "0.44.2":
+            with allure.step("Verify zero payload ranges"):
+                range_hash = get_range_hash(
+                    wallet,
+                    cid,
+                    oid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    range_cut="0:0",
+                )
+                assert get_file_hash(file_path) == range_hash, "Expected range hash to match full file payload"
+
+                with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
+                    get_range_hash(
+                        wallet,
+                        cid,
+                        oid,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        range_cut="5:0",
+                    )
+
     @allure.title("Validate native object API get_range")
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
         """
@@ -593,6 +615,30 @@ class TestObjectApi(NeofsEnvTestBase):
                         get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start)
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
+
+        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) > "0.44.2":
+            with allure.step("Verify zero payload ranges"):
+                _, range_content = get_range(
+                    wallet,
+                    cid,
+                    oid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    range_cut="0:0",
+                )
+                assert get_file_content(file_path, mode="rb") == range_content, (
+                    "Expected range content to match full file payload"
+                )
+
+                with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
+                    get_range(
+                        wallet,
+                        cid,
+                        oid,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        range_cut="5:0",
+                    )
 
     @allure.title("Validate native object API get_range for a complex object")
     def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
