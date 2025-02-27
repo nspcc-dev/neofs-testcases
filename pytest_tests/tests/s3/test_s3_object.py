@@ -23,8 +23,8 @@ from helpers.s3_helper import (
     set_bucket_versioning,
     verify_acls,
 )
+from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NodeWallet
-from neofs_testlib.utils.wallet import init_wallet
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
@@ -585,9 +585,7 @@ class TestS3Object(TestNeofsS3Base):
     def prepare_two_wallets(self, default_wallet, client_shell):
         self.main_wallet = default_wallet
         self.main_public_key = get_wallet_public_key(self.main_wallet.path, WALLET_PASS)
-        other_wallet_path = os.path.join(get_assets_dir_path(), f"{str(uuid.uuid4())}.json")
-        other_wallet_address = init_wallet(other_wallet_path, WALLET_PASS)
-        self.other_wallet = NodeWallet(path=other_wallet_path, address=other_wallet_address, password=WALLET_PASS)
+        self.other_wallet = create_wallet()
         self.other_public_key = get_wallet_public_key(self.other_wallet.path, WALLET_PASS)
 
     @allure.title("Test S3: put object with ACL")
