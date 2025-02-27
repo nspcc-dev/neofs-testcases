@@ -19,7 +19,6 @@ from helpers.utility import placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 
 def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
