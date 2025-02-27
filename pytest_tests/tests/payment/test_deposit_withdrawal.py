@@ -1,5 +1,6 @@
 import allure
 from helpers.wallet_helpers import (
+    create_wallet,
     get_wallet_balance,
     wait_for_correct_neofs_balance,
     wait_for_correct_wallet_balance,
@@ -13,13 +14,7 @@ class TestDepositWithdrawal:
         neofs_env = neofs_env_with_mainchain
 
         with allure.step("Create wallet for deposits/withdrawals"):
-            wallet = NodeWallet(
-                path=neofs_env._generate_temp_file(neofs_env._env_dir, prefix="deposit_withdrawal_test_wallet"),
-                address="",
-                password=neofs_env.default_password,
-            )
-            wallet_utils.init_wallet(wallet.path, wallet.password)
-            wallet.address = wallet_utils.get_last_address_from_wallet(wallet.path, wallet.password)
+            wallet = create_wallet("deposit_withdrawal_test_wallet")
             neo_go_wallet_config = neofs_env.generate_neo_go_config(wallet)
             cli_wallet_config = neofs_env.generate_cli_config(wallet)
 
