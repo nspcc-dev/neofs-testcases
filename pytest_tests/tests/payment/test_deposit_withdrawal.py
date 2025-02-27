@@ -5,8 +5,7 @@ from helpers.wallet_helpers import (
     wait_for_correct_neofs_balance,
     wait_for_correct_wallet_balance,
 )
-from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.utils import wallet as wallet_utils
+from neofs_testlib.env.env import NeoFSEnv
 
 
 class TestDepositWithdrawal:

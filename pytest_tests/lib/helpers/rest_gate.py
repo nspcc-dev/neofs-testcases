@@ -10,7 +10,6 @@ from urllib.parse import quote
 
 import allure
 import requests
-from helpers.aws_cli_client import LONG_TIMEOUT
 from helpers.cli_helpers import _cmd_run
 from helpers.common import (
     DEFAULT_OBJECT_OPERATION_TIMEOUT,

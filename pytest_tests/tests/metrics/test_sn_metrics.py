@@ -2,12 +2,10 @@ import json
 import logging
 import os
 import sys
-from importlib.resources import files
 
 import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
-import yaml
 from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file

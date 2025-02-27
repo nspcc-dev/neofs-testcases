@@ -24,7 +24,6 @@ from helpers.s3_helper import (
     verify_acls,
 )
 from helpers.wallet_helpers import create_wallet
-from neofs_testlib.env.env import NodeWallet
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
