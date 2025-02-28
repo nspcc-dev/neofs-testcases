@@ -285,8 +285,8 @@ class NeoFSEnv:
             ).splitlines()
         )
         result = neo_go.contract.deploy(
-            input_file=f"{self.neofs_contract_dir}/neofs/neofs_contract.nef",
-            manifest=f"{self.neofs_contract_dir}/neofs/config.json",
+            input_file=f"{self.neofs_contract_dir}/neofs/contract.nef",
+            manifest=f"{self.neofs_contract_dir}/neofs/manifest.json",
             force=True,
             rpc_endpoint=f"http://{self.main_chain.rpc_address}",
             post_data=f"[ true ffffffffffffffffffffffffffffffffffffffff [ {pub_keys_of_existing_ir_nodes} ] [ InnerRingCandidateFee 10 WithdrawFee 10 ] ]",
