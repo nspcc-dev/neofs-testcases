@@ -9,7 +9,7 @@ import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.complex_object_actions import get_object_chunks
-from helpers.container import create_container
+from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import (
     delete_object,
@@ -40,7 +40,7 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
 def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
     cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule="REP 3 CBF 3")
     yield cid
-    # delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
+    delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.mark.sanity
