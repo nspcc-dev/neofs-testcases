@@ -2,7 +2,6 @@ import json
 import logging
 
 import allure
-import pytest
 from helpers.test_control import wait_for_success
 from helpers.utility import parse_node_height
 from neofs_testlib.cli import NeoGo
@@ -45,8 +44,6 @@ def new_pub_key_in_alphabet_pub_keys(neofs_env: NeoFSEnv, neo_go: NeoGo, expecte
 
 def test_replace_ir_node_from_main_chain(neofs_env_4_ir_with_mainchain: NeoFSEnv):
     neofs_env = neofs_env_4_ir_with_mainchain
-    if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
-        pytest.skip("Test requires fresh node version")
     neofs_adm = neofs_env.neofs_adm()
 
     with allure.step("Deploy new inner ring node"):

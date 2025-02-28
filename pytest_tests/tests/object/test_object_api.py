@@ -40,7 +40,7 @@ from helpers.neofs_verbs import (
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
-from helpers.utility import wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -562,27 +562,26 @@ class TestObjectApi(NeofsEnvTestBase):
                         f"Expected range hash to match {range_cut} slice of file payload"
                     )
 
-        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) > "0.44.2":
-            with allure.step("Verify zero payload ranges"):
-                range_hash = get_range_hash(
+        with allure.step("Verify zero payload ranges"):
+            range_hash = get_range_hash(
+                wallet,
+                cid,
+                oid,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                range_cut="0:0",
+            )
+            assert get_file_hash(file_path) == range_hash, "Expected range hash to match full file payload"
+
+            with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
+                get_range_hash(
                     wallet,
                     cid,
                     oid,
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    range_cut="0:0",
+                    range_cut="5:0",
                 )
-                assert get_file_hash(file_path) == range_hash, "Expected range hash to match full file payload"
-
-                with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
-                    get_range_hash(
-                        wallet,
-                        cid,
-                        oid,
-                        shell=self.shell,
-                        endpoint=self.neofs_env.sn_rpc,
-                        range_cut="5:0",
-                    )
 
     @allure.title("Validate native object API get_range")
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
@@ -616,7 +615,7 @@ class TestObjectApi(NeofsEnvTestBase):
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
 
-        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) > "0.44.2":
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.0"):
             with allure.step("Verify zero payload ranges"):
                 _, range_content = get_range(
                     wallet,

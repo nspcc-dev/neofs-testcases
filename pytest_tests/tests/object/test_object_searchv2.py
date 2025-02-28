@@ -36,14 +36,8 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
     return value
 
 
-@pytest.fixture(scope="module")
-def requires_node_from_master(neofs_env: NeoFSEnv):
-    if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
-        pytest.skip("Test requires fresh node version")
-
-
 @pytest.fixture
-def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, requires_node_from_master) -> str:
+def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
     cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule="REP 3 CBF 3")
     yield cid
     # delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
