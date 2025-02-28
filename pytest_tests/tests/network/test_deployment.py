@@ -1,4 +1,6 @@
+import os
 import time
+from pathlib import Path
 
 import allure
 import pytest
@@ -102,6 +104,12 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
     with allure.step("Create wallet for test"):
         default_wallet = create_wallet()
 
+    with allure.step("Disable write to blobstore"):
+        for sn in neofs_env.storage_nodes:
+            for shard in sn.shards:
+                os.chmod(shard.fstree_path, 0o444)
+                os.chmod(shard.blobovnicza_path, 0o444)
+
     with allure.step("Run put get to ensure neofs setup is actually working"):
         cid, oid, size = put_get_object(neofs_env, default_wallet)
 
@@ -123,6 +131,28 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
         assert len(storage_nodes_with_cached_object) == 3, (
             "Invalid number of storage nodes with a single shard containing a cached object"
         )
+
+    with allure.step("Enable write to blobstore"):
+        for sn in neofs_env.storage_nodes:
+            sn.stop()
+            for shard in sn.shards:
+                os.chmod(shard.fstree_path, 0o666)
+                os.chmod(shard.blobovnicza_path, 0o666)
+            NeoFSEnv.generate_config_file(
+                config_template="sn.yaml",
+                config_path=sn.storage_node_config_path,
+                custom=Path("sn.yaml").is_file(),
+                fschain_endpoint=sn.neofs_env.fschain_rpc,
+                shards=sn.shards,
+                writecache=sn.writecache,
+                peapod=True,
+                wallet=sn.wallet,
+                state_file=sn.state_file,
+                pprof_address=sn.pprof_address,
+                prometheus_address=sn.prometheus_address,
+                attrs=sn.node_attrs,
+            )
+            sn.start(fresh=False)
 
     with allure.step("Flush cache"):
         for sn in neofs_env.storage_nodes:

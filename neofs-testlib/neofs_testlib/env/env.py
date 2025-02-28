@@ -184,7 +184,7 @@ class NeoFSEnv:
                     raise e
 
     @allure.step("Deploy storage node")
-    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False):
+    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False, peapod_required=True):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
         for idx in range(count):
@@ -192,7 +192,11 @@ class NeoFSEnv:
             if node_attrs:
                 node_attrs_list = node_attrs.get(idx, None)
             new_storage_node = StorageNode(
-                self, len(self.storage_nodes) + 1, writecache=writecache, node_attrs=node_attrs_list
+                self,
+                len(self.storage_nodes) + 1,
+                writecache=writecache,
+                peapod_required=peapod_required,
+                node_attrs=node_attrs_list,
             )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
@@ -520,6 +524,7 @@ class NeoFSEnv:
         storage_nodes_count=4,
         inner_ring_nodes_count=1,
         writecache=False,
+        peapod_required=True,
         with_s3_gw=True,
         with_rest_gw=True,
     ) -> "NeoFSEnv":
@@ -540,7 +545,12 @@ class NeoFSEnv:
             3: ["UN-LOCODE:FI HEL", "Price:44"],
         }
         adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
-        neofs_env.deploy_storage_nodes(count=storage_nodes_count, node_attrs=adjusted_node_attrs, writecache=writecache)
+        neofs_env.deploy_storage_nodes(
+            count=storage_nodes_count,
+            node_attrs=adjusted_node_attrs,
+            writecache=writecache,
+            peapod_required=peapod_required,
+        )
         if with_main_chain:
             neofs_adm = neofs_env.neofs_adm()
             for sn in neofs_env.storage_nodes:
@@ -980,6 +990,7 @@ class StorageNode:
         neofs_env: NeoFSEnv,
         sn_number: int,
         writecache=False,
+        peapod_required=True,
         node_attrs: Optional[list] = None,
         attrs: Optional[dict] = None,
     ):
@@ -1009,6 +1020,7 @@ class StorageNode:
         self.attrs = {}
         self.node_attrs = node_attrs
         self.writecache = writecache
+        self.peapod_required = peapod_required
         if attrs:
             self.attrs.update(attrs)
 
@@ -1045,6 +1057,7 @@ class StorageNode:
                 fschain_endpoint=self.neofs_env.fschain_rpc,
                 shards=self.shards,
                 writecache=self.writecache,
+                peapod=self.peapod_required,
                 wallet=self.wallet,
                 state_file=self.state_file,
                 pprof_address=self.pprof_address,

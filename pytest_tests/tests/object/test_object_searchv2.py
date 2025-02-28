@@ -5,6 +5,7 @@ import operator
 from datetime import datetime
 
 import allure
+import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.complex_object_actions import get_object_chunks
@@ -884,9 +885,9 @@ def test_search_attrs_ordering(
             shell=neofs_env.shell,
         )
 
-        max_oid = found_objects[0]["id"]
+        max_oid = base58.b58decode(found_objects[0]["id"])
         for found_obj in found_objects[1:]:
-            current_oid = found_obj["id"]
+            current_oid = base58.b58decode(found_obj["id"])
             assert current_oid > max_oid, "invalid ordering in search output"
             max_oid = current_oid
 
@@ -945,7 +946,21 @@ def test_search_attrs_ordering_with_cursor(
             }
         )
 
-    with allure.step("Verify unfiltered ordering"):
+    with allure.step("Verify unfiltered ordering without cursor"):
+        found_objects, _ = search_objectv2(
+            rpc_endpoint=neofs_env.sn_rpc,
+            wallet=default_wallet.path,
+            cid=cid,
+            shell=neofs_env.shell,
+        )
+
+        max_oid = base58.b58decode(found_objects[0]["id"])
+        for found_obj in found_objects[1:]:
+            current_oid = base58.b58decode(found_obj["id"])
+            assert current_oid > max_oid, "invalid ordering in search output without cursor"
+            max_oid = current_oid
+
+    with allure.step("Verify unfiltered ordering with cursor"):
         cursor = None
         found_objects = []
         for _ in range(len(created_objects)):
@@ -961,10 +976,10 @@ def test_search_attrs_ordering_with_cursor(
 
         assert cursor is None, "cursor is not None after all objects were found"
 
-        max_oid = found_objects[0]["id"]
+        max_oid = base58.b58decode(found_objects[0]["id"])
         for found_obj in found_objects[1:]:
-            current_oid = found_obj["id"]
-            assert current_oid > max_oid, "invalid ordering in search output"
+            current_oid = base58.b58decode(found_obj["id"])
+            assert current_oid > max_oid, "invalid ordering in search output with cursor"
             max_oid = current_oid
 
     with allure.step("Verify numeric ordering"):
@@ -1053,9 +1068,9 @@ def test_search_with_cursor_empty_filters_and_attributes(
             assert cursor is None, "cursor is not empty after all objects were found"
             assert len(found_objects) == len(created_objects), "invalid number of found objects"
 
-            max_oid = found_objects[0]["id"]
+            max_oid = base58.b58decode(found_objects[0]["id"])
             for found_obj in found_objects[1:]:
-                current_oid = found_obj["id"]
+                current_oid = base58.b58decode(found_obj["id"])
                 assert current_oid > max_oid, "invalid ordering in search output"
                 max_oid = current_oid
 
