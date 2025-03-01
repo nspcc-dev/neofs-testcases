@@ -1,6 +1,5 @@
 import datetime
 import os
-import uuid
 
 import yaml
 

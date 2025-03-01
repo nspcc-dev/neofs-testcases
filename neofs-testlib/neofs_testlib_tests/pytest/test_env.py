@@ -9,9 +9,10 @@ import pexpect
 import pytest
 import requests
 from botocore.config import Config
-from helpers.common import DEFAULT_OBJECT_OPERATION_TIMEOUT, DEFAULT_REST_OPERATION_TIMEOUT
+from helpers.common import DEFAULT_OBJECT_OPERATION_TIMEOUT
+from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.utils.wallet import get_last_public_key_from_wallet, init_wallet
+from neofs_testlib.utils.wallet import get_last_public_key_from_wallet
 
 
 def _run_with_passwd(cmd: str, password: str) -> str:
@@ -42,11 +43,7 @@ def neofs_env(request):
 
 @pytest.fixture
 def wallet() -> NodeWallet:
-    wallet_name = f"wallet-{str(uuid.uuid4())}.json"
-    wallet_path = os.path.join(os.getcwd(), wallet_name)
-    wallet_password = "password"
-    wallet_address = init_wallet(wallet_path, wallet_password)
-    return NodeWallet(path=wallet_path, address=wallet_address, password=wallet_password)
+    return create_wallet()
 
 
 @pytest.fixture

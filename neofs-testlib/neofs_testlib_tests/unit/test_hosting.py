@@ -1,7 +1,6 @@
 from unittest import TestCase
 
-import docker
-from neofs_testlib.hosting import CLIConfig, DockerHost, HostConfig, Hosting, ServiceConfig
+from neofs_testlib.hosting import CLIConfig, Hosting, ServiceConfig
 
 
 class TestHosting(TestCase):

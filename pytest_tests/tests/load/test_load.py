@@ -1,4 +1,3 @@
-import pytest
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import XK6
 
