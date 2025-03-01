@@ -2,6 +2,7 @@ import logging
 
 import allure
 import pytest
+from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container
 from helpers.grpc_responses import OBJECT_NOT_FOUND
 from helpers.neofs_verbs import get_object
@@ -39,9 +40,8 @@ class TestFailoverNodePart:
         self,
         enable_metabase_resync_on_start,
         user_container: StorageContainer,
-        simple_object_size: int,
     ):
-        storage_object = user_container.generate_object(simple_object_size)
+        storage_object = user_container.generate_object(int(SIMPLE_OBJECT_SIZE))
 
         with allure.step("Delete metabase files from storage nodes"):
             for node in self.neofs_env.storage_nodes:
@@ -64,8 +64,8 @@ class TestFailoverNodePart:
                     )
 
     @allure.title("Delete metadata without resync metabase enabling, delete metadata try to get object")
-    def test_delete_metadata(self, user_container: StorageContainer, simple_object_size: int):
-        storage_object = user_container.generate_object(simple_object_size)
+    def test_delete_metadata(self, user_container: StorageContainer):
+        storage_object = user_container.generate_object(int(SIMPLE_OBJECT_SIZE))
 
         with allure.step("Delete metabase files from storage nodes"):
             for node in self.neofs_env.storage_nodes:
