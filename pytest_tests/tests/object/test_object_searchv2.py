@@ -2,6 +2,7 @@ import itertools
 import logging
 import math
 import operator
+import time
 from datetime import datetime
 
 import allure
@@ -18,6 +19,7 @@ from helpers.neofs_verbs import (
     put_object_to_random_node,
     search_objectv2,
 )
+from helpers.storage_object_info import CLEANUP_TIMEOUT
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 
@@ -1189,6 +1191,11 @@ def test_search_count_and_cursor(
             neofs_env.shell,
             neofs_env.sn_rpc,
         )
+
+    current_epoch = neofs_epoch.get_epoch(neofs_env)
+    neofs_epoch.tick_epoch(neofs_env)
+    neofs_epoch.wait_for_epochs_align(neofs_env, current_epoch)
+    time.sleep(CLEANUP_TIMEOUT)
 
     tombstone_objects, _ = search_objectv2(
         rpc_endpoint=neofs_env.sn_rpc,
