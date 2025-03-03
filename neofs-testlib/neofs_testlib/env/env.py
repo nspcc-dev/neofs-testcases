@@ -26,7 +26,6 @@ from typing import Optional
 
 import allure
 import jinja2
-import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -533,9 +532,6 @@ class NeoFSEnv:
 
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
-        if writecache:
-            if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
-                pytest.skip("Writecache requires fresh node version")
         neofs_env.deploy_inner_ring_nodes(count=inner_ring_nodes_count, with_main_chain=with_main_chain)
 
         node_attrs = {
@@ -1115,6 +1111,7 @@ class StorageNode:
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             writecache=self.writecache,
+            peapod=self.peapod_required,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,
@@ -1139,6 +1136,7 @@ class StorageNode:
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             writecache=self.writecache,
+            peapod=self.peapod_required,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,

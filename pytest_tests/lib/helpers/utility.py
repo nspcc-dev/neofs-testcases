@@ -1,3 +1,4 @@
+import re
 import time
 
 import allure
@@ -28,6 +29,22 @@ def parse_time(value: str) -> int:
             return int(value[: -len(suffix)]) * 60 * 60
 
     raise ValueError(f"Unknown units in time value '{value}'")
+
+
+def parse_version(version):
+    """Parses a version string like '0.44.2-231-g1df00450-dirty' into a sortable tuple."""
+    match = re.match(r"(\d+)\.(\d+)\.(\d+)(?:-(\d+)-g([a-f0-9]+))?(?:-dirty)?", version)
+    if not match:
+        raise ValueError(f"Invalid version format: {version}")
+
+    major, minor, patch, commits, commit_hash = match.groups()
+    return (
+        int(major),
+        int(minor),
+        int(patch),
+        int(commits) if commits else 0,
+        commit_hash or "",
+    )
 
 
 def placement_policy_from_container(container_info: str) -> str:

@@ -614,11 +614,10 @@ class TestS3Object(TestNeofsS3Base):
             assert get_file_hash(file_path_1) == get_file_hash(object_1), "Hashes must be the same"
 
         with allure.step("Put object with acl public-read"):
-            if self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path) > "0.32.0":
-                with allure.step("Enable ACLs"):
-                    s3_bucket.put_bucket_ownership_controls(
-                        self.s3_client, bucket, s3_bucket.ObjectOwnership.BUCKET_OWNER_PREFERRED
-                    )
+            with allure.step("Enable ACLs"):
+                s3_bucket.put_bucket_ownership_controls(
+                    self.s3_client, bucket, s3_bucket.ObjectOwnership.BUCKET_OWNER_PREFERRED
+                )
             acl = "public-read"
             file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
             s3_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL=acl)

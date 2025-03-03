@@ -205,8 +205,6 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
     def test_static_session_token_container_create_signed_with_wrong_wallet(
         self, owner_wallet: NodeWallet, user_wallet: NodeWallet, stranger_wallet: NodeWallet, temp_directory: str
     ):
-        if self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path) <= "0.43.0":
-            pytest.skip("This test runs only on post 0.43.0 neofs-node version")
         session_token_file = generate_container_session_token(
             owner_wallet=user_wallet,
             session_wallet=user_wallet,

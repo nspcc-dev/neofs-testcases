@@ -2,6 +2,7 @@ import itertools
 import logging
 import math
 import operator
+import time
 from datetime import datetime
 
 import allure
@@ -9,7 +10,7 @@ import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.complex_object_actions import get_object_chunks
-from helpers.container import create_container
+from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import (
     delete_object,
@@ -18,6 +19,7 @@ from helpers.neofs_verbs import (
     put_object_to_random_node,
     search_objectv2,
 )
+from helpers.storage_object_info import CLEANUP_TIMEOUT
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 
@@ -36,17 +38,11 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
     return value
 
 
-@pytest.fixture(scope="module")
-def requires_node_from_master(neofs_env: NeoFSEnv):
-    if neofs_env.get_binary_version(neofs_env.neofs_node_path) <= "0.44.2":
-        pytest.skip("Test requires fresh node version")
-
-
 @pytest.fixture
-def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, requires_node_from_master) -> str:
+def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
     cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule="REP 3 CBF 3")
     yield cid
-    # delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
+    delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.mark.sanity
@@ -1195,6 +1191,11 @@ def test_search_count_and_cursor(
             neofs_env.shell,
             neofs_env.sn_rpc,
         )
+
+    current_epoch = neofs_epoch.get_epoch(neofs_env)
+    neofs_epoch.tick_epoch(neofs_env)
+    neofs_epoch.wait_for_epochs_align(neofs_env, current_epoch)
+    time.sleep(CLEANUP_TIMEOUT)
 
     tombstone_objects, _ = search_objectv2(
         rpc_endpoint=neofs_env.sn_rpc,
