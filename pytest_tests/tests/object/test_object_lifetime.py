@@ -44,7 +44,7 @@ class TestObjectApiLifetime(NeofsEnvTestBase):
 
         file_path = generate_file(object_size)
         file_hash = get_file_hash(file_path)
-        epoch = self.get_epoch()
+        epoch = self.ensure_fresh_epoch()
 
         oid = put_object_to_random_node(
             wallet.path,

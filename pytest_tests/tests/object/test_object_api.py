@@ -882,7 +882,7 @@ class TestObjectApi(NeofsEnvTestBase):
         self, default_wallet: NodeWallet, container: str, complex_object_size: int
     ):
         with allure.step("Get current epoch"):
-            epoch = self.get_epoch()
+            epoch = self.ensure_fresh_epoch()
 
         with allure.step("Upload big object"):
             file_path = generate_file(complex_object_size)

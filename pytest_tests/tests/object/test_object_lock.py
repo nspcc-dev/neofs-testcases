@@ -114,7 +114,7 @@ class TestObjectLockWithGrpc(NeofsEnvTestBase):
         So we need a new one each time we ask for it
         """
         with allure.step("Creating locked object"):
-            current_epoch = self.get_epoch()
+            current_epoch = self.ensure_fresh_epoch()
 
             storage_object = user_container.generate_object(
                 request.param, expire_at=current_epoch + FIXTURE_OBJECT_LIFETIME

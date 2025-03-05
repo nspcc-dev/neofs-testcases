@@ -3,7 +3,6 @@ import logging
 import os
 
 import allure
-import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file, generate_file_with_content
@@ -398,7 +397,7 @@ class TestRestGate(NeofsEnvTestBase):
         file_path = generate_file(simple_object_size)
         oids = []
 
-        curr_epoch = neofs_epoch.get_epoch(self.neofs_env)
+        curr_epoch = self.ensure_fresh_epoch()
         epochs = (curr_epoch, curr_epoch + 1, curr_epoch + 2, curr_epoch + 100)
 
         for epoch in epochs:
