@@ -35,11 +35,11 @@ from helpers.object_access import (
     can_search_object,
 )
 from helpers.wellknown_acl import PUBLIC_ACL, PUBLIC_ACL_F
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
 
 
-class TestEACLContainer(NeofsEnvTestBase):
+class TestEACLContainer(TestNeofsBase):
     @pytest.fixture(scope="function")
     def eacl_full_placement_container_with_object(self, wallets, file_path) -> tuple[str, str, str]:
         user_wallet = wallets.get_wallet()

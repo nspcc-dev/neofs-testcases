@@ -38,7 +38,7 @@ from helpers.object_access import (
     can_search_object,
 )
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
@@ -46,7 +46,7 @@ from neofs_testlib.utils.wallet import get_last_address_from_wallet
 ContainerTuple = namedtuple("ContainerTuple", ["cid", "objects_oids"])
 
 
-class TestACLBearer(NeofsEnvTestBase):
+class TestACLBearer(TestNeofsBase):
     @pytest.mark.parametrize("role", [EACLRole.USER, EACLRole.OTHERS])
     def test_bearer_token_operations(self, wallets, eacl_container_with_objects, role):
         allure.dynamic.title(f"Testcase to validate NeoFS operations with {role.value} BearerToken")

@@ -19,11 +19,11 @@ from helpers.object_access import (
     can_search_object,
 )
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL_F, READONLY_ACL_F
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
 
 
-class TestACLBasic(NeofsEnvTestBase):
+class TestACLBasic(TestNeofsBase):
     @pytest.fixture(scope="function")
     def public_container(self, user_wallet: NodeWallet):
         with allure.step("Create public container"):

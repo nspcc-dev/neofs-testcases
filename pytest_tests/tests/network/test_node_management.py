@@ -35,7 +35,7 @@ from helpers.utility import (
     wait_for_gc_pass_on_storage_nodes,
 )
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet, StorageNode
 
 logger = logging.getLogger("NeoLogger")
@@ -43,7 +43,7 @@ check_nodes: list[StorageNode] = []
 
 
 @allure.title("Add one node to cluster")
-class TestNodeManagement(NeofsEnvTestBase):
+class TestNodeManagement(TestNeofsBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
     def create_container_and_pick_node(self, default_wallet: NodeWallet, simple_object_size) -> Tuple[str, StorageNode]:

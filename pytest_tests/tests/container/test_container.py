@@ -17,7 +17,7 @@ from helpers.neofs_verbs import put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
 
@@ -31,7 +31,7 @@ def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str,
     assert "GC MARKED" in response.stdout, "Unexected output from control object status command"
 
 
-class TestContainer(NeofsEnvTestBase):
+class TestContainer(TestNeofsBase):
     @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
     @pytest.mark.sanity
     def test_container_creation(self, default_wallet, name):

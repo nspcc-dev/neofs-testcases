@@ -8,12 +8,12 @@ from helpers.file_helper import generate_file
 from helpers.grpc_responses import EXPIRED_SESSION_TOKEN, SESSION_NOT_FOUND
 from helpers.neofs_verbs import delete_object, put_object, put_object_to_random_node
 from helpers.session_token import create_session_token
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from pytest_lazy_fixtures import lf
 
 
-class TestDynamicObjectSession(NeofsEnvTestBase):
+class TestDynamicObjectSession(TestNeofsBase):
     @allure.title("Test Object Operations with Session Token")
     @pytest.mark.parametrize(
         "object_size",

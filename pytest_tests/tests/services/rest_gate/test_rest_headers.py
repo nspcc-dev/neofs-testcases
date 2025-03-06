@@ -22,15 +22,15 @@ from helpers.rest_gate import (
 )
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest import FixtureRequest
 from pytest_lazy_fixtures import lf
+from rest_gw.rest_base import TestNeofsRestBase
 
 logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-class Test_rest_headers(NeofsEnvTestBase):
+class Test_rest_headers(TestNeofsRestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
     obj1_keys = ["Writer", "Chapter1", "Chapter2"]
     obj2_keys = ["Writer", "Ch$pter1", "Chapter2"]

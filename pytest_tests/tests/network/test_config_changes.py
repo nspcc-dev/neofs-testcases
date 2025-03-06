@@ -3,11 +3,11 @@ from typing import Optional, Union
 import allure
 import pytest
 from helpers.neofs_verbs import CONFIG_KEYS_MAPPING, get_netmap_netinfo
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 
 
 @allure.title("Network configuration changes via neofs-adm")
-class TestNetworkConfigChange(NeofsEnvTestBase):
+class TestNetworkConfigChange(TestNeofsBase):
     @pytest.mark.parametrize(
         "key, value",
         [

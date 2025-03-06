@@ -13,7 +13,7 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import get_netmap_netinfo, head_object, put_object_to_random_node
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
 
 logger = logging.getLogger("NeoLogger")
@@ -21,7 +21,7 @@ CONTAINERS_NAME_PREFIX = "homo_hash_container_"
 
 
 @allure.title("Homomorphic hash disabling/enabling")
-class TestHomomorphicHash(NeofsEnvTestBase):
+class TestHomomorphicHash(TestNeofsBase):
     @pytest.fixture(scope="class")
     def set_homomorphic_hash_to_default(self):
         yield

@@ -36,7 +36,7 @@ from helpers.session_token import (
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
@@ -138,7 +138,7 @@ def static_sessions(
     }
 
 
-class TestObjectStaticSession(NeofsEnvTestBase):
+class TestObjectStaticSession(TestNeofsBase):
     @allure.title("Validate static session with read operations")
     @pytest.mark.parametrize(
         "method_under_test,verb",

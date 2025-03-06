@@ -581,7 +581,7 @@ class TestS3Object(TestNeofsS3Base):
             assert got_tags_3 == [{"Key": tag_key_3, "Value": str(tag_value_3)}], "Tags must be the same"
 
     @pytest.fixture
-    def prepare_two_wallets(self, default_wallet, client_shell):
+    def prepare_two_wallets(self, default_wallet):
         self.main_wallet = default_wallet
         self.main_public_key = get_wallet_public_key(self.main_wallet.path, WALLET_PASS)
         self.other_wallet = create_wallet()

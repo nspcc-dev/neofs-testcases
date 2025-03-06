@@ -17,15 +17,15 @@ from helpers.rest_gate import (
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE, PUBLIC_ACL
 from neo3.core import cryptography
 from neo3.wallet.wallet import Wallet
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.utils.converters import load_wallet
+from rest_gw.rest_base import TestNeofsRestBase
 
 logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-class TestRestContainers(NeofsEnvTestBase):
+class TestRestContainers(TestNeofsRestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)

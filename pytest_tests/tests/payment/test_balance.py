@@ -5,7 +5,7 @@ import allure
 import pytest
 import yaml
 from helpers.wallet_helpers import create_wallet
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import CommandResult
 from neofs_testlib.utils import wallet as wallet_utils
@@ -15,7 +15,7 @@ DEPOSIT_AMOUNT = 30
 
 
 @pytest.mark.skip("Unsupported of current version of NeoFSEnv")
-class TestBalanceAccounting(NeofsEnvTestBase):
+class TestBalanceAccounting(TestNeofsBase):
     @pytest.fixture(scope="class")
     def main_wallet(self) -> NodeWallet:
         return create_wallet()

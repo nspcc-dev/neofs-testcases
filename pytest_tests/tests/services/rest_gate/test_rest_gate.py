@@ -6,19 +6,19 @@ import allure
 import pytest
 from helpers.container import create_container
 from helpers.file_helper import generate_file, generate_file_with_content
+from helpers.neofs_verbs import put_object_to_random_node
 from helpers.rest_gate import (
     attr_into_header,
     get_object_by_attr_and_verify_hashes,
     get_via_rest_gate,
+    quote,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
-    quote,
 )
-from helpers.neofs_verbs import put_object_to_random_node
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
+from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 
 logger = logging.getLogger("NeoLogger")
 OBJECT_NOT_FOUND_ERROR = "not found"
@@ -29,7 +29,7 @@ OBJECT_NOT_FOUND_ERROR = "not found"
     name="neofs-rest-gateway",
 )
 @pytest.mark.sanity
-class TestRestGate(NeofsEnvTestBase):
+class TestRestGate(TestNeofsRestBase):
     PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 

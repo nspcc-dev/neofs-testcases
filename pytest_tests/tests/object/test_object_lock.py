@@ -25,7 +25,7 @@ from helpers.test_control import expect_not_raises, wait_for_success
 from helpers.utility import parse_time, wait_for_gc_pass_on_storage_nodes
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
@@ -106,7 +106,7 @@ def locked_storage_object(
             logger.debug(ex_message)
 
 
-class TestObjectLockWithGrpc(NeofsEnvTestBase):
+class TestObjectLockWithGrpc(TestNeofsBase):
     @pytest.fixture()
     def new_locked_storage_object(self, user_container: StorageContainer, request: FixtureRequest) -> StorageObjectInfo:
         """
