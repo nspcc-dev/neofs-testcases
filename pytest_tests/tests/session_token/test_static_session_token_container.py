@@ -99,7 +99,7 @@ class TestSessionTokenContainer(NeofsEnvTestBase):
         user_wallet: NodeWallet,
         temp_directory: str,
     ):
-        epoch = self.get_epoch()
+        epoch = self.ensure_fresh_epoch()
 
         with allure.step(
             'IAt is bigger than current epoch should lead to a 1024 error with "token should not be issued yet" message'

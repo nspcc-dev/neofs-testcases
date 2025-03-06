@@ -526,54 +526,91 @@ class NeoFSEnv:
         peapod_required=True,
         with_s3_gw=True,
         with_rest_gw=True,
+        request=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
 
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
-        neofs_env.deploy_inner_ring_nodes(count=inner_ring_nodes_count, with_main_chain=with_main_chain)
+        try:
+            neofs_env.deploy_inner_ring_nodes(count=inner_ring_nodes_count, with_main_chain=with_main_chain)
 
-        node_attrs = {
-            0: ["UN-LOCODE:RU MOW", "Price:22"],
-            1: ["UN-LOCODE:RU LED", "Price:33"],
-            2: ["UN-LOCODE:SE STO", "Price:11"],
-            3: ["UN-LOCODE:FI HEL", "Price:44"],
-        }
-        adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
-        neofs_env.deploy_storage_nodes(
-            count=storage_nodes_count,
-            node_attrs=adjusted_node_attrs,
-            writecache=writecache,
-            peapod_required=peapod_required,
-        )
-        if with_main_chain:
-            neofs_adm = neofs_env.neofs_adm()
-            for sn in neofs_env.storage_nodes:
-                neofs_adm.fschain.refill_gas(
+            node_attrs = {
+                0: ["UN-LOCODE:RU MOW", "Price:22"],
+                1: ["UN-LOCODE:RU LED", "Price:33"],
+                2: ["UN-LOCODE:SE STO", "Price:11"],
+                3: ["UN-LOCODE:FI HEL", "Price:44"],
+            }
+            adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
+            neofs_env.deploy_storage_nodes(
+                count=storage_nodes_count,
+                node_attrs=adjusted_node_attrs,
+                writecache=writecache,
+                peapod_required=peapod_required,
+            )
+            if with_main_chain:
+                neofs_adm = neofs_env.neofs_adm()
+                for sn in neofs_env.storage_nodes:
+                    neofs_adm.fschain.refill_gas(
+                        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+                        alphabet_wallets=neofs_env.alphabet_wallets_dir,
+                        storage_wallet=sn.wallet.path,
+                        gas="10.0",
+                    )
+                neofs_env.neofs_adm().fschain.set_config(
                     rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
                     alphabet_wallets=neofs_env.alphabet_wallets_dir,
-                    storage_wallet=sn.wallet.path,
-                    gas="10.0",
+                    post_data="WithdrawFee=5",
                 )
-            neofs_env.neofs_adm().fschain.set_config(
-                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                alphabet_wallets=neofs_env.alphabet_wallets_dir,
-                post_data="WithdrawFee=5",
-            )
-        else:
-            neofs_env.neofs_adm().fschain.set_config(
-                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                alphabet_wallets=neofs_env.alphabet_wallets_dir,
-                post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
-            )
-        if with_s3_gw:
-            neofs_env.deploy_s3_gw()
-        if with_rest_gw:
-            neofs_env.deploy_rest_gw()
+            else:
+                neofs_env.neofs_adm().fschain.set_config(
+                    rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+                    alphabet_wallets=neofs_env.alphabet_wallets_dir,
+                    post_data="ContainerFee=0 ContainerAliasFee=0 MaxObjectSize=524288",
+                )
+            if with_s3_gw:
+                neofs_env.deploy_s3_gw()
+            if with_rest_gw:
+                neofs_env.deploy_rest_gw()
+        except Exception as e:
+            neofs_env.finalize(request)
+            raise e
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
         return neofs_env
+
+    @allure.step("Cleanup neofs env")
+    def finalize(self, request):
+        if request.config.getoption("--persist-env"):
+            self.persist()
+        else:
+            if not request.config.getoption("--load-env"):
+                self.kill()
+
+        if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
+            for ir in self.inner_ring_nodes:
+                os.remove(ir.ir_storage_path)
+
+            for sn in self.storage_nodes:
+                for shard in sn.shards:
+                    os.remove(shard.metabase_path)
+                    os.remove(shard.blobovnicza_path)
+                    shutil.rmtree(shard.fstree_path, ignore_errors=True)
+                    os.remove(shard.pilorama_path)
+                    shutil.rmtree(shard.wc_path, ignore_errors=True)
+
+            if request.session.testsfailed:
+                shutil.make_archive(os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir)
+                allure.attach.file(
+                    os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}.zip"),
+                    name="neofs env files",
+                    extension="zip",
+                )
+
+            shutil.rmtree(self._env_dir, ignore_errors=True)
+
+        NeoFSEnv.cleanup_unused_ports()
 
     @staticmethod
     def generate_config_file(config_template: str, config_path: str, custom=False, **kwargs):

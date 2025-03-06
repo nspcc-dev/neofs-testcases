@@ -171,7 +171,7 @@ class TestObjectApiWithBearerToken(NeofsEnvTestBase):
 
         s3_gate_wallet = self.neofs_env.s3_gw.wallet
         with allure.step("Put one object to container"):
-            epoch = self.get_epoch()
+            epoch = self.ensure_fresh_epoch()
             storage_object = user_container.generate_object(
                 file_size, epoch + 3, bearer_token=bearer_token_file_all_allow
             )

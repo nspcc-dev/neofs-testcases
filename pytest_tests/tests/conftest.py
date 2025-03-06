@@ -29,40 +29,6 @@ def pytest_addoption(parser):
     parser.addoption("--load-env", action="store", help="load persisted env from file")
 
 
-def neofs_env_finalizer(neofs_env: NeoFSEnv, request):
-    if request.config.getoption("--persist-env"):
-        neofs_env.persist()
-    else:
-        if not request.config.getoption("--load-env"):
-            neofs_env.kill()
-
-    if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
-        for ir in neofs_env.inner_ring_nodes:
-            os.remove(ir.ir_storage_path)
-
-        for sn in neofs_env.storage_nodes:
-            for shard in sn.shards:
-                os.remove(shard.metabase_path)
-                os.remove(shard.blobovnicza_path)
-                shutil.rmtree(shard.fstree_path, ignore_errors=True)
-                os.remove(shard.pilorama_path)
-                shutil.rmtree(shard.wc_path, ignore_errors=True)
-
-        if request.session.testsfailed:
-            shutil.make_archive(
-                os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}"), "zip", neofs_env._env_dir
-            )
-            allure.attach.file(
-                os.path.join(get_assets_dir_path(), f"neofs_env_{neofs_env._id}.zip"),
-                name="neofs env files",
-                extension="zip",
-            )
-
-        shutil.rmtree(neofs_env._env_dir, ignore_errors=True)
-
-    NeoFSEnv.cleanup_unused_ports()
-
-
 def get_or_create_neofs_env(
     request,
     with_main_chain=False,
@@ -85,8 +51,8 @@ def get_or_create_neofs_env(
             peapod_required=peapod_required,
             with_s3_gw=with_s3_gw,
             with_rest_gw=with_rest_gw,
+            request=request,
         )
-
     return neofs_env
 
 
@@ -94,14 +60,14 @@ def get_or_create_neofs_env(
 def neofs_env(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request)
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture(scope="function")
 def neofs_env_function_scope(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request)
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
@@ -110,14 +76,14 @@ def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
         request, writecache=True, peapod_required=False, with_s3_gw=False, with_rest_gw=False
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
 def neofs_env_single_sn(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1)
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
@@ -130,7 +96,7 @@ def neofs_env_4_ir(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture(scope="module")
@@ -143,7 +109,7 @@ def neofs_env_4_ir_4_sn(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
@@ -156,7 +122,7 @@ def neofs_env_7_ir(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
@@ -170,7 +136,7 @@ def neofs_env_4_ir_with_mainchain(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture()
@@ -184,14 +150,14 @@ def neofs_env_7_ir_with_mainchain(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
     )
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture
 def neofs_env_with_mainchain(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, with_main_chain=True)
     yield neofs_env
-    neofs_env_finalizer(neofs_env, request)
+    neofs_env.finalize(request)
 
 
 @pytest.fixture(scope="session")

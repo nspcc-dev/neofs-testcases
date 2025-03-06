@@ -872,7 +872,7 @@ class TestEACLFilters(NeofsEnvTestBase):
         cid = eacl_container
         oid = None
 
-        epoch = self.get_epoch()
+        epoch = self.ensure_fresh_epoch()
 
         with allure.step("Set EACLs for GET/PUT to restrict operations with expiration attribute"):
             users_role = EACLRole.USER
@@ -1089,7 +1089,7 @@ class TestEACLFilters(NeofsEnvTestBase):
     def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, complex_object_size, address):
         user_wallet = wallets.get_wallet()
 
-        epoch = self.get_epoch()
+        epoch = self.ensure_fresh_epoch()
 
         cid = eacl_container
 
