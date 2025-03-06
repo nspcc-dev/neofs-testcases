@@ -36,12 +36,12 @@ from helpers.session_token import (
 )
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.shell import Shell
 
 
-class TestSessionTokenContainer(NeofsEnvTestBase):
+class TestSessionTokenContainer(TestNeofsBase):
     @pytest.fixture(scope="module")
     def static_sessions(
         self,

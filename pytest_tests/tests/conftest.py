@@ -58,14 +58,28 @@ def get_or_create_neofs_env(
 
 @pytest.fixture(scope="session")
 def neofs_env(temp_directory, artifacts_directory, request):
-    neofs_env = get_or_create_neofs_env(request)
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture(scope="session")
+def neofs_env_s3_gw(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=True, with_rest_gw=False)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture(scope="session")
+def neofs_env_rest_gw(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=True)
     yield neofs_env
     neofs_env.finalize(request)
 
 
 @pytest.fixture(scope="function")
 def neofs_env_function_scope(temp_directory, artifacts_directory, request):
-    neofs_env = get_or_create_neofs_env(request)
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False)
     yield neofs_env
     neofs_env.finalize(request)
 
@@ -81,7 +95,7 @@ def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
 
 @pytest.fixture()
 def neofs_env_single_sn(temp_directory, artifacts_directory, request):
-    neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1)
+    neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1, with_s3_gw=True, with_rest_gw=True)
     yield neofs_env
     neofs_env.finalize(request)
 
@@ -155,7 +169,7 @@ def neofs_env_7_ir_with_mainchain(temp_directory, artifacts_directory, request):
 
 @pytest.fixture
 def neofs_env_with_mainchain(temp_directory, artifacts_directory, request):
-    neofs_env = get_or_create_neofs_env(request, with_main_chain=True)
+    neofs_env = get_or_create_neofs_env(request, with_main_chain=True, with_s3_gw=True, with_rest_gw=True)
     yield neofs_env
     neofs_env.finalize(request)
 

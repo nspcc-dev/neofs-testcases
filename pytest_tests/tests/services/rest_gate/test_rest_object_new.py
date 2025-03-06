@@ -10,15 +10,15 @@ from helpers.rest_gate import (
     try_to_get_object_via_passed_request_and_expect_error,
 )
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from pytest_lazy_fixtures import lf
+from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
 logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-class Test_rest_object(NeofsEnvTestBase):
+class Test_rest_object(TestNeofsRestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)

@@ -2,13 +2,13 @@ import os
 
 import allure
 import pytest
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeoGo
 from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 
 
-class TestContract(NeofsEnvTestBase):
+class TestContract(TestNeofsBase):
     @allure.title("Test operations with external smart contracts")
     def test_contract(self, datadir, client_shell: Shell, neofs_env: NeoFSEnv):
         neogo = NeoGo(client_shell, neo_go_exec_path=neofs_env.neo_go_path)

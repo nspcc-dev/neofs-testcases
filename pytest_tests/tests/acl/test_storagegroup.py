@@ -26,7 +26,7 @@ from helpers.storage_group import (
     verify_list_storage_group,
 )
 from helpers.wallet_helpers import create_wallet
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
@@ -38,7 +38,7 @@ deposit = 30
     [lf("simple_object_size"), lf("complex_object_size")],
     ids=["simple object", "complex object"],
 )
-class TestStorageGroup(NeofsEnvTestBase):
+class TestStorageGroup(TestNeofsBase):
     @pytest.fixture(autouse=True)
     def prepare_two_wallets(self, default_wallet):
         self.main_wallet = default_wallet

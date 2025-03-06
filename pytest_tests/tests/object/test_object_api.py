@@ -41,7 +41,7 @@ from helpers.neofs_verbs import (
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
 from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
@@ -166,7 +166,7 @@ def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSE
     delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
 
-class TestObjectApi(NeofsEnvTestBase):
+class TestObjectApi(TestNeofsBase):
     @pytest.mark.sanity
     @allure.title("Validate object storage policy by native API")
     def test_object_storage_policies(

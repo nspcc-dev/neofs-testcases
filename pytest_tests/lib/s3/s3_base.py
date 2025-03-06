@@ -17,9 +17,9 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from helpers.aws_cli_client import AwsCliClient
 from helpers.cli_helpers import _cmd_run, _configure_aws_cli
+from helpers.neofs_verbs import get_netmap_netinfo
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_public_key_from_wallet
 from pytest import FixtureRequest
 from s3 import s3_bucket, s3_object
@@ -57,14 +57,31 @@ class TestNeofsS3Base(NeofsEnvTestBase):
     secret_access_key: str = None
 
     @pytest.fixture(scope="class", autouse=True)
+    def fill_mandatory_dependencies(self, request, neofs_env_s3_gw: NeoFSEnv):
+        request.cls.shell = neofs_env_s3_gw.shell
+        request.cls.neofs_env = neofs_env_s3_gw
+        yield
+
+    @pytest.fixture(scope="session")
+    def max_object_size(self, neofs_env_s3_gw: NeoFSEnv) -> int:
+        storage_node = neofs_env_s3_gw.storage_nodes[0]
+        net_info = get_netmap_netinfo(
+            wallet=storage_node.wallet.path,
+            wallet_config=storage_node.cli_config,
+            endpoint=storage_node.endpoint,
+            shell=neofs_env_s3_gw.shell,
+        )
+        yield net_info["maximum_object_size"]
+
+    @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
     def s3_client(  # noqa
         self,
         default_wallet: NodeWallet,
-        client_shell: Shell,
         request: FixtureRequest,
-        neofs_env: NeoFSEnv,
+        neofs_env_s3_gw: NeoFSEnv,
     ) -> Any:
+        neofs_env = neofs_env_s3_gw
         wallet = default_wallet
         s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
         policy = None if isinstance(request.param, str) else request.param[1]

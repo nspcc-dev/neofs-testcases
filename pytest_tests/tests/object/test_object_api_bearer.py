@@ -32,23 +32,27 @@ from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.test_control import expect_not_raises
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.shell import Shell
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from pytest import FixtureRequest
 from pytest_lazy_fixtures import lf
+from s3.s3_base import TestNeofsS3Base
+
+
+def pytest_generate_tests(metafunc):
+    if "s3_client" in metafunc.fixturenames:
+        metafunc.parametrize("s3_client", ["boto3"], indirect=True)
 
 
 @pytest.fixture(scope="module")
 @allure.title("Create bearer token for OTHERS with all operations allowed for all containers")
-def bearer_token_file_all_allow(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
+def bearer_token_file_all_allow(default_wallet: NodeWallet, neofs_env_s3_gw: NeoFSEnv) -> str:
     bearer = form_bearertoken_file(
         default_wallet.path,
         "",
         [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS) for op in EACLOperation],
-        shell=client_shell,
-        endpoint=neofs_env.sn_rpc,
+        shell=neofs_env_s3_gw.shell,
+        endpoint=neofs_env_s3_gw.sn_rpc,
     )
 
     return bearer
@@ -56,21 +60,19 @@ def bearer_token_file_all_allow(default_wallet: NodeWallet, client_shell: Shell,
 
 @pytest.fixture(scope="module")
 @allure.title("Create user container for bearer token usage")
-def user_container(
-    default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
-) -> StorageContainer:
+def user_container(default_wallet: NodeWallet, neofs_env_s3_gw: NeoFSEnv, request: FixtureRequest) -> StorageContainer:
     container_id = create_container(
         default_wallet.path,
-        shell=client_shell,
+        shell=neofs_env_s3_gw.shell,
         rule=request.param,
         basic_acl=EACL_PUBLIC_READ_WRITE,
-        endpoint=neofs_env.sn_rpc,
+        endpoint=neofs_env_s3_gw.sn_rpc,
     )
     # Deliberately using s3gate wallet here to test bearer token
     return StorageContainer(
-        StorageContainerInfo(container_id, neofs_env.s3_gw.wallet),
-        client_shell,
-        neofs_env,
+        StorageContainerInfo(container_id, neofs_env_s3_gw.s3_gw.wallet),
+        neofs_env_s3_gw.shell,
+        neofs_env_s3_gw,
     )
 
 
@@ -79,11 +81,11 @@ def storage_objects(
     user_container: StorageContainer,
     bearer_token_file_all_allow: str,
     request: FixtureRequest,
-    neofs_env: NeoFSEnv,
+    neofs_env_s3_gw: NeoFSEnv,
 ) -> list[StorageObjectInfo]:
-    epoch = neofs_epoch.get_epoch(neofs_env)
+    epoch = neofs_epoch.get_epoch(neofs_env_s3_gw)
     storage_objects: list[StorageObjectInfo] = []
-    for node in neofs_env.storage_nodes:
+    for node in neofs_env_s3_gw.storage_nodes:
         storage_objects.append(
             user_container.generate_object(
                 request.param,
@@ -95,7 +97,7 @@ def storage_objects(
     return storage_objects
 
 
-class TestObjectApiWithBearerToken(NeofsEnvTestBase):
+class TestObjectApiWithBearerToken(TestNeofsS3Base):
     @pytest.mark.parametrize(
         "user_container",
         [SINGLE_PLACEMENT_RULE],

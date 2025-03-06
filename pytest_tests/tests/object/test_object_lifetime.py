@@ -7,7 +7,7 @@ from helpers.file_helper import generate_file, get_file_hash
 from helpers.grpc_responses import OBJECT_NOT_FOUND
 from helpers.neofs_verbs import get_object_from_random_node, put_object_to_random_node
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
 from pytest import FixtureRequest
 from pytest_lazy_fixtures import lf
@@ -15,7 +15,7 @@ from pytest_lazy_fixtures import lf
 logger = logging.getLogger("NeoLogger")
 
 
-class TestObjectApiLifetime(NeofsEnvTestBase):
+class TestObjectApiLifetime(TestNeofsBase):
     @allure.title("Test object life time")
     @pytest.mark.parametrize(
         "object_size,expiration_flag",
