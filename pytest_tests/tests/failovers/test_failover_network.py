@@ -32,7 +32,7 @@ class TestFailoverNetwork:
         not_empty = len(blocked_nodes) != 0
         for node in list(blocked_nodes):
             with allure.step(f"Restore network at host for {node}"):
-                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
+                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.rpc_address.split(":")[1]])
             blocked_nodes.remove(node)
         if not_empty:
             wait_all_storage_nodes_returned(self.neofs_env)
@@ -76,10 +76,10 @@ class TestFailoverNetwork:
 
         excluded_nodes = []
         for node in nodes_to_block:
-            with allure.step(f"Block incoming traffic at node {node} on port {[node.endpoint.split(':')[1]]}"):
+            with allure.step(f"Block incoming traffic at node {node} on port {[node.rpc_address.split(':')[1]]}"):
                 blocked_nodes.append(node)
                 excluded_nodes.append(node)
-                IpTablesHelper.drop_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
+                IpTablesHelper.drop_input_traffic_to_port(self.shell, [node.rpc_address.split(":")[1]])
                 sleep(wakeup_node_timeout)
 
             with allure.step(f"Check object is not stored on node {node}"):
@@ -94,12 +94,12 @@ class TestFailoverNetwork:
                 assert node not in new_nodes
 
             with allure.step("Check object data is not corrupted"):
-                got_file_path = get_object(wallet.path, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell)
+                got_file_path = get_object(wallet.path, cid, oid, endpoint=new_nodes[0].rpc_address, shell=self.shell)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         for node in nodes_to_block:
-            with allure.step(f"Unblock incoming traffic at host {node} on port {[node.endpoint.split(':')[1]]}"):
-                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
+            with allure.step(f"Unblock incoming traffic at host {node} on port {[node.rpc_address.split(':')[1]]}"):
+                IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.rpc_address.split(":")[1]])
                 blocked_nodes.remove(node)
                 sleep(wakeup_node_timeout)
 
@@ -108,7 +108,7 @@ class TestFailoverNetwork:
                 cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
             )
 
-            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].rpc_address)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @pytest.mark.sanity

@@ -27,7 +27,7 @@ def check_full_access_to_container(
     xhdr: Optional[dict] = None,
 ):
     if neofs_env:
-        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(neofs_env.storage_nodes).rpc_address
     assert can_put_object(
         wallet=wallet,
         cid=cid,
@@ -113,7 +113,7 @@ def check_no_access_to_container(
     xhdr: Optional[dict] = None,
 ):
     if neofs_env:
-        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(neofs_env.storage_nodes).rpc_address
     assert not can_put_object(
         wallet=wallet,
         cid=cid,
@@ -201,7 +201,7 @@ def check_custom_access_to_container(
     xhdr: Optional[dict] = None,
 ):
     if neofs_env:
-        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(neofs_env.storage_nodes).rpc_address
     deny_operations = [op.value for op in deny_operations or []]
     ignore_operations = [op.value for op in ignore_operations or []]
     checks: dict = {}

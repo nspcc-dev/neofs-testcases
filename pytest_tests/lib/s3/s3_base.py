@@ -68,7 +68,7 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         net_info = get_netmap_netinfo(
             wallet=storage_node.wallet.path,
             wallet_config=storage_node.cli_config,
-            endpoint=storage_node.endpoint,
+            endpoint=storage_node.rpc_address,
             shell=neofs_env_s3_gw.shell,
         )
         yield net_info["maximum_object_size"]
@@ -99,9 +99,9 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
         if "aws cli" in request.param:
-            client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
+            client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.rpc_address}")
         else:
-            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
+            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.rpc_address}")
         TestNeofsS3Base.s3_client = client
         TestNeofsS3Base.wallet = wallet
         TestNeofsS3Base.access_key_id = access_key_id
@@ -162,7 +162,7 @@ def init_s3_credentials(
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
-        f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
+        f"--peer {neofs_env.storage_nodes[0].rpc_address} --container-friendly-name {bucket} "
         f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
         f"--container-policy {policy}"
     )

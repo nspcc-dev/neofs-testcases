@@ -42,7 +42,9 @@ def s3_boto_client(temp_directory, neofs_env_single_sn: NeoFSEnv):
     _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
         wallet, neofs_env_single_sn, s3_bearer_rules_file=s3_bearer_rules_file
     )
-    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.address}")
+    client = configure_boto3_client(
+        access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.rpc_address}"
+    )
     yield client
 
 

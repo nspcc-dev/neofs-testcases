@@ -109,7 +109,7 @@ class NeoFSEnv:
     @property
     def sn_rpc(self):
         if len(self.storage_nodes) > 0:
-            return self.storage_nodes[0].endpoint
+            return self.storage_nodes[0].rpc_address
         raise ValueError("No storage nodes configured in this env")
 
     @property
@@ -222,7 +222,7 @@ class NeoFSEnv:
         ready_counter = 0
         for sn in self.storage_nodes:
             neofs_cli = self.neofs_cli(sn.cli_config)
-            result = neofs_cli.control.healthcheck(endpoint=sn.control_grpc_endpoint)
+            result = neofs_cli.control.healthcheck(endpoint=sn.grpc_address)
             if "Health status: READY" in result.stdout:
                 ready_counter += 1
         assert ready_counter == len(self.storage_nodes)
@@ -827,7 +827,7 @@ class MainChain:
             main_chain_boltdb=self.main_chain_boltdb,
             p2p_address=self.p2p_address,
             rpc_address=self.rpc_address,
-            sn_addresses=[sn.endpoint for sn in self.neofs_env.storage_nodes],
+            sn_addresses=[sn.rpc_address for sn in self.neofs_env.storage_nodes],
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
         )
@@ -1042,8 +1042,8 @@ class StorageNode:
         )
         self.state_file = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{sn_number}_state")
         self.shards = [Shard(neofs_env, self.sn_dir), Shard(neofs_env, self.sn_dir)]
-        self.endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
-        self.control_grpc_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.grpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.stdout = "Not initialized"
@@ -1060,8 +1060,8 @@ class StorageNode:
     def __str__(self):
         return f"""
             Storage node:
-            - Endpoint: {self.endpoint}
-            - Control gRPC endpoint: {self.control_grpc_endpoint}
+            - RPC address: {self.rpc_address}
+            - GRPC address: {self.grpc_address}
             - Pprof address: {self.pprof_address}
             - Prometheus address: {self.prometheus_address}
             - Attributes: {self.attrs}
@@ -1108,7 +1108,7 @@ class StorageNode:
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
     def stop(self):
-        with allure.step(f"Stop SN: {self.endpoint}; {self.stderr}"):
+        with allure.step(f"Stop SN: {self.rpc_address}; {self.stderr}"):
             if self.process:
                 terminate_process(self.process)
                 self.process = None
@@ -1118,7 +1118,7 @@ class StorageNode:
                 AssertionError("Storage node has been already stopped")
 
     def kill(self):
-        with allure.step(f"Kill SN: {self.endpoint}; {self.stderr}"):
+        with allure.step(f"Kill SN: {self.rpc_address}; {self.stderr}"):
             if self.process:
                 self.process.kill()
                 self.process = None
@@ -1197,9 +1197,9 @@ class StorageNode:
         env_dict = {
             "NEOFS_NODE_WALLET_PATH": self.wallet.path,
             "NEOFS_NODE_WALLET_PASSWORD": self.wallet.password,
-            "NEOFS_NODE_ADDRESSES": self.endpoint,
-            "NEOFS_GRPC_0_ENDPOINT": self.endpoint,
-            "NEOFS_CONTROL_GRPC_ENDPOINT": self.control_grpc_endpoint,
+            "NEOFS_NODE_ADDRESSES": self.rpc_address,
+            "NEOFS_GRPC_0_ENDPOINT": self.rpc_address,
+            "NEOFS_CONTROL_GRPC_ENDPOINT": self.grpc_address,
         }
         env_dict.update(self.attrs)
         self.process = subprocess.Popen(
@@ -1212,7 +1212,7 @@ class StorageNode:
     @retry(wait=wait_fixed(15), stop=stop_after_attempt(30), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
-        result = neofs_cli.control.healthcheck(endpoint=self.control_grpc_endpoint)
+        result = neofs_cli.control.healthcheck(endpoint=self.grpc_address)
         assert "Health status: READY" in result.stdout, "Health is not ready"
         assert "Network status: ONLINE" in result.stdout, "Network is not online"
 
@@ -1220,7 +1220,7 @@ class StorageNode:
     def _wait_until_not_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         try:
-            result = neofs_cli.control.healthcheck(endpoint=self.control_grpc_endpoint)
+            result = neofs_cli.control.healthcheck(endpoint=self.grpc_address)
         except Exception as e:
             with allure.step(f"Exception caught: {e}, node is not ready"):
                 return
@@ -1238,7 +1238,7 @@ class S3_GW:
             address="",
             password=self.neofs_env.default_password,
         )
-        self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.tls_cert_path = self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_tls_cert")
@@ -1251,10 +1251,10 @@ class S3_GW:
     def __str__(self):
         return f"""
             S3 Gateway:
-            - Address: {self.address}
-            - S3 GW Config path: {self.config_path}
+            - RPC address: {self.rpc_address}
             - Pprof address: {self.pprof_address}
             - Prometheus address: {self.prometheus_address}
+            - S3 GW Config path: {self.config_path}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
@@ -1290,7 +1290,7 @@ class S3_GW:
 
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
     def _wait_until_ready(self):
-        endpoint = f"https://{self.address}" if self.tls_enabled else f"http://{self.address}"
+        endpoint = f"https://{self.rpc_address}" if self.tls_enabled else f"http://{self.rpc_address}"
         resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
         assert resp.status_code == 200
 
@@ -1308,20 +1308,20 @@ class S3_GW:
 
         peers = []
         for sn in self.neofs_env.storage_nodes:
-            peers.append(S3peer(sn.endpoint, 1, 1))
+            peers.append(S3peer(sn.rpc_address, 1, 1))
 
         NeoFSEnv.generate_config_file(
             config_template=s3_config_template,
             config_path=self.config_path,
             custom=Path(s3_config_template).is_file(),
-            address=self.address,
+            address=self.rpc_address,
             tls_enabled=str(self.tls_enabled).lower(),
             cert_file_path=self.tls_cert_path,
             key_file_path=self.tls_key_path,
             wallet=self.wallet,
             fschain_endpoint=self.neofs_env.fschain_rpc,
             peers=peers,
-            tree_service_endpoint=self.neofs_env.storage_nodes[0].endpoint,
+            tree_service_endpoint=self.neofs_env.storage_nodes[0].rpc_address,
             listen_domain=self.neofs_env.domain,
             s3_gw_version=self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path),
             pprof_address=self.pprof_address,
@@ -1353,7 +1353,7 @@ class REST_GW:
             address="",
             password=self.neofs_env.default_password,
         )
-        self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.metrics_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.stdout = "Not initialized"
@@ -1363,7 +1363,7 @@ class REST_GW:
     def __str__(self):
         return f"""
             REST Gateway:
-            - Address: {self.address}
+            - RPC address: {self.rpc_address}
             - Pprof address: {self.pprof_address}
             - Metrics address: {self.metrics_address}
             - REST GW Config path: {self.config_path}
@@ -1393,7 +1393,7 @@ class REST_GW:
             config_template=rest_config_template,
             config_path=self.config_path,
             custom=Path(rest_config_template).is_file(),
-            address=self.address,
+            address=self.rpc_address,
             wallet=self.wallet,
             pprof_address=self.pprof_address,
             metrics_address=self.metrics_address,
@@ -1407,7 +1407,7 @@ class REST_GW:
         rest_gw_env = {}
 
         for index, sn in enumerate(self.neofs_env.storage_nodes):
-            rest_gw_env[f"REST_GW_POOL_PEERS_{index}_ADDRESS"] = sn.endpoint
+            rest_gw_env[f"REST_GW_POOL_PEERS_{index}_ADDRESS"] = sn.rpc_address
             rest_gw_env[f"REST_GW_POOL_PEERS_{index}_WEIGHT"] = "0.2"
 
         self.process = subprocess.Popen(

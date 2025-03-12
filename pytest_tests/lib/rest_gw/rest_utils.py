@@ -1,10 +1,10 @@
 import random
 
+from helpers.complex_object_actions import get_nodes_without_object
+from helpers.neofs_verbs import get_object
+from helpers.rest_gate import assert_hashes_are_equal, get_via_rest_gate
 from neofs_testlib.env.env import StorageNode
 from neofs_testlib.shell import Shell
-from helpers.rest_gate import assert_hashes_are_equal, get_via_rest_gate
-from helpers.neofs_verbs import get_object
-from helpers.complex_object_actions import get_nodes_without_object
 
 
 def get_object_and_verify_hashes(
@@ -37,7 +37,7 @@ def get_object_and_verify_hashes(
         cid=cid,
         oid=oid,
         shell=shell,
-        endpoint=random_node.endpoint,
+        endpoint=random_node.rpc_address,
     )
     got_file_path_http = object_getter(cid=cid, oid=oid, endpoint=endpoint)
 

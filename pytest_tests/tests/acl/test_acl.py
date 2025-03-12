@@ -220,7 +220,7 @@ class TestACLBasic(TestNeofsBase):
             GET range of object from container
             DELETE object from container
         """
-        endpoint = random.choice(self.neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(self.neofs_env.storage_nodes).rpc_address
 
         ir_wallet = self.neofs_env.inner_ring_nodes[0].alphabet_wallet
         ir_wallet_config = self.neofs_env.inner_ring_nodes[0].cli_config

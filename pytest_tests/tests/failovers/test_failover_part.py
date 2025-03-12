@@ -59,7 +59,7 @@ class TestFailoverNodePart:
                         storage_object.cid,
                         storage_object.oid,
                         self.shell,
-                        endpoint=node.endpoint,
+                        endpoint=node.rpc_address,
                         wallet_config=user_container.get_wallet_config_path(),
                     )
 
@@ -83,6 +83,6 @@ class TestFailoverNodePart:
                         storage_object.cid,
                         storage_object.oid,
                         self.shell,
-                        endpoint=node.endpoint,
+                        endpoint=node.rpc_address,
                         wallet_config=user_container.get_wallet_config_path(),
                     )

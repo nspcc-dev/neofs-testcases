@@ -455,7 +455,7 @@ class TestACLBearer(TestNeofsBase):
                     cid,
                     objects_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
@@ -465,7 +465,7 @@ class TestACLBearer(TestNeofsBase):
                     cid,
                     objects_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
@@ -475,7 +475,7 @@ class TestACLBearer(TestNeofsBase):
                     cid,
                     objects_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
@@ -484,7 +484,7 @@ class TestACLBearer(TestNeofsBase):
                     deny_wallet.wallet_path,
                     cid,
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
@@ -494,7 +494,7 @@ class TestACLBearer(TestNeofsBase):
                     cid,
                     objects_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
@@ -528,7 +528,7 @@ class TestACLBearer(TestNeofsBase):
                         cid,
                         objects_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                         bearer=bearer,
                         wallet_config=deny_wallet.config_path,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
@@ -538,7 +538,7 @@ class TestACLBearer(TestNeofsBase):
                         cid,
                         objects_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                         bearer=bearer,
                         wallet_config=deny_wallet.config_path,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
@@ -548,7 +548,7 @@ class TestACLBearer(TestNeofsBase):
                         cid,
                         objects_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                         bearer=bearer,
                         wallet_config=deny_wallet.config_path,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
@@ -557,7 +557,7 @@ class TestACLBearer(TestNeofsBase):
                         deny_wallet.wallet_path,
                         cid,
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                         bearer=bearer,
                         wallet_config=deny_wallet.config_path,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
@@ -567,7 +567,7 @@ class TestACLBearer(TestNeofsBase):
                         cid,
                         objects_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                         bearer=bearer,
                         wallet_config=deny_wallet.config_path,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"

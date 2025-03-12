@@ -72,7 +72,7 @@ def get_object_from_random_node(
         (str): path to downloaded file
     """
     if neofs_env:
-        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(neofs_env.storage_nodes).rpc_address
     return get_object(
         wallet,
         cid,
@@ -226,7 +226,7 @@ def put_object_to_random_node(
     """
 
     if neofs_env:
-        endpoint = random.choice(neofs_env.storage_nodes).endpoint
+        endpoint = random.choice(neofs_env.storage_nodes).rpc_address
     return put_object(
         wallet,
         path,

@@ -80,7 +80,7 @@ class TestFailoverStorage:
 
             with allure.step("Check object data is not corrupted"):
                 got_file_path = get_object(
-                    wallet.path, cid, oid, shell=self.shell, endpoint=object_nodes_after_stop[0].endpoint
+                    wallet.path, cid, oid, shell=self.shell, endpoint=object_nodes_after_stop[0].rpc_address
                 )
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
@@ -91,7 +91,7 @@ class TestFailoverStorage:
                 new_nodes = wait_object_replication(
                     cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
                 )
-                got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
+                got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].rpc_address)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     def test_put_get_without_storage_node(
@@ -116,7 +116,7 @@ class TestFailoverStorage:
             cid = create_container(
                 wallet.path,
                 shell=self.shell,
-                endpoint=alive_nodes[0].endpoint,
+                endpoint=alive_nodes[0].rpc_address,
                 rule=placement_rule,
                 basic_acl=PUBLIC_ACL,
             )
@@ -129,19 +129,19 @@ class TestFailoverStorage:
                     source_file_path,
                     cid,
                     shell=self.shell,
-                    endpoint=random.choice(alive_nodes).endpoint,
+                    endpoint=random.choice(alive_nodes).rpc_address,
                 )
                 wait_object_replication(cid, oid, 3, shell=self.shell, nodes=alive_nodes, neofs_env=self.neofs_env)
 
         with allure.step("Get last object"):
-            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=alive_nodes[0].endpoint)
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=alive_nodes[0].rpc_address)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         with allure.step("Return stopped storage node"):
             self.return_stopped_storage_nodes(self.neofs_env, [dead_node])
 
         with allure.step("Get last object from previously dead node"):
-            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=dead_node.endpoint)
+            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=dead_node.rpc_address)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     def test_put_get_without_storage_nodes(
@@ -167,7 +167,7 @@ class TestFailoverStorage:
             cid = create_container(
                 wallet.path,
                 shell=self.shell,
-                endpoint=alive_nodes[0].endpoint,
+                endpoint=alive_nodes[0].rpc_address,
                 rule=placement_rule,
                 basic_acl=PUBLIC_ACL,
             )
@@ -180,7 +180,7 @@ class TestFailoverStorage:
                     source_file_path,
                     cid,
                     shell=self.shell,
-                    endpoint=alive_nodes[0].endpoint,
+                    endpoint=alive_nodes[0].rpc_address,
                 )
 
         with allure.step("Return stopped storage node"):

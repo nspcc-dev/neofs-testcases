@@ -246,7 +246,7 @@ class TestEACLContainer(TestNeofsBase):
                     cid,
                     object_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                 ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.GET_RANGE:
                 assert can_get_range_of_object(
@@ -254,7 +254,7 @@ class TestEACLContainer(TestNeofsBase):
                     cid,
                     object_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                 ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.GET_RANGE_HASH:
                 assert can_get_range_hash_of_object(
@@ -262,14 +262,14 @@ class TestEACLContainer(TestNeofsBase):
                     cid,
                     object_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                 ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.SEARCH:
                 assert can_search_object(
                     user_wallet.wallet_path,
                     cid,
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                 ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.DELETE:
                 assert can_delete_object(
@@ -277,7 +277,7 @@ class TestEACLContainer(TestNeofsBase):
                     cid,
                     object_oids.pop(),
                     self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                    endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                 ), f"{operation.value} is not allowed, while it should be"
         with allure.step("Check all other operations are not available"):
             not_allowed_operations = [op for op in EACLOperation if op != operation]
@@ -305,7 +305,7 @@ class TestEACLContainer(TestNeofsBase):
                         cid,
                         object_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.GET_RANGE:
                     assert not can_get_range_of_object(
@@ -313,7 +313,7 @@ class TestEACLContainer(TestNeofsBase):
                         cid,
                         object_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.GET_RANGE_HASH:
                     assert not can_get_range_hash_of_object(
@@ -321,14 +321,14 @@ class TestEACLContainer(TestNeofsBase):
                         cid,
                         object_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.SEARCH:
                     assert not can_search_object(
                         user_wallet.wallet_path,
                         cid,
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.DELETE:
                     assert not can_delete_object(
@@ -336,7 +336,7 @@ class TestEACLContainer(TestNeofsBase):
                         cid,
                         object_oids.pop(),
                         self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
+                        endpoint=random.choice(self.neofs_env.storage_nodes).rpc_address,
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
 
     @allure.title("Testcase to validate NeoFS replication with eACL deny rules.")
