@@ -58,8 +58,8 @@ def test_ports_for_metrics_are_utilized(neofs_env_with_mainchain: NeoFSEnv):
     )
 
     is_port_in_use(
-        neofs_env_with_mainchain.rest_gw.metrics_address.split(":")[0],
-        neofs_env_with_mainchain.rest_gw.metrics_address.split(":")[1],
+        neofs_env_with_mainchain.rest_gw.prometheus_address.split(":")[0],
+        neofs_env_with_mainchain.rest_gw.prometheus_address.split(":")[1],
         "rest gw prometheus port is not utilized",
     )
 
