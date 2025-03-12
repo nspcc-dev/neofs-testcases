@@ -8,4 +8,4 @@ logger = logging.getLogger("NeoLogger")
 
 @pytest.fixture(scope="session")
 def gw_endpoint(neofs_env_rest_gw: NeoFSEnv):
-    return f"http://{neofs_env_rest_gw.rest_gw.address}/v1"
+    return f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1"

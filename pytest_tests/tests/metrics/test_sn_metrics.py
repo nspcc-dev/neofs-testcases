@@ -52,7 +52,7 @@ def s3_boto_client(temp_directory, neofs_env_single_sn: NeoFSEnv):
     _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
         wallet, neofs_env_single_sn, s3_bearer_rules_file=s3_bearer_rules_file
     )
-    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.address}")
+    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.endpoint}")
     yield client
 
 
@@ -119,7 +119,7 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     )
 
     block_height, validated_state = parse_node_height(
-        neofs_env_single_sn.neo_go().query.height(rpc_endpoint=f"http://{ir.rpc_address}").stdout
+        neofs_env_single_sn.neo_go().query.height(rpc_endpoint=f"http://{ir.endpoint}").stdout
     )
 
     with allure.step("Get metrics"):
@@ -345,7 +345,7 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
 
 def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet):
     simple_object_size = int(SIMPLE_OBJECT_SIZE)
-    gw_endpoint = f"http://{neofs_env_single_sn.rest_gw.address}/v1"
+    gw_endpoint = f"http://{neofs_env_single_sn.rest_gw.endpoint}/v1"
 
     session_token, signature, pub_key = generate_credentials(gw_endpoint, default_wallet, wallet_connect=True)
     cid = create_container_rest_gw(

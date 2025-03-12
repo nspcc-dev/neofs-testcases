@@ -30,7 +30,7 @@ class Test_rest_object(TestNeofsRestBase):
     @pytest.fixture(scope="class")
     def gw_attributes(self):
         return {
-            "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+            "endpoint": f"http://{self.neofs_env.rest_gw.endpoint}/v1",
             # List of Key=Value attributes
             # REST gateway accepts attributes in the Canonical MIME Header Key.
             "obj_key1": "Chapter1",

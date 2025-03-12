@@ -93,7 +93,7 @@ class TestNetworkConfigChange(TestNeofsBase):
             keys_values_str = " ".join([f"{key}={str(value).lower()}" for key, value in key_value_pairs.items()])
 
             neofsadm.fschain.set_config(
-                rpc_endpoint=f"http://{ir_node.rpc_address}",
+                rpc_endpoint=f"http://{ir_node.endpoint}",
                 alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
                 post_data=f"{force_str}{keys_values_str}",
             )

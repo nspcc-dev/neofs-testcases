@@ -267,7 +267,7 @@ def _run_control_command_with_retries(node: StorageNode, command: str, retries: 
 
 def _run_control_command(node: StorageNode, command: str) -> None:
     result = node.neofs_env.shell.exec(
-        f"{node.neofs_env.neofs_cli_path} {command} --endpoint {node.control_grpc_endpoint} "
+        f"{node.neofs_env.neofs_cli_path} {command} --endpoint {node.control_endpoint} "
         f"--wallet {node.wallet.path} --config {node.cli_config}"
     )
     return result.stdout

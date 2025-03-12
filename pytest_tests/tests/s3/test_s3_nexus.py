@@ -121,7 +121,7 @@ class TestS3Nexus(TestNeofsS3Base):
             admin_password=nexus_admin_password,
             blob_store_name="s3-blob-store",
             s3_bucket_name=bucket,
-            s3_endpoint=self.neofs_env.s3_gw.address,
+            s3_endpoint=self.neofs_env.s3_gw.endpoint,
             access_key=self.access_key_id,
             secret_key=self.secret_access_key,
         )

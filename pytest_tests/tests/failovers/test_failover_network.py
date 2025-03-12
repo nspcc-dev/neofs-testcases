@@ -138,8 +138,8 @@ class TestFailoverNetwork:
         for storage_node in self.neofs_env.storage_nodes:
             pid = storage_node.process.pid
 
-            fschain_addr = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[0]
-            fschain_port = self.neofs_env.inner_ring_nodes[0].rpc_address.split(":")[1]
+            fschain_addr = self.neofs_env.inner_ring_nodes[0].endpoint.split(":")[0]
+            fschain_port = self.neofs_env.inner_ring_nodes[0].endpoint.split(":")[1]
 
             with allure.step(f"Disconnecting storage node {storage_node} from {fschain_addr} {dport_repeat} times"):
                 for repeat in range(dport_repeat):

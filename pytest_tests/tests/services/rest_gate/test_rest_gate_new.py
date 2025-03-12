@@ -43,7 +43,7 @@ class TestRestGate(TestNeofsRestBase):
     @pytest.fixture(scope="class")
     def gw_params(self):
         return {
-            "endpoint": f"http://{self.neofs_env.rest_gw.address}/v1",
+            "endpoint": f"http://{self.neofs_env.rest_gw.endpoint}/v1",
             "wallet_path": self.neofs_env.rest_gw.wallet.path,
         }
 
