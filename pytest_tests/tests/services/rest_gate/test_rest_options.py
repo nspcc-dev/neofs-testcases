@@ -6,14 +6,14 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.rest_gate import upload_via_rest_gate, verify_options_request
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NodeWallet
+from rest_gw.rest_base import TestNeofsRestBase
 
 logger = logging.getLogger("NeoLogger")
 
 
 @pytest.mark.sanity
-class TestRestOptions(NeofsEnvTestBase):
+class TestRestOptions(TestNeofsRestBase):
     PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)

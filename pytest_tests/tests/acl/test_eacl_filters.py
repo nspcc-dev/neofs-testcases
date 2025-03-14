@@ -24,11 +24,11 @@ from helpers.grpc_responses import INVALID_RULES, OBJECT_ACCESS_DENIED
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.object_access import can_get_head_object, can_get_object, can_put_object
 from helpers.wellknown_acl import PUBLIC_ACL
-from neofs_env.neofs_env_test_base import NeofsEnvTestBase
+from neofs_env.neofs_env_test_base import TestNeofsBase
 from pytest_lazy_fixtures import lf
 
 
-class TestEACLFilters(NeofsEnvTestBase):
+class TestEACLFilters(TestNeofsBase):
     #  SPEC: https://github.com/nspcc-dev/neofs-spec/blob/master/01-arch/07-acl.md
     ATTRIBUTE = {"check_key": "check_value"}
     OTHER_ATTRIBUTE = {"check_key": "other_value"}
