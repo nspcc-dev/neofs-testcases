@@ -170,6 +170,7 @@ class TestS3(TestNeofsS3Base):
             time.sleep(1)
             generate_file_with_content(simple_object_size, file_path=file_name_simple, content=version_2_content)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            time.sleep(1)
 
         with allure.step("Check bucket shows all versions"):
             versions = s3_object.list_objects_versions_s3(self.s3_client, bucket)

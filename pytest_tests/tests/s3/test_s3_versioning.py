@@ -1,4 +1,5 @@
 import os
+import time
 
 import allure
 import pytest
@@ -38,6 +39,7 @@ class TestS3Versioning(TestNeofsS3Base):
 
         with allure.step("Put object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
             objects_list = s3_object.list_objects_s3(self.s3_client, bucket)
             assert objects_list == bucket_objects, f"Expected list with single objects in bucket, got {objects_list}"
             object_version = s3_object.list_objects_versions_s3(self.s3_client, bucket)
@@ -52,6 +54,7 @@ class TestS3Versioning(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
             file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
