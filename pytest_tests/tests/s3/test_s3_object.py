@@ -109,6 +109,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Delete one object from first bucket and check object in bucket"):
             s3_object.delete_object_s3(self.s3_client, bucket_1, obj_key)
+            time.sleep(1)
             bucket_1_objects.remove(obj_key)
             check_objects_in_bucket(self.s3_client, bucket_1, expected_objects=bucket_1_objects)
 
@@ -337,6 +338,7 @@ class TestS3Object(TestNeofsS3Base):
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
+            time.sleep(1)
             file_name_1 = generate_file_with_content(
                 simple_object_size, file_path=file_name_simple, content=version_2_content
             )
@@ -362,6 +364,7 @@ class TestS3Object(TestNeofsS3Base):
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
             file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
@@ -443,6 +446,7 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path, Metadata=object_metadata)
+            time.sleep(1)
             file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
@@ -473,6 +477,7 @@ class TestS3Object(TestNeofsS3Base):
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         with allure.step("Put several versions of object into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path_1)
+            time.sleep(1)
             s3_object.put_object_s3(self.s3_client, bucket, file_path_2)
 
         with allure.step("Get list of object"):
@@ -691,6 +696,7 @@ class TestS3Object(TestNeofsS3Base):
                 ObjectLockLegalHoldStatus="OFF",
             )
             assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
+            time.sleep(1)
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
@@ -705,6 +711,7 @@ class TestS3Object(TestNeofsS3Base):
                 ObjectLockRetainUntilDate=date_obj,
             )
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
+            time.sleep(1)
 
         with allure.step(
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
@@ -720,6 +727,7 @@ class TestS3Object(TestNeofsS3Base):
                 ObjectLockLegalHoldStatus="ON",
             )
             assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
+            time.sleep(1)
 
         with allure.step("Put object with lock-mode"):
             with pytest.raises(
@@ -728,6 +736,7 @@ class TestS3Object(TestNeofsS3Base):
             ):
                 # x-amz-object-lock-retain-until-date and x-amz-object-lock-mode must both be supplied
                 s3_object.put_object_s3(self.s3_client, bucket, file_path_1, ObjectLockMode="COMPLIANCE")
+                time.sleep(1)
 
         with allure.step("Put object with lock-mode and past date"):
             date_obj = datetime.now(UTC) - timedelta(days=3)
