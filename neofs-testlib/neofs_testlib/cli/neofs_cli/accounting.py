@@ -11,6 +11,7 @@ class NeofsCliAccounting(CliCommand):
         rpc_endpoint: Optional[str] = None,
         address: Optional[str] = None,
         owner: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """Get internal balance of NeoFS account
 
@@ -19,6 +20,7 @@ class NeofsCliAccounting(CliCommand):
             owner: Owner of balance account (omit to use owner from private key).
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

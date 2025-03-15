@@ -6,7 +6,12 @@ from neofs_testlib.shell import CommandResult
 
 class NeofsCliACL(CliCommand):
     def extended_create(
-        self, cid: str, out: str, file: Optional[str] = None, rule: Optional[list] = None
+        self,
+        cid: str,
+        out: str,
+        file: Optional[str] = None,
+        rule: Optional[list] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """Create extended ACL from the text representation.
 
@@ -40,6 +45,7 @@ class NeofsCliACL(CliCommand):
             file: Read list of extended ACL table records from from text file.
             out: Save JSON formatted extended ACL table in file.
             rule: Extended ACL table record to apply.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

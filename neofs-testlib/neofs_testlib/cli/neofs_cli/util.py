@@ -12,6 +12,7 @@ class NeofsCliUtil(CliCommand):
         to_file: str,
         address: Optional[str] = None,
         json: Optional[bool] = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Sign bearer token to use it in requests.
@@ -22,6 +23,7 @@ class NeofsCliUtil(CliCommand):
             to_file: File to dump signed bearer token (default: binary encoded).
             json: Dump bearer token in JSON encoding.
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -37,6 +39,7 @@ class NeofsCliUtil(CliCommand):
         from_file: str,
         to_file: str,
         address: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Sign session token to use it in requests.
@@ -46,6 +49,7 @@ class NeofsCliUtil(CliCommand):
             from_file: File with JSON encoded session token to sign.
             to_file: File to dump signed bearer token (default: binary encoded).
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

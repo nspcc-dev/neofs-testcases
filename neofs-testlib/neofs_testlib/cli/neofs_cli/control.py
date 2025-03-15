@@ -1,3 +1,5 @@
+from typing import Optional
+
 from neofs_testlib.cli.cli_command import CliCommand
 from neofs_testlib.shell import CommandResult
 
@@ -7,6 +9,7 @@ class NeofsCliControl(CliCommand):
         self,
         endpoint: str,
         post_data="",
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get current epoch number.
@@ -18,6 +21,7 @@ class NeofsCliControl(CliCommand):
             ttl: TTL value in request meta header (default 2).
             wallet: Path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -27,7 +31,9 @@ class NeofsCliControl(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def object_status(self, address: str, endpoint: str, object: str, wallet: str) -> CommandResult:
+    def object_status(
+        self, address: str, endpoint: str, object: str, wallet: str, shell_timeout: Optional[int] = None
+    ) -> CommandResult:
         """
         Get object status.
 
@@ -36,6 +42,7 @@ class NeofsCliControl(CliCommand):
             endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
             object: Object address
             wallet: Path to the wallet
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -45,7 +52,9 @@ class NeofsCliControl(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def notary_list(self, address: str, endpoint: str, wallet: str) -> CommandResult:
+    def notary_list(
+        self, address: str, endpoint: str, wallet: str, shell_timeout: Optional[int] = None
+    ) -> CommandResult:
         """
         Get list of all notary requests in network.
 
@@ -53,6 +62,7 @@ class NeofsCliControl(CliCommand):
             address: Address of wallet account
             endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
             wallet: Path to the wallet
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -62,7 +72,9 @@ class NeofsCliControl(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def notary_request(self, address: str, endpoint: str, wallet: str, method: str, post_data="") -> CommandResult:
+    def notary_request(
+        self, address: str, endpoint: str, wallet: str, method: str, post_data="", shell_timeout: Optional[int] = None
+    ) -> CommandResult:
         """
         Create and send a notary request with one of the following methods:
         - newEpoch, transaction for creating of new NeoFS epoch event in FS chain, no args
@@ -75,6 +87,7 @@ class NeofsCliControl(CliCommand):
             wallet: Path to the wallet
             method: Requested method
             post_data: Requested method argument
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -84,7 +97,9 @@ class NeofsCliControl(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def notary_sign(self, address: str, endpoint: str, wallet: str, hash: str) -> CommandResult:
+    def notary_sign(
+        self, address: str, endpoint: str, wallet: str, hash: str, shell_timeout: Optional[int] = None
+    ) -> CommandResult:
         """
         Sign notary request by its hash
 
@@ -93,6 +108,7 @@ class NeofsCliControl(CliCommand):
             endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
             wallet: Path to the wallet
             hash: hash of the notary request
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

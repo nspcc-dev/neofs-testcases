@@ -61,10 +61,14 @@ class CliCommand:
         return f"{self.cli_exec_path} {self.__base_params} {command or ''} {param_str}"
 
     def _execute(self, command: Optional[str], **params) -> CommandResult:
-        return self.shell.exec(self._format_command(command, **params))
+        shell_timeout = params.pop("shell_timeout", None)
+        return self.shell.exec(self._format_command(command, **params), options=CommandOptions(timeout=shell_timeout))
 
     def _execute_with_password(self, command: Optional[str], password, **params) -> CommandResult:
+        shell_timeout = params.pop("shell_timeout", None)
         return self.shell.exec(
             self._format_command(command, **params),
-            options=CommandOptions(interactive_inputs=[InteractiveInput(prompt_pattern="assword", input=password)]),
+            options=CommandOptions(
+                interactive_inputs=[InteractiveInput(prompt_pattern="assword", input=password)], timeout=shell_timeout
+            ),
         )
