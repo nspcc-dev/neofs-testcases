@@ -574,14 +574,14 @@ class NeoFSEnv:
             if with_rest_gw:
                 neofs_env.deploy_rest_gw()
         except Exception as e:
-            neofs_env.finalize(request)
+            neofs_env.finalize(request, force_collect_logs=True)
             raise e
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
         return neofs_env
 
     @allure.step("Cleanup neofs env")
-    def finalize(self, request):
+    def finalize(self, request, force_collect_logs=False):
         if request.config.getoption("--persist-env"):
             self.persist()
         else:
@@ -600,7 +600,7 @@ class NeoFSEnv:
                     os.remove(shard.pilorama_path)
                     shutil.rmtree(shard.wc_path, ignore_errors=True)
 
-            if request.session.testsfailed:
+            if request.session.testsfailed or force_collect_logs:
                 shutil.make_archive(os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir)
                 allure.attach.file(
                     os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}.zip"),
