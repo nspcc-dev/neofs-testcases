@@ -1355,7 +1355,7 @@ class REST_GW:
         )
         self.address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
-        self.metrics_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1365,7 +1365,7 @@ class REST_GW:
             REST Gateway:
             - Address: {self.address}
             - Pprof address: {self.pprof_address}
-            - Metrics address: {self.metrics_address}
+            - Prometheus address: {self.prometheus_address}
             - REST GW Config path: {self.config_path}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
@@ -1396,7 +1396,7 @@ class REST_GW:
             address=self.address,
             wallet=self.wallet,
             pprof_address=self.pprof_address,
-            metrics_address=self.metrics_address,
+            metrics_address=self.prometheus_address,
         )
 
     def _launch_process(self):
