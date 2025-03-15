@@ -168,7 +168,7 @@ class TestObjectStaticSession(TestNeofsBase):
                     cid=storage_object.cid,
                     oid=storage_object.oid,
                     shell=self.shell,
-                    endpoint=node.endpoint,
+                    endpoint=node.rpc_address,
                     session=static_sessions[verb],
                 )
 

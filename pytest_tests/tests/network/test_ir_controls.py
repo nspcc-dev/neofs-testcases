@@ -15,7 +15,7 @@ def wait_until_new_config_value(neofs_env: NeoFSEnv, config_key: str, config_val
     net_info = get_netmap_netinfo(
         wallet=neofs_env.storage_nodes[0].wallet.path,
         wallet_config=neofs_env.storage_nodes[0].cli_config,
-        endpoint=neofs_env.storage_nodes[0].endpoint,
+        endpoint=neofs_env.storage_nodes[0].rpc_address,
         shell=neofs_env.shell,
     )
 
@@ -30,7 +30,7 @@ def wait_until_node_disappears_from_netmap_snapshot(
     netmap_snapshot = (
         neofs_env.neofs_cli(alive_node.cli_config)
         .netmap.snapshot(
-            rpc_endpoint=alive_node.endpoint,
+            rpc_endpoint=alive_node.rpc_address,
             wallet=alive_node.wallet.path,
         )
         .stdout

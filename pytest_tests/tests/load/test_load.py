@@ -5,6 +5,6 @@ from neofs_testlib.env.env import XK6
 class TestLoad(TestNeofsBase):
     def test_custom_load(self):
         xk6 = XK6(self.neofs_env)
-        endpoints = [sn.endpoint for sn in self.neofs_env.storage_nodes]
+        endpoints = [sn.rpc_address for sn in self.neofs_env.storage_nodes]
         xk6.prepare(endpoints)
         xk6.run(endpoints)

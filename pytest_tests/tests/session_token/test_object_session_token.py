@@ -51,7 +51,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                 owner=address,
                 wallet_path=wallet.path,
                 wallet_password=wallet.password,
-                rpc_endpoint=session_token_node.endpoint,
+                rpc_endpoint=session_token_node.rpc_address,
                 lifetime=2,
             )
 
@@ -93,7 +93,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                 path=file_path,
                 cid=cid,
                 shell=self.shell,
-                endpoint=session_token_node.endpoint,
+                endpoint=session_token_node.rpc_address,
                 session=session_token,
             )
             delete_object(
@@ -101,7 +101,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                 cid=cid,
                 oid=oid_delete,
                 shell=self.shell,
-                endpoint=session_token_node.endpoint,
+                endpoint=session_token_node.rpc_address,
                 session=session_token,
             )
 
@@ -112,7 +112,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                     path=file_path,
                     cid=cid,
                     shell=self.shell,
-                    endpoint=container_node.endpoint,
+                    endpoint=container_node.rpc_address,
                     session=session_token,
                 )
             with pytest.raises(Exception, match=SESSION_NOT_FOUND):
@@ -121,7 +121,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                     cid=cid,
                     oid=oid,
                     shell=self.shell,
-                    endpoint=container_node.endpoint,
+                    endpoint=container_node.rpc_address,
                     session=session_token,
                 )
 
@@ -132,7 +132,7 @@ class TestDynamicObjectSession(TestNeofsBase):
                     path=file_path,
                     cid=cid,
                     shell=self.shell,
-                    endpoint=non_container_node.endpoint,
+                    endpoint=non_container_node.rpc_address,
                     session=session_token,
                 )
             with pytest.raises(Exception, match=SESSION_NOT_FOUND):
@@ -141,14 +141,14 @@ class TestDynamicObjectSession(TestNeofsBase):
                     cid=cid,
                     oid=oid,
                     shell=self.shell,
-                    endpoint=non_container_node.endpoint,
+                    endpoint=non_container_node.rpc_address,
                     session=session_token,
                 )
 
     @allure.title("Verify session token expiration flags")
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_session_token_expiration_flags(self, default_wallet, simple_object_size, expiration_flag):
-        rpc_endpoint = self.neofs_env.storage_nodes[0].endpoint
+        rpc_endpoint = self.neofs_env.storage_nodes[0].rpc_address
 
         with allure.step("Create Session Token with Lifetime param"):
             current_epoch = neofs_epoch.get_epoch(self.neofs_env)

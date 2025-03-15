@@ -706,5 +706,5 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                             cid,
                             oid,
                             self.shell,
-                            node.endpoint,
+                            node.rpc_address,
                         )

@@ -24,7 +24,7 @@ from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
     response = neofs_env.neofs_cli(node.cli_config).control.object_status(
         address=node.wallet.address,
-        endpoint=node.control_grpc_endpoint,
+        endpoint=node.grpc_address,
         object=f"{cid}/{oid}",
         wallet=node.wallet.path,
     )
@@ -184,7 +184,7 @@ class TestContainer(TestNeofsBase):
 
             with allure.step("Delete container"):
                 delete_container(
-                    wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
+                    wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.rpc_address, await_mode=True
                 )
 
             with allure.step("Alive node should return GC MARKED for the created object from the deleted container"):

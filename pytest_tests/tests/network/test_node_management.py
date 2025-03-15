@@ -151,14 +151,14 @@ class TestNodeManagement(TestNeofsBase):
             rule=placement_rule_3,
             basic_acl=PUBLIC_ACL,
             shell=self.shell,
-            endpoint=alive_node.endpoint,
+            endpoint=alive_node.rpc_address,
         )
         oid = put_object(
             wallet.path,
             source_file_path,
             cid,
             shell=self.shell,
-            endpoint=alive_node.endpoint,
+            endpoint=alive_node.rpc_address,
         )
         wait_object_replication(cid, oid, 3, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env)
 
@@ -194,14 +194,14 @@ class TestNodeManagement(TestNeofsBase):
                 rule=placement_rule_4,
                 basic_acl=PUBLIC_ACL,
                 shell=self.shell,
-                endpoint=alive_node.endpoint,
+                endpoint=alive_node.rpc_address,
             )
             oid = put_object(
                 wallet.path,
                 source_file_path,
                 cid,
                 shell=self.shell,
-                endpoint=alive_node.endpoint,
+                endpoint=alive_node.rpc_address,
             )
             wait_object_replication(cid, oid, 4, shell=self.shell, nodes=storage_nodes, neofs_env=self.neofs_env)
 
@@ -401,7 +401,7 @@ class TestNodeManagement(TestNeofsBase):
 
         for sn in self.neofs_env.storage_nodes:
             self.neofs_env.neofs_cli(sn.cli_config).netmap.nodeinfo(
-                rpc_endpoint=sn.endpoint,
+                rpc_endpoint=sn.rpc_address,
                 wallet=wallet,
             )
 

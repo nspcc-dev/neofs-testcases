@@ -46,7 +46,7 @@ def wait_until_new_epoch(neofs_env: NeoFSEnv, current_epoch: int) -> int:
 def get_epoch(neofs_env: NeoFSEnv, alive_node: Optional[StorageNode] = None):
     alive_node = alive_node if alive_node else neofs_env.storage_nodes[0]
     cli = neofs_env.neofs_cli(alive_node.cli_config)
-    epoch = cli.netmap.epoch(alive_node.endpoint, alive_node.wallet.path)
+    epoch = cli.netmap.epoch(alive_node.rpc_address, alive_node.wallet.path)
     return int(epoch.stdout)
 
 

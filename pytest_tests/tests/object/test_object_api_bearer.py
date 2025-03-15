@@ -91,7 +91,7 @@ def storage_objects(
                 request.param,
                 epoch + 3,
                 bearer_token=bearer_token_file_all_allow,
-                endpoint=node.endpoint,
+                endpoint=node.rpc_address,
             )
         )
     return storage_objects
@@ -186,7 +186,7 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
                         storage_object.cid,
                         storage_object.oid,
                         self.shell,
-                        endpoint=node.endpoint,
+                        endpoint=node.rpc_address,
                         bearer=bearer_token_file_all_allow,
                         wallet_config=self.neofs_env.generate_cli_config(s3_gate_wallet),
                     )

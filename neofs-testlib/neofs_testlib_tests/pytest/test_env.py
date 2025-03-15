@@ -55,7 +55,7 @@ def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
-        f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
+        f"--peer {neofs_env.storage_nodes[0].rpc_address} --container-friendly-name {bucket} "
         f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
         f"--container-policy container_policy.json"
     )
@@ -114,7 +114,7 @@ def test_s3_gw_put_get(neofs_env: NeoFSEnv, s3_creds, wallet: NodeWallet):
         aws_access_key_id=access_key_id,
         aws_secret_access_key=secret_access_key,
         config=config,
-        endpoint_url=f"https://{neofs_env.s3_gw.address}",
+        endpoint_url=f"https://{neofs_env.s3_gw.rpc_address}",
         verify=False,
     )
 
@@ -163,9 +163,9 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
         file.write("123456789")
 
     if gw_type == "HTTP":
-        request = f"http://{neofs_env.http_gw.address}/upload/{cid}"
+        request = f"http://{neofs_env.http_gw.rpc_address}/upload/{cid}"
     else:
-        request = f"http://{neofs_env.rest_gw.address}/v1/upload/{cid}"
+        request = f"http://{neofs_env.rest_gw.rpc_address}/v1/upload/{cid}"
     files = {"upload_file": open(filename, "rb")}
     body = {"filename": filename}
     resp = requests.post(request, files=files, data=body, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
@@ -182,9 +182,9 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
 
     download_attribute = "?download=true"
     if gw_type == "HTTP":
-        request = f"http://{neofs_env.http_gw.address}/get/{cid}/{oid}{download_attribute}"
+        request = f"http://{neofs_env.http_gw.rpc_address}/get/{cid}/{oid}{download_attribute}"
     else:
-        request = f"http://{neofs_env.rest_gw.address}/v1/get/{cid}/{oid}{download_attribute}"
+        request = f"http://{neofs_env.rest_gw.rpc_address}/v1/get/{cid}/{oid}{download_attribute}"
 
     resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 

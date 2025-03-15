@@ -102,7 +102,7 @@ class TestNetworkConfigChange(TestNeofsBase):
             net_info = get_netmap_netinfo(
                 wallet=storage_node.wallet.path,
                 wallet_config=storage_node.cli_config,
-                endpoint=storage_node.endpoint,
+                endpoint=storage_node.rpc_address,
                 shell=self.shell,
             )
 
@@ -116,7 +116,7 @@ class TestNetworkConfigChange(TestNeofsBase):
             net_info = get_netmap_netinfo(
                 wallet=storage_node.wallet.path,
                 wallet_config=storage_node.cli_config,
-                endpoint=storage_node.endpoint,
+                endpoint=storage_node.rpc_address,
                 shell=self.shell,
             )
             original_key_value_pairs = {}

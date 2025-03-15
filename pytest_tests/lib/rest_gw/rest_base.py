@@ -11,7 +11,7 @@ class TestNeofsRestBase(NeofsEnvTestBase):
         net_info = get_netmap_netinfo(
             wallet=storage_node.wallet.path,
             wallet_config=storage_node.cli_config,
-            endpoint=storage_node.endpoint,
+            endpoint=storage_node.rpc_address,
             shell=neofs_env_rest_gw.shell,
         )
         yield net_info["maximum_object_size"]

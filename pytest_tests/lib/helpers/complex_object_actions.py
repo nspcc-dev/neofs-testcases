@@ -6,8 +6,7 @@ from typing import Optional, Tuple
 import allure
 from helpers.common import WALLET_CONFIG
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
-from helpers.neofs_verbs import get_object
-from helpers.neofs_verbs import head_object
+from helpers.neofs_verbs import get_object, head_object
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from neofs_testlib.shell import Shell
@@ -133,7 +132,7 @@ def get_link_object(
         the function throws an error.
     """
     for node in nodes:
-        endpoint = node.endpoint
+        endpoint = node.rpc_address
         try:
             resp = head_object(
                 wallet,
@@ -170,7 +169,7 @@ def get_last_object(wallet: str, cid: str, oid: str, shell: Shell, nodes: list[S
         the function throws an error.
     """
     for node in nodes:
-        endpoint = node.endpoint
+        endpoint = node.rpc_address
         try:
             resp = head_object(wallet, cid, oid, shell=shell, endpoint=endpoint, is_raw=True, is_direct=True)
             if resp["lastPart"]:
@@ -225,7 +224,7 @@ def get_simple_object_copies(wallet: str, cid: str, oid: str, shell: Shell, node
     copies = 0
     for node in nodes:
         try:
-            response = head_object(wallet, cid, oid, shell=shell, endpoint=node.endpoint, is_direct=True)
+            response = head_object(wallet, cid, oid, shell=shell, endpoint=node.rpc_address, is_direct=True)
             if response:
                 logger.info(f"Found object {oid} on node {node}")
                 copies += 1
@@ -281,7 +280,7 @@ def get_nodes_with_object(
                 cid,
                 oid,
                 shell=shell,
-                endpoint=node.endpoint,
+                endpoint=node.rpc_address,
                 is_direct=True,
                 wallet_config=node.cli_config,
             )
@@ -313,7 +312,7 @@ def get_nodes_without_object(
     nodes_list = []
     for node in nodes:
         try:
-            res = head_object(wallet, cid, oid, shell=shell, endpoint=node.endpoint, is_direct=True)
+            res = head_object(wallet, cid, oid, shell=shell, endpoint=node.rpc_address, is_direct=True)
             if res is None:
                 nodes_list.append(node)
         except Exception as err:
