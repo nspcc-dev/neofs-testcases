@@ -47,7 +47,7 @@ class TestContainerPayments:
         GAS = 10**12
         GB = 10**9
         MAX_OBJECT_SIZE = 10**8
-        EPOCH_DURATION = 20
+        EPOCH_DURATION = 30
         CONTAINER_FEE = GAS
         STORAGE_FEE = GAS
 
