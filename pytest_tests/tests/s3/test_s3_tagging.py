@@ -89,11 +89,13 @@ class TestS3Tagging(TestNeofsS3Base):
         with allure.step("Put 10 bucket tags"):
             tags_1 = self.create_tags(10)
             s3_bucket.put_bucket_tagging(self.s3_client, bucket, tags_1)
+            time.sleep(1)
             check_tags_by_bucket(self.s3_client, bucket, tags_1)
 
         with allure.step("Put new 10 bucket tags"):
             tags_2 = self.create_tags(10)
             s3_bucket.put_bucket_tagging(self.s3_client, bucket, tags_2)
+            time.sleep(1)
             check_tags_by_bucket(self.s3_client, bucket, tags_2, tags_1)
 
         with allure.step("Put 11 new tags to bucket and expect an error"):
@@ -101,15 +103,18 @@ class TestS3Tagging(TestNeofsS3Base):
             with pytest.raises(Exception, match=r".*Object tags cannot be greater than 10.*"):
                 # An error occurred (BadRequest) when calling the PutBucketTagging operation (reached max retries: 0): Object tags cannot be greater than 10
                 s3_bucket.put_bucket_tagging(self.s3_client, bucket, tags_3)
+                time.sleep(1)
 
         with allure.step("Put empty tag"):
             tags_4 = []
             s3_bucket.put_bucket_tagging(self.s3_client, bucket, tags_4)
+            time.sleep(1)
             check_tags_by_bucket(self.s3_client, bucket, tags_4)
 
         with allure.step("Put new 10 bucket tags"):
             tags_5 = self.create_tags(10)
             s3_bucket.put_bucket_tagging(self.s3_client, bucket, tags_5)
+            time.sleep(1)
             check_tags_by_bucket(self.s3_client, bucket, tags_5, tags_2)
 
         with allure.step("Delete tags by delete-bucket-tagging"):
