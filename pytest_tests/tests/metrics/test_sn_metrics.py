@@ -20,8 +20,18 @@ from helpers.neofs_verbs import (
     search_object,
 )
 from helpers.node_management import drop_object
+from helpers.rest_gate import create_container as create_container_rest_gw
+from helpers.rest_gate import delete_container as delete_container_rest_gw
+from helpers.rest_gate import (
+    get_container_info,
+    get_epoch_duration_via_rest_gate,
+    get_via_rest_gate,
+    new_upload_via_rest_gate,
+)
 from helpers.wallet_helpers import create_wallet
+from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from rest_gw.rest_utils import generate_credentials
 from s3 import s3_bucket, s3_object
 from s3.s3_base import configure_boto3_client, init_s3_credentials
 
@@ -331,3 +341,69 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
     # assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
     #     "invalid value for neofs_s3_version"
     # )
+
+
+def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet):
+    simple_object_size = int(SIMPLE_OBJECT_SIZE)
+    gw_endpoint = f"http://{neofs_env_single_sn.rest_gw.address}/v1"
+
+    session_token, signature, pub_key = generate_credentials(gw_endpoint, default_wallet, wallet_connect=True)
+    cid = create_container_rest_gw(
+        gw_endpoint,
+        "rest_gw_container",
+        "REP 1",
+        PUBLIC_ACL,
+        session_token,
+        signature,
+        pub_key,
+        wallet_connect=True,
+    )
+
+    get_container_info(gw_endpoint, cid)
+    get_epoch_duration_via_rest_gate(gw_endpoint)
+    oid = new_upload_via_rest_gate(
+        cid=cid,
+        path=generate_file(simple_object_size),
+        endpoint=gw_endpoint,
+    )
+    get_via_rest_gate(
+        cid=cid,
+        oid=oid,
+        endpoint=gw_endpoint,
+        return_response=True,
+    )
+
+    with allure.step("Get metrics"):
+        after_metrics_rest_gw = get_metrics(neofs_env_single_sn.rest_gw)
+        with open("rest_gw_metrics", "w") as f:
+            json.dump(dict(after_metrics_rest_gw), f)
+        allure.attach(json.dumps(dict(after_metrics_rest_gw)), "rest gw metrics", allure.attachment_type.JSON)
+
+    rest_gw_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_rest_gw_path)
+    assert "neofs_rest_gw_version" in after_metrics_rest_gw, "no neofs_rest_gw_version in metrics"
+    assert after_metrics_rest_gw["neofs_rest_gw_version"][0]["params"]["version"] == rest_gw_version, (
+        "invalid value for neofs_rest_gw_version"
+    )
+
+    assert after_metrics_rest_gw["neofs_rest_gw_pool_overall_node_requests"][0]["value"] > 10, (
+        "invalid value for neofs_rest_gw_pool_overall_node_requests"
+    )
+
+    # @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/274")
+    # expected_params = {
+    #     "get_object",
+    #     "network_info",
+    #     "put_container",
+    #     "put_object",
+    #     "get_container",
+    # }
+    # for metric in after_metrics_rest_gw["neofs_rest_gw_pool_avg_request_duration"]:
+    #     if metric["params"]["method"] in expected_params:
+    #         assert metric["value"] > 0, (
+    #             f"invalid value for neofs_rest_gw_pool_avg_request_duration[{metric['params']['method']}]"
+    #         )
+
+    session_token, signature, pub_key = generate_credentials(
+        gw_endpoint, default_wallet, verb="DELETE", wallet_connect=True
+    )
+    delete_container_rest_gw(gw_endpoint, cid, session_token, signature, pub_key, wallet_connect=True)
