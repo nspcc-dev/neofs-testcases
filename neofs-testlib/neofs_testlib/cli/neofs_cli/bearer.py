@@ -16,6 +16,7 @@ class NeofsCliBearer(CliCommand):
         eacl: Optional[str] = None,
         lifetime: Optional[int] = None,
         expire_at: Optional[int] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Create bearer token
@@ -30,6 +31,7 @@ class NeofsCliBearer(CliCommand):
             eacl: Path to the extended ACL table.
             lifetime: Lock lifetime - relative to the current epoch.
             expire_at: Last epoch in the life of the object - absolute value.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

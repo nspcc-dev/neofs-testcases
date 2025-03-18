@@ -17,6 +17,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Delete object from NeoFS.
@@ -32,6 +33,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -57,6 +59,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get object from NeoFS.
@@ -76,6 +79,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -100,6 +104,7 @@ class NeofsCliObject(CliCommand):
         hash_type: Optional[str] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get object hash.
@@ -118,6 +123,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -144,6 +150,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get object header.
@@ -164,6 +171,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -187,6 +195,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Lock object in container.
@@ -204,6 +213,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -232,6 +242,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Put object to NeoFS.
@@ -255,6 +266,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -280,6 +292,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get payload range data of an object.
@@ -299,6 +312,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -323,6 +337,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Search object.
@@ -341,6 +356,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -368,6 +384,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Search object.
@@ -389,6 +406,7 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

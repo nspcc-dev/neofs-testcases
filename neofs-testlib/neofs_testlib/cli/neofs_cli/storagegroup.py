@@ -17,6 +17,7 @@ class NeofsCliStorageGroup(CliCommand):
         expire_at: Optional[int] = None,
         address: Optional[str] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Put storage group to NeoFS.
@@ -32,6 +33,7 @@ class NeofsCliStorageGroup(CliCommand):
             ttl: TTL value in request meta header.
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -53,6 +55,7 @@ class NeofsCliStorageGroup(CliCommand):
         bearer: Optional[str] = None,
         address: Optional[str] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get storage group from NeoFS.
@@ -67,6 +70,7 @@ class NeofsCliStorageGroup(CliCommand):
             ttl: TTL value in request meta header.
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -86,6 +90,7 @@ class NeofsCliStorageGroup(CliCommand):
         bearer: Optional[str] = None,
         address: Optional[str] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         List storage groups in NeoFS container.
@@ -99,6 +104,7 @@ class NeofsCliStorageGroup(CliCommand):
             ttl: TTL value in request meta header.
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -119,6 +125,7 @@ class NeofsCliStorageGroup(CliCommand):
         bearer: Optional[str] = None,
         address: Optional[str] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Delete storage group from NeoFS.
@@ -133,6 +140,7 @@ class NeofsCliStorageGroup(CliCommand):
             ttl: TTL value in request meta header.
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

@@ -15,6 +15,7 @@ class NeofsCliSession(CliCommand):
         expire_at: Optional[int] = None,
         address: Optional[str] = None,
         json: Optional[bool] = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Create session token.
@@ -28,6 +29,7 @@ class NeofsCliSession(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             wallet_password: Wallet password.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

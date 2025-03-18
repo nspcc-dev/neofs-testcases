@@ -23,6 +23,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Create a new container and register it in the NeoFS.
@@ -46,6 +47,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -67,6 +69,7 @@ class NeofsCliContainer(CliCommand):
         xhdr: Optional[dict] = None,
         force: bool = False,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Delete an existing container.
@@ -83,6 +86,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -105,6 +109,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get container field info.
@@ -120,6 +125,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -141,6 +147,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get extended ACL table of container.
@@ -156,6 +163,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -175,6 +183,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
         **params,
     ) -> CommandResult:
         """
@@ -188,6 +197,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -206,6 +216,7 @@ class NeofsCliContainer(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         List existing objects in container.
@@ -218,6 +229,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -240,6 +252,7 @@ class NeofsCliContainer(CliCommand):
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
         force: Optional[bool] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Set a new extended ACL table for the container.
@@ -256,6 +269,7 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -270,6 +284,7 @@ class NeofsCliContainer(CliCommand):
         rpc_endpoint: str,
         wallet: str,
         cid: str,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Show nodes taking part in a container at the current epoch.
@@ -278,6 +293,7 @@ class NeofsCliContainer(CliCommand):
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             cid: Container ID.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

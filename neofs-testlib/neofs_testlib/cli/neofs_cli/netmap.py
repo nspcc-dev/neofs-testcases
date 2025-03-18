@@ -13,6 +13,7 @@ class NeofsCliNetmap(CliCommand):
         generate_key: bool = False,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get current epoch number.
@@ -24,6 +25,7 @@ class NeofsCliNetmap(CliCommand):
             ttl: TTL value in request meta header (default 2).
             wallet: Path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -41,6 +43,7 @@ class NeofsCliNetmap(CliCommand):
         generate_key: bool = False,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get information about NeoFS network.
@@ -52,6 +55,7 @@ class NeofsCliNetmap(CliCommand):
             ttl: TTL value in request meta header (default 2)
             wallet: Path to the wallet or binary key
             xhdr: Request X-Headers in form of Key=Value
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -70,6 +74,7 @@ class NeofsCliNetmap(CliCommand):
         json: bool = False,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Get target node info.
@@ -82,6 +87,7 @@ class NeofsCliNetmap(CliCommand):
             ttl: TTL value in request meta header (default 2).
             wallet: Path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -99,6 +105,7 @@ class NeofsCliNetmap(CliCommand):
         generate_key: bool = False,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Request current local snapshot of the network map.
@@ -110,6 +117,7 @@ class NeofsCliNetmap(CliCommand):
             ttl: TTL value in request meta header (default 2).
             wallet: Path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.

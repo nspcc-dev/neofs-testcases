@@ -56,7 +56,10 @@ class TestCli(TestCase):
             f"--xhdr '{xhdr}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_bad_wallet_argument(self):
         shell = Mock()
@@ -134,7 +137,10 @@ class TestCli(TestCase):
             f"--wallet '{self.wallet}' --notary"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_wallet_nep17_multitransfer(self):
         shell = Mock()
@@ -160,14 +166,20 @@ class TestCli(TestCase):
             f"--timeout '{self.timeout}s'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_version(self):
         shell = Mock()
         neofs_adm = NeofsAdm(shell=shell, neofs_adm_exec_path=self.neofs_adm_exec_path)
         neofs_adm.version.get()
 
-        shell.exec.assert_called_once_with(f"{self.neofs_adm_exec_path}   --version")
+        shell.exec.assert_called_once_with(
+            f"{self.neofs_adm_exec_path}   --version",
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_flush_cache(self):
         shell = Mock()
@@ -190,7 +202,10 @@ class TestCli(TestCase):
             f"--id '{self.shards_id[0]}' --id '{self.shards_id[1]}' --id '{self.shards_id[2]}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_set_mode(self):
         shell = Mock()
@@ -214,7 +229,10 @@ class TestCli(TestCase):
             f"--id '{self.shards_id[0]}' --id '{self.shards_id[1]}' --id '{self.shards_id[2]}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_dump(self):
         shell = Mock()
@@ -238,7 +256,10 @@ class TestCli(TestCase):
             f"--path '{self.path_to_objects}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_list(self):
         shell = Mock()
@@ -260,7 +281,10 @@ class TestCli(TestCase):
             f"--endpoint '{self.rpc_endpoint}' --wallet '{self.wallet}' --address '{self.address}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_evacuate(self):
         shell = Mock()
@@ -283,7 +307,10 @@ class TestCli(TestCase):
             f"--id '{self.shards_id[0]}' --id '{self.shards_id[1]}' --id '{self.shards_id[2]}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )
 
     def test_shards_restore(self):
         shell = Mock()
@@ -307,4 +334,7 @@ class TestCli(TestCase):
             f"--path '{self.path_to_objects}'"
         )
 
-        shell.exec.assert_called_once_with(expected_command)
+        shell.exec.assert_called_once_with(
+            expected_command,
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+        )

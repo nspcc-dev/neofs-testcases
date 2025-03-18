@@ -12,6 +12,7 @@ class NeofsCliShards(CliCommand):
         shards_id: Optional[list[str]] = None,
         address: Optional[str] = None,
         all: bool = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Flush objects from the write-cache to the main storage.
@@ -22,6 +23,7 @@ class NeofsCliShards(CliCommand):
             all: Process all shards.
             endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -40,6 +42,7 @@ class NeofsCliShards(CliCommand):
         address: Optional[str] = None,
         all_shards: bool = False,
         clear_errors: bool = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Set work mode of the shard.
@@ -52,6 +55,7 @@ class NeofsCliShards(CliCommand):
             clear_errors: Set shard error count to 0.
             endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -69,6 +73,7 @@ class NeofsCliShards(CliCommand):
         path: str,
         address: Optional[str] = None,
         no_errors: bool = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Dump objects from shard to a file.
@@ -80,6 +85,7 @@ class NeofsCliShards(CliCommand):
             path: File to write objects to.
             endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -95,6 +101,7 @@ class NeofsCliShards(CliCommand):
         wallet: str,
         address: Optional[str] = None,
         json_mode: bool = False,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         List shards of the storage node.
@@ -104,6 +111,7 @@ class NeofsCliShards(CliCommand):
             json_mode: Print shard info as a JSON array.
             endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -122,6 +130,7 @@ class NeofsCliShards(CliCommand):
         no_errors: bool = False,
         address: Optional[str] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Evacuate objects from shard to other shards.
@@ -134,6 +143,7 @@ class NeofsCliShards(CliCommand):
             no_errors: Skip invalid/unreadable objects.
             address: Address of wallet account.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
@@ -153,6 +163,7 @@ class NeofsCliShards(CliCommand):
         no_errors: bool = False,
         address: Optional[str] = None,
         timeout: Optional[str] = None,
+        shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
         Restore objects from shard to a file.
@@ -165,6 +176,7 @@ class NeofsCliShards(CliCommand):
             no_errors: Skip invalid/unreadable objects.
             address: Address of wallet account.
             timeout: Timeout for the operation (default 15s).
+            shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
