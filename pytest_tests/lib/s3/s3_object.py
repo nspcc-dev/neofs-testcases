@@ -1,7 +1,6 @@
 import logging
 import os
 import uuid
-from time import sleep
 from typing import Optional
 
 import allure
@@ -10,7 +9,6 @@ from botocore.exceptions import ClientError
 from helpers.aws_cli_client import AwsCliClient
 from helpers.cli_helpers import log_command_execution
 from helpers.common import get_assets_dir_path
-from s3.s3_bucket import S3_SYNC_WAIT_TIME
 
 ##########################################################
 # Disabling warnings on self-signed certificate which the
@@ -148,7 +146,6 @@ def delete_object_s3(s3_client, bucket: str, object_key: str, version_id: Option
             params["VersionId"] = version_id
         response = s3_client.delete_object(**params)
         log_command_execution("S3 Delete object result", response)
-        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:
@@ -163,7 +160,6 @@ def delete_objects_s3(s3_client, bucket: str, object_keys: list):
     try:
         response = s3_client.delete_objects(Bucket=bucket, Delete=_make_objs_dict(object_keys))
         log_command_execution("S3 Delete objects result", response)
-        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:

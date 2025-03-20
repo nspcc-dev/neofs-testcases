@@ -2,7 +2,6 @@ import json
 import logging
 import uuid
 from enum import Enum
-from time import sleep
 from typing import Optional
 
 import allure
@@ -10,12 +9,6 @@ from botocore.exceptions import ClientError
 from helpers.cli_helpers import log_command_execution
 
 logger = logging.getLogger("NeoLogger")
-
-# Artificial delay that we add after object deletion and container creation
-# Delay is added because sometimes immediately after deletion object still appears
-# to be existing (probably because tombstone object takes some time to replicate)
-# TODO: remove after https://github.com/nspcc-dev/neofs-s3-gw/issues/610 is fixed
-S3_SYNC_WAIT_TIME = 5
 
 
 class VersioningStatus(Enum):
@@ -59,7 +52,6 @@ def create_bucket_s3(
 
         s3_bucket = s3_client.create_bucket(**params)
         log_command_execution(f"Created S3 bucket {bucket_name}", s3_bucket)
-        sleep(S3_SYNC_WAIT_TIME)
         return bucket_name
     except ClientError as err:
         raise Exception(
@@ -92,7 +84,6 @@ def delete_bucket_s3(s3_client, bucket: str):
     try:
         response = s3_client.delete_bucket(Bucket=bucket)
         log_command_execution("S3 Delete bucket result", response)
-        sleep(S3_SYNC_WAIT_TIME)
         return response
 
     except ClientError as err:
