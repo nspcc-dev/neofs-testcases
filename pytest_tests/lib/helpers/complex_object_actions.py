@@ -6,8 +6,7 @@ from typing import Optional, Tuple
 import allure
 from helpers.common import WALLET_CONFIG
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
-from helpers.neofs_verbs import get_object
-from helpers.neofs_verbs import head_object
+from helpers.neofs_verbs import get_object, head_object
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from neofs_testlib.shell import Shell

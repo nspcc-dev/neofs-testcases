@@ -129,7 +129,7 @@ class TestControlShard:
     def get_shards_from_cli(neofs_env: NeoFSEnv, node: StorageNode) -> list[Shard]:
         cli = neofs_env.neofs_cli(node.cli_config)
         result = cli.shards.list(
-            endpoint=node.control_grpc_endpoint,
+            endpoint=node.control_endpoint,
             wallet=node.wallet.path,
             json_mode=True,
         )

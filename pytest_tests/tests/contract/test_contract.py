@@ -25,7 +25,7 @@ class TestContract(TestNeofsBase):
         with allure.step("Try to deploy contract with wrong arguments"):
             with pytest.raises(RuntimeError, match=".*deploy has failed.*"):
                 neofsadm.fschain.deploy(
-                    rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
+                    rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].endpoint}",
                     alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                     domain="myzone",
                     contract=os.path.join(datadir, "deploy"),
@@ -34,7 +34,7 @@ class TestContract(TestNeofsBase):
 
         with allure.step("Try to deploy contract with valid arguments"):
             neofsadm.fschain.deploy(
-                rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
+                rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].endpoint}",
                 alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                 domain="myzone",
                 contract=os.path.join(datadir, "deploy"),
@@ -53,7 +53,7 @@ class TestContract(TestNeofsBase):
             with allure.step("Try to deploy updated contract with wrong arguments"):
                 with pytest.raises(RuntimeError, match=".*update has failed.*"):
                     neofsadm.fschain.deploy(
-                        rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
+                        rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].endpoint}",
                         alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                         domain="myzone",
                         update=True,
@@ -63,7 +63,7 @@ class TestContract(TestNeofsBase):
 
             with allure.step("Try to deploy updated contract with valid arguments"):
                 neofsadm.fschain.deploy(
-                    rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
+                    rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].endpoint}",
                     alphabet_wallets="/".join(neofs_env.inner_ring_nodes[0].alphabet_wallet.path.split("/")[:-1]),
                     domain="myzone",
                     update=True,
@@ -72,7 +72,7 @@ class TestContract(TestNeofsBase):
                 )
 
         hashes = neofsadm.fschain.dump_hashes(
-            rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].rpc_address}",
+            rpc_endpoint=f"http://{neofs_env.inner_ring_nodes[0].endpoint}",
             domain="myzone",
         )
         assert hashes != ""

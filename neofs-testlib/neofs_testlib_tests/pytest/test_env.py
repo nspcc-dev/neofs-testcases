@@ -114,7 +114,7 @@ def test_s3_gw_put_get(neofs_env: NeoFSEnv, s3_creds, wallet: NodeWallet):
         aws_access_key_id=access_key_id,
         aws_secret_access_key=secret_access_key,
         config=config,
-        endpoint_url=f"https://{neofs_env.s3_gw.address}",
+        endpoint_url=f"https://{neofs_env.s3_gw.endpoint}",
         verify=False,
     )
 
@@ -163,9 +163,9 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
         file.write("123456789")
 
     if gw_type == "HTTP":
-        request = f"http://{neofs_env.http_gw.address}/upload/{cid}"
+        request = f"http://{neofs_env.http_gw.endpoint}/upload/{cid}"
     else:
-        request = f"http://{neofs_env.rest_gw.address}/v1/upload/{cid}"
+        request = f"http://{neofs_env.rest_gw.endpoint}/v1/upload/{cid}"
     files = {"upload_file": open(filename, "rb")}
     body = {"filename": filename}
     resp = requests.post(request, files=files, data=body, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
@@ -182,9 +182,9 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
 
     download_attribute = "?download=true"
     if gw_type == "HTTP":
-        request = f"http://{neofs_env.http_gw.address}/get/{cid}/{oid}{download_attribute}"
+        request = f"http://{neofs_env.http_gw.endpoint}/get/{cid}/{oid}{download_attribute}"
     else:
-        request = f"http://{neofs_env.rest_gw.address}/v1/get/{cid}/{oid}{download_attribute}"
+        request = f"http://{neofs_env.rest_gw.endpoint}/v1/get/{cid}/{oid}{download_attribute}"
 
     resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 

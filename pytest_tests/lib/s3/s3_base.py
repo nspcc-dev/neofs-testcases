@@ -99,9 +99,9 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
         if "aws cli" in request.param:
-            client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
+            client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.endpoint}")
         else:
-            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.address}")
+            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.endpoint}")
         TestNeofsS3Base.s3_client = client
         TestNeofsS3Base.wallet = wallet
         TestNeofsS3Base.access_key_id = access_key_id

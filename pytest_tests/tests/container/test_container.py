@@ -24,7 +24,7 @@ from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
     response = neofs_env.neofs_cli(node.cli_config).control.object_status(
         address=node.wallet.address,
-        endpoint=node.control_grpc_endpoint,
+        endpoint=node.control_endpoint,
         object=f"{cid}/{oid}",
         wallet=node.wallet.path,
     )

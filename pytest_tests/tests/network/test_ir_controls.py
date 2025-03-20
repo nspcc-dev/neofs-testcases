@@ -50,7 +50,7 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_request(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 method="newEpoch",
             )
@@ -63,7 +63,7 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_list(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
             )
             .stdout.strip()
@@ -74,7 +74,7 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
         for ir_node in neofs_env.inner_ring_nodes[1:-1]:
             neofs_env.neofs_cli(ir_node.cli_config).control.notary_sign(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 hash=tx_hash,
             )
@@ -109,7 +109,7 @@ def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, 
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_request(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 method="setConfig",
                 post_data=f"{key}={value}",
@@ -123,7 +123,7 @@ def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, 
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_list(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
             )
             .stdout.strip()
@@ -134,7 +134,7 @@ def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, 
         for ir_node in neofs_env.inner_ring_nodes[1:-1]:
             neofs_env.neofs_cli(ir_node.cli_config).control.notary_sign(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 hash=tx_hash,
             )
@@ -156,7 +156,7 @@ def test_control_notary_request_node_removal(neofs_env_4_ir_4_sn: NeoFSEnv):
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_request(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 method="removeNode",
                 post_data=sn_offline_node_addr,
@@ -170,7 +170,7 @@ def test_control_notary_request_node_removal(neofs_env_4_ir_4_sn: NeoFSEnv):
             neofs_env.neofs_cli(ir_node.cli_config)
             .control.notary_list(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
             )
             .stdout.strip()
@@ -181,7 +181,7 @@ def test_control_notary_request_node_removal(neofs_env_4_ir_4_sn: NeoFSEnv):
         for ir_node in neofs_env.inner_ring_nodes[1:-1]:
             neofs_env.neofs_cli(ir_node.cli_config).control.notary_sign(
                 address=ir_node.alphabet_wallet.address,
-                endpoint=ir_node.grpc_address,
+                endpoint=ir_node.control_endpoint,
                 wallet=ir_node.alphabet_wallet.path,
                 hash=tx_hash,
             )

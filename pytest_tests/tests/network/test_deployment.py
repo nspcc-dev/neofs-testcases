@@ -155,7 +155,7 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
     with allure.step("Flush cache"):
         for sn in neofs_env.storage_nodes:
             neofs_cli = neofs_env.neofs_cli(sn.cli_config)
-            result = neofs_cli.shards.flush_cache(endpoint=sn.control_grpc_endpoint, all=True).stdout
+            result = neofs_cli.shards.flush_cache(endpoint=sn.control_endpoint, all=True).stdout
             assert "Write-cache has been flushed" in result
 
     with allure.step("Stop SNs and inspect blobstore"):

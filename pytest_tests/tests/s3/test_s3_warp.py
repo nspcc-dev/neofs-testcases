@@ -33,7 +33,7 @@ class TestS3Warp(TestNeofsS3Base):
             region="us-east-1",
             access_key=self.access_key_id,
             secret_key=self.secret_access_key,
-            host=self.neofs_env.s3_gw.address,
+            host=self.neofs_env.s3_gw.endpoint,
         )
         resulted_config_path = f"{temp_directory}/warp_config"
         with open(resulted_config_path, mode="w") as fp:
