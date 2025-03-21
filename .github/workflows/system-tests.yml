@@ -163,14 +163,23 @@ jobs:
             uses: actions/checkout@v4
             with:
               repository: nspcc-dev/xk6-neofs
-              ref: master
+              ref: 'v0.2.0'
+              fetch-depth: 0
+              fetch-tags: true
               path: xk6-neofs
 
-          - name: Build xk6-neofs
-            timeout-minutes: 5
+          - name: Download xk6-neofs
+            uses: dsaltares/fetch-gh-release-asset@1.1.2
+            with:
+              repo: 'nspcc-dev/xk6-neofs'
+              version: 'tags/v0.2.0'
+              file: 'xk6-neofs-${{ matrix.binary }}'
+              target: 'xk6-neofs/xk6-neofs'
+
+          - name: Make xk6-neofs executable
+            timeout-minutes: 30
             run: |
-              make install_xk6
-              make build
+              sudo chmod a+x xk6-neofs
             working-directory: xk6-neofs
 
           - name: Checkout neofs-node repository
