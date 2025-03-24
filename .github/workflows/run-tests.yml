@@ -36,5 +36,6 @@ jobs:
       neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
       neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
       tests_parallel_level: 3
+      marks: 'sanity'
       os: '[{runner: "ubuntu-latest", binary: "linux-amd64"}, {runner: "macos-14", binary: "darwin-arm64"}]'
     secrets: inherit
