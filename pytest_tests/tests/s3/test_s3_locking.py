@@ -136,6 +136,7 @@ class TestS3Locking(TestNeofsS3Base):
                     "RetainUntilDate": date_obj,
                 }
                 s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+                time.sleep(1)
                 assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
             with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
@@ -146,6 +147,7 @@ class TestS3Locking(TestNeofsS3Base):
                 }
                 with pytest.raises(Exception):
                     s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+                    time.sleep(1)
 
             with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
                 date_obj = datetime.now(UTC) + timedelta(minutes=retention_period_1)
@@ -155,6 +157,7 @@ class TestS3Locking(TestNeofsS3Base):
                 }
                 with pytest.raises(Exception):
                     s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+                    time.sleep(1)
 
             with allure.step(f"Put new retention period {retention_period_2}min to object {file_name}"):
                 date_obj = datetime.now(UTC) + timedelta(minutes=retention_period_2)
