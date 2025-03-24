@@ -300,6 +300,7 @@ class TestS3(TestNeofsS3Base):
 
         for tags in (key_value_pair_obj, key_value_pair_obj_new):
             s3_object.put_object_tagging(self.s3_client, bucket, obj_key, tags)
+            time.sleep(1)
             check_tags_by_object(
                 self.s3_client,
                 bucket,
