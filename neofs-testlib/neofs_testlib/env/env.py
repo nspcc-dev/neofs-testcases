@@ -1000,8 +1000,9 @@ class InnerRing:
             stdout=stdout_fp,
             stderr=stderr_fp,
             env={
-                "GRPC_GO_LOG_VERBOSITY_LEVEL": "99",
-                "GRPC_GO_LOG_SEVERITY_LEVEL": "info",
+#                 "GRPC_GO_LOG_VERBOSITY_LEVEL": "99",
+#                 "GRPC_GO_LOG_SEVERITY_LEVEL": "info",
+                "GODEBUG": "http2debug=2",
             },
         )
 
