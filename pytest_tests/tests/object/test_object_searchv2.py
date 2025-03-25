@@ -42,7 +42,13 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
 
 @pytest.fixture
 def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
-    cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule="REP 3 CBF 3")
+    cid = create_container(
+        default_wallet.path,
+        shell=client_shell,
+        endpoint=neofs_env.sn_rpc,
+        rule="REP 3 CBF 3",
+        attributes={"__NEOFS__METAINFO_CONSISTENCY": "strict"},
+    )
     yield cid
     delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 

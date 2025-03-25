@@ -35,6 +35,8 @@ jobs:
       neofs_manual_expiration_period: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
       neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
       neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
+      neofs_node_commit: '5c9fedccade6d678094e36a82c5e51deb9bf7d50'
+      tests_path: 'pytest_tests/tests/object/test_object_searchv2.py'
       tests_parallel_level: 3
       os: '[{runner: "ubuntu-latest", binary: "linux-amd64"}, {runner: "macos-14", binary: "darwin-arm64"}]'
     secrets: inherit
