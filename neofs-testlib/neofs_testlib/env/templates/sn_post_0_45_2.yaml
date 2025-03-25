@@ -36,6 +36,9 @@ node:
   persistent_state:
     path: {{ state_file }}  # Path to application state file
 
+metadata:
+  path: {{ metadata_path }}
+
 # Storage engine configuration
 storage:    
   shards:
