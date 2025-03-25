@@ -38,6 +38,7 @@ def get_or_create_neofs_env(
     peapod_required=True,
     with_s3_gw=True,
     with_rest_gw=True,
+    chain_meta_data=False,
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -52,6 +53,7 @@ def get_or_create_neofs_env(
             with_s3_gw=with_s3_gw,
             with_rest_gw=with_rest_gw,
             request=request,
+            chain_meta_data=chain_meta_data,
         )
     return neofs_env
 
@@ -80,6 +82,13 @@ def neofs_env_rest_gw(temp_directory, artifacts_directory, request):
 @pytest.fixture(scope="function")
 def neofs_env_function_scope(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False)
+    yield neofs_env
+    neofs_env.finalize(request)
+    
+    
+@pytest.fixture(scope="function")
+def neofs_env_chain_meta_data(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False, chain_meta_data=True)
     yield neofs_env
     neofs_env.finalize(request)
 

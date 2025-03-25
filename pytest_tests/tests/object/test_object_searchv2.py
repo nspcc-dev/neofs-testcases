@@ -9,6 +9,7 @@ import allure
 import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
+from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.complex_object_actions import get_object_chunks
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
@@ -16,6 +17,7 @@ from helpers.neofs_verbs import (
     delete_object,
     generate_filter_json_file,
     head_object,
+    put_object,
     put_object_to_random_node,
     search_objectv2,
 )
@@ -1387,3 +1389,53 @@ def test_search_filters_attributes_limits(
             filters=[f"int_attr{x} GE 1000" for x in range(8)],
             attributes=[f"int_attr{x}" for x in range(9)],
         )
+
+
+def test_searchv2_meta_enabled_containers(neofs_env_chain_meta_data: NeoFSEnv, default_wallet: NodeWallet):
+    neofs_env = neofs_env_chain_meta_data
+    for meta_info_consistency in ("strict", "optimistic"):
+        with allure.step(f"Create container with __NEOFS__METAINFO_CONSISTENCY={meta_info_consistency}"):
+            cid = create_container(
+                default_wallet.path,
+                shell=neofs_env.shell,
+                endpoint=neofs_env.sn_rpc,
+                rule="REP 1",
+                attributes={"__NEOFS__METAINFO_CONSISTENCY": meta_info_consistency},
+            )
+
+        with allure.step("Put objects to different nodes"):
+            for sn in neofs_env.storage_nodes:
+                for _ in range(2):
+                    file_path = generate_file(int(SIMPLE_OBJECT_SIZE))
+                    put_object(
+                        default_wallet.path,
+                        file_path,
+                        cid,
+                        neofs_env.shell,
+                        sn.endpoint,
+                    )
+
+        with allure.step("Search from one node should return all created objects"):
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+            )
+
+            assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
+
+        with allure.step("Kill all nodes except one"):
+            alive_node = neofs_env.storage_nodes[0]
+            for sn in neofs_env.storage_nodes[1:]:
+                sn.kill()
+
+        with allure.step("Search from alive node should return all created objects"):
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=alive_node.endpoint,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+            )
+
+            assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
