@@ -34,7 +34,7 @@ from helpers.session_token import (
     get_object_signed_token,
     sign_session_token,
 )
-from helpers.storage_object_info import StorageObjectInfo, delete_objects
+from helpers.storage_object_info import StorageObjectInfo
 from helpers.test_control import expect_not_raises
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -47,7 +47,7 @@ logger = logging.getLogger("NeoLogger")
 RANGE_OFFSET_FOR_COMPLEX_OBJECT = 200
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def storage_containers(owner_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> list[str]:
     cid = create_container(owner_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
     other_cid = create_container(owner_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
@@ -57,8 +57,6 @@ def storage_containers(owner_wallet: NodeWallet, client_shell: Shell, neofs_env:
 @pytest.fixture(
     params=[lf("simple_object_size"), lf("complex_object_size")],
     ids=["simple object", "complex object"],
-    # Scope module to upload/delete each files set only once
-    scope="module",
 )
 def storage_objects(
     owner_wallet: NodeWallet,
@@ -89,9 +87,6 @@ def storage_objects(
 
     yield storage_objects
 
-    # Teardown after all tests done with current param
-    delete_objects(storage_objects, client_shell, neofs_env)
-
 
 @allure.step("Get ranges for test")
 def get_ranges(storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, endpoint: str) -> list[str]:
@@ -111,7 +106,7 @@ def get_ranges(storage_object: StorageObjectInfo, max_object_size: int, shell: S
         return ["0:10", f"{object_size - 10}:10"]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def static_sessions(
     owner_wallet: NodeWallet,
     user_wallet: NodeWallet,
