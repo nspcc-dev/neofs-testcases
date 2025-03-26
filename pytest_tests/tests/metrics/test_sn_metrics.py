@@ -328,6 +328,22 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         f"invalid value for neofs_s3_request_seconds_bucket, these params are not present: {expected_params=}"
     )
 
+    expected_methods = {
+        "get_container",
+        "get_container_eacl",
+        "get_object",
+        "head_object",
+        "list_container",
+        "network_info",
+        "put_container",
+        "set_container_eacl",
+    }
+    for metric in after_metrics_s3_gw["neofs_s3_gw_pool_avg_request_duration"]:
+        if metric["params"]["method"] in expected_methods:
+            assert metric["value"] > 0, (
+                f"invalid value for neofs_s3_gw_pool_avg_request_duration[{metric['params']['method']}]"
+            )
+
     assert after_metrics_s3_gw["neofs_s3_rx_bytes_total"][0]["value"] >= int(SIMPLE_OBJECT_SIZE), (
         "invalid value for neofs_s3_rx_bytes_total"
     )
@@ -335,12 +351,11 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "invalid value for neofs_s3_rx_bytes_total"
     )
 
-    # https://github.com/nspcc-dev/neofs-s3-gw/issues/1083
-    # neofs_s3_version = single_noded_env.get_binary_version(single_noded_env.neofs_s3_gw_path)
-    # assert 'neofs_s3_version' in after_metrics_s3_gw, "no neofs_s3_version in metrics"
-    # assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
-    #     "invalid value for neofs_s3_version"
-    # )
+    neofs_s3_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)
+    assert "neofs_s3_version" in after_metrics_s3_gw, "no neofs_s3_version in metrics"
+    assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
+        "invalid value for neofs_s3_version"
+    )
 
 
 def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet):
