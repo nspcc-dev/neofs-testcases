@@ -13,7 +13,7 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
-from helpers.neofs_verbs import put_object_to_random_node
+from helpers.neofs_verbs import get_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
@@ -187,15 +187,29 @@ class TestContainer(TestNeofsBase):
                     wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
                 )
 
-            with allure.step("Alive node should return GC MARKED for the created object from the deleted container"):
-                object_should_be_gc_marked(self.neofs_env, alive_node_with_object, cid, oid)
+            with allure.step("Object should become immediately unavailable"):
+                with pytest.raises(Exception):
+                    get_object(
+                        default_wallet.path,
+                        cid,
+                        oid,
+                        self.neofs_env.shell,
+                        alive_node_with_object.endpoint,
+                    )
 
             with allure.step("Start storage node"):
                 node_to_stop.start(fresh=False)
                 wait_all_storage_nodes_returned(self.neofs_env)
 
-            with allure.step("Previously stopped node should return GC MARKED for the created object"):
-                object_should_be_gc_marked(self.neofs_env, node_to_stop, cid, oid)
+            with allure.step("Object should be unavailable from the restarted node"):
+                with pytest.raises(Exception):
+                    get_object(
+                        default_wallet.path,
+                        cid,
+                        oid,
+                        self.neofs_env.shell,
+                        node_to_stop.endpoint,
+                    )
         finally:
             for node in list(stopped_nodes):
                 with allure.step(f"Start {node}"):
