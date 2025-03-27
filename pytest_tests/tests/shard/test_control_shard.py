@@ -8,6 +8,7 @@ import allure
 import pytest
 import yaml
 from dotenv import dotenv_values
+from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
 SHARD_PREFIX = "NEOFS_STORAGE_SHARD_"
@@ -100,6 +101,11 @@ def shards_from_yaml(contents: str) -> list[Shard]:
     return [Shard.from_object(shard) for shard in config["storage"]["shard"].values()]
 
 
+def shards_from_yaml_post_0_45_2(contents: str) -> list[Shard]:
+    config = yaml.safe_load(contents)
+    return [Shard.from_object(shard) for shard in config["storage"]["shards"]]
+
+
 def shards_from_env(contents: str) -> list[Shard]:
     configObj = dotenv_values(stream=StringIO(contents))
 
@@ -116,10 +122,14 @@ class TestControlShard:
         file_type = pathlib.Path(config_file).suffix
         contents = neofs_env.shell.exec(f"cat {config_file}").stdout
 
+        yaml_parser = shards_from_yaml
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            yaml_parser = shards_from_yaml_post_0_45_2
+
         parser_method = {
             ".env": shards_from_env,
-            ".yaml": shards_from_yaml,
-            ".yml": shards_from_yaml,
+            ".yaml": yaml_parser,
+            ".yml": yaml_parser,
         }
 
         shards = parser_method[file_type](contents)

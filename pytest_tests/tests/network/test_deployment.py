@@ -136,10 +136,11 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
             for shard in sn.shards:
                 os.chmod(shard.fstree_path, 0o666)
                 os.chmod(shard.blobovnicza_path, 0o666)
+            sn_config_template = sn.get_config_template()
             NeoFSEnv.generate_config_file(
-                config_template="sn.yaml",
+                config_template=sn_config_template,
                 config_path=sn.storage_node_config_path,
-                custom=Path("sn.yaml").is_file(),
+                custom=Path(sn_config_template).is_file(),
                 fschain_endpoint=sn.neofs_env.fschain_rpc,
                 shards=sn.shards,
                 writecache=sn.writecache,

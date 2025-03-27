@@ -36,6 +36,7 @@ from helpers.common import (
     DEFAULT_REST_OPERATION_TIMEOUT,
     get_assets_dir_path,
 )
+from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -1074,6 +1075,12 @@ class StorageNode:
         del attributes["process"]
         return attributes
 
+    def get_config_template(self):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            return "sn_post_0_45_2.yaml"
+        else:
+            return "sn.yaml"
+
     @allure.step("Start storage node")
     def start(self, fresh=True):
         if fresh:
@@ -1081,7 +1088,7 @@ class StorageNode:
             self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
-            sn_config_template = "sn.yaml"
+            sn_config_template = self.get_config_template()
 
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
@@ -1139,7 +1146,7 @@ class StorageNode:
         os.remove(self.state_file)
         self.shards = [Shard(), Shard()]
 
-        sn_config_template = "sn.yaml"
+        sn_config_template = self.get_config_template()
 
         NeoFSEnv.generate_config_file(
             config_template=sn_config_template,
@@ -1164,7 +1171,7 @@ class StorageNode:
             os.remove(shard.metabase_path)
             shard.metabase_path = self.neofs_env._generate_temp_file(self.sn_dir, prefix="shard_metabase")
 
-        sn_config_template = "sn.yaml"
+        sn_config_template = self.get_config_template()
 
         NeoFSEnv.generate_config_file(
             config_template=sn_config_template,
