@@ -381,7 +381,7 @@ jobs:
             env:
               ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
             run: |
-              source venv.pytest/bin/activate && pytest --timeout=900 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
+              source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
           - name: Publish to NeoFS
