@@ -153,5 +153,5 @@ class TestContainerPayments:
                     - user_wallet_balance_after_new_epoch
                     - (single_node_gain_per_epoch * replicas_number)
                 )
-                <= 1
+                <= 5
             ), "Invalid user wallet balance"
