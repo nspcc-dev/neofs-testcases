@@ -1,0 +1,82 @@
+# Logger section
+logger:
+  level: debug # Minimum enabled logging level
+
+
+# Profiler section
+pprof:
+  enabled: true
+  address: {{ pprof_address }}  # Server address
+  shutdown_timeout: 15s  # Timeout for profiling HTTP server graceful shutdown
+
+# Application metrics section
+prometheus:
+  enabled: true
+  address: {{ prometheus_address }}  # Server address
+  shutdown_timeout: 15s  # Timeout for metrics HTTP server graceful shutdown
+
+# FS chain section
+fschain:
+  dial_timeout: 30s  # Timeout for side chain NEO RPC client connection
+  endpoints:  # Side chain NEO RPC endpoints
+    - ws://{{ fschain_endpoint }}/ws
+
+
+# Tree section
+tree:
+  enabled: true
+
+node:
+  wallet:
+    path: "{{ wallet.path }}"
+    address: "{{ wallet.address }}"
+    password: "{{ wallet.password }}"
+
+  attributes:
+    {%- for attr in attrs %}
+    - "{{attr}}"
+    {%- endfor %}
+
+  persistent_state:
+    path: {{ state_file }}  # Path to application state file
+
+# Storage engine configuration
+storage:    
+  shards:
+    - writecache:
+        enabled: {{ writecache }}
+        path: {{ shards[0].wc_path }}  # Write-cache root directory
+
+      metabase:
+        path: {{ shards[0].metabase_path }}  # Path to the metabase
+
+      blobstor:
+        {% if peapod %}
+        - type: peapod
+          path: {{ shards[0].blobovnicza_path }}  # Blobovnicza root directory
+        {% endif %}
+        - type: fstree
+          path: {{ shards[0].fstree_path }}  # FSTree root directory
+          depth: 2
+
+      pilorama:
+        path: {{ shards[0].pilorama_path }}  # Path to the pilorama database
+
+    - writecache:
+        enabled: {{ writecache }}
+        path: {{ shards[1].wc_path }}  # Write-cache root directory
+
+      metabase:
+        path: {{ shards[1].metabase_path }}  # Path to the metabase
+
+      blobstor:
+        {% if peapod %}
+        - type: peapod
+          path: {{ shards[1].blobovnicza_path }}  # Blobovnicza root directory
+        {% endif %}
+        - type: fstree
+          path: {{ shards[1].fstree_path }}  # FSTree root directory
+          depth: 2
+
+      pilorama:
+        path: {{ shards[1].pilorama_path }}  # Path to the pilorama database
