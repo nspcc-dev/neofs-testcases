@@ -406,3 +406,19 @@ class NeofsAdmFSChain(CliCommand):
             "fschain netmap-candidates",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
+
+    def estimations(self, rpc_endpoint: str, cid: str, epoch: str) -> CommandResult:
+        """Set NeoFS config settings.
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint.
+            cid: Inspected container, base58 encoded.
+            epoch: Epoch for estimations, 0 for current, negative for relative epochs
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "fschain estimations",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
