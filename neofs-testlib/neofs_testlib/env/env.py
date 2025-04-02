@@ -406,6 +406,7 @@ class NeoFSEnv:
             env_details += f"{self.s3_gw}\n"
             env_details += f"{self.rest_gw}\n"
 
+            allure.attach(env_details, "neofs env details", allure.attachment_type.TEXT, ".txt")
             fp.write(env_details)
 
     def log_versions_to_allure(self):
