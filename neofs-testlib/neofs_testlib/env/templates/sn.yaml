@@ -22,10 +22,6 @@ fschain:
     - ws://{{ fschain_endpoint }}/ws
 
 
-# Tree section
-tree:
-  enabled: true
-
 node:
   wallet:
     path: "{{ wallet.path }}"
@@ -59,9 +55,6 @@ storage:
           path: {{ shards[0].fstree_path }}  # FSTree root directory
           depth: 2
 
-      pilorama:
-        path: {{ shards[0].pilorama_path }}  # Path to the pilorama database
-
     1:
       writecache:
         enabled: {{ writecache }}
@@ -78,6 +71,3 @@ storage:
         - type: fstree
           path: {{ shards[1].fstree_path }}  # FSTree root directory
           depth: 2
-
-      pilorama:
-        path: {{ shards[1].pilorama_path }}  # Path to the pilorama database
