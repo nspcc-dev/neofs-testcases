@@ -46,9 +46,6 @@ peers:
     weight: {{ peer.weight }}
   {%- endfor %}
 
-tree:
-  service: {{ tree_service_endpoint }}
-
 listen_domains:
   - {{ listen_domain }}
 
