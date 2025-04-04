@@ -917,6 +917,41 @@ class TestObjectApi(TestNeofsBase):
                         self.neofs_env.sn_rpc,
                     )
 
+    def test_object_can_be_get_without_link_object(
+        self, default_wallet: NodeWallet, container: str, complex_object_size: int
+    ):
+        with allure.step("Upload big object"):
+            file_path = generate_file(complex_object_size)
+            oid = put_object_to_random_node(
+                default_wallet.path,
+                file_path,
+                container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+
+        with allure.step("Get link object"):
+            link_oid = get_link_object(
+                default_wallet.path, container, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes
+            )
+
+        with allure.step("Remove link object from all nodes"):
+            for sn in self.neofs_env.storage_nodes:
+                self.neofs_env.neofs_cli(sn.cli_config).control.drop_objects(
+                    endpoint=sn.control_endpoint,
+                    wallet=sn.wallet.path,
+                    objects=f"{container}/{link_oid}",
+                )
+
+        with allure.step("Get object without corresponding link object"):
+            get_object(
+                default_wallet.path,
+                container,
+                oid,
+                self.shell,
+                self.neofs_env.sn_rpc,
+            )
+
     def check_header_is_presented(self, head_info: dict, object_header: dict) -> None:
         for key_to_check, val_to_check in object_header.items():
             assert key_to_check in head_info["header"]["attributes"], f"Key {key_to_check} is found in {head_object}"
