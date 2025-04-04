@@ -28,6 +28,7 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     new_upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -351,11 +352,14 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "invalid value for neofs_s3_rx_bytes_total"
     )
 
-    neofs_s3_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)
-    assert "neofs_s3_version" in after_metrics_s3_gw, "no neofs_s3_version in metrics"
-    assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
-        "invalid value for neofs_s3_version"
-    )
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)) >= parse_version(
+        "0.35.0"
+    ):
+        neofs_s3_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)
+        assert "neofs_s3_version" in after_metrics_s3_gw, "no neofs_s3_version in metrics"
+        assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
+            "invalid value for neofs_s3_version"
+        )
 
 
 def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet):
