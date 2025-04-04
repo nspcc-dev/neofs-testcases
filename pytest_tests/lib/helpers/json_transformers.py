@@ -56,6 +56,7 @@ def decode_linking_object(data: dict) -> dict:
         split["splitID"] = json_reencode(split["splitID"])
         split["previous"] = json_reencode(split["previous"]["value"]) if split["previous"] else None
         split["parent"] = json_reencode(split["parent"]["value"]) if split["parent"] else None
+        split["first"] = json_reencode(split["first"]["value"]) if split["first"] else None
     except Exception as exc:
         raise ValueError(f"failed to decode JSON output: {exc}") from exc
 
@@ -126,7 +127,7 @@ def decode_common_fields(data: dict) -> dict:
     header["containerID"] = json_reencode(header["containerID"]["value"])
     header["ownerID"] = json_reencode(header["ownerID"]["value"])
     header["payloadHash"] = json_reencode(header["payloadHash"]["sum"])
-    header["version"] = f"{header['version']['major']}{header['version']['minor']}"
+    header["version"] = f"v{header['version']['major']}.{header['version']['minor']}"
     # Homomorphic hash is optional and its calculation might be disabled in trusted network
     if header.get("homomorphicHash"):
         header["homomorphicHash"] = json_reencode(header["homomorphicHash"]["sum"])
