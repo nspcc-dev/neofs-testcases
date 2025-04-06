@@ -83,6 +83,7 @@ def _run_with_passwd(cmd: str) -> str:
 
 
 def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str = "json") -> str:
+    start_time = datetime.now(UTC)
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 1
 
@@ -99,10 +100,13 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
     child.sendline(out_format)
 
     child.wait()
-    cmd = child.read()
+    res = child.read()
     # child.expect(pexpect.EOF)
     # cmd = child.before
-    return cmd.decode()
+    output = res.decode()
+    end_time = datetime.now(UTC)
+    _attach_allure_log(cmd, output, 0, start_time, end_time)
+    return output
 
 
 def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime) -> None:
