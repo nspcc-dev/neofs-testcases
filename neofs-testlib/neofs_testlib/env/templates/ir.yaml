@@ -147,3 +147,6 @@ prometheus:
   enabled: true
   address: {{ prometheus_address }}
   shutdown_timeout: 30s
+
+experimental:
+  chain_meta_data: {{ chain_meta_data }}
