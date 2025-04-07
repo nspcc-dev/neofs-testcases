@@ -45,7 +45,7 @@ class TestContainerPayments:
         _cleanup_files,
     ):
         neofs_env = neofs_env_with_mainchain
-        rpc_client = RPCClient(f"http://{neofs_env.main_chain.rpc_address}")
+        rpc_client = RPCClient(f"http://{neofs_env.inner_ring_nodes[0].endpoint}")
         GAS = 10**12
         GB = 10**9
         MAX_OBJECT_SIZE = 10**8
