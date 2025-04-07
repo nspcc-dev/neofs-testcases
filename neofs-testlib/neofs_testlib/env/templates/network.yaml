@@ -13,6 +13,14 @@ network:
     withdraw: 0
 # if credentials section is omitted, then neofs-adm will require manual password input
 credentials:
+  alphabet0: {{ default_password }}
+  alphabet1: {{ default_password }}
+  alphabet2: {{ default_password }}
+  alphabet3: {{ default_password }}
+  alphabet4: {{ default_password }}
+  alphabet5: {{ default_password }}
+  alphabet6: {{ default_password }}
+  alphabet7: {{ default_password }}
   az: {{ default_password }}
   buky: {{ default_password }}
   vedi: {{ default_password }}
