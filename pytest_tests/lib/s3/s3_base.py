@@ -1,3 +1,4 @@
+import fcntl
 import json
 import logging
 import os
@@ -225,11 +226,16 @@ def configure_boto3_client(access_key_id: str, secret_access_key: str, s3gate_en
 @allure.step("Configure S3 client (aws cli)")
 def configure_cli_client(access_key_id: str, secret_access_key: str, s3gate_endpoint: str):
     try:
-        profile = _generate_random_profile()
-        client = AwsCliClient(s3gate_endpoint, profile)
-        _configure_aws_cli(f"aws configure --profile {profile}", access_key_id, secret_access_key)
-        _cmd_run(f"aws configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
-        _cmd_run(f"aws configure set retry_mode {RETRY_MODE}")
+        with open("S3_CONFIG_LOCK", "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                profile = _generate_random_profile()
+                client = AwsCliClient(s3gate_endpoint, profile)
+                _configure_aws_cli(f"aws configure --profile {profile}", access_key_id, secret_access_key)
+                _cmd_run(f"aws configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
+                _cmd_run(f"aws configure set retry_mode {RETRY_MODE}")
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
         return client
     except Exception as err:
         if "command was not found or was not executable" in str(err):
