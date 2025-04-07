@@ -20,6 +20,7 @@ from helpers.neofs_verbs import (
     search_objectv2,
 )
 from helpers.storage_object_info import CLEANUP_TIMEOUT
+from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 
@@ -677,7 +678,16 @@ def test_search_by_system_attributes(
             "$Object:creationEpoch": head_info["header"]["creationEpoch"],
             "$Object:payloadLength": head_info["header"]["payloadLength"],
             "$Object:objectType": head_info["header"]["objectType"],
+            "$Object:version": head_info["header"]["version"],
         }
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            system_attributes.update(
+                {
+                    "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
+                    "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
+                    "$Object:ownerID": head_info["header"]["ownerID"],
+                }
+            )
         created_objects.append({"id": oid, "attrs": system_attributes})
 
     for system_attr in system_attributes.keys():
@@ -707,6 +717,56 @@ def test_search_by_system_attributes(
             assert any(found_obj["id"] == created_obj["id"] for found_obj in found_objects), (
                 f"created object {created_obj['id']} not found in search output"
             )
+
+
+def test_search_by_split_attributes(
+    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, complex_object_size: int
+):
+    if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.45.2"):
+        pytest.skip("Unsupported on 0.45.2 and below")
+    cid = container
+    created_objects = []
+    for idx in range(3):
+        file_path = generate_file(complex_object_size * (idx + 1))
+        oid = put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            cid,
+            shell=neofs_env.shell,
+            neofs_env=neofs_env,
+        )
+        head_info = head_object(
+            default_wallet.path, cid, oid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc, is_raw=True
+        )
+        head_info = head_object(
+            default_wallet.path,
+            cid,
+            head_info["link"],
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+        system_attributes = {
+            "$Object:split.parent": head_info["header"]["split"]["parent"],
+            "$Object:split.first": head_info["header"]["split"]["first"],
+        }
+        created_objects.append({"id": oid, "attrs": system_attributes})
+
+    for system_attr in system_attributes.keys():
+        for created_obj in created_objects:
+            created_obj_attr_value = created_obj["attrs"][system_attr]
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+                filters=[f"{system_attr} EQ {created_obj_attr_value}"],
+                attributes=[system_attr],
+            )
+            assert len(found_objects) > 0, "no objects found"
+            for found_obj in found_objects:
+                assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
+                    f"Invalid object returned from searchv2: {found_obj}"
+                )
 
 
 @pytest.mark.parametrize("with_attributes", [True, False])
