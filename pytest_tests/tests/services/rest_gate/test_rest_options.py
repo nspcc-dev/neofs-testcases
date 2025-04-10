@@ -32,10 +32,10 @@ class TestRestOptions(TestNeofsRestBase):
         )
 
     @pytest.fixture(scope="class")
-    def user_object(self, simple_object_size, gw_endpoint, user_container) -> str:
+    def user_object(self, gw_endpoint, user_container) -> str:
         return upload_via_rest_gate(
             cid=user_container,
-            path=generate_file(simple_object_size),
+            path=generate_file(self.neofs_env.get_object_size("simple_object_size")),
             endpoint=gw_endpoint,
         )
 

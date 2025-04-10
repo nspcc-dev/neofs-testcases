@@ -33,16 +33,19 @@ from helpers.common import (
     ALLOCATED_PORTS_FILE,
     ALLOCATED_PORTS_LOCK_FILE,
     BINARY_DOWNLOADS_LOCK_FILE,
+    COMPLEX_OBJECT_CHUNKS_COUNT,
+    COMPLEX_OBJECT_TAIL_SIZE,
     DEFAULT_OBJECT_OPERATION_TIMEOUT,
     DEFAULT_REST_OPERATION_TIMEOUT,
+    SIMPLE_OBJECT_SIZE,
     get_assets_dir_path,
 )
+from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
-from tenacity import retry, stop_after_attempt, wait_fixed
-
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -60,6 +63,11 @@ class NodeWallet:
 class WalletType(Enum):
     STORAGE = 1
     ALPHABET = 2
+
+
+class ObjectType(Enum):
+    SIMPLE = "simple_object_size"
+    COMPLEX = "complex_object_size"
 
 
 def terminate_process(process: Popen):
@@ -101,6 +109,7 @@ class NeoFSEnv:
         self.s3_gw = None
         self.rest_gw = None
         self.main_chain = None
+        self.max_object_size = None
 
     @property
     def fschain_rpc(self):
@@ -579,6 +588,16 @@ class NeoFSEnv:
         except Exception as e:
             neofs_env.finalize(request, force_collect_logs=True)
             raise e
+            storage_node = neofs_env.storage_nodes[0]
+        if len(neofs_env.storage_nodes) > 0:
+            storage_node = neofs_env.storage_nodes[0]
+            net_info = get_netmap_netinfo(
+                wallet=storage_node.wallet.path,
+                wallet_config=storage_node.cli_config,
+                endpoint=storage_node.endpoint,
+                shell=neofs_env.shell,
+            )
+            neofs_env.max_object_size = net_info["maximum_object_size"]
         neofs_env.log_env_details_to_file()
         neofs_env.log_versions_to_allure()
         return neofs_env
@@ -735,6 +754,14 @@ class NeoFSEnv:
             if "Version:" in line:
                 return line.split("Version:")[1].strip()
         return ""
+
+    def get_object_size(self, object_type: str) -> int:
+        if object_type == ObjectType.SIMPLE.value:
+            return int(SIMPLE_OBJECT_SIZE) if int(SIMPLE_OBJECT_SIZE) < self.max_object_size else self.max_object_size
+        elif object_type == ObjectType.COMPLEX.value:
+            return self.max_object_size * int(COMPLEX_OBJECT_CHUNKS_COUNT) + int(COMPLEX_OBJECT_TAIL_SIZE)
+        else:
+            raise AssertionError(f"Invalid {object_type=}")
 
     def _generate_temp_file(self, base_dir: str, extension: str = "", prefix: str = "tmp_file") -> str:
         file_path = f"{base_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"

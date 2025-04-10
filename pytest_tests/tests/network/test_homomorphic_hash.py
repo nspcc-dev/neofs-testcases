@@ -34,18 +34,18 @@ class TestHomomorphicHash(TestNeofsBase):
 
     @allure.title("New containers should have specified homomorphic hash value")
     def test_new_containers_created_with_specified_homomorphic_hash_value(
-        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup, set_homomorphic_hash_to_default
+        self, default_wallet: NodeWallet, containers_cleanup, set_homomorphic_hash_to_default
     ):
         with allure.step("Set homomorphic hash value to the opposite one "):
             new_hash_value = self.switch_homomorphic_hash_value()
             with allure.step("Verify objects metadata"):
                 if new_hash_value:
                     assert self.is_homomorphic_hash_disabled_in_metadata_of_new_containers(
-                        default_wallet, simple_object_size
+                        default_wallet, self.neofs_env.get_object_size("simple_object_size")
                     )
                 else:
                     assert not self.is_homomorphic_hash_disabled_in_metadata_of_new_containers(
-                        default_wallet, simple_object_size
+                        default_wallet, self.neofs_env.get_object_size("simple_object_size")
                     )
 
         with allure.step("Set homomorphic hash value back to the original state"):
@@ -53,24 +53,26 @@ class TestHomomorphicHash(TestNeofsBase):
             with allure.step("Verify objects metadata"):
                 if new_hash_value:
                     assert self.is_homomorphic_hash_disabled_in_metadata_of_new_containers(
-                        default_wallet, simple_object_size
+                        default_wallet, self.neofs_env.get_object_size("simple_object_size")
                     )
                 else:
                     assert not self.is_homomorphic_hash_disabled_in_metadata_of_new_containers(
-                        default_wallet, simple_object_size
+                        default_wallet, self.neofs_env.get_object_size("simple_object_size")
                     )
 
     @allure.title("Old containers should not be affected by new hash value")
     def test_old_containers_have_old_homomorphic_hash_value(
-        self, default_wallet: NodeWallet, simple_object_size: int, containers_cleanup, set_homomorphic_hash_to_default
+        self, default_wallet: NodeWallet, containers_cleanup, set_homomorphic_hash_to_default
     ):
-        cid, oid = self.create_container_with_single_object(default_wallet, simple_object_size)
+        cid, oid = self.create_container_with_single_object(
+            default_wallet, self.neofs_env.get_object_size("simple_object_size")
+        )
         current_object_has_hash = self.object_has_homomorphic_hash_value(default_wallet, cid, oid)
 
         self.switch_homomorphic_hash_value()
 
         with allure.step("Verify new objects still have the old hash setting"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             new_oid = put_object_to_random_node(
                 default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env
             )

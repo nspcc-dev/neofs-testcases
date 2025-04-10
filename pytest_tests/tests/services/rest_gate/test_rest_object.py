@@ -11,7 +11,6 @@ from helpers.rest_gate import (
     try_to_get_object_via_passed_request_and_expect_error,
 )
 from helpers.wellknown_acl import PUBLIC_ACL
-from pytest_lazy_fixtures import lf
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
@@ -42,7 +41,7 @@ class Test_rest_object(TestNeofsRestBase):
     @allure.title("Test Put over gRPC, Get over HTTP")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_object_put_get_attributes(self, object_size: int, gw_attributes):
@@ -73,7 +72,7 @@ class Test_rest_object(TestNeofsRestBase):
             )
 
         # Generate file
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
 
         # List of Key=Value attributes
         obj_key1 = gw_attributes["obj_key1"]

@@ -16,7 +16,6 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from neofs_testlib.cli import NeofsCli
-from neofs_testlib.env.env import NeoFSEnv
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
@@ -45,7 +44,7 @@ def get_object_from_random_node(
     cid: str,
     oid: str,
     shell: Shell,
-    neofs_env: Optional[NeoFSEnv] = None,
+    neofs_env=None,
     bearer: Optional[str] = None,
     write_object: Optional[str] = None,
     xhdr: Optional[dict] = None,
@@ -194,7 +193,7 @@ def put_object_to_random_node(
     path: str,
     cid: str,
     shell: Shell,
-    neofs_env: Optional[NeoFSEnv] = None,
+    neofs_env=None,
     bearer: Optional[str] = None,
     attributes: Optional[dict] = None,
     xhdr: Optional[dict] = None,

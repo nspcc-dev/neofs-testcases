@@ -29,7 +29,6 @@ from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -66,7 +65,7 @@ def locked_storage_object(
         expiration_epoch = current_epoch + FIXTURE_LOCK_LIFETIME
 
         storage_object = user_container.generate_object(
-            request.param, expire_at=current_epoch + FIXTURE_OBJECT_LIFETIME
+            neofs_env.get_object_size(request.param), expire_at=current_epoch + FIXTURE_OBJECT_LIFETIME
         )
         lock_object_id = lock_object(
             storage_object.wallet_file_path,
@@ -117,7 +116,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
             current_epoch = self.ensure_fresh_epoch()
 
             storage_object = user_container.generate_object(
-                request.param, expire_at=current_epoch + FIXTURE_OBJECT_LIFETIME
+                self.neofs_env.get_object_size(request.param), expire_at=current_epoch + FIXTURE_OBJECT_LIFETIME
             )
             lock_object(
                 storage_object.wallet_file_path,
@@ -133,7 +132,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Locked object should be protected from deletion")
     @pytest.mark.parametrize(
         "locked_storage_object",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -158,7 +157,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
     @allure.title("Lock object of a simple object should be protected from deletion")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", ["simple_object_size"], indirect=True)
     def test_lock_object_itself_cannot_be_deleted(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -181,7 +180,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
     @allure.title("Lock object of a simple object cannot be locked")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", ["simple_object_size"], indirect=True)
     def test_lock_object_cannot_be_locked(
         self,
         locked_storage_object: StorageObjectInfo,
@@ -205,7 +204,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
     @allure.title("Cannot lock simple object without lifetime and expire_at fields")
     # We operate with only lock object here so no complex object needed in this test
-    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", ["simple_object_size"], indirect=True)
     @pytest.mark.parametrize(
         "wrong_lifetime,wrong_expire_at,expected_error",
         [
@@ -248,7 +247,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Expired object should be deleted after locks are expired")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_expired_object_should_be_deleted_after_locks_are_expired(
@@ -263,7 +262,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
         allure.dynamic.title(f"Expired object should be deleted after locks are expired for {request.node.callspec.id}")
 
         current_epoch = self.ensure_fresh_epoch()
-        storage_object = user_container.generate_object(object_size, expire_at=current_epoch + 1)
+        storage_object = user_container.generate_object(
+            self.neofs_env.get_object_size(object_size), expire_at=current_epoch + 1
+        )
 
         with allure.step("Lock object for couple epochs"):
             lock_object(
@@ -314,7 +315,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Should be possible to lock multiple objects at once")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_should_be_possible_to_lock_multiple_objects_at_once(
@@ -333,7 +334,11 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
         with allure.step("Generate three objects"):
             for _ in range(3):
-                storage_objects.append(user_container.generate_object(object_size, expire_at=current_epoch + 5))
+                storage_objects.append(
+                    user_container.generate_object(
+                        self.neofs_env.get_object_size(object_size), expire_at=current_epoch + 5
+                    )
+                )
 
         lock_object(
             storage_objects[0].wallet_file_path,
@@ -364,7 +369,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Already outdated lock should not be applied")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_already_outdated_lock_should_not_be_applied(
@@ -380,7 +385,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
         current_epoch = self.ensure_fresh_epoch()
 
-        storage_object = user_container.generate_object(object_size, expire_at=current_epoch + 1)
+        storage_object = user_container.generate_object(
+            self.neofs_env.get_object_size(object_size), expire_at=current_epoch + 1
+        )
 
         expiration_epoch = current_epoch - 1
         with pytest.raises(
@@ -399,7 +406,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("After lock expiration with lifetime user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     @expect_not_raises()
@@ -417,7 +424,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
         )
 
         current_epoch = self.ensure_fresh_epoch()
-        storage_object = user_container.generate_object(object_size, expire_at=current_epoch + 5)
+        storage_object = user_container.generate_object(
+            self.neofs_env.get_object_size(object_size), expire_at=current_epoch + 5
+        )
 
         lock_object(
             storage_object.wallet_file_path,
@@ -441,7 +450,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("After lock expiration with expire_at user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     @expect_not_raises()
@@ -460,7 +469,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
         current_epoch = self.ensure_fresh_epoch()
 
-        storage_object = user_container.generate_object(object_size, expire_at=current_epoch + 5)
+        storage_object = user_container.generate_object(
+            self.neofs_env.get_object_size(object_size), expire_at=current_epoch + 5
+        )
 
         lock_object(
             storage_object.wallet_file_path,
@@ -486,7 +497,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
-        [lf("complex_object_size")],
+        ["complex_object_size"],
         indirect=True,
     )
     def test_link_object_of_locked_complex_object_can_be_dropped(
@@ -516,7 +527,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         # Only complex object is required
-        [lf("complex_object_size")],
+        ["complex_object_size"],
         indirect=True,
     )
     def test_chunks_of_locked_complex_object_can_be_dropped(
@@ -545,7 +556,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -569,7 +580,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                 drop_object(node, new_locked_storage_object.cid, new_locked_storage_object.oid)
 
     @allure.title("Lock object of a simple object can be dropped via control")
-    @pytest.mark.parametrize("locked_storage_object", [lf("simple_object_size")], indirect=True)
+    @pytest.mark.parametrize("locked_storage_object", ["simple_object_size"], indirect=True)
     def test_lock_object_can_be_dropped(self, locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv):
         lock_object_info = locked_storage_object.locks[0]
 
@@ -592,7 +603,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @pytest.mark.skip(reason="Unknown issue")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -661,10 +672,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                     self.neofs_env.sn_rpc,
                 )
 
-    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet, simple_object_size: int):
+    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet):
         with allure.step("Create container"):
             wallet = default_wallet
-            source_file_path = generate_file(simple_object_size)
+            source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             cid = create_container(
                 wallet.path,
                 shell=self.shell,
