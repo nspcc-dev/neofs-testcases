@@ -53,7 +53,7 @@ class TestRestGate(TestNeofsRestBase):
         yield
 
     @allure.title("Test Put over gRPC, Get over REST")
-    def test_put_grpc_get_rest(self, complex_object_size, simple_object_size, gw_endpoint):
+    def test_put_grpc_get_rest(self, gw_endpoint):
         """
         Test that object can be put using gRPC interface and get using REST gateway.
 
@@ -75,7 +75,10 @@ class TestRestGate(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE_1,
             basic_acl=PUBLIC_ACL,
         )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
+        file_path_simple, file_path_large = (
+            generate_file(self.neofs_env.get_object_size("simple_object_size")),
+            generate_file(self.neofs_env.get_object_size("complex_object_size")),
+        )
 
         with allure.step("Put objects using gRPC"):
             oid_simple = put_object_to_random_node(
@@ -105,7 +108,7 @@ class TestRestGate(TestNeofsRestBase):
             )
 
     @allure.title("Verify Content-Disposition header")
-    def test_put_http_get_http_content_disposition(self, simple_object_size, gw_params):
+    def test_put_http_get_http_content_disposition(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -115,7 +118,7 @@ class TestRestGate(TestNeofsRestBase):
         )
 
         with allure.step("Verify Content-Disposition"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             oid = new_upload_via_rest_gate(
                 cid=cid,
@@ -132,7 +135,7 @@ class TestRestGate(TestNeofsRestBase):
             assert "inline" in resp.headers["Content-Disposition"]
 
         with allure.step("Verify Content-Disposition with download=true"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             oid = new_upload_via_rest_gate(
                 cid=cid,
@@ -150,7 +153,7 @@ class TestRestGate(TestNeofsRestBase):
             assert "attachment" in resp.headers["Content-Disposition"]
 
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
-    def test_put_http_get_http_without_content_type(self, simple_object_size, gw_params):
+    def test_put_http_get_http_without_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -160,7 +163,7 @@ class TestRestGate(TestNeofsRestBase):
         )
 
         with allure.step("Upload binary object"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             oid = new_upload_via_rest_gate(
                 cid=cid,
@@ -177,7 +180,7 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "application/octet-stream"
 
         with allure.step("Upload text object"):
-            file_path = generate_file_with_content(simple_object_size, content="123")
+            file_path = generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), content="123")
 
             oid = new_upload_via_rest_gate(
                 cid=cid,
@@ -194,7 +197,7 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "text/plain; charset=utf-8"
 
     @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
-    def test_put_http_get_http_with_x_atribute_content_type(self, simple_object_size, gw_params):
+    def test_put_http_get_http_with_x_atribute_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -204,7 +207,7 @@ class TestRestGate(TestNeofsRestBase):
         )
 
         with allure.step("Upload object with X-Attribute-Content-Type"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             headers = {"X-Attributes": '{"Content-Type":"CoolContentType"}'}
             oid = new_upload_via_rest_gate(
@@ -251,7 +254,7 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "application/json"
 
     @allure.title("Verify special HTTP headers")
-    def test_put_http_get_http_special_attributes(self, simple_object_size, gw_params):
+    def test_put_http_get_http_special_attributes(self, gw_params):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
@@ -260,7 +263,7 @@ class TestRestGate(TestNeofsRestBase):
             basic_acl=PUBLIC_ACL,
         )
 
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
         oid = new_upload_via_rest_gate(
             cid=cid,
@@ -282,7 +285,7 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.link("https://github.com/nspcc-dev/neofs-rest-gw#docs", name="docs")
     @allure.title("Test Put over REST, Get over REST")
-    def test_put_rest_get_rest(self, complex_object_size, simple_object_size, gw_params):
+    def test_put_rest_get_rest(self, gw_params):
         """
         Test that object can be put and get using REST interface.
 
@@ -302,7 +305,10 @@ class TestRestGate(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path_simple, file_path_large = generate_file(simple_object_size), generate_file(complex_object_size)
+        file_path_simple, file_path_large = (
+            generate_file(self.neofs_env.get_object_size("simple_object_size")),
+            generate_file(self.neofs_env.get_object_size("complex_object_size")),
+        )
 
         with allure.step("Put objects using REST"):
             oid_simple = new_upload_via_rest_gate(cid=cid, path=file_path_simple, endpoint=gw_params["endpoint"])
@@ -357,7 +363,7 @@ class TestRestGate(TestNeofsRestBase):
             "not-so-zero bytes value",
         ],
     )
-    def test_put_rest_get_rest_with_headers(self, attributes: dict, simple_object_size, gw_params):
+    def test_put_rest_get_rest_with_headers(self, attributes: dict, gw_params):
         """
         Test that object can be downloaded using different attributes in HTTP header.
 
@@ -377,7 +383,7 @@ class TestRestGate(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
         with allure.step("Put objects using REST with attribute"):
             headers = new_attr_into_header(attributes)
@@ -397,7 +403,7 @@ class TestRestGate(TestNeofsRestBase):
         )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
-    def test_expiration_epoch_in_rest(self, simple_object_size, gw_params, fresh_epoch):
+    def test_expiration_epoch_in_rest(self, gw_params, fresh_epoch):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
@@ -407,7 +413,7 @@ class TestRestGate(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         oids = []
 
         curr_epoch = neofs_epoch.get_epoch(self.neofs_env)
@@ -446,7 +452,7 @@ class TestRestGate(TestNeofsRestBase):
                     get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
     @allure.title("Test other Expiration-Epoch settings in HTTP header")
-    def test_expiration_headers_in_rest(self, simple_object_size, gw_params, fresh_epoch):
+    def test_expiration_headers_in_rest(self, gw_params, fresh_epoch):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
@@ -456,7 +462,7 @@ class TestRestGate(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE_2,
             basic_acl=PUBLIC_ACL,
         )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         oids = []
 
         epoch_duration = get_epoch_duration_via_rest_gate(endpoint=gw_params["endpoint"])
@@ -496,7 +502,7 @@ class TestRestGate(TestNeofsRestBase):
             )
 
     @allure.title("Test Put over REST, Get over REST for large object")
-    def test_put_rest_get_rest_large_file(self, complex_object_size, gw_params):
+    def test_put_rest_get_rest_large_file(self, gw_params):
         """
         This test checks upload and download with 'large' object.
         Large is object with size up to 20Mb.
@@ -509,7 +515,7 @@ class TestRestGate(TestNeofsRestBase):
             basic_acl=PUBLIC_ACL,
         )
 
-        obj_size = int(os.getenv("BIG_OBJ_SIZE", complex_object_size))
+        obj_size = int(os.getenv("BIG_OBJ_SIZE", self.neofs_env.get_object_size("complex_object_size")))
         file_path = generate_file(obj_size)
 
         with allure.step("Put objects using REST"):

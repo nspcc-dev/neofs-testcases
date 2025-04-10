@@ -14,8 +14,8 @@ def pytest_generate_tests(metafunc):
 class TestS3ACL(TestNeofsS3Base):
     @pytest.mark.sanity
     @allure.title("Test S3: Object ACL")
-    def test_s3_object_ACL(self, bucket, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_object_ACL(self, bucket):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 
         with allure.step("Put object into bucket, Check ACL is empty"):
@@ -67,12 +67,12 @@ class TestS3ACL(TestNeofsS3Base):
             verify_acls(obj_acl, ACLType.PRIVATE)
 
     @allure.title("Test S3: Object eligible ACLs")
-    def test_s3_object_eligible_acls(self, bucket, simple_object_size):
+    def test_s3_object_eligible_acls(self, bucket):
         """
         By default with disabled ACLs, user should be able to set object 'private'
         and 'bucket-owner-full-control' ACLs
         """
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 
         with allure.step("Put object into bucket, Check ACL is empty"):

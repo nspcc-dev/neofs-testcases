@@ -5,16 +5,8 @@ from pathlib import Path
 
 import allure
 import pytest
-from helpers.common import (
-    COMPLEX_OBJECT_CHUNKS_COUNT,
-    COMPLEX_OBJECT_TAIL_SIZE,
-    SIMPLE_OBJECT_SIZE,
-    TEST_FILES_DIR,
-    TEST_OBJECTS_DIR,
-    get_assets_dir_path,
-)
+from helpers.common import SIMPLE_OBJECT_SIZE, TEST_FILES_DIR, TEST_OBJECTS_DIR, get_assets_dir_path
 from helpers.file_helper import generate_file
-from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.reporter import AllureHandler, get_reporter
@@ -186,28 +178,6 @@ def client_shell(neofs_env: NeoFSEnv) -> Shell:
 
 
 @pytest.fixture(scope="session")
-def max_object_size(neofs_env: NeoFSEnv, client_shell: Shell) -> int:
-    storage_node = neofs_env.storage_nodes[0]
-    net_info = get_netmap_netinfo(
-        wallet=storage_node.wallet.path,
-        wallet_config=storage_node.cli_config,
-        endpoint=storage_node.endpoint,
-        shell=client_shell,
-    )
-    yield net_info["maximum_object_size"]
-
-
-@pytest.fixture(scope="session")
-def simple_object_size(max_object_size: int) -> int:
-    yield int(SIMPLE_OBJECT_SIZE) if int(SIMPLE_OBJECT_SIZE) < max_object_size else max_object_size
-
-
-@pytest.fixture(scope="session")
-def complex_object_size(max_object_size: int) -> int:
-    return max_object_size * int(COMPLEX_OBJECT_CHUNKS_COUNT) + int(COMPLEX_OBJECT_TAIL_SIZE)
-
-
-@pytest.fixture(scope="session")
 @allure.title("Prepare tmp directory")
 def temp_directory(request) -> str:
     with allure.step("Prepare tmp directory"):
@@ -289,8 +259,8 @@ def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
 
 
 @pytest.fixture(scope="module")
-def file_path(simple_object_size, artifacts_directory):
-    yield generate_file(simple_object_size)
+def file_path(artifacts_directory):
+    yield generate_file(int(SIMPLE_OBJECT_SIZE))
 
 
 def create_dir(dir_path: str) -> None:

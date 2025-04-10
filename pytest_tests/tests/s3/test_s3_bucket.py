@@ -101,8 +101,8 @@ class TestS3Bucket(TestNeofsS3Base):
             verify_acls(bucket_acl_2, ACLType.PUBLIC_READ_WRITE)
 
     @allure.title("Test S3: create bucket with object lock")
-    def test_s3_bucket_object_lock(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_bucket_object_lock(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 
         with allure.step("Create bucket with --no-object-lock-enabled-for-bucket"):
@@ -136,10 +136,10 @@ class TestS3Bucket(TestNeofsS3Base):
             assert_object_lock_mode(self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON")
 
     @allure.title("Test S3: delete bucket")
-    def test_s3_delete_bucket(self, simple_object_size):
-        file_path_1 = generate_file(simple_object_size)
+    def test_s3_delete_bucket(self):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)
-        file_path_2 = generate_file(simple_object_size)
+        file_path_2 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_2 = object_key_from_file_path(file_path_2)
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
 

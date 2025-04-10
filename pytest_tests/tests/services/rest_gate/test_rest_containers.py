@@ -27,7 +27,7 @@ class TestRestContainers(TestNeofsRestBase):
         TestRestContainers.wallet = default_wallet
 
     @pytest.mark.parametrize("wallet_connect", [True, False])
-    def test_rest_gw_containers_sanity(self, simple_object_size: int, gw_endpoint: str, wallet_connect: bool):
+    def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool):
         session_token, signature, pub_key = generate_credentials(
             gw_endpoint, self.wallet, wallet_connect=wallet_connect
         )
@@ -51,7 +51,7 @@ class TestRestContainers(TestNeofsRestBase):
 
         upload_via_rest_gate(
             cid=cid,
-            path=generate_file(simple_object_size),
+            path=generate_file(self.neofs_env.get_object_size("simple_object_size")),
             endpoint=gw_endpoint,
         )
 

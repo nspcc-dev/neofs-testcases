@@ -10,7 +10,6 @@ from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -20,8 +19,8 @@ class TestObjectApiLifetime(TestNeofsBase):
     @pytest.mark.parametrize(
         "object_size,expiration_flag",
         [
-            (lf("simple_object_size"), "lifetime"),
-            (lf("complex_object_size"), "expire_at"),
+            ("simple_object_size", "lifetime"),
+            ("complex_object_size", "expire_at"),
         ],
         ids=["simple object, lifetime", "complex object, expire_at"],
     )
@@ -42,7 +41,7 @@ class TestObjectApiLifetime(TestNeofsBase):
         endpoint = self.neofs_env.sn_rpc
         cid = create_container(wallet.path, self.shell, endpoint)
 
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         file_hash = get_file_hash(file_path)
         epoch = self.ensure_fresh_epoch()
 

@@ -23,7 +23,6 @@ from helpers.rest_gate import (
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 from rest_gw.rest_base import TestNeofsRestBase
 
 logger = logging.getLogger("NeoLogger")
@@ -47,8 +46,8 @@ class Test_rest_headers(TestNeofsRestBase):
 
     @pytest.fixture(
         params=[
-            lf("simple_object_size"),
-            lf("complex_object_size"),
+            "simple_object_size",
+            "complex_object_size",
         ],
         ids=["simple object", "complex object"],
         scope="class",
@@ -63,7 +62,7 @@ class Test_rest_headers(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE,
             basic_acl=PUBLIC_ACL,
         )
-        file_path = generate_file(request.param)
+        file_path = generate_file(self.neofs_env.get_object_size(request.param))
         for attributes in self.OBJECT_ATTRIBUTES:
             storage_object_id = upload_via_rest_gate(
                 cid=cid,
@@ -163,7 +162,7 @@ class Test_rest_headers(TestNeofsRestBase):
             )
 
     @allure.title("[Negative] Try to put object and get right after container is deleted")
-    def test_negative_put_and_get_object3(self, simple_object_size, gw_endpoint):
+    def test_negative_put_and_get_object3(self, gw_endpoint):
         """
         Test to attempt to put object and try to download it right after the container has been deleted
 
@@ -181,7 +180,7 @@ class Test_rest_headers(TestNeofsRestBase):
             rule=self.PLACEMENT_RULE,
             basic_acl=PUBLIC_ACL,
         )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         upload_via_rest_gate(
             cid=cid,
             path=file_path,
@@ -192,7 +191,7 @@ class Test_rest_headers(TestNeofsRestBase):
         with allure.step(
             "[Negative] Allocate and attemt to put object#3 via http with attributes: [Writer=Leo Tolstoy, Writer=peace, peace=peace]"
         ):
-            file_path_3 = generate_file(simple_object_size)
+            file_path_3 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             attrs_obj3 = {"Writer": "Leo Tolstoy", "peace": "peace"}
             headers = attr_into_str_header_curl(attrs_obj3)
             headers.append(" ".join(attr_into_str_header_curl({"Writer": "peace"})))

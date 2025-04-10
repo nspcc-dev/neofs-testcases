@@ -47,14 +47,14 @@ def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSE
 
 
 @pytest.mark.sanity
-def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int):
+def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     for _ in range(2):
         created_objects.append(
             put_object_to_random_node(
                 default_wallet.path,
-                generate_file(simple_object_size),
+                generate_file(neofs_env.get_object_size("simple_object_size")),
                 cid,
                 shell=neofs_env.shell,
                 neofs_env=neofs_env,
@@ -70,16 +70,14 @@ def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: Ne
         )
 
 
-def test_search_single_filter_by_custom_int_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
-):
+def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     int_attributes_values = [-(2**255) - 1, -1, 0, 1, 10, 2**255 + 1]
     int_attribute_name = "int_attribute"
 
     for int_value in int_attributes_values:
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
         created_objects.append(
             {
@@ -153,7 +151,9 @@ def test_search_single_filter_by_custom_int_attributes(
 
 
 def test_search_single_filter_by_custom_str_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
@@ -161,7 +161,7 @@ def test_search_single_filter_by_custom_str_attributes(
     str_attribute_name = "str_attribute"
 
     for str_value in str_attributes_values:
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
         created_objects.append(
             {
@@ -214,11 +214,9 @@ def test_search_single_filter_by_custom_str_attributes(
                     )
 
 
-def test_search_multiple_filters_same_attribute(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
-):
+def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -269,11 +267,9 @@ def test_search_multiple_filters_same_attribute(
         assert len(found_objects) == testcase["expected_result"], "invalid number of objects"
 
 
-def test_search_empty_attrs_in_filters(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
-):
+def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -320,7 +316,9 @@ def test_search_empty_attrs_in_filters(
 
 
 def test_search_multiple_filters_by_custom_int_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
@@ -328,7 +326,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
     int_attributes_values = [0, 1, -1]
 
     for attr0, attr1, attr2 in list(itertools.permutations(int_attributes_values, 3)):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {"int_attr0": attr0, "int_attr1": attr1, "int_attr2": attr2}
         created_objects.append(
             {
@@ -386,14 +384,16 @@ def test_search_multiple_filters_by_custom_int_attributes(
 
 
 def test_search_multiple_filters_by_custom_str_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     str_attributes_values = ["Aaa", "Aaabcd", "123", "1234"]
 
     for attr0, attr1, attr2 in list(itertools.permutations(str_attributes_values, 3)):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {"str_attr0": attr0, "str_attr1": attr1, "str_attr2": attr2}
         created_objects.append(
             {
@@ -460,10 +460,12 @@ def test_search_multiple_filters_by_custom_str_attributes(
 
 
 def test_search_by_mixed_attributes_contents(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     oid1 = put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -512,7 +514,9 @@ def test_search_by_mixed_attributes_contents(
 
 
 def test_search_multiple_filters_by_custom_mixed_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
@@ -528,7 +532,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
     ]
 
     for str_attr0, str_attr1, str_attr2, int_attr0, int_attr1, int_attr2 in attr_values:
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {
             "str_attr0": str_attr0,
             "str_attr1": str_attr1,
@@ -651,12 +655,14 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
 
 
 def test_search_by_system_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for idx in range(4):
-        file_path = generate_file(simple_object_size + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         oid = put_object_to_random_node(
             default_wallet.path,
             file_path,
@@ -720,14 +726,16 @@ def test_search_by_system_attributes(
 
 
 def test_search_by_split_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, complex_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.45.2"):
         pytest.skip("Unsupported on 0.45.2 and below")
     cid = container
     created_objects = []
     for idx in range(3):
-        file_path = generate_file(complex_object_size * (idx + 1))
+        file_path = generate_file(neofs_env.get_object_size("complex_object_size") * (idx + 1))
         oid = put_object_to_random_node(
             default_wallet.path,
             file_path,
@@ -771,12 +779,12 @@ def test_search_by_split_attributes(
 
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_non_existing_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int, with_attributes: bool
+    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
 ):
     cid = container
     created_objects = []
     for _ in range(3):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         created_objects.append(
             put_object_to_random_node(
                 default_wallet.path,
@@ -800,10 +808,12 @@ def test_search_by_non_existing_attributes(
 
 
 def test_search_of_complex_object(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, complex_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
-    file_path = generate_file(complex_object_size)
+    file_path = generate_file(neofs_env.get_object_size("complex_object_size"))
     oid = put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -840,10 +850,10 @@ def test_search_of_complex_object(
 
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_various_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int, with_attributes: bool
+    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
 ):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     oid1 = put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -860,7 +870,7 @@ def test_search_by_various_attributes(
         endpoint=neofs_env.sn_rpc,
     )
     neofs_epoch.ensure_fresh_epoch(neofs_env)
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     oid2 = put_object_to_random_node(
         default_wallet.path,
         file_path,
@@ -875,7 +885,11 @@ def test_search_by_various_attributes(
         wallet=default_wallet.path,
         cid=cid,
         shell=neofs_env.shell,
-        filters=[f"$Object:payloadLength EQ {simple_object_size}", "str_attr1 NOPRESENT", "int_attr0 GE 10"],
+        filters=[
+            f"$Object:payloadLength EQ {neofs_env.get_object_size('simple_object_size')}",
+            "str_attr1 NOPRESENT",
+            "int_attr0 GE 10",
+        ],
         attributes=["$Object:payloadLength", "str_attr1", "int_attr0"] if with_attributes else None,
     )
     assert len(found_objects) == 1, "invalid number of found objects"
@@ -912,12 +926,14 @@ def test_search_by_various_attributes(
 
 
 def test_search_attrs_ordering(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for idx in range(5):
-        file_path = generate_file(simple_object_size + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         attrs = {"str_attr": "ab" * (idx + 1)}
         created_objects.append(
             {
@@ -953,7 +969,10 @@ def test_search_attrs_ordering(
             wallet=default_wallet.path,
             cid=cid,
             shell=neofs_env.shell,
-            filters=[f"$Object:payloadLength GE {simple_object_size}", "str_attr COMMON_PREFIX ab"],
+            filters=[
+                f"$Object:payloadLength GE {neofs_env.get_object_size('simple_object_size')}",
+                "str_attr COMMON_PREFIX ab",
+            ],
             attributes=["$Object:payloadLength", "str_attr"],
         )
 
@@ -969,7 +988,10 @@ def test_search_attrs_ordering(
             wallet=default_wallet.path,
             cid=cid,
             shell=neofs_env.shell,
-            filters=["str_attr COMMON_PREFIX ab", f"$Object:payloadLength GE {simple_object_size}"],
+            filters=[
+                "str_attr COMMON_PREFIX ab",
+                f"$Object:payloadLength GE {neofs_env.get_object_size('simple_object_size')}",
+            ],
             attributes=["str_attr", "$Object:payloadLength"],
         )
 
@@ -981,12 +1003,14 @@ def test_search_attrs_ordering(
 
 
 def test_search_attrs_ordering_with_cursor(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for idx in range(5):
-        file_path = generate_file(simple_object_size + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         attrs = {"str_attr": "ab" * (idx + 1)}
         created_objects.append(
             {
@@ -1047,7 +1071,10 @@ def test_search_attrs_ordering_with_cursor(
                 wallet=default_wallet.path,
                 cid=cid,
                 shell=neofs_env.shell,
-                filters=[f"$Object:payloadLength GE {simple_object_size}", "str_attr COMMON_PREFIX ab"],
+                filters=[
+                    f"$Object:payloadLength GE {neofs_env.get_object_size('simple_object_size')}",
+                    "str_attr COMMON_PREFIX ab",
+                ],
                 attributes=["$Object:payloadLength", "str_attr"],
                 cursor=cursor,
                 count=1,
@@ -1071,7 +1098,10 @@ def test_search_attrs_ordering_with_cursor(
                 wallet=default_wallet.path,
                 cid=cid,
                 shell=neofs_env.shell,
-                filters=["str_attr COMMON_PREFIX ab", f"$Object:payloadLength GE {simple_object_size}"],
+                filters=[
+                    "str_attr COMMON_PREFIX ab",
+                    f"$Object:payloadLength GE {neofs_env.get_object_size('simple_object_size')}",
+                ],
                 attributes=["str_attr", "$Object:payloadLength"],
                 cursor=cursor,
                 count=1,
@@ -1088,12 +1118,14 @@ def test_search_attrs_ordering_with_cursor(
 
 
 def test_search_with_cursor_empty_filters_and_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for idx in range(5):
-        file_path = generate_file(simple_object_size + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         created_objects.append(
             {
                 "id": put_object_to_random_node(
@@ -1132,12 +1164,14 @@ def test_search_with_cursor_empty_filters_and_attributes(
 
 
 def test_search_count_and_cursor(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for _ in range(5):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         created_objects.append(
             {
                 "id": put_object_to_random_node(
@@ -1296,12 +1330,14 @@ def test_search_count_and_cursor(
 
 
 def test_search_invalid_filters(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for _ in range(2):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         created_objects.append(
             {
                 "id": put_object_to_random_node(
@@ -1376,10 +1412,12 @@ def test_search_invalid_filters(
 
 
 def test_search_conflicting_filters(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     (
         put_object_to_random_node(
             default_wallet.path,
@@ -1404,10 +1442,12 @@ def test_search_conflicting_filters(
 
 
 def test_search_filters_attributes_limits(
-    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, simple_object_size: int
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
-    file_path = generate_file(simple_object_size)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     put_object_to_random_node(
         default_wallet.path,
         file_path,

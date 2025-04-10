@@ -28,8 +28,8 @@ class TestS3Versioning(TestNeofsS3Base):
             set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.SUSPENDED)
 
     @allure.title("Test S3: Enable and disable versioning")
-    def test_s3_version(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_version(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = self.object_key_from_file_path(file_path)
         bucket_objects = [file_name]
         bucket = s3_bucket.create_bucket_s3(
@@ -55,7 +55,9 @@ class TestS3Versioning(TestNeofsS3Base):
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path)
             time.sleep(1)
-            file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
+            file_name_1 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
+            )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
         with allure.step("Check bucket shows all versions"):

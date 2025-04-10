@@ -46,8 +46,8 @@ check_nodes: list[StorageNode] = []
 class TestNodeManagement(TestNeofsBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
-    def create_container_and_pick_node(self, default_wallet: NodeWallet, simple_object_size) -> Tuple[str, StorageNode]:
-        file_path = generate_file(simple_object_size)
+    def create_container_and_pick_node(self, default_wallet: NodeWallet) -> Tuple[str, StorageNode]:
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
         endpoint = self.neofs_env.sn_rpc
 
@@ -122,7 +122,6 @@ class TestNodeManagement(TestNeofsBase):
         self,
         default_wallet,
         return_nodes_after_test_run,
-        simple_object_size,
     ):
         """
         This test remove one node from cluster then add it back. Test uses base control operations with storage nodes (healthcheck, netmap-snapshot, set-status).
@@ -131,7 +130,7 @@ class TestNodeManagement(TestNeofsBase):
         wallet = default_wallet
         placement_rule_3 = "REP 3 IN X CBF 1 SELECT 3 FROM * AS X"
         placement_rule_4 = "REP 4 IN X CBF 1 SELECT 4 FROM * AS X"
-        source_file_path = generate_file(simple_object_size)
+        source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
         storage_nodes = self.neofs_env.storage_nodes
         random_node = random.choice(storage_nodes[1:])
@@ -218,12 +217,12 @@ class TestNodeManagement(TestNeofsBase):
         ],
     )
     @allure.title("Test object copies based on placement policy")
-    def test_placement_policy(self, default_wallet, placement_rule, expected_copies, simple_object_size):
+    def test_placement_policy(self, default_wallet, placement_rule, expected_copies):
         """
         This test checks object's copies based on container's placement policy.
         """
         wallet = default_wallet
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
     @pytest.mark.parametrize(
@@ -282,14 +281,13 @@ class TestNodeManagement(TestNeofsBase):
         placement_rule,
         expected_copies,
         expected_nodes_id: set[int],
-        simple_object_size,
     ):
         """
         Based on container's placement policy check that storage nodes are piked correctly and object has
         correct copies amount.
         """
         wallet = default_wallet
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         cid, oid, found_nodes = self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
         assert found_nodes == expected_nodes_id, f"Expected nodes {expected_nodes_id}, got {found_nodes}"
@@ -301,24 +299,27 @@ class TestNodeManagement(TestNeofsBase):
         ],
     )
     @allure.title("Negative cases for placement policy")
-    def test_placement_policy_negative(self, default_wallet, placement_rule, expected_copies, simple_object_size):
+    def test_placement_policy_negative(self, default_wallet, placement_rule, expected_copies):
         """
         Negative test for placement policy.
         """
         wallet = default_wallet
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         with pytest.raises(RuntimeError, match=".*not enough nodes to SELECT from.*"):
             self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
     @allure.title("NeoFS object could be dropped using control command")
     @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/537")
-    def test_drop_object(self, default_wallet, complex_object_size, simple_object_size):
+    def test_drop_object(self, default_wallet):
         """
         Test checks object could be dropped using `neofs-cli control drop-objects` command.
         """
         wallet = default_wallet
         endpoint = self.neofs_env.sn_rpc
-        file_path_simple, file_path_complex = generate_file(simple_object_size), generate_file(complex_object_size)
+        file_path_simple, file_path_complex = (
+            generate_file(self.neofs_env.get_object_size("simple_object_size")),
+            generate_file(self.neofs_env.get_object_size("complex_object_size")),
+        )
 
         locode = get_locode_from_random_node(self.neofs_env)
         rule = f"REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '{locode}' AS LOC"
@@ -357,10 +358,9 @@ class TestNodeManagement(TestNeofsBase):
         self,
         default_wallet,
         create_container_and_pick_node,
-        simple_object_size,
     ):
         wallet = default_wallet
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
         cid, node = create_container_and_pick_node
         original_oid = put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)

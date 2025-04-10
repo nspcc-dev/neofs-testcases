@@ -1,7 +1,7 @@
+import time
 from random import choice
 from string import ascii_letters
 from typing import Tuple
-import time
 
 import allure
 import pytest
@@ -32,8 +32,8 @@ class TestS3Tagging(TestNeofsS3Base):
         return tags
 
     @allure.title("Test S3: Object tagging")
-    def test_s3_object_tagging(self, bucket, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_object_tagging(self, bucket):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 
         with allure.step("Put with 3 tags object into bucket"):

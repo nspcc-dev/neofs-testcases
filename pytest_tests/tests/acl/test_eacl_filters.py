@@ -25,7 +25,6 @@ from helpers.neofs_verbs import put_object_to_random_node
 from helpers.object_access import can_get_head_object, can_get_object, can_put_object
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
-from pytest_lazy_fixtures import lf
 
 
 class TestEACLFilters(TestNeofsBase):
@@ -620,10 +619,11 @@ class TestEACLFilters(TestNeofsBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_extended_acl_numeric_values(self, wallets, operator, eacl_container, object_size):
+        object_size = self.neofs_env.get_object_size(object_size)
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
@@ -734,16 +734,14 @@ class TestEACLFilters(TestNeofsBase):
         "invalid_attr_value",
         ["abc", "92.1", "93-1"],
     )
-    def test_extended_acl_numeric_values_invalid_filters(
-        self, wallets, operator, eacl_container, simple_object_size, invalid_attr_value
-    ):
+    def test_extended_acl_numeric_values_invalid_filters(self, wallets, operator, eacl_container, invalid_attr_value):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
         oid = None
 
         with allure.step("Add test object to container"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             oid = put_object_to_random_node(
                 user_wallet.wallet_path,
@@ -786,9 +784,7 @@ class TestEACLFilters(TestNeofsBase):
                 create_eacl(cid, eacl_deny, shell=self.shell)
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
-    def test_extended_acl_numeric_values_attr_str_filter_numeric(
-        self, wallets, eacl_container, simple_object_size, address
-    ):
+    def test_extended_acl_numeric_values_attr_str_filter_numeric(self, wallets, eacl_container, address):
         operator = EACLMatchType.NUM_GT
         user_wallet = wallets.get_wallet()
 
@@ -796,7 +792,7 @@ class TestEACLFilters(TestNeofsBase):
         oid = None
 
         with allure.step("Add test object to container"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             oid = put_object_to_random_node(
                 user_wallet.wallet_path,
@@ -866,7 +862,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
-    def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, complex_object_size, address):
+    def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
@@ -943,7 +939,7 @@ class TestEACLFilters(TestNeofsBase):
             )
 
         with allure.step("Add test object to container"):
-            file_path = generate_file(complex_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
 
             oid = put_object_to_random_node(
                 user_wallet.wallet_path,
@@ -987,7 +983,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
-    def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, complex_object_size, address):
+    def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 
         cid = eacl_container
@@ -1009,7 +1005,7 @@ class TestEACLFilters(TestNeofsBase):
                                 header_type=EACLHeaderType.OBJECT,
                                 match_type=EACLMatchType.NUM_LT,
                                 key=self.PAYLOAD_LENGTH_OBJECT_ATTR,
-                                value=complex_object_size + 1,
+                                value=self.neofs_env.get_object_size("complex_object_size") + 1,
                             ),
                         ]
                     ),
@@ -1031,9 +1027,11 @@ class TestEACLFilters(TestNeofsBase):
                 endpoint=self.neofs_env.sn_rpc,
             )
 
-        small_file_path = generate_file(complex_object_size)
+        small_file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
 
-        with allure.step(f"PUT object should not be allowed because size is LT {complex_object_size + 1}"):
+        with allure.step(
+            f"PUT object should not be allowed because size is LT {self.neofs_env.get_object_size('complex_object_size') + 1}"
+        ):
             with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):
                 put_object_to_random_node(
                     user_wallet.wallet_path,
@@ -1043,9 +1041,11 @@ class TestEACLFilters(TestNeofsBase):
                     neofs_env=self.neofs_env,
                 )
 
-        big_file_path = generate_file(complex_object_size + 1)
+        big_file_path = generate_file(self.neofs_env.get_object_size("complex_object_size") + 1)
 
-        with allure.step(f"PUT object should be allowed because size is EQ {complex_object_size + 1}"):
+        with allure.step(
+            f"PUT object should be allowed because size is EQ {self.neofs_env.get_object_size('complex_object_size') + 1}"
+        ):
             oid1 = put_object_to_random_node(
                 user_wallet.wallet_path,
                 big_file_path,
@@ -1064,9 +1064,11 @@ class TestEACLFilters(TestNeofsBase):
                 neofs_env=self.neofs_env,
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
-        very_big_file_path = generate_file(complex_object_size * 2)
+        very_big_file_path = generate_file(self.neofs_env.get_object_size("complex_object_size") * 2)
 
-        with allure.step(f"PUT object should be allowed because value is GT {complex_object_size + 1}"):
+        with allure.step(
+            f"PUT object should be allowed because value is GT {self.neofs_env.get_object_size('complex_object_size') + 1}"
+        ):
             oid2 = put_object_to_random_node(
                 user_wallet.wallet_path,
                 very_big_file_path,
@@ -1086,7 +1088,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
-    def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, complex_object_size, address):
+    def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 
         epoch = self.ensure_fresh_epoch()
@@ -1133,7 +1135,7 @@ class TestEACLFilters(TestNeofsBase):
             )
 
         with allure.step("Add test object to container"):
-            file_path = generate_file(complex_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
 
             oid = put_object_to_random_node(
                 user_wallet.wallet_path,
@@ -1156,7 +1158,7 @@ class TestEACLFilters(TestNeofsBase):
         self.tick_epoch()
 
         with allure.step("Add test object to container"):
-            file_path = generate_file(complex_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
 
             oid = put_object_to_random_node(
                 user_wallet.wallet_path,
