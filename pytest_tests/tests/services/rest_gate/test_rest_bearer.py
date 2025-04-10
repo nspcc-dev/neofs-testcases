@@ -18,7 +18,6 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.rest_gate import upload_via_rest_gate
 from helpers.wellknown_acl import PUBLIC_ACL
-from pytest_lazy_fixtures import lf
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
@@ -79,13 +78,11 @@ class Test_rest_bearer(TestNeofsRestBase):
             return bearer_token_base64_from_file(bearer_signed)
 
     @allure.title(f"[negative] Put object without bearer token for {EACLRole.OTHERS}")
-    def test_unable_put_without_bearer_token(
-        self, simple_object_size: int, user_container: str, eacl_deny_for_others, gw_endpoint
-    ):
+    def test_unable_put_without_bearer_token(self, user_container: str, eacl_deny_for_others, gw_endpoint):
         eacl_deny_for_others
         upload_via_rest_gate(
             cid=user_container,
-            path=generate_file(simple_object_size),
+            path=generate_file(self.neofs_env.get_object_size("simple_object_size")),
             endpoint=gw_endpoint,
             error_pattern="access to object operation denied",
         )
@@ -93,7 +90,7 @@ class Test_rest_bearer(TestNeofsRestBase):
     @pytest.mark.parametrize("bearer_type", ("header", "cookie"))
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_put_with_bearer_when_eacl_restrict(
@@ -107,7 +104,7 @@ class Test_rest_bearer(TestNeofsRestBase):
     ):
         eacl_deny_for_others
         bearer = bearer_token_no_limit_for_others
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         with allure.step(f"Put object with bearer token for {EACLRole.OTHERS}, then get and verify hashes"):
             headers = None
             cookies = None

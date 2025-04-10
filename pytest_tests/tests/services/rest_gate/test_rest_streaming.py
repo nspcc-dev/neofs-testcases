@@ -7,7 +7,6 @@ from helpers.common import DEFAULT_OBJECT_OPERATION_TIMEOUT
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.wellknown_acl import PUBLIC_ACL
-from pytest_lazy_fixtures import lf
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
@@ -26,7 +25,7 @@ class Test_rest_streaming(TestNeofsRestBase):
     @allure.title("Test Put via pipe (steaming), Get over HTTP and verify hashes")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("complex_object_size")],
+        ["complex_object_size"],
         ids=["complex object"],
     )
     def test_object_can_be_put_get_by_streaming(self, object_size: int, gw_endpoint):
@@ -52,7 +51,7 @@ class Test_rest_streaming(TestNeofsRestBase):
             )
         with allure.step("Allocate big object"):
             # Generate file
-            file_path = generate_file(object_size)
+            file_path = generate_file(self.neofs_env.get_object_size(object_size))
 
         with allure.step("Put objects and Get object and verify hashes [ get/$CID/$OID ]"):
             # https://docs.python-requests.org/en/latest/user/advanced/#streaming-uploads

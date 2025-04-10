@@ -17,7 +17,6 @@ from helpers.rest_gate import (
     upload_via_rest_gate,
 )
 from helpers.wellknown_acl import PUBLIC_ACL
-from pytest_lazy_fixtures import lf
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
@@ -133,9 +132,9 @@ class Test_rest_system_header(TestNeofsRestBase):
         return oid, head
 
     @allure.title("[negative] attempt to put object with expired epoch")
-    def test_unable_put_expired_epoch(self, user_container: str, simple_object_size: int, gw_endpoint):
+    def test_unable_put_expired_epoch(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)})
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         with allure.step("Put object using HTTP with attribute Expiration-Epoch where epoch is expired"):
             upload_via_rest_gate(
                 cid=user_container,
@@ -146,9 +145,9 @@ class Test_rest_system_header(TestNeofsRestBase):
             )
 
     @allure.title("[negative] attempt to put object with negative Neofs-Expiration-Duration")
-    def test_unable_put_negative_duration(self, user_container: str, simple_object_size: int, gw_endpoint):
+    def test_unable_put_negative_duration(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Duration": "-1h"})
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         with allure.step("Put object using HTTP with attribute Neofs-Expiration-Duration where duration is negative"):
             upload_via_rest_gate(
                 cid=user_container,
@@ -159,9 +158,9 @@ class Test_rest_system_header(TestNeofsRestBase):
             )
 
     @allure.title("[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past")
-    def test_unable_put_expired_timestamp(self, user_container: str, simple_object_size: int, gw_endpoint):
+    def test_unable_put_expired_timestamp(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Timestamp": "1635075727"})
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         with allure.step(
             "Put object using HTTP with attribute Neofs-Expiration-Timestamp where duration is in the past"
         ):
@@ -176,9 +175,9 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title(
         "[negative] Put object using HTTP with attribute Neofs-Expiration-RFC3339 where duration is in the past"
     )
-    def test_unable_put_expired_rfc(self, user_container: str, simple_object_size: int, gw_endpoint):
+    def test_unable_put_expired_rfc(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         upload_via_rest_gate(
             cid=user_container,
             path=file_path,
@@ -191,7 +190,7 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title("priority of attributes epoch>duration")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_epoch_duration(
@@ -204,7 +203,7 @@ class Test_rest_system_header(TestNeofsRestBase):
             f"epoch duration={epoch_duration}, current_epoch= {neofs_epoch.get_epoch(self.neofs_env)} expected_epoch {expected_epoch}"
         )
         attributes = {NEOFS_EXPIRATION_EPOCH: expected_epoch, NEOFS_EXPIRATION_DURATION: "1m"}
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         with allure.step(
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
@@ -244,7 +243,7 @@ class Test_rest_system_header(TestNeofsRestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_dur_timestamp(
@@ -261,7 +260,7 @@ class Test_rest_system_header(TestNeofsRestBase):
             NEOFS_EXPIRATION_DURATION: self.epoch_count_into_mins(epoch_duration=epoch_duration, epoch=2),
             NEOFS_EXPIRATION_TIMESTAMP: self.epoch_count_into_timestamp(epoch_duration=epoch_duration, epoch=1),
         }
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         with allure.step(
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
@@ -301,7 +300,7 @@ class Test_rest_system_header(TestNeofsRestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_http_attr_priority_timestamp_rfc(
@@ -320,7 +319,7 @@ class Test_rest_system_header(TestNeofsRestBase):
                 epoch_duration=epoch_duration, epoch=1, rfc3339=True
             ),
         }
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         with allure.step(
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
@@ -358,7 +357,7 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title("Test that object is automatically delete when expiration passed")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_http_rfc_object_unavailable_after_expir(
@@ -376,7 +375,7 @@ class Test_rest_system_header(TestNeofsRestBase):
                 epoch_duration=epoch_duration, epoch=2, rfc3339=True
             )
         }
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         with allure.step(
             f"Put objects using HTTP with attributes and head command should display {EXPIRATION_EPOCH_HEADER}: {expected_epoch} attr"
         ):
