@@ -26,6 +26,7 @@ from typing import Optional
 
 import allure
 import jinja2
+import psutil
 import requests
 import yaml
 from helpers.common import (
@@ -750,7 +751,26 @@ class NeoFSEnv:
         return dir_path
 
 
-class MainChain:
+class ResurrectableProcess:
+    def __getstate__(self):
+        attributes = self.__dict__.copy()
+        del attributes["process"]
+        return attributes
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        try:
+            if psutil.pid_exists(self.pid):
+                self.process = psutil.Process(self.pid)
+            else:
+                logger.info(f"Process {self.pid} no longer exists.")
+                self.process = None
+        except Exception as e:
+            logger.info(f"Failed to reattach to process {self.pid}: {e}")
+            self.process = None
+
+
+class MainChain(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
         self.main_chain_dir = self.neofs_env._generate_temp_dir("main_chain")
@@ -775,6 +795,7 @@ class MainChain:
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
+        self.pid = None
         self.neofs_contract_address = None
         self.neofs_contract_hash = None
 
@@ -790,11 +811,6 @@ class MainChain:
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
 
     @allure.step("Start Main Chain")
     def start(self, wait_until_ready=True):
@@ -856,6 +872,7 @@ class MainChain:
             stdout=stdout_fp,
             stderr=stderr_fp,
         )
+        self.pid = self.process.pid
 
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
     def _wait_until_ready(self):
@@ -865,7 +882,7 @@ class MainChain:
         logger.info(result.stderr)
 
 
-class InnerRing:
+class InnerRing(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
         self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
@@ -891,6 +908,7 @@ class InnerRing:
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
+        self.pid = None
 
     def __str__(self):
         return f"""
@@ -906,11 +924,6 @@ class InnerRing:
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
 
     def generate_network_config(self):
         logger.info(f"Generating network config at: {self.network_config}")
@@ -1002,6 +1015,7 @@ class InnerRing:
             stdout=stdout_fp,
             stderr=stderr_fp,
         )
+        self.pid = self.process.pid
 
     @retry(wait=wait_fixed(12), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
@@ -1019,7 +1033,7 @@ class Shard:
         self.wc_path = neofs_env._generate_temp_dir(prefix="shards/shard_wc")
 
 
-class StorageNode:
+class StorageNode(ResurrectableProcess):
     def __init__(
         self,
         neofs_env: NeoFSEnv,
@@ -1052,6 +1066,7 @@ class StorageNode:
         self.stderr = "Not initialized"
         self.sn_number = sn_number
         self.process = None
+        self.pid = None
         self.attrs = {}
         self.node_attrs = node_attrs
         self.writecache = writecache
@@ -1070,11 +1085,6 @@ class StorageNode:
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
 
     def get_config_template(self):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
@@ -1120,6 +1130,7 @@ class StorageNode:
             if self.process:
                 terminate_process(self.process)
                 self.process = None
+                self.pid = None
                 with allure.step("Wait until storage node is not ready"):
                     self._wait_until_not_ready()
             else:
@@ -1130,6 +1141,7 @@ class StorageNode:
             if self.process:
                 self.process.kill()
                 self.process = None
+                self.pid = None
                 with allure.step("Wait until storage node is not ready"):
                     self._wait_until_not_ready()
             else:
@@ -1216,6 +1228,7 @@ class StorageNode:
             stderr=stderr_fp,
             env=env_dict,
         )
+        self.pid = self.process.pid
 
     @retry(wait=wait_fixed(15), stop=stop_after_attempt(30), reraise=True)
     def _wait_until_ready(self):
@@ -1236,7 +1249,7 @@ class StorageNode:
         assert "Network status: ONLINE" not in result.stdout, "Network is online"
 
 
-class S3_GW:
+class S3_GW(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
         self.s3_gw_dir = self.neofs_env._generate_temp_dir("s3-gw")
@@ -1255,6 +1268,7 @@ class S3_GW:
         self.stderr = "Not initialized"
         self.tls_enabled = True
         self.process = None
+        self.pid = None
 
     def __str__(self):
         return f"""
@@ -1266,11 +1280,6 @@ class S3_GW:
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
 
     def start(self, fresh=True):
         if self.process is not None:
@@ -1295,6 +1304,7 @@ class S3_GW:
         self.process.terminate()
         terminate_process(self.process)
         self.process = None
+        self.pid = None
 
     @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
     def _wait_until_ready(self):
@@ -1347,9 +1357,10 @@ class S3_GW:
             stdout=stdout_fp,
             stderr=stderr_fp,
         )
+        self.pid = self.process.pid
 
 
-class REST_GW:
+class REST_GW(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
         self.rest_gw_dir = self.neofs_env._generate_temp_dir("rest-gw")
@@ -1367,6 +1378,7 @@ class REST_GW:
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
+        self.pid = None
 
     def __str__(self):
         return f"""
@@ -1378,11 +1390,6 @@ class REST_GW:
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
-
-    def __getstate__(self):
-        attributes = self.__dict__.copy()
-        del attributes["process"]
-        return attributes
 
     def start(self):
         if self.process is not None:
@@ -1424,6 +1431,7 @@ class REST_GW:
             stderr=stderr_fp,
             env=rest_gw_env,
         )
+        self.pid = self.process.pid
 
 
 class XK6:
