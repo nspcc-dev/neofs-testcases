@@ -133,7 +133,7 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
         for sn in neofs_env.storage_nodes:
             sn.stop()
             for shard in sn.shards:
-                os.chmod(shard.fstree_path, 0o666)
+                os.chmod(shard.fstree_path, 0o777)
             sn_config_template = sn.get_config_template()
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
