@@ -1014,6 +1014,9 @@ class InnerRing(ResurrectableProcess):
             [self.neofs_env.neofs_ir_path, "--config", self.ir_node_config_path],
             stdout=stdout_fp,
             stderr=stderr_fp,
+            env={
+                "GODEBUG": "http2debug=2",
+            },
         )
         self.pid = self.process.pid
 
@@ -1220,6 +1223,9 @@ class StorageNode(ResurrectableProcess):
             "NEOFS_NODE_ADDRESSES": self.endpoint,
             "NEOFS_GRPC_0_ENDPOINT": self.endpoint,
             "NEOFS_CONTROL_GRPC_ENDPOINT": self.control_endpoint,
+            "GRPC_GO_LOG_VERBOSITY_LEVEL": "99",
+            "GRPC_GO_LOG_SEVERITY_LEVEL": "info",
+            "GODEBUG": "http2debug=2",
         }
         env_dict.update(self.attrs)
         self.process = subprocess.Popen(
