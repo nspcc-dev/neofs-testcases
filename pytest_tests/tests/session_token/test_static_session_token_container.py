@@ -400,7 +400,6 @@ class TestSessionTokenContainer(TestNeofsBase):
         user_wallet: NodeWallet,
         stranger_wallet: NodeWallet,
         static_sessions: dict[ContainerVerb, str],
-        simple_object_size,
     ):
         """
         Validate static session with set eacl operation
@@ -412,7 +411,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
         with allure.step("Deny all operations for other via eACL"):
@@ -435,7 +434,6 @@ class TestSessionTokenContainer(TestNeofsBase):
         user_wallet: NodeWallet,
         stranger_wallet: NodeWallet,
         static_sessions: dict[ContainerVerb, str],
-        simple_object_size,
     ):
         """
         Validate static session without seteacl operation
@@ -447,7 +445,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         assert can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
         with allure.step("Try to seteacl with static session token without seteacl rule"):
@@ -528,7 +526,6 @@ class TestSessionTokenContainer(TestNeofsBase):
         owner_wallet: NodeWallet,
         user_wallet: NodeWallet,
         temp_directory: str,
-        simple_object_size,
     ):
         with allure.step("Prepare object session token"):
             cid = create_container(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
@@ -536,7 +533,7 @@ class TestSessionTokenContainer(TestNeofsBase):
             storage_objects = []
 
             with allure.step("Put object"):
-                file_path = generate_file(simple_object_size)
+                file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
                 storage_object_id = put_object_to_random_node(
                     wallet=owner_wallet.path,
@@ -547,7 +544,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                 )
 
                 storage_object = StorageObjectInfo(cid, storage_object_id)
-                storage_object.size = simple_object_size
+                storage_object.size = self.neofs_env.get_object_size("simple_object_size")
                 storage_object.wallet_file_path = owner_wallet.path
                 storage_object.file_path = file_path
                 storage_objects.append(storage_object)

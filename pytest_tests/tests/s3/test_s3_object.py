@@ -39,8 +39,8 @@ class TestS3Object(TestNeofsS3Base):
 
     @pytest.mark.sanity
     @allure.title("Test S3: Copy object")
-    def test_s3_copy_object(self, two_buckets, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_copy_object(self, two_buckets):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = self.object_key_from_file_path(file_path)
         bucket_1_objects = [file_name]
 
@@ -80,9 +80,11 @@ class TestS3Object(TestNeofsS3Base):
                 s3_object.copy_object_s3(self.s3_client, bucket_1, file_name)
 
     @allure.title("Test S3: Copy version of object")
-    def test_s3_copy_version_object(self, two_buckets, simple_object_size):
+    def test_s3_copy_version_object(self, two_buckets):
         version_1_content = "Version 1"
-        file_name_simple = generate_file_with_content(simple_object_size, content=version_1_content)
+        file_name_simple = generate_file_with_content(
+            self.neofs_env.get_object_size("simple_object_size"), content=version_1_content
+        )
         obj_key = os.path.basename(file_name_simple)
 
         bucket_1, bucket_2 = two_buckets
@@ -119,9 +121,11 @@ class TestS3Object(TestNeofsS3Base):
                 s3_object.copy_object_s3(self.s3_client, bucket_1, obj_key)
 
     @allure.title("Test S3: Checking copy with acl")
-    def test_s3_copy_acl(self, bucket, simple_object_size):
+    def test_s3_copy_acl(self, bucket):
         version_1_content = "Version 1"
-        file_name_simple = generate_file_with_content(simple_object_size, content=version_1_content)
+        file_name_simple = generate_file_with_content(
+            self.neofs_env.get_object_size("simple_object_size"), content=version_1_content
+        )
         obj_key = os.path.basename(file_name_simple)
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -138,9 +142,9 @@ class TestS3Object(TestNeofsS3Base):
             verify_acls(obj_acl, ACLType.PRIVATE)
 
     @allure.title("Test S3: Copy object with metadata")
-    def test_s3_copy_metadate(self, bucket, simple_object_size):
+    def test_s3_copy_metadate(self, bucket):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = self.object_key_from_file_path(file_path)
         bucket_1_objects = [file_name]
 
@@ -182,9 +186,9 @@ class TestS3Object(TestNeofsS3Base):
             assert obj_head.get("Metadata") == object_metadata_1, f"Metadata must be {object_metadata_1}"
 
     @allure.title("Test S3: Copy object with tagging")
-    def test_s3_copy_tagging(self, bucket, simple_object_size):
+    def test_s3_copy_tagging(self, bucket):
         object_tagging = [(f"{uuid.uuid4()}", f"{uuid.uuid4()}")]
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_simple = self.object_key_from_file_path(file_path)
         bucket_1_objects = [file_name_simple]
 
@@ -237,10 +241,12 @@ class TestS3Object(TestNeofsS3Base):
                 assert tag in got_tags, f"Expected tag {tag} in {got_tags}"
 
     @allure.title("Test S3: Delete version of object")
-    def test_s3_delete_versioning(self, bucket, complex_object_size, simple_object_size):
+    def test_s3_delete_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
-        file_name_simple = generate_file_with_content(simple_object_size, content=version_1_content)
+        file_name_simple = generate_file_with_content(
+            self.neofs_env.get_object_size("simple_object_size"), content=version_1_content
+        )
 
         obj_key = os.path.basename(file_name_simple)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -248,7 +254,9 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
             file_name_1 = generate_file_with_content(
-                simple_object_size, file_path=file_name_simple, content=version_2_content
+                self.neofs_env.get_object_size("simple_object_size"),
+                file_path=file_name_simple,
+                content=version_2_content,
             )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
@@ -275,7 +283,7 @@ class TestS3Object(TestNeofsS3Base):
             assert "DeleteMarkers" not in delete_obj.keys(), "Delete markes not found"
 
         with allure.step("Put new object into bucket"):
-            file_name_simple = generate_file(complex_object_size)
+            file_name_simple = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             obj_key = os.path.basename(file_name_simple)
             s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
 
@@ -286,12 +294,14 @@ class TestS3Object(TestNeofsS3Base):
             assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
     @allure.title("Test S3: bulk delete version of object")
-    def test_s3_bulk_delete_versioning(self, bucket, simple_object_size):
+    def test_s3_bulk_delete_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
         version_3_content = "Version 3"
         version_4_content = "Version 4"
-        file_name_1 = generate_file_with_content(simple_object_size, content=version_1_content)
+        file_name_1 = generate_file_with_content(
+            self.neofs_env.get_object_size("simple_object_size"), content=version_1_content
+        )
 
         obj_key = os.path.basename(file_name_1)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -299,15 +309,15 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
             file_name_2 = generate_file_with_content(
-                simple_object_size, file_path=file_name_1, content=version_2_content
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_name_1, content=version_2_content
             )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_2)
             file_name_3 = generate_file_with_content(
-                simple_object_size, file_path=file_name_1, content=version_3_content
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_name_1, content=version_3_content
             )
             version_id_3 = s3_object.put_object_s3(self.s3_client, bucket, file_name_3)
             file_name_4 = generate_file_with_content(
-                simple_object_size, file_path=file_name_1, content=version_4_content
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_name_1, content=version_4_content
             )
             version_id_4 = s3_object.put_object_s3(self.s3_client, bucket, file_name_4)
             version_ids = {version_id_1, version_id_2, version_id_3, version_id_4}
@@ -329,10 +339,12 @@ class TestS3Object(TestNeofsS3Base):
             assert obj_versions.sort() == version_to_save.sort(), f"Expected object has versions: {version_to_save}"
 
     @allure.title("Test S3: Get versions of object")
-    def test_s3_get_versioning(self, bucket, simple_object_size):
+    def test_s3_get_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
-        file_name_simple = generate_file_with_content(simple_object_size, content=version_1_content)
+        file_name_simple = generate_file_with_content(
+            self.neofs_env.get_object_size("simple_object_size"), content=version_1_content
+        )
 
         obj_key = os.path.basename(file_name_simple)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -340,7 +352,9 @@ class TestS3Object(TestNeofsS3Base):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_name_simple)
             time.sleep(1)
             file_name_1 = generate_file_with_content(
-                simple_object_size, file_path=file_name_simple, content=version_2_content
+                self.neofs_env.get_object_size("simple_object_size"),
+                file_path=file_name_simple,
+                content=version_2_content,
             )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
@@ -357,15 +371,17 @@ class TestS3Object(TestNeofsS3Base):
             assert object_3.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
 
     @allure.title("Test S3: Get range")
-    def test_s3_get_range(self, bucket, complex_object_size: int, simple_object_size: int):
-        file_path = generate_file(complex_object_size)
+    def test_s3_get_range(self, bucket):
+        file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path)
         file_hash = get_file_hash(file_path)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path)
             time.sleep(1)
-            file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
+            file_name_1 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
+            )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
         with allure.step("Get first version of object"):
@@ -374,21 +390,27 @@ class TestS3Object(TestNeofsS3Base):
                 bucket,
                 file_name,
                 version_id_1,
-                range=[0, int(complex_object_size / 3)],
+                range=[0, int(self.neofs_env.get_object_size("complex_object_size") / 3)],
             )
             object_1_part_2 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
                 version_id_1,
-                range=[int(complex_object_size / 3) + 1, 2 * int(complex_object_size / 3)],
+                range=[
+                    int(self.neofs_env.get_object_size("complex_object_size") / 3) + 1,
+                    2 * int(self.neofs_env.get_object_size("complex_object_size") / 3),
+                ],
             )
             object_1_part_3 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
                 version_id_1,
-                range=[2 * int(complex_object_size / 3) + 1, complex_object_size],
+                range=[
+                    2 * int(self.neofs_env.get_object_size("complex_object_size") / 3) + 1,
+                    self.neofs_env.get_object_size("complex_object_size"),
+                ],
             )
             con_file = concat_files([object_1_part_1, object_1_part_2, object_1_part_3])
             assert get_file_hash(con_file) == file_hash, "Hashes must be the same"
@@ -399,55 +421,72 @@ class TestS3Object(TestNeofsS3Base):
                 bucket,
                 file_name,
                 version_id_2,
-                range=[0, int(simple_object_size / 3)],
+                range=[0, int(self.neofs_env.get_object_size("simple_object_size") / 3)],
             )
             object_2_part_2 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
                 version_id_2,
-                range=[int(simple_object_size / 3) + 1, 2 * int(simple_object_size / 3)],
+                range=[
+                    int(self.neofs_env.get_object_size("simple_object_size") / 3) + 1,
+                    2 * int(self.neofs_env.get_object_size("simple_object_size") / 3),
+                ],
             )
             object_2_part_3 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
                 version_id_2,
-                range=[2 * int(simple_object_size / 3) + 1, simple_object_size],
+                range=[
+                    2 * int(self.neofs_env.get_object_size("simple_object_size") / 3) + 1,
+                    self.neofs_env.get_object_size("simple_object_size"),
+                ],
             )
             con_file_1 = concat_files([object_2_part_1, object_2_part_2, object_2_part_3])
             assert get_file_hash(con_file_1) == get_file_hash(file_name_1), "Hashes must be the same"
 
         with allure.step("Get object"):
             object_3_part_1 = s3_object.get_object_s3(
-                self.s3_client, bucket, file_name, range=[0, int(simple_object_size / 3)]
+                self.s3_client,
+                bucket,
+                file_name,
+                range=[0, int(self.neofs_env.get_object_size("simple_object_size") / 3)],
             )
             object_3_part_2 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
-                range=[int(simple_object_size / 3) + 1, 2 * int(simple_object_size / 3)],
+                range=[
+                    int(self.neofs_env.get_object_size("simple_object_size") / 3) + 1,
+                    2 * int(self.neofs_env.get_object_size("simple_object_size") / 3),
+                ],
             )
             object_3_part_3 = s3_object.get_object_s3(
                 self.s3_client,
                 bucket,
                 file_name,
-                range=[2 * int(simple_object_size / 3) + 1, simple_object_size],
+                range=[
+                    2 * int(self.neofs_env.get_object_size("simple_object_size") / 3) + 1,
+                    self.neofs_env.get_object_size("simple_object_size"),
+                ],
             )
             con_file = concat_files([object_3_part_1, object_3_part_2, object_3_part_3])
             assert get_file_hash(con_file) == get_file_hash(file_name_1), "Hashes must be the same"
 
     @allure.title("Test S3: Copy object with metadata")
-    def test_s3_head_object(self, bucket, complex_object_size, simple_object_size):
+    def test_s3_head_object(self, bucket):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
-        file_path = generate_file(complex_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
 
         with allure.step("Put several versions of object into bucket"):
             version_id_1 = s3_object.put_object_s3(self.s3_client, bucket, file_path, Metadata=object_metadata)
             time.sleep(1)
-            file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
+            file_name_1 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
+            )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
 
         with allure.step("Get head of first version of object"):
@@ -468,10 +507,10 @@ class TestS3Object(TestNeofsS3Base):
 
     @allure.title("Test S3: list of object with versions")
     @pytest.mark.parametrize("list_type", ["v1", "v2"])
-    def test_s3_list_object(self, list_type: str, bucket, complex_object_size):
-        file_path_1 = generate_file(complex_object_size)
+    def test_s3_list_object(self, list_type: str, bucket):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
-        file_path_2 = generate_file(complex_object_size)
+        file_path_2 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name_2 = self.object_key_from_file_path(file_path_2)
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -502,8 +541,8 @@ class TestS3Object(TestNeofsS3Base):
             assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
     @allure.title("Test S3: put object")
-    def test_s3_put_object(self, bucket, complex_object_size, simple_object_size):
-        file_path_1 = generate_file(complex_object_size)
+    def test_s3_put_object(self, bucket):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
         object_1_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         tag_key_1 = "tag1"
@@ -525,7 +564,9 @@ class TestS3Object(TestNeofsS3Base):
             assert got_tags == [{"Key": tag_key_1, "Value": str(tag_value_1)}], "Tags must be the same"
 
         with allure.step("Rewrite file into bucket"):
-            file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            file_path_2 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
+            )
             s3_object.put_object_s3(self.s3_client, bucket, file_path_2, Metadata=object_2_metadata, Tagging=tag_2)
             time.sleep(1)
             obj_head = s3_object.head_object_s3(self.s3_client, bucket, file_name)
@@ -536,7 +577,7 @@ class TestS3Object(TestNeofsS3Base):
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
 
-        file_path_3 = generate_file(complex_object_size)
+        file_path_3 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_hash = get_file_hash(file_path_3)
         file_name_3 = self.object_key_from_file_path(file_path_3)
         object_3_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
@@ -556,7 +597,9 @@ class TestS3Object(TestNeofsS3Base):
             assert got_tags_3 == [{"Key": tag_key_3, "Value": str(tag_value_3)}], "Tags must be the same"
 
         with allure.step("Put new version of file into bucket"):
-            file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_3)
+            file_path_4 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_3
+            )
             version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_path_4)
             time.sleep(1)
             versions = s3_object.list_objects_versions_s3(self.s3_client, bucket)
@@ -599,10 +642,8 @@ class TestS3Object(TestNeofsS3Base):
         prepare_two_wallets,
         bucket_versioning,
         bucket,
-        complex_object_size,
-        simple_object_size,
     ):
-        file_path_1 = generate_file(complex_object_size)
+        file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
         if bucket_versioning == "ENABLED":
             status = s3_bucket.VersioningStatus.ENABLED
@@ -624,7 +665,9 @@ class TestS3Object(TestNeofsS3Base):
                     self.s3_client, bucket, s3_bucket.ObjectOwnership.BUCKET_OWNER_PREFERRED
                 )
             acl = "public-read"
-            file_path_2 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            file_path_2 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
+            )
             s3_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ)
@@ -633,7 +676,9 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put object with acl public-read-write"):
             acl = "public-read-write"
-            file_path_3 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            file_path_3 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
+            )
             s3_object.put_object_s3(self.s3_client, bucket, file_path_3, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ_WRITE)
@@ -642,18 +687,22 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put object with acl authenticated-read"):
             acl = "authenticated-read"
-            file_path_4 = generate_file_with_content(simple_object_size, file_path=file_path_1)
+            file_path_4 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
+            )
             s3_object.put_object_s3(self.s3_client, bucket, file_path_4, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ)
             object_4 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
             assert get_file_hash(file_path_4) == get_file_hash(object_4), "Hashes must be the same"
 
-        file_path_5 = generate_file(complex_object_size)
+        file_path_5 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name_5 = self.object_key_from_file_path(file_path_5)
 
         with allure.step("Put object with --grant-full-control id=mycanonicaluserid"):
-            file_path_6 = generate_file_with_content(simple_object_size, file_path=file_path_5)
+            file_path_6 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_5
+            )
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -666,7 +715,9 @@ class TestS3Object(TestNeofsS3Base):
             assert get_file_hash(file_path_5) == get_file_hash(object_4), "Hashes must be the same"
 
         with allure.step("Put object with --grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"):
-            file_path_7 = generate_file_with_content(simple_object_size, file_path=file_path_5)
+            file_path_7 = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_5
+            )
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -679,8 +730,8 @@ class TestS3Object(TestNeofsS3Base):
             assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
 
     @allure.title("Test S3: put object with lock-mode")
-    def test_s3_put_object_lock_mode(self, complex_object_size, simple_object_size):
-        file_path_1 = generate_file(complex_object_size)
+    def test_s3_put_object_lock_mode(self):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
         bucket = s3_bucket.create_bucket_s3(self.s3_client, True)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -702,7 +753,7 @@ class TestS3Object(TestNeofsS3Base):
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +3days]"
         ):
             date_obj = datetime.now(UTC) + timedelta(days=2)
-            generate_file_with_content(simple_object_size, file_path=file_path_1)
+            generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -717,7 +768,7 @@ class TestS3Object(TestNeofsS3Base):
             "Put new version of object with [--object-lock-mode COMPLIANCE] и [--object-lock-retain-until-date +2days]"
         ):
             date_obj = datetime.now(UTC) + timedelta(days=3)
-            generate_file_with_content(simple_object_size, file_path=file_path_1)
+            generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
@@ -756,14 +807,14 @@ class TestS3Object(TestNeofsS3Base):
     @allure.title("Test S3 Sync directory")
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
     @pytest.mark.aws_cli_only
-    def test_s3_sync_dir(self, sync_type, bucket, simple_object_size):
+    def test_s3_sync_dir(self, sync_type, bucket):
         file_path_1 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_1")
         file_path_2 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_2")
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         key_to_path = {"test_file_1": file_path_1, "test_file_2": file_path_2}
 
-        generate_file_with_content(simple_object_size, file_path=file_path_1)
-        generate_file_with_content(simple_object_size, file_path=file_path_2)
+        generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1)
+        generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_2)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         # TODO: return ACL, when https://github.com/nspcc-dev/neofs-s3-gw/issues/685 will be closed
         if sync_type == "sync":
@@ -798,10 +849,10 @@ class TestS3Object(TestNeofsS3Base):
                 # assert_s3_acl(acl_grants = obj_acl, permitted_users = "AllUsers")
 
     @allure.title("Test S3 Put 10 nested level object")
-    def test_s3_put_10_folder(self, bucket, temp_directory, simple_object_size):
+    def test_s3_put_10_folder(self, bucket, temp_directory):
         path = "/".join(["".join(choices(string.ascii_letters, k=3)) for _ in range(10)])
         file_path_1 = os.path.join(temp_directory, path, "test_file_1")
-        generate_file_with_content(simple_object_size, file_path=file_path_1)
+        generate_file_with_content(self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1)
         file_name = self.object_key_from_file_path(file_path_1)
         objects_list = s3_object.list_objects_s3(self.s3_client, bucket)
         assert not objects_list, f"Expected empty bucket, got {objects_list}"

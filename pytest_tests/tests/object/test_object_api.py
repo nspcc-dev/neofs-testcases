@@ -45,7 +45,6 @@ from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -114,10 +113,8 @@ def generate_ranges(
 
 
 @pytest.fixture(
-    params=[lf("simple_object_size"), lf("complex_object_size")],
+    params=["simple_object_size", "complex_object_size"],
     ids=["simple object", "complex object"],
-    # Scope session to upload/delete each files set only once
-    scope="function",
 )
 def storage_objects(
     default_wallet: str, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
@@ -126,7 +123,7 @@ def storage_objects(
     # Separate containers for complex/simple objects to avoid side-effects
     cid = create_container(wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
-    file_path = generate_file(request.param)
+    file_path = generate_file(neofs_env.get_object_size(request.param))
     file_hash = get_file_hash(file_path)
 
     storage_objects = []
@@ -144,7 +141,7 @@ def storage_objects(
             )
 
             storage_object = StorageObjectInfo(cid, storage_object_id)
-            storage_object.size = request.param
+            storage_object.size = neofs_env.get_object_size(request.param)
             storage_object.wallet_file_path = wallet.path
             storage_object.file_path = file_path
             storage_object.file_hash = file_hash
@@ -170,7 +167,9 @@ class TestObjectApi(TestNeofsBase):
     @pytest.mark.sanity
     @allure.title("Validate object storage policy by native API")
     def test_object_storage_policies(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], simple_object_size
+        self,
+        request: FixtureRequest,
+        storage_objects: list[StorageObjectInfo],
     ):
         """
         Validate object storage policy
@@ -179,7 +178,7 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Validate storage policy for objects"):
             for storage_object in storage_objects:
-                if storage_object.size == simple_object_size:
+                if storage_object.size == self.neofs_env.get_object_size("simple_object_size"):
                     copies = get_simple_object_copies(
                         storage_object.wallet_file_path,
                         storage_object.cid,
@@ -291,7 +290,7 @@ class TestObjectApi(TestNeofsBase):
     @pytest.mark.parametrize("operator", ["GT", "GE", "LT", "LE"])
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_object_search_with_numeric_queries(
@@ -299,7 +298,7 @@ class TestObjectApi(TestNeofsBase):
     ):
         objects = []
         for numeric_value in OBJECT_NUMERIC_VALUES:
-            file_path = generate_file(object_size)
+            file_path = generate_file(self.neofs_env.get_object_size(object_size))
 
             objects.append(
                 {
@@ -369,9 +368,11 @@ class TestObjectApi(TestNeofsBase):
             )
 
     def test_object_search_with_attr_as_number(
-        self, default_wallet: NodeWallet, container: str, simple_object_size: int
+        self,
+        default_wallet: NodeWallet,
+        container: str,
     ):
-        file_path = generate_file(simple_object_size)
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         oid = put_object_to_random_node(
             default_wallet.path,
             file_path,
@@ -391,10 +392,8 @@ class TestObjectApi(TestNeofsBase):
 
         assert oid in result, "Object was not found, while it should be"
 
-    def test_object_search_numeric_with_attr_as_string(
-        self, default_wallet: NodeWallet, container: str, simple_object_size: int
-    ):
-        file_path = generate_file(simple_object_size)
+    def test_object_search_numeric_with_attr_as_string(self, default_wallet: NodeWallet, container: str):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         string_attr = "cool_string_attribute"
         oid = put_object_to_random_node(
             default_wallet.path,
@@ -418,7 +417,7 @@ class TestObjectApi(TestNeofsBase):
     @allure.title("Validate object search with removed items")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_object_search_should_return_tombstone_items(
@@ -433,7 +432,7 @@ class TestObjectApi(TestNeofsBase):
         cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc)
 
         with allure.step("Upload file"):
-            file_path = generate_file(object_size)
+            file_path = generate_file(self.neofs_env.get_object_size(object_size))
             file_hash = get_file_hash(file_path)
 
             storage_object = StorageObjectInfo(
@@ -477,14 +476,14 @@ class TestObjectApi(TestNeofsBase):
                 )
 
     @allure.title("Validate objects search by common prefix")
-    def test_search_object_api_common_prefix(self, default_wallet: NodeWallet, simple_object_size: int, container: str):
+    def test_search_object_api_common_prefix(self, default_wallet: NodeWallet, container: str):
         FILEPATH_ATTR_NAME = "FilePath"
         NUMBER_OF_OBJECTS = 5
         wallet = default_wallet
 
         objects = {}
         for _ in range(NUMBER_OF_OBJECTS):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
 
             with allure.step("Put objects"):
                 objects[file_path] = put_object_to_random_node(
@@ -530,9 +529,7 @@ class TestObjectApi(TestNeofsBase):
                     )
 
     @allure.title("Validate native object API get_range_hash")
-    def test_object_get_range_hash(
-        self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size
-    ):
+    def test_object_get_range_hash(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
         Validate get_range_hash for object by native gRPC API
         """
@@ -543,7 +540,9 @@ class TestObjectApi(TestNeofsBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_path = storage_objects[0].file_path
 
-        file_ranges_to_test = generate_ranges(storage_objects[0], max_object_size, self.shell, self.neofs_env)
+        file_ranges_to_test = generate_ranges(
+            storage_objects[0], self.neofs_env.max_object_size, self.shell, self.neofs_env
+        )
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
         for range_start, range_len in file_ranges_to_test:
@@ -584,7 +583,7 @@ class TestObjectApi(TestNeofsBase):
                 )
 
     @allure.title("Validate native object API get_range")
-    def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo], max_object_size):
+    def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
         Validate get_range for object by native gRPC API
         """
@@ -595,7 +594,9 @@ class TestObjectApi(TestNeofsBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_path = storage_objects[0].file_path
 
-        file_ranges_to_test = generate_ranges(storage_objects[0], max_object_size, self.shell, self.neofs_env)
+        file_ranges_to_test = generate_ranges(
+            storage_objects[0], self.neofs_env.max_object_size, self.shell, self.neofs_env
+        )
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
         for range_start, range_len in file_ranges_to_test:
@@ -640,11 +641,11 @@ class TestObjectApi(TestNeofsBase):
                     )
 
     @allure.title("Validate native object API get_range for a complex object")
-    def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
+    def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str):
         """
         Validate get_range for object by native gRPC API for a complex object
         """
-        four_chunked_size = complex_object_size
+        four_chunked_size = self.neofs_env.get_object_size("complex_object_size")
         file_path = generate_file(four_chunked_size)
         oid = put_object_to_random_node(
             default_wallet.path,
@@ -665,11 +666,15 @@ class TestObjectApi(TestNeofsBase):
         # range requires more than one child and includes the first child
         file_ranges_to_test.append((0, parts[0][1] + parts[1][1] - 1))
         # range requires more than one child and includes the last child
-        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - 1))
+        file_ranges_to_test.append(
+            (parts[0][1] + 1, self.neofs_env.get_object_size("complex_object_size") - parts[0][1] - 1)
+        )
         # range requires more than one child and does not include the first and the last child
-        file_ranges_to_test.append((parts[0][1] + 1, complex_object_size - parts[0][1] - parts[-1][1] - 1))
+        file_ranges_to_test.append(
+            (parts[0][1] + 1, self.neofs_env.get_object_size("complex_object_size") - parts[0][1] - parts[-1][1] - 1)
+        )
         # range requires more than two children and includes the first and the last child
-        file_ranges_to_test.append((0, complex_object_size - 1))
+        file_ranges_to_test.append((0, self.neofs_env.get_object_size("complex_object_size") - 1))
 
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
@@ -786,8 +791,8 @@ class TestObjectApi(TestNeofsBase):
                             range_cut=range_cut,
                         )
 
-    def test_put_object_header_limitation(self, default_wallet: NodeWallet, container: str, simple_object_size: int):
-        file_path = generate_file(simple_object_size)
+    def test_put_object_header_limitation(self, default_wallet: NodeWallet, container: str):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         attr_key = "a" * (NEOFS_API_HEADER_LIMIT // 2)
         attr_val = "b" * (NEOFS_API_HEADER_LIMIT // 2)
         with pytest.raises(Exception, match=OBJECT_HEADER_LENGTH_LIMIT):
@@ -801,8 +806,8 @@ class TestObjectApi(TestNeofsBase):
             )
 
     @allure.title("Finished objects (with link object found) cannot be deleted")
-    def test_object_parts_cannot_be_deleted(self, default_wallet: NodeWallet, container: str, complex_object_size: int):
-        file_path = generate_file(complex_object_size)
+    def test_object_parts_cannot_be_deleted(self, default_wallet: NodeWallet, container: str):
+        file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         oid = put_object_to_random_node(
             default_wallet.path,
             file_path,
@@ -838,11 +843,9 @@ class TestObjectApi(TestNeofsBase):
                     )
 
     @allure.title("Big object parts are removed after deletion")
-    def test_object_parts_are_unavailable_after_deletion(
-        self, default_wallet: NodeWallet, container: str, complex_object_size: int
-    ):
+    def test_object_parts_are_unavailable_after_deletion(self, default_wallet: NodeWallet, container: str):
         with allure.step("Upload big object"):
-            file_path = generate_file(complex_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
             oid = put_object_to_random_node(
                 default_wallet.path,
                 file_path,
@@ -878,14 +881,12 @@ class TestObjectApi(TestNeofsBase):
                     )
 
     @allure.title("Big object parts are removed after expiration")
-    def test_object_parts_are_unavailable_after_expiration(
-        self, default_wallet: NodeWallet, container: str, complex_object_size: int
-    ):
+    def test_object_parts_are_unavailable_after_expiration(self, default_wallet: NodeWallet, container: str):
         with allure.step("Get current epoch"):
             epoch = self.ensure_fresh_epoch()
 
         with allure.step("Upload big object"):
-            file_path = generate_file(complex_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
             oid = put_object_to_random_node(
                 default_wallet.path,
                 file_path,

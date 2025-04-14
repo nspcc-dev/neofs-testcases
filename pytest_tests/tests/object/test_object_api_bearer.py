@@ -35,7 +35,6 @@ from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 from s3.s3_base import TestNeofsS3Base
 
 
@@ -88,7 +87,7 @@ def storage_objects(
     for node in neofs_env_s3_gw.storage_nodes:
         storage_objects.append(
             user_container.generate_object(
-                request.param,
+                neofs_env_s3_gw.get_object_size(request.param),
                 epoch + 3,
                 bearer_token=bearer_token_file_all_allow,
                 endpoint=node.endpoint,
@@ -106,7 +105,7 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "storage_objects",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
         indirect=True,
     )
@@ -157,13 +156,13 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "file_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_get_object_with_s3_wallet_bearer_from_all_nodes(
         self,
         user_container: StorageContainer,
-        file_size: int,
+        file_size: str,
         bearer_token_file_all_allow: str,
         request: FixtureRequest,
     ):
@@ -175,7 +174,7 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
         with allure.step("Put one object to container"):
             epoch = self.ensure_fresh_epoch()
             storage_object = user_container.generate_object(
-                file_size, epoch + 3, bearer_token=bearer_token_file_all_allow
+                self.neofs_env.get_object_size(file_size), epoch + 3, bearer_token=bearer_token_file_all_allow
             )
 
         with allure.step("Try to fetch object from each storage node"):
@@ -198,20 +197,20 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "file_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_attributes_bearer_rules(
         self,
         default_wallet: NodeWallet,
-        file_size: int,
+        file_size: str,
         user_container: StorageContainer,
     ):
         # what? user_container has "s3 GW wallet to test bearer", so much magic...
         other_wallet = user_container.get_wallet_path()
         container_owner = default_wallet.path
         cid = user_container.get_id()
-        test_file = generate_file(file_size)
+        test_file = generate_file(self.neofs_env.get_object_size(file_size))
         ATTRIBUTE_KEY = "test_attribute"
         ATTRIBUTE_VALUE = "allowed_value"
 

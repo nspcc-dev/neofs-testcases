@@ -41,10 +41,10 @@ class TestS3GatePolicy(TestNeofsS3Base):
         assert actual_policy == expected_policy, f"Expected policy\n{expected_policy} but got policy\n{actual_policy}"
 
     @allure.title("Test S3: Verify bucket creation with retention policy applied")
-    def test_s3_bucket_location(self, simple_object_size):
-        file_path_1 = generate_file(simple_object_size)
+    def test_s3_bucket_location(self):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)
-        file_path_2 = generate_file(simple_object_size)
+        file_path_2 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_2 = object_key_from_file_path(file_path_2)
 
         with allure.step("Create two buckets with different bucket configuration"):
@@ -100,10 +100,10 @@ class TestS3GatePolicy(TestNeofsS3Base):
             assert copies_2 == 3
 
     @allure.title("Test S3: Verify bucket creation with policies from config file")
-    def test_s3_bucket_location_from_config_file(self, simple_object_size):
-        file_path_1 = generate_file(simple_object_size)
+    def test_s3_bucket_location_from_config_file(self):
+        file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)
-        file_path_2 = generate_file(simple_object_size)
+        file_path_2 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_2 = object_key_from_file_path(file_path_2)
 
         with allure.step("Create two buckets with different bucket configuration"):

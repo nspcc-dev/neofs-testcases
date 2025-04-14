@@ -153,11 +153,11 @@ class TestContainer(TestNeofsBase):
             wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @allure.title("Container deletion while some storage nodes down")
-    def test_container_deletion_while_sn_down(self, default_wallet, simple_object_size):
+    def test_container_deletion_while_sn_down(self, default_wallet):
         with allure.step("Create container"):
             wallet = default_wallet
             placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
-            source_file_path = generate_file(simple_object_size)
+            source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             cid = create_container(
                 wallet.path,
                 shell=self.shell,
@@ -218,7 +218,7 @@ class TestContainer(TestNeofsBase):
 
             wait_all_storage_nodes_returned(self.neofs_env)
 
-    def test_container_global_name(self, default_wallet, simple_object_size):
+    def test_container_global_name(self, default_wallet):
         with allure.step("Create container"):
             wallet = default_wallet
             placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"

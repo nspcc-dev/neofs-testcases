@@ -10,14 +10,13 @@ from helpers.neofs_verbs import delete_object, put_object, put_object_to_random_
 from helpers.session_token import create_session_token
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
-from pytest_lazy_fixtures import lf
 
 
 class TestDynamicObjectSession(TestNeofsBase):
     @allure.title("Test Object Operations with Session Token")
     @pytest.mark.parametrize(
         "object_size",
-        [lf("simple_object_size"), lf("complex_object_size")],
+        ["simple_object_size", "complex_object_size"],
         ids=["simple object", "complex object"],
     )
     def test_object_session_token(self, default_wallet, object_size):
@@ -71,7 +70,7 @@ class TestDynamicObjectSession(TestNeofsBase):
             )
 
         with allure.step("Put Objects"):
-            file_path = generate_file(object_size)
+            file_path = generate_file(self.neofs_env.get_object_size(object_size))
             oid = put_object_to_random_node(
                 wallet=wallet.path,
                 path=file_path,
@@ -147,7 +146,7 @@ class TestDynamicObjectSession(TestNeofsBase):
 
     @allure.title("Verify session token expiration flags")
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
-    def test_session_token_expiration_flags(self, default_wallet, simple_object_size, expiration_flag):
+    def test_session_token_expiration_flags(self, default_wallet, expiration_flag):
         rpc_endpoint = self.neofs_env.storage_nodes[0].endpoint
 
         with allure.step("Create Session Token with Lifetime param"):
@@ -180,7 +179,7 @@ class TestDynamicObjectSession(TestNeofsBase):
             )
 
         with allure.step("Verify object operations with created session token are allowed"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             oid = put_object(
                 wallet=default_wallet.path,
                 path=file_path,
@@ -201,7 +200,7 @@ class TestDynamicObjectSession(TestNeofsBase):
         self.tick_epochs_and_wait(2)
 
         with allure.step("Verify object operations with created session token are not allowed"):
-            file_path = generate_file(simple_object_size)
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             with pytest.raises(RuntimeError, match=EXPIRED_SESSION_TOKEN):
                 oid = put_object(
                     wallet=default_wallet.path,

@@ -20,8 +20,8 @@ def pytest_generate_tests(metafunc):
 
 class TestS3Locking(TestNeofsS3Base):
     @allure.title("Test S3: Checking the operation of retention period & legal lock on the object")
-    def test_s3_object_locking(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_object_locking(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
         retention_period = 30
 
@@ -33,7 +33,9 @@ class TestS3Locking(TestNeofsS3Base):
             with allure.step("Put several versions of object into bucket"):
                 s3_object.put_object_s3(self.s3_client, bucket, file_path)
                 time.sleep(1)
-                file_name_1 = generate_file_with_content(simple_object_size, file_path=file_path)
+                file_name_1 = generate_file_with_content(
+                    self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
+                )
                 version_id_2 = s3_object.put_object_s3(self.s3_client, bucket, file_name_1)
                 time.sleep(1)
                 check_objects_in_bucket(self.s3_client, bucket, [file_name])
@@ -75,8 +77,8 @@ class TestS3Locking(TestNeofsS3Base):
                     s3_object.delete_object_s3(self.s3_client, bucket, file_name, version_id)
 
     @allure.title("Test S3: Checking the impossibility to change the retention mode COMPLIANCE")
-    def test_s3_mode_compliance(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_mode_compliance(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
         retention_period = 2
         retention_period_1 = 1
@@ -111,8 +113,8 @@ class TestS3Locking(TestNeofsS3Base):
                     s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
 
     @allure.title("Test S3: Checking the ability to change retention mode GOVERNANCE")
-    def test_s3_mode_governance(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_mode_governance(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
         retention_period = 3
         retention_period_1 = 2
@@ -169,8 +171,8 @@ class TestS3Locking(TestNeofsS3Base):
                 assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
     @allure.title("Test S3: Checking if an Object Cannot Be Locked")
-    def test_s3_legal_hold(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_legal_hold(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 
         bucket = s3_bucket.create_bucket_s3(
@@ -191,8 +193,8 @@ class TestS3Locking(TestNeofsS3Base):
 
 class TestS3LockingBucket(TestNeofsS3Base):
     @allure.title("Test S3: Bucket Lock")
-    def test_s3_bucket_lock(self, simple_object_size):
-        file_path = generate_file(simple_object_size)
+    def test_s3_bucket_lock(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
         configuration = {"Rule": {"DefaultRetention": {"Mode": "COMPLIANCE", "Days": 1}}}
 

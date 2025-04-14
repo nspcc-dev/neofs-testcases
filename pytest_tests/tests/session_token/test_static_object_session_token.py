@@ -43,7 +43,6 @@ from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
-from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 
@@ -58,7 +57,7 @@ def storage_containers(owner_wallet: NodeWallet, client_shell: Shell, neofs_env:
 
 
 @pytest.fixture(
-    params=[lf("simple_object_size"), lf("complex_object_size")],
+    params=["simple_object_size", "complex_object_size"],
     ids=["simple object", "complex object"],
 )
 def storage_objects(
@@ -68,7 +67,7 @@ def storage_objects(
     neofs_env: NeoFSEnv,
     request: FixtureRequest,
 ) -> list[StorageObjectInfo]:
-    file_path = generate_file(request.param)
+    file_path = generate_file(neofs_env.get_object_size(request.param))
     storage_objects = []
 
     with allure.step("Put objects"):
@@ -83,7 +82,7 @@ def storage_objects(
             )
 
             storage_object = StorageObjectInfo(storage_containers[0], storage_object_id)
-            storage_object.size = request.param
+            storage_object.size = neofs_env.get_object_size(request.param)
             storage_object.wallet_file_path = owner_wallet.path
             storage_object.file_path = file_path
             storage_objects.append(storage_object)
@@ -183,14 +182,13 @@ class TestObjectStaticSession(TestNeofsBase):
         method_under_test,
         verb: ObjectVerb,
         request: FixtureRequest,
-        max_object_size,
     ):
         """
         Validate static session with range operations
         """
         allure.dynamic.title(f"Validate static session with range operations for {request.node.callspec.id}")
         storage_object = storage_objects[0]
-        ranges_to_test = get_ranges(storage_object, max_object_size, self.shell, self.neofs_env.sn_rpc)
+        ranges_to_test = get_ranges(storage_object, self.neofs_env.max_object_size, self.shell, self.neofs_env.sn_rpc)
 
         for range_to_test in ranges_to_test:
             with allure.step(f"Check range {range_to_test}"):

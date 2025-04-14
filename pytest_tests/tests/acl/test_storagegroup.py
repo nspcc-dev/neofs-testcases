@@ -27,7 +27,6 @@ from helpers.storage_group import (
 )
 from helpers.wallet_helpers import create_wallet
 from neofs_env.neofs_env_test_base import TestNeofsBase
-from pytest_lazy_fixtures import lf
 
 logger = logging.getLogger("NeoLogger")
 deposit = 30
@@ -35,7 +34,7 @@ deposit = 30
 
 @pytest.mark.parametrize(
     "object_size",
-    [lf("simple_object_size"), lf("complex_object_size")],
+    ["simple_object_size", "complex_object_size"],
     ids=["simple object", "complex object"],
 )
 class TestStorageGroup(TestNeofsBase):
@@ -45,9 +44,9 @@ class TestStorageGroup(TestNeofsBase):
         self.other_wallet = create_wallet()
 
     @allure.title("Test Storage Group in Private Container")
-    def test_storagegroup_basic_private_container(self, object_size, max_object_size):
+    def test_storagegroup_basic_private_container(self, object_size):
         cid = create_container(self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object_to_random_node(self.main_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
         objects = [oid]
         storage_group = put_storagegroup(
@@ -62,8 +61,8 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         self.expect_failure_for_storagegroup_operations(
             wallet=self.other_wallet.path,
@@ -75,20 +74,20 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
 
     @pytest.mark.sanity
     @allure.title("Test Storage Group in Public Container")
-    def test_storagegroup_basic_public_container(self, object_size, max_object_size):
+    def test_storagegroup_basic_public_container(self, object_size):
         cid = create_container(
             self.main_wallet.path,
             basic_acl="public-read-write",
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object_to_random_node(
             self.main_wallet.path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
         )
@@ -97,33 +96,33 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         self.expect_success_for_storagegroup_operations(
             wallet=self.other_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         self.storagegroup_operations_by_system_ro_container(
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
 
     @allure.title("Test Storage Group in Read-Only Container")
-    def test_storagegroup_basic_ro_container(self, object_size, max_object_size):
+    def test_storagegroup_basic_ro_container(self, object_size):
         cid = create_container(
             self.main_wallet.path,
             basic_acl="public-read",
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object_to_random_node(
             self.main_wallet.path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
         )
@@ -132,34 +131,34 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         self.storagegroup_operations_by_other_ro_container(
             owner_wallet=self.main_wallet.path,
             other_wallet=self.other_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         self.storagegroup_operations_by_system_ro_container(
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
 
     @allure.title("Test Storage Group with Bearer Allow")
-    def test_storagegroup_bearer_allow(self, object_size, max_object_size):
+    def test_storagegroup_bearer_allow(self, object_size):
         cid = create_container(
             self.main_wallet.path,
             basic_acl="eacl-public-read-write",
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
         )
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object_to_random_node(
             self.main_wallet.path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
         )
@@ -168,8 +167,8 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
         )
         storage_group = put_storagegroup(self.shell, self.neofs_env.sn_rpc, self.main_wallet.path, cid, objects)
         eacl_deny = [
@@ -197,8 +196,8 @@ class TestStorageGroup(TestNeofsBase):
             wallet=self.main_wallet.path,
             cid=cid,
             obj_list=objects,
-            object_size=object_size,
-            max_object_size=max_object_size,
+            object_size=self.neofs_env.get_object_size(object_size),
+            max_object_size=self.neofs_env.max_object_size,
             bearer=bearer_file,
         )
 
@@ -206,7 +205,7 @@ class TestStorageGroup(TestNeofsBase):
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
     def test_storagegroup_lifetime(self, object_size, expiration_flag):
         cid = create_container(self.main_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-        file_path = generate_file(object_size)
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object_to_random_node(
             self.main_wallet.path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
         )
@@ -312,13 +311,7 @@ class TestStorageGroup(TestNeofsBase):
 
     @allure.step("Run Storage Group Operations On Other's Behalf In RO Container")
     def storagegroup_operations_by_other_ro_container(
-        self,
-        owner_wallet: str,
-        other_wallet: str,
-        cid: str,
-        obj_list: list,
-        object_size: int,
-        max_object_size: int,
+        self, owner_wallet: str, other_wallet: str, cid: str, obj_list: list, object_size: int, max_object_size: int
     ):
         storage_group = put_storagegroup(self.shell, self.neofs_env.sn_rpc, owner_wallet, cid, obj_list)
         with pytest.raises(Exception, match=OBJECT_ACCESS_DENIED):

@@ -52,7 +52,6 @@ class TestFailoverStorage:
         self,
         default_wallet,
         neofs_env_function_scope: NeoFSEnv,
-        simple_object_size,
         after_run_return_all_stopped_storage_nodes,
         hard_restart,
     ):
@@ -61,7 +60,7 @@ class TestFailoverStorage:
 
         wallet = default_wallet
         placement_rule = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
-        source_file_path = generate_file(simple_object_size)
+        source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         cid = create_container(
             wallet.path,
             shell=self.shell,
@@ -110,7 +109,6 @@ class TestFailoverStorage:
         self,
         default_wallet,
         neofs_env_function_scope: NeoFSEnv,
-        simple_object_size,
         after_run_return_all_stopped_storage_nodes,
     ):
         self.neofs_env = neofs_env_function_scope
@@ -135,7 +133,7 @@ class TestFailoverStorage:
 
         with allure.step("Put objects"):
             for _ in range(10):
-                source_file_path = generate_file(simple_object_size)
+                source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
                 oid = put_object(
                     wallet.path,
                     source_file_path,
@@ -160,7 +158,6 @@ class TestFailoverStorage:
         self,
         default_wallet,
         neofs_env_function_scope: NeoFSEnv,
-        simple_object_size,
         after_run_return_all_stopped_storage_nodes,
     ):
         self.neofs_env = neofs_env_function_scope
@@ -185,7 +182,7 @@ class TestFailoverStorage:
             )
 
         with allure.step("Try to put object and expect error"):
-            source_file_path = generate_file(simple_object_size)
+            source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
             with pytest.raises(Exception, match=r".*incomplete object PUT by placement.*"):
                 put_object(
                     wallet.path,
