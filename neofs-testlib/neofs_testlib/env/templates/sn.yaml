@@ -47,10 +47,6 @@ storage:
         path: {{ shards[0].metabase_path }}  # Path to the metabase
 
       blobstor:
-        {% if peapod %}
-        - type: peapod
-          path: {{ shards[0].blobovnicza_path }}  # Blobovnicza root directory
-        {% endif %}
         - type: fstree
           path: {{ shards[0].fstree_path }}  # FSTree root directory
           depth: 2
@@ -64,10 +60,6 @@ storage:
         path: {{ shards[1].metabase_path }}  # Path to the metabase
 
       blobstor:
-        {% if peapod %}
-        - type: peapod
-          path: {{ shards[1].blobovnicza_path }}  # Blobovnicza root directory
-        {% endif %}
         - type: fstree
           path: {{ shards[1].fstree_path }}  # FSTree root directory
           depth: 2

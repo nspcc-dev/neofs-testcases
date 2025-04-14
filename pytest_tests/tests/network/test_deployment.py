@@ -106,7 +106,6 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
         for sn in neofs_env.storage_nodes:
             for shard in sn.shards:
                 os.chmod(shard.fstree_path, 0o444)
-                os.chmod(shard.blobovnicza_path, 0o444)
 
     with allure.step("Run put get to ensure neofs setup is actually working"):
         cid, oid, size = put_get_object(neofs_env, default_wallet)
@@ -135,7 +134,6 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
             sn.stop()
             for shard in sn.shards:
                 os.chmod(shard.fstree_path, 0o666)
-                os.chmod(shard.blobovnicza_path, 0o666)
             sn_config_template = sn.get_config_template()
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
@@ -144,7 +142,6 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
                 fschain_endpoint=sn.neofs_env.fschain_rpc,
                 shards=sn.shards,
                 writecache=sn.writecache,
-                peapod=True,
                 wallet=sn.wallet,
                 state_file=sn.state_file,
                 pprof_address=sn.pprof_address,
