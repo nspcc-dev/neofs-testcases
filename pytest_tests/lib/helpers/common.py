@@ -1,5 +1,6 @@
 import datetime
 import os
+from functools import lru_cache
 
 import yaml
 
@@ -72,5 +73,6 @@ with open(WALLET_CONFIG, "w") as file:
     yaml.dump({"password": WALLET_PASS}, file)
 
 
+@lru_cache(maxsize=1)
 def get_assets_dir_path() -> str:
     return os.path.join(os.getcwd(), TEST_RUN_DIR)

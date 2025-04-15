@@ -194,7 +194,7 @@ class NeoFSEnv:
                     raise e
 
     @allure.step("Deploy storage node")
-    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False, peapod_required=True):
+    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
         for idx in range(count):
@@ -205,7 +205,6 @@ class NeoFSEnv:
                 self,
                 len(self.storage_nodes) + 1,
                 writecache=writecache,
-                peapod_required=peapod_required,
                 node_attrs=node_attrs_list,
             )
             self.storage_nodes.append(new_storage_node)
@@ -535,7 +534,6 @@ class NeoFSEnv:
         storage_nodes_count=4,
         inner_ring_nodes_count=1,
         writecache=False,
-        peapod_required=True,
         with_s3_gw=True,
         with_rest_gw=True,
         request=None,
@@ -559,7 +557,6 @@ class NeoFSEnv:
                 count=storage_nodes_count,
                 node_attrs=adjusted_node_attrs,
                 writecache=writecache,
-                peapod_required=peapod_required,
             )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
@@ -617,7 +614,6 @@ class NeoFSEnv:
             for sn in self.storage_nodes:
                 for shard in sn.shards:
                     os.remove(shard.metabase_path)
-                    os.remove(shard.blobovnicza_path)
                     shutil.rmtree(shard.fstree_path, ignore_errors=True)
                     os.remove(shard.pilorama_path)
                     shutil.rmtree(shard.wc_path, ignore_errors=True)
@@ -1054,7 +1050,6 @@ class InnerRing(ResurrectableProcess):
 class Shard:
     def __init__(self, neofs_env: NeoFSEnv, sn_dir: str):
         self.metabase_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_metabase")
-        self.blobovnicza_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_blobovnicza")
         self.fstree_path = neofs_env._generate_temp_dir(prefix="shards/shard_fstree")
         self.pilorama_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_pilorama")
         self.wc_path = neofs_env._generate_temp_dir(prefix="shards/shard_wc")
@@ -1066,7 +1061,6 @@ class StorageNode(ResurrectableProcess):
         neofs_env: NeoFSEnv,
         sn_number: int,
         writecache=False,
-        peapod_required=True,
         node_attrs: Optional[list] = None,
         attrs: Optional[dict] = None,
     ):
@@ -1097,7 +1091,6 @@ class StorageNode(ResurrectableProcess):
         self.attrs = {}
         self.node_attrs = node_attrs
         self.writecache = writecache
-        self.peapod_required = peapod_required
         if attrs:
             self.attrs.update(attrs)
 
@@ -1135,7 +1128,6 @@ class StorageNode(ResurrectableProcess):
                 fschain_endpoint=self.neofs_env.fschain_rpc,
                 shards=self.shards,
                 writecache=self.writecache,
-                peapod=self.peapod_required,
                 wallet=self.wallet,
                 state_file=self.state_file,
                 pprof_address=self.pprof_address,
@@ -1179,7 +1171,6 @@ class StorageNode(ResurrectableProcess):
         self.stop()
         for shard in self.shards:
             os.remove(shard.metabase_path)
-            os.remove(shard.blobovnicza_path)
             os.rmdir(shard.fstree_path)
             os.remove(shard.pilorama_path)
             shutil.rmtree(shard.wc_path, ignore_errors=True)
@@ -1195,7 +1186,6 @@ class StorageNode(ResurrectableProcess):
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             writecache=self.writecache,
-            peapod=self.peapod_required,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,
@@ -1220,7 +1210,6 @@ class StorageNode(ResurrectableProcess):
             fschain_endpoint=self.neofs_env.fschain_rpc,
             shards=self.shards,
             writecache=self.writecache,
-            peapod=self.peapod_required,
             wallet=self.wallet,
             state_file=self.state_file,
             pprof_address=self.pprof_address,
