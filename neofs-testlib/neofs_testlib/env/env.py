@@ -27,6 +27,7 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
+import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -161,9 +162,9 @@ class NeoFSEnv:
         return neo_go_config_path
 
     @allure.step("Deploy inner ring nodes")
-    def deploy_inner_ring_nodes(self, count=1, with_main_chain=False):
+    def deploy_inner_ring_nodes(self, count=1, with_main_chain=False, chain_meta_data=False):
         for _ in range(count):
-            new_inner_ring_node = InnerRing(self)
+            new_inner_ring_node = InnerRing(self, chain_meta_data=chain_meta_data)
             new_inner_ring_node.generate_network_config()
             self.inner_ring_nodes.append(new_inner_ring_node)
 
@@ -537,6 +538,7 @@ class NeoFSEnv:
         with_s3_gw=True,
         with_rest_gw=True,
         request=None,
+        chain_meta_data=False,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -544,7 +546,9 @@ class NeoFSEnv:
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
         try:
-            neofs_env.deploy_inner_ring_nodes(count=inner_ring_nodes_count, with_main_chain=with_main_chain)
+            neofs_env.deploy_inner_ring_nodes(
+                count=inner_ring_nodes_count, with_main_chain=with_main_chain, chain_meta_data=chain_meta_data
+            )
 
             node_attrs = {
                 0: ["UN-LOCODE:RU MOW", "Price:22"],
@@ -906,7 +910,7 @@ class MainChain(ResurrectableProcess):
 
 
 class InnerRing(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv):
+    def __init__(self, neofs_env: NeoFSEnv, chain_meta_data=False):
         self.neofs_env = neofs_env
         self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
         self.network_config = self.neofs_env._generate_temp_file(
@@ -928,6 +932,12 @@ class InnerRing(ResurrectableProcess):
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
+        if (
+            parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.45.2")
+            and chain_meta_data
+        ):
+            pytest.skip("chain_meta_data=True is not supported on 0.45.2 and below")
+        self.chain_meta_data = chain_meta_data
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1020,6 +1030,7 @@ class InnerRing(ResurrectableProcess):
             neofs_contract_hash="123" if not with_main_chain else self.neofs_env.main_chain.neofs_contract_hash,
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
+            chain_meta_data=self.chain_meta_data,
         )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
@@ -1083,6 +1094,7 @@ class StorageNode(ResurrectableProcess):
         self.control_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.metadata_path = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}_metadata")
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.sn_number = sn_number
@@ -1133,6 +1145,7 @@ class StorageNode(ResurrectableProcess):
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
+                metadata_path=self.metadata_path,
             )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
@@ -1191,6 +1204,7 @@ class StorageNode(ResurrectableProcess):
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
             attrs=self.node_attrs,
+            metadata_path=self.metadata_path,
         )
         time.sleep(1)
 
@@ -1215,6 +1229,7 @@ class StorageNode(ResurrectableProcess):
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
             attrs=self.node_attrs,
+            metadata_path=self.metadata_path,
         )
         time.sleep(1)
 

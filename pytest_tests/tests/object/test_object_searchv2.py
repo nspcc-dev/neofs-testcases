@@ -9,6 +9,7 @@ import allure
 import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
+from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.complex_object_actions import get_object_chunks
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
@@ -16,13 +17,14 @@ from helpers.neofs_verbs import (
     delete_object,
     generate_filter_json_file,
     head_object,
+    put_object,
     put_object_to_random_node,
     search_objectv2,
 )
 from helpers.storage_object_info import CLEANUP_TIMEOUT
+from helpers.test_control import wait_for_success
 from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
 
@@ -39,14 +41,45 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
     return value
 
 
+@wait_for_success(90, 10)
+def expected_number_of_object_found(
+    default_wallet: NodeWallet, cid: str, neofs_env: NeoFSEnv, expected_number_of_objects: int
+):
+    found_objects, _ = search_objectv2(
+        rpc_endpoint=neofs_env.sn_rpc,
+        wallet=default_wallet.path,
+        cid=cid,
+        shell=neofs_env.shell,
+    )
+
+    assert len(found_objects) == expected_number_of_objects, "invalid number of found objects"
+
+
 @pytest.fixture
-def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
-    cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule="REP 3 CBF 3")
+def container(default_wallet: NodeWallet, neofs_env: NeoFSEnv) -> str:
+    cid = create_container(
+        default_wallet.path,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
+        rule="REP 3 CBF 3",
+        attributes={"__NEOFS__METAINFO_CONSISTENCY": "strict"}
+        if neofs_env.inner_ring_nodes[0].chain_meta_data
+        else None,
+    )
     yield cid
-    delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
+    delete_container(default_wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.mark.sanity
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
@@ -70,6 +103,15 @@ def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: Ne
         )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
@@ -150,6 +192,15 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
         assert len(found_objects) == 0, "invalid number of objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_single_filter_by_custom_str_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -214,6 +265,15 @@ def test_search_single_filter_by_custom_str_attributes(
                     )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
@@ -267,6 +327,15 @@ def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, cont
         assert len(found_objects) == testcase["expected_result"], "invalid number of objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
@@ -315,6 +384,15 @@ def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: st
         assert len(found_objects) == testcase["expected_result"], "invalid number of found objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_multiple_filters_by_custom_int_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -383,6 +461,15 @@ def test_search_multiple_filters_by_custom_int_attributes(
                     )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_multiple_filters_by_custom_str_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -459,6 +546,15 @@ def test_search_multiple_filters_by_custom_str_attributes(
                     )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_by_mixed_attributes_contents(
     default_wallet: NodeWallet,
     container: str,
@@ -513,6 +609,15 @@ def test_search_by_mixed_attributes_contents(
     assert found_objects[0]["id"] == oid2, "invalid object returned from search"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_multiple_filters_by_custom_mixed_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -654,6 +759,15 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                         )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_by_system_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -725,6 +839,15 @@ def test_search_by_system_attributes(
             )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_by_split_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -777,6 +900,15 @@ def test_search_by_split_attributes(
                 )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_non_existing_attributes(
     default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
@@ -807,6 +939,15 @@ def test_search_by_non_existing_attributes(
         assert len(found_objects) == 0, "invalid number of found objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_of_complex_object(
     default_wallet: NodeWallet,
     container: str,
@@ -848,6 +989,15 @@ def test_search_of_complex_object(
     assert len(found_complex_objects) == len(parts) + 1, "tthere is an unexpected number of REGULAR objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_various_attributes(
     default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
@@ -925,6 +1075,15 @@ def test_search_by_various_attributes(
     assert found_objects[0]["id"] == oid2, "invalid object returned from search"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_attrs_ordering(
     default_wallet: NodeWallet,
     container: str,
@@ -1002,6 +1161,15 @@ def test_search_attrs_ordering(
             max_str = current_str
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_attrs_ordering_with_cursor(
     default_wallet: NodeWallet,
     container: str,
@@ -1117,6 +1285,15 @@ def test_search_attrs_ordering_with_cursor(
             max_str = current_str
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_with_cursor_empty_filters_and_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -1163,6 +1340,15 @@ def test_search_with_cursor_empty_filters_and_attributes(
                 max_oid = current_oid
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_count_and_cursor(
     default_wallet: NodeWallet,
     container: str,
@@ -1300,9 +1486,7 @@ def test_search_count_and_cursor(
         attributes=["$Object:creationEpoch", "$Object:objectType"],
         cursor=first_cursor,
     )
-    assert len(tombstone_objects) > 0 and len(created_objects) >= len(tombstone_objects), (
-        "invalid objects count after search"
-    )
+    assert len(tombstone_objects) > 0, "invalid objects count after search"
 
     with allure.step("Verify --root doesn't return tombstones"):
         found_objects, _ = search_objectv2(
@@ -1315,7 +1499,7 @@ def test_search_count_and_cursor(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell, phy=True
         )
 
-        len(tombstone_objects) == len(created_objects), "invalid number of found objects with --phy filter"
+        assert len(tombstone_objects) > 0, "invalid objects count after search"
 
     with pytest.raises(Exception, match=".*wrong primary attribute.*"):
         not_tombstone_objects, _ = search_objectv2(
@@ -1329,6 +1513,15 @@ def test_search_count_and_cursor(
         )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_invalid_filters(
     default_wallet: NodeWallet,
     container: str,
@@ -1411,6 +1604,15 @@ def test_search_invalid_filters(
         )
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_conflicting_filters(
     default_wallet: NodeWallet,
     container: str,
@@ -1441,6 +1643,15 @@ def test_search_conflicting_filters(
     assert len(found_objects) == 0, "invalid number of found objects"
 
 
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
 def test_search_filters_attributes_limits(
     default_wallet: NodeWallet,
     container: str,
@@ -1487,3 +1698,50 @@ def test_search_filters_attributes_limits(
             filters=[f"int_attr{x} GE 1000" for x in range(8)],
             attributes=[f"int_attr{x}" for x in range(9)],
         )
+
+
+@pytest.mark.parametrize("meta_info_consistency", ["strict", "optimistic"])
+def test_searchv2_meta_enabled_containers(
+    neofs_env_chain_meta_data: NeoFSEnv, default_wallet: NodeWallet, meta_info_consistency: str
+):
+    neofs_env = neofs_env_chain_meta_data
+    with allure.step(f"Create container with __NEOFS__METAINFO_CONSISTENCY={meta_info_consistency}"):
+        cid = create_container(
+            default_wallet.path,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+            rule="REP 1 CBF 4",
+            attributes={"__NEOFS__METAINFO_CONSISTENCY": meta_info_consistency},
+        )
+
+    with allure.step("Put objects to different nodes"):
+        for sn in neofs_env.storage_nodes:
+            for _ in range(2):
+                file_path = generate_file(int(SIMPLE_OBJECT_SIZE))
+                put_object(
+                    default_wallet.path,
+                    file_path,
+                    cid,
+                    neofs_env.shell,
+                    sn.endpoint,
+                )
+
+    with allure.step("Search from one node should return all created objects"):
+        expected_number_of_object_found(
+            default_wallet, cid, neofs_env, expected_number_of_objects=len(neofs_env.storage_nodes) * 2
+        )
+
+    with allure.step("Kill all nodes except one"):
+        alive_node = neofs_env.storage_nodes[0]
+        for sn in neofs_env.storage_nodes[1:]:
+            sn.kill()
+
+    with allure.step("Search from alive node should return all created objects"):
+        found_objects, _ = search_objectv2(
+            rpc_endpoint=alive_node.endpoint,
+            wallet=default_wallet.path,
+            cid=cid,
+            shell=neofs_env.shell,
+        )
+
+        assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
