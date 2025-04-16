@@ -34,7 +34,7 @@ def wait_for_epochs_align(neofs_env: NeoFSEnv, epoch_number: Optional[int] = Non
 
 
 @allure.step("Wait until new epoch arrives")
-@wait_for_success(60, 5)
+@wait_for_success(60, 1)
 def wait_until_new_epoch(neofs_env: NeoFSEnv, current_epoch: int) -> int:
     for node in neofs_env.storage_nodes:
         next_epoch = get_epoch(neofs_env, node)
