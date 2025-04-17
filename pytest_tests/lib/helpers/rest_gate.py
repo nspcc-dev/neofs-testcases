@@ -76,6 +76,46 @@ def get_via_rest_gate(
     return resp
 
 
+@allure.step("Head via REST Gate")
+def head_via_rest_gate(
+    cid: str,
+    oid: str,
+    endpoint: str,
+    request_path: Optional[str] = None,
+    skip_options_verify=False,
+) -> Union[str, requests.Response]:
+    """
+    This function heads given object from REST gate
+    cid:          container id to get object from
+    oid:          object ID
+    endpoint:     REST gate endpoint
+    request_path: (optional) REST request, if ommited - use default [{endpoint}/objects/{cid}/by_id/{oid}]
+    """
+
+    # if `request_path` parameter ommited, use default
+    if request_path is None:
+        request = f"{endpoint}/objects/{cid}/by_id/{oid}"
+    else:
+        request = f"{endpoint}{request_path}"
+
+    if not skip_options_verify:
+        verify_options_request(request)
+    resp = requests.head(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to head object via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.status_code)
+
+    return resp.headers
+
+
 @allure.step("Get via Zip HTTP Gate")
 def get_via_zip_http_gate(cid: str, prefix: str, endpoint: str):
     """
@@ -146,6 +186,43 @@ def get_via_rest_gate_by_attribute(
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
     return file_path
+
+
+@allure.step("Head via REST Gate by attribute")
+def head_via_rest_gate_by_attribute(
+    cid: str, attribute: dict, endpoint: str, request_path: Optional[str] = None, skip_options_verify=False
+):
+    """
+    This function heads given object from REST gate
+    cid:          CID to get object from
+    attribute:    attribute {name: attribute} value pair
+    endpoint:     REST gate endpoint
+    request_path: (optional) REST request path, if ommited - use default [{endpoint}/objects/{Key}/by_attribute/{Value}]
+    """
+    attr_name = list(attribute.keys())[0]
+    attr_value = quote(str(attribute.get(attr_name)))
+    # if `request_path` parameter ommited, use default
+    if request_path is None:
+        request = f"{endpoint}/objects/{cid}/by_attribute/{quote(str(attr_name))}/{attr_value}"
+    else:
+        request = f"{endpoint}{request_path}"
+
+    if not skip_options_verify:
+        verify_options_request(request)
+    resp = requests.head(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to head object via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.status_code)
+
+    return resp.headers
 
 
 @allure.step("Upload via REST Gate")
@@ -282,6 +359,26 @@ def get_object_by_attr_and_verify_hashes(
         cid=cid, attribute=attrs, endpoint=endpoint, request_path=request_path_attr
     )
     assert_hashes_are_equal(file_name, got_file_path_rest, got_file_path_rest_attr)
+
+
+@allure.step("Verify object can be head using REST header attribute")
+def head_object_by_attr_and_verify(
+    oid: str,
+    cid: str,
+    attrs: dict,
+    endpoint: str,
+    request_path: Optional[str] = None,
+    request_path_attr: Optional[str] = None,
+) -> None:
+    headers_with_oid = head_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint, request_path=request_path)
+    headers_with_attr = head_via_rest_gate_by_attribute(
+        cid=cid, attribute=attrs, endpoint=endpoint, request_path=request_path_attr
+    )
+    logger.info(f"{headers_with_oid=}")
+    logger.info(f"{headers_with_attr=}")
+    assert headers_with_oid["X-Object-Id"] == headers_with_attr["X-Object-Id"], (
+        f"headers not equal, expected: {headers_with_oid['X-Object-Id']}, got: {headers_with_attr['X-Object-Id']}"
+    )
 
 
 def get_object_and_verify_hashes(
