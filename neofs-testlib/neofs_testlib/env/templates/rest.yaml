@@ -22,6 +22,7 @@ pool:
   rebalance-timer: 30s
   # The number of errors on connection after which node is considered as unhealthy.
   error-threshold: 100
+  default-timestamp: {{ default_timestamp }}
 
 server:
   endpoints:

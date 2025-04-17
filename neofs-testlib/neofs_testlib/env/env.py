@@ -1392,7 +1392,7 @@ class S3_GW(ResurrectableProcess):
 
 
 class REST_GW(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv):
+    def __init__(self, neofs_env: NeoFSEnv, default_timestamp: bool = False):
         self.neofs_env = neofs_env
         self.rest_gw_dir = self.neofs_env._generate_temp_dir("rest-gw")
         self.config_path = self.neofs_env._generate_temp_file(
@@ -1406,6 +1406,7 @@ class REST_GW(ResurrectableProcess):
         self.endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.default_timestamp = default_timestamp
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1422,15 +1423,37 @@ class REST_GW(ResurrectableProcess):
             - STDERR: {self.stderr}
         """
 
-    def start(self):
+    def start(self, fresh=True):
         if self.process is not None:
             raise RuntimeError(f"This rest gw instance has already been started:\n{self}")
-        self.neofs_env.generate_storage_wallet(self.wallet, label="rest")
+        if fresh:
+            self.neofs_env.generate_storage_wallet(self.wallet, label="rest")
         logger.info(f"Generating config for rest gw at {self.config_path}")
         self._generate_config()
         logger.info(f"Launching REST GW: {self}")
         self._launch_process()
         logger.info(f"Launched REST GW: {self}")
+        try:
+            self._wait_until_ready()
+        except Exception as e:
+            allure.attach.file(self.stderr, name="rest gw stderr", extension="txt")
+            allure.attach.file(self.stdout, name="rest gw stdout", extension="txt")
+            allure.attach.file(self.config_path, name="rest gw config", extension="txt")
+            raise e
+
+    @allure.step("Stop rest gw")
+    def stop(self):
+        logger.info(f"Stopping rest gw:{self}")
+        self.process.terminate()
+        terminate_process(self.process)
+        self.process = None
+        self.pid = None
+
+    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    def _wait_until_ready(self):
+        endpoint = f"http://{self.endpoint}"
+        resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+        assert resp.status_code == 200
 
     def _generate_config(self):
         rest_config_template = "rest.yaml"
@@ -1443,6 +1466,7 @@ class REST_GW(ResurrectableProcess):
             wallet=self.wallet,
             pprof_address=self.pprof_address,
             metrics_address=self.prometheus_address,
+            default_timestamp=self.default_timestamp,
         )
 
     def _launch_process(self):
