@@ -11,11 +11,12 @@ from helpers.rest_gate import (
     attr_into_header,
     get_object_by_attr_and_verify_hashes,
     get_via_rest_gate,
+    head_object_by_attr_and_verify,
     quote,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
-from helpers.utility import wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
@@ -388,6 +389,136 @@ class TestRestGate(TestNeofsRestBase):
             request_path=f"/get/{cid}/{oid}",
             request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
         )
+
+    def test_get_by_same_attribute(self, gw_params):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.11.1"
+        ):
+            pytest.skip("Supported only on post-0.11.1 rest gw")
+
+        cid = create_container(
+            self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Put objects using HTTP with the same attribute"):
+            attr_name = "FileName"
+            attr_value = "InterestingFileName"
+            headers = attr_into_header({attr_name: attr_value})
+            oids = []
+            for _ in range(3):
+                oids.append(
+                    upload_via_rest_gate(
+                        cid=cid,
+                        path=file_path,
+                        headers=headers,
+                        endpoint=gw_params["endpoint"],
+                    )
+                )
+
+        get_object_by_attr_and_verify_hashes(
+            oid=oids[-1],
+            file_name=file_path,
+            cid=cid,
+            attrs={attr_name: attr_value},
+            endpoint=gw_params["endpoint"],
+            request_path=f"/get/{cid}/{oids[-1]}",
+            request_path_attr=f"/get_by_attribute/{cid}/{attr_name}/{attr_value}",
+        )
+
+        with allure.step("Put objects using HTTP with multiple same attribute"):
+            attr_name2 = "FilePath"
+            attr_value2 = "CoolPath"
+            headers = attr_into_header({attr_name: attr_value, attr_name2: attr_value2})
+            oids = []
+            for _ in range(3):
+                oids.append(
+                    upload_via_rest_gate(
+                        cid=cid,
+                        path=file_path,
+                        headers=headers,
+                        endpoint=gw_params["endpoint"],
+                    )
+                )
+
+        for key, value in [(attr_name, attr_value), (attr_name2, attr_value2)]:
+            get_object_by_attr_and_verify_hashes(
+                oid=oids[-1],
+                file_name=file_path,
+                cid=cid,
+                attrs={key: value},
+                endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oids[-1]}",
+                request_path_attr=f"/get_by_attribute/{cid}/{key}/{value}",
+            )
+
+    def test_head_by_same_attribute(self, gw_params):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.11.1"
+        ):
+            pytest.skip("Supported only on post-0.11.1 rest gw")
+
+        cid = create_container(
+            self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=self.PLACEMENT_RULE_2,
+            basic_acl=PUBLIC_ACL,
+        )
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Put objects using HTTP with the same attribute"):
+            attr_name = "FileName"
+            attr_value = "InterestingFileName"
+            headers = attr_into_header({attr_name: attr_value})
+            oids = []
+            for _ in range(3):
+                oids.append(
+                    upload_via_rest_gate(
+                        cid=cid,
+                        path=file_path,
+                        headers=headers,
+                        endpoint=gw_params["endpoint"],
+                    )
+                )
+
+        head_object_by_attr_and_verify(
+            oid=oids[-1],
+            cid=cid,
+            attrs={attr_name: attr_value},
+            endpoint=gw_params["endpoint"],
+            request_path=f"/get/{cid}/{oids[-1]}",
+            request_path_attr=f"/get_by_attribute/{cid}/{attr_name}/{attr_value}",
+        )
+
+        with allure.step("Put objects using HTTP with multiple same attribute"):
+            attr_name2 = "FilePath"
+            attr_value2 = "CoolPath"
+            headers = attr_into_header({attr_name: attr_value, attr_name2: attr_value2})
+            oids = []
+            for _ in range(3):
+                oids.append(
+                    upload_via_rest_gate(
+                        cid=cid,
+                        path=file_path,
+                        headers=headers,
+                        endpoint=gw_params["endpoint"],
+                    )
+                )
+
+        for key, value in [(attr_name, attr_value), (attr_name2, attr_value2)]:
+            head_object_by_attr_and_verify(
+                oid=oids[-1],
+                cid=cid,
+                attrs={key: value},
+                endpoint=gw_params["endpoint"],
+                request_path=f"/get/{cid}/{oids[-1]}",
+                request_path_attr=f"/get_by_attribute/{cid}/{key}/{value}",
+            )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
     def test_expiration_epoch_in_http(self, gw_params):
