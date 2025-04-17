@@ -127,10 +127,6 @@ audit:
 indexer:
   cache_timeout: 15s # Duration between internal state update about current list of inner ring nodes
 
-netmap_cleaner:
-  enabled: true # Enable voting for removing stale storage nodes from network map
-  threshold: 3  # Number of NeoFS epoch without bootstrap request from storage node before it considered stale
-
 settlement:
   basic_income_rate: 0 # Optional: override basic income rate value from network config; applied only in debug mode
   audit_fee: 0         # Optional: override audit fee value from network config; applied only in debug mode
