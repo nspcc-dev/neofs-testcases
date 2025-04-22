@@ -5,6 +5,8 @@ import random
 import shutil
 import uuid
 import zipfile
+from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, Union
 from urllib.parse import quote
 
@@ -23,6 +25,39 @@ from helpers.neofs_verbs import get_object
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
+
+
+class SearchV2FilterMatch(Enum):
+    MatchStringEqual = "EQ"
+    MatchStringNotEqual = "NE"
+    MatchNotPresent = "NOPRESENT"
+    MatchCommonPrefix = "COMMON_PREFIX"
+    MatchNumGT = "GT"
+    MatchNumGE = "GE"
+    MatchNumLT = "LT"
+    MatchNumLE = "LE"
+
+
+@dataclass
+class SearchV2Filter:
+    key: str
+    match_: SearchV2FilterMatch
+    value: Optional[str] = None
+
+    @classmethod
+    def convert_from_cli(cls, cli_filter: str) -> "SearchV2Filter":
+        key, op, *right_side = cli_filter.split(" ")
+        return SearchV2Filter(
+            key=key,
+            match_=SearchV2FilterMatch(op),
+            value=right_side[0] if right_side else None,
+        )
+
+    def to_json(self):
+        res = {"key": self.key, "match": self.match_.name}
+        if self.value:
+            res["value"] = self.value
+        return res
 
 
 @allure.step("Get via REST Gate")
@@ -500,7 +535,8 @@ def new_upload_via_rest_gate(
 
 
 def new_attr_into_header(attrs: dict) -> dict:
-    json_string = json.dumps(attrs)
+    str_attrs = {k: str(v) if isinstance(v, int) else v for k, v in attrs.items()}
+    json_string = json.dumps(str_attrs)
     return {"X-Attributes": json_string}
 
 
@@ -716,4 +752,48 @@ def delete_container(
     logger.info(f"Response: {resp.json()}")
     _attach_allure_step(request, resp.json(), req_type="DELETE")
 
+    return resp.json()
+
+
+@allure.step("Searchv2 via REST Gate")
+def searchv2(
+    endpoint: str,
+    cid: str,
+    cursor: Optional[str] = None,
+    limit: Optional[int] = None,
+    filters: Optional[list[SearchV2Filter]] = None,
+    attributes: Optional[list[str]] = None,
+) -> str:
+    request = f"{endpoint}/v2/objects/{cid}/search"
+
+    params = {}
+    if cursor:
+        params["cursor"] = cursor
+
+    if limit:
+        params["limit"] = limit
+
+    search_request = {}
+    if filters:
+        search_request["filters"] = [f.to_json() for f in filters]
+
+    if attributes:
+        search_request["attributes"] = attributes
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+    resp = requests.post(request, params=params, json=search_request, headers=headers)
+
+    if not resp.ok:
+        raise AssertionError(
+            f"""Failed to searchv2 object via REST gate:
+                request: {resp.request.path_url},
+                params: {params},
+                json: {search_request},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    _attach_allure_step(f"{request=}; {params=}; {search_request=}", resp.json(), req_type="POST")
     return resp.json()
