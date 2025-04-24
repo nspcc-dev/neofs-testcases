@@ -376,6 +376,7 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
         signature,
         pub_key,
         wallet_connect=True,
+        new_api=False,
     )
 
     get_container_info(gw_endpoint, cid)

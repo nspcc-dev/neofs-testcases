@@ -473,6 +473,7 @@ def create_container(
     bearer_signature: str,
     bearer_signature_key: str,
     wallet_connect=False,
+    new_api=True,
 ) -> str:
     request = f"{endpoint}/containers"
     body = {
@@ -490,7 +491,10 @@ def create_container(
     if wallet_connect:
         params["walletConnect"] = "true"
 
-    resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
+    if new_api:
+        resp = requests.post(request, json=body, headers=headers, params=params, timeout=60)
+    else:
+        resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
 
     if not resp.ok:
         raise Exception(
