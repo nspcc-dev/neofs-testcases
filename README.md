@@ -89,6 +89,23 @@ For example:
 pytest -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py --load-env env_files/persisted_env_awxyrbxdwu 
 ```
 
+If for debug purposes it is needed to provide a custom config for S3 GW, REST GW, Storage Nodes, Inner Ring Nodes or Main Chain nodes,
+it can be done via following env vars:
+```
+S3_GW_CONFIG_PATH
+REST_GW_CONFIG_PATH
+SN1_CONFIG_PATH
+SN2_CONFIG_PATH
+SN3_CONFIG_PATH
+SN4_CONFIG_PATH
+IR1_CONFIG_PATH
+IR2_CONFIG_PATH
+IR3_CONFIG_PATH
+IR4_CONFIG_PATH
+MAINCHAIN_CONFIG_PATH
+```
+Full path to a custom config file should be specified. 
+
 ## pytest marks
 
 Custom pytest marks used in tests:
