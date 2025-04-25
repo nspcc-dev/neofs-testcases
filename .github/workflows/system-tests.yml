@@ -273,6 +273,8 @@ jobs:
             with:
               repository: nspcc-dev/neofs-s3-gw
               ref: ${{ inputs.neofs_s3_gw_commit }}
+              fetch-depth: 0
+              fetch-tags: true
               path: neofs-s3-gw
 
           - name: Build neofs-s3-gw
@@ -321,6 +323,8 @@ jobs:
             with:
               repository: nspcc-dev/neofs-rest-gw
               ref: ${{ inputs.neofs_rest_gw_commit }}
+              fetch-depth: 0
+              fetch-tags: true
               path: neofs-rest-gw
 
           - name: Build neofs-rest-gw
