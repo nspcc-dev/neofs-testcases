@@ -405,23 +405,57 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
         "invalid value for neofs_rest_gw_version"
     )
 
-    assert after_metrics_rest_gw["neofs_rest_gw_pool_overall_node_requests"][0]["value"] > 10, (
-        "invalid value for neofs_rest_gw_pool_overall_node_requests"
-    )
+    for metric in (
+        "auth",
+        "get_container",
+        "get_network_info",
+        "new_upload_container_object",
+        "put_container",
+    ):
+        assert (
+            len(
+                [
+                    m
+                    for _, m in enumerate(after_metrics_rest_gw[f"neofs_rest_gw_api_{metric}_duration_bucket"])
+                    if m["value"] >= 1
+                ]
+            )
+            >= 1
+        ), f"invalid value for neofs_rest_gw_api_{metric}_duration_bucket"
 
-    # @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/274")
-    # expected_params = {
-    #     "get_object",
-    #     "network_info",
-    #     "put_container",
-    #     "put_object",
-    #     "get_container",
-    # }
-    # for metric in after_metrics_rest_gw["neofs_rest_gw_pool_avg_request_duration"]:
-    #     if metric["params"]["method"] in expected_params:
-    #         assert metric["value"] > 0, (
-    #             f"invalid value for neofs_rest_gw_pool_avg_request_duration[{metric['params']['method']}]"
-    #         )
+        assert after_metrics_rest_gw[f"neofs_rest_gw_api_{metric}_duration_sum"][0]["value"] > 0, (
+            f"invalid value for neofs_rest_gw_api_{metric}_duration_sum"
+        )
+        assert after_metrics_rest_gw[f"neofs_rest_gw_api_{metric}_duration_count"][0]["value"] > 0, (
+            f"invalid value for neofs_rest_gw_api_{metric}_duration_count"
+        )
+
+    for metric in (
+        "container_get",
+        "container_put",
+        "network_info",
+        "object_get_init",
+        "object_put_init",
+        "object_put_stream",
+        "session_create",
+    ):
+        assert (
+            len(
+                [
+                    m
+                    for _, m in enumerate(after_metrics_rest_gw[f"neofs_rest_gw_pool_{metric}_bucket"])
+                    if m["value"] >= 1
+                ]
+            )
+            >= 1
+        ), f"invalid value for neofs_rest_gw_pool_{metric}_bucket"
+
+        assert after_metrics_rest_gw[f"neofs_rest_gw_pool_{metric}_sum"][0]["value"] > 0, (
+            f"neofs_rest_gw_pool_{metric}_sum"
+        )
+        assert after_metrics_rest_gw[f"neofs_rest_gw_pool_{metric}_count"][0]["value"] > 0, (
+            f"neofs_rest_gw_pool_{metric}_count"
+        )
 
     session_token, signature, pub_key = generate_credentials(
         gw_endpoint, default_wallet, verb="DELETE", wallet_connect=True
