@@ -393,6 +393,7 @@ class TestRestGate(TestNeofsRestBase):
             request_path_attr=f"/get_by_attribute/{cid}/{quote(str(attr_name))}/{attr_value}",
         )
 
+    @allure.title("Object with latest timestamp is returned when get by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
     def test_sorting_order_get_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
@@ -464,6 +465,7 @@ class TestRestGate(TestNeofsRestBase):
                 endpoint=gw_params["endpoint"],
             )
 
+    @allure.title("Object with latest timestamp is returned when head by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
     def test_sorting_order_head_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
