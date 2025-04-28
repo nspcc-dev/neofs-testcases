@@ -50,9 +50,9 @@ storage:
         path: {{ shards[0].metabase_path }}  # Path to the metabase
 
       blobstor:
-        - type: fstree
-          path: {{ shards[0].fstree_path }}  # FSTree root directory
-          depth: 2
+        type: fstree
+        path: {{ shards[0].fstree_path }}  # FSTree root directory
+        depth: 2
 
     - writecache:
         enabled: {{ writecache }}
@@ -62,6 +62,6 @@ storage:
         path: {{ shards[1].metabase_path }}  # Path to the metabase
 
       blobstor:
-        - type: fstree
-          path: {{ shards[1].fstree_path }}  # FSTree root directory
-          depth: 2
+        type: fstree
+        path: {{ shards[1].fstree_path }}  # FSTree root directory
+        depth: 2
