@@ -47,7 +47,7 @@ def test_replace_ir_node_from_main_chain(neofs_env_4_ir_with_mainchain: NeoFSEnv
     neofs_adm = neofs_env.neofs_adm()
 
     with allure.step("Deploy new inner ring node"):
-        new_inner_ring_node = InnerRing(neofs_env)
+        new_inner_ring_node = InnerRing(neofs_env, len(neofs_env.inner_ring_nodes) + 1)
         new_inner_ring_node.generate_network_config()
         new_inner_ring_node.alphabet_wallet = neofs_env.generate_alphabet_wallets(
             neofs_env.inner_ring_nodes[0].network_config,

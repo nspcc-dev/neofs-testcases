@@ -43,10 +43,11 @@ from helpers.common import (
 )
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
+from tenacity import retry, stop_after_attempt, wait_fixed
+
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -164,7 +165,7 @@ class NeoFSEnv:
     @allure.step("Deploy inner ring nodes")
     def deploy_inner_ring_nodes(self, count=1, with_main_chain=False, chain_meta_data=False):
         for _ in range(count):
-            new_inner_ring_node = InnerRing(self, chain_meta_data=chain_meta_data)
+            new_inner_ring_node = InnerRing(self, len(self.inner_ring_nodes) + 1, chain_meta_data=chain_meta_data)
             new_inner_ring_node.generate_network_config()
             self.inner_ring_nodes.append(new_inner_ring_node)
 
@@ -807,8 +808,9 @@ class MainChain(ResurrectableProcess):
         self.neo_go_config = self.neofs_env._generate_temp_file(
             self.main_chain_dir, extension="yml", prefix="main_chain_neo_go_config"
         )
-        self.main_chain_config_path = self.neofs_env._generate_temp_file(
-            self.main_chain_dir, extension="yml", prefix="main_chain_config"
+        self.main_chain_config_path = os.getenv(
+            "MAINCHAIN_CONFIG_PATH",
+            self.neofs_env._generate_temp_file(self.main_chain_dir, extension="yml", prefix="main_chain_config"),
         )
         self.main_chain_boltdb = self.neofs_env._generate_temp_file(
             self.main_chain_dir, extension="db", prefix="main_chain_bolt_db"
@@ -862,20 +864,21 @@ class MainChain(ResurrectableProcess):
         logger.info(f"Generating main chain config at: {self.main_chain_config_path}")
         main_chain_config_template = "main_chain.yaml"
 
-        NeoFSEnv.generate_config_file(
-            config_template=main_chain_config_template,
-            config_path=self.main_chain_config_path,
-            custom=Path(main_chain_config_template).is_file(),
-            wallet=self.wallet,
-            standby_committee=standby_committee,
-            ir_public_keys=ir_public_keys,
-            main_chain_boltdb=self.main_chain_boltdb,
-            p2p_address=self.p2p_address,
-            rpc_address=self.rpc_address,
-            sn_addresses=[sn.endpoint for sn in self.neofs_env.storage_nodes],
-            pprof_address=self.pprof_address,
-            prometheus_address=self.prometheus_address,
-        )
+        if not os.getenv("MAINCHAIN_CONFIG_PATH", None):
+            NeoFSEnv.generate_config_file(
+                config_template=main_chain_config_template,
+                config_path=self.main_chain_config_path,
+                custom=Path(main_chain_config_template).is_file(),
+                wallet=self.wallet,
+                standby_committee=standby_committee,
+                ir_public_keys=ir_public_keys,
+                main_chain_boltdb=self.main_chain_boltdb,
+                p2p_address=self.p2p_address,
+                rpc_address=self.rpc_address,
+                sn_addresses=[sn.endpoint for sn in self.neofs_env.storage_nodes],
+                pprof_address=self.pprof_address,
+                prometheus_address=self.prometheus_address,
+            )
         logger.info(f"Generating CLI config at: {self.cli_config}")
         NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.wallet)
         logger.info(f"Generating NEO GO config at: {self.neo_go_config}")
@@ -910,8 +913,9 @@ class MainChain(ResurrectableProcess):
 
 
 class InnerRing(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv, chain_meta_data=False):
+    def __init__(self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=False):
         self.neofs_env = neofs_env
+        self.ir_number = ir_number
         self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
         self.network_config = self.neofs_env._generate_temp_file(
             self.inner_ring_dir, extension="yml", prefix="ir_network_config"
@@ -920,8 +924,9 @@ class InnerRing(ResurrectableProcess):
             self.inner_ring_dir, extension="yml", prefix="ir_cli_config"
         )
         self.alphabet_wallet = None
-        self.ir_node_config_path = self.neofs_env._generate_temp_file(
-            self.inner_ring_dir, extension="yml", prefix="ir_node_config"
+        self.ir_node_config_path = os.getenv(
+            f"IR{self.ir_number}_CONFIG_PATH",
+            self.neofs_env._generate_temp_file(self.inner_ring_dir, extension="yml", prefix="ir_node_config"),
         )
         self.ir_storage_path = self.neofs_env._generate_temp_file(
             self.inner_ring_dir, extension="db", prefix="ir_storage"
@@ -1005,33 +1010,34 @@ class InnerRing(ResurrectableProcess):
                 ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes
             ]
 
-        NeoFSEnv.generate_config_file(
-            config_template=ir_config_template,
-            config_path=self.ir_node_config_path,
-            custom=Path(ir_config_template).is_file(),
-            wallet=self.alphabet_wallet,
-            public_keys=pub_keys_of_existing_ir_nodes,
-            ir_storage_path=self.ir_storage_path,
-            seed_nodes_addresses=seed_node_addresses_of_existing_ir_nodes,
-            rpc_address=self.endpoint,
-            p2p_address=self.p2p_address,
-            grpc_address=self.control_endpoint,
-            ir_state_file=self.ir_state_file,
-            peers_min_number=int(
-                len(self.neofs_env.inner_ring_nodes) - (len(self.neofs_env.inner_ring_nodes) - 1) / 3 - 1
-            ),
-            set_roles_in_genesis=str(False if len(self.neofs_env.inner_ring_nodes) == 1 else True).lower(),
-            fschain_autodeploy=fschain_autodeploy,
-            control_public_key=wallet_utils.get_last_public_key_from_wallet(
-                self.alphabet_wallet.path, self.alphabet_wallet.password
-            ),
-            without_mainnet=f"{not with_main_chain}".lower(),
-            main_chain_rpc="localhost:1234" if not with_main_chain else self.neofs_env.main_chain.rpc_address,
-            neofs_contract_hash="123" if not with_main_chain else self.neofs_env.main_chain.neofs_contract_hash,
-            pprof_address=self.pprof_address,
-            prometheus_address=self.prometheus_address,
-            chain_meta_data=self.chain_meta_data,
-        )
+        if not os.getenv(f"IR{self.ir_number}_CONFIG_PATH", None):
+            NeoFSEnv.generate_config_file(
+                config_template=ir_config_template,
+                config_path=self.ir_node_config_path,
+                custom=Path(ir_config_template).is_file(),
+                wallet=self.alphabet_wallet,
+                public_keys=pub_keys_of_existing_ir_nodes,
+                ir_storage_path=self.ir_storage_path,
+                seed_nodes_addresses=seed_node_addresses_of_existing_ir_nodes,
+                rpc_address=self.endpoint,
+                p2p_address=self.p2p_address,
+                grpc_address=self.control_endpoint,
+                ir_state_file=self.ir_state_file,
+                peers_min_number=int(
+                    len(self.neofs_env.inner_ring_nodes) - (len(self.neofs_env.inner_ring_nodes) - 1) / 3 - 1
+                ),
+                set_roles_in_genesis=str(False if len(self.neofs_env.inner_ring_nodes) == 1 else True).lower(),
+                fschain_autodeploy=fschain_autodeploy,
+                control_public_key=wallet_utils.get_last_public_key_from_wallet(
+                    self.alphabet_wallet.path, self.alphabet_wallet.password
+                ),
+                without_mainnet=f"{not with_main_chain}".lower(),
+                main_chain_rpc="localhost:1234" if not with_main_chain else self.neofs_env.main_chain.rpc_address,
+                neofs_contract_hash="123" if not with_main_chain else self.neofs_env.main_chain.neofs_contract_hash,
+                pprof_address=self.pprof_address,
+                prometheus_address=self.prometheus_address,
+                chain_meta_data=self.chain_meta_data,
+            )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
         logger.info(f"Launched Inner Ring Node:{self}")
@@ -1085,8 +1091,9 @@ class StorageNode(ResurrectableProcess):
         self.cli_config = self.neofs_env._generate_temp_file(
             self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_cli_config"
         )
-        self.storage_node_config_path = self.neofs_env._generate_temp_file(
-            self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_config"
+        self.storage_node_config_path = os.getenv(
+            f"SN{sn_number}_CONFIG_PATH",
+            self.neofs_env._generate_temp_file(self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_config"),
         )
         self.state_file = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{sn_number}_state")
         self.shards = [Shard(neofs_env, self.sn_dir), Shard(neofs_env, self.sn_dir)]
@@ -1131,22 +1138,23 @@ class StorageNode(ResurrectableProcess):
             self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
-            sn_config_template = self.get_config_template()
+            if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
+                sn_config_template = self.get_config_template()
 
-            NeoFSEnv.generate_config_file(
-                config_template=sn_config_template,
-                config_path=self.storage_node_config_path,
-                custom=Path(sn_config_template).is_file(),
-                fschain_endpoint=self.neofs_env.fschain_rpc,
-                shards=self.shards,
-                writecache=self.writecache,
-                wallet=self.wallet,
-                state_file=self.state_file,
-                pprof_address=self.pprof_address,
-                prometheus_address=self.prometheus_address,
-                attrs=self.node_attrs,
-                metadata_path=self.metadata_path,
-            )
+                NeoFSEnv.generate_config_file(
+                    config_template=sn_config_template,
+                    config_path=self.storage_node_config_path,
+                    custom=Path(sn_config_template).is_file(),
+                    fschain_endpoint=self.neofs_env.fschain_rpc,
+                    shards=self.shards,
+                    writecache=self.writecache,
+                    wallet=self.wallet,
+                    state_file=self.state_file,
+                    pprof_address=self.pprof_address,
+                    prometheus_address=self.prometheus_address,
+                    attrs=self.node_attrs,
+                    metadata_path=self.metadata_path,
+                )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
                 config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.wallet
@@ -1190,22 +1198,23 @@ class StorageNode(ResurrectableProcess):
         os.remove(self.state_file)
         self.shards = [Shard(), Shard()]
 
-        sn_config_template = self.get_config_template()
+        if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
+            sn_config_template = self.get_config_template()
 
-        NeoFSEnv.generate_config_file(
-            config_template=sn_config_template,
-            config_path=self.storage_node_config_path,
-            custom=Path(sn_config_template).is_file(),
-            fschain_endpoint=self.neofs_env.fschain_rpc,
-            shards=self.shards,
-            writecache=self.writecache,
-            wallet=self.wallet,
-            state_file=self.state_file,
-            pprof_address=self.pprof_address,
-            prometheus_address=self.prometheus_address,
-            attrs=self.node_attrs,
-            metadata_path=self.metadata_path,
-        )
+            NeoFSEnv.generate_config_file(
+                config_template=sn_config_template,
+                config_path=self.storage_node_config_path,
+                custom=Path(sn_config_template).is_file(),
+                fschain_endpoint=self.neofs_env.fschain_rpc,
+                shards=self.shards,
+                writecache=self.writecache,
+                wallet=self.wallet,
+                state_file=self.state_file,
+                pprof_address=self.pprof_address,
+                prometheus_address=self.prometheus_address,
+                attrs=self.node_attrs,
+                metadata_path=self.metadata_path,
+            )
         time.sleep(1)
 
     @allure.step("Delete storage node metadata")
@@ -1215,22 +1224,23 @@ class StorageNode(ResurrectableProcess):
             os.remove(shard.metabase_path)
             shard.metabase_path = self.neofs_env._generate_temp_file(self.sn_dir, prefix="shard_metabase")
 
-        sn_config_template = self.get_config_template()
+        if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
+            sn_config_template = self.get_config_template()
 
-        NeoFSEnv.generate_config_file(
-            config_template=sn_config_template,
-            config_path=self.storage_node_config_path,
-            custom=Path(sn_config_template).is_file(),
-            fschain_endpoint=self.neofs_env.fschain_rpc,
-            shards=self.shards,
-            writecache=self.writecache,
-            wallet=self.wallet,
-            state_file=self.state_file,
-            pprof_address=self.pprof_address,
-            prometheus_address=self.prometheus_address,
-            attrs=self.node_attrs,
-            metadata_path=self.metadata_path,
-        )
+            NeoFSEnv.generate_config_file(
+                config_template=sn_config_template,
+                config_path=self.storage_node_config_path,
+                custom=Path(sn_config_template).is_file(),
+                fschain_endpoint=self.neofs_env.fschain_rpc,
+                shards=self.shards,
+                writecache=self.writecache,
+                wallet=self.wallet,
+                state_file=self.state_file,
+                pprof_address=self.pprof_address,
+                prometheus_address=self.prometheus_address,
+                attrs=self.node_attrs,
+                metadata_path=self.metadata_path,
+            )
         time.sleep(1)
 
     @allure.step("Set metabase resync")
@@ -1284,7 +1294,10 @@ class S3_GW(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv):
         self.neofs_env = neofs_env
         self.s3_gw_dir = self.neofs_env._generate_temp_dir("s3-gw")
-        self.config_path = self.neofs_env._generate_temp_file(self.s3_gw_dir, extension="yml", prefix="s3gw_config")
+        self.config_path = os.getenv(
+            "S3_GW_CONFIG_PATH",
+            self.neofs_env._generate_temp_file(self.s3_gw_dir, extension="yml", prefix="s3gw_config"),
+        )
         self.wallet = NodeWallet(
             path=self.neofs_env._generate_temp_file(self.s3_gw_dir, prefix="s3gw_wallet"),
             address="",
@@ -1344,6 +1357,8 @@ class S3_GW(ResurrectableProcess):
         assert resp.status_code == 200
 
     def _generate_config(self):
+        if os.getenv("S3_GW_CONFIG_PATH", None):
+            return
         tls_crt_template = files("neofs_testlib.env.templates").joinpath("tls.crt").read_text()
         with open(self.tls_cert_path, mode="w") as fp:
             fp.write(tls_crt_template)
@@ -1395,8 +1410,9 @@ class REST_GW(ResurrectableProcess):
     def __init__(self, neofs_env: NeoFSEnv, default_timestamp: bool = False):
         self.neofs_env = neofs_env
         self.rest_gw_dir = self.neofs_env._generate_temp_dir("rest-gw")
-        self.config_path = self.neofs_env._generate_temp_file(
-            self.rest_gw_dir, extension="yml", prefix="rest_gw_config"
+        self.config_path = os.getenv(
+            "REST_GW_CONFIG_PATH",
+            self.neofs_env._generate_temp_file(self.rest_gw_dir, extension="yml", prefix="rest_gw_config"),
         )
         self.wallet = NodeWallet(
             path=self.neofs_env._generate_temp_file(self.rest_gw_dir, prefix="rest_gw_wallet"),
@@ -1456,6 +1472,9 @@ class REST_GW(ResurrectableProcess):
         assert resp.status_code == 200
 
     def _generate_config(self):
+        if os.getenv("REST_GW_CONFIG_PATH", None):
+            return
+
         rest_config_template = "rest.yaml"
 
         NeoFSEnv.generate_config_file(
