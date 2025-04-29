@@ -47,6 +47,15 @@ def get_neofs_balance(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWall
     )
 
 
+def get_neofs_balance_by_owner(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWallet) -> float:
+    return float(
+        neofs_cli.accounting.balance(
+            rpc_endpoint=neofs_env.sn_rpc,
+            owner=get_last_address_from_wallet(wallet.path, wallet.password),
+        ).stdout.strip()
+    )
+
+
 @allure.step("Wait for correct neofs balance")
 @wait_for_success(60, 5)
 def wait_for_correct_neofs_balance(neofs_env, wallet, cli_wallet_config: str, compare_func: callable):
