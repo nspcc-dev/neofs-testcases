@@ -95,6 +95,20 @@ class Shard:
             writecache=writecache,
         )
 
+    @staticmethod
+    def from_object_post_0_45_2(shard):
+        metabase = shard["metabase"]["path"] if "path" in shard["metabase"] else shard["metabase"]
+        if "enabled" in shard["writecache"]:
+            writecache = shard["writecache"]["path"] if shard["writecache"]["enabled"] else ""
+        else:
+            writecache = shard["writecache"]["path"] if "path" in shard["writecache"] else shard["writecache"]
+
+        return Shard(
+            blobstor=[Blobstor(path=shard["blobstor"]["path"], path_type=shard["blobstor"]["type"])],
+            metabase=metabase,
+            writecache=writecache,
+        )
+
 
 def shards_from_yaml(contents: str) -> list[Shard]:
     config = yaml.safe_load(contents)
@@ -103,7 +117,7 @@ def shards_from_yaml(contents: str) -> list[Shard]:
 
 def shards_from_yaml_post_0_45_2(contents: str) -> list[Shard]:
     config = yaml.safe_load(contents)
-    return [Shard.from_object(shard) for shard in config["storage"]["shards"]]
+    return [Shard.from_object_post_0_45_2(shard) for shard in config["storage"]["shards"]]
 
 
 def shards_from_env(contents: str) -> list[Shard]:
@@ -143,6 +157,8 @@ class TestControlShard:
             wallet=node.wallet.path,
             json_mode=True,
         )
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            return [Shard.from_object_post_0_45_2(shard) for shard in json.loads(result.stdout.strip())]
         return [Shard.from_object(shard) for shard in json.loads(result.stdout.strip())]
 
     @pytest.mark.sanity
