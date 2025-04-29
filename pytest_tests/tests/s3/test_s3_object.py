@@ -643,8 +643,6 @@ class TestS3Object(TestNeofsS3Base):
         bucket_versioning,
         bucket,
     ):
-        file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
-        file_name = self.object_key_from_file_path(file_path_1)
         if bucket_versioning == "ENABLED":
             status = s3_bucket.VersioningStatus.ENABLED
         elif bucket_versioning == "SUSPENDED":
@@ -653,11 +651,13 @@ class TestS3Object(TestNeofsS3Base):
 
         with allure.step("Put object with acl private"):
             acl = "private"
-            s3_object.put_object_s3(self.s3_client, bucket, file_path_1, ACL=acl)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PRIVATE)
             object_1 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
-            assert get_file_hash(file_path_1) == get_file_hash(object_1), "Hashes must be the same"
+            assert get_file_hash(file_path) == get_file_hash(object_1), "Hashes must be the same"
 
         with allure.step("Put object with acl public-read"):
             with allure.step("Enable ACLs"):
@@ -665,69 +665,61 @@ class TestS3Object(TestNeofsS3Base):
                     self.s3_client, bucket, s3_bucket.ObjectOwnership.BUCKET_OWNER_PREFERRED
                 )
             acl = "public-read"
-            file_path_2 = generate_file_with_content(
-                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
-            )
-            s3_object.put_object_s3(self.s3_client, bucket, file_path_2, ACL=acl)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ)
             object_2 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
-            assert get_file_hash(file_path_2) == get_file_hash(object_2), "Hashes must be the same"
+            assert get_file_hash(file_path) == get_file_hash(object_2), "Hashes must be the same"
 
         with allure.step("Put object with acl public-read-write"):
             acl = "public-read-write"
-            file_path_3 = generate_file_with_content(
-                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
-            )
-            s3_object.put_object_s3(self.s3_client, bucket, file_path_3, ACL=acl)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ_WRITE)
             object_3 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
-            assert get_file_hash(file_path_3) == get_file_hash(object_3), "Hashes must be the same"
+            assert get_file_hash(file_path) == get_file_hash(object_3), "Hashes must be the same"
 
         with allure.step("Put object with acl authenticated-read"):
             acl = "authenticated-read"
-            file_path_4 = generate_file_with_content(
-                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_1
-            )
-            s3_object.put_object_s3(self.s3_client, bucket, file_path_4, ACL=acl)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, ACL=acl)
             obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ)
             object_4 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
-            assert get_file_hash(file_path_4) == get_file_hash(object_4), "Hashes must be the same"
-
-        file_path_5 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
-        file_name_5 = self.object_key_from_file_path(file_path_5)
+            assert get_file_hash(file_path) == get_file_hash(object_4), "Hashes must be the same"
 
         with allure.step("Put object with --grant-full-control id=mycanonicaluserid"):
-            file_path_6 = generate_file_with_content(
-                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_5
-            )
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
-                file_path_6,
+                file_path,
                 GrantFullControl=f"id={self.other_wallet.address}",
             )
-            obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
+            obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PRIVATE)
-            object_4 = s3_object.get_object_s3(self.s3_client, bucket, file_name_5)
-            assert get_file_hash(file_path_5) == get_file_hash(object_4), "Hashes must be the same"
+            object_4 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
+            assert get_file_hash(file_path) == get_file_hash(object_4), "Hashes must be the same"
 
         with allure.step("Put object with --grant-read uri=http://acs.amazonaws.com/groups/global/AllUsers"):
-            file_path_7 = generate_file_with_content(
-                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path_5
-            )
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+            file_name = self.object_key_from_file_path(file_path)
             s3_object.put_object_s3(
                 self.s3_client,
                 bucket,
-                file_path_7,
+                file_path,
                 GrantRead="uri=http://acs.amazonaws.com/groups/global/AllUsers",
             )
-            obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name_5)
+            obj_acl = s3_object.get_object_acl_s3(self.s3_client, bucket, file_name)
             verify_acls(obj_acl, ACLType.PUBLIC_READ)
-            object_7 = s3_object.get_object_s3(self.s3_client, bucket, file_name_5)
-            assert get_file_hash(file_path_7) == get_file_hash(object_7), "Hashes must be the same"
+            object_7 = s3_object.get_object_s3(self.s3_client, bucket, file_name)
+            assert get_file_hash(file_path) == get_file_hash(object_7), "Hashes must be the same"
 
     @allure.title("Test S3: put object with lock-mode")
     def test_s3_put_object_lock_mode(self):
