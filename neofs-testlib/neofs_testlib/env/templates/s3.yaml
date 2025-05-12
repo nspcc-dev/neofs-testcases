@@ -30,18 +30,13 @@ wallet:
 
 # RPC endpoint
 
-{% if s3_gw_version <= "0.30.1" %}
-rpc_endpoint: http://{{ fschain_endpoint }}
-{% else %}
 fschain:
   endpoints:
     - http://{{ fschain_endpoint }}
-{% endif %}
 
 peers:
   {%- for peer in peers %}
-  {{ loop.index0 }}:
-    address: {{ peer.address }}
+  - address: {{ peer.address }}
     priority: {{ peer.priority }}
     weight: {{ peer.weight }}
   {%- endfor %}
@@ -57,9 +52,7 @@ prometheus:
   enabled: true
   address: {{ prometheus_address }}
 
-{% if s3_gw_version > "0.31.1" %}
 placement_policy:
   locations:
     rep-2: "REP 2"
     select: "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
-{% endif %}
