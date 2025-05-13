@@ -1246,8 +1246,11 @@ class StorageNode(ResurrectableProcess):
     @allure.step("Set metabase resync")
     def set_metabase_resync(self, resync_state: bool):
         self.stop()
+        neofs_shard_env_variable = "NEOFS_STORAGE_SHARD_{idx}_RESYNC_METABASE"
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
         for idx, _ in enumerate(self.shards):
-            self.attrs.update({f"NEOFS_STORAGE_SHARD_{idx}_RESYNC_METABASE": f"{resync_state}".lower()})
+            self.attrs.update({neofs_shard_env_variable.format(idx=idx): f"{resync_state}".lower()})
         self.start(fresh=False)
 
     def _launch_process(self):

@@ -12,6 +12,7 @@ from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
 SHARD_PREFIX = "NEOFS_STORAGE_SHARD_"
+SHARD_PREFIX_POST_0_45_2 = "NEOFS_STORAGE_SHARDS_"
 BLOBSTOR_PREFIX = "_BLOBSTOR_"
 
 
@@ -29,8 +30,8 @@ class Blobstor:
         return hash((self.path, self.path_type))
 
     @staticmethod
-    def from_config_object(section: dict, shard_id: str, blobstor_id: str):
-        var_prefix = f"{SHARD_PREFIX}{shard_id}{BLOBSTOR_PREFIX}{blobstor_id}"
+    def from_config_object(section: dict, shard_id: str, blobstor_id: str, shard_prefix: str = SHARD_PREFIX):
+        var_prefix = f"{shard_prefix}{shard_id}{BLOBSTOR_PREFIX}{blobstor_id}"
         return Blobstor(section[f"{var_prefix}_PATH"], section[f"{var_prefix}_TYPE"])
 
 
@@ -53,18 +54,19 @@ class Shard:
         return hash((self.metabase, self.writecache))
 
     @staticmethod
-    def _get_blobstor_count_from_section(config_object: dict, shard_id: int):
-        pattern = f"{SHARD_PREFIX}{shard_id}{BLOBSTOR_PREFIX}"
+    def _get_blobstor_count_from_section(config_object: dict, shard_id: int, shard_prefix: str = SHARD_PREFIX):
+        pattern = f"{shard_prefix}{shard_id}{BLOBSTOR_PREFIX}"
         blobstors = {key[: len(pattern) + 2] for key in config_object.keys() if pattern in key}
         return len(blobstors)
 
     @staticmethod
-    def from_config_object(config_object: dict, shard_id: int):
-        var_prefix = f"{SHARD_PREFIX}{shard_id}"
+    def from_config_object(config_object: dict, shard_id: int, shard_prefix: str = SHARD_PREFIX):
+        var_prefix = f"{shard_prefix}{shard_id}"
 
-        blobstor_count = Shard._get_blobstor_count_from_section(config_object, shard_id)
+        blobstor_count = Shard._get_blobstor_count_from_section(config_object, shard_id, shard_prefix)
         blobstors = [
-            Blobstor.from_config_object(config_object, shard_id, blobstor_id) for blobstor_id in range(blobstor_count)
+            Blobstor.from_config_object(config_object, shard_id, blobstor_id, shard_prefix)
+            for blobstor_id in range(blobstor_count)
         ]
 
         write_cache_enabled = config_object[f"{var_prefix}_WRITECACHE_ENABLED"].lower() in (
@@ -129,6 +131,15 @@ def shards_from_env(contents: str) -> list[Shard]:
     return [Shard.from_config_object(configObj, shard_id) for shard_id in range(num_shards)]
 
 
+def shards_from_env_post_0_45_2(contents: str) -> list[Shard]:
+    configObj = dotenv_values(stream=StringIO(contents))
+
+    pattern = rf"{SHARD_PREFIX_POST_0_45_2}\d*"
+    num_shards = len(set(re.findall(pattern, contents)))
+
+    return [Shard.from_config_object(configObj, shard_id, SHARD_PREFIX_POST_0_45_2) for shard_id in range(num_shards)]
+
+
 class TestControlShard:
     @staticmethod
     def get_shards_from_config(neofs_env: NeoFSEnv, node: StorageNode) -> list[Shard]:
@@ -140,8 +151,12 @@ class TestControlShard:
         if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
             yaml_parser = shards_from_yaml_post_0_45_2
 
+        shards_from_env_parser = shards_from_env
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
+            shards_from_env_parser = shards_from_env_post_0_45_2
+
         parser_method = {
-            ".env": shards_from_env,
+            ".env": shards_from_env_parser,
             ".yaml": yaml_parser,
             ".yml": yaml_parser,
         }
