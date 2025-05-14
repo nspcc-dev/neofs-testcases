@@ -190,6 +190,27 @@ class TestS3Locking(TestNeofsS3Base):
                 with pytest.raises(Exception):
                     s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
 
+    @allure.title("Test S3: Checking that Legal Hold cannot be turned off once it has been enabled")
+    def test_object_lock_set_legal_hold_off_not_supported(self):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        file_name = object_key_from_file_path(file_path)
+
+        bucket = s3_bucket.create_bucket_s3(
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+        )
+
+        for version_id in [None, "second"]:
+            with allure.step("Put object into bucket"):
+                obj_version = s3_object.put_object_s3(self.s3_client, bucket, file_path)
+                if version_id:
+                    version_id = obj_version
+                check_objects_in_bucket(self.s3_client, bucket, [file_name])
+                s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
+
+            with allure.step(f"Put legal hold to object {file_name}"):
+                with pytest.raises(Exception):
+                    s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "OFF", version_id)
+
 
 class TestS3LockingBucket(TestNeofsS3Base):
     @allure.title("Test S3: Bucket Lock")
