@@ -28,7 +28,6 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     new_upload_via_rest_gate,
 )
-from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -299,10 +298,6 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         after_metrics_s3_gw = get_metrics(neofs_env_single_sn.s3_gw)
         allure.attach(json.dumps(dict(after_metrics_s3_gw)), "s3 gw metrics", allure.attachment_type.JSON)
 
-    assert after_metrics_s3_gw["neofs_s3_gw_pool_overall_node_requests"][0]["value"] >= 10, (
-        "invalid value for neofs_s3_gw_pool_overall_node_requests"
-    )
-
     expected_params = {"getbucketacl", "getobjectacl", "listbuckets", "listobjectsv1"}
     for metric in after_metrics_s3_gw["neofs_s3_request_seconds_bucket"]:
         if metric["params"]["api"] in expected_params:
@@ -329,22 +324,6 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         f"invalid value for neofs_s3_request_seconds_bucket, these params are not present: {expected_params=}"
     )
 
-    # expected_methods = {
-    #     "get_container",
-    #     "get_container_eacl",
-    #     "get_object",
-    #     "head_object",
-    #     "list_container",
-    #     "network_info",
-    #     "put_container",
-    #     "set_container_eacl",
-    # }
-    # for metric in after_metrics_s3_gw["neofs_s3_gw_pool_avg_request_duration"]:
-    #     if metric["params"]["method"] in expected_methods:
-    #         assert metric["value"] > 0, (
-    #             f"invalid value for neofs_s3_gw_pool_avg_request_duration[{metric['params']['method']}]"
-    #         )
-
     assert after_metrics_s3_gw["neofs_s3_rx_bytes_total"][0]["value"] >= int(SIMPLE_OBJECT_SIZE), (
         "invalid value for neofs_s3_rx_bytes_total"
     )
@@ -352,13 +331,51 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "invalid value for neofs_s3_rx_bytes_total"
     )
 
-    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)) >= parse_version(
-        "0.35.0"
+    neofs_s3_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)
+    assert "neofs_s3_version" in after_metrics_s3_gw, "no neofs_s3_version in metrics"
+    assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
+        "invalid value for neofs_s3_version"
+    )
+
+    for metric in ("eacl", "get", "list", "put", "set_eacl"):
+        assert (
+            len(
+                [
+                    m
+                    for _, m in enumerate(after_metrics_s3_gw[f"neofs_s3_pool_container_{metric}_bucket"])
+                    if m["value"] >= 1
+                ]
+            )
+            >= 1
+        ), f"invalid value for neofs_s3_pool_container_{metric}_duration_bucket"
+
+        assert after_metrics_s3_gw[f"neofs_s3_pool_container_{metric}_sum"][0]["value"] > 0, (
+            f"invalid value for neofs_s3_pool_container_{metric}_sum"
+        )
+        assert after_metrics_s3_gw[f"neofs_s3_pool_container_{metric}_count"][0]["value"] > 0, (
+            f"invalid value for neofs_s3_pool_container_{metric}_count"
+        )
+
+    for metric in (
+        "network_info",
+        "object_get_init",
+        "object_get_stream",
+        "object_head",
+        "object_put_init",
+        "object_put_stream",
+        "object_search_v2",
+        "session_create",
     ):
-        neofs_s3_version = neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_s3_gw_path)
-        assert "neofs_s3_version" in after_metrics_s3_gw, "no neofs_s3_version in metrics"
-        assert after_metrics_s3_gw["neofs_s3_version"][0]["params"]["version"] == neofs_s3_version, (
-            "invalid value for neofs_s3_version"
+        assert (
+            len([m for _, m in enumerate(after_metrics_s3_gw[f"neofs_s3_pool_{metric}_bucket"]) if m["value"] >= 1])
+            >= 1
+        ), f"invalid value for neofs_s3_pool_{metric}_duration_bucket"
+
+        assert after_metrics_s3_gw[f"neofs_s3_pool_{metric}_sum"][0]["value"] > 0, (
+            f"invalid value for neofs_s3_pool_{metric}_sum"
+        )
+        assert after_metrics_s3_gw[f"neofs_s3_pool_{metric}_count"][0]["value"] > 0, (
+            f"invalid value for neofs_s3_pool_{metric}_count"
         )
 
 
