@@ -96,8 +96,17 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
-    def list_object_versions(self, Bucket: str) -> dict:
-        cmd = f"aws {self.common_flags} s3api list-object-versions --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+    def list_object_versions(self, Bucket: str, Prefix: str = "", MaxKeys: int = 1000) -> dict:
+        common_flags = self.common_flags
+        if MaxKeys:
+            common_flags = common_flags.replace("--no-paginate", "")
+
+        cmd = f"aws {common_flags} s3api list-object-versions --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+
+        if MaxKeys:
+            cmd += f" --max-keys {MaxKeys}"
+        if Prefix:
+            cmd += f" --prefix {Prefix}"
         output = _cmd_run(cmd)
         return self._to_json(output)
 

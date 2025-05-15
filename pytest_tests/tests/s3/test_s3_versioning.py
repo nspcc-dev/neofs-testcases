@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 
 import allure
@@ -78,3 +79,64 @@ class TestS3Versioning(TestNeofsS3Base):
         with allure.step("Get second version of object"):
             object_3 = s3_object.get_object_s3(self.s3_client, bucket, file_name, version_id_2, full_output=True)
             assert object_3.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
+
+    @allure.title("Test for duplicate objects in S3 listings")
+    def test_s3_duplicates_in_object_listing(self):
+        bucket = s3_bucket.create_bucket_s3(
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
+        )
+
+        set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
+
+        num_of_versions = 51
+        num_of_objects = 20
+        small_object_size = 8
+
+        def put_objects_with_versions():
+            file_path = generate_file(small_object_size)
+            file_name = self.object_key_from_file_path(file_path)
+            for _ in range(num_of_versions):
+                file_name = generate_file_with_content(small_object_size, file_path=file_path)
+                s3_object.put_object_s3(self.s3_client, bucket, file_name)
+
+        put_object_threads = [
+            threading.Thread(
+                target=put_objects_with_versions,
+            )
+            for _ in range(num_of_objects)
+        ]
+
+        for t in put_object_threads:
+            t.start()
+        for t in put_object_threads:
+            t.join()
+
+        with allure.step("Check all versions are presented and unique"):
+            versions = s3_object.list_objects_versions_s3(self.s3_client, bucket, max_keys=2000)
+            assert len(versions) == num_of_versions * num_of_objects, (
+                f"Expected {num_of_versions * num_of_objects} versions, got {len(versions)}"
+            )
+            version_ids = [obj["VersionId"] for obj in versions]
+            assert len(version_ids) == len(set(version_ids)), "Duplicate VersionId found!"
+
+    @allure.title("Test prefix in list object versions")
+    def test_s3_prefix_in_object_listing(self):
+        bucket = s3_bucket.create_bucket_s3(
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
+        )
+
+        set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
+
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        file_name = self.object_key_from_file_path(file_path)
+        for _ in range(5):
+            file_name = generate_file_with_content(
+                self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
+            )
+            s3_object.put_object_s3(self.s3_client, bucket, file_name)
+
+        with allure.step("Check prefix in list object versions"):
+            response = self.s3_client.list_object_versions(Bucket=bucket, Prefix=file_name[:5])
+            assert response.get("Prefix", "") == file_name[:5], (
+                f"Expected prefix {file_name[:5]}, got {response.get('Prefix', '')}"
+            )

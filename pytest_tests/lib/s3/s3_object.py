@@ -67,13 +67,12 @@ def list_objects_s3(s3_client, bucket: str, full_output: bool = False) -> list:
 
 
 @allure.step("List objects versions S3")
-def list_objects_versions_s3(s3_client, bucket: str, full_output: bool = False) -> list:
+def list_objects_versions_s3(s3_client, bucket: str, full_output: bool = False, max_keys=1000) -> list:
     try:
-        response = s3_client.list_object_versions(Bucket=bucket)
+        response = s3_client.list_object_versions(Bucket=bucket, MaxKeys=max_keys)
         versions = response.get("Versions", [])
         log_command_execution("S3 List objects versions result", response)
         return response if full_output else versions
-
     except ClientError as err:
         raise Exception(
             f"Error Message: {err.response['Error']['Message']}\n"
