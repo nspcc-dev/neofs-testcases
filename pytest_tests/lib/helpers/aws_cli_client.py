@@ -96,8 +96,10 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
-    def list_object_versions(self, Bucket: str) -> dict:
+    def list_object_versions(self, Bucket: str, Prefix: str = "") -> dict:
         cmd = f"aws {self.common_flags} s3api list-object-versions --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+        if Prefix:
+            cmd += f" --prefix {Prefix}"
         output = _cmd_run(cmd)
         return self._to_json(output)
 
