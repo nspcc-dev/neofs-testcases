@@ -56,3 +56,5 @@ placement_policy:
   locations:
     rep-2: "REP 2"
     select: "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+
+internal_slicer: {{ internal_slicer }}

@@ -23,6 +23,7 @@ from helpers.s3_helper import (
     set_bucket_versioning,
     verify_acls,
 )
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
@@ -852,3 +853,23 @@ class TestS3Object(TestNeofsS3Base):
         with allure.step("Put object"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path_1)
             check_objects_in_bucket(self.s3_client, bucket, [file_name])
+
+    @allure.title("Test internal slicer")
+    def test_s3_internal_slicer(self, bucket):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.37.0"):
+            pytest.skip("Supported only on post-0.37.0 s3 gw")
+        try:
+            self.neofs_env.s3_gw.stop()
+            self.neofs_env.s3_gw.internal_slicer = True
+            self.neofs_env.s3_gw.start(fresh=False)
+            file_path = generate_file(self.neofs_env.get_object_size("complex_object_size") * 2)
+            file_name = self.object_key_from_file_path(file_path)
+
+            s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
+            got_object = s3_object.get_object_s3(self.s3_client, bucket, file_name)
+            assert get_file_hash(got_object) == get_file_hash(file_path), "Expected hashes are the same"
+        finally:
+            self.neofs_env.s3_gw.stop()
+            self.neofs_env.s3_gw.internal_slicer = False
+            self.neofs_env.s3_gw.start(fresh=False)
