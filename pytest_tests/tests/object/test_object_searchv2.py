@@ -19,6 +19,7 @@ from helpers.neofs_verbs import (
     head_object,
     put_object,
     put_object_to_random_node,
+    search_object,
     search_objectv2,
 )
 from helpers.storage_object_info import CLEANUP_TIMEOUT
@@ -1745,3 +1746,37 @@ def test_searchv2_meta_enabled_containers(
         )
 
         assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
+
+
+@allure.title("Test ROOT object search for big objects")
+def test_root_search_for_big_object(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
+    cid = container
+    oid = put_object_to_random_node(
+        default_wallet.path,
+        generate_file(neofs_env.get_object_size("complex_object_size") * 3),
+        cid,
+        shell=neofs_env.shell,
+        neofs_env=neofs_env,
+    )
+
+    found_objects = search_object(
+        default_wallet.path,
+        cid,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
+        expected_objects_list=[oid],
+        root=True,
+        fail_on_assert=True,
+    )
+
+    found_objects, _ = search_objectv2(
+        rpc_endpoint=neofs_env.sn_rpc,
+        wallet=default_wallet.path,
+        cid=cid,
+        shell=neofs_env.shell,
+        root=True,
+    )
+    assert len(found_objects) == 1, "invalid number of objects in searchv2 outut"
+    assert any(found_obj["id"] == oid for found_obj in found_objects), (
+        f"created object {oid} not found in searchv2 output"
+    )
