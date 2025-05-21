@@ -117,3 +117,24 @@ class NeofsCliControl(CliCommand):
             "control notary sign",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def drop_objects(
+        self, endpoint: str, wallet: str, objects: str, address: str = None, shell_timeout: Optional[int] = None
+    ) -> CommandResult:
+        """
+        Drop objects from the node's local storage
+
+        Args:
+            address: Address of wallet account
+            endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
+            wallet: Path to the wallet
+            objects: List of object addresses to be removed in string format
+            shell_timeout: Shell timeout for the command.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "control drop-objects",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
