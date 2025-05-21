@@ -110,6 +110,33 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
+    def paginated_list_object_versions(
+        self,
+        Bucket: str,
+        Prefix: str = "",
+        MaxKeys: Optional[int] = None,
+        MaxItems: Optional[int] = None,
+        PageSize: Optional[int] = None,
+        StartingToken: Optional[str] = None,
+    ) -> dict:
+        common_flags = self.common_flags.replace("--no-paginate", "")
+
+        cmd = f"aws {common_flags} s3api list-object-versions --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+
+        if Prefix:
+            cmd += f" --prefix {Prefix}"
+        if MaxKeys:
+            cmd += f" --max-keys {MaxKeys}"
+        if MaxItems:
+            cmd += f" --max-items {MaxItems}"
+        if PageSize:
+            cmd += f" --page-size {PageSize}"
+        if StartingToken:
+            cmd += f" --starting-token {StartingToken}"
+
+        output = _cmd_run(cmd)
+        return self._to_json(output)
+
     def copy_object(
         self,
         Bucket: str,
