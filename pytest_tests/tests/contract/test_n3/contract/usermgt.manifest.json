@@ -1,0 +1,37 @@
+{
+    "abi": {
+        "events": [],
+        "methods": [
+            {
+                "name": "_initialize",
+                "offset": 0,
+                "parameters": [],
+                "returntype": "Void",
+                "safe": false
+            },
+            {
+                "name": "verifySignature",
+                "offset": 46,
+                "parameters": [
+                    {
+                        "name": "user",
+                        "type": "String"
+                    },
+                    {
+                        "name": "sig",
+                        "type": "Signature"
+                    }
+                ],
+                "returntype": "Boolean",
+                "safe": true
+            }
+        ]
+    },
+    "extra": null,
+    "features": {},
+    "groups": [],
+    "name": "NeoFS User Management",
+    "permissions": [],
+    "supportedstandards": [],
+    "trusts": []
+}
