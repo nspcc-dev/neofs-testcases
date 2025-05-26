@@ -51,6 +51,7 @@ class NeoGoContract(CliCommand):
         out: Optional[str] = None,
         force: bool = False,
         timeout: int = 10,
+        await_mode: bool = False,
         post_data: Optional[str] = None,
     ) -> CommandResult:
         """Deploy a smart contract (.nef with description)

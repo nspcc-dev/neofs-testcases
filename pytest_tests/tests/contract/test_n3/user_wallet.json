@@ -1,0 +1,32 @@
+{
+    "accounts": [
+        {
+            "address": "NM1beYDQosRDrzbmHE3HydB7LJv5WCohga",
+            "contract": {
+                "deployed": false,
+                "parameters": [
+                    {
+                        "name": "parameter0",
+                        "type": "Signature"
+                    }
+                ],
+                "script": "DCEDUtWBmJG9aVmunjzrYayjbGaxDlCTUIIlu1mjbLbVqjVBVuezJw=="
+            },
+            "isDefault": false,
+            "key": "6PYMx7LxpQtoaPXbgBVDNGZs2PfvgsbciUhjzshrvrekfFMPYFy6JMWcCy",
+            "label": "NeoFS user",
+            "lock": false,
+            "extra": null
+        }
+    ],
+    "extra": {
+        "Tokens": null
+    },
+    "scrypt": {
+        "n": 16384,
+        "p": 8,
+        "r": 8
+    },
+    "version": "1.0",
+    "name": null
+}

@@ -1,0 +1,30 @@
+{
+    "accounts": [
+        {
+            "address": "NgXCvP87aAtX6pRPLbiYmF7j5UdaTV8Aiy",
+            "contract": {
+                "deployed": false,
+                "parameters": [
+                    {
+                        "name": "parameter0",
+                        "type": "Signature"
+                    }
+                ],
+                "script": "DCECdulc/FSYboaFICz6lhh3a/t42VYvYgXXJ0Dt2Lh6tJlBVuezJw=="
+            },
+            "isDefault": false,
+            "key": "6PYQA11YfFFrFjyEBBKvqLfAHPAYGxmH6mQfY3Z2jqfTNdSJdBhKFWRo3X",
+            "label": "Usermanagement contract deployer",
+            "lock": false
+        }
+    ],
+    "extra": {
+        "Tokens": null
+    },
+    "scrypt": {
+        "n": 16384,
+        "p": 8,
+        "r": 8
+    },
+    "version": "1.0"
+}
