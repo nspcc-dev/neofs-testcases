@@ -34,7 +34,6 @@ CONFIG_KEYS_MAPPING = {
     "InnerRingCandidateFee": "inner_ring_candidate_fee",
     "WithdrawFee": "withdrawal_fee",
     "HomomorphicHashingDisabled": "homomorphic_hashing_disabled",
-    "MaintenanceModeAllowed": "maintenance_mode_allowed",
 }
 
 

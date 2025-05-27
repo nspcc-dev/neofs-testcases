@@ -96,7 +96,6 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
         ("InnerRingCandidateFee", 5000000000),
         ("WithdrawFee", 200000000),
         ("HomomorphicHashingDisabled", True),
-        ("MaintenanceModeAllowed", True),
     ],
 )
 def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, key: str, value: Union[str, int, bool]):

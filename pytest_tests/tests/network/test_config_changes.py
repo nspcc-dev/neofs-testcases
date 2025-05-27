@@ -22,7 +22,6 @@ class TestNetworkConfigChange(TestNeofsBase):
             ("InnerRingCandidateFee", 5000000000),
             ("WithdrawFee", 200000000),
             ("HomomorphicHashingDisabled", True),
-            ("MaintenanceModeAllowed", True),
         ],
     )
     def test_config_update_single_value(self, key: str, value: Union[str, int, bool], clean_config: None):
