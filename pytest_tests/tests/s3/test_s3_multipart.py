@@ -2,10 +2,12 @@ import random
 from collections import defaultdict
 
 import allure
+import pytest
 from helpers.file_helper import generate_file, get_file_hash, split_file
 from helpers.s3_helper import (
     check_objects_in_bucket,
     object_key_from_file_path,
+    parametrize_clients,
     set_bucket_versioning,
 )
 from s3 import s3_bucket, s3_object
@@ -15,8 +17,7 @@ PART_SIZE = 5 * 1024 * 1024
 
 
 def pytest_generate_tests(metafunc):
-    if "s3_client" in metafunc.fixturenames:
-        metafunc.parametrize("s3_client", ["aws cli", "boto3"], indirect=True)
+    parametrize_clients(metafunc)
 
 
 class TestS3Multipart(TestNeofsS3Base):
@@ -197,3 +198,139 @@ class TestS3Multipart(TestNeofsS3Base):
         with allure.step("Check we can get whole object from bucket"):
             got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
+    @allure.title("Test S3 Object List Multipart Uploads Pagination via boto3")
+    @pytest.mark.boto3_only
+    def test_s3_object_multipart_upload_pagination_boto3(self):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        small_object_size = 8
+        number_of_uploads = 20
+
+        with allure.step("Create multiple uploads"):
+            for _ in range(number_of_uploads):
+                file_name = generate_file(small_object_size)
+                object_key = object_key_from_file_path(file_name)
+                s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+
+        with allure.step("Check pagination with paginator"):
+            paginator = self.s3_client.get_paginator("list_multipart_uploads")
+
+            pages = paginator.paginate(Bucket=bucket, PaginationConfig={"PageSize": 5, "MaxItems": number_of_uploads})
+
+            results = []
+            for page in pages:
+                results.extend(page.get("Uploads", []))
+
+            assert len(results) == number_of_uploads, f"Expected {number_of_uploads} uploads, got {len(results)}"
+
+    @allure.title("Test S3 Object List Multipart Uploads Pagination via aws cli")
+    @pytest.mark.aws_cli_only
+    def test_s3_object_multipart_upload_pagination_aws_cli(self, bucket):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        small_object_size = 8
+        number_of_uploads = 20
+
+        with allure.step("Create multiple uploads"):
+            for _ in range(number_of_uploads):
+                file_name = generate_file(small_object_size)
+                object_key = object_key_from_file_path(file_name)
+                s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+
+        with allure.step("Check pagination with max-items and page-size"):
+            response = self.s3_client.list_multipart_uploads(Bucket=bucket, MaxItems=number_of_uploads, PageSize=5)
+            uploads = response.get("Uploads", [])
+            assert len(uploads) == number_of_uploads, f"Expected {number_of_uploads} uploads, got {len(uploads)}"
+
+        with allure.step("Check pagination with starting token loop"):
+            all_uploads = []
+            starting_token = None
+
+            while True:
+                response = self.s3_client.list_multipart_uploads(
+                    Bucket=bucket, PageSize=5, StartingToken=starting_token
+                )
+                uploads = response.get("Uploads", [])
+                all_uploads.extend(uploads)
+
+                starting_token = response.get("NextToken")
+                if not starting_token:
+                    break
+
+            assert len(all_uploads) == number_of_uploads, (
+                f"Expected {number_of_uploads} uploads, got {len(all_uploads)}"
+            )
+
+    @allure.title("Test S3 Object Multipart List Parts Pagination via boto3")
+    @pytest.mark.boto3_only
+    def test_s3_object_multipart_list_parts_boto3(self):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        PART_SIZE = 16
+        file_name = generate_file(PART_SIZE * 20)
+        object_key = object_key_from_file_path(file_name)
+        part_files = split_file(file_name, 20)
+        parts_count = len(part_files)
+        parts = []
+
+        with allure.step("Upload all parts"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_id, file_path in enumerate(part_files, start=1):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
+                parts.append((part_id, etag))
+
+        with allure.step("Check pagination with paginator"):
+            paginator = self.s3_client.get_paginator("list_parts")
+
+            pages = paginator.paginate(
+                Bucket=bucket,
+                Key=object_key,
+                UploadId=upload_id,
+                PaginationConfig={"PageSize": 5, "MaxItems": parts_count},
+            )
+
+            results = []
+            for page in pages:
+                results.extend(page.get("Parts", []))
+
+            assert len(results) == parts_count, f"Expected {parts_count} parts, got {len(results)}"
+
+    @allure.title("Test S3 Object Multipart List Parts Pagination via aws cli")
+    @pytest.mark.aws_cli_only
+    def test_s3_object_multipart_list_parts_aws_cli(self, bucket):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        PART_SIZE = 16
+        parts_count = 20
+        file_name = generate_file(PART_SIZE * parts_count)
+        object_key = object_key_from_file_path(file_name)
+        part_files = split_file(file_name, parts_count)
+        parts_count = len(part_files)
+        parts = []
+
+        with allure.step("Upload all parts"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_id, file_path in enumerate(part_files, start=1):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
+                parts.append((part_id, etag))
+
+        with allure.step("Check pagination with max-items and page-size"):
+            response = self.s3_client.list_parts(
+                Bucket=bucket, Key=object_key, UploadId=upload_id, MaxItems=parts_count, PageSize=5
+            )
+            parts = response.get("Parts", [])
+            assert len(parts) == parts_count, f"Expected {parts_count} parts, got {len(parts)}"
+
+        with allure.step("Check pagination with starting token loop"):
+            all_parts = []
+            starting_token = None
+
+            while True:
+                response = self.s3_client.list_parts(
+                    Bucket=bucket, Key=object_key, UploadId=upload_id, PageSize=5, StartingToken=starting_token
+                )
+                parts = response.get("Parts", [])
+                all_parts.extend(parts)
+
+                starting_token = response.get("NextToken")
+                if not starting_token:
+                    break
+
+            assert len(all_parts) == parts_count, f"Expected {parts_count} parts, got {len(all_parts)}"

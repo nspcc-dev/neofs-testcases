@@ -541,6 +541,66 @@ class TestS3Object(TestNeofsS3Base):
             assert contents[0].get("Key") == file_name_2, f"bucket has object key {file_name_2}"
             assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
+    @pytest.mark.boto3_only
+    def test_s3_list_objects_pagination_boto3(self, bucket):
+        small_object_size = 8
+        number_of_objects = 20
+
+        with allure.step("Put some objects into the bucket"):
+            for _ in range(number_of_objects):
+                file_path = generate_file(small_object_size)
+                s3_object.put_object_s3(self.s3_client, bucket, file_path)
+
+        with allure.step("Check pagination with paginator"):
+            paginator = self.s3_client.get_paginator("list_objects_v2")
+
+            pages = paginator.paginate(Bucket=bucket, PaginationConfig={"PageSize": 5, "MaxItems": number_of_objects})
+
+            results = []
+            for page in pages:
+                results.extend(page.get("Contents", []))
+
+            assert len(results) == number_of_objects, f"Expected {number_of_objects} objects, got {len(results)}"
+
+    @pytest.mark.aws_cli_only
+    def test_s3_list_objects_pagination_aws_cli(self, bucket):
+        small_object_size = 8
+        number_of_objects = 20
+
+        with allure.step("Put some objects into the bucket"):
+            for _ in range(number_of_objects):
+                file_path = generate_file(small_object_size)
+                s3_object.put_object_s3(self.s3_client, bucket, file_path)
+
+        with allure.step("Check basic pagination with MaxKeys"):
+            max_keys = 5
+            response = self.s3_client.list_objects_v2(Bucket=bucket, MaxKeys=max_keys)
+            objects = response.get("Contents", [])
+            assert len(objects) <= max_keys, f"Expected {max_keys} objects, got {len(objects)}"
+            assert response.get("IsTruncated", False), "Expected 'IsTruncated' key in response"
+
+        with allure.step("Check pagination with max-items and page-size"):
+            response = self.s3_client.list_objects_v2(Bucket=bucket, MaxItems=number_of_objects, PageSize=5)
+            objects = response.get("Contents", [])
+            assert len(objects) == number_of_objects, f"Expected {number_of_objects} objects, got {len(objects)}"
+
+        with allure.step("Check pagination with starting token loop"):
+            all_objects = []
+            starting_token = None
+
+            while True:
+                response = self.s3_client.list_objects_v2(Bucket=bucket, PageSize=5, StartingToken=starting_token)
+                objects = response.get("Contents", [])
+                all_objects.extend(objects)
+
+                starting_token = response.get("NextToken")
+                if not starting_token:
+                    break
+
+            assert len(all_objects) == number_of_objects, (
+                f"Expected {number_of_objects} objects, got {len(all_objects)}"
+            )
+
     @allure.title("Test S3: put object")
     def test_s3_put_object(self, bucket):
         file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))

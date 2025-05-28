@@ -91,8 +91,28 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
-    def list_objects_v2(self, Bucket: str) -> dict:
-        cmd = f"aws {self.common_flags} s3api list-objects-v2 --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+    def list_objects_v2(
+        self,
+        Bucket: str,
+        MaxKeys: Optional[int] = None,
+        MaxItems: Optional[int] = None,
+        PageSize: Optional[int] = None,
+        StartingToken: Optional[str] = None,
+    ) -> dict:
+        common_flags = self.common_flags
+        if MaxKeys or MaxItems or PageSize or StartingToken:
+            common_flags = common_flags.replace("--no-paginate", "")
+        cmd = f"aws {common_flags} s3api list-objects-v2 --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+
+        if MaxKeys:
+            cmd += f" --max-keys {MaxKeys}"
+        if MaxItems:
+            cmd += f" --max-items {MaxItems}"
+        if PageSize:
+            cmd += f" --page-size {PageSize}"
+        if StartingToken:
+            cmd += f" --starting-token {StartingToken}"
+
         output = _cmd_run(cmd)
         return self._to_json(output)
 
@@ -454,11 +474,28 @@ class AwsCliClient:
         output = _cmd_run(cmd)
         return self._to_json(output)
 
-    def list_multipart_uploads(self, Bucket: str) -> dict:
-        cmd = (
-            f"aws {self.common_flags} s3api list-multipart-uploads --bucket {Bucket} "
-            f"--endpoint-url {self.s3gate_endpoint}"
-        )
+    def list_multipart_uploads(
+        self,
+        Bucket: str,
+        MaxKeys: Optional[int] = None,
+        MaxItems: Optional[int] = None,
+        PageSize: Optional[int] = None,
+        StartingToken: Optional[str] = None,
+    ) -> dict:
+        common_flags = self.common_flags
+        if MaxKeys or MaxItems or PageSize or StartingToken:
+            common_flags = common_flags.replace("--no-paginate", "")
+        cmd = f"aws {common_flags} s3api list-multipart-uploads --bucket {Bucket} --endpoint-url {self.s3gate_endpoint}"
+
+        if MaxKeys:
+            cmd += f" --max-keys {MaxKeys}"
+        if MaxItems:
+            cmd += f" --max-items {MaxItems}"
+        if PageSize:
+            cmd += f" --page-size {PageSize}"
+        if StartingToken:
+            cmd += f" --starting-token {StartingToken}"
+
         output = _cmd_run(cmd)
         return self._to_json(output)
 
@@ -488,11 +525,34 @@ class AwsCliClient:
         output = _cmd_run(cmd, LONG_TIMEOUT)
         return self._to_json(output)
 
-    def list_parts(self, UploadId: str, Bucket: str, Key: str) -> dict:
+    def list_parts(
+        self,
+        UploadId: str,
+        Bucket: str,
+        Key: str,
+        MaxKeys: Optional[int] = None,
+        MaxItems: Optional[int] = None,
+        PageSize: Optional[int] = None,
+        StartingToken: Optional[str] = None,
+    ) -> dict:
+        common_flags = self.common_flags
+        if MaxKeys or MaxItems or PageSize or StartingToken:
+            common_flags = common_flags.replace("--no-paginate", "")
+
         cmd = (
-            f"aws {self.common_flags} s3api list-parts --bucket {Bucket} --key {Key} "
+            f"aws {common_flags} s3api list-parts --bucket {Bucket} --key {Key} "
             f"--upload-id {UploadId} --endpoint-url {self.s3gate_endpoint}"
         )
+
+        if MaxKeys:
+            cmd += f" --max-keys {MaxKeys}"
+        if MaxItems:
+            cmd += f" --max-items {MaxItems}"
+        if PageSize:
+            cmd += f" --page-size {PageSize}"
+        if StartingToken:
+            cmd += f" --starting-token {StartingToken}"
+
         output = _cmd_run(cmd)
         return self._to_json(output)
 
