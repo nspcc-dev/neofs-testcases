@@ -16,6 +16,7 @@ ProtocolConfiguration:
         {%- endfor %}
 
 ApplicationConfiguration:
+  LogTimestamp: true
   SkipBlockVerification: false
   DBConfiguration:
     Type: "boltdb"
