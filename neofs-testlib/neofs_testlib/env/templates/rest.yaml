@@ -1,5 +1,6 @@
 logger:
   level: debug # Log level
+  timestamp: true
   
 # Wallet settings
 wallet:

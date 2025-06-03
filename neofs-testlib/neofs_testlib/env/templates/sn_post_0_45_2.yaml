@@ -1,6 +1,7 @@
 # Logger section
 logger:
   level: debug # Minimum enabled logging level
+  timestamp: true
 
 
 # Profiler section
