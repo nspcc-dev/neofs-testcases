@@ -43,11 +43,10 @@ from helpers.common import (
 )
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
-from tenacity import retry, stop_after_attempt, wait_fixed
-
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -1154,10 +1153,13 @@ class StorageNode(ResurrectableProcess):
             return "sn.yaml"
 
     @allure.step("Start storage node")
-    def start(self, fresh=True, wait_until_ready=True):
+    def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
         if fresh:
             logger.info("Generating wallet for storage node")
-            self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
+            if prepared_wallet:
+                self.wallet = prepared_wallet
+            else:
+                self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
             if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
