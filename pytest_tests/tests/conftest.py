@@ -5,7 +5,13 @@ from pathlib import Path
 
 import allure
 import pytest
-from helpers.common import SIMPLE_OBJECT_SIZE, TEST_FILES_DIR, TEST_OBJECTS_DIR, get_assets_dir_path
+from helpers.common import (
+    SIMPLE_OBJECT_SIZE,
+    SN_VALIDATOR_DEFAULT_PORT,
+    TEST_FILES_DIR,
+    TEST_OBJECTS_DIR,
+    get_assets_dir_path,
+)
 from helpers.file_helper import generate_file
 from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -30,6 +36,7 @@ def get_or_create_neofs_env(
     with_s3_gw=True,
     with_rest_gw=True,
     chain_meta_data=False,
+    sn_validator_url=None,
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -44,6 +51,7 @@ def get_or_create_neofs_env(
             with_rest_gw=with_rest_gw,
             request=request,
             chain_meta_data=chain_meta_data,
+            sn_validator_url=sn_validator_url,
         )
     return neofs_env
 
@@ -99,6 +107,19 @@ def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
 @pytest.fixture()
 def neofs_env_single_sn(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1, with_s3_gw=True, with_rest_gw=True)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture()
+def neofs_env_ir_only_with_sn_validator(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=0,
+        with_s3_gw=False,
+        with_rest_gw=False,
+        sn_validator_url=f"http://localhost:{SN_VALIDATOR_DEFAULT_PORT}/verify",
+    )
     yield neofs_env
     neofs_env.finalize(request)
 
