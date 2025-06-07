@@ -551,18 +551,19 @@ class NeoFSEnv:
                 count=inner_ring_nodes_count, with_main_chain=with_main_chain, chain_meta_data=chain_meta_data
             )
 
-            node_attrs = {
-                0: ["UN-LOCODE:RU MOW", "Price:22"],
-                1: ["UN-LOCODE:RU LED", "Price:33"],
-                2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"],
-            }
-            adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
-            neofs_env.deploy_storage_nodes(
-                count=storage_nodes_count,
-                node_attrs=adjusted_node_attrs,
-                writecache=writecache,
-            )
+            if storage_nodes_count:
+                node_attrs = {
+                    0: ["UN-LOCODE:RU MOW", "Price:22"],
+                    1: ["UN-LOCODE:RU LED", "Price:33"],
+                    2: ["UN-LOCODE:SE STO", "Price:11"],
+                    3: ["UN-LOCODE:FI HEL", "Price:44"],
+                }
+                adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
+                neofs_env.deploy_storage_nodes(
+                    count=storage_nodes_count,
+                    node_attrs=adjusted_node_attrs,
+                    writecache=writecache,
+                )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
                 for sn in neofs_env.storage_nodes:
@@ -1132,10 +1133,13 @@ class StorageNode(ResurrectableProcess):
             return "sn.yaml"
 
     @allure.step("Start storage node")
-    def start(self, fresh=True):
+    def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
         if fresh:
             logger.info("Generating wallet for storage node")
-            self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
+            if prepared_wallet:
+                self.wallet = prepared_wallet
+            else:
+                self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
 
             if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
@@ -1161,8 +1165,9 @@ class StorageNode(ResurrectableProcess):
             )
         logger.info(f"Launching Storage Node:{self}")
         self._launch_process()
-        logger.info("Wait until storage node is READY")
-        self._wait_until_ready()
+        if wait_until_ready:
+            logger.info("Wait until storage node is READY")
+            self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
     def stop(self):

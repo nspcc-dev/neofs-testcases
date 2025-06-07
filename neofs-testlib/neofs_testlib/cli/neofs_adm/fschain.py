@@ -422,3 +422,51 @@ class NeofsAdmFSChain(CliCommand):
             "fschain estimations",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
+
+    def verified_nodes_domain_access_list(self, rpc_endpoint: str, domain: str) -> CommandResult:
+        """List Neo addresses of the storage nodes that have access to use the specified verified domain.
+
+        Args:
+            rpc-endpoint: FS chain RPC endpoint
+            domain: Verified domain of the storage nodes. Must be a valid NeoFS NNS domain (e.g. 'nodes.some-org.neofs')
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "fschain verified-nodes-domain access-list",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
+
+    def verified_nodes_domain_set_access_list(
+        self,
+        rpc_endpoint: str,
+        domain: str,
+        account: Optional[str] = None,
+        neo_addresses: Optional[list[str]] = None,
+        public_keys: Optional[list[str]] = None,
+        wallet: Optional[str] = None,
+        wallet_password: Optional[str] = None,
+    ) -> CommandResult:
+        """List Neo addresses of the storage nodes that have access to use the specified verified domain.
+
+        Args:
+            rpc-endpoint: FS chain RPC endpoint
+            domain: Verified domain of the storage nodes. Must be a valid NeoFS NNS domain (e.g. 'nodes.some-org.neofs')
+            account: Optional Neo address of the wallet account for signing transactions. If omitted, default change address from the wallet is used
+            neo-addresses: Neo addresses resolved from public keys of the storage nodes
+            public-keys: HEX-encoded public keys of the storage nodes
+            wallet: Path to the Neo wallet file
+            wallet_password: Password from the Neo wallet file
+        Returns:
+            Command's result.
+        """
+        return self._execute_with_password(
+            "fschain verified-nodes-domain set-access-list",
+            wallet_password,
+            **{
+                param: param_value
+                for param, param_value in locals().items()
+                if param not in ["self", "wallet_password"]
+            },
+        )
