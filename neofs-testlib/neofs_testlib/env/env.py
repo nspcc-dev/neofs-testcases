@@ -163,9 +163,14 @@ class NeoFSEnv:
         return neo_go_config_path
 
     @allure.step("Deploy inner ring nodes")
-    def deploy_inner_ring_nodes(self, count=1, with_main_chain=False, chain_meta_data=False):
+    def deploy_inner_ring_nodes(self, count=1, with_main_chain=False, chain_meta_data=False, sn_validator_url=None):
         for _ in range(count):
-            new_inner_ring_node = InnerRing(self, len(self.inner_ring_nodes) + 1, chain_meta_data=chain_meta_data)
+            new_inner_ring_node = InnerRing(
+                self,
+                len(self.inner_ring_nodes) + 1,
+                chain_meta_data=chain_meta_data,
+                sn_validator_url=sn_validator_url,
+            )
             new_inner_ring_node.generate_network_config()
             self.inner_ring_nodes.append(new_inner_ring_node)
 
@@ -540,6 +545,7 @@ class NeoFSEnv:
         with_rest_gw=True,
         request=None,
         chain_meta_data=False,
+        sn_validator_url=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -548,21 +554,25 @@ class NeoFSEnv:
         neofs_env.download_binaries()
         try:
             neofs_env.deploy_inner_ring_nodes(
-                count=inner_ring_nodes_count, with_main_chain=with_main_chain, chain_meta_data=chain_meta_data
+                count=inner_ring_nodes_count,
+                with_main_chain=with_main_chain,
+                chain_meta_data=chain_meta_data,
+                sn_validator_url=sn_validator_url,
             )
 
-            node_attrs = {
-                0: ["UN-LOCODE:RU MOW", "Price:22"],
-                1: ["UN-LOCODE:RU LED", "Price:33"],
-                2: ["UN-LOCODE:SE STO", "Price:11"],
-                3: ["UN-LOCODE:FI HEL", "Price:44"],
-            }
-            adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
-            neofs_env.deploy_storage_nodes(
-                count=storage_nodes_count,
-                node_attrs=adjusted_node_attrs,
-                writecache=writecache,
-            )
+            if storage_nodes_count:
+                node_attrs = {
+                    0: ["UN-LOCODE:RU MOW", "Price:22"],
+                    1: ["UN-LOCODE:RU LED", "Price:33"],
+                    2: ["UN-LOCODE:SE STO", "Price:11"],
+                    3: ["UN-LOCODE:FI HEL", "Price:44"],
+                }
+                adjusted_node_attrs = {k: node_attrs[k] for k in list(node_attrs.keys())[:storage_nodes_count]}
+                neofs_env.deploy_storage_nodes(
+                    count=storage_nodes_count,
+                    node_attrs=adjusted_node_attrs,
+                    writecache=writecache,
+                )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
                 for sn in neofs_env.storage_nodes:
@@ -590,7 +600,6 @@ class NeoFSEnv:
         except Exception as e:
             neofs_env.finalize(request, force_collect_logs=True)
             raise e
-            storage_node = neofs_env.storage_nodes[0]
         if len(neofs_env.storage_nodes) > 0:
             storage_node = neofs_env.storage_nodes[0]
             net_info = get_netmap_netinfo(
@@ -913,7 +922,13 @@ class MainChain(ResurrectableProcess):
 
 
 class InnerRing(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=False):
+    def __init__(
+        self,
+        neofs_env: NeoFSEnv,
+        ir_number: int,
+        chain_meta_data=False,
+        sn_validator_url=None,
+    ):
         self.neofs_env = neofs_env
         self.ir_number = ir_number
         self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
@@ -943,6 +958,12 @@ class InnerRing(ResurrectableProcess):
         ):
             pytest.skip("chain_meta_data=True is not supported on 0.45.2 and below")
         self.chain_meta_data = chain_meta_data
+        if (
+            parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.46.1")
+            and sn_validator_url
+        ):
+            pytest.skip("sn_validator_url=True is not supported on 0.46.1 and below")
+        self.sn_validator_url = sn_validator_url
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1037,6 +1058,7 @@ class InnerRing(ResurrectableProcess):
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
                 chain_meta_data=self.chain_meta_data,
+                sn_validator_url=self.sn_validator_url,
             )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
@@ -1132,7 +1154,7 @@ class StorageNode(ResurrectableProcess):
             return "sn.yaml"
 
     @allure.step("Start storage node")
-    def start(self, fresh=True):
+    def start(self, fresh=True, wait_until_ready=True):
         if fresh:
             logger.info("Generating wallet for storage node")
             self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
@@ -1161,8 +1183,9 @@ class StorageNode(ResurrectableProcess):
             )
         logger.info(f"Launching Storage Node:{self}")
         self._launch_process()
-        logger.info("Wait until storage node is READY")
-        self._wait_until_ready()
+        if wait_until_ready:
+            logger.info("Wait until storage node is READY")
+            self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
     def stop(self):

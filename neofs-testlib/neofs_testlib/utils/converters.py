@@ -63,7 +63,7 @@ def get_wif_from_private_key(priv_key: bytes) -> str:
     return wif.decode("utf-8")
 
 
-def load_wallet(path: str, passwd: str = "") -> neo3_wallet.Wallet:
+def load_wallet(path: str, passwd: str = "", passwords=None) -> neo3_wallet.Wallet:
     with open(path, "r") as wallet_file:
         wlt_data = wallet_file.read()
-    return neo3_wallet.Wallet.from_json(json.loads(wlt_data), passwords=[passwd])
+    return neo3_wallet.Wallet.from_json(json.loads(wlt_data), passwords=passwords if passwords else [passwd])

@@ -66,6 +66,8 @@ BINARY_DOWNLOADS_LOCK_FILE = "/tmp/binary_downloads.lock"
 DEFAULT_OBJECT_OPERATION_TIMEOUT = 600
 DEFAULT_REST_OPERATION_TIMEOUT = 10
 
+SN_VALIDATOR_DEFAULT_PORT = 8181
+
 # Generate wallet configs
 # TODO: we should move all info about wallet configs to fixtures
 WALLET_CONFIG = os.path.join(os.getcwd(), "wallet_config.yml")
