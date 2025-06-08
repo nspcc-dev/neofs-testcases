@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import os
 import uuid
 from typing import Optional
@@ -5,8 +7,11 @@ from typing import Optional
 import allure
 from helpers.common import get_assets_dir_path
 from helpers.test_control import wait_for_success
+from neo3.core import cryptography
+from neo3.wallet.wallet import Wallet
 from neofs_testlib.cli import NeofsCli, NeoGo
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.utils.converters import load_wallet
 from neofs_testlib.utils.wallet import get_last_address_from_wallet, init_wallet
 
 
@@ -122,3 +127,16 @@ def create_wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
         wait_for_correct_neofs_balance(neofs_env, wallet, wallet.cli_config, lambda balance: balance == 100)
 
     return wallet
+
+
+def get_private_key(wallet: NodeWallet) -> bytes:
+    neo3_wallet: Wallet = load_wallet(wallet.path, passwords=[wallet.password] * 3)
+    acc = neo3_wallet.accounts[0]
+    return acc.private_key_from_nep2(
+        acc.encrypted_key.decode("utf-8"), wallet.password, _scrypt_parameters=acc.scrypt_parameters
+    )
+
+
+def sign_string(str_to_sign: str, private_key: bytes) -> str:
+    signature = cryptography.sign(str_to_sign.encode(), private_key, hash_func=hashlib.sha256)
+    return base64.standard_b64encode(signature).decode("utf-8")
