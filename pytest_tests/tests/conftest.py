@@ -125,6 +125,13 @@ def neofs_env_ir_only_with_sn_validator(temp_directory, artifacts_directory, req
 
 
 @pytest.fixture()
+def neofs_env_ir_only(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, storage_nodes_count=0, with_s3_gw=False, with_rest_gw=False)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture()
 def neofs_env_4_ir(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(
         request,
