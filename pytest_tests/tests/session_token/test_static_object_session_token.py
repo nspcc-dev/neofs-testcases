@@ -8,7 +8,6 @@ from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     EXPIRED_SESSION_TOKEN,
     INVALID_SESSION_TOKEN_OWNER,
-    INVALID_SESSION_TOKEN_OWNER_POST_0_45_2,
     MALFORMED_REQUEST,
     OBJECT_ACCESS_DENIED,
     OBJECT_NOT_FOUND,
@@ -25,7 +24,6 @@ from helpers.neofs_verbs import (
 )
 from helpers.session_token import (
     INVALID_SIGNATURE,
-    INVALID_SIGNATURE_POST_0_45_2,
     UNRELATED_CONTAINER,
     UNRELATED_KEY,
     UNRELATED_OBJECT,
@@ -38,7 +36,6 @@ from helpers.session_token import (
 )
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.test_control import expect_not_raises
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -351,8 +348,6 @@ class TestObjectStaticSession(TestNeofsBase):
         signed_token_file = sign_session_token(self.shell, session_token_file, stranger_wallet)
 
         expected_error = INVALID_SESSION_TOKEN_OWNER
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            expected_error = INVALID_SESSION_TOKEN_OWNER_POST_0_45_2
 
         with pytest.raises(Exception, match=expected_error):
             head_object(
@@ -428,8 +423,6 @@ class TestObjectStaticSession(TestNeofsBase):
         )
 
         expected_error = INVALID_SIGNATURE
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            expected_error = INVALID_SIGNATURE_POST_0_45_2
 
         with pytest.raises(Exception, match=expected_error):
             head_object(

@@ -22,8 +22,7 @@ UNRELATED_KEY = "unrelated key in the session"
 UNRELATED_OBJECT = "unrelated object in the session"
 UNRELATED_CONTAINER = "unrelated container in the session"
 WRONG_VERB = "wrong verb of the session"
-INVALID_SIGNATURE = "invalid signature of the session data"
-INVALID_SIGNATURE_POST_0_45_2 = "verify session token signature: missing signature"
+INVALID_SIGNATURE = "verify session token signature: missing signature"
 
 
 class ObjectVerb(Enum):

@@ -24,7 +24,6 @@ from helpers.neofs_verbs import (
 )
 from helpers.storage_object_info import CLEANUP_TIMEOUT
 from helpers.test_control import wait_for_success
-from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
 logger = logging.getLogger("NeoLogger")
@@ -800,15 +799,10 @@ def test_search_by_system_attributes(
             "$Object:payloadLength": head_info["header"]["payloadLength"],
             "$Object:objectType": head_info["header"]["objectType"],
             "$Object:version": head_info["header"]["version"],
+            "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
+            "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
+            "$Object:ownerID": head_info["header"]["ownerID"],
         }
-        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            system_attributes.update(
-                {
-                    "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
-                    "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
-                    "$Object:ownerID": head_info["header"]["ownerID"],
-                }
-            )
         created_objects.append({"id": oid, "attrs": system_attributes})
 
     for system_attr in system_attributes.keys():
@@ -854,8 +848,6 @@ def test_search_by_split_attributes(
     container: str,
     neofs_env: NeoFSEnv,
 ):
-    if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.45.2"):
-        pytest.skip("Unsupported on 0.45.2 and below")
     cid = container
     created_objects = []
     for idx in range(3):

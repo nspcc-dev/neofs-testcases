@@ -18,7 +18,7 @@ from helpers.grpc_responses import (
     INVALID_EXP,
     INVALID_IAT,
     INVALID_NBF,
-    INVALID_SESSION_TOKEN_OWNER_POST_0_45_2,
+    INVALID_SESSION_TOKEN_OWNER,
     INVALID_TOKEN_FORMAT,
     INVALID_VERB,
     NOT_SESSION_CONTAINER_OWNER,
@@ -36,7 +36,6 @@ from helpers.session_token import (
     sign_session_token,
 )
 from helpers.storage_object_info import StorageObjectInfo
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NodeWallet
@@ -216,8 +215,7 @@ class TestSessionTokenContainer(TestNeofsBase):
         container_token = sign_session_token(self.shell, session_token_file, stranger_wallet)
 
         expected_error = CONTAINER_CREATION_TIMED_OUT
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            expected_error = INVALID_SESSION_TOKEN_OWNER_POST_0_45_2
+        expected_error = INVALID_SESSION_TOKEN_OWNER
 
         with pytest.raises(Exception, match=expected_error):
             create_container(

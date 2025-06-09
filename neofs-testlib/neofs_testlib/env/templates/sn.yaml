@@ -1,6 +1,7 @@
 # Logger section
 logger:
   level: debug # Minimum enabled logging level
+  timestamp: true
 
 
 # Profiler section
@@ -28,9 +29,10 @@ node:
     address: "{{ wallet.address }}"
     password: "{{ wallet.password }}"
 
-  {%- for attr in attrs %}
-  attribute_{{loop.index-1}}: "{{attr}}"
-  {%- endfor %}
+  attributes:
+    {%- for attr in attrs %}
+    - "{{attr}}"
+    {%- endfor %}
 
   persistent_state:
     path: {{ state_file }}  # Path to application state file
@@ -39,10 +41,9 @@ metadata:
   path: {{ metadata_path }}
 
 # Storage engine configuration
-storage:
-  shard:
-    0:
-      writecache:
+storage:    
+  shards:
+    - writecache:
         enabled: {{ writecache }}
         path: {{ shards[0].wc_path }}  # Write-cache root directory
 
@@ -50,12 +51,11 @@ storage:
         path: {{ shards[0].metabase_path }}  # Path to the metabase
 
       blobstor:
-        - type: fstree
-          path: {{ shards[0].fstree_path }}  # FSTree root directory
-          depth: 2
+        type: fstree
+        path: {{ shards[0].fstree_path }}  # FSTree root directory
+        depth: 2
 
-    1:
-      writecache:
+    - writecache:
         enabled: {{ writecache }}
         path: {{ shards[1].wc_path }}  # Write-cache root directory
 
@@ -63,6 +63,6 @@ storage:
         path: {{ shards[1].metabase_path }}  # Path to the metabase
 
       blobstor:
-        - type: fstree
-          path: {{ shards[1].fstree_path }}  # FSTree root directory
-          depth: 2
+        type: fstree
+        path: {{ shards[1].fstree_path }}  # FSTree root directory
+        depth: 2

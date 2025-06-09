@@ -951,11 +951,6 @@ class InnerRing(ResurrectableProcess):
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
-        if (
-            parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.45.2")
-            and chain_meta_data
-        ):
-            pytest.skip("chain_meta_data=True is not supported on 0.45.2 and below")
         self.chain_meta_data = chain_meta_data
         if (
             parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.46.1")
@@ -1147,10 +1142,7 @@ class StorageNode(ResurrectableProcess):
         """
 
     def get_config_template(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            return "sn_post_0_45_2.yaml"
-        else:
-            return "sn.yaml"
+        return "sn.yaml"
 
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
@@ -1271,9 +1263,7 @@ class StorageNode(ResurrectableProcess):
     @allure.step("Set metabase resync")
     def set_metabase_resync(self, resync_state: bool):
         self.stop()
-        neofs_shard_env_variable = "NEOFS_STORAGE_SHARD_{idx}_RESYNC_METABASE"
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
+        neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
         for idx, _ in enumerate(self.shards):
             self.attrs.update({neofs_shard_env_variable.format(idx=idx): f"{resync_state}".lower()})
         self.start(fresh=False)
