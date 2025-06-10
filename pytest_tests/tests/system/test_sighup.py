@@ -5,7 +5,6 @@ import time
 
 import allure
 import yaml
-from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv
 
 
@@ -60,10 +59,7 @@ def test_sighup_node_attrs_update(neofs_env_single_sn: NeoFSEnv):
     with allure.step("Update node attributes in config file"):
         config_path = neofs_env.storage_nodes[0].storage_node_config_path
         sn_config = yaml.safe_load(neofs_env.shell.exec(f"cat {config_path}").stdout)
-        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            sn_config["node"]["attributes"][0] = "UN-LOCODE:FI HEL"
-        else:
-            sn_config["node"]["attribute_0"] = "UN-LOCODE:FI HEL"
+        sn_config["node"]["attributes"][0] = "UN-LOCODE:FI HEL"
         with open(config_path, "w") as config_file:
             yaml.dump(sn_config, config_file)
         os.kill(neofs_env.storage_nodes[0].process.pid, signal.SIGHUP)

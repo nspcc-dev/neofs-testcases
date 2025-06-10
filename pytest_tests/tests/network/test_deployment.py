@@ -7,7 +7,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object_from_random_node, put_object, put_object_to_random_node
 from helpers.wallet_helpers import create_wallet, create_wallet_with_money
-from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
 
 def parse_object_info_data(raw_output: str) -> dict:
@@ -211,3 +211,24 @@ def test_7_ir_node_deployment_with_main_chain(neofs_env_7_ir_with_mainchain: Neo
             neofs_env.shell,
             neofs_env.sn_rpc,
         )
+
+
+@allure.title("SN does not die on startup when the first endpoint is unavailable")
+def test_sn_deployment_with_inactive_fschain_endpoint(neofs_env_ir_only: NeoFSEnv):
+    with allure.step("Add new SN with inactive fschain endpoint"):
+        new_storage_node = StorageNode(
+            neofs_env_ir_only,
+            len(neofs_env_ir_only.storage_nodes) + 1,
+            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
+            fschain_endpoints=["localhost:9", neofs_env_ir_only.fschain_rpc],
+        )
+        neofs_env_ir_only.storage_nodes.append(new_storage_node)
+
+    with allure.step("Start new storage node and ensure it is registered in the network"):
+        new_storage_node.start(wait_until_ready=False)
+        neofs_env_ir_only._wait_until_all_storage_nodes_are_ready()
+        neofs_env_ir_only.neofs_adm().fschain.force_new_epoch(
+            rpc_endpoint=f"http://{neofs_env_ir_only.fschain_rpc}",
+            alphabet_wallets=neofs_env_ir_only.alphabet_wallets_dir,
+        )
+        new_storage_node._wait_until_ready()

@@ -16,7 +16,6 @@ from helpers.rest_gate import SearchV2Filter, new_attr_into_header
 from helpers.rest_gate import new_upload_via_rest_gate as put_object_to_random_node_via_rest_gw
 from helpers.rest_gate import searchv2 as search_object_via_rest_gw
 from helpers.storage_object_info import CLEANUP_TIMEOUT
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -625,18 +624,11 @@ def test_search_by_system_attributes(
             "$Object:payloadLength": head_info["header"]["payloadLength"],
             "$Object:objectType": head_info["header"]["objectType"],
             "$Object:version": head_info["header"]["version"],
+            "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
+            "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
+            "$Object:ownerID": head_info["header"]["ownerID"],
         }
 
-        if parse_version(neofs_env_rest_gw.get_binary_version(neofs_env_rest_gw.neofs_node_path)) > parse_version(
-            "0.45.2"
-        ):
-            system_attributes.update(
-                {
-                    "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
-                    "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
-                    "$Object:ownerID": head_info["header"]["ownerID"],
-                }
-            )
         created_objects.append({"id": oid, "attrs": system_attributes})
 
     for system_attr in system_attributes.keys():

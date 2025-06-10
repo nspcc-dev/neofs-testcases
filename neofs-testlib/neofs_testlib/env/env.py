@@ -200,7 +200,13 @@ class NeoFSEnv:
                     raise e
 
     @allure.step("Deploy storage node")
-    def deploy_storage_nodes(self, count=1, node_attrs: Optional[dict] = None, writecache=False):
+    def deploy_storage_nodes(
+        self,
+        count=1,
+        node_attrs: Optional[dict] = None,
+        writecache=False,
+        fschain_endpoints: Optional[list[str]] = None,
+    ):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
         for idx in range(count):
@@ -212,6 +218,7 @@ class NeoFSEnv:
                 len(self.storage_nodes) + 1,
                 writecache=writecache,
                 node_attrs=node_attrs_list,
+                fschain_endpoints=fschain_endpoints,
             )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
@@ -545,6 +552,7 @@ class NeoFSEnv:
         request=None,
         chain_meta_data=False,
         sn_validator_url=None,
+        fschain_endpoints: Optional[list[str]] = None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -571,6 +579,7 @@ class NeoFSEnv:
                     count=storage_nodes_count,
                     node_attrs=adjusted_node_attrs,
                     writecache=writecache,
+                    fschain_endpoints=fschain_endpoints,
                 )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
@@ -951,11 +960,6 @@ class InnerRing(ResurrectableProcess):
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
-        if (
-            parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.45.2")
-            and chain_meta_data
-        ):
-            pytest.skip("chain_meta_data=True is not supported on 0.45.2 and below")
         self.chain_meta_data = chain_meta_data
         if (
             parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.46.1")
@@ -1101,6 +1105,7 @@ class StorageNode(ResurrectableProcess):
         writecache=False,
         node_attrs: Optional[list] = None,
         attrs: Optional[dict] = None,
+        fschain_endpoints: Optional[list] = None,
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
@@ -1123,6 +1128,7 @@ class StorageNode(ResurrectableProcess):
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.metadata_path = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}_metadata")
+        self.fschain_endpoints = fschain_endpoints
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.sn_number = sn_number
@@ -1147,10 +1153,7 @@ class StorageNode(ResurrectableProcess):
         """
 
     def get_config_template(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            return "sn_post_0_45_2.yaml"
-        else:
-            return "sn.yaml"
+        return "sn.yaml"
 
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
@@ -1169,7 +1172,9 @@ class StorageNode(ResurrectableProcess):
                     config_template=sn_config_template,
                     config_path=self.storage_node_config_path,
                     custom=Path(sn_config_template).is_file(),
-                    fschain_endpoint=self.neofs_env.fschain_rpc,
+                    fschain_endpoints=[self.neofs_env.fschain_rpc]
+                    if self.fschain_endpoints is None
+                    else self.fschain_endpoints,
                     shards=self.shards,
                     writecache=self.writecache,
                     wallet=self.wallet,
@@ -1230,7 +1235,9 @@ class StorageNode(ResurrectableProcess):
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
                 custom=Path(sn_config_template).is_file(),
-                fschain_endpoint=self.neofs_env.fschain_rpc,
+                fschain_endpoints=[self.neofs_env.fschain_rpc]
+                if self.fschain_endpoints is None
+                else self.fschain_endpoints,
                 shards=self.shards,
                 writecache=self.writecache,
                 wallet=self.wallet,
@@ -1256,7 +1263,9 @@ class StorageNode(ResurrectableProcess):
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
                 custom=Path(sn_config_template).is_file(),
-                fschain_endpoint=self.neofs_env.fschain_rpc,
+                fschain_endpoints=[self.neofs_env.fschain_rpc]
+                if self.fschain_endpoints is None
+                else self.fschain_endpoints,
                 shards=self.shards,
                 writecache=self.writecache,
                 wallet=self.wallet,
@@ -1271,9 +1280,7 @@ class StorageNode(ResurrectableProcess):
     @allure.step("Set metabase resync")
     def set_metabase_resync(self, resync_state: bool):
         self.stop()
-        neofs_shard_env_variable = "NEOFS_STORAGE_SHARD_{idx}_RESYNC_METABASE"
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.45.2"):
-            neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
+        neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
         for idx, _ in enumerate(self.shards):
             self.attrs.update({neofs_shard_env_variable.format(idx=idx): f"{resync_state}".lower()})
         self.start(fresh=False)

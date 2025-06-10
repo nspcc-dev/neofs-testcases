@@ -1,6 +1,5 @@
 import allure
 import pytest
-from helpers.utility import parse_version
 from helpers.wallet_helpers import get_neofs_balance, get_neofs_balance_by_owner
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -10,11 +9,6 @@ from neofs_testlib.env.env import NeoFSEnv, NodeWallet
     [True, False],
 )
 def test_mint_balance(neofs_env: NeoFSEnv, user_wallet: NodeWallet, get_balance_by_owner: bool):
-    if get_balance_by_owner and parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version(
-        "0.45.2"
-    ):
-        pytest.skip("Get balance by owner is not supported in this version. Please use version higher than 0.45.2")
-
     allure.dynamic.title(
         f"Verify mint balance and getting balance {'by owner' if get_balance_by_owner else 'by wallet'}"
     )
