@@ -139,7 +139,7 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
                 config_template=sn_config_template,
                 config_path=sn.storage_node_config_path,
                 custom=Path(sn_config_template).is_file(),
-                fschain_endpoint=sn.neofs_env.fschain_rpc,
+                fschain_endpoints=[sn.neofs_env.fschain_rpc],
                 shards=sn.shards,
                 writecache=sn.writecache,
                 wallet=sn.wallet,
