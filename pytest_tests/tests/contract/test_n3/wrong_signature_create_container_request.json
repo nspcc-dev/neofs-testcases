@@ -1,0 +1,23 @@
+{
+    "Container": {
+        "Version": "2.16",
+        "Nonce": "ac08b342-9272-4ea3-b1e8-2a33b5c52c29",
+        "Owner": "NLgQiJZAzYyEj9XSKzNiSLFFuid5dNcgRF",
+        "BasicACL": "eacl-public-read-write",
+        "StoragePolicy": "REP 2 IN X\nCBF 2\nSELECT 2 FROM F AS X\nFILTER Deployed EQ NSPCC AS F",
+        "Attributes": [
+            {
+                "key": "Type",
+                "value": "Test"
+            },
+            {
+                "key": "Timestamp",
+                "value": "1747900527"
+            }
+        ]
+    },
+    "Witness": {
+        "invocation": "DECYZf6QU7T4dJ6vlHS+ZCqe5tboUY9ugaCQcc8c8m/e0UBSpuxo20/1z2L/irh8C7a6WYS7bF0Vd0tTI1usO/D1",
+        "verification": "DANCb2ISwBUMD3ZlcmlmeVNpZ25hdHVyZQwUsMuABBlN9kB1p62oMIKhq9ISQBtBYn1bUg=="
+    }
+}
