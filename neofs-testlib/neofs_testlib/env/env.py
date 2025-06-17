@@ -27,7 +27,6 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
-import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -42,7 +41,6 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
-from helpers.utility import parse_version
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
@@ -961,11 +959,6 @@ class InnerRing(ResurrectableProcess):
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
         self.chain_meta_data = chain_meta_data
-        if (
-            parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.46.1")
-            and sn_validator_url
-        ):
-            pytest.skip("sn_validator_url=True is not supported on 0.46.1 and below")
         self.sn_validator_url = sn_validator_url
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"

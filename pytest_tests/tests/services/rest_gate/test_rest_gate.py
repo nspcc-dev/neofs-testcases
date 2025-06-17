@@ -19,7 +19,7 @@ from helpers.rest_gate import (
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
-from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
+from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
@@ -406,11 +406,6 @@ class TestRestGate(TestNeofsRestBase):
     @pytest.mark.parametrize("default_timestamp", [True, False])
     @pytest.mark.simple
     def test_sorting_order_get_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.11.1"
-        ):
-            pytest.skip("Supported only on post-0.11.1 rest gw")
-
         with allure.step(f"Restart rest gw with {default_timestamp=}"):
             self.neofs_env.rest_gw.default_timestamp = default_timestamp
             self.neofs_env.rest_gw.stop()
@@ -479,11 +474,6 @@ class TestRestGate(TestNeofsRestBase):
     @pytest.mark.parametrize("default_timestamp", [True, False])
     @pytest.mark.simple
     def test_sorting_order_head_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.11.1"
-        ):
-            pytest.skip("Supported only on post-0.11.1 rest gw")
-
         with allure.step(f"Restart rest gw with {default_timestamp=}"):
             self.neofs_env.rest_gw.default_timestamp = default_timestamp
             self.neofs_env.rest_gw.stop()

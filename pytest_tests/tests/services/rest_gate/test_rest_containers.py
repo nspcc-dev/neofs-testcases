@@ -9,7 +9,6 @@ from helpers.rest_gate import (
     get_container_info,
     upload_via_rest_gate,
 )
-from helpers.utility import parse_version
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE, PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from rest_gw.rest_base import TestNeofsRestBase
@@ -31,10 +30,6 @@ class TestRestContainers(TestNeofsRestBase):
     @pytest.mark.parametrize("new_api", [True, False])
     @pytest.mark.simple
     def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool, new_api: bool):
-        if new_api and parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)
-        ) <= parse_version("0.11.1"):
-            pytest.skip("Supported only on post-0.11.1 rest gw")
         session_token, signature, pub_key = generate_credentials(
             gw_endpoint, self.wallet, wallet_connect=wallet_connect
         )

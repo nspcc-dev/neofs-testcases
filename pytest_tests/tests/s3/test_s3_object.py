@@ -23,7 +23,6 @@ from helpers.s3_helper import (
     set_bucket_versioning,
     verify_acls,
 )
-from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
@@ -937,8 +936,6 @@ class TestS3Object(TestNeofsS3Base):
     @allure.title("Test internal slicer")
     @pytest.mark.complex
     def test_s3_internal_slicer(self, bucket):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.37.0"):
-            pytest.skip("Supported only on post-0.37.0 s3 gw")
         try:
             self.neofs_env.s3_gw.stop()
             self.neofs_env.s3_gw.internal_slicer = True
