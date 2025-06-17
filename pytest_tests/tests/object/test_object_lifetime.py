@@ -19,10 +19,9 @@ class TestObjectApiLifetime(TestNeofsBase):
     @pytest.mark.parametrize(
         "object_size,expiration_flag",
         [
-            ("simple_object_size", "lifetime"),
-            ("complex_object_size", "expire_at"),
+            pytest.param("simple_object_size", "lifetime", id="simple object, lifetime", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", "expire_at", id="complex object, expire_at", marks=pytest.mark.complex),
         ],
-        ids=["simple object, lifetime", "complex object, expire_at"],
     )
     def test_object_api_lifetime(
         self,

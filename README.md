@@ -110,6 +110,17 @@ Full path to a custom config file should be specified.
 
 Custom pytest marks used in tests:
 * `sanity` - a short subset of tests to ensure basic NeoFS functionality works.
+* `simple` - a subset of tests that use simple (small) objects
+* `complex` - a subset of tests that use complex (big) objects
+
+To run tests only with `complex` objects:
+```
+pytest -m 'complex and not simple' pytest_tests/tests
+```
+To run tests only with `simple` objects:
+```
+pytest -m 'simple and not complex' pytest_tests/tests
+```
 
 ## Tests/Libraries structure
 

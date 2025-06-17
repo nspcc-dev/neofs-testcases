@@ -48,6 +48,7 @@ class TestFailoverStorage:
 
     @allure.title("Lose and return storage node's process")
     @pytest.mark.parametrize("hard_restart", [True, False])
+    @pytest.mark.simple
     def test_storage_node_failover(
         self,
         default_wallet,
@@ -105,6 +106,7 @@ class TestFailoverStorage:
                 got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
+    @pytest.mark.simple
     def test_put_get_without_storage_node(
         self,
         default_wallet,
@@ -154,6 +156,7 @@ class TestFailoverStorage:
             got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=dead_node.endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
+    @pytest.mark.simple
     def test_put_get_without_storage_nodes(
         self,
         default_wallet,

@@ -29,6 +29,7 @@ class TestRestContainers(TestNeofsRestBase):
 
     @pytest.mark.parametrize("wallet_connect", [True, False])
     @pytest.mark.parametrize("new_api", [True, False])
+    @pytest.mark.simple
     def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool, new_api: bool):
         if new_api and parse_version(
             self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)

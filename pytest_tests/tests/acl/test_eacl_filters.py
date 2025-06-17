@@ -619,8 +619,10 @@ class TestEACLFilters(TestNeofsBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_extended_acl_numeric_values(self, wallets, operator, eacl_container, object_size):
         object_size = self.neofs_env.get_object_size(object_size)
@@ -734,6 +736,7 @@ class TestEACLFilters(TestNeofsBase):
         "invalid_attr_value",
         ["abc", "92.1", "93-1"],
     )
+    @pytest.mark.simple
     def test_extended_acl_numeric_values_invalid_filters(self, wallets, operator, eacl_container, invalid_attr_value):
         user_wallet = wallets.get_wallet()
 
@@ -784,6 +787,7 @@ class TestEACLFilters(TestNeofsBase):
                 create_eacl(cid, eacl_deny, shell=self.shell)
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    @pytest.mark.simple
     def test_extended_acl_numeric_values_attr_str_filter_numeric(self, wallets, eacl_container, address):
         operator = EACLMatchType.NUM_GT
         user_wallet = wallets.get_wallet()
@@ -862,6 +866,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    @pytest.mark.complex
     def test_extended_acl_numeric_values_expiration_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 
@@ -983,6 +988,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    @pytest.mark.complex
     def test_extended_acl_numeric_values_payload_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 
@@ -1088,6 +1094,7 @@ class TestEACLFilters(TestNeofsBase):
             ), self.OPERATION_NOT_ALLOWED_ERROR_MESSAGE
 
     @pytest.mark.parametrize("address", [EACLRoleExtendedType.ADDRESS, None])
+    @pytest.mark.complex
     def test_extended_acl_numeric_values_epoch_attr(self, wallets, eacl_container, address):
         user_wallet = wallets.get_wallet()
 

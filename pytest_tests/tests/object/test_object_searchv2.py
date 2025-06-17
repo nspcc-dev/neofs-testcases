@@ -80,6 +80,7 @@ def container(default_wallet: NodeWallet, neofs_env: NeoFSEnv) -> str:
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
@@ -112,6 +113,7 @@ def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: Ne
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
@@ -201,6 +203,7 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_single_filter_by_custom_str_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -274,6 +277,7 @@ def test_search_single_filter_by_custom_str_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
@@ -336,6 +340,7 @@ def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, cont
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
@@ -393,6 +398,7 @@ def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: st
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_int_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -470,6 +476,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_str_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -555,6 +562,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_by_mixed_attributes_contents(
     default_wallet: NodeWallet,
     container: str,
@@ -618,6 +626,7 @@ def test_search_by_mixed_attributes_contents(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_mixed_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -768,6 +777,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_by_system_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -843,6 +853,7 @@ def test_search_by_system_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.complex
 def test_search_by_split_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -902,6 +913,7 @@ def test_search_by_split_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_non_existing_attributes(
     default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
@@ -941,6 +953,7 @@ def test_search_by_non_existing_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.complex
 def test_search_of_complex_object(
     default_wallet: NodeWallet,
     container: str,
@@ -991,6 +1004,7 @@ def test_search_of_complex_object(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_various_attributes(
     default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
@@ -1077,6 +1091,7 @@ def test_search_by_various_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_attrs_ordering(
     default_wallet: NodeWallet,
     container: str,
@@ -1163,6 +1178,7 @@ def test_search_attrs_ordering(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_attrs_ordering_with_cursor(
     default_wallet: NodeWallet,
     container: str,
@@ -1287,6 +1303,7 @@ def test_search_attrs_ordering_with_cursor(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_with_cursor_empty_filters_and_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -1342,6 +1359,7 @@ def test_search_with_cursor_empty_filters_and_attributes(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_count_and_cursor(
     default_wallet: NodeWallet,
     container: str,
@@ -1515,6 +1533,7 @@ def test_search_count_and_cursor(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_invalid_filters(
     default_wallet: NodeWallet,
     container: str,
@@ -1606,6 +1625,7 @@ def test_search_invalid_filters(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_conflicting_filters(
     default_wallet: NodeWallet,
     container: str,
@@ -1645,6 +1665,7 @@ def test_search_conflicting_filters(
     ids=["chain_meta_data=False", "chain_meta_data=True"],
     indirect=True,
 )
+@pytest.mark.simple
 def test_search_filters_attributes_limits(
     default_wallet: NodeWallet,
     container: str,
@@ -1741,6 +1762,7 @@ def test_searchv2_meta_enabled_containers(
 
 
 @allure.title("Test ROOT object search for big objects")
+@pytest.mark.complex
 def test_root_search_for_big_object(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
     cid = container
     oid = put_object_to_random_node(

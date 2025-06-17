@@ -32,6 +32,7 @@ class TestRestOptions(TestNeofsRestBase):
         )
 
     @pytest.fixture(scope="class")
+    @pytest.mark.simple
     def user_object(self, gw_endpoint, user_container) -> str:
         return upload_via_rest_gate(
             cid=user_container,

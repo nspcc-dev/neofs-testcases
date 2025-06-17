@@ -20,6 +20,7 @@ def pytest_generate_tests(metafunc):
 
 class TestS3Locking(TestNeofsS3Base):
     @allure.title("Test S3: Checking the operation of retention period & legal lock on the object")
+    @pytest.mark.simple
     def test_s3_object_locking(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -77,6 +78,7 @@ class TestS3Locking(TestNeofsS3Base):
                     s3_object.delete_object_s3(self.s3_client, bucket, file_name, version_id)
 
     @allure.title("Test S3: Checking the impossibility to change the retention mode COMPLIANCE")
+    @pytest.mark.simple
     def test_s3_mode_compliance(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -113,6 +115,7 @@ class TestS3Locking(TestNeofsS3Base):
                     s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
 
     @allure.title("Test S3: Checking the ability to change retention mode GOVERNANCE")
+    @pytest.mark.simple
     def test_s3_mode_governance(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -171,6 +174,7 @@ class TestS3Locking(TestNeofsS3Base):
                 assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
 
     @allure.title("Test S3: Checking if an Object Cannot Be Locked")
+    @pytest.mark.simple
     def test_s3_legal_hold(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -191,6 +195,7 @@ class TestS3Locking(TestNeofsS3Base):
                     s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "ON", version_id)
 
     @allure.title("Test S3: Checking that Legal Hold cannot be turned off once it has been enabled")
+    @pytest.mark.simple
     def test_object_lock_set_legal_hold_off_not_supported(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -214,6 +219,7 @@ class TestS3Locking(TestNeofsS3Base):
 
 class TestS3LockingBucket(TestNeofsS3Base):
     @allure.title("Test S3: Bucket Lock")
+    @pytest.mark.simple
     def test_s3_bucket_lock(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)

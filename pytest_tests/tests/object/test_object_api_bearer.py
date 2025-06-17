@@ -105,8 +105,10 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "storage_objects",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_delete_object_with_s3_wallet_bearer(
@@ -156,8 +158,10 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "file_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_get_object_with_s3_wallet_bearer_from_all_nodes(
         self,
@@ -197,8 +201,10 @@ class TestObjectApiWithBearerToken(TestNeofsS3Base):
     )
     @pytest.mark.parametrize(
         "file_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_attributes_bearer_rules(
         self,

@@ -32,6 +32,7 @@ class TestS3Tagging(TestNeofsS3Base):
         return tags
 
     @allure.title("Test S3: Object tagging")
+    @pytest.mark.simple
     def test_s3_object_tagging(self, bucket):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)

@@ -67,6 +67,7 @@ def search_objectv2(
     return found_objects, cursor
 
 
+@pytest.mark.simple
 def test_search_sanity(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     created_objects = []
@@ -89,6 +90,7 @@ def test_search_sanity(container: str, neofs_env_rest_gw: NeoFSEnv):
         )
 
 
+@pytest.mark.simple
 def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     created_objects = []
@@ -145,6 +147,7 @@ def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env
                     )
 
 
+@pytest.mark.simple
 def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     created_objects = []
@@ -197,6 +200,7 @@ def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env
                     )
 
 
+@pytest.mark.simple
 def test_search_numeric_filter_by_str_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     created_objects = []
@@ -231,6 +235,7 @@ def test_search_numeric_filter_by_str_attributes(container: str, neofs_env_rest_
                 )
 
 
+@pytest.mark.simple
 def test_search_multiple_filters_same_attribute(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
@@ -280,6 +285,7 @@ def test_search_multiple_filters_same_attribute(container: str, neofs_env_rest_g
         assert len(found_objects) == testcase["expected_result"], "invalid number of objects"
 
 
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_int_attributes(
     container: str,
     neofs_env_rest_gw: NeoFSEnv,
@@ -343,6 +349,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
                     )
 
 
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_str_attributes(
     container: str,
     neofs_env_rest_gw: NeoFSEnv,
@@ -414,6 +421,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
                     )
 
 
+@pytest.mark.simple
 def test_search_by_mixed_attributes_contents(
     container: str,
     neofs_env_rest_gw: NeoFSEnv,
@@ -460,6 +468,7 @@ def test_search_by_mixed_attributes_contents(
     assert found_objects[0]["id"] == oid2, "invalid object returned from search"
 
 
+@pytest.mark.simple
 def test_search_multiple_filters_by_custom_mixed_attributes(
     container: str,
     neofs_env_rest_gw: NeoFSEnv,
@@ -596,6 +605,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                         )
 
 
+@pytest.mark.simple
 def test_search_by_system_attributes(
     default_wallet: NodeWallet,
     container: str,
@@ -649,6 +659,7 @@ def test_search_by_system_attributes(
             )
 
 
+@pytest.mark.simple
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_non_existing_attributes(
     container: str,
@@ -677,6 +688,7 @@ def test_search_by_non_existing_attributes(
         assert len(found_objects) == 0, "invalid number of found objects"
 
 
+@pytest.mark.simple
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_various_attributes(
     default_wallet: NodeWallet, container: str, neofs_env_rest_gw: NeoFSEnv, with_attributes: bool
@@ -734,6 +746,7 @@ def test_search_by_various_attributes(
     assert len(found_objects) == 0, "invalid number of found objects"
 
 
+@pytest.mark.simple
 def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
     cid = container
     created_objects = []
@@ -772,6 +785,7 @@ def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_e
                 max_oid = current_oid
 
 
+@pytest.mark.simple
 def test_search_count_and_cursor(
     default_wallet: NodeWallet,
     container: str,

@@ -40,6 +40,7 @@ class TestS3Object(TestNeofsS3Base):
 
     @pytest.mark.sanity
     @allure.title("Test S3: Copy object")
+    @pytest.mark.simple
     def test_s3_copy_object(self, two_buckets):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = self.object_key_from_file_path(file_path)
@@ -81,6 +82,7 @@ class TestS3Object(TestNeofsS3Base):
                 s3_object.copy_object_s3(self.s3_client, bucket_1, file_name)
 
     @allure.title("Test S3: Copy version of object")
+    @pytest.mark.simple
     def test_s3_copy_version_object(self, two_buckets):
         version_1_content = "Version 1"
         file_name_simple = generate_file_with_content(
@@ -122,6 +124,7 @@ class TestS3Object(TestNeofsS3Base):
                 s3_object.copy_object_s3(self.s3_client, bucket_1, obj_key)
 
     @allure.title("Test S3: Checking copy with acl")
+    @pytest.mark.simple
     def test_s3_copy_acl(self, bucket):
         version_1_content = "Version 1"
         file_name_simple = generate_file_with_content(
@@ -143,6 +146,7 @@ class TestS3Object(TestNeofsS3Base):
             verify_acls(obj_acl, ACLType.PRIVATE)
 
     @allure.title("Test S3: Copy object with metadata")
+    @pytest.mark.simple
     def test_s3_copy_metadate(self, bucket):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -187,6 +191,7 @@ class TestS3Object(TestNeofsS3Base):
             assert obj_head.get("Metadata") == object_metadata_1, f"Metadata must be {object_metadata_1}"
 
     @allure.title("Test S3: Copy object with tagging")
+    @pytest.mark.simple
     def test_s3_copy_tagging(self, bucket):
         object_tagging = [(f"{uuid.uuid4()}", f"{uuid.uuid4()}")]
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -242,6 +247,7 @@ class TestS3Object(TestNeofsS3Base):
                 assert tag in got_tags, f"Expected tag {tag} in {got_tags}"
 
     @allure.title("Test S3: Delete version of object")
+    @pytest.mark.simple
     def test_s3_delete_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
@@ -295,6 +301,7 @@ class TestS3Object(TestNeofsS3Base):
             assert "DeleteMarker" in delete_obj.keys(), "Expected delete Marker"
 
     @allure.title("Test S3: bulk delete version of object")
+    @pytest.mark.simple
     def test_s3_bulk_delete_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
@@ -340,6 +347,7 @@ class TestS3Object(TestNeofsS3Base):
             assert obj_versions.sort() == version_to_save.sort(), f"Expected object has versions: {version_to_save}"
 
     @allure.title("Test S3: Get versions of object")
+    @pytest.mark.simple
     def test_s3_get_versioning(self, bucket):
         version_1_content = "Version 1"
         version_2_content = "Version 2"
@@ -372,6 +380,8 @@ class TestS3Object(TestNeofsS3Base):
             assert object_3.get("VersionId") == version_id_2, f"Get object with version {version_id_2}"
 
     @allure.title("Test S3: Get range")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_get_range(self, bucket):
         file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path)
@@ -476,6 +486,8 @@ class TestS3Object(TestNeofsS3Base):
             assert get_file_hash(con_file) == get_file_hash(file_name_1), "Hashes must be the same"
 
     @allure.title("Test S3: Copy object with metadata")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_head_object(self, bucket):
         object_metadata = {f"{uuid.uuid4()}": f"{uuid.uuid4()}"}
         file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
@@ -508,6 +520,7 @@ class TestS3Object(TestNeofsS3Base):
 
     @allure.title("Test S3: list of object with versions")
     @pytest.mark.parametrize("list_type", ["v1", "v2"])
+    @pytest.mark.complex
     def test_s3_list_object(self, list_type: str, bucket):
         file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
@@ -602,6 +615,8 @@ class TestS3Object(TestNeofsS3Base):
             )
 
     @allure.title("Test S3: put object")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_put_object(self, bucket):
         file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
@@ -698,6 +713,7 @@ class TestS3Object(TestNeofsS3Base):
 
     @allure.title("Test S3: put object with ACL")
     @pytest.mark.parametrize("bucket_versioning", ["ENABLED", "SUSPENDED"])
+    @pytest.mark.complex
     def test_s3_put_object_acl(
         self,
         prepare_two_wallets,
@@ -783,6 +799,8 @@ class TestS3Object(TestNeofsS3Base):
             assert get_file_hash(file_path) == get_file_hash(object_7), "Hashes must be the same"
 
     @allure.title("Test S3: put object with lock-mode")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_put_object_lock_mode(self):
         file_path_1 = generate_file(self.neofs_env.get_object_size("complex_object_size"))
         file_name = self.object_key_from_file_path(file_path_1)
@@ -860,6 +878,7 @@ class TestS3Object(TestNeofsS3Base):
     @allure.title("Test S3 Sync directory")
     @pytest.mark.parametrize("sync_type", ["sync", "cp"])
     @pytest.mark.aws_cli_only
+    @pytest.mark.simple
     def test_s3_sync_dir(self, sync_type, bucket):
         file_path_1 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_1")
         file_path_2 = os.path.join(get_assets_dir_path(), "test_sync", "test_file_2")
@@ -902,6 +921,7 @@ class TestS3Object(TestNeofsS3Base):
                 # assert_s3_acl(acl_grants = obj_acl, permitted_users = "AllUsers")
 
     @allure.title("Test S3 Put 10 nested level object")
+    @pytest.mark.simple
     def test_s3_put_10_folder(self, bucket, temp_directory):
         path = "/".join(["".join(choices(string.ascii_letters, k=3)) for _ in range(10)])
         file_path_1 = os.path.join(temp_directory, path, "test_file_1")
@@ -915,6 +935,7 @@ class TestS3Object(TestNeofsS3Base):
             check_objects_in_bucket(self.s3_client, bucket, [file_name])
 
     @allure.title("Test internal slicer")
+    @pytest.mark.complex
     def test_s3_internal_slicer(self, bucket):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.37.0"):
             pytest.skip("Supported only on post-0.37.0 s3 gw")

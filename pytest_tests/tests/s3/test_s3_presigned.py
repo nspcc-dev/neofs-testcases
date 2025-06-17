@@ -22,6 +22,7 @@ def pytest_generate_tests(metafunc):
 class TestS3Presigned(TestNeofsS3Base):
     @allure.title("Test S3: Get Object With Presigned Url")
     @pytest.mark.parametrize("url_from", ["s3"])
+    @pytest.mark.simple
     def test_s3_get_object_with_presigned_url(self, bucket, url_from: str):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_names_to_check = [

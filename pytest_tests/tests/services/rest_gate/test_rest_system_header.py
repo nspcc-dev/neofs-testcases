@@ -132,6 +132,7 @@ class Test_rest_system_header(TestNeofsRestBase):
         return oid, head
 
     @allure.title("[negative] attempt to put object with expired epoch")
+    @pytest.mark.simple
     def test_unable_put_expired_epoch(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Epoch": str(neofs_epoch.get_epoch(self.neofs_env) - 1)})
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -145,6 +146,7 @@ class Test_rest_system_header(TestNeofsRestBase):
             )
 
     @allure.title("[negative] attempt to put object with negative Neofs-Expiration-Duration")
+    @pytest.mark.simple
     def test_unable_put_negative_duration(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Duration": "-1h"})
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -158,6 +160,7 @@ class Test_rest_system_header(TestNeofsRestBase):
             )
 
     @allure.title("[negative] attempt to put object with Neofs-Expiration-Timestamp value in the past")
+    @pytest.mark.simple
     def test_unable_put_expired_timestamp(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-Timestamp": "1635075727"})
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -175,6 +178,7 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title(
         "[negative] Put object using HTTP with attribute Neofs-Expiration-RFC3339 where duration is in the past"
     )
+    @pytest.mark.simple
     def test_unable_put_expired_rfc(self, user_container: str, gw_endpoint):
         headers = attr_into_str_header({"Neofs-Expiration-RFC3339": "2021-11-22T09:55:49Z"})
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -190,8 +194,10 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title("priority of attributes epoch>duration")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_http_attr_priority_epoch_duration(
         self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
@@ -243,8 +249,10 @@ class Test_rest_system_header(TestNeofsRestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_http_attr_priority_dur_timestamp(
         self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
@@ -300,8 +308,10 @@ class Test_rest_system_header(TestNeofsRestBase):
     )
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_http_attr_priority_timestamp_rfc(
         self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
@@ -357,8 +367,10 @@ class Test_rest_system_header(TestNeofsRestBase):
     @allure.title("Test that object is automatically delete when expiration passed")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_http_rfc_object_unavailable_after_expir(
         self, user_container: str, object_size: int, epoch_duration: int, gw_endpoint
