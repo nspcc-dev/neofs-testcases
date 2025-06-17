@@ -70,6 +70,7 @@ class TestS3Versioning(TestNeofsS3Base):
         yield bucket, num_of_versions * num_of_objects
 
     @allure.title("Test S3: Enable and disable versioning")
+    @pytest.mark.simple
     def test_s3_version(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = self.object_key_from_file_path(file_path)
@@ -161,6 +162,7 @@ class TestS3Versioning(TestNeofsS3Base):
             assert len(version_ids) == len(set(version_ids)), "Duplicate VersionId found!"
 
     @allure.title("Test prefix in list object versions")
+    @pytest.mark.simple
     def test_s3_prefix_in_object_listing(self):
         bucket = s3_bucket.create_bucket_s3(
             self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"

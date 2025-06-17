@@ -54,8 +54,10 @@ def storage_containers(owner_wallet: NodeWallet, client_shell: Shell, neofs_env:
 
 
 @pytest.fixture(
-    params=["simple_object_size", "complex_object_size"],
-    ids=["simple object", "complex object"],
+    params=[
+        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+        pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+    ],
 )
 def storage_objects(
     owner_wallet: NodeWallet,

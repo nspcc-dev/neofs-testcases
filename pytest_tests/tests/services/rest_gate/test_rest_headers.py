@@ -46,10 +46,9 @@ class Test_rest_headers(TestNeofsRestBase):
 
     @pytest.fixture(
         params=[
-            "simple_object_size",
-            "complex_object_size",
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
         ],
-        ids=["simple object", "complex object"],
         scope="class",
     )
     def storage_objects_with_attributes(self, request: FixtureRequest, gw_endpoint) -> list[StorageObjectInfo]:
@@ -162,6 +161,7 @@ class Test_rest_headers(TestNeofsRestBase):
             )
 
     @allure.title("[Negative] Try to put object and get right after container is deleted")
+    @pytest.mark.simple
     def test_negative_put_and_get_object3(self, gw_endpoint):
         """
         Test to attempt to put object and try to download it right after the container has been deleted

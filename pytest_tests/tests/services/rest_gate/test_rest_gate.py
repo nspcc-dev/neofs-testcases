@@ -50,6 +50,8 @@ class TestRestGate(TestNeofsRestBase):
         }
 
     @allure.title("Test Put over gRPC, Get over HTTP")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_put_grpc_get_http(self, gw_endpoint):
         """
         Test that object can be put using gRPC interface and get using HTTP.
@@ -105,6 +107,7 @@ class TestRestGate(TestNeofsRestBase):
             )
 
     @allure.title("Verify Content-Disposition header")
+    @pytest.mark.simple
     def test_put_http_get_http_content_disposition(self, gw_params):
         cid = create_container(
             self.wallet.path,
@@ -154,6 +157,7 @@ class TestRestGate(TestNeofsRestBase):
             assert filename.strip().split("=")[1] == file_path.split("/")[-1]
 
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
+    @pytest.mark.simple
     def test_put_http_get_http_without_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
@@ -200,6 +204,7 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "text/plain; charset=utf-8"
 
     @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
+    @pytest.mark.simple
     def test_put_http_get_http_with_x_atribute_content_type(self, gw_params):
         cid = create_container(
             self.wallet.path,
@@ -259,6 +264,7 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "application/json"
 
     @allure.title("Verify special HTTP headers")
+    @pytest.mark.simple
     def test_put_http_get_http_special_attributes(self, gw_params):
         cid = create_container(
             self.wallet.path,
@@ -292,6 +298,8 @@ class TestRestGate(TestNeofsRestBase):
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#uploading", name="uploading")
     @allure.link("https://github.com/nspcc-dev/neofs-http-gw#downloading", name="downloading")
     @allure.title("Test Put over HTTP, Get over HTTP")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_put_http_get_http(self, gw_params):
         """
         Test that object can be put and get using HTTP interface.
@@ -350,6 +358,7 @@ class TestRestGate(TestNeofsRestBase):
         ],
         ids=["simple", "hyphen", "special", "percent"],
     )
+    @pytest.mark.simple
     def test_put_http_get_http_with_headers(self, attributes: dict, gw_params):
         """
         Test that object can be downloaded using different attributes in HTTP header.
@@ -395,6 +404,7 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Object with latest timestamp is returned when get by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
+    @pytest.mark.simple
     def test_sorting_order_get_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
             "0.11.1"
@@ -467,6 +477,7 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Object with latest timestamp is returned when head by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
+    @pytest.mark.simple
     def test_sorting_order_head_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
         if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
             "0.11.1"
@@ -541,6 +552,7 @@ class TestRestGate(TestNeofsRestBase):
             )
 
     @allure.title("Test Expiration-Epoch in HTTP header")
+    @pytest.mark.simple
     def test_expiration_epoch_in_http(self, gw_params):
         endpoint = self.neofs_env.sn_rpc
 
@@ -597,6 +609,7 @@ class TestRestGate(TestNeofsRestBase):
                     )
 
     @allure.title("Test Put over HTTP, Get over HTTP for large object")
+    @pytest.mark.complex
     def test_put_http_get_http_large_file(self, gw_params):
         """
         This test checks upload and download with 'large' object.

@@ -40,8 +40,10 @@ class Test_rest_object(TestNeofsRestBase):
     @allure.title("Test Put over gRPC, Get over HTTP")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_object_put_get_attributes(self, object_size: int, gw_attributes):
         """

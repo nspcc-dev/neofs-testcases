@@ -33,6 +33,7 @@ class TestHomomorphicHash(TestNeofsBase):
         self.switch_homomorphic_hash_value()
 
     @allure.title("New containers should have specified homomorphic hash value")
+    @pytest.mark.simple
     def test_new_containers_created_with_specified_homomorphic_hash_value(
         self, default_wallet: NodeWallet, containers_cleanup, set_homomorphic_hash_to_default
     ):
@@ -61,6 +62,7 @@ class TestHomomorphicHash(TestNeofsBase):
                     )
 
     @allure.title("Old containers should not be affected by new hash value")
+    @pytest.mark.simple
     def test_old_containers_have_old_homomorphic_hash_value(
         self, default_wallet: NodeWallet, containers_cleanup, set_homomorphic_hash_to_default
     ):

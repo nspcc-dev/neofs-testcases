@@ -78,6 +78,7 @@ class Test_rest_bearer(TestNeofsRestBase):
             return bearer_token_base64_from_file(bearer_signed)
 
     @allure.title(f"[negative] Put object without bearer token for {EACLRole.OTHERS}")
+    @pytest.mark.simple
     def test_unable_put_without_bearer_token(self, user_container: str, eacl_deny_for_others, gw_endpoint):
         eacl_deny_for_others
         upload_via_rest_gate(
@@ -90,8 +91,10 @@ class Test_rest_bearer(TestNeofsRestBase):
     @pytest.mark.parametrize("bearer_type", ("header", "cookie"))
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_put_with_bearer_when_eacl_restrict(
         self,

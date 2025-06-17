@@ -34,8 +34,10 @@ deposit = 30
 
 @pytest.mark.parametrize(
     "object_size",
-    ["simple_object_size", "complex_object_size"],
-    ids=["simple object", "complex object"],
+    [
+        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+        pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+    ],
 )
 class TestStorageGroup(TestNeofsBase):
     @pytest.fixture(autouse=True)

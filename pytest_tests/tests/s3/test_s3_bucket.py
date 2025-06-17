@@ -101,6 +101,7 @@ class TestS3Bucket(TestNeofsS3Base):
             verify_acls(bucket_acl_2, ACLType.PUBLIC_READ_WRITE)
 
     @allure.title("Test S3: create bucket with object lock")
+    @pytest.mark.simple
     def test_s3_bucket_object_lock(self):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
@@ -136,6 +137,7 @@ class TestS3Bucket(TestNeofsS3Base):
             assert_object_lock_mode(self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON")
 
     @allure.title("Test S3: delete bucket")
+    @pytest.mark.simple
     def test_s3_delete_bucket(self):
         file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)

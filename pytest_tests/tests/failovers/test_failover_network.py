@@ -45,6 +45,7 @@ class TestFailoverNetwork:
         wait_all_storage_nodes_returned(self.neofs_env)
 
     @allure.title("Block Storage node traffic")
+    @pytest.mark.simple
     def test_block_storage_node_traffic(self, default_wallet, restore_network):
         """
         Block storage nodes traffic using iptables and wait for replication for objects.

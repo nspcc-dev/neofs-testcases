@@ -392,6 +392,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                     force=True,
                 )
 
+    @pytest.mark.simple
     def test_static_session_token_container_set_eacl(
         self,
         owner_wallet: NodeWallet,
@@ -426,6 +427,7 @@ class TestSessionTokenContainer(TestNeofsBase):
 
         assert not can_put_object(stranger_wallet.path, cid, file_path, self.shell, neofs_env=self.neofs_env)
 
+    @pytest.mark.simple
     def test_static_session_token_container_set_eacl_with_other_verb(
         self,
         owner_wallet: NodeWallet,
@@ -519,6 +521,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                         session_token=stranger_token[ContainerVerb.SETEACL],
                     )
 
+    @pytest.mark.simple
     def test_use_object_session_token_for_container_operation(
         self,
         owner_wallet: NodeWallet,

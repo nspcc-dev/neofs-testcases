@@ -153,6 +153,7 @@ class TestContainer(TestNeofsBase):
             wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @allure.title("Container deletion while some storage nodes down")
+    @pytest.mark.simple
     def test_container_deletion_while_sn_down(self, default_wallet):
         with allure.step("Create container"):
             wallet = default_wallet

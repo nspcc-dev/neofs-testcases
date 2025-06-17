@@ -132,8 +132,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Locked object should be protected from deletion")
     @pytest.mark.parametrize(
         "locked_storage_object",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_locked_object_cannot_be_deleted(
@@ -247,8 +249,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Expired object should be deleted after locks are expired")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_expired_object_should_be_deleted_after_locks_are_expired(
         self,
@@ -315,8 +319,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Should be possible to lock multiple objects at once")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_should_be_possible_to_lock_multiple_objects_at_once(
         self,
@@ -369,8 +375,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Already outdated lock should not be applied")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_already_outdated_lock_should_not_be_applied(
         self,
@@ -406,8 +414,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("After lock expiration with lifetime user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     @expect_not_raises()
     def test_after_lock_expiration_with_lifetime_user_should_be_able_to_delete_object(
@@ -450,8 +460,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("After lock expiration with expire_at user should be able to delete object")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     @expect_not_raises()
     def test_after_lock_expiration_with_expire_at_user_should_be_able_to_delete_object(
@@ -496,8 +508,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Link object of locked complex object can be dropped via control")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        # Only complex object is required
-        ["complex_object_size"],
+        [
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_link_object_of_locked_complex_object_can_be_dropped(
@@ -526,8 +539,9 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @allure.title("Chunks of locked complex object can be dropped via control")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        # Only complex object is required
-        ["complex_object_size"],
+        [
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_chunks_of_locked_complex_object_can_be_dropped(
@@ -556,8 +570,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_locked_object_can_be_dropped(
@@ -603,8 +619,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     @pytest.mark.skip(reason="Unknown issue")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
         indirect=True,
     )
     def test_the_object_lock_should_be_kept_after_metabase_deletion(
@@ -672,6 +690,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                     self.neofs_env.sn_rpc,
                 )
 
+    @pytest.mark.simple
     def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet):
         with allure.step("Create container"):
             wallet = default_wallet

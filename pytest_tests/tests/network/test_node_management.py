@@ -46,6 +46,7 @@ check_nodes: list[StorageNode] = []
 class TestNodeManagement(TestNeofsBase):
     @pytest.fixture
     @allure.title("Create container and pick the node with data")
+    @pytest.mark.simple
     def create_container_and_pick_node(self, default_wallet: NodeWallet) -> Tuple[str, StorageNode]:
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
@@ -118,6 +119,7 @@ class TestNodeManagement(TestNeofsBase):
 
     @allure.title("Add one node to cluster")
     @pytest.mark.skip(reason="Problems with nodes addition on new dev env")
+    @pytest.mark.simple
     def test_add_nodes(
         self,
         default_wallet,
@@ -217,6 +219,7 @@ class TestNodeManagement(TestNeofsBase):
         ],
     )
     @allure.title("Test object copies based on placement policy")
+    @pytest.mark.simple
     def test_placement_policy(self, default_wallet, placement_rule, expected_copies):
         """
         This test checks object's copies based on container's placement policy.
@@ -275,6 +278,7 @@ class TestNodeManagement(TestNeofsBase):
         ],
     )
     @allure.title("Test object copies and storage nodes based on placement policy")
+    @pytest.mark.simple
     def test_placement_policy_with_nodes(
         self,
         default_wallet,
@@ -299,6 +303,7 @@ class TestNodeManagement(TestNeofsBase):
         ],
     )
     @allure.title("Negative cases for placement policy")
+    @pytest.mark.simple
     def test_placement_policy_negative(self, default_wallet, placement_rule, expected_copies):
         """
         Negative test for placement policy.
@@ -310,6 +315,8 @@ class TestNodeManagement(TestNeofsBase):
 
     @allure.title("NeoFS object could be dropped using control command")
     @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/537")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_drop_object(self, default_wallet):
         """
         Test checks object could be dropped using `neofs-cli control drop-objects` command.
@@ -354,6 +361,7 @@ class TestNodeManagement(TestNeofsBase):
 
     @pytest.mark.skip(reason="Need to clarify scenario")
     @allure.title("Control Operations with storage nodes")
+    @pytest.mark.simple
     def test_shards(
         self,
         default_wallet,

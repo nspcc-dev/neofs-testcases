@@ -1,6 +1,7 @@
 import os
 
 import allure
+import pytest
 from helpers.complex_object_actions import get_simple_object_copies
 from helpers.container import get_container, search_container_by_name
 from helpers.file_helper import generate_file
@@ -41,6 +42,7 @@ class TestS3GatePolicy(TestNeofsS3Base):
         assert actual_policy == expected_policy, f"Expected policy\n{expected_policy} but got policy\n{actual_policy}"
 
     @allure.title("Test S3: Verify bucket creation with retention policy applied")
+    @pytest.mark.simple
     def test_s3_bucket_location(self):
         file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)
@@ -100,6 +102,7 @@ class TestS3GatePolicy(TestNeofsS3Base):
             assert copies_2 == 3
 
     @allure.title("Test S3: Verify bucket creation with policies from config file")
+    @pytest.mark.simple
     def test_s3_bucket_location_from_config_file(self):
         file_path_1 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_1 = object_key_from_file_path(file_path_1)

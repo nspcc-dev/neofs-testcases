@@ -25,8 +25,9 @@ class Test_rest_streaming(TestNeofsRestBase):
     @allure.title("Test Put via pipe (steaming), Get over HTTP and verify hashes")
     @pytest.mark.parametrize(
         "object_size",
-        ["complex_object_size"],
-        ids=["complex object"],
+        [
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_object_can_be_put_get_by_streaming(self, object_size: int, gw_endpoint):
         """

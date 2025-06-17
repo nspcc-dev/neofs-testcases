@@ -36,6 +36,7 @@ def pytest_generate_tests(metafunc):
 @allure.link("https://github.com/nspcc-dev/neofs-s3-gw#neofs-s3-gateway", name="neofs-s3-gateway")
 class TestS3(TestNeofsS3Base):
     @allure.title("Test S3 Bucket API")
+    @pytest.mark.simple
     def test_s3_buckets(self):
         """
         Test base S3 Bucket API (Create/List/Head/Delete).
@@ -104,7 +105,11 @@ class TestS3(TestNeofsS3Base):
 
     @allure.title("Test S3 Object API")
     @pytest.mark.parametrize(
-        "file_type", ["simple_object_size", "complex_object_size"], ids=["Simple object", "Large object"]
+        "file_type",
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_s3_api_object(self, file_type, two_buckets):
         """
@@ -132,6 +137,7 @@ class TestS3(TestNeofsS3Base):
 
     @allure.title("Test S3 Sync directory")
     @pytest.mark.aws_cli_only
+    @pytest.mark.simple
     def test_s3_sync_dir(self, bucket):
         """
         Test checks sync directory with AWS CLI utility.
@@ -157,6 +163,7 @@ class TestS3(TestNeofsS3Base):
                 )
 
     @allure.title("Test S3 Object versioning")
+    @pytest.mark.simple
     def test_s3_api_versioning(self, bucket):
         """
         Test checks basic versioning functionality for S3 bucket.
@@ -230,6 +237,7 @@ class TestS3(TestNeofsS3Base):
             )
 
     @allure.title("Test S3 Object Multipart API")
+    @pytest.mark.simple
     def test_s3_api_multipart(self, bucket):
         """
         Test checks S3 Multipart API (Create multipart upload/Abort multipart upload/List multipart upload/
@@ -294,6 +302,7 @@ class TestS3(TestNeofsS3Base):
             check_tags_by_bucket(self.s3_client, bucket, [])
 
     @allure.title("Test S3 Object tagging API")
+    @pytest.mark.simple
     def test_s3_api_object_tagging(self, bucket):
         """
         Test checks S3 Object tagging API (Put tag/Get tag/Update tag).
@@ -322,6 +331,8 @@ class TestS3(TestNeofsS3Base):
         check_tags_by_object(self.s3_client, bucket, obj_key, [])
 
     @allure.title("Test S3: Delete object & delete objects S3 API")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_api_delete(self, two_buckets):
         """
         Check DeleteObject and DeleteObjects S3 API operations. From first bucket some objects deleted one by one.
@@ -381,6 +392,8 @@ class TestS3(TestNeofsS3Base):
             try_to_get_objects_and_expect_error(self.s3_client, bucket_2, objects_to_delete_b2)
 
     @allure.title("Test S3: Copy object to the same bucket")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_copy_same_bucket(self, bucket):
         """
         Test object can be copied to the same bucket.
@@ -424,6 +437,8 @@ class TestS3(TestNeofsS3Base):
         )
 
     @allure.title("Test S3: Copy object to another bucket")
+    @pytest.mark.complex
+    @pytest.mark.simple
     def test_s3_copy_to_another_bucket(self, two_buckets):
         """
         Test object can be copied to another bucket.

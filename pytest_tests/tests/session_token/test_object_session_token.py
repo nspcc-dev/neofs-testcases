@@ -16,8 +16,10 @@ class TestDynamicObjectSession(TestNeofsBase):
     @allure.title("Test Object Operations with Session Token")
     @pytest.mark.parametrize(
         "object_size",
-        ["simple_object_size", "complex_object_size"],
-        ids=["simple object", "complex object"],
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
     )
     def test_object_session_token(self, default_wallet, object_size):
         """
@@ -146,6 +148,7 @@ class TestDynamicObjectSession(TestNeofsBase):
 
     @allure.title("Verify session token expiration flags")
     @pytest.mark.parametrize("expiration_flag", ["lifetime", "expire_at"])
+    @pytest.mark.simple
     def test_session_token_expiration_flags(self, default_wallet, expiration_flag):
         rpc_endpoint = self.neofs_env.storage_nodes[0].endpoint
 
