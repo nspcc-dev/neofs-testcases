@@ -6,7 +6,6 @@ import allure
 import pytest
 from helpers.file_helper import generate_file, generate_file_with_content
 from helpers.s3_helper import set_bucket_versioning
-from helpers.utility import parse_version
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
@@ -187,9 +186,6 @@ class TestS3Versioning(TestNeofsS3Base):
     @allure.title("Test pagination for list_objects_versions_s3 using boto3")
     @pytest.mark.boto3_only
     def test_s3_pagination_in_objects_versions_listing_via_boto3(self, prepare_versioned_objects: tuple):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.37.0"):
-            pytest.skip("Supported only on post-0.37.0 s3 gw")
-
         bucket, objects_count = prepare_versioned_objects
         with allure.step("Check basic pagination with MaxKeys"):
             max_keys = 5
@@ -212,9 +208,6 @@ class TestS3Versioning(TestNeofsS3Base):
     @allure.title("Test pagination for list_object_versions using AWS CLI")
     @pytest.mark.aws_cli_only
     def test_s3_pagination_in_objects_versions_listing_via_cli(self, prepare_versioned_objects: tuple):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.37.0"):
-            pytest.skip("Supported only on post-0.37.0 s3 gw")
-
         bucket, objects_count = prepare_versioned_objects
 
         with allure.step("Check basic pagination with MaxKeys"):
