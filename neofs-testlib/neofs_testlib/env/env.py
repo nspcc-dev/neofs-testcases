@@ -13,6 +13,7 @@ import string
 import subprocess
 import sys
 import tarfile
+import tempfile
 import threading
 import time
 import uuid
@@ -441,6 +442,59 @@ class NeoFSEnv:
         versions += NeoFSEnv._run_single_command(self.neofs_rest_gw_path, "--version")
         allure.attach(versions, "neofs env versions", allure.attachment_type.TEXT, ".txt")
 
+    @allure.step("Download and install AWS CLI v2")
+    def download_and_install_awscli(self):
+        system = platform.system().lower()
+        if system == "darwin":
+            logger.info(f"AWS CLI local installation is not supported on {system}, skipping")
+            return
+
+        install_dir = os.path.abspath("aws-cli-local")
+        bin_dir = os.path.join(install_dir, "bin")
+        aws_binary = os.path.join(bin_dir, "aws")
+        required_version = self.neofs_env_config["binaries"]["awscli"]["version"]
+
+        if os.path.exists(aws_binary):
+            try:
+                result = subprocess.run([aws_binary, "--version"], check=True, capture_output=True, text=True)
+                installed_version = result.stdout.split(" ")[1]
+                if installed_version != required_version:
+                    logger.warning(
+                        f"AWS CLI already installed at {aws_binary}, but version is {installed_version} (expected {required_version})"
+                    )
+                else:
+                    logger.info(f"AWS CLI v{required_version} already installed at {aws_binary}")
+                return
+            except Exception as e:
+                logger.warning(f"Failed to verify existing AWS CLI version: {e}, re-installing")
+
+        subprocess.run(["mkdir", "-p", bin_dir], check=True)
+        base_url = f"https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{required_version}.zip"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            archive_path = os.path.join(tmpdir, "awscliv2.zip")
+            logger.info(f"Downloading AWS CLI v{required_version} from {base_url}")
+            subprocess.run(["curl", "-sS", "-o", archive_path, base_url], check=True)
+
+            subprocess.run(["unzip", "-q", archive_path, "-d", tmpdir], check=True)
+            logger.info(f"Installing AWS CLI v{required_version} to {install_dir}")
+            try:
+                subprocess.run(
+                    [os.path.join(tmpdir, "aws", "install"), "--install-dir", install_dir, "--bin-dir", bin_dir],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+            except Exception as e:
+                logger.info(f"Error installing awscli: {e.stderr=}; {e.stdout=}")
+                raise e
+
+            st = os.stat(aws_binary)
+            os.chmod(aws_binary, st.st_mode | stat.S_IEXEC)
+
+            logger.info(f"AWS CLI v{required_version} installed at {aws_binary}")
+
     @allure.step("Download binaries")
     def download_binaries(self):
         with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
@@ -492,6 +546,7 @@ class NeoFSEnv:
                     logger.info("Wait until all binaries are downloaded")
                     for t in deploy_threads:
                         t.join()
+                self.download_and_install_awscli()
             finally:
                 fcntl.flock(lock_file, fcntl.LOCK_UN)
 

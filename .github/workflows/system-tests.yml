@@ -125,17 +125,10 @@ jobs:
           - run: python --version
 
           - name: Remove existing AWS CLI
+            if: runner.os == 'macOS'
             run: |
               sudo rm -rf /usr/local/aws-cli
               sudo rm /usr/local/bin/aws
-            
-          - name: Install AWS CLI 2.22.35 on Linux
-            if: runner.os == 'Linux'
-            run: |
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.22.35.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              sudo ./aws/install
-              rm -rf aws awscliv2.zip
 
           - name: Install AWS CLI 2.22.35 on Macos
             if: runner.os == 'macOS'
@@ -145,6 +138,7 @@ jobs:
               rm AWSCLIV2.pkg
           
           - name: Verify AWS CLI version
+            if: runner.os == 'macOS'
             run: aws --version
 
           - name: Checkout neofs-testcases repository
@@ -381,7 +375,7 @@ jobs:
 
           - name: Run tests
             id: run_tests
-            timeout-minutes: 120
+            timeout-minutes: 180
             env:
               ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
             run: |
