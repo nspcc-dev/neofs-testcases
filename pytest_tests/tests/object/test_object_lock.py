@@ -616,7 +616,6 @@ class TestObjectLockWithGrpc(TestNeofsBase):
         "The locked object must be protected from deletion after metabase deletion "
         "(metabase resynchronization must be enabled), and after restarting storage nodes"
     )
-    @pytest.mark.skip(reason="Unknown issue")
     @pytest.mark.parametrize(
         "new_locked_storage_object",
         [
