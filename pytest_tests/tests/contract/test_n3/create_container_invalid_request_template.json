@@ -1,0 +1,23 @@
+{
+    "Container": {
+        "Version": "2.16",
+        "Nonce": "8db34c87-f470-42a2-9684-970f3db74b15",
+        "Owner": "{{ owner }}",
+        "BasicACL": "eacl-public-read-write",
+        "StoragePolicy": "REP 2 IN X\nCBF 2\nSELECT 2 FROM * AS X",
+        "Attributes": [
+            {
+                "key": "Type",
+                "value": "Test"
+            },
+            {
+                "key": "Timestamp",
+                "value": "1747899566"
+            }
+        ]
+    },
+    "Witness": {
+        "invocation": "{{ invocation_script }}",
+        "verification": "{{ verification_script }}"
+    }
+}

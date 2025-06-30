@@ -56,7 +56,7 @@ class CliCommand:
                 else:
                     param_str.append(f"--{param} '{value}'")
 
-        param_str = " ".join(param_str)
+        param_str = " ".join(s for s in param_str if s is not None)
 
         return f"{self.cli_exec_path} {self.__base_params} {command or ''} {param_str}"
 

@@ -21,3 +21,5 @@ urllib3==2.5.0
 pytest-xdist==3.6.1
 pytest-timeout==2.3.1
 psutil==7.0.0
+ecdsa==0.19.1
+protobuf==6.31.1
