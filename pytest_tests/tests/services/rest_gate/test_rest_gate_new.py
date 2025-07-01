@@ -341,10 +341,6 @@ class TestRestGate(TestNeofsRestBase):
             {"File-Name": "simple obj filename"},
             {"FileName": "simple obj filename"},
             {"Filename": "simple_obj_filename"},
-            pytest.param(
-                {"cat%jpeg": "cat%jpeg"},
-                marks=pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/195"),
-            ),
             {"Filename": "simple_obj_filename\n"},
             {"Filename\n": "simple_obj_filename"},
             {"\n": "\n"},

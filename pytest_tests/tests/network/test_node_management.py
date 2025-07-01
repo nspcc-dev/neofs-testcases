@@ -12,18 +12,14 @@ from helpers.file_helper import generate_file
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
 from helpers.neofs_verbs import (
     delete_object,
-    get_object,
     get_object_from_random_node,
-    head_object,
     put_object,
     put_object_to_random_node,
 )
 from helpers.node_management import (
     check_node_in_map,
     delete_node_data,
-    drop_object,
     exclude_node_from_network_map,
-    get_locode_from_random_node,
     include_node_to_network_map,
     node_shard_list,
     node_shard_set_mode,
@@ -312,52 +308,6 @@ class TestNodeManagement(TestNeofsBase):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         with pytest.raises(RuntimeError, match=".*not enough nodes to SELECT from.*"):
             self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
-
-    @allure.title("NeoFS object could be dropped using control command")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-testcases/issues/537")
-    @pytest.mark.complex
-    @pytest.mark.simple
-    def test_drop_object(self, default_wallet):
-        """
-        Test checks object could be dropped using `neofs-cli control drop-objects` command.
-        """
-        wallet = default_wallet
-        endpoint = self.neofs_env.sn_rpc
-        file_path_simple, file_path_complex = (
-            generate_file(self.neofs_env.get_object_size("simple_object_size")),
-            generate_file(self.neofs_env.get_object_size("complex_object_size")),
-        )
-
-        locode = get_locode_from_random_node(self.neofs_env)
-        rule = f"REP 1 CBF 1 SELECT 1 FROM * FILTER 'UN-LOCODE' EQ '{locode}' AS LOC"
-        cid = create_container(wallet.path, rule=rule, shell=self.shell, endpoint=endpoint)
-        oid_simple = put_object_to_random_node(
-            wallet.path, file_path_simple, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
-        oid_complex = put_object_to_random_node(
-            wallet.path, file_path_complex, cid, shell=self.shell, neofs_env=self.neofs_env
-        )
-
-        for oid in (oid_simple, oid_complex):
-            get_object_from_random_node(wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env)
-            head_object(wallet.path, cid, oid, shell=self.shell, endpoint=endpoint)
-
-        nodes_with_object = get_nodes_with_object(
-            cid,
-            oid_simple,
-            shell=self.shell,
-            nodes=self.neofs_env.storage_nodes,
-            neofs_env=self.neofs_env,
-        )
-        random_node = random.choice(nodes_with_object)
-
-        for oid in (oid_simple, oid_complex):
-            with allure.step(f"Drop object {oid}"):
-                get_object_from_random_node(wallet.path, cid, oid, shell=self.shell, neofs_env=self.neofs_env)
-                head_object(wallet.path, cid, oid, shell=self.shell, endpoint=endpoint)
-                drop_object(random_node, cid, oid)
-                self.wait_for_obj_dropped(wallet.path, cid, oid, endpoint, get_object)
-                self.wait_for_obj_dropped(wallet.path, cid, oid, endpoint, head_object)
 
     @pytest.mark.skip(reason="Need to clarify scenario")
     @allure.title("Control Operations with storage nodes")

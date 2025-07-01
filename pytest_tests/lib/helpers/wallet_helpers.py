@@ -5,6 +5,7 @@ import uuid
 from typing import Optional
 
 import allure
+import yaml
 from helpers.common import get_assets_dir_path
 from helpers.test_control import wait_for_success
 from neo3.core import cryptography
@@ -50,6 +51,23 @@ def get_neofs_balance(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWall
             address=get_last_address_from_wallet(wallet.path, wallet.password),
         ).stdout.strip()
     )
+
+
+def get_neofs_balance_by_wallet(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWallet) -> float:
+    return float(
+        neofs_cli.accounting.balance(
+            wallet=wallet.path,
+            rpc_endpoint=neofs_env.sn_rpc,
+        ).stdout.strip()
+    )
+
+
+def get_neofs_balance_by_config(neofs_env: NeoFSEnv, wallet: NodeWallet) -> float:
+    api_config = {"rpc-endpoint": neofs_env.sn_rpc, "wallet": wallet.path, "password": wallet.password}
+    api_config_file = os.path.join(neofs_env._generate_temp_dir(), "neofs-cli-api-config.yaml")
+    with open(api_config_file, "w") as file:
+        yaml.dump(api_config, file)
+    return float(neofs_env.neofs_cli(api_config_file).accounting.balance().stdout.strip())
 
 
 def get_neofs_balance_by_owner(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet: NodeWallet) -> float:
