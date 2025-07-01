@@ -347,16 +347,8 @@ class TestRestGate(TestNeofsRestBase):
         [
             {"File-Name": "simple obj filename"},
             {"FileName": "simple obj filename"},
-            pytest.param(
-                {"cat%jpeg": "cat%jpeg"},
-                marks=pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/195"),
-            ),
-            pytest.param(
-                {"Filename": "simple_obj_filename"},
-                marks=pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/168"),
-            ),
         ],
-        ids=["simple", "hyphen", "special", "percent"],
+        ids=["hyphen", "simple"],
     )
     @pytest.mark.simple
     def test_put_http_get_http_with_headers(self, attributes: dict, gw_params):
