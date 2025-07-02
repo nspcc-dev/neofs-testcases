@@ -1219,7 +1219,7 @@ class StorageNode(ResurrectableProcess):
             os.remove(shard.pilorama_path)
             shutil.rmtree(shard.wc_path, ignore_errors=True)
         os.remove(self.state_file)
-        self.shards = [Shard(), Shard()]
+        self.shards = [Shard(self.neofs_env, self.sn_dir), Shard(self.neofs_env, self.sn_dir)]
 
         if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
             sn_config_template = self.get_config_template()
