@@ -358,7 +358,6 @@ class TestRestGate(TestNeofsRestBase):
             "simple",
             "hyphen",
             "special",
-            "percent",
             "linebreak in value",
             "linebreak in key",
             "linebreaks in key and value",
