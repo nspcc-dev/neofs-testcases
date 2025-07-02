@@ -41,38 +41,30 @@ check_nodes: list[StorageNode] = []
 
 @allure.title("Add one node to cluster")
 class TestNodeManagement(TestNeofsBase):
-    @pytest.fixture
     @allure.title("Create container and pick the node with data")
-    @pytest.mark.simple
-    def create_container_and_pick_node(self, default_wallet: NodeWallet) -> Tuple[str, StorageNode]:
-        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+    def create_container_and_pick_node(
+        self, neofs_env: NeoFSEnv, default_wallet: NodeWallet
+    ) -> Tuple[str, StorageNode]:
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
-        endpoint = self.neofs_env.sn_rpc
+        endpoint = neofs_env.sn_rpc
 
         cid = create_container(
             default_wallet.path,
-            shell=self.shell,
+            shell=neofs_env.shell,
             endpoint=endpoint,
             rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
-        oid = put_object_to_random_node(default_wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
+        oid = put_object_to_random_node(default_wallet.path, file_path, cid, neofs_env.shell, neofs_env=neofs_env)
 
         nodes = get_nodes_with_object(
-            cid, oid, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
+            cid, oid, shell=neofs_env.shell, nodes=neofs_env.storage_nodes, neofs_env=neofs_env
         )
         assert len(nodes) == 1
         node = nodes[0]
 
-        yield cid, node
-
-        shards = node_shard_list(node)
-        assert shards
-
-        for shard in shards:
-            node_shard_set_mode(node, shard, "read-write")
-
-        node_shard_list(node)
+        return cid, node
 
     @allure.step("Tick epoch with retries")
     def tick_epoch_with_retries(self, neofs_env: NeoFSEnv, attempts: int = 3, timeout: int = 3):
@@ -303,22 +295,21 @@ class TestNodeManagement(TestNeofsBase):
         with pytest.raises(RuntimeError, match=".*not enough nodes to SELECT from.*"):
             self.validate_object_copies(wallet.path, placement_rule, file_path, expected_copies)
 
-    @pytest.mark.skip(reason="Need to clarify scenario")
     @allure.title("Control Operations with storage nodes")
     @pytest.mark.simple
     def test_shards(
         self,
+        neofs_env_function_scope: NeoFSEnv,
         default_wallet,
-        create_container_and_pick_node,
     ):
+        neofs_env = neofs_env_function_scope
         wallet = default_wallet
-        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
-        cid, node = create_container_and_pick_node
-        original_oid = put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
+        cid, node = self.create_container_and_pick_node(neofs_env, default_wallet)
+        original_oid = put_object_to_random_node(wallet.path, file_path, cid, neofs_env.shell, neofs_env=neofs_env)
 
-        # for mode in ('read-only', 'degraded'):
-        for mode in ("degraded",):
+        for mode in ("read-only", "degraded-read-only"):
             shards = node_shard_list(node)
             assert shards
 
@@ -329,12 +320,12 @@ class TestNodeManagement(TestNeofsBase):
             assert shards
 
             with pytest.raises(RuntimeError):
-                put_object_to_random_node(wallet, file_path, cid, self.shell, self.cluster)
+                put_object_to_random_node(wallet.path, file_path, cid, neofs_env.shell, neofs_env)
 
             with pytest.raises(RuntimeError):
-                delete_object(wallet, cid, original_oid, self.shell, self.neofs_env.sn_rpc)
+                delete_object(wallet.path, cid, original_oid, neofs_env.shell, neofs_env.sn_rpc)
 
-            get_object_from_random_node(wallet, cid, original_oid, self.shell, self.cluster)
+            get_object_from_random_node(wallet.path, cid, original_oid, neofs_env.shell, neofs_env)
 
             for shard in shards:
                 node_shard_set_mode(node, shard, "read-write")
@@ -342,8 +333,8 @@ class TestNodeManagement(TestNeofsBase):
             shards = node_shard_list(node)
             assert shards
 
-            oid = put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env)
-            delete_object(wallet.path, cid, oid, self.shell, self.neofs_env.sn_rpc)
+            oid = put_object_to_random_node(wallet.path, file_path, cid, neofs_env.shell, neofs_env=neofs_env)
+            delete_object(wallet.path, cid, oid, neofs_env.shell, neofs_env.sn_rpc)
 
     @allure.step("Validate object has {expected_copies} copies")
     def validate_object_copies(
