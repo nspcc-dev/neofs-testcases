@@ -2,6 +2,7 @@ import random
 from typing import List, Optional
 
 from helpers.acl import EACLOperation
+from helpers.grpc_responses import OBJECT_ACCESS_DENIED
 from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
@@ -111,6 +112,7 @@ def check_no_access_to_container(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ):
     if neofs_env:
         endpoint = random.choice(neofs_env.storage_nodes).endpoint
@@ -123,6 +125,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_get_head_object(
         wallet=wallet,
@@ -133,6 +136,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_get_range_of_object(
         wallet=wallet,
@@ -143,6 +147,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_get_range_hash_of_object(
         wallet=wallet,
@@ -153,6 +158,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_search_object(
         wallet=wallet,
@@ -163,6 +169,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_get_object(
         wallet=wallet,
@@ -174,6 +181,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
     assert not can_delete_object(
         wallet=wallet,
@@ -184,6 +192,7 @@ def check_no_access_to_container(
         bearer=bearer,
         wallet_config=wallet_config,
         xhdr=xhdr,
+        expected_error=expected_error,
     )
 
 

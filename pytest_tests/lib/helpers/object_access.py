@@ -29,6 +29,7 @@ def can_get_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try get object from container"):
         try:
@@ -43,7 +44,7 @@ def can_get_object(
                 neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
         assert get_file_hash(file_name) == get_file_hash(got_file_path), (
             "file hash of downloaded object is not equal to the uploaded"
@@ -61,6 +62,7 @@ def can_put_object(
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
     attributes: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try put object to container"):
         try:
@@ -76,7 +78,7 @@ def can_put_object(
                 neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
     return True
 
@@ -90,6 +92,7 @@ def can_delete_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try delete object from container"):
         try:
@@ -104,7 +107,7 @@ def can_delete_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
     return True
 
@@ -118,6 +121,7 @@ def can_get_head_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try get head of object"):
         try:
@@ -132,7 +136,7 @@ def can_get_head_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
     return True
 
@@ -153,6 +157,7 @@ def can_get_range_of_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try get range of object"):
         try:
@@ -168,7 +173,7 @@ def can_get_range_of_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
     return True
 
@@ -182,6 +187,7 @@ def can_get_range_hash_of_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try get range hash of object"):
         try:
@@ -197,7 +203,7 @@ def can_get_range_hash_of_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
     return True
 
@@ -211,6 +217,7 @@ def can_search_object(
     bearer: Optional[str] = None,
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    expected_error: str = OBJECT_ACCESS_DENIED,
 ) -> bool:
     with allure.step("Try search object in container"):
         try:
@@ -224,7 +231,7 @@ def can_search_object(
                 endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
         if oid:
             return oid in oids
