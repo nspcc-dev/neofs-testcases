@@ -91,20 +91,21 @@ class TestFailoverStorage:
             assert node_to_stop not in object_nodes_after_stop
 
             with allure.step("Check object data is not corrupted"):
-                got_file_path = get_object(
-                    wallet.path, cid, oid, shell=self.shell, endpoint=object_nodes_after_stop[0].endpoint
-                )
-                assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
+                for node in self.neofs_env.storage_nodes:
+                    if node != node_to_stop:
+                        got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=node.endpoint)
+                        assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
             with allure.step("Return stopped storage nodes"):
                 self.return_stopped_storage_nodes(self.neofs_env, [node_to_stop])
 
             with allure.step("Check object data is not corrupted"):
-                new_nodes = wait_object_replication(
+                wait_object_replication(
                     cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
                 )
-                got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
-                assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
+                for node in self.neofs_env.storage_nodes:
+                    got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=node.endpoint)
+                    assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @pytest.mark.simple
     def test_put_get_without_storage_node(
