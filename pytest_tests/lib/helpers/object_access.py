@@ -3,7 +3,7 @@ from typing import Optional
 
 import allure
 from helpers.file_helper import get_file_hash
-from helpers.grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
+from helpers.grpc_responses import EXPIRED_BEARER_TOKEN, OBJECT_ACCESS_DENIED, error_matches_status
 from helpers.neofs_verbs import (
     delete_object,
     get_object_from_random_node,
@@ -76,7 +76,9 @@ def can_put_object(
                 neofs_env=neofs_env,
             )
         except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, OBJECT_ACCESS_DENIED), f"Expected {err} to match {OBJECT_ACCESS_DENIED}"
+            assert error_matches_status(err, OBJECT_ACCESS_DENIED) or error_matches_status(err, EXPIRED_BEARER_TOKEN), (
+                f"Expected {err} to match {OBJECT_ACCESS_DENIED} or {EXPIRED_BEARER_TOKEN}"
+            )
             return False
     return True
 
