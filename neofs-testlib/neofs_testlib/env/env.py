@@ -82,7 +82,7 @@ def terminate_process(process: Popen):
 class NeoFSEnv:
     def __init__(self, neofs_env_config: dict = None):
         self._id = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M-%S")
-        self._env_dir = f"{get_assets_dir_path()}/env_files/neofs-env-{self._id}"
+        self._env_dir = f"{get_assets_dir_path()}/env_files/neofs-env-{self._id}-{threading.current_thread().ident}"
 
         self.domain = "localhost"
         self.default_password = "password"
