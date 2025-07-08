@@ -29,16 +29,16 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
 
 
 @pytest.fixture
-def container(default_wallet: NodeWallet, neofs_env_rest_gw: NeoFSEnv) -> str:
+def container(default_wallet: NodeWallet, neofs_env: NeoFSEnv) -> str:
     cid = create_container(
         default_wallet.path,
-        shell=neofs_env_rest_gw.shell,
-        endpoint=neofs_env_rest_gw.sn_rpc,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
         rule="REP 3 CBF 3",
         basic_acl=PUBLIC_ACL,
     )
     yield cid
-    delete_container(default_wallet.path, cid, shell=neofs_env_rest_gw.shell, endpoint=neofs_env_rest_gw.sn_rpc)
+    delete_container(default_wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
 def search_objectv2(
@@ -47,10 +47,10 @@ def search_objectv2(
     attributes: Optional[list] = None,
     count: Optional[int] = None,
     cursor: Optional[str] = None,
-    neofs_env_rest_gw=None,
+    neofs_env=None,
 ) -> tuple[list[dict], Union[str, None]]:
     search_result = search_object_via_rest_gw(
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}",
         cid=cid,
         cursor=cursor,
         limit=count,
@@ -68,20 +68,20 @@ def search_objectv2(
 
 
 @pytest.mark.simple
-def test_search_sanity(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_sanity(container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     for _ in range(2):
         created_objects.append(
             put_object_to_random_node_via_rest_gw(
                 cid=cid,
-                path=generate_file(neofs_env_rest_gw.get_object_size("simple_object_size")),
-                endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                path=generate_file(neofs_env.get_object_size("simple_object_size")),
+                endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
             )
         )
     found_objects, _ = search_objectv2(
         cid=cid,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
     assert len(found_objects) == len(created_objects), "invalid number of objects"
     for created_obj_id in created_objects:
@@ -91,14 +91,14 @@ def test_search_sanity(container: str, neofs_env_rest_gw: NeoFSEnv):
 
 
 @pytest.mark.simple
-def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     int_attributes_values = [-(2**255) - 1, -1, 0, 1, 10, 2**255 + 1]
     int_attribute_name = "int_attribute"
 
     for int_value in int_attributes_values:
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
         created_objects.append(
             {
@@ -106,7 +106,7 @@ def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header({int_attribute_name: int_value}),
                 ),
             }
@@ -120,7 +120,7 @@ def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env
                 cid=cid,
                 filters=[f"{int_attribute_name} {operator_str} {int_value}"],
                 attributes=[int_attribute_name],
-                neofs_env_rest_gw=neofs_env_rest_gw,
+                neofs_env=neofs_env,
             )
 
             if found_objects:
@@ -148,14 +148,14 @@ def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env
 
 
 @pytest.mark.simple
-def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     str_attributes_values = ["Aaa", "Aaabcd", "Aaabcd", "1Aaabcd2", "A11a//b_c.//", "#FFFFFF", "!@#$%ˆ&*()"]
     str_attribute_name = "str_attribute"
 
     for str_value in str_attributes_values:
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
         created_objects.append(
             {
@@ -163,7 +163,7 @@ def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header({str_attribute_name: str_value}),
                 ),
             }
@@ -181,7 +181,7 @@ def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env
                 cid=cid,
                 filters=[f"{str_attribute_name} {operator_str} {str_value}"],
                 attributes=[str_attribute_name],
-                neofs_env_rest_gw=neofs_env_rest_gw,
+                neofs_env=neofs_env,
             )
 
             for created_obj in created_objects:
@@ -201,14 +201,14 @@ def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env
 
 
 @pytest.mark.simple
-def test_search_numeric_filter_by_str_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_numeric_filter_by_str_attributes(container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     str_attributes_values = ["Aaa", "Aaabcd", "Aaabcd", "1Aaabcd2", "A11a//b_c.//", "#FFFFFF", "!@#$%ˆ&*()"]
     str_attribute_name = "str_attribute"
 
     for str_value in str_attributes_values:
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
         created_objects.append(
             {
@@ -216,7 +216,7 @@ def test_search_numeric_filter_by_str_attributes(container: str, neofs_env_rest_
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header({str_attribute_name: str_value}),
                 ),
             }
@@ -231,18 +231,18 @@ def test_search_numeric_filter_by_str_attributes(container: str, neofs_env_rest_
                     cid=cid,
                     filters=[f"{str_attribute_name} {operator_str} {str_value}"],
                     attributes=[str_attribute_name],
-                    neofs_env_rest_gw=neofs_env_rest_gw,
+                    neofs_env=neofs_env,
                 )
 
 
 @pytest.mark.simple
-def test_search_multiple_filters_same_attribute(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_multiple_filters_same_attribute(container: str, neofs_env: NeoFSEnv):
     cid = container
-    file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         headers=new_attr_into_header({"int_attr": 100, "str_attr": "abcd"}),
     )
     testcases = [
@@ -279,7 +279,7 @@ def test_search_multiple_filters_same_attribute(container: str, neofs_env_rest_g
         found_objects, _ = search_objectv2(
             cid=cid,
             filters=testcase["filters"],
-            neofs_env_rest_gw=neofs_env_rest_gw,
+            neofs_env=neofs_env,
         )
 
         assert len(found_objects) == testcase["expected_result"], "invalid number of objects"
@@ -288,7 +288,7 @@ def test_search_multiple_filters_same_attribute(container: str, neofs_env_rest_g
 @pytest.mark.simple
 def test_search_multiple_filters_by_custom_int_attributes(
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
@@ -296,7 +296,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
     int_attributes_values = [0, 1, -1]
 
     for attr0, attr1, attr2 in list(itertools.permutations(int_attributes_values, 3)):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {"int_attr0": attr0, "int_attr1": attr1, "int_attr2": attr2}
         created_objects.append(
             {
@@ -304,7 +304,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header(attrs),
                 ),
             }
@@ -324,7 +324,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
                     f"int_attr2 {op2} {int_value}",
                 ],
                 attributes=["int_attr0", "int_attr1", "int_attr2"],
-                neofs_env_rest_gw=neofs_env_rest_gw,
+                neofs_env=neofs_env,
             )
 
             for found_obj in found_objects:
@@ -352,14 +352,14 @@ def test_search_multiple_filters_by_custom_int_attributes(
 @pytest.mark.simple
 def test_search_multiple_filters_by_custom_str_attributes(
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     str_attributes_values = ["Aaa", "Aaabcd", "123", "1234"]
 
     for attr0, attr1, attr2 in list(itertools.permutations(str_attributes_values, 3)):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {"str_attr0": attr0, "str_attr1": attr1, "str_attr2": attr2}
         created_objects.append(
             {
@@ -367,7 +367,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header(attrs),
                 ),
             }
@@ -396,7 +396,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
                     f"str_attr2 {op2} {str_value}",
                 ],
                 attributes=["str_attr0", "str_attr1", "str_attr2"],
-                neofs_env_rest_gw=neofs_env_rest_gw,
+                neofs_env=neofs_env,
             )
 
             for found_obj in found_objects:
@@ -424,20 +424,20 @@ def test_search_multiple_filters_by_custom_str_attributes(
 @pytest.mark.simple
 def test_search_by_mixed_attributes_contents(
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
-    file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     oid1 = put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         headers=new_attr_into_header({"str_attr": "345", "int_attr": "abcd"}),
     )
     oid2 = put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         headers=new_attr_into_header({"str_attr": "abcd", "int_attr": "345"}),
     )
 
@@ -448,7 +448,7 @@ def test_search_by_mixed_attributes_contents(
             "int_attr COMMON_PREFIX abcd",
         ],
         attributes=["str_attr", "int_attr"],
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert len(found_objects) == 1, "invalid number of objects"
@@ -461,7 +461,7 @@ def test_search_by_mixed_attributes_contents(
             "int_attr LE 345",
         ],
         attributes=["str_attr", "int_attr"],
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert len(found_objects) == 1, "invalid number of objects"
@@ -471,7 +471,7 @@ def test_search_by_mixed_attributes_contents(
 @pytest.mark.simple
 def test_search_multiple_filters_by_custom_mixed_attributes(
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
@@ -487,7 +487,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
     ]
 
     for str_attr0, str_attr1, str_attr2, int_attr0, int_attr1, int_attr2 in attr_values:
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         attrs = {
             "str_attr0": str_attr0,
             "str_attr1": str_attr1,
@@ -502,7 +502,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                     headers=new_attr_into_header(attrs),
                 ),
             }
@@ -558,7 +558,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                     cid=cid,
                     filters=search_filters,
                     attributes=attributes,
-                    neofs_env_rest_gw=neofs_env_rest_gw,
+                    neofs_env=neofs_env,
                 )
 
                 for found_obj in found_objects:
@@ -609,24 +609,24 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
 def test_search_by_system_attributes(
     default_wallet: NodeWallet,
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for idx in range(4):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size") + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         oid = put_object_to_random_node_via_rest_gw(
             cid=cid,
             path=file_path,
-            endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+            endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         )
 
         head_info = head_object(
             default_wallet.path,
             cid,
             oid,
-            shell=neofs_env_rest_gw.shell,
-            endpoint=neofs_env_rest_gw.sn_rpc,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
         )
         logger.info(f"{head_info=}")
         system_attributes = {
@@ -648,7 +648,7 @@ def test_search_by_system_attributes(
                 cid=cid,
                 filters=[f"{system_attr} EQ {created_obj_attr_value}"],
                 attributes=[system_attr],
-                neofs_env_rest_gw=neofs_env_rest_gw,
+                neofs_env=neofs_env,
             )
             for found_obj in found_objects:
                 assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
@@ -663,18 +663,18 @@ def test_search_by_system_attributes(
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_non_existing_attributes(
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
     with_attributes: bool,
 ):
     cid = container
     created_objects = []
     for _ in range(3):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         created_objects.append(
             put_object_to_random_node_via_rest_gw(
                 cid=cid,
                 path=file_path,
-                endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
             )
         )
 
@@ -683,7 +683,7 @@ def test_search_by_non_existing_attributes(
             cid=cid,
             filters=[f"nonExistentAttr {op} 1234"],
             attributes=["nonExistentAttr"] if with_attributes else None,
-            neofs_env_rest_gw=neofs_env_rest_gw,
+            neofs_env=neofs_env,
         )
         assert len(found_objects) == 0, "invalid number of found objects"
 
@@ -691,14 +691,14 @@ def test_search_by_non_existing_attributes(
 @pytest.mark.simple
 @pytest.mark.parametrize("with_attributes", [True, False])
 def test_search_by_various_attributes(
-    default_wallet: NodeWallet, container: str, neofs_env_rest_gw: NeoFSEnv, with_attributes: bool
+    default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv, with_attributes: bool
 ):
     cid = container
-    file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     oid1 = put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         headers=new_attr_into_header({"str_attr0": "interesting.value_for_some*reason", "int_attr0": 54321}),
     )
 
@@ -706,15 +706,15 @@ def test_search_by_various_attributes(
         default_wallet.path,
         cid,
         oid1,
-        shell=neofs_env_rest_gw.shell,
-        endpoint=neofs_env_rest_gw.sn_rpc,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
     )
-    neofs_epoch.ensure_fresh_epoch(neofs_env_rest_gw)
-    file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+    neofs_epoch.ensure_fresh_epoch(neofs_env)
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
     put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
-        endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
         headers=new_attr_into_header(
             {"str_attr0": "interesting.value_for_some*reason", "str_attr1": "oops", "int_attr0": 54321}
         ),
@@ -723,12 +723,12 @@ def test_search_by_various_attributes(
     found_objects, _ = search_objectv2(
         cid=cid,
         filters=[
-            f"$Object:payloadLength EQ {neofs_env_rest_gw.get_object_size('simple_object_size')}",
+            f"$Object:payloadLength EQ {neofs_env.get_object_size('simple_object_size')}",
             "str_attr1 NOPRESENT",
             "int_attr0 GE 10",
         ],
         attributes=["$Object:payloadLength", "str_attr1", "int_attr0"] if with_attributes else None,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
     assert len(found_objects) == 1, "invalid number of found objects"
     assert found_objects[0]["id"] == oid1, "invalid object returned from search"
@@ -741,23 +741,23 @@ def test_search_by_various_attributes(
             "str_attr1 NOPRESENT",
         ],
         attributes=["int_attr0", "$Object:creationEpoch", "str_attr1"] if with_attributes else None,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
     assert len(found_objects) == 0, "invalid number of found objects"
 
 
 @pytest.mark.simple
-def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_env_rest_gw: NeoFSEnv):
+def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_env: NeoFSEnv):
     cid = container
     created_objects = []
     for idx in range(5):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size") + (idx * 100))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size") + (idx * 100))
         created_objects.append(
             {
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                 ),
             }
         )
@@ -771,7 +771,7 @@ def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_e
                     cid=cid,
                     cursor=cursor,
                     count=count,
-                    neofs_env_rest_gw=neofs_env_rest_gw,
+                    neofs_env=neofs_env,
                 )
                 found_objects.extend(new_found_objects)
 
@@ -789,18 +789,18 @@ def test_search_with_cursor_empty_filters_and_attributes(container: str, neofs_e
 def test_search_count_and_cursor(
     default_wallet: NodeWallet,
     container: str,
-    neofs_env_rest_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ):
     cid = container
     created_objects = []
     for _ in range(5):
-        file_path = generate_file(neofs_env_rest_gw.get_object_size("simple_object_size"))
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
         created_objects.append(
             {
                 "id": put_object_to_random_node_via_rest_gw(
                     cid=cid,
                     path=file_path,
-                    endpoint=f"http://{neofs_env_rest_gw.rest_gw.endpoint}/v1",
+                    endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
                 ),
             }
         )
@@ -811,7 +811,7 @@ def test_search_count_and_cursor(
             filters=["$Object:creationEpoch GE 0"],
             attributes=["$Object:creationEpoch"],
             count=count_value,
-            neofs_env_rest_gw=neofs_env_rest_gw,
+            neofs_env=neofs_env,
         )
 
         assert not cursor, "there should be no cursor object in search output"
@@ -824,7 +824,7 @@ def test_search_count_and_cursor(
         filters=["$Object:creationEpoch GE 0"],
         attributes=["$Object:creationEpoch"],
         count=2,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert len(first_found_objects) == 2, "invalid objects count after search"
@@ -837,7 +837,7 @@ def test_search_count_and_cursor(
         attributes=["$Object:creationEpoch"],
         cursor=first_cursor,
         count=2,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert len(second_found_objects) == 2, "invalid objects count after search"
@@ -850,7 +850,7 @@ def test_search_count_and_cursor(
         attributes=["$Object:creationEpoch"],
         cursor=cursor,
         count=2,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert not last_cursor, "there should be no last cursor object in search output"
@@ -869,7 +869,7 @@ def test_search_count_and_cursor(
         attributes=["$Object:creationEpoch"],
         cursor=cursor,
         count=2,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
 
     assert not last_cursor, "there should be no last cursor object in search output"
@@ -883,7 +883,7 @@ def test_search_count_and_cursor(
             attributes=["$Object:creationEpoch"],
             cursor="0123_???!##",
             count=2,
-            neofs_env_rest_gw=neofs_env_rest_gw,
+            neofs_env=neofs_env,
         )
 
     for created_obj in created_objects:
@@ -891,13 +891,13 @@ def test_search_count_and_cursor(
             default_wallet.path,
             cid,
             created_obj["id"],
-            neofs_env_rest_gw.shell,
-            neofs_env_rest_gw.sn_rpc,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
         )
 
-    current_epoch = neofs_epoch.get_epoch(neofs_env_rest_gw)
-    neofs_epoch.tick_epoch(neofs_env_rest_gw)
-    neofs_epoch.wait_for_epochs_align(neofs_env_rest_gw, current_epoch)
+    current_epoch = neofs_epoch.get_epoch(neofs_env)
+    neofs_epoch.tick_epoch(neofs_env)
+    neofs_epoch.wait_for_epochs_align(neofs_env, current_epoch)
     time.sleep(CLEANUP_TIMEOUT)
 
     tombstone_objects, _ = search_objectv2(
@@ -905,7 +905,7 @@ def test_search_count_and_cursor(
         filters=["$Object:creationEpoch GE 0"],
         attributes=["$Object:creationEpoch", "$Object:objectType"],
         cursor=first_cursor,
-        neofs_env_rest_gw=neofs_env_rest_gw,
+        neofs_env=neofs_env,
     )
     assert len(tombstone_objects) > 0, "invalid objects count after search"
 
@@ -915,5 +915,5 @@ def test_search_count_and_cursor(
             filters=["$Object:objectType NE TOMBSTONE"],
             attributes=["$Object:objectType"],
             cursor=first_cursor,
-            neofs_env_rest_gw=neofs_env_rest_gw,
+            neofs_env=neofs_env,
         )
