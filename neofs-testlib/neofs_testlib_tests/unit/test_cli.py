@@ -58,7 +58,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_bad_wallet_argument(self):
@@ -139,7 +139,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_wallet_nep17_multitransfer(self):
@@ -168,7 +168,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_version(self):
@@ -178,7 +178,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             f"{self.neofs_adm_exec_path}   --version",
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_flush_cache(self):
@@ -204,7 +204,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_set_mode(self):
@@ -231,7 +231,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_dump(self):
@@ -258,7 +258,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_list(self):
@@ -283,7 +283,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_evacuate(self):
@@ -309,7 +309,7 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )
 
     def test_shards_restore(self):
@@ -336,5 +336,5 @@ class TestCli(TestCase):
 
         shell.exec.assert_called_once_with(
             expected_command,
-            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=90, check=True, no_log=False),
+            options=CommandOptions(interactive_inputs=None, close_stdin=False, timeout=180, check=True, no_log=False),
         )

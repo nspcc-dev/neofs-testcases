@@ -21,7 +21,7 @@ COLOR_GREEN = "\033[92m"
 COLOR_OFF = "\033[0m"
 
 
-def _cmd_run(cmd: str, timeout: int = 30) -> str:
+def _cmd_run(cmd: str, timeout: int = 60 * 3) -> str:
     """
     Runs given shell command <cmd>, in case of success returns its stdout,
     in case of failure returns error message.
