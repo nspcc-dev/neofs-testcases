@@ -12,6 +12,7 @@ from helpers.s3_helper import (
     check_tags_by_object,
     object_key_from_file_path,
 )
+from helpers.utility import parse_version
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
@@ -122,3 +123,21 @@ class TestS3Tagging(TestNeofsS3Base):
             s3_bucket.delete_bucket_tagging(self.s3_client, bucket)
             with pytest.raises(Exception, match=NO_SUCH_TAGS_ERROR):
                 check_tags_by_bucket(self.s3_client, bucket, [])
+
+    @allure.title("Test S3: unversioned bucket tagging")
+    @pytest.mark.simple
+    def test_s3_object_tagging_unversioned_bucket(self, bucket):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.38.0"):
+            pytest.skip("Test doesn't work on s3 gw 0.38.0 and earlier versions")
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        file_name = object_key_from_file_path(file_path)
+
+        with allure.step("Put with 3 tags object into bucket"):
+            s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
+            tags = self.create_tags(1)
+            s3_object.put_object_tagging(self.s3_client, bucket, file_name, tags=tags)
+            check_tags_by_object(self.s3_client, bucket, file_name, tags)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path)
+            time.sleep(1)
+            check_tags_by_object(self.s3_client, bucket, file_name, [])
