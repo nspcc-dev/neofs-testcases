@@ -628,15 +628,18 @@ class NeoFSEnv:
                 self.kill()
 
         if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
-            for ir in self.inner_ring_nodes:
-                os.remove(ir.ir_storage_path)
+            try:
+                for ir in self.inner_ring_nodes:
+                    os.remove(ir.ir_storage_path)
 
-            for sn in self.storage_nodes:
-                for shard in sn.shards:
-                    os.remove(shard.metabase_path)
-                    shutil.rmtree(shard.fstree_path, ignore_errors=True)
-                    os.remove(shard.pilorama_path)
-                    shutil.rmtree(shard.wc_path, ignore_errors=True)
+                for sn in self.storage_nodes:
+                    for shard in sn.shards:
+                        os.remove(shard.metabase_path)
+                        shutil.rmtree(shard.fstree_path, ignore_errors=True)
+                        os.remove(shard.pilorama_path)
+                        shutil.rmtree(shard.wc_path, ignore_errors=True)
+            except OSError as e:
+                logger.warning(f"Failed to remove some files during env cleanup: {e}")
 
             if request.session.testsfailed or force_collect_logs:
                 shutil.make_archive(os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir)
