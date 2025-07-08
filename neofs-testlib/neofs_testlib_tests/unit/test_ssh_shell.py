@@ -64,7 +64,7 @@ class TestSSHShellInteractive(TestCase):
 
         error = format_error_details(raised.exception)
         self.assertIn("SyntaxError", error)
-        self.assertIn("return code: 1", error)
+        self.assertIn("Return code: 1", error)
 
     def test_invalid_command_without_check(self):
         script = "invalid script"
@@ -84,7 +84,7 @@ class TestSSHShellInteractive(TestCase):
             self.shell.exec("not-a-command", CommandOptions(interactive_inputs=inputs))
 
         error = format_error_details(raised.exception)
-        self.assertIn("return code: 127", error)
+        self.assertIn("Return code: 127", error)
 
 
 class TestSSHShellNonInteractive(TestCase):
@@ -109,7 +109,7 @@ class TestSSHShellNonInteractive(TestCase):
 
         error = format_error_details(raised.exception)
         self.assertIn("Error", error)
-        self.assertIn("return code: 1", error)
+        self.assertIn("Return code: 1", error)
 
     def test_invalid_command_without_check(self):
         script = "invalid script"
@@ -127,4 +127,4 @@ class TestSSHShellNonInteractive(TestCase):
 
         error = format_error_details(exc.exception)
         self.assertIn("Error", error)
-        self.assertIn("return code: 127", error)
+        self.assertIn("Return code: 127", error)

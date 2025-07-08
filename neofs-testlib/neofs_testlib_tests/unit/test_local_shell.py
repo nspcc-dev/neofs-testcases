@@ -87,7 +87,7 @@ class TestLocalShellNonInteractive(TestCase):
 
         error = format_error_details(exc.exception)
         self.assertIn("Error", error)
-        self.assertIn("return code: 1", error)
+        self.assertIn("Return code: 1", error)
 
     def test_invalid_command_without_check(self):
         script = "invalid script"
@@ -102,4 +102,4 @@ class TestLocalShellNonInteractive(TestCase):
             self.shell.exec("not-a-command")
 
         error = format_error_details(exc.exception)
-        self.assertIn("return code: 127", error)
+        self.assertIn("Return code: 127", error)
