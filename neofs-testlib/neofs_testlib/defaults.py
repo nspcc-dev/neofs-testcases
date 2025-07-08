@@ -1,5 +1,5 @@
 class Options:
-    DEFAULT_SHELL_TIMEOUT = 90
+    DEFAULT_SHELL_TIMEOUT = 180
 
     @staticmethod
     def get_default_shell_timeout():
