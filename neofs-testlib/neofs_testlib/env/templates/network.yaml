@@ -6,7 +6,6 @@ network:
   basic_income_rate: 100000000
   homomorphic_hash_disabled: false
   fee:
-    audit: 0
     candidate: 0
     container: 0
     container_alias: 0
