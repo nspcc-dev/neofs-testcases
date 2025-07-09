@@ -88,7 +88,6 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
     [
         ("MaxObjectSize", 1048576),
         ("BasicIncomeRate", 50000000),
-        ("AuditFee", 5000),
         ("EpochDuration", 480),
         ("ContainerFee", 2000),
         ("EigenTrustIterations", 8),

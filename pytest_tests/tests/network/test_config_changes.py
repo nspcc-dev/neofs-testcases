@@ -13,7 +13,6 @@ class TestNetworkConfigChange(TestNeofsBase):
         [
             ("MaxObjectSize", 1048576),
             ("BasicIncomeRate", 50000000),
-            ("AuditFee", 5000),
             ("EpochDuration", 480),
             ("ContainerFee", 2000),
             # ("ContainerAliasFee", 5000),
@@ -33,7 +32,6 @@ class TestNetworkConfigChange(TestNeofsBase):
         new_key_value_pairs = {
             "MaxObjectSize": 1048576,
             "BasicIncomeRate": 50000000,
-            "AuditFee": 5000,
         }
         self._set_and_verify_config_keys(**new_key_value_pairs)
 

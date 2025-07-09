@@ -123,7 +123,6 @@ class TestFailoverNetwork:
         required_keys = [
             "epoch",
             "time_per_block",
-            "audit_fee",
             "storage_price",
             "container_fee",
             "eigentrust_alpha",

@@ -26,7 +26,6 @@ NEOFS_API_HEADER_LIMIT = 16384
 CONFIG_KEYS_MAPPING = {
     "MaxObjectSize": "maximum_object_size",
     "BasicIncomeRate": "storage_price",
-    "AuditFee": "audit_fee",
     "EpochDuration": "epoch_duration",
     "ContainerFee": "container_fee",
     "EigenTrustIterations": "number_of_eigentrust_iterations",
