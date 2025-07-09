@@ -2,7 +2,6 @@ import itertools
 import logging
 import math
 import operator
-import time
 from typing import Optional, Union
 
 import allure
@@ -15,7 +14,6 @@ from helpers.neofs_verbs import delete_object, head_object
 from helpers.rest_gate import SearchV2Filter, new_attr_into_header
 from helpers.rest_gate import new_upload_via_rest_gate as put_object_to_random_node_via_rest_gw
 from helpers.rest_gate import searchv2 as search_object_via_rest_gw
-from helpers.storage_object_info import CLEANUP_TIMEOUT
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -895,10 +893,8 @@ def test_search_count_and_cursor(
             neofs_env.sn_rpc,
         )
 
-    current_epoch = neofs_epoch.get_epoch(neofs_env)
-    neofs_epoch.tick_epoch(neofs_env)
-    neofs_epoch.wait_for_epochs_align(neofs_env, current_epoch)
-    time.sleep(CLEANUP_TIMEOUT)
+    neofs_epoch.tick_epoch_and_wait(neofs_env)
+    neofs_epoch.tick_epoch_and_wait(neofs_env)
 
     tombstone_objects, _ = search_objectv2(
         cid=cid,
