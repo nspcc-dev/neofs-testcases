@@ -45,13 +45,13 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 @allure.title("Create bearer token for OTHERS with all operations allowed for all containers")
-def bearer_token_file_all_allow(default_wallet: NodeWallet, neofs_env_s3_gw: NeoFSEnv) -> str:
+def bearer_token_file_all_allow(default_wallet: NodeWallet, neofs_env: NeoFSEnv) -> str:
     bearer = form_bearertoken_file(
         default_wallet.path,
         "",
         [EACLRule(operation=op, access=EACLAccess.ALLOW, role=EACLRole.OTHERS) for op in EACLOperation],
-        shell=neofs_env_s3_gw.shell,
-        endpoint=neofs_env_s3_gw.sn_rpc,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
     )
 
     return bearer
@@ -59,19 +59,19 @@ def bearer_token_file_all_allow(default_wallet: NodeWallet, neofs_env_s3_gw: Neo
 
 @pytest.fixture(scope="module")
 @allure.title("Create user container for bearer token usage")
-def user_container(default_wallet: NodeWallet, neofs_env_s3_gw: NeoFSEnv, request: FixtureRequest) -> StorageContainer:
+def user_container(default_wallet: NodeWallet, neofs_env: NeoFSEnv, request: FixtureRequest) -> StorageContainer:
     container_id = create_container(
         default_wallet.path,
-        shell=neofs_env_s3_gw.shell,
+        shell=neofs_env.shell,
         rule=request.param,
         basic_acl=EACL_PUBLIC_READ_WRITE,
-        endpoint=neofs_env_s3_gw.sn_rpc,
+        endpoint=neofs_env.sn_rpc,
     )
     # Deliberately using s3gate wallet here to test bearer token
     return StorageContainer(
-        StorageContainerInfo(container_id, neofs_env_s3_gw.s3_gw.wallet),
-        neofs_env_s3_gw.shell,
-        neofs_env_s3_gw,
+        StorageContainerInfo(container_id, neofs_env.s3_gw.wallet),
+        neofs_env.shell,
+        neofs_env,
     )
 
 
@@ -80,14 +80,14 @@ def storage_objects(
     user_container: StorageContainer,
     bearer_token_file_all_allow: str,
     request: FixtureRequest,
-    neofs_env_s3_gw: NeoFSEnv,
+    neofs_env: NeoFSEnv,
 ) -> list[StorageObjectInfo]:
-    epoch = neofs_epoch.get_epoch(neofs_env_s3_gw)
+    epoch = neofs_epoch.get_epoch(neofs_env)
     storage_objects: list[StorageObjectInfo] = []
-    for node in neofs_env_s3_gw.storage_nodes:
+    for node in neofs_env.storage_nodes:
         storage_objects.append(
             user_container.generate_object(
-                neofs_env_s3_gw.get_object_size(request.param),
+                neofs_env.get_object_size(request.param),
                 epoch + 3,
                 bearer_token=bearer_token_file_all_allow,
                 endpoint=node.endpoint,
