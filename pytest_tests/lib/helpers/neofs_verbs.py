@@ -30,7 +30,6 @@ CONFIG_KEYS_MAPPING = {
     "ContainerFee": "container_fee",
     "EigenTrustIterations": "number_of_eigentrust_iterations",
     "EigenTrustAlpha": "eigentrust_alpha",
-    "InnerRingCandidateFee": "inner_ring_candidate_fee",
     "WithdrawFee": "withdrawal_fee",
     "HomomorphicHashingDisabled": "homomorphic_hashing_disabled",
 }

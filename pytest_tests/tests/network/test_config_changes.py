@@ -18,7 +18,6 @@ class TestNetworkConfigChange(TestNeofsBase):
             # ("ContainerAliasFee", 5000),
             ("EigenTrustIterations", 8),
             ("EigenTrustAlpha", 0.2),
-            ("InnerRingCandidateFee", 5000000000),
             ("WithdrawFee", 200000000),
             ("HomomorphicHashingDisabled", True),
         ],

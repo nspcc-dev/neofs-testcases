@@ -309,7 +309,7 @@ class NeoFSEnv:
             manifest=f"{self.neofs_contract_dir}/neofs/manifest.json",
             force=True,
             rpc_endpoint=f"http://{self.main_chain.rpc_address}",
-            post_data=f"[ true ffffffffffffffffffffffffffffffffffffffff [ {pub_keys_of_existing_ir_nodes} ] [ InnerRingCandidateFee 10 WithdrawFee 10 ] ]",
+            post_data=f"[ true ffffffffffffffffffffffffffffffffffffffff [ {pub_keys_of_existing_ir_nodes} ] [ WithdrawFee 10 ] ]",
             wallet_config=self.default_wallet_neogo_config,
         )
         contract_hash = result.stdout.split("Contract: ")[-1].strip()

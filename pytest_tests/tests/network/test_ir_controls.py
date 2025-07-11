@@ -92,7 +92,6 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
         ("ContainerFee", 2000),
         ("EigenTrustIterations", 8),
         ("EigenTrustAlpha", 0.2),
-        ("InnerRingCandidateFee", 5000000000),
         ("WithdrawFee", 200000000),
         ("HomomorphicHashingDisabled", True),
     ],

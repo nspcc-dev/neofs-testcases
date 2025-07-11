@@ -128,7 +128,6 @@ class TestFailoverNetwork:
             "eigentrust_alpha",
             "number_of_eigentrust_iterations",
             "epoch_duration",
-            "inner_ring_candidate_fee",
             "maximum_object_size",
             "withdrawal_fee",
             "homomorphic_hashing_disabled",
