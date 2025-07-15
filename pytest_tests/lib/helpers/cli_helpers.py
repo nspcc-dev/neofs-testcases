@@ -21,7 +21,7 @@ COLOR_GREEN = "\033[92m"
 COLOR_OFF = "\033[0m"
 
 
-def _cmd_run(cmd: str, timeout: int = 30) -> str:
+def _cmd_run(cmd: str, timeout: int = 60 * 3) -> str:
     """
     Runs given shell command <cmd>, in case of success returns its stdout,
     in case of failure returns error message.
@@ -48,8 +48,22 @@ def _cmd_run(cmd: str, timeout: int = 30) -> str:
 
         return output
     except subprocess.CalledProcessError as exc:
-        logger.info(f"Command: {cmd}\nError:\nreturn code: {exc.returncode} \nOutput: {exc.output}")
+        output = exc.output
+        return_code = exc.returncode
         end_time = datetime.now(UTC)
+        logger.info(f"Command: {cmd}\nError:\nReturn code: {return_code} \nOutput: {output}")
+        if "connection to the RPC node has been lost" in output:
+            if sys.platform == "darwin":
+                try:
+                    lsof_output = subprocess.check_output(
+                        ["lsof", "-nP", "-iTCP"],
+                        text=True,
+                        stderr=subprocess.STDOUT,
+                    )
+                    _attach_allure_log("lsof -nP -iTCP", lsof_output, 0, end_time, datetime.now(UTC))
+                except subprocess.SubprocessError as lsof_exc:
+                    logger.warning(f"Failed to run lsof: {lsof_exc}")
+
         return_code, cmd_output = subprocess.getstatusoutput(cmd)
         _attach_allure_log(cmd, cmd_output, return_code, start_time, end_time)
 

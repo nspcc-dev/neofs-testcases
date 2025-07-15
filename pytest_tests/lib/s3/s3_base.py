@@ -58,9 +58,9 @@ class TestNeofsS3Base(NeofsEnvTestBase):
     secret_access_key: str = None
 
     @pytest.fixture(scope="class", autouse=True)
-    def fill_mandatory_dependencies(self, request, neofs_env_s3_gw: NeoFSEnv):
-        request.cls.shell = neofs_env_s3_gw.shell
-        request.cls.neofs_env = neofs_env_s3_gw
+    def fill_mandatory_dependencies(self, request, neofs_env: NeoFSEnv):
+        request.cls.shell = neofs_env.shell
+        request.cls.neofs_env = neofs_env
         yield
 
     @pytest.fixture(scope="class", autouse=True)
@@ -69,9 +69,8 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         self,
         default_wallet: NodeWallet,
         request: FixtureRequest,
-        neofs_env_s3_gw: NeoFSEnv,
+        neofs_env: NeoFSEnv,
     ) -> Any:
-        neofs_env = neofs_env_s3_gw
         wallet = default_wallet
         s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
         policy = None if isinstance(request.param, str) else request.param[1]
@@ -92,7 +91,7 @@ class TestNeofsS3Base(NeofsEnvTestBase):
             client = configure_cli_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.endpoint}")
         else:
             client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.endpoint}")
-        TestNeofsS3Base.neofs_env = neofs_env_s3_gw
+        TestNeofsS3Base.neofs_env = neofs_env
         TestNeofsS3Base.s3_client = client
         TestNeofsS3Base.wallet = wallet
         TestNeofsS3Base.access_key_id = access_key_id

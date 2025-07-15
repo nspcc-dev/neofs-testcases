@@ -1,11 +1,11 @@
 import logging
 import subprocess
+import sys
 import tempfile
 from datetime import UTC, datetime
 from typing import IO, Optional
 
 import pexpect
-
 from neofs_testlib.defaults import Options
 from neofs_testlib.reporter import get_reporter
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
@@ -88,12 +88,29 @@ class LocalShell(Shell):
                 return_code=command_process.returncode,
             )
         except subprocess.CalledProcessError as exc:
-            # TODO: always set check flag to false and capture command result normally
             result = CommandResult(
                 stdout=exc.stdout or "",
                 stderr="",
                 return_code=exc.returncode,
             )
+
+            if "connection to the RPC node has been lost" in (exc.output or ""):
+                if sys.platform == "darwin":
+                    try:
+                        lsof_output = subprocess.check_output(
+                            ["lsof", "-nP", "-iTCP"],
+                            text=True,
+                            stderr=subprocess.STDOUT,
+                        )
+                        self._report_command_result(
+                            "lsof -nP -iTCP",
+                            start_time,
+                            datetime.now(UTC),
+                            CommandResult(stdout=lsof_output, stderr="", return_code=0),
+                        )
+                    except subprocess.SubprocessError as lsof_exc:
+                        logger.warning(f"Failed to run lsof for debug: {lsof_exc}")
+
             raise RuntimeError(
                 f"Command: {command}\nError:\nreturn code: {exc.returncode}\noutput: {exc.output}"
             ) from exc

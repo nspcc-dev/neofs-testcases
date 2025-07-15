@@ -255,7 +255,7 @@ def put_object(
     no_progress: bool = True,
     session: Optional[str] = None,
     lifetime: Optional[int] = None,
-    timeout: Optional[str] = "60s",
+    timeout: Optional[str] = "180s",
 ):
     """
     PUT of given file.
