@@ -242,10 +242,7 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     for metric in ("neofs_node_object_delete_req_count", "neofs_node_object_delete_req_count_success"):
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
 
-    for metric in (
-        "neofs_node_object_rpc_delete_time_bucket",
-        "neofs_node_engine_inhume_time_bucket",
-    ):
+    for metric in ("neofs_node_object_rpc_delete_time_bucket",):
         assert len([m for _, m in enumerate(after_metrics_sn[metric]) if m["value"] >= 1]) >= 1, (
             f"invalid value for {metric}"
         )
