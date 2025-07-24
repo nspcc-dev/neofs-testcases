@@ -201,6 +201,7 @@ class TestContainer(TestNeofsBase):
             with allure.step("Start storage node"):
                 node_to_stop.start(fresh=False)
                 wait_all_storage_nodes_returned(self.neofs_env)
+                stopped_nodes.remove(node_to_stop)
 
             with allure.step("Object should be unavailable from the restarted node"):
                 with pytest.raises(Exception):

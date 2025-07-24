@@ -1163,6 +1163,8 @@ class StorageNode(ResurrectableProcess):
 
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
+        if self.process is not None or self.pid is not None:
+            raise RuntimeError(f"This storage node instance has already been started \n{self}")
         if fresh:
             logger.info("Generating wallet for storage node")
             if prepared_wallet:
