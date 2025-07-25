@@ -41,10 +41,11 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
+from tenacity import retry, stop_after_attempt, wait_fixed
+
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -70,13 +71,21 @@ class ObjectType(Enum):
 
 
 def terminate_process(process: Popen):
-    process.terminate()
+    with allure.step(f"Check if process is already terminated: {process.pid}"):
+        if process.poll() is not None:
+            return
+
+    with allure.step(f"Terminate process: {process.pid}"):
+        process.terminate()
     try:
         process.wait(timeout=60)
     except TimeoutExpired as e:
-        logger.info(f"Didn't manage to terminate process gracefully: {e}")
-        process.kill()
-        process.wait(timeout=60)
+        with allure.step(f"Didn't manage to terminate process gracefully: {e}, going to kill it."):
+            process.kill()
+            process.wait(timeout=60)
+            with allure.step("List available processes in the system"):
+                result = subprocess.run(["ps", "axo", "pid,ppid,comm"], capture_output=True, text=True, timeout=10)
+                allure.attach(result.stdout, "Available processes", allure.attachment_type.TEXT)
 
 
 class NeoFSEnv:
@@ -1144,6 +1153,7 @@ class StorageNode(ResurrectableProcess):
             - Pprof address: {self.pprof_address}
             - Prometheus address: {self.prometheus_address}
             - Attributes: {self.attrs}
+            - Process ID: {self.pid}
             - STDOUT: {self.stdout}
             - STDERR: {self.stderr}
         """
@@ -1153,6 +1163,8 @@ class StorageNode(ResurrectableProcess):
 
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
+        if self.process is not None or self.pid is not None:
+            raise RuntimeError(f"This storage node instance has already been started \n{self}")
         if fresh:
             logger.info("Generating wallet for storage node")
             if prepared_wallet:
@@ -1192,7 +1204,7 @@ class StorageNode(ResurrectableProcess):
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
     def stop(self):
-        with allure.step(f"Stop SN: {self.endpoint}; {self.stderr}"):
+        with allure.step(f"Stop SN: {self.pid=}; {self.endpoint=}; {self.stderr=}"):
             if self.process:
                 terminate_process(self.process)
                 self.process = None
