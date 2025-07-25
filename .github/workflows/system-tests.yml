@@ -105,8 +105,12 @@ env:
 jobs:
     run_system_tests:
         runs-on: ${{ matrix.runner }}
+        outputs:
+          shard_used: ${{ contains(toJson(matrix), '"shard"') }}
+          os_matrix: ${{ inputs.os }}
         strategy:
           fail-fast: false
+          max-parallel: 5
           matrix:
             include: ${{ fromJson(inputs.os) }}
         timeout-minutes: 500
@@ -381,16 +385,71 @@ jobs:
 
           - name: Run tests
             id: run_tests
+            if: '!contains(toJson(matrix), ''"shard"'')'
             timeout-minutes: 120
-            env:
-              ALLURE_RESULTS_DIR: ${{ env.ALLURE_RESULTS_DIR }}
             run: |
               source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
+          - name: Run sharded tests
+            if: contains(toJson(matrix), '"shard"')
+            id: run_sharded_tests
+            run: |
+              source venv.pytest/bin/activate
+              python run-tests.py ${{ inputs.tests_parallel_level }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}
+            working-directory: neofs-testcases
+
+          - name: Mark shard job result
+            if: always() && contains(toJson(matrix), '"shard"')
+            run: |
+              echo "${{ job.status }}" > result-${{ matrix.shard }}.txt
+
+          - name: Upload shard result
+            if: always() && contains(toJson(matrix), '"shard"')
+            uses: actions/upload-artifact@v4
+            with:
+              name: shard-result-${{ matrix.shard }}
+              path: result-${{ matrix.shard }}.txt
+
+          - name: Prepare Allure results from sharded run
+            if: always() && contains(toJson(matrix), '"shard"')
+            run: |
+              SHARDED_RESULTS_DIR="${{ github.workspace }}/allure-results-${{ matrix.runner }}-${{ matrix.shard }}"
+              echo "ALLURE_SHARDED_RESULTS_DIR=$SHARDED_RESULTS_DIR" >> "$GITHUB_ENV"
+          
+              mkdir -p "$SHARDED_RESULTS_DIR"
+              rsync -a "${{ env.ALLURE_RESULTS_DIR }}/" "$SHARDED_RESULTS_DIR/"
+          
+              ZIP_NAME="allure-results-${{ matrix.runner }}-${{ matrix.shard }}.zip"
+              cd "$SHARDED_RESULTS_DIR"
+              find . -type f -print | zip -@ "$ZIP_NAME"
+              find . -type f ! -name "$ZIP_NAME" -delete
+              cd -
+          
+              timestamp=$(date +%s)
+              echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+              echo "NEOFS_ATTRIBUTES=RunNumber=${{ github.run_number }}-$timestamp,Type=neofs_test_files" >> "$GITHUB_ENV"
+          
+          - name: Upload Allure results from sharded run
+            if: always() && contains(toJson(matrix), '"shard"')
+            uses: nspcc-dev/gh-push-to-neofs@v0.3.1
+            env:
+              NEOFS_ATTRIBUTES: ${{ env.NEOFS_ATTRIBUTES }}
+              ALLURE_SHARDED_RESULTS_DIR: ${{ env.ALLURE_SHARDED_RESULTS_DIR }}
+            with:
+              NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
+              NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
+              NEOFS_NETWORK_DOMAIN: ${{ inputs.neofs_network_domain }}
+              NEOFS_HTTP_GATE: ${{ inputs.neofs_http_gate }}
+              STORE_OBJECTS_CID: ${{ inputs.neofs_store_objects_cid }}
+              LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
+              PATH_TO_FILES_DIR: ${{ env.ALLURE_SHARDED_RESULTS_DIR }}
+              NEOFS_ATTRIBUTES: ${{ env.NEOFS_ATTRIBUTES }}
+            
+          
           - name: Publish to NeoFS
             id: put_report
-            if: always() && steps.prepare_venv.outcome == 'success'
+            if: always() && steps.prepare_venv.outcome == 'success' && !contains(toJson(matrix), 'shard')
             uses: nspcc-dev/gh-push-allure-report-to-neofs@master
             with:
               NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
@@ -408,7 +467,7 @@ jobs:
           - name: Post the link to the report
             id: post_report_link
             timeout-minutes: 60
-            if: always() && steps.put_report.outcome == 'success'
+            if: always() && steps.put_report.outcome == 'success' && !contains(toJson(matrix), 'shard')
             env:
               REPORT_NEOFS_URL: ${{ steps.put_report.outputs.REPORT_NEOFS_URL }}index.html
             uses: guibranco/github-status-action-v2@v1.1.13
@@ -418,3 +477,134 @@ jobs:
               state: ${{ steps.run_tests.outcome == 'success' && 'success' || 'failure' }}
               sha: ${{ github.event.pull_request.head.sha || github.sha }}
               target_url: ${{ env.REPORT_NEOFS_URL }}
+
+    merge_allure:
+      name: Merge Allure Results from sharded run
+      runs-on: ubuntu-latest
+      needs: run_system_tests
+      if: always()
+      steps:
+        - name: Download shard results
+          uses: actions/download-artifact@v4
+          with:
+            path: shard-results
+
+        - name: Install jq
+          run: sudo apt-get update && sudo apt-get install -y jq
+
+        - name: Determine final status from shard results
+          id: shard_status
+          run: |
+            set -e
+        
+            files=$(find shard-results -type f -name 'result-*.txt')
+        
+            if [ -z "$files" ]; then
+              echo "No shard result files found. Skipping report."
+              echo "no_shards=true" >> $GITHUB_OUTPUT
+              echo "state=skipped" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+        
+            failed=0
+            for file in $files; do
+              if [ "$(cat "$file")" != "success" ]; then
+                failed=1
+                break
+              fi
+            done
+        
+            echo "no_shards=false" >> $GITHUB_OUTPUT
+        
+            if [ "$failed" -eq 1 ]; then
+              echo "state=failure" >> $GITHUB_OUTPUT
+            else
+              echo "state=success" >> $GITHUB_OUTPUT
+            fi
+
+        - name: Download Allure artifacts from shards
+          if: steps.shard_status.outputs.no_shards == 'false'
+          run: |
+            set -e
+            mkdir -p merged-allure-results
+        
+            os_matrix_json='${{ needs.run_system_tests.outputs.os_matrix }}'
+            echo "Matrix: $os_matrix_json"
+        
+            shard_count=0
+        
+            echo "$os_matrix_json" | jq -c '.[]' | while read -r entry; do
+              runner=$(echo "$entry" | jq -r '.runner')
+              shard=$(echo "$entry" | jq -r '.shard // empty')
+        
+              if [ -n "$shard" ]; then
+                zip_name="allure-results-${runner}-${shard}.zip"
+                url="https://${{ inputs.neofs_http_gate }}/${{ inputs.neofs_store_objects_cid }}/allure-results-${runner}-${shard}/${zip_name}"
+                echo "Discovered URL: $url"
+        
+                wget "$url" -O "$zip_name"
+                unzip -o "$zip_name" -d merged-allure-results/
+                rm "$zip_name"
+        
+                shard_count=$((shard_count + 1))
+              fi
+            done
+        
+            if [ "$shard_count" -eq 0 ]; then
+              echo "No shard artifacts downloaded."
+            fi
+          shell: bash          
+          
+
+        - name: Check if any results exist
+          if: steps.shard_status.outputs.no_shards == 'false'
+          id: check_results
+          run: |
+            count=$(find merged-allure-results -type f -name '*.json' | wc -l)
+            echo "Found $count JSON files"
+            if [ "$count" -eq 0 ]; then
+              echo "no_shards=true" >> $GITHUB_OUTPUT
+            else
+              echo "no_shards=false" >> $GITHUB_OUTPUT
+            fi
+
+        - name: Exit early if no shard jobs ran
+          if: steps.shard_status.outputs.no_shards == 'false'
+          run: |
+            echo "No sharded results found. Skipping merge."
+            exit 0
+
+        - name: Combine Allure results
+          if: steps.shard_status.outputs.no_shards == 'false'
+          run: |
+            mkdir -p merged-allure
+            find merged-allure-results -type f -name '*.json' -exec cp {} merged-allure/ \;
+
+        - name: Publish to NeoFS
+          if: steps.shard_status.outputs.no_shards == 'false'
+          id: put_report
+          uses: nspcc-dev/gh-push-allure-report-to-neofs@master
+          with:
+            NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
+            NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
+            NEOFS_NETWORK_DOMAIN: ${{ inputs.neofs_network_domain }}
+            NEOFS_HTTP_GATE: ${{ inputs.neofs_http_gate }}
+            STORE_OBJECTS_CID: ${{ inputs.neofs_store_objects_cid }}
+            PR_LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
+            MASTER_LIFETIME: ${{ inputs.neofs_master_expiration_period }}
+            MANUAL_RUN_LIFETIME: ${{ inputs.neofs_manual_expiration_period }}
+            OTHER_LIFETIME: ${{ inputs.neofs_other_expiration_period }}
+            ALLURE_RESULTS_DIR: merged-allure
+            ALLURE_GENERATED_DIR: 'neofs-test-allure-generated-report'
+
+        - name: Post the link to the report
+          if: steps.shard_status.outputs.no_shards == 'false' && steps.put_report.outcome == 'success'
+          env:
+            REPORT_NEOFS_URL: ${{ steps.put_report.outputs.REPORT_NEOFS_URL }}index.html
+          uses: guibranco/github-status-action-v2@v1.1.13
+          with:
+            authToken: ${{ secrets.GITHUB_TOKEN }}
+            context: 'Test report MacOS'
+            state: ${{ steps.shard_status.outputs.state }}
+            sha: ${{ github.event.pull_request.head.sha || github.sha }}
+            target_url: ${{ env.REPORT_NEOFS_URL }}
