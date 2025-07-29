@@ -1,7 +1,12 @@
+import hashlib
 import re
 import time
+from typing import Callable, Tuple
 
 import allure
+from ecdsa import SigningKey
+from ecdsa.ellipticcurve import Point
+from ecdsa.rfc6979 import generate_k
 from helpers.common import STORAGE_GC_TIME
 
 
@@ -84,3 +89,39 @@ def parse_node_height(stdout: str) -> tuple[float, float]:
     block_height = float(lines[0].split(": ")[1].strip())
     state = float(lines[1].split(": ")[1].strip())
     return block_height, state
+
+
+def sign_ecdsa(priv_key: SigningKey, hash_bytes: bytes, hashfunc: Callable[[], "hashlib._Hash"]) -> Tuple[int, int]:
+    curve = priv_key.curve
+    order = curve.order
+    secexp = priv_key.privkey.secret_multiplier
+
+    e = int.from_bytes(hash_bytes, byteorder="big")
+
+    def attempt_sign():
+        k = generate_k(order, secexp, hashfunc, hash_bytes)
+        p: Point = curve.generator * k
+        r = p.x() % order
+        if r == 0:
+            return None
+
+        inv_k = pow(k, -1, order)
+        s = (inv_k * (e + r * secexp)) % order
+        if s == 0:
+            return None
+
+        return r, s
+
+    signature = attempt_sign()
+    if signature is None:
+        raise ValueError("Failed to generate valid signature")
+
+    return signature
+
+
+def get_signature_slice(curve, r: int, s: int) -> bytes:
+    p_bitlen = curve.curve.p().bit_length()
+    byte_len = p_bitlen // 8
+    r_bytes = r.to_bytes(byte_len, byteorder="big")
+    s_bytes = s.to_bytes(byte_len, byteorder="big")
+    return r_bytes + s_bytes
