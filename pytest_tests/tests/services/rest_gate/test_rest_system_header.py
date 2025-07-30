@@ -58,9 +58,7 @@ class Test_rest_system_header(TestNeofsRestBase):
             endpoint=self.neofs_env.sn_rpc,
             shell=self.shell,
         )
-        epoch_duration_in_blocks = net_info["epoch_duration"]
-        time_per_block = net_info["time_per_block"]
-        return int(epoch_duration_in_blocks * time_per_block)
+        return int(net_info["epoch_duration"])
 
     @allure.title("Return N-epoch count in minutes")
     def epoch_count_into_mins(self, epoch_duration: int, epoch: int) -> str:
