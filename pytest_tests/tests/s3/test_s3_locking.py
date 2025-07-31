@@ -216,6 +216,8 @@ class TestS3Locking(TestNeofsS3Base):
                 with pytest.raises(Exception):
                     s3_object.put_object_legal_hold(self.s3_client, bucket, file_name, "OFF", version_id)
 
+            time.sleep(1)
+
 
 class TestS3LockingBucket(TestNeofsS3Base):
     @allure.title("Test S3: Bucket Lock")
