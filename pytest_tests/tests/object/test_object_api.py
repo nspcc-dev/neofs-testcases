@@ -35,6 +35,7 @@ from helpers.neofs_verbs import (
     get_range,
     get_range_hash,
     head_object,
+    put_object,
     put_object_to_random_node,
     search_object,
 )
@@ -45,6 +46,7 @@ from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
 
@@ -972,3 +974,33 @@ class TestObjectApi(TestNeofsBase):
             assert head_info["header"]["attributes"].get(key_to_check) == str(val_to_check), (
                 f"Value {val_to_check} is equal"
             )
+
+    @retry(wait=wait_fixed(20), stop=stop_after_attempt(20), reraise=True)
+    def wait_until_object_is_completely_deleted(self, cid: str, oid: str):
+        for sn in self.neofs_env.storage_nodes:
+            response = self.neofs_env.neofs_cli(sn.cli_config).control.object_status(
+                address=sn.wallet.address,
+                endpoint=sn.control_endpoint,
+                object=f"{cid}/{oid}",
+                wallet=sn.wallet.path,
+            )
+            assert "empty response" in response.stdout, "Object is not deleted by GC"
+
+    @pytest.mark.parametrize(
+        "object_size",
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_object_delete_by_gc(self, default_wallet: NodeWallet, request: FixtureRequest, object_size: str):
+        allure.dynamic.title(f"Verify that an object of {object_size} is deleted entirely by GC")
+
+        wallet = default_wallet
+        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc)
+
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
+        oid = put_object(default_wallet.path, file_path, cid, self.neofs_env.shell, self.neofs_env.sn_rpc)
+        head_object(default_wallet.path, cid, oid, self.neofs_env.shell, self.neofs_env.sn_rpc)
+        delete_object(default_wallet.path, cid, oid, shell=self.neofs_env.shell, endpoint=self.neofs_env.sn_rpc)
+        self.wait_until_object_is_completely_deleted(cid, oid)
