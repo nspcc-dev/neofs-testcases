@@ -45,26 +45,20 @@ metadata:
 # Storage engine configuration
 storage:    
   shards:
+    {%- for shard in shards %}
     - writecache:
         enabled: {{ writecache }}
-        path: {{ shards[0].wc_path }}  # Write-cache root directory
+        path: {{ shard.wc_path }}  # Write-cache root directory
 
       metabase:
-        path: {{ shards[0].metabase_path }}  # Path to the metabase
+        path: {{ shard.metabase_path }}  # Path to the metabase
 
       blobstor:
         type: fstree
-        path: {{ shards[0].fstree_path }}  # FSTree root directory
+        path: {{ shard.fstree_path }}  # FSTree root directory
         depth: 2
-
-    - writecache:
-        enabled: {{ writecache }}
-        path: {{ shards[1].wc_path }}  # Write-cache root directory
-
-      metabase:
-        path: {{ shards[1].metabase_path }}  # Path to the metabase
-
-      blobstor:
-        type: fstree
-        path: {{ shards[1].fstree_path }}  # FSTree root directory
-        depth: 2
+      
+      gc: 
+        remover_batch_size: {{ shard.gc_remover_batch_size }}
+        remover_sleep_interval: {{ shard.gc_sleep_interval }}
+    {%- endfor %}
