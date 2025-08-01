@@ -414,7 +414,7 @@ jobs:
           - name: Prepare Allure results from sharded run
             if: always() && contains(toJson(matrix), '"shard"')
             run: |
-              SHARDED_RESULTS_DIR="${{ github.workspace }}/allure-results-${{ matrix.runner }}-${{ matrix.shard }}"
+              SHARDED_RESULTS_DIR="${{ github.workspace }}/allure-results-${{ matrix.runner }}-${{ github.run_number }}-${{ matrix.shard }}"
               echo "ALLURE_SHARDED_RESULTS_DIR=$SHARDED_RESULTS_DIR" >> "$GITHUB_ENV"
           
               mkdir -p "$SHARDED_RESULTS_DIR"
