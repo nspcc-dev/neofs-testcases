@@ -214,6 +214,9 @@ class NeoFSEnv:
         node_attrs: Optional[dict] = None,
         writecache=False,
         fschain_endpoints: Optional[list[str]] = None,
+        shards_count=2,
+        gc_remover_batch_size=200,
+        gc_sleep_interval="5m",
     ):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
@@ -227,6 +230,9 @@ class NeoFSEnv:
                 writecache=writecache,
                 node_attrs=node_attrs_list,
                 fschain_endpoints=fschain_endpoints,
+                shards_count=shards_count,
+                gc_remover_batch_size=gc_remover_batch_size,
+                gc_sleep_interval=gc_sleep_interval,
             )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
@@ -658,6 +664,9 @@ class NeoFSEnv:
         chain_meta_data=False,
         sn_validator_url=None,
         fschain_endpoints: Optional[list[str]] = None,
+        shards_count=2,
+        gc_remover_batch_size=200,
+        gc_sleep_interval="5m",
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -685,6 +694,9 @@ class NeoFSEnv:
                     node_attrs=adjusted_node_attrs,
                     writecache=writecache,
                     fschain_endpoints=fschain_endpoints,
+                    shards_count=shards_count,
+                    gc_remover_batch_size=gc_remover_batch_size,
+                    gc_sleep_interval=gc_sleep_interval,
                 )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
@@ -1193,11 +1205,13 @@ class InnerRing(ResurrectableProcess):
 
 
 class Shard:
-    def __init__(self, neofs_env: NeoFSEnv, sn_dir: str):
+    def __init__(self, neofs_env: NeoFSEnv, sn_dir: str, gc_remover_batch_size=200, gc_sleep_interval="5m"):
         self.metabase_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_metabase")
         self.fstree_path = neofs_env._generate_temp_dir(prefix="shards/shard_fstree")
         self.pilorama_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_pilorama")
         self.wc_path = neofs_env._generate_temp_dir(prefix="shards/shard_wc")
+        self.gc_remover_batch_size = gc_remover_batch_size
+        self.gc_sleep_interval = gc_sleep_interval
 
 
 class StorageNode(ResurrectableProcess):
@@ -1209,6 +1223,9 @@ class StorageNode(ResurrectableProcess):
         node_attrs: Optional[list] = None,
         attrs: Optional[dict] = None,
         fschain_endpoints: Optional[list] = None,
+        shards_count=2,
+        gc_remover_batch_size=200,
+        gc_sleep_interval="5m",
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
@@ -1225,7 +1242,12 @@ class StorageNode(ResurrectableProcess):
             self.neofs_env._generate_temp_file(self.sn_dir, extension="yml", prefix=f"sn_{sn_number}_config"),
         )
         self.state_file = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{sn_number}_state")
-        self.shards = [Shard(neofs_env, self.sn_dir), Shard(neofs_env, self.sn_dir)]
+        self.shards = [
+            Shard(
+                neofs_env, self.sn_dir, gc_remover_batch_size=gc_remover_batch_size, gc_sleep_interval=gc_sleep_interval
+            )
+            for _ in range(shards_count)
+        ]
         self.endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.control_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
