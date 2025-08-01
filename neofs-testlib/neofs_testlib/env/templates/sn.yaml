@@ -56,6 +56,10 @@ storage:
         type: fstree
         path: {{ shards[0].fstree_path }}  # FSTree root directory
         depth: 2
+      
+      gc: 
+        remover_batch_size: {{ shards[0].gc_remover_batch_size }}
+        remover_sleep_interval: {{ shards[0].gc_sleep_interval }}
 
     - writecache:
         enabled: {{ writecache }}
@@ -68,3 +72,7 @@ storage:
         type: fstree
         path: {{ shards[1].fstree_path }}  # FSTree root directory
         depth: 2
+
+      gc: 
+        remover_batch_size: {{ shards[1].gc_remover_batch_size }}
+        remover_sleep_interval: {{ shards[1].gc_sleep_interval }}
