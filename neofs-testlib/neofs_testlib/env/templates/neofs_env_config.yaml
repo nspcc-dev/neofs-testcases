@@ -53,3 +53,6 @@ binaries:
         repo: 'minio/warp'
         version: 'v1.0.2'
         file: '{{ warp_binary_name }}'
+
+    awscli:
+        version: '2.22.35'

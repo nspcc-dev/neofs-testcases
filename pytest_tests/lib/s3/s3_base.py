@@ -16,7 +16,7 @@ import pytest
 import urllib3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from helpers.aws_cli_client import AwsCliClient
+from helpers.aws_cli_client import AwsCliClient, aws_binary_path
 from helpers.cli_helpers import _cmd_run, _configure_aws_cli
 from neofs_env.neofs_env_test_base import NeofsEnvTestBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -220,9 +220,9 @@ def configure_cli_client(access_key_id: str, secret_access_key: str, s3gate_endp
             try:
                 profile = _generate_random_profile()
                 client = AwsCliClient(s3gate_endpoint, profile)
-                _configure_aws_cli(f"aws configure --profile {profile}", access_key_id, secret_access_key)
-                _cmd_run(f"aws configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
-                _cmd_run(f"aws configure set retry_mode {RETRY_MODE}")
+                _configure_aws_cli(f"{aws_binary_path} configure --profile {profile}", access_key_id, secret_access_key)
+                _cmd_run(f"{aws_binary_path} configure set max_attempts {MAX_REQUEST_ATTEMPTS}")
+                _cmd_run(f"{aws_binary_path} configure set retry_mode {RETRY_MODE}")
             finally:
                 fcntl.flock(lock_file, fcntl.LOCK_UN)
         return client
