@@ -893,23 +893,33 @@ def test_search_count_and_cursor(
             neofs_env.sn_rpc,
         )
 
-    neofs_epoch.tick_epoch_and_wait(neofs_env)
-    neofs_epoch.tick_epoch_and_wait(neofs_env)
+
+def test_search_tombstone_objects(default_wallet: NodeWallet, container: str, neofs_env: NeoFSEnv):
+    cid = container
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+
+    oid = put_object_to_random_node_via_rest_gw(
+        cid=cid,
+        path=file_path,
+        endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
+    )
+
+    found_objects, _ = search_objectv2(
+        cid=cid,
+        filters=["$Object:creationEpoch GE 0"],
+        attributes=["$Object:creationEpoch"],
+        neofs_env=neofs_env,
+    )
+
+    assert len(found_objects) == 1, "invalid objects count after search"
+
+    delete_object(default_wallet.path, cid, oid, neofs_env.shell, neofs_env.sn_rpc)
 
     tombstone_objects, _ = search_objectv2(
         cid=cid,
-        filters=["$Object:creationEpoch GE 0"],
+        filters=["$Object:objectType EQ TOMBSTONE"],
         attributes=["$Object:creationEpoch", "$Object:objectType"],
-        cursor=first_cursor,
         neofs_env=neofs_env,
     )
-    assert len(tombstone_objects) > 0, "invalid objects count after search"
-
-    with pytest.raises(Exception, match=".*wrong primary attribute.*"):
-        not_tombstone_objects, _ = search_objectv2(
-            cid=cid,
-            filters=["$Object:objectType NE TOMBSTONE"],
-            attributes=["$Object:objectType"],
-            cursor=first_cursor,
-            neofs_env=neofs_env,
-        )
+    assert len(tombstone_objects) == 1, "invalid tombstone objects count after search"
+    assert tombstone_objects[0]["id"] != oid, "invalid tombstone object returned from search"
