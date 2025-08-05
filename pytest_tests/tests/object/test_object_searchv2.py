@@ -1481,19 +1481,61 @@ def test_search_count_and_cursor(
             neofs_env.sn_rpc,
         )
 
-    neofs_epoch.tick_epoch_and_wait(neofs_env)
-    neofs_epoch.tick_epoch_and_wait(neofs_env)
+
+@pytest.mark.parametrize(
+    "neofs_env",
+    [
+        {"chain_meta_data": False},
+        {"chain_meta_data": True},
+    ],
+    ids=["chain_meta_data=False", "chain_meta_data=True"],
+    indirect=True,
+)
+@pytest.mark.simple
+def test_search_tombstone_objects(
+    default_wallet: NodeWallet,
+    container: str,
+    neofs_env: NeoFSEnv,
+):
+    cid = container
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+    oid = put_object_to_random_node(
+        default_wallet.path,
+        file_path,
+        cid,
+        shell=neofs_env.shell,
+        neofs_env=neofs_env,
+    )
+
+    found_objects, _ = search_objectv2(
+        rpc_endpoint=neofs_env.sn_rpc,
+        wallet=default_wallet.path,
+        cid=cid,
+        shell=neofs_env.shell,
+        filters=["$Object:creationEpoch GE 0"],
+        attributes=["$Object:creationEpoch"],
+    )
+
+    assert len(found_objects) == 1, "invalid objects count after search"
+
+    delete_object(
+        default_wallet.path,
+        cid,
+        oid,
+        neofs_env.shell,
+        neofs_env.sn_rpc,
+    )
 
     tombstone_objects, _ = search_objectv2(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
         shell=neofs_env.shell,
-        filters=["$Object:creationEpoch GE 0"],
-        attributes=["$Object:creationEpoch", "$Object:objectType"],
-        cursor=first_cursor,
+        filters=["$Object:objectType EQ TOMBSTONE"],
+        attributes=["$Object:objectType"],
     )
-    assert len(tombstone_objects) > 0, "invalid objects count after search"
+    assert len(tombstone_objects) == 1, "invalid tombstone objects count after search"
+    assert tombstone_objects[0]["id"] != oid, "invalid tombstone object returned from search"
 
     with allure.step("Verify --root doesn't return tombstones"):
         found_objects, _ = search_objectv2(
@@ -1506,18 +1548,7 @@ def test_search_count_and_cursor(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell, phy=True
         )
 
-        assert len(tombstone_objects) > 0, "invalid objects count after search"
-
-    with pytest.raises(Exception, match=".*wrong primary attribute.*"):
-        not_tombstone_objects, _ = search_objectv2(
-            rpc_endpoint=neofs_env.sn_rpc,
-            wallet=default_wallet.path,
-            cid=cid,
-            shell=neofs_env.shell,
-            filters=["$Object:objectType NE TOMBSTONE"],
-            attributes=["$Object:objectType"],
-            cursor=first_cursor,
-        )
+        assert len(tombstone_objects) == 1, "invalid tombstone objects count after search"
 
 
 @pytest.mark.parametrize(
