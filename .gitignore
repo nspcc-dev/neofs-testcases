@@ -42,3 +42,5 @@ neofs-contract
 neofs_env_*.zip
 temp_files.zip
 test-run-*/
+aws-cli-local/*
+S3_CONFIG_LOCK
