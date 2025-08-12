@@ -65,3 +65,25 @@ class TestObjectApiLifetime(TestNeofsBase):
         with allure.step("Check object deleted because it expires-on epoch"):
             with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
                 get_object_from_random_node(wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env)
+
+    def test_put_of_already_expired_object(self, default_wallet: NodeWallet):
+        """
+        Test put of an object with expired epoch.
+        """
+
+        wallet = default_wallet
+        endpoint = self.neofs_env.sn_rpc
+        cid = create_container(wallet.path, self.shell, endpoint)
+
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        current_epoch = self.ensure_fresh_epoch()
+
+        with pytest.raises(Exception, match=".*object has expired.*"):
+            put_object_to_random_node(
+                wallet.path,
+                file_path,
+                cid,
+                self.shell,
+                neofs_env=self.neofs_env,
+                expire_at=current_epoch - 1,
+            )
