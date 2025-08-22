@@ -14,10 +14,12 @@ from neofs_testlib.shell import Shell
 from neofs_testlib.utils.converters import load_wallet
 
 
-def generate_credentials(gw_endpoint: str, wallet: NodeWallet, verb="PUT", wallet_connect=False) -> tuple:
+def generate_credentials(
+    gw_endpoint: str, wallet: NodeWallet, verb="PUT", wallet_connect=False, bearer_for_all_users=None
+) -> tuple:
     neo3_wallet: Wallet = load_wallet(wallet.path, wallet.password)
     acc = neo3_wallet.accounts[0]
-    token = get_container_token(gw_endpoint, acc.address, verb=verb)
+    token = get_container_token(gw_endpoint, acc.address, verb=verb, bearer_for_all_users=bearer_for_all_users)
     private_key = acc.private_key_from_nep2(
         acc.encrypted_key.decode("utf-8"), wallet.password, _scrypt_parameters=acc.scrypt_parameters
     )

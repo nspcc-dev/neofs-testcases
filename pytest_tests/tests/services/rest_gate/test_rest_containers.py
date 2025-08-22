@@ -28,10 +28,13 @@ class TestRestContainers(TestNeofsRestBase):
 
     @pytest.mark.parametrize("wallet_connect", [True, False])
     @pytest.mark.parametrize("new_api", [True, False])
+    @pytest.mark.parametrize("bearer_for_all_users", [True, False, None])
     @pytest.mark.simple
-    def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool, new_api: bool):
+    def test_rest_gw_containers_sanity(
+        self, gw_endpoint: str, wallet_connect: bool, new_api: bool, bearer_for_all_users: bool
+    ):
         session_token, signature, pub_key = generate_credentials(
-            gw_endpoint, self.wallet, wallet_connect=wallet_connect
+            gw_endpoint, self.wallet, wallet_connect=wallet_connect, bearer_for_all_users=bearer_for_all_users
         )
         cid = create_container(
             gw_endpoint,

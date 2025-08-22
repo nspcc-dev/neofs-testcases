@@ -625,20 +625,27 @@ def create_container(
 
 @allure.step("Get token for container operations via REST GW")
 def get_container_token(
-    endpoint: str, bearer_owner_id: str, bearer_lifetime: int = 100, bearer_for_all_users: bool = True, verb="PUT"
+    endpoint: str,
+    bearer_owner_id: str,
+    bearer_lifetime: int = 100,
+    verb="PUT",
+    bearer_for_all_users: bool = None,
 ) -> str:
     request = f"{endpoint}/auth"
     body = [
         {"container": {"verb": verb}, "name": str(uuid.uuid4())},
     ]
+    headers = {
+        "X-Bearer-Owner-Id": bearer_owner_id,
+        "X-Bearer-Lifetime": str(bearer_lifetime),
+    }
+    if bearer_for_all_users is not None:
+        headers["X-Bearer-For-All-Users"] = str(bearer_for_all_users)
+
     resp = requests.post(
         request,
         json=body,
-        headers={
-            "X-Bearer-Owner-Id": bearer_owner_id,
-            "X-Bearer-Lifetime": str(bearer_lifetime),
-            "X-Bearer-For-All-Users": str(bearer_for_all_users),
-        },
+        headers=headers,
         timeout=60,
     )
 
