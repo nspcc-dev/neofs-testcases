@@ -103,6 +103,7 @@ class TestS3Locking(TestNeofsS3Base):
                     "RetainUntilDate": date_obj,
                 }
                 s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+                time.sleep(1)
                 assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
 
             with allure.step(f"Try to change retention period {retention_period_1}min to object {file_name}"):
@@ -113,6 +114,7 @@ class TestS3Locking(TestNeofsS3Base):
                 }
                 with pytest.raises(Exception):
                     s3_object.put_object_retention(self.s3_client, bucket, file_name, retention, version_id)
+                    time.sleep(1)
 
     @allure.title("Test S3: Checking the ability to change retention mode GOVERNANCE")
     @pytest.mark.simple
