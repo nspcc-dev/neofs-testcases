@@ -902,6 +902,44 @@ def test_search_by_split_attributes(
                 )
 
 
+@pytest.mark.complex
+def test_split_object_boundaries(
+    default_wallet: NodeWallet,
+    neofs_env: NeoFSEnv,
+):
+    boundary_sizes_and_expected_number_of_objects = [
+        (neofs_env.max_object_size - 1, 1),
+        (neofs_env.max_object_size, 1),
+        (neofs_env.max_object_size + 1, 3),
+    ]
+    for object_size, resulted_number_of_objects in boundary_sizes_and_expected_number_of_objects:
+        cid = create_container(
+            default_wallet.path,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+            rule="REP 1",
+        )
+        file_path = generate_file(object_size)
+        put_object_to_random_node(
+            default_wallet.path,
+            file_path,
+            cid,
+            shell=neofs_env.shell,
+            neofs_env=neofs_env,
+        )
+        found_objects, _ = search_objectv2(
+            rpc_endpoint=neofs_env.sn_rpc,
+            wallet=default_wallet.path,
+            cid=cid,
+            shell=neofs_env.shell,
+            phy=True,
+        )
+
+        assert len(found_objects) == resulted_number_of_objects, (
+            f"Expected to see {resulted_number_of_objects} number of objects, got: {len(found_objects)}"
+        )
+
+
 @pytest.mark.parametrize(
     "neofs_env",
     [
