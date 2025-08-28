@@ -28,6 +28,7 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     new_upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -157,9 +158,8 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     assert after_metrics_sn["neofs_node_state_health"][0]["value"] == 2.0, "invalid value for neofs_node_state_health"
     assert after_metrics_ir["neofs_ir_state_health"][0]["value"] == 2.0, "invalid value for neofs_ir_state_health"
 
-    for metric in (
+    metrics_to_verify = [
         "neofs_node_engine_put_time_count",
-        "neofs_node_engine_get_time_count",
         "neofs_node_engine_search_time_count",
         "neofs_node_object_get_req_count",
         "neofs_node_object_get_req_count_success",
@@ -178,16 +178,24 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_range_hash_req_count_success",
         "neofs_node_object_range_req_count",
         "neofs_node_object_range_req_count_success",
+    ]
+
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) > parse_version(
+        "0.48.3"
     ):
+        metrics_to_verify.append("neofs_node_engine_get_stream_time_count")
+    else:
+        metrics_to_verify.append("neofs_node_engine_get_time_count")
+
+    for metric in metrics_to_verify:
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
 
     assert after_metrics_sn["neofs_node_engine_range_time_count"][0]["value"] == 2, (
         "invalid value for neofs_node_engine_range_time_count"
     )
 
-    for metric in (
+    metrics_to_verify = [
         "neofs_node_engine_put_time_bucket",
-        "neofs_node_engine_get_time_bucket",
         "neofs_node_engine_range_time_bucket",
         "neofs_node_engine_search_time_bucket",
         "neofs_node_object_rpc_get_time_bucket",
@@ -199,7 +207,16 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_rpc_range_hash_time_bucket",
         "neofs_node_object_rpc_put_time_bucket",
         "neofs_node_engine_list_objects_time_bucket",
+    ]
+
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) > parse_version(
+        "0.48.3"
     ):
+        metrics_to_verify.append("neofs_node_engine_get_stream_time_bucket")
+    else:
+        metrics_to_verify.append("neofs_node_engine_get_time_bucket")
+
+    for metric in metrics_to_verify:
         assert len([m for _, m in enumerate(after_metrics_sn[metric]) if m["value"] >= 1]) >= 1, (
             f"invalid value for {metric}"
         )
