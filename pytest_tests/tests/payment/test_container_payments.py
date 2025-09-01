@@ -137,7 +137,8 @@ class TestContainerPayments:
             single_node_gain_per_epoch = int((objects_count * MAX_OBJECT_SIZE) / GB)
             assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 1, "Invalid user wallet balance"
 
-        with allure.step("Wait for a new epoch to arrive"):
+        with allure.step("Wait for a couple of epochs to arrive"):
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
 
         with allure.step("Ensure the storage node balance is debited only once per epoch"):
