@@ -7,7 +7,6 @@ import grpc
 from ecdsa import NIST256p, SigningKey
 from helpers.tzhash import TZHash
 from helpers.utility import get_signature_slice, sign_ecdsa
-from neo3.core import cryptography
 from neo3.wallet.wallet import Wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.protobuf.generated.object import service_pb2 as object_service_pb2
@@ -62,12 +61,12 @@ def create_verification_header(
 
 def create_put_request(
     object_id: refs_types_pb2.ObjectID,
-    signature: refs_types_pb2.Signature,
     header: object_types_pb2.Header,
     version: refs_types_pb2.Version,
     test_payload: bytes,
     wallet: NodeWallet,
     session_token: session_types_pb2.SessionToken,
+    object_type: object_types_pb2.ObjectType,
     is_init=True,
 ):
     public_key, private_key = get_wallet_keys(wallet)
@@ -76,11 +75,13 @@ def create_put_request(
 
     if is_init:
         request.body.init.object_id.CopyFrom(object_id)
-        if signature:
-            request.body.init.signature.CopyFrom(signature)
         request.body.init.header.CopyFrom(header)
     else:
         request.body.chunk = test_payload
+
+    if object_type != object_types_pb2.ObjectType.TOMBSTONE and object_id:
+        signature = create_ecdsa_signature(object_id.SerializeToString(deterministic=True), public_key, private_key)
+        request.body.init.signature.CopyFrom(signature)
 
     meta_header = session_types_pb2.RequestMetaHeader()
     meta_header.version.CopyFrom(version)
@@ -187,24 +188,26 @@ def get_put_object_request_header(
     object_type: object_types_pb2.ObjectType,
     test_payload: bytes,
     oid: str = None,
+    homo_hash: bool = True,
 ) -> object_types_pb2.Header:
     payload_checksum = refs_types_pb2.Checksum()
     payload_checksum.type = refs_types_pb2.ChecksumType.SHA256
     payload_checksum.sum = hashlib.sha256(test_payload).digest()
-
-    homomorphic_checksum = refs_types_pb2.Checksum()
-    homomorphic_checksum.type = refs_types_pb2.ChecksumType.TZ
-    homomorphic_checksum.sum = TZHash.hash_data(test_payload)
 
     header = object_types_pb2.Header()
     header.version.CopyFrom(version)
     header.container_id.CopyFrom(container_id)
     header.owner_id.CopyFrom(owner_id)
     header.creation_epoch = 1
-    header.payload_length = 0
+    header.payload_length = len(test_payload)
     header.payload_hash.CopyFrom(payload_checksum)
     header.object_type = object_type
-    header.homomorphic_hash.CopyFrom(homomorphic_checksum)
+
+    if homo_hash:
+        homomorphic_checksum = refs_types_pb2.Checksum()
+        homomorphic_checksum.type = refs_types_pb2.ChecksumType.TZ
+        homomorphic_checksum.sum = TZHash.hash_data(test_payload)
+        header.homomorphic_hash.CopyFrom(homomorphic_checksum)
 
     if object_type == object_types_pb2.ObjectType.TOMBSTONE:
         associate_attribute = object_types_pb2.Header.Attribute()
@@ -251,6 +254,7 @@ def put_object(
     payload: bytes,
     cid: str,
     oid: str = None,
+    homo_hash: bool = True,
 ) -> object_service_pb2.PutResponse:
     with allure.step("Create put request for an object"):
         owner_id = refs_types_pb2.OwnerID()
@@ -265,7 +269,9 @@ def put_object(
 
         session_id, session_key = get_session_token(wallet, neofs_env.storage_nodes[0].endpoint)
 
-        header = get_put_object_request_header(owner_id, version, container_id, object_type, payload, oid)
+        header = get_put_object_request_header(
+            owner_id, version, container_id, object_type, payload, oid, homo_hash=homo_hash
+        )
 
         object_id = refs_types_pb2.ObjectID()
         object_id.value = hashlib.sha256(header.SerializeToString(deterministic=True)).digest()
@@ -274,20 +280,14 @@ def put_object(
             session_id, session_key, wallet, owner_id, container_id, object_id, object_type
         )
 
-        signature = None
-        if object_type != object_types_pb2.ObjectType.TOMBSTONE:
-            public_key, private_key = get_wallet_keys(wallet)
-            signature = refs_types_pb2.Signature()
-            signature.key = public_key
-            signature.sign = cryptography.sign(payload, private_key, hash_func=hashlib.sha512)
-            signature.scheme = refs_types_pb2.SignatureScheme.ECDSA_SHA512
-
         init_request = create_put_request(
-            object_id, signature, header, version, payload, wallet, session_token, is_init=True
+            object_id, header, version, payload, wallet, session_token, object_type, is_init=True
         )
         allure.attach(str(init_request), "Init Request", allure.attachment_type.TEXT)
 
-        chunk_request = create_put_request(None, None, None, version, payload, wallet, session_token, is_init=False)
+        chunk_request = create_put_request(
+            None, None, version, payload, wallet, session_token, object_type, is_init=False
+        )
 
         allure.attach(str(chunk_request), "Chunk Request", allure.attachment_type.TEXT)
 
