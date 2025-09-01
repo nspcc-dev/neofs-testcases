@@ -7,7 +7,6 @@ import grpc
 from ecdsa import NIST256p, SigningKey
 from helpers.tzhash import TZHash
 from helpers.utility import get_signature_slice, sign_ecdsa
-from neo3.core import cryptography
 from neo3.wallet.wallet import Wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.protobuf.generated.object import service_pb2 as object_service_pb2
@@ -62,13 +61,15 @@ def create_verification_header(
 
 def create_put_request(
     object_id: refs_types_pb2.ObjectID,
-    signature: refs_types_pb2.Signature,
     header: object_types_pb2.Header,
     version: refs_types_pb2.Version,
     test_payload: bytes,
     wallet: NodeWallet,
     session_token: session_types_pb2.SessionToken,
+    object_type: object_types_pb2.ObjectType,
     is_init=True,
+    epoch=1,
+    ttl=1,
 ):
     public_key, private_key = get_wallet_keys(wallet)
 
@@ -76,16 +77,18 @@ def create_put_request(
 
     if is_init:
         request.body.init.object_id.CopyFrom(object_id)
-        if signature:
-            request.body.init.signature.CopyFrom(signature)
         request.body.init.header.CopyFrom(header)
     else:
         request.body.chunk = test_payload
 
+    if object_type != object_types_pb2.ObjectType.TOMBSTONE and object_id:
+        signature = create_ecdsa_signature(object_id.SerializeToString(deterministic=True), public_key, private_key)
+        request.body.init.signature.CopyFrom(signature)
+
     meta_header = session_types_pb2.RequestMetaHeader()
     meta_header.version.CopyFrom(version)
-    meta_header.epoch = 1
-    meta_header.ttl = 1
+    meta_header.epoch = epoch
+    meta_header.ttl = ttl
     meta_header.session_token.CopyFrom(session_token)
     request.meta_header.CopyFrom(meta_header)
 
@@ -107,23 +110,23 @@ def init_session_token_for_object_put(
     owner_id: refs_types_pb2.OwnerID,
     cid: refs_types_pb2.ContainerID,
     oid: refs_types_pb2.ObjectID,
-    object_type: object_types_pb2.ObjectType,
+    object_context_verb: session_types_pb2.ObjectSessionContext,
+    lifetime_exp=1000,
+    lifetime_nbf=1,
+    lifetime_iat=1,
 ) -> session_types_pb2.SessionToken:
     public_key, private_key = get_wallet_keys(wallet)
 
     session_token = session_types_pb2.SessionToken()
     session_token.body.id = session_id
     session_token.body.owner_id.CopyFrom(owner_id)
-    session_token.body.lifetime.exp = 100
-    session_token.body.lifetime.nbf = 1
-    session_token.body.lifetime.iat = 1
+    session_token.body.lifetime.exp = lifetime_exp
+    session_token.body.lifetime.nbf = lifetime_nbf
+    session_token.body.lifetime.iat = lifetime_iat
     session_token.body.session_key = session_key
 
     object_context = session_types_pb2.ObjectSessionContext()
-    if object_type == object_types_pb2.ObjectType.TOMBSTONE:
-        object_context.verb = session_types_pb2.ObjectSessionContext.DELETE
-    else:
-        object_context.verb = session_types_pb2.ObjectSessionContext.PUT
+    object_context.verb = object_context_verb
     target = session_types_pb2.ObjectSessionContext.Target()
     target.container.CopyFrom(cid)
     target.objects.append(oid)
@@ -137,7 +140,7 @@ def init_session_token_for_object_put(
 
 
 @allure.step("Create session via SessionService")
-def get_session_token(wallet: NodeWallet, endpoint: str) -> tuple[bytes, bytes]:
+def get_session_token(wallet: NodeWallet, endpoint: str, epoch=1, expiration=1000) -> tuple[bytes, bytes]:
     public_key, private_key = get_wallet_keys(wallet)
 
     session_create_request = session_service_pb2.CreateRequest()
@@ -146,12 +149,12 @@ def get_session_token(wallet: NodeWallet, endpoint: str) -> tuple[bytes, bytes]:
     owner_id.value = base58.b58decode(wallet.address)
     session_create_request.body.owner_id.CopyFrom(owner_id)
 
-    session_create_request.body.expiration = 100
+    session_create_request.body.expiration = expiration
 
     meta_header = session_types_pb2.RequestMetaHeader()
     meta_header.version.major = 2
     meta_header.version.minor = 18
-    meta_header.epoch = 1
+    meta_header.epoch = epoch
     session_create_request.meta_header.CopyFrom(meta_header)
 
     verify_header = create_verification_header(
@@ -187,24 +190,28 @@ def get_put_object_request_header(
     object_type: object_types_pb2.ObjectType,
     test_payload: bytes,
     oid: str = None,
+    homo_hash: bool = True,
+    creation_epoch=1,
+    expiration_epoch="1000",
 ) -> object_types_pb2.Header:
     payload_checksum = refs_types_pb2.Checksum()
     payload_checksum.type = refs_types_pb2.ChecksumType.SHA256
     payload_checksum.sum = hashlib.sha256(test_payload).digest()
 
-    homomorphic_checksum = refs_types_pb2.Checksum()
-    homomorphic_checksum.type = refs_types_pb2.ChecksumType.TZ
-    homomorphic_checksum.sum = TZHash.hash_data(test_payload)
-
     header = object_types_pb2.Header()
     header.version.CopyFrom(version)
     header.container_id.CopyFrom(container_id)
     header.owner_id.CopyFrom(owner_id)
-    header.creation_epoch = 1
-    header.payload_length = 0
+    header.creation_epoch = creation_epoch
+    header.payload_length = len(test_payload)
     header.payload_hash.CopyFrom(payload_checksum)
     header.object_type = object_type
-    header.homomorphic_hash.CopyFrom(homomorphic_checksum)
+
+    if homo_hash:
+        homomorphic_checksum = refs_types_pb2.Checksum()
+        homomorphic_checksum.type = refs_types_pb2.ChecksumType.TZ
+        homomorphic_checksum.sum = TZHash.hash_data(test_payload)
+        header.homomorphic_hash.CopyFrom(homomorphic_checksum)
 
     if object_type == object_types_pb2.ObjectType.TOMBSTONE:
         associate_attribute = object_types_pb2.Header.Attribute()
@@ -212,10 +219,10 @@ def get_put_object_request_header(
         associate_attribute.value = oid
         header.attributes.append(associate_attribute)
 
-        expiration_epoch = object_types_pb2.Header.Attribute()
-        expiration_epoch.key = "__NEOFS__EXPIRATION_EPOCH"
-        expiration_epoch.value = "100"
-        header.attributes.append(expiration_epoch)
+        expiration_epoch_attr = object_types_pb2.Header.Attribute()
+        expiration_epoch_attr.key = "__NEOFS__EXPIRATION_EPOCH"
+        expiration_epoch_attr.value = expiration_epoch
+        header.attributes.append(expiration_epoch_attr)
     return header
 
 
@@ -251,6 +258,8 @@ def put_object(
     payload: bytes,
     cid: str,
     oid: str = None,
+    homo_hash: bool = True,
+    object_context_verb: session_types_pb2.ObjectSessionContext = session_types_pb2.ObjectSessionContext.PUT,
 ) -> object_service_pb2.PutResponse:
     with allure.step("Create put request for an object"):
         owner_id = refs_types_pb2.OwnerID()
@@ -265,29 +274,25 @@ def put_object(
 
         session_id, session_key = get_session_token(wallet, neofs_env.storage_nodes[0].endpoint)
 
-        header = get_put_object_request_header(owner_id, version, container_id, object_type, payload, oid)
+        header = get_put_object_request_header(
+            owner_id, version, container_id, object_type, payload, oid, homo_hash=homo_hash
+        )
 
         object_id = refs_types_pb2.ObjectID()
         object_id.value = hashlib.sha256(header.SerializeToString(deterministic=True)).digest()
 
         session_token = init_session_token_for_object_put(
-            session_id, session_key, wallet, owner_id, container_id, object_id, object_type
+            session_id, session_key, wallet, owner_id, container_id, object_id, object_context_verb
         )
 
-        signature = None
-        if object_type != object_types_pb2.ObjectType.TOMBSTONE:
-            public_key, private_key = get_wallet_keys(wallet)
-            signature = refs_types_pb2.Signature()
-            signature.key = public_key
-            signature.sign = cryptography.sign(payload, private_key, hash_func=hashlib.sha512)
-            signature.scheme = refs_types_pb2.SignatureScheme.ECDSA_SHA512
-
         init_request = create_put_request(
-            object_id, signature, header, version, payload, wallet, session_token, is_init=True
+            object_id, header, version, payload, wallet, session_token, object_type, is_init=True
         )
         allure.attach(str(init_request), "Init Request", allure.attachment_type.TEXT)
 
-        chunk_request = create_put_request(None, None, None, version, payload, wallet, session_token, is_init=False)
+        chunk_request = create_put_request(
+            None, None, version, payload, wallet, session_token, object_type, is_init=False
+        )
 
         allure.attach(str(chunk_request), "Chunk Request", allure.attachment_type.TEXT)
 
