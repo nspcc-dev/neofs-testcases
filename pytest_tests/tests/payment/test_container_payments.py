@@ -9,6 +9,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
 from helpers.node_management import restart_storage_nodes
+from helpers.utility import parse_version, verify_container_estimations
 from helpers.wallet_helpers import create_wallet_with_money, get_neofs_balance
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -120,6 +121,16 @@ class TestContainerPayments:
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
+
+            if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.48.3"):
+                verify_container_estimations(
+                    neofs_env.neofs_adm()
+                    .fschain.estimations(rpc_endpoint=f"http://{neofs_env.fschain_rpc}", cid=cid)
+                    .stdout.strip(),
+                    cid,
+                    container_size=objects_count * MAX_OBJECT_SIZE,
+                    number_of_objects=objects_count,
+                )
 
         with allure.step("Ensure the user wallet balance is charged only once per epoch"):
             deltas = []

@@ -407,7 +407,7 @@ class NeofsAdmFSChain(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
-    def estimations(self, rpc_endpoint: str, cid: str, epoch: str) -> CommandResult:
+    def estimations(self, rpc_endpoint: str, cid: str, epoch: str = None) -> CommandResult:
         """Set NeoFS config settings.
 
         Args:
