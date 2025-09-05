@@ -52,6 +52,27 @@ class NeofsCliControl(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
+    def object_revive(
+        self, address: str, endpoint: str, object: str, wallet: str, shell_timeout: Optional[int] = None
+    ) -> CommandResult:
+        """
+        Forcefully revive object.
+
+        Args:
+            address: Address of wallet account
+            endpoint: Remote node control address (as 'multiaddr' or '<host>:<port>')
+            object: Object address
+            wallet: Path to the wallet
+            shell_timeout: Shell timeout for the command.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "control object revive",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
+
     def notary_list(
         self, address: str, endpoint: str, wallet: str, shell_timeout: Optional[int] = None
     ) -> CommandResult:

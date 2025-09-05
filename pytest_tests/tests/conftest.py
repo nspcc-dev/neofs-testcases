@@ -37,6 +37,9 @@ def get_or_create_neofs_env(
     with_rest_gw=True,
     chain_meta_data=False,
     sn_validator_url=None,
+    shards_count=2,
+    gc_remover_batch_size=200,
+    gc_sleep_interval="5m",
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -52,6 +55,9 @@ def get_or_create_neofs_env(
             request=request,
             chain_meta_data=chain_meta_data,
             sn_validator_url=sn_validator_url,
+            shards_count=shards_count,
+            gc_remover_batch_size=gc_remover_batch_size,
+            gc_sleep_interval=gc_sleep_interval,
         )
     return neofs_env
 
@@ -93,6 +99,21 @@ def neofs_env_with_writecache(temp_directory, artifacts_directory, request):
 @pytest.fixture()
 def neofs_env_single_sn(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, storage_nodes_count=1, with_s3_gw=True, with_rest_gw=True)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture()
+def neofs_env_single_sn_custom_gc(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=1,
+        with_s3_gw=False,
+        with_rest_gw=False,
+        shards_count=1,
+        gc_remover_batch_size=1,
+        gc_sleep_interval="15s",
+    )
     yield neofs_env
     neofs_env.finalize(request)
 
