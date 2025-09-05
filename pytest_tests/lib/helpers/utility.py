@@ -84,3 +84,33 @@ def parse_node_height(stdout: str) -> tuple[float, float]:
     block_height = float(lines[0].split(": ")[1].strip())
     state = float(lines[1].split(": ")[1].strip())
     return block_height, state
+
+
+def parse_container_estimations_info(s: str) -> dict:
+    pattern = (
+        r"^(?P<container_id>[A-Za-z0-9]+): "
+        r"container size: (?P<container_size>\d+); "
+        r"number of objects: (?P<number_of_objects>\d+)"
+    )
+    match = re.match(pattern, s.strip())
+    if not match:
+        raise ValueError(f"String format does not match expected pattern: {s=}")
+
+    return {
+        "container_id": match.group("container_id"),
+        "container_size": int(match.group("container_size")),
+        "number_of_objects": int(match.group("number_of_objects")),
+    }
+
+
+def verify_container_estimations(cli_output: str, cid: str, container_size: int, number_of_objects: int):
+    container_info = parse_container_estimations_info(cli_output)
+    assert container_info["container_id"] == cid, (
+        f"invalid container_id, expected: {cid}, got: {container_info['container_id']}"
+    )
+    assert int(container_info["container_size"]) == container_size, (
+        f"invalid container size, expected: {container_size}, got: {container_info['container_size']}"
+    )
+    assert int(container_info["number_of_objects"]) == number_of_objects, (
+        f"invalid number of objects, expected: {number_of_objects}, got: {container_info['number_of_objects']}"
+    )
