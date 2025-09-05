@@ -365,7 +365,7 @@ jobs:
             if: '!contains(toJson(matrix), ''"shard"'')'
             timeout-minutes: 120
             run: |
-              source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
+              source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ contains(inputs.marks, 'long') && inputs.marks || format('{0} and not long', inputs.marks != '' && inputs.marks || 'not long') }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
           - name: Run sharded tests
@@ -373,7 +373,7 @@ jobs:
             id: run_sharded_tests
             run: |
               source venv.pytest/bin/activate
-              python run-tests.py ${{ inputs.tests_parallel_level }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}
+              python run-tests.py ${{ inputs.tests_parallel_level }} ${{ matrix.shard }} ${{ inputs.tests_path }} "${{ contains(inputs.marks, 'long') && inputs.marks || format('{0} and not long', inputs.marks != '' && inputs.marks || 'not long') }}"
             working-directory: neofs-testcases
 
           - name: Mark shard job result
