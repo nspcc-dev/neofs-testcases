@@ -5,16 +5,13 @@ import logging
 import os
 import uuid
 from pathlib import Path
-from typing import Callable, Tuple
 
 import allure
 import base58
 import jinja2
 import pytest
 from ecdsa import NIST256p, SigningKey
-from ecdsa.ellipticcurve import Point
-from ecdsa.rfc6979 import generate_k
-from helpers.utility import parse_version
+from helpers.utility import get_signature_slice, parse_version, sign_ecdsa
 from neo3.wallet.wallet import Wallet
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeoGo
@@ -29,42 +26,6 @@ CONTRACT_ADDR = "1b4012d2aba18230a8ada77540f64d190480cbb0"
 CONTAINER_REQUEST_JSON_FILE_NAME = "create_container_request.json"
 CONTAINER_REQUEST_TEMPLATE_JSON_FILE_NAME = "create_container_request_template.json"
 CONTAINER_INVALID_REQUEST_TEMPLATE_JSON_FILE_NAME = "create_container_invalid_request_template.json"
-
-
-def sign_ecdsa(priv_key: SigningKey, hash_bytes: bytes, hashfunc: Callable[[], "hashlib._Hash"]) -> Tuple[int, int]:
-    curve = priv_key.curve
-    order = curve.order
-    secexp = priv_key.privkey.secret_multiplier
-
-    e = int.from_bytes(hash_bytes, byteorder="big")
-
-    def attempt_sign():
-        k = generate_k(order, secexp, hashfunc, hash_bytes)
-        p: Point = curve.generator * k
-        r = p.x() % order
-        if r == 0:
-            return None
-
-        inv_k = pow(k, -1, order)
-        s = (inv_k * (e + r * secexp)) % order
-        if s == 0:
-            return None
-
-        return r, s
-
-    signature = attempt_sign()
-    if signature is None:
-        raise ValueError("Failed to generate valid signature")
-
-    return signature
-
-
-def get_signature_slice(curve, r: int, s: int) -> bytes:
-    p_bitlen = curve.curve.p().bit_length()
-    byte_len = p_bitlen // 8
-    r_bytes = r.to_bytes(byte_len, byteorder="big")
-    s_bytes = s.to_bytes(byte_len, byteorder="big")
-    return r_bytes + s_bytes
 
 
 def get_container_marshalled_bytes(datadir: str, template_file_name: str, owner_address: str) -> bytes:
