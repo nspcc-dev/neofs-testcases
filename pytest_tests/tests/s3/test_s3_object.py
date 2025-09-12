@@ -1,3 +1,4 @@
+import logging
 import os
 import string
 import time
@@ -26,6 +27,8 @@ from helpers.s3_helper import (
 from helpers.wallet_helpers import create_wallet
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
+
+logger = logging.getLogger("NeoLogger")
 
 
 def pytest_generate_tests(metafunc):
@@ -951,3 +954,36 @@ class TestS3Object(TestNeofsS3Base):
             self.neofs_env.s3_gw.stop()
             self.neofs_env.s3_gw.internal_slicer = False
             self.neofs_env.s3_gw.start(fresh=False)
+
+    @pytest.mark.aws_cli_only
+    @pytest.mark.simple
+    def test_s3_large_object_listings(
+        self,
+    ):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+
+        file_path = generate_file(16)
+        prefix_a = "/patha/"
+        prefix_b = "/pathb/"
+
+        for idx in range(1001):
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, f"{prefix_a}file_{idx}")
+
+        for idx in range(1001):
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, f"{prefix_b}file_{idx}")
+
+        list_obj = s3_object.list_objects_s3_v2(self.s3_client, bucket, max_keys=2002, prefix="/")
+        assert len(list_obj) == 2002, "invalid number of objects"
+
+        unique_objects = set(list_obj)
+        if len(unique_objects) != len(list_obj):
+            duplicates = [obj for obj in list_obj if list_obj.count(obj) > 1]
+            unique_duplicates = list(set(duplicates))
+            logger.info(f"Found {len(list_obj) - len(unique_objects)} duplicate objects in listing:")
+            for duplicate in unique_duplicates:
+                count = list_obj.count(duplicate)
+                logger.info(f"  '{duplicate}' appears {count} times")
+
+        assert len(unique_objects) == len(list_obj), (
+            f"there are duplicates in objects listing output: {unique_duplicates}"
+        )

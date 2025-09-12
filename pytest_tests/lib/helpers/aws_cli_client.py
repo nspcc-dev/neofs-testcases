@@ -100,11 +100,16 @@ class AwsCliClient:
         MaxItems: Optional[int] = None,
         PageSize: Optional[int] = None,
         StartingToken: Optional[str] = None,
+        Prefix: Optional[str] = None,
     ) -> dict:
         common_flags = self.common_flags
         if MaxKeys or MaxItems or PageSize or StartingToken:
             common_flags = common_flags.replace("--no-paginate", "")
-        cmd = f"{aws_binary_path} {common_flags} s3api list-objects-v2 --bucket {Bucket} --endpoint {self.s3gate_endpoint}"
+
+        prefix_ = ""
+        if Prefix:
+            prefix_ = f"--prefix {Prefix}"
+        cmd = f"{aws_binary_path} {common_flags} s3api list-objects-v2 --bucket {Bucket} {prefix_} --endpoint {self.s3gate_endpoint}"
 
         if MaxKeys:
             cmd += f" --max-keys {MaxKeys}"
