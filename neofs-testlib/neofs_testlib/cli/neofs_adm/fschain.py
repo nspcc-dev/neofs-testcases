@@ -470,3 +470,75 @@ class NeofsAdmFSChain(CliCommand):
                 if param not in ["self", "wallet_password"]
             },
         )
+
+    def container_quota(
+        self, rpc_endpoint: str, cid: str, wallet: str, wallet_password: str, post_data: str = None, soft: bool = False
+    ) -> CommandResult:
+        """Manage container space quota values, if <value> is missing, prints already set values.
+
+        Args:
+            rpc-endpoint: N3 RPC node endpoint
+            cid: Inspected container, base58 encoded
+            wallet: Wallet that signs transaction (must have user's key)
+            wallet_password: Wallet password
+            post_data: Quota value
+            soft: Set soft quota limit (omit if hard limit is required)
+
+        Returns:
+            Command's result.
+        """
+        if post_data:
+            return self._execute_with_password(
+                "fschain quota container",
+                wallet_password,
+                **{
+                    param: param_value
+                    for param, param_value in locals().items()
+                    if param not in ["self", "wallet_password"]
+                },
+            )
+        else:
+            return self._execute(
+                "fschain quota container",
+                **{
+                    param: param_value
+                    for param, param_value in locals().items()
+                    if param not in ["self", "wallet_password"]
+                },
+            )
+
+    def user_quota(
+        self, rpc_endpoint: str, account: str, wallet: str, wallet_password: str, post_data: str, soft: bool = False
+    ) -> CommandResult:
+        """Manage user space quota values, if <value> is missing, prints already set values
+
+        Args:
+            rpc-endpoint: N3 RPC node endpoint
+            account: Inspected user account, base58 encoded
+            wallet: Wallet that signs transaction (must have user's key)
+            wallet_password: Wallet password
+            post_data: Quota value
+            soft: Set soft quota limit (omit if hard limit is required)
+
+        Returns:
+            Command's result.
+        """
+        if post_data:
+            return self._execute_with_password(
+                "fschain quota user",
+                wallet_password,
+                **{
+                    param: param_value
+                    for param, param_value in locals().items()
+                    if param not in ["self", "wallet_password"]
+                },
+            )
+        else:
+            return self._execute(
+                "fschain quota user",
+                **{
+                    param: param_value
+                    for param, param_value in locals().items()
+                    if param not in ["self", "wallet_password"]
+                },
+            )

@@ -271,6 +271,14 @@ def user_wallet(temp_directory) -> NodeWallet:
     return create_wallet()
 
 
+@pytest.fixture(scope="function")
+def unique_wallet(temp_directory) -> NodeWallet:
+    """
+    Returns a unique wallet per a single test for general purposes
+    """
+    return create_wallet()
+
+
 @pytest.fixture(scope="module")
 def stranger_wallet(temp_directory) -> NodeWallet:
     """
