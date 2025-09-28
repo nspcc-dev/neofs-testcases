@@ -18,7 +18,7 @@ METABASE_RESYNC_TIMEOUT = os.getenv("METABASE_RESYNC_TIMEOUT", "10s")
 
 # Time interval that allows a GC pass on storage node (this includes GC sleep interval
 # of 1min plus 15 seconds for GC pass itself)
-STORAGE_GC_TIME = os.getenv("STORAGE_GC_TIME", "75s")
+STORAGE_GC_TIME = os.getenv("STORAGE_GC_TIME", "15s")
 
 GAS_HASH = os.getenv("GAS_HASH", "0xd2a4cff31913016155e38e474a2c06d08be276cf")
 
