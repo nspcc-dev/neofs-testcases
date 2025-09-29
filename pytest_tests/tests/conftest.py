@@ -8,6 +8,7 @@ import pytest
 from helpers.common import (
     SIMPLE_OBJECT_SIZE,
     SN_VALIDATOR_DEFAULT_PORT,
+    STORAGE_GC_TIME,
     TEST_FILES_DIR,
     TEST_OBJECTS_DIR,
     get_assets_dir_path,
@@ -39,7 +40,7 @@ def get_or_create_neofs_env(
     sn_validator_url=None,
     shards_count=2,
     gc_remover_batch_size=200,
-    gc_sleep_interval="5m",
+    gc_sleep_interval=STORAGE_GC_TIME,
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -112,7 +113,7 @@ def neofs_env_single_sn_custom_gc(temp_directory, artifacts_directory, request):
         with_rest_gw=False,
         shards_count=1,
         gc_remover_batch_size=1,
-        gc_sleep_interval="15s",
+        gc_sleep_interval=STORAGE_GC_TIME,
     )
     yield neofs_env
     neofs_env.finalize(request)

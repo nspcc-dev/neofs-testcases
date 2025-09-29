@@ -39,6 +39,7 @@ from helpers.common import (
     DEFAULT_OBJECT_OPERATION_TIMEOUT,
     DEFAULT_REST_OPERATION_TIMEOUT,
     SIMPLE_OBJECT_SIZE,
+    STORAGE_GC_TIME,
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
@@ -216,7 +217,7 @@ class NeoFSEnv:
         fschain_endpoints: Optional[list[str]] = None,
         shards_count=2,
         gc_remover_batch_size=200,
-        gc_sleep_interval="5m",
+        gc_sleep_interval=STORAGE_GC_TIME,
     ):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
@@ -666,7 +667,7 @@ class NeoFSEnv:
         fschain_endpoints: Optional[list[str]] = None,
         shards_count=2,
         gc_remover_batch_size=200,
-        gc_sleep_interval="5m",
+        gc_sleep_interval=STORAGE_GC_TIME,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -1205,7 +1206,7 @@ class InnerRing(ResurrectableProcess):
 
 
 class Shard:
-    def __init__(self, neofs_env: NeoFSEnv, sn_dir: str, gc_remover_batch_size=200, gc_sleep_interval="5m"):
+    def __init__(self, neofs_env: NeoFSEnv, sn_dir: str, gc_remover_batch_size=200, gc_sleep_interval=STORAGE_GC_TIME):
         self.metabase_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_metabase")
         self.fstree_path = neofs_env._generate_temp_dir(prefix="shards/shard_fstree")
         self.pilorama_path = neofs_env._generate_temp_file(sn_dir, prefix="shard_pilorama")
@@ -1225,7 +1226,7 @@ class StorageNode(ResurrectableProcess):
         fschain_endpoints: Optional[list] = None,
         shards_count=2,
         gc_remover_batch_size=200,
-        gc_sleep_interval="5m",
+        gc_sleep_interval=STORAGE_GC_TIME,
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
