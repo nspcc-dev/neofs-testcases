@@ -1351,7 +1351,7 @@ class StorageNode(ResurrectableProcess):
         self.stop()
         for shard in self.shards:
             os.remove(shard.metabase_path)
-            os.rmdir(shard.fstree_path)
+            shutil.rmtree(shard.fstree_path, ignore_errors=True)
             os.remove(shard.pilorama_path)
             shutil.rmtree(shard.wc_path, ignore_errors=True)
         os.remove(self.state_file)
