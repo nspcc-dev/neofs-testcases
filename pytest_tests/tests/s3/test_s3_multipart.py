@@ -58,28 +58,24 @@ class TestS3Multipart(TestNeofsS3Base):
     def test_s3_object_multipart_non_sequential(self):
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
-        parts_count = 5
+        parts_count = 11
         file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
         object_key = object_key_from_file_path(file_name_large)
         part_files = split_file(file_name_large, parts_count)
         parts = []
 
-        with allure.step("Upload second part"):
+        with allure.step("Create multipart upload"):
             upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
             uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
-            etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 2, part_files[1])
-            parts.append((2, etag))
 
-        with allure.step("Upload first part"):
-            etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, 1, part_files[0])
-            parts.append((1, etag))
-            got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
-            assert len(got_parts) == 2, f"Expected {1} parts, got\n{got_parts}"
+        with allure.step("Upload all parts in random order"):
+            part_orders = list(enumerate(part_files, start=1))
+            random.shuffle(part_orders)
 
-        with allure.step("Upload last parts"):
-            for part_id, file_path in enumerate(part_files[2:], start=3):
+            for part_id, file_path in part_orders:
                 etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
                 parts.append((part_id, etag))
+
             got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
             sorted_parts = sorted(parts, key=lambda x: x[0])
             s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, sorted_parts)
