@@ -29,9 +29,11 @@ ACL_COPY = [
 
 
 @allure.step("List objects S3 v2")
-def list_objects_s3_v2(s3_client, bucket: str, full_output: bool = False) -> list:
+def list_objects_s3_v2(
+    s3_client, bucket: str, full_output: bool = False, max_keys: int = None, prefix: str = None
+) -> list:
     try:
-        response = s3_client.list_objects_v2(Bucket=bucket)
+        response = s3_client.list_objects_v2(Bucket=bucket, MaxKeys=max_keys, Prefix=prefix)
         content = response.get("Contents", [])
         log_command_execution("S3 v2 List objects result", response)
         obj_list = []
