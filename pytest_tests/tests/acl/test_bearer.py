@@ -29,7 +29,9 @@ from helpers.container_access import (
 )
 from helpers.grpc_responses import (
     BEARER_TOKEN_FOR_ANOTHER_CONTAINER,
+    BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3,
     EXPIRED_BEARER_TOKEN,
+    EXPIRED_BEARER_TOKEN_POST_0_48_3,
     OBJECT_ACCESS_DENIED,
 )
 from helpers.neofs_verbs import put_object_to_random_node
@@ -303,6 +305,10 @@ class TestACLBearer(TestNeofsBase):
                 "0.47.1"
             ):
                 expected_error = OBJECT_ACCESS_DENIED
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version(
+                "0.48.3"
+            ):
+                expected_error = EXPIRED_BEARER_TOKEN_POST_0_48_3
             check_no_access_to_container(
                 user_wallet.wallet_path,
                 cid,
@@ -358,6 +364,11 @@ class TestACLBearer(TestNeofsBase):
                 "0.47.1"
             ):
                 expected_error = OBJECT_ACCESS_DENIED
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version(
+                "0.48.3"
+            ):
+                expected_error = BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3
+
             check_no_access_to_container(
                 user_wallet.wallet_path,
                 container2.cid,
