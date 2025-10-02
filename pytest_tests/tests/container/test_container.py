@@ -74,9 +74,9 @@ class TestContainer(TestNeofsBase):
         with allure.step("Check container has correct information"):
             expected_policy = placement_rule.casefold()
             actual_policy = placement_policy_from_container(container_info)
-            assert actual_policy == expected_policy, (
-                f"Expected policy\n{expected_policy} but got policy\n{actual_policy}"
-            )
+            assert (
+                actual_policy == expected_policy
+            ), f"Expected policy\n{expected_policy} but got policy\n{actual_policy}"
 
             for info in info_to_check:
                 expected_info = info.casefold()
