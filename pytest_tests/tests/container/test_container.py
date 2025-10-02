@@ -185,7 +185,12 @@ class TestContainer(TestNeofsBase):
 
             with allure.step("Delete container"):
                 delete_container(
-                    wallet.path, cid, shell=self.shell, endpoint=alive_node_with_object.endpoint, await_mode=True
+                    wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=alive_node_with_object.endpoint,
+                    await_mode=True,
+                    force=True,
                 )
 
             with allure.step("Object should become immediately unavailable"):
