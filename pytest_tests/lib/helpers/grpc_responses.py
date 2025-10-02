@@ -16,9 +16,11 @@ OBJECT_ALREADY_REMOVED = "code = 2052.*message = object already removed"
 SESSION_NOT_FOUND = "code = 4096.*message = session token not found"
 OUT_OF_RANGE = "code = 2053.*message = out of range"
 EXPIRED_BEARER_TOKEN = "code = 1024.*message = bearer token has expired"
-EXPIRED_BEARER_TOKEN_POST_0_48_3 = "code = 2048.*message = bearer token has expired"
+EXPIRED_BEARER_TOKEN_POST_0_48_3 = "code = 2048.*message = access to object operation denied: bearer token has expired"
 BEARER_TOKEN_FOR_ANOTHER_CONTAINER = "code = 1024.*message = bearer token was created for another container"
-BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3 = "code = 2048.*message = bearer token was created for another container"
+BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3 = (
+    "code = 2048.*message = access to object operation denied: bearer token was created for another container"
+)
 EXPIRED_SESSION_TOKEN = "code = 4097.*message = expired session token"
 # TODO: Due to https://github.com/nspcc-dev/neofs-node/issues/2092 we have to check only codes until fixed
 # OBJECT_IS_LOCKED = "code = 2050.*message = object is locked"
