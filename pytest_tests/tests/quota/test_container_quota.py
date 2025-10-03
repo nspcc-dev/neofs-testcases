@@ -6,6 +6,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import delete_object, get_object, put_object
 from helpers.quota import TestQuotaBase
+from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
 
@@ -578,7 +579,7 @@ class TestContainerQuota(TestQuotaBase):
             )
 
         self.tick_epochs_and_wait(2)
-        time.sleep(5)
+        wait_for_gc_pass_on_storage_nodes()
         self.tick_epochs_and_wait(1)
         time.sleep(5)
 
