@@ -1,27 +1,27 @@
 binaries:
     neofs_cli:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.48.3'
+        version: 'v0.49.0'
         file: 'neofs-cli-{{ arch }}'
 
     neofs_adm:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.48.3'
+        version: 'v0.49.0'
         file: 'neofs-adm-{{ arch }}'
 
     neofs_ir:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.48.3'
+        version: 'v0.49.0'
         file: 'neofs-ir-{{ arch }}'
 
     neofs_lens:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.48.3'
+        version: 'v0.49.0'
         file: 'neofs-lens-{{ arch }}'
 
     neofs_node:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.48.3'
+        version: 'v0.49.0'
         file: 'neofs-node-{{ arch }}'
 
     neofs_s3_gw:
@@ -41,13 +41,13 @@ binaries:
 
     neo_go:
         repo: 'nspcc-dev/neo-go'
-        version: 'v0.111.0'
+        version: 'v0.113.0'
         file: 'neo-go-{{ arch }}'
 
     neofs_contract:
         repo: 'nspcc-dev/neofs-contract'
-        version: 'v0.23.0'
-        file: 'neofs-contract-v0.23.0.tar.gz'
+        version: 'v0.24.0'
+        file: 'neofs-contract-v0.24.0.tar.gz'
 
     warp:
         repo: 'minio/warp'
