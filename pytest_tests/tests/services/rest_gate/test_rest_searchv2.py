@@ -906,8 +906,8 @@ def test_search_tombstone_objects(default_wallet: NodeWallet, container: str, ne
 
     found_objects, _ = search_objectv2(
         cid=cid,
-        filters=["$Object:creationEpoch GE 0"],
-        attributes=["$Object:creationEpoch"],
+        filters=["$Object:ROOT EQ 1", "$Object:creationEpoch GE 0"],
+        attributes=["$Object:ROOT", "$Object:creationEpoch"],
         neofs_env=neofs_env,
     )
 
@@ -923,3 +923,22 @@ def test_search_tombstone_objects(default_wallet: NodeWallet, container: str, ne
     )
     assert len(tombstone_objects) == 1, "invalid tombstone objects count after search"
     assert tombstone_objects[0]["id"] != oid, "invalid tombstone object returned from search"
+
+    with allure.step("Verify --root doesn't return tombstones"):
+        found_objects, _ = search_objectv2(
+            cid=cid,
+            filters=["$Object:ROOT EQ 1"],
+            attributes=["$Object:ROOT"],
+            neofs_env=neofs_env,
+        )
+        assert len(found_objects) == 0, "invalid number of found objects with --root filter"
+
+    with allure.step("Verify --phy returns tombstones"):
+        tombstone_objects, _ = search_objectv2(
+            cid=cid,
+            filters=["$Object:PHY EQ 1"],
+            attributes=["$Object:PHY"],
+            neofs_env=neofs_env,
+        )
+
+        assert len(tombstone_objects) == 1, "invalid tombstone objects count after search"
