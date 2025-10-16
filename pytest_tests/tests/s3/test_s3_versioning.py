@@ -162,26 +162,29 @@ class TestS3Versioning(TestNeofsS3Base):
 
     @allure.title("Test prefix in list object versions")
     @pytest.mark.simple
-    def test_s3_prefix_in_object_listing(self):
+    @pytest.mark.parametrize("common_prefix", ["/s3-prefix/", "s3-prefix/", "s3-prefix", "test/s3/prefix/"])
+    def test_s3_prefix_in_object_listing(self, common_prefix: str):
         bucket = s3_bucket.create_bucket_s3(
             self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
         )
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
+        versions_count = 5
 
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-        file_name = self.object_key_from_file_path(file_path)
-        for _ in range(5):
-            file_name = generate_file_with_content(
+        for idx in range(versions_count):
+            file_path = generate_file_with_content(
                 self.neofs_env.get_object_size("simple_object_size"), file_path=file_path
             )
-            s3_object.put_object_s3(self.s3_client, bucket, file_name)
+            s3_object.put_object_s3(self.s3_client, bucket, file_path, f"{common_prefix}file-{idx}.jpg")
 
         with allure.step("Check prefix in list object versions"):
-            response = self.s3_client.list_object_versions(Bucket=bucket, Prefix=file_name[:5])
-            assert response.get("Prefix", "") == file_name[:5], (
-                f"Expected prefix {file_name[:5]}, got {response.get('Prefix', '')}"
+            response = self.s3_client.list_object_versions(Bucket=bucket, Prefix=common_prefix)
+            assert response.get("Prefix", "") == common_prefix, (
+                f"Expected prefix {common_prefix}, got {response.get('Prefix', '')}"
             )
+            versions = response.get("Versions", [])
+            assert len(versions) == versions_count, f"Expected {versions_count} versions, got {len(versions)}"
 
     @allure.title("Test pagination for list_objects_versions_s3 using boto3")
     @pytest.mark.boto3_only
