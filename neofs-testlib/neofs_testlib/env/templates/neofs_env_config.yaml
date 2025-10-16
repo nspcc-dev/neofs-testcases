@@ -36,7 +36,7 @@ binaries:
 
     neofs_rest_gw:
         repo: 'nspcc-dev/neofs-rest-gw'
-        version: 'v0.14.1'
+        version: 'v0.14.2'
         file: 'neofs-rest-gw-{{ arch }}'
 
     neo_go:
