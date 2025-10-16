@@ -9,7 +9,6 @@ from helpers.grpc_responses import (
     EXPIRED_SESSION_TOKEN,
     INVALID_SESSION_TOKEN_OWNER,
     MALFORMED_REQUEST,
-    MALFORMED_REQUEST_POST_0_48_3,
     OBJECT_ACCESS_DENIED,
     OBJECT_NOT_FOUND,
 )
@@ -37,7 +36,6 @@ from helpers.session_token import (
 )
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.test_control import expect_not_raises
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -524,8 +522,6 @@ class TestObjectStaticSession(TestNeofsBase):
         )
 
         expected_error = MALFORMED_REQUEST
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.48.3"):
-            expected_error = MALFORMED_REQUEST_POST_0_48_3
 
         with pytest.raises(Exception, match=expected_error):
             head_object(
@@ -677,8 +673,6 @@ class TestObjectStaticSession(TestNeofsBase):
         )
 
         expected_error = MALFORMED_REQUEST
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.48.3"):
-            expected_error = MALFORMED_REQUEST_POST_0_48_3
 
         with pytest.raises(Exception, match=expected_error):
             head_object(

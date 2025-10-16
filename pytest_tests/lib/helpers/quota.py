@@ -1,19 +1,11 @@
 import re
 
-import pytest
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
 
 
 class TestQuotaBase(TestNeofsBase):
-    @pytest.fixture(scope="class", autouse=True)
-    def check_node_version(self, fill_mandatory_dependencies):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.48.3"):
-            pytest.skip("Quota tests don't work on the version lower or equal to v0.48.3")
-        yield
-
     def _check_soft_quota_warning_in_logs(self, cid: str, start_line: int = 0, expect_warning: bool = True):
         with open(self.neofs_env.storage_nodes[0].stderr) as sn_node_logs:
             lines = sn_node_logs.readlines()

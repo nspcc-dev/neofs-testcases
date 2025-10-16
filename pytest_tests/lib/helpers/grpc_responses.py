@@ -5,8 +5,7 @@ CONTAINER_NOT_FOUND = "code = 3072.*message = container not found"
 
 
 # Regex patterns of status codes of Object service (https://github.com/nspcc-dev/neofs-spec/blob/98b154848116223e486ce8b43eaa35fec08b4a99/20-api-v2/object.md)
-MALFORMED_REQUEST = "code = 1024.*message = malformed request"
-MALFORMED_REQUEST_POST_0_48_3 = "code = 1028.*message = malformed request"
+MALFORMED_REQUEST = "code = 1028.*message = malformed request"
 WRONG_CONTAINER = "code = 1024.*message = wrong container"
 SESSION_NOT_ISSUED_BY_OWNER = "code = 1024.*message = session was not issued by the container owner"
 INVALID_SESSION_TOKEN_OWNER = ".*issuer mismatches signature.*"
@@ -15,10 +14,8 @@ OBJECT_NOT_FOUND = "code = 2049.*message = object not found"
 OBJECT_ALREADY_REMOVED = "code = 2052.*message = object already removed"
 SESSION_NOT_FOUND = "code = 4096.*message = session token not found"
 OUT_OF_RANGE = "code = 2053.*message = out of range"
-EXPIRED_BEARER_TOKEN = "code = 1024.*message = bearer token has expired"
-EXPIRED_BEARER_TOKEN_POST_0_48_3 = "code = 2048.*message = access to object operation denied: bearer token has expired"
-BEARER_TOKEN_FOR_ANOTHER_CONTAINER = "code = 1024.*message = bearer token was created for another container"
-BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3 = (
+EXPIRED_BEARER_TOKEN = "code = 2048.*message = access to object operation denied: bearer token has expired"
+BEARER_TOKEN_FOR_ANOTHER_CONTAINER = (
     "code = 2048.*message = access to object operation denied: bearer token was created for another container"
 )
 EXPIRED_SESSION_TOKEN = "code = 4097.*message = expired session token"

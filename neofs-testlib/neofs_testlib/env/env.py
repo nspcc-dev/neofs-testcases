@@ -43,7 +43,6 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
-from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -1313,8 +1312,6 @@ class StorageNode(ResurrectableProcess):
                     prometheus_address=self.prometheus_address,
                     attrs=self.node_attrs,
                     metadata_path=self.metadata_path,
-                    quota_supported=parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path))
-                    > parse_version("0.48.3"),
                 )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
@@ -1378,8 +1375,6 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
-                quota_supported=parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path))
-                > parse_version("0.48.3"),
             )
         time.sleep(1)
 
@@ -1408,8 +1403,6 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
-                quota_supported=parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path))
-                > parse_version("0.48.3"),
             )
         time.sleep(1)
 

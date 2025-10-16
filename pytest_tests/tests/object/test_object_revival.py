@@ -7,17 +7,12 @@ from helpers.neofs_verbs import (
     head_object,
     put_object,
 )
-from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
 
 @pytest.mark.simple
 @allure.title("Verify that an object can be revived")
 def test_object_revival(neofs_env_single_sn_custom_gc: NeoFSEnv, default_wallet: NodeWallet):
-    if parse_version(
-        neofs_env_single_sn_custom_gc.get_binary_version(neofs_env_single_sn_custom_gc.neofs_node_path)
-    ) <= parse_version("0.48.3"):
-        pytest.skip("Test works only on post 0.48.3")
     neofs_env = neofs_env_single_sn_custom_gc
 
     wallet = default_wallet
