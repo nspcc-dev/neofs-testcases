@@ -12,7 +12,6 @@ from helpers.s3_helper import (
     check_tags_by_object,
     object_key_from_file_path,
 )
-from helpers.utility import parse_version
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
@@ -127,8 +126,6 @@ class TestS3Tagging(TestNeofsS3Base):
     @allure.title("Test S3: unversioned bucket tagging")
     @pytest.mark.simple
     def test_s3_object_tagging_unversioned_bucket(self, bucket):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)) <= parse_version("0.38.0"):
-            pytest.skip("Test doesn't work on s3 gw 0.38.0 and earlier versions")
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name = object_key_from_file_path(file_path)
 

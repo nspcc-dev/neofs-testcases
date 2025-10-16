@@ -29,10 +29,7 @@ from helpers.container_access import (
 )
 from helpers.grpc_responses import (
     BEARER_TOKEN_FOR_ANOTHER_CONTAINER,
-    BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3,
     EXPIRED_BEARER_TOKEN,
-    EXPIRED_BEARER_TOKEN_POST_0_48_3,
-    OBJECT_ACCESS_DENIED,
 )
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.object_access import (
@@ -44,7 +41,6 @@ from helpers.object_access import (
     can_put_object,
     can_search_object,
 )
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
@@ -301,14 +297,6 @@ class TestACLBearer(TestNeofsBase):
 
         with allure.step(f"Check {EACLRole.USER.value} has no access to all operations with container"):
             expected_error = EXPIRED_BEARER_TOKEN
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                "0.47.1"
-            ):
-                expected_error = OBJECT_ACCESS_DENIED
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version(
-                "0.48.3"
-            ):
-                expected_error = EXPIRED_BEARER_TOKEN_POST_0_48_3
             check_no_access_to_container(
                 user_wallet.wallet_path,
                 cid,
@@ -360,14 +348,6 @@ class TestACLBearer(TestNeofsBase):
             f"Check {EACLRole.USER.value} has no access to all operations with another container {container2.cid}"
         ):
             expected_error = BEARER_TOKEN_FOR_ANOTHER_CONTAINER
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                "0.47.1"
-            ):
-                expected_error = OBJECT_ACCESS_DENIED
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version(
-                "0.48.3"
-            ):
-                expected_error = BEARER_TOKEN_FOR_ANOTHER_CONTAINER_POST_0_48_3
 
             check_no_access_to_container(
                 user_wallet.wallet_path,

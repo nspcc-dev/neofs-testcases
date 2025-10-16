@@ -1,42 +1,42 @@
 binaries:
     neofs_cli:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.49.0'
+        version: 'v0.49.1'
         file: 'neofs-cli-{{ arch }}'
 
     neofs_adm:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.49.0'
+        version: 'v0.49.1'
         file: 'neofs-adm-{{ arch }}'
 
     neofs_ir:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.49.0'
+        version: 'v0.49.1'
         file: 'neofs-ir-{{ arch }}'
 
     neofs_lens:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.49.0'
+        version: 'v0.49.1'
         file: 'neofs-lens-{{ arch }}'
 
     neofs_node:
         repo: 'nspcc-dev/neofs-node'
-        version: 'v0.49.0'
+        version: 'v0.49.1'
         file: 'neofs-node-{{ arch }}'
 
     neofs_s3_gw:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.41.2'
+        version: 'v0.41.3'
         file: 'neofs-s3-gw-{{ arch }}'
 
     neofs_s3_authmate:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.41.2'
+        version: 'v0.41.3'
         file: 'neofs-s3-authmate-{{ arch }}'
 
     neofs_rest_gw:
         repo: 'nspcc-dev/neofs-rest-gw'
-        version: 'v0.14.1'
+        version: 'v0.14.2'
         file: 'neofs-rest-gw-{{ arch }}'
 
     neo_go:

@@ -11,7 +11,7 @@ import base58
 import jinja2
 import pytest
 from ecdsa import NIST256p, SigningKey
-from helpers.utility import get_signature_slice, parse_version, sign_ecdsa
+from helpers.utility import get_signature_slice, sign_ecdsa
 from neo3.wallet.wallet import Wallet
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeoGo
@@ -140,9 +140,6 @@ def render_create_container_json(
 class TestN3(TestNeofsBase):
     @allure.title("Test N3 contract witnesses in container ops")
     def test_n3_contract_witnesses_in_container_ops(self, datadir, neofs_env: NeoFSEnv):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) == parse_version("0.47.1"):
-            pytest.skip("Test doesn't work on 0.47.1 - https://github.com/nspcc-dev/neofs-node/issues/3433")
-
         neogo = NeoGo(neofs_env.shell, neo_go_exec_path=neofs_env.neo_go_path)
 
         owner_address = wallet_utils.get_last_address_from_wallet(os.path.join(datadir, "user_wallet.json"), "user")
