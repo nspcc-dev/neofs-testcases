@@ -258,3 +258,25 @@ class TestContainer(TestNeofsBase):
                     basic_acl=PUBLIC_ACL,
                     global_name=True,
                 )
+
+    @allure.title("Without owner and wallet flags all containers should be displayed")
+    def test_show_all_containers_from_network(self, not_owner_wallet: NodeWallet, default_wallet: str):
+        cids = []
+        cids.append(
+            create_container(
+                wallet=default_wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+        )
+        cids.append(
+            create_container(
+                wallet=not_owner_wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+        )
+
+        containers = list_containers(None, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        assert len(containers) >= len(cids), f"Less than {len(cids)} containers in the network"
+        assert all(cid in containers for cid in cids), f"Expected containers {cids} in containers: {containers}"
