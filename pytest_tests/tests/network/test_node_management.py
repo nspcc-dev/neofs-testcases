@@ -46,7 +46,7 @@ class TestNodeManagement(TestNeofsBase):
         self, neofs_env: NeoFSEnv, default_wallet: NodeWallet
     ) -> Tuple[str, StorageNode]:
         file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
-        placement_rule = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+        placement_rule = "EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X"
         endpoint = neofs_env.sn_rpc
 
         cid = create_container(
@@ -194,8 +194,8 @@ class TestNodeManagement(TestNeofsBase):
             ("REP 2 IN X CBF 2 SELECT 2 FROM * AS X", 2),
             ("REP 2 IN X CBF 1 SELECT 2 FROM * AS X", 2),
             ("REP 3 IN X CBF 1 SELECT 3 FROM * AS X", 3),
-            ("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", 1),
-            ("REP 1 IN X CBF 2 SELECT 1 FROM * AS X", 1),
+            ("EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X", 1),
+            ("EC 2/2 IN X CBF 2 SELECT 1 FROM * AS X", 1),
             ("REP 4 IN X CBF 1 SELECT 4 FROM * AS X", 4),
             ("REP 2 IN X CBF 1 SELECT 4 FROM * AS X", 2),
         ],
@@ -215,17 +215,17 @@ class TestNodeManagement(TestNeofsBase):
         [
             ("REP 4 IN X CBF 1 SELECT 4 FROM * AS X", 4, {1, 2, 3, 4}),
             (
-                "REP 1 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW",
+                "EC 2/2 IN LOC_PLACE CBF 1 SELECT 1 FROM LOC_SW AS LOC_PLACE FILTER Country EQ Sweden AS LOC_SW",
                 1,
                 {3},
             ),
             (
-                "REP 1 CBF 1 SELECT 1 FROM LOC_SPB FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB",
+                "EC 2/2 CBF 1 SELECT 1 FROM LOC_SPB FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB",
                 1,
                 {2},
             ),
             (
-                "REP 1 IN LOC_SPB_PLACE REP 1 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE "
+                "EC 2/2 IN LOC_SPB_PLACE EC 2/2 IN LOC_MSK_PLACE CBF 1 SELECT 1 FROM LOC_SPB AS LOC_SPB_PLACE "
                 "SELECT 1 FROM LOC_MSK AS LOC_MSK_PLACE "
                 "FILTER 'UN-LOCODE' EQ 'RU LED' AS LOC_SPB FILTER 'UN-LOCODE' EQ 'RU MOW' AS LOC_MSK",
                 2,
@@ -237,7 +237,7 @@ class TestNodeManagement(TestNeofsBase):
                 {1, 2, 3, 4},
             ),
             (
-                "REP 1 CBF 1 SELECT 1 FROM LOC_SPB "
+                "EC 2/2 CBF 1 SELECT 1 FROM LOC_SPB "
                 "FILTER 'UN-LOCODE' NE 'RU MOW' AND 'UN-LOCODE' NE 'SE STO' AND 'UN-LOCODE' NE 'FI HEL' AS LOC_SPB",
                 1,
                 {2},

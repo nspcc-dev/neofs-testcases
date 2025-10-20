@@ -16,7 +16,7 @@ def test_object_revival(neofs_env_single_sn_custom_gc: NeoFSEnv, default_wallet:
     neofs_env = neofs_env_single_sn_custom_gc
 
     wallet = default_wallet
-    cid = create_container(wallet.path, neofs_env.shell, neofs_env.sn_rpc, rule="REP 1")
+    cid = create_container(wallet.path, neofs_env.shell, neofs_env.sn_rpc, rule="EC 2/2")
 
     created_objects = []
     for _ in range(2):

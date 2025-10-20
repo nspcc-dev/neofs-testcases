@@ -19,7 +19,9 @@ from helpers.utility import placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
+import logging
 
+logger = logging.getLogger("NeoLogger")
 
 def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str, oid: str):
     response = neofs_env.neofs_cli(node.cli_config).control.object_status(
@@ -81,6 +83,38 @@ class TestContainer(TestNeofsBase):
             for info in info_to_check:
                 expected_info = info.casefold()
                 assert expected_info in container_info, f"Expected {expected_info} in container info:\n{container_info}"
+
+        with allure.step("Delete container and check it was deleted"):
+            delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            self.tick_epochs_and_wait(1)
+            wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            
+    @pytest.mark.sanity
+    @allure.title("User can create container with EC policy")
+    def test_ec_container_creation(self, default_wallet):
+        wallet = default_wallet
+
+        placement_rule = "EC 1/2"
+        cid = create_container(
+            wallet.path,
+            rule=placement_rule,
+            name="ec-container",
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+        )
+
+        containers = list_containers(wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        assert cid in containers, f"Expected container {cid} in containers: {containers}"
+        
+        container_info: str = get_container(
+            wallet.path,
+            cid,
+            json_mode=False,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+        )
+        container_info = container_info.casefold() 
+        logger.info(f"Container info: {container_info=}")
 
         with allure.step("Delete container and check it was deleted"):
             delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)

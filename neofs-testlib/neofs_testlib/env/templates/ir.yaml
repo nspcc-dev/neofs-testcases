@@ -125,6 +125,7 @@ prometheus:
 
 experimental:
   chain_meta_data: {{ chain_meta_data }}
+  allow_ec: {{ allow_ec }}
 
 {% if sn_validator_url %}
 sn_validator:

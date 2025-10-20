@@ -16,7 +16,7 @@ class TestUserQuota(TestQuotaBase):
     @pytest.mark.parametrize("quota_value,quota_type", [(100, "hard"), (100, "soft")])
     @pytest.mark.sanity
     def test_user_quota(self, unique_wallet: NodeWallet, quota_value: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,
@@ -141,7 +141,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_value,quota_type", [(100, "hard"), (100, "soft")])
     def test_multiple_users_quota_independence(self, unique_wallet: NodeWallet, quota_value: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
 
         user1_wallet = unique_wallet
         user2_wallet = create_wallet()
@@ -319,7 +319,7 @@ class TestUserQuota(TestQuotaBase):
         [(100, 200, "hard"), (200, 50, "hard"), (100, 200, "soft"), (200, 50, "soft")],
     )
     def test_quota_update(self, unique_wallet: NodeWallet, initial_quota: int, updated_quota: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,
@@ -428,7 +428,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_value,quota_type", [(200, "hard"), (200, "soft")])
     def test_quota_inheritance_new_containers(self, unique_wallet: NodeWallet, quota_value: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         neofs_adm: NeofsAdm = self.neofs_env.neofs_adm()
         neofs_adm.fschain.refill_gas(
             rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
@@ -537,7 +537,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_value,quota_type", [(200, "hard"), (200, "soft")])
     def test_object_delete_and_quota_reclaim(self, unique_wallet: NodeWallet, quota_value: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,
@@ -659,7 +659,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_value,quota_type", [(200, "hard"), (200, "soft")])
     def test_user_object_lifetime_and_quota_reclaim(self, unique_wallet: NodeWallet, quota_value: int, quota_type: str):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,
@@ -818,7 +818,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_type,initial_quota", [("hard", 100), ("soft", 100)])
     def test_user_quota_removal(self, unique_wallet: NodeWallet, quota_type: str, initial_quota: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,
@@ -893,7 +893,7 @@ class TestUserQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("soft_quota,hard_quota", [(50, 100), (100, 50), (75, 75)])
     def test_user_mixed_quotas(self, unique_wallet: NodeWallet, soft_quota: int, hard_quota: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             unique_wallet.path,
             rule=placement_rule,

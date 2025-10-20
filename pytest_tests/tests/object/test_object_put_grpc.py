@@ -15,7 +15,7 @@ def test_put_storage_group_object_no_longer_supported(default_wallet: NodeWallet
             default_wallet.path,
             shell=neofs_env_single_sn.shell,
             endpoint=neofs_env_single_sn.sn_rpc,
-            rule="REP 1",
+            rule="EC 2/2",
         )
     with allure.step("Try to put a storage group object via grpc"):
         response = put_object(
@@ -32,7 +32,7 @@ def test_put_tombstone_object_without_delete_permission(
             default_wallet.path,
             shell=neofs_env_single_sn.shell,
             endpoint=neofs_env_single_sn.sn_rpc,
-            rule="REP 1",
+            rule="EC 2/2",
             basic_acl=ALLOW_ALL_OPERATIONS_EXCEPT_DELETE,
         )
 
@@ -81,7 +81,7 @@ def test_put_object_without_homo_hash(default_wallet: NodeWallet, neofs_env_sing
             default_wallet.path,
             shell=neofs_env_single_sn.shell,
             endpoint=neofs_env_single_sn.sn_rpc,
-            rule="REP 1",
+            rule="EC 2/2",
         )
 
     with allure.step("Try to put an object via grpc without homo hash"):
@@ -104,7 +104,7 @@ def test_put_object_without_homo_hash(default_wallet: NodeWallet, neofs_env_sing
             default_wallet.path,
             shell=neofs_env_single_sn.shell,
             endpoint=neofs_env_single_sn.sn_rpc,
-            rule="REP 1",
+            rule="EC 2/2",
         )
 
     with allure.step("Try to put an object via grpc without homo hash"):

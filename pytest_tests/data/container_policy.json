@@ -1,5 +1,5 @@
 {
-    "rep-1": "REP 1",
+    "rep-1": "EC 2/2",
     "rep-3": "REP 3",
-    "complex": "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+    "complex": "EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X"
 }

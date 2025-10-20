@@ -180,7 +180,7 @@ def test_4_ir_node_deployment_with_main_chain(neofs_env_4_ir_with_mainchain: Neo
         new_wallet = create_wallet_with_money(neofs_env)
         cid = create_container(
             new_wallet.path,
-            rule="REP 1",
+            rule="EC 2/2",
             shell=neofs_env.shell,
             endpoint=neofs_env.sn_rpc,
         )
@@ -200,7 +200,7 @@ def test_7_ir_node_deployment_with_main_chain(neofs_env_7_ir_with_mainchain: Neo
         new_wallet = create_wallet_with_money(neofs_env)
         cid = create_container(
             new_wallet.path,
-            rule="REP 1",
+            rule="EC 2/2",
             shell=neofs_env.shell,
             endpoint=neofs_env.sn_rpc,
         )

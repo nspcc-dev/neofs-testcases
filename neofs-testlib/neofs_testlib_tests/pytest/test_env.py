@@ -56,7 +56,7 @@ def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
         f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
-        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
+        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'EC 2/2' "
         f"--container-policy container_policy.json"
     )
     output = _run_with_passwd(cmd, wallet.password)
@@ -143,7 +143,7 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
     result = cli.container.create(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=wallet.path,
-        policy="REP 1 IN X CBF 1 SELECT 1 FROM * AS X",
+        policy="EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X",
         basic_acl="0FBFBFFF",
         await_mode=True,
     )

@@ -15,7 +15,7 @@ class TestContainerQuota(TestQuotaBase):
     @pytest.mark.parametrize("quota_type,quota_value", [("hard", 100), ("soft", 100)])
     @pytest.mark.sanity
     def test_container_quota(self, default_wallet: NodeWallet, quota_type: str, quota_value: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -73,7 +73,7 @@ class TestContainerQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_type,quota_value", [("hard", 200), ("soft", 200)])
     def test_container_quota_multiple_objects(self, default_wallet: NodeWallet, quota_type: str, quota_value: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -161,7 +161,7 @@ class TestContainerQuota(TestQuotaBase):
         self, default_wallet: NodeWallet, quota_type1: str, quota_type2: str, quota_value: int
     ):
         """Test that quotas are enforced per container and don't affect each other."""
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
 
         cid1 = create_container(
             default_wallet.path,
@@ -281,7 +281,7 @@ class TestContainerQuota(TestQuotaBase):
     def test_container_quota_update(
         self, default_wallet: NodeWallet, quota_type: str, initial_quota: int, updated_quota: int
     ):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -391,7 +391,7 @@ class TestContainerQuota(TestQuotaBase):
     def test_container_object_delete_and_quota_reclaim(
         self, default_wallet: NodeWallet, quota_type: str, quota_value: int
     ):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -520,7 +520,7 @@ class TestContainerQuota(TestQuotaBase):
     def test_container_object_lifetime_and_quota_reclaim(
         self, default_wallet: NodeWallet, quota_type: str, quota_value: int
     ):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -691,7 +691,7 @@ class TestContainerQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("quota_type,initial_quota", [("hard", 100), ("soft", 100)])
     def test_container_quota_removal(self, default_wallet: NodeWallet, quota_type: str, initial_quota: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,
@@ -765,7 +765,7 @@ class TestContainerQuota(TestQuotaBase):
 
     @pytest.mark.parametrize("soft_quota,hard_quota", [(100, 200)])
     def test_container_mixed_quotas(self, default_wallet: NodeWallet, soft_quota: int, hard_quota: int):
-        placement_rule = "REP 1"
+        placement_rule = "EC 2/2"
         cid = create_container(
             default_wallet.path,
             rule=placement_rule,

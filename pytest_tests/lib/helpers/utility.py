@@ -63,7 +63,7 @@ def placement_policy_from_container(container_info: str) -> str:
         attribute: Timestamp=1656340345 (2022-06-27 17:32:25 +0300 MSK)
         nonce: 1c511e88-efd7-4004-8dbf-14391a5d375a
         placement policy:
-        REP 1 IN LOC_PLACE
+        EC 2/2 IN LOC_PLACE
         CBF 1
         SELECT 1 FROM LOC_SW AS LOC_PLACE
         FILTER Country EQ Sweden AS LOC_SW
