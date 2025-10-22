@@ -62,7 +62,7 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     ir = neofs_env_single_sn.inner_ring_nodes[0]
 
     cid = create_container(
-        default_wallet.path, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc, rule="REP 1"
+        default_wallet.path, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc, rule="EC 2/2"
     )
 
     file_path = generate_file(simple_object_size)
@@ -390,7 +390,7 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
     cid = create_container_rest_gw(
         gw_endpoint,
         "rest_gw_container",
-        "REP 1",
+        "EC 2/2",
         PUBLIC_ACL,
         session_token,
         signature,
