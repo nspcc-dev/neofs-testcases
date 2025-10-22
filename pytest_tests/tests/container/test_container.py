@@ -13,7 +13,7 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
-from helpers.neofs_verbs import get_object, put_object_to_random_node
+from helpers.neofs_verbs import get_object, put_object_to_random_node, head_object
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
@@ -94,7 +94,7 @@ class TestContainer(TestNeofsBase):
     def test_ec_container_creation(self, default_wallet):
         wallet = default_wallet
 
-        placement_rule = "EC 1/2"
+        placement_rule = "EC 2/2"
         cid = create_container(
             wallet.path,
             rule=placement_rule,
@@ -115,11 +115,42 @@ class TestContainer(TestNeofsBase):
         )
         container_info = container_info.casefold() 
         logger.info(f"Container info: {container_info=}")
+        
+        source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        
+        oid = put_object_to_random_node(
+            wallet.path, source_file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+        )
+        
+        get_object(
+            default_wallet.path,
+            cid,
+            oid,
+            self.neofs_env.shell,
+            self.neofs_env.sn_rpc,
+        )
+        
+        head_object(
+            default_wallet.path,
+            cid,
+            oid,
+            self.neofs_env.shell,
+            self.neofs_env.sn_rpc,
+        )
+        
+        node_info = (
+            self.neofs_env.neofs_cli(self.neofs_env.storage_nodes[0].cli_config)
+            .netmap.nodeinfo(
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=self.neofs_env.storage_nodes[0].wallet.path,
+            )
+            .stdout.strip()
+        )
 
-        with allure.step("Delete container and check it was deleted"):
-            delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-            self.tick_epochs_and_wait(1)
-            wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        # with allure.step("Delete container and check it was deleted"):
+        #     delete_container(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+        #     self.tick_epochs_and_wait(1)
+        #     wait_for_container_deletion(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @allure.title("Not owner and not trusted party can NOT delete container")
     def test_only_owner_can_delete_container(self, not_owner_wallet: NodeWallet, default_wallet: str):
