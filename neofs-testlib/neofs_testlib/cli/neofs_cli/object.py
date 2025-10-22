@@ -415,3 +415,27 @@ class NeofsCliObject(CliCommand):
             "object searchv2",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def nodes(
+        self,
+        rpc_endpoint: str,
+        cid: str,
+        oid: Optional[str] = None,
+        shell_timeout: Optional[str] = None,
+    ) -> CommandResult:
+        """
+        Search object.
+
+        Args:
+            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+            cid: Container ID.
+            oid: Object ID.
+            shell_timeout: Shell timeout for the command.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "object nodes",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
