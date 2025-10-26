@@ -36,8 +36,7 @@ jobs:
       neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
       neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
       tests_parallel_level: 3
-      neofs_node_commit: 'bugfix/3644-object-put-panic'
-      tests_path: 'pytest_tests/tests/object/test_object_searchv2.py'
+      neofs_node_commit: 'master'
       os: >
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"},
         {"runner": "macos-14", "binary": "darwin-arm64", "shard": 0},
