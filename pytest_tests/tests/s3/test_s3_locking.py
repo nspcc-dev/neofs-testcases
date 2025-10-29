@@ -27,7 +27,7 @@ class TestS3Locking(TestNeofsS3Base):
         retention_period = 30
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
         )
 
         for version_id in [None, "second"]:
@@ -86,7 +86,7 @@ class TestS3Locking(TestNeofsS3Base):
         retention_period_1 = 1
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
         )
 
         for version_id in [None, "second"]:
@@ -126,7 +126,7 @@ class TestS3Locking(TestNeofsS3Base):
         retention_period_2 = 5
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
         )
 
         for version_id in [None, "second"]:
@@ -182,7 +182,7 @@ class TestS3Locking(TestNeofsS3Base):
         file_name = object_key_from_file_path(file_path)
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
         )
 
         for version_id in [None, "second"]:
@@ -203,7 +203,7 @@ class TestS3Locking(TestNeofsS3Base):
         file_name = object_key_from_file_path(file_path)
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
         )
 
         for version_id in [None, "second"]:
@@ -230,7 +230,7 @@ class TestS3LockingBucket(TestNeofsS3Base):
         configuration = {"Rule": {"DefaultRetention": {"Mode": "COMPLIANCE", "Days": 1}}}
 
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
         )
 
         with allure.step("PutObjectLockConfiguration with ObjectLockEnabled=False"):

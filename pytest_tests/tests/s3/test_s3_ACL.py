@@ -104,7 +104,7 @@ class TestS3ACL(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 acl=acl,
-                bucket_configuration="rep-1",
+                bucket_configuration="ec 3/1",
             )
             bucket_acl = s3_bucket.get_bucket_acl(self.s3_client, bucket)
             verify_acls(bucket_acl, ACLType.PUBLIC_READ_WRITE)
@@ -129,7 +129,7 @@ class TestS3ACL(TestNeofsS3Base):
         with allure.step("Create bucket"):
             bucket = s3_bucket.create_bucket_s3(
                 self.s3_client,
-                bucket_configuration="rep-1",
+                bucket_configuration="ec 3/1",
             )
             bucket_acl = s3_bucket.get_bucket_acl(self.s3_client, bucket)
             verify_acls(bucket_acl, ACLType.PRIVATE)
