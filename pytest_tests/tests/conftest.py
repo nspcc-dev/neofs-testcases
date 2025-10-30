@@ -38,6 +38,7 @@ def get_or_create_neofs_env(
     with_rest_gw=True,
     chain_meta_data=False,
     sn_validator_url=None,
+    allow_ec=True,
     shards_count=2,
     gc_remover_batch_size=200,
     gc_sleep_interval=STORAGE_GC_TIME,
@@ -56,6 +57,7 @@ def get_or_create_neofs_env(
             request=request,
             chain_meta_data=chain_meta_data,
             sn_validator_url=sn_validator_url,
+            allow_ec=allow_ec,
             shards_count=shards_count,
             gc_remover_batch_size=gc_remover_batch_size,
             gc_sleep_interval=gc_sleep_interval,
@@ -86,6 +88,13 @@ def neofs_env_function_scope(temp_directory, artifacts_directory, request):
 @pytest.fixture(scope="function")
 def neofs_env_chain_meta_data(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False, chain_meta_data=True)
+    yield neofs_env
+    neofs_env.finalize(request)
+    
+
+@pytest.fixture(scope="function")
+def neofs_env_ec(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False, allow_ec=True)
     yield neofs_env
     neofs_env.finalize(request)
 

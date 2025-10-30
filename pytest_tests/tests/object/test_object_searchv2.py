@@ -917,7 +917,7 @@ def test_split_object_boundaries(
             default_wallet.path,
             shell=neofs_env.shell,
             endpoint=neofs_env.sn_rpc,
-            rule="REP 1",
+            rule="EC 2/2",
         )
         file_path = generate_file(object_size)
         put_object_to_random_node(
@@ -1789,7 +1789,7 @@ def test_searchv2_meta_enabled_containers(
             default_wallet.path,
             shell=neofs_env.shell,
             endpoint=neofs_env.sn_rpc,
-            rule="REP 1 CBF 4",
+            rule="EC 2/2 CBF 4",
             attributes={"__NEOFS__METAINFO_CONSISTENCY": meta_info_consistency},
         )
 

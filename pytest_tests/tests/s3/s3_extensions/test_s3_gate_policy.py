@@ -137,7 +137,7 @@ class TestS3GatePolicy(TestNeofsS3Base):
             assert bucket_loc_2 == "rep-2"
 
         with allure.step("Check containers policy"):
-            self.check_container_policy(bucket_1, "REP 1 IN X CBF 1 SELECT 1 FROM * AS X")
+            self.check_container_policy(bucket_1, "EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X")
             self.check_container_policy(bucket_2, "REP 2")
 
         with allure.step("Check object policy"):
