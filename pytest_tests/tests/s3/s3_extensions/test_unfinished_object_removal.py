@@ -21,7 +21,7 @@ def pytest_generate_tests(metafunc):
 class TestUnfinishedObjectRemoval(TestNeofsS3Base):
     def test_unfinished_object_removal(self):
         with allure.step("Create s3 bucket"):
-            bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+            bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
             cid = search_container_by_name(self.wallet.path, bucket, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
             parts_count = 5

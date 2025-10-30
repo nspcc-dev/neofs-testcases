@@ -57,7 +57,7 @@ def s3_client(default_wallet: NodeWallet, neofs_env_single_sn: NeoFSEnv) -> Any:
 def test_s3_api_multipart_disabled_homo_hash(s3_client):
     neofs_env, client = s3_client
 
-    bucket = s3_bucket.create_bucket_s3(client, bucket_configuration="ec 3/1")
+    bucket = s3_bucket.create_bucket_s3(client, bucket_configuration="rep-2")
 
     parts_count = 3
     file_name_large = generate_file(neofs_env.get_object_size("simple_object_size") * 1024 * 6 * parts_count)

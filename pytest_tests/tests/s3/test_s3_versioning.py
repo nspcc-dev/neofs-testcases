@@ -31,7 +31,7 @@ class TestS3Versioning(TestNeofsS3Base):
     @allure.title("Test S3: try to disable versioning")
     def test_s3_version_off(self):
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
+            self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-2"
         )
         with pytest.raises(Exception):
             set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.SUSPENDED)
@@ -39,7 +39,7 @@ class TestS3Versioning(TestNeofsS3Base):
     @pytest.fixture(scope="class")
     def prepare_versioned_objects(self) -> tuple:
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-2"
         )
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -75,7 +75,7 @@ class TestS3Versioning(TestNeofsS3Base):
         file_name = self.object_key_from_file_path(file_path)
         bucket_objects = [file_name]
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-2"
         )
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.SUSPENDED)
 
@@ -124,7 +124,7 @@ class TestS3Versioning(TestNeofsS3Base):
     @allure.title("Test for duplicate objects in S3 listings")
     def test_s3_duplicates_in_object_listing(self):
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-2"
         )
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
@@ -165,7 +165,7 @@ class TestS3Versioning(TestNeofsS3Base):
     @pytest.mark.parametrize("common_prefix", ["/s3-prefix/", "s3-prefix/", "s3-prefix", "test/s3/prefix/"])
     def test_s3_prefix_in_object_listing(self, common_prefix: str):
         bucket = s3_bucket.create_bucket_s3(
-            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
+            self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-2"
         )
 
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)

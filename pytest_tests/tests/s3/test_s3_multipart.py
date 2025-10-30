@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
 class TestS3Multipart(TestNeofsS3Base):
     @allure.title("Test S3 Object Multipart API")
     def test_s3_object_multipart(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         parts_count = 5
         file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
@@ -56,7 +56,7 @@ class TestS3Multipart(TestNeofsS3Base):
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
     def test_s3_object_multipart_non_sequential(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         parts_count = 11
         file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
@@ -90,7 +90,7 @@ class TestS3Multipart(TestNeofsS3Base):
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
     def test_s3_object_multipart_random(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         parts_count = 7
         files_num = 5
@@ -138,7 +138,7 @@ class TestS3Multipart(TestNeofsS3Base):
 
     @allure.title("Test S3 Multipart abord")
     def test_s3_abort_multipart(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         parts_count = 5
         file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
@@ -161,7 +161,7 @@ class TestS3Multipart(TestNeofsS3Base):
 
     @allure.title("Test S3 Upload Part Copy")
     def test_s3_multipart_copy(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
         parts_count = 3
         file_name_large = generate_file(PART_SIZE * parts_count)  # 5Mb - min part
@@ -198,7 +198,7 @@ class TestS3Multipart(TestNeofsS3Base):
     @allure.title("Test S3 Object List Multipart Uploads Pagination via boto3")
     @pytest.mark.boto3_only
     def test_s3_object_multipart_upload_pagination_boto3(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         small_object_size = 8
         number_of_uploads = 20
 
@@ -222,7 +222,7 @@ class TestS3Multipart(TestNeofsS3Base):
     @allure.title("Test S3 Object List Multipart Uploads Pagination via aws cli")
     @pytest.mark.aws_cli_only
     def test_s3_object_multipart_upload_pagination_aws_cli(self, bucket):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         small_object_size = 8
         number_of_uploads = 20
 
@@ -259,7 +259,7 @@ class TestS3Multipart(TestNeofsS3Base):
     @allure.title("Test S3 Object Multipart List Parts Pagination via boto3")
     @pytest.mark.boto3_only
     def test_s3_object_multipart_list_parts_boto3(self):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         PART_SIZE = 16
         file_name = generate_file(PART_SIZE * 20)
         object_key = object_key_from_file_path(file_name)
@@ -292,7 +292,7 @@ class TestS3Multipart(TestNeofsS3Base):
     @allure.title("Test S3 Object Multipart List Parts Pagination via aws cli")
     @pytest.mark.aws_cli_only
     def test_s3_object_multipart_list_parts_aws_cli(self, bucket):
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
         PART_SIZE = 16
         parts_count = 20
         file_name = generate_file(PART_SIZE * parts_count)

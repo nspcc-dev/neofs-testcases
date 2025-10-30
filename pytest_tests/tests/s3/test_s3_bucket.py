@@ -30,7 +30,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 acl=acl,
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl = s3_bucket.get_bucket_acl(self.s3_client, bucket)
             verify_acls(bucket_acl, ACLType.PRIVATE)
@@ -41,7 +41,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 acl=acl,
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl_1 = s3_bucket.get_bucket_acl(self.s3_client, bucket_1)
             verify_acls(bucket_acl_1, ACLType.PUBLIC_READ)
@@ -52,7 +52,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 acl=acl,
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl_2 = s3_bucket.get_bucket_acl(self.s3_client, bucket_2)
             verify_acls(bucket_acl_2, ACLType.PUBLIC_READ_WRITE)
@@ -63,7 +63,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 acl=acl,
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl_3 = s3_bucket.get_bucket_acl(self.s3_client, bucket_3)
             verify_acls(bucket_acl_3, ACLType.PUBLIC_READ)
@@ -75,7 +75,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 grant_read="uri=http://acs.amazonaws.com/groups/global/AllUsers",
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl = s3_bucket.get_bucket_acl(self.s3_client, bucket)
             verify_acls(bucket_acl, ACLType.PUBLIC_READ)
@@ -85,7 +85,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 grant_write="uri=http://acs.amazonaws.com/groups/global/AllUsers",
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl_1 = s3_bucket.get_bucket_acl(self.s3_client, bucket_1)
             verify_acls(bucket_acl_1, ACLType.PUBLIC_WRITE)
@@ -95,7 +95,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 self.s3_client,
                 object_lock_enabled_for_bucket=True,
                 grant_full_control="uri=http://acs.amazonaws.com/groups/global/AllUsers",
-                bucket_configuration="ec 3/1",
+                bucket_configuration="rep-2",
             )
             bucket_acl_2 = s3_bucket.get_bucket_acl(self.s3_client, bucket_2)
             verify_acls(bucket_acl_2, ACLType.PUBLIC_READ_WRITE)
@@ -108,7 +108,7 @@ class TestS3Bucket(TestNeofsS3Base):
 
         with allure.step("Create bucket with --no-object-lock-enabled-for-bucket"):
             bucket = s3_bucket.create_bucket_s3(
-                self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="ec 3/1"
+                self.s3_client, object_lock_enabled_for_bucket=False, bucket_configuration="rep-2"
             )
             date_obj = datetime.now(UTC) + timedelta(days=1)
             with pytest.raises(Exception, match=r".*Object Lock configuration does not exist for this bucket.*"):
@@ -123,7 +123,7 @@ class TestS3Bucket(TestNeofsS3Base):
                 )
         with allure.step("Create bucket with --object-lock-enabled-for-bucket"):
             bucket_1 = s3_bucket.create_bucket_s3(
-                self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
+                self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-2"
             )
             date_obj_1 = datetime.now(UTC) + timedelta(days=1)
             s3_object.put_object_s3(
@@ -143,7 +143,7 @@ class TestS3Bucket(TestNeofsS3Base):
         file_name_1 = object_key_from_file_path(file_path_1)
         file_path_2 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         file_name_2 = object_key_from_file_path(file_path_2)
-        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
 
         with allure.step("Put two objects into bucket"):
             s3_object.put_object_s3(self.s3_client, bucket, file_path_1)

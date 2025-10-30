@@ -47,10 +47,10 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Create buckets"):
             bucket_1 = s3_bucket.create_bucket_s3(
-                self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="ec 3/1"
+                self.s3_client, object_lock_enabled_for_bucket=True, bucket_configuration="rep-2"
             )
             set_bucket_versioning(self.s3_client, bucket_1, s3_bucket.VersioningStatus.ENABLED)
-            bucket_2 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="ec 3/1")
+            bucket_2 = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-2")
 
         with allure.step("Check buckets are presented in the system"):
             buckets = s3_bucket.list_buckets_s3(self.s3_client)
