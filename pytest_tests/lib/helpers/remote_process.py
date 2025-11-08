@@ -158,7 +158,7 @@ class RemoteProcess:
         self.process_dir = terminal.stdout.strip()
 
     @allure.step("Get pid")
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(5), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(50), reraise=True)
     def _get_pid(self) -> str:
         terminal = self.shell.exec(f"cat {self.process_dir}/pid")
         assert terminal.stdout, f"invalid pid: {terminal.stdout}"

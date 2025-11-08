@@ -260,7 +260,7 @@ class NeoFSEnv:
         for t in deploy_threads:
             t.join()
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(60), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(120), reraise=True)
     def _wait_until_all_storage_nodes_are_ready(self):
         ready_counter = 0
         for sn in self.storage_nodes:
@@ -1054,7 +1054,7 @@ class MainChain(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(500), reraise=True)
     def _wait_until_ready(self):
         result = self.neofs_env.neo_go().query.height(rpc_endpoint=f"http://{self.rpc_address}")
         logger.info("WAIT UNTIL MAIN CHAIN IS READY:")
@@ -1208,7 +1208,7 @@ class InnerRing(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(12), stop=stop_after_attempt(100), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(1200), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint, post_data="--ir")
@@ -1445,14 +1445,14 @@ class StorageNode(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(15), stop=stop_after_attempt(30), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(450), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint)
         assert "Health status: READY" in result.stdout, "Health is not ready"
         assert "Network status: ONLINE" in result.stdout, "Network is not online"
 
-    @retry(wait=wait_fixed(15), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(150), reraise=True)
     def _wait_until_not_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         try:
@@ -1526,7 +1526,7 @@ class S3_GW(ResurrectableProcess):
         self.process = None
         self.pid = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"https://{self.endpoint}" if self.tls_enabled else f"http://{self.endpoint}"
         resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
@@ -1642,7 +1642,7 @@ class REST_GW(ResurrectableProcess):
         self.process = None
         self.pid = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"http://{self.endpoint}"
         resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)

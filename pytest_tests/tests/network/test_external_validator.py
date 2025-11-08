@@ -96,7 +96,7 @@ def invalid_response_code():
     response_config["status_code"] = 200
 
 
-@retry(wait=wait_fixed(5), stop=stop_after_attempt(5), reraise=True)
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(50), reraise=True)
 def _wait_until_ready(neofs_env: NeoFSEnv, sn: StorageNode):
     neofs_cli = neofs_env.neofs_cli(sn.cli_config)
     result = neofs_cli.control.healthcheck(endpoint=sn.control_endpoint)
