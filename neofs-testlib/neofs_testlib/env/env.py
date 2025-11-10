@@ -473,7 +473,8 @@ class NeoFSEnv:
         if os.path.isfile(aws_binary):
             try:
                 result = subprocess.run([aws_binary, "--version"], check=True, capture_output=True, text=True)
-                installed_version = result.stdout.split(" ")[1]
+                # for 2.22.35 version output is "aws-cli/2.22.35 Python/3.12.6 Linux/6.14.0-29-generic exe/x86_64.ubuntu.24"
+                installed_version = result.stdout.split(" ")[0].split("/")[1]
                 if installed_version != required_version:
                     logger.warning(
                         f"AWS CLI already installed at {aws_binary}, but version is {installed_version} (expected {required_version})"
