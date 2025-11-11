@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import allure
+import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import (
     SIMPLE_OBJECT_SIZE,
@@ -14,6 +15,7 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.file_helper import generate_file
+from helpers.node_management import restart_storage_nodes
 from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.reporter import AllureHandler, get_reporter
@@ -212,9 +214,25 @@ def neofs_env_7_ir_with_mainchain(temp_directory, artifacts_directory, request):
     neofs_env.finalize(request)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def neofs_env_with_mainchain(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, with_main_chain=True, with_s3_gw=True, with_rest_gw=True)
+    GAS = 10**12
+    MAX_OBJECT_SIZE = 10**7
+    EPOCH_DURATION = 20
+    CONTAINER_FEE = GAS
+    STORAGE_FEE = GAS
+    with allure.step("Set more convenient network config values"):
+        neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+            post_data=f"MaxObjectSize={MAX_OBJECT_SIZE} ContainerFee={CONTAINER_FEE} BasicIncomeRate={STORAGE_FEE} EpochDuration={EPOCH_DURATION}",
+        )
+
+        # Temporary workaround for a problem with propagading MaxObjectSize between storage nodes
+        restart_storage_nodes(neofs_env.storage_nodes)
+
+        neofs_epoch.tick_epoch_and_wait(neofs_env=neofs_env)
     yield neofs_env
     neofs_env.finalize(request)
 
