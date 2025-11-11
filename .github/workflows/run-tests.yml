@@ -37,7 +37,7 @@ jobs:
       neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
       tests_parallel_level: 3
       neofs_s3_gw_commit: 'ec'
-      neofs_node_commit: 'bugfix/ec-forwarding'
+      neofs_node_commit: 'master'
       tests_path: 'pytest_tests/tests/s3'
       os: >
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"}]
