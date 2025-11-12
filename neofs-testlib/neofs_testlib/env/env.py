@@ -205,13 +205,13 @@ class NeoFSEnv:
 
         with allure.step("Wait until all IR nodes are READY"):
             for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
-                logger.info(f"Wait until IR: {ir_node} is READY")
-                try:
-                    ir_node._wait_until_ready()
-                except Exception as e:
-                    allure.attach.file(ir_node.stderr, name=f"ir{ir_node_idx} node stderr", extension="txt")
-                    allure.attach.file(ir_node.stdout, name=f"ir{ir_node_idx} node stdout", extension="txt")
-                    raise e
+                with allure.step(f"Wait until IR: {ir_node} is READY"):
+                    try:
+                        ir_node._wait_until_ready()
+                    except Exception as e:
+                        allure.attach.file(ir_node.stderr, name=f"ir{ir_node_idx} node stderr", extension="txt")
+                        allure.attach.file(ir_node.stdout, name=f"ir{ir_node_idx} node stdout", extension="txt")
+                        raise e
 
     @allure.step("Deploy storage node")
     def deploy_storage_nodes(
@@ -1209,7 +1209,7 @@ class InnerRing(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(1), stop=stop_after_attempt(1200), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(200), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint, post_data="--ir")
@@ -1446,7 +1446,7 @@ class StorageNode(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(1), stop=stop_after_attempt(450), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(200), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint)
