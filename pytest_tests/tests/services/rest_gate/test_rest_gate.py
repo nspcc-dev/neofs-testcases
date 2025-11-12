@@ -34,7 +34,7 @@ OBJECT_NOT_FOUND_ERROR = "not found"
 )
 @pytest.mark.sanity
 class TestRestGate(TestNeofsRestBase):
-    PLACEMENT_RULE_1 = "REP 1 IN X CBF 1 SELECT 1 FROM * AS X"
+    PLACEMENT_RULE_1 = "EC 2/2 IN X CBF 1 SELECT 1 FROM * AS X"
     PLACEMENT_RULE_2 = "REP 2 IN X CBF 2 SELECT 2 FROM * AS X"
 
     @pytest.fixture(scope="class", autouse=True)

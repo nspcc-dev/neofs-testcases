@@ -173,16 +173,14 @@ class NeoFSEnv:
         return neo_go_config_path
 
     @allure.step("Deploy inner ring nodes")
-    def deploy_inner_ring_nodes(
-        self, count=1, with_main_chain=False, chain_meta_data=False, sn_validator_url=None, allow_ec=False
-    ):
+    def deploy_inner_ring_nodes(self, count=1, with_main_chain=False, chain_meta_data=False, sn_validator_url=None, allow_ec=True):
         for _ in range(count):
             new_inner_ring_node = InnerRing(
                 self,
                 len(self.inner_ring_nodes) + 1,
                 chain_meta_data=chain_meta_data,
                 sn_validator_url=sn_validator_url,
-                allow_ec=allow_ec,
+                allow_ec=allow_ec
             )
             new_inner_ring_node.generate_network_config()
             self.inner_ring_nodes.append(new_inner_ring_node)
@@ -670,7 +668,7 @@ class NeoFSEnv:
         request=None,
         chain_meta_data=False,
         sn_validator_url=None,
-        allow_ec=False,
+        allow_ec=True,
         fschain_endpoints: Optional[list[str]] = None,
         shards_count=2,
         gc_remover_batch_size=200,
@@ -692,7 +690,7 @@ class NeoFSEnv:
                 with_main_chain=with_main_chain,
                 chain_meta_data=chain_meta_data,
                 sn_validator_url=sn_validator_url,
-                allow_ec=allow_ec,
+                allow_ec=allow_ec
             )
 
             if storage_nodes_count:
@@ -1065,7 +1063,12 @@ class MainChain(ResurrectableProcess):
 
 class InnerRing(ResurrectableProcess):
     def __init__(
-        self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=False, sn_validator_url=None, allow_ec=False
+        self,
+        neofs_env: NeoFSEnv,
+        ir_number: int,
+        chain_meta_data=False,
+        sn_validator_url=None,
+        allow_ec=True,
     ):
         self.neofs_env = neofs_env
         self.ir_number = ir_number
@@ -1091,6 +1094,7 @@ class InnerRing(ResurrectableProcess):
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
         self.chain_meta_data = chain_meta_data
+        self.allow_ec = allow_ec
         self.sn_validator_url = sn_validator_url
         self.allow_ec = allow_ec
         self.stdout = "Not initialized"

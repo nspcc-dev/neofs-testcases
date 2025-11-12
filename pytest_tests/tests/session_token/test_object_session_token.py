@@ -60,7 +60,7 @@ class TestDynamicObjectSession(TestNeofsBase):
             un_locode = container_node.node_attrs[0].split(":")[1].strip()
             locode = "SPB" if un_locode == "RU LED" else un_locode.split()[1]
             placement_policy = (
-                f"REP 1 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
+                f"EC 2/2 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
                 f'AS LOC_{locode}_PLACE FILTER "UN-LOCODE" '
                 f'EQ "{un_locode}" AS LOC_{locode}'
             )
@@ -170,7 +170,7 @@ class TestDynamicObjectSession(TestNeofsBase):
             un_locode = first_node.node_attrs[0].split(":")[1].strip()
             locode = "SPB" if un_locode == "RU LED" else un_locode.split()[1]
             placement_policy = (
-                f"REP 1 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
+                f"EC 2/2 IN LOC_{locode}_PLACE CBF 1 SELECT 1 FROM LOC_{locode} "
                 f'AS LOC_{locode}_PLACE FILTER "UN-LOCODE" '
                 f'EQ "{un_locode}" AS LOC_{locode}'
             )

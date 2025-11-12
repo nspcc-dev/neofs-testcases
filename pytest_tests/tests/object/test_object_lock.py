@@ -714,7 +714,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                 wallet.path,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                rule="REP 1 CBF 1",
+                rule="EC 2/2 CBF 1",
                 basic_acl=PUBLIC_ACL,
             )
 

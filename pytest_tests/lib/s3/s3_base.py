@@ -153,7 +153,7 @@ def init_s3_credentials(
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
         f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
-        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
+        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'EC 2/2' "
         f"--container-policy {policy}"
     )
 
