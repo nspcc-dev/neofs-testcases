@@ -4,7 +4,7 @@ from neofs_testlib.env.env import NeoFSEnv
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 
-@retry(wait=wait_fixed(10), stop=stop_after_attempt(5), reraise=True)
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(50), reraise=True)
 def is_port_in_use(host: str, port: str, error_msg: str):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:

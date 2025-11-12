@@ -28,6 +28,7 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
+import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -43,6 +44,7 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
+from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -256,7 +258,7 @@ class NeoFSEnv:
         for t in deploy_threads:
             t.join()
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(60), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(120), reraise=True)
     def _wait_until_all_storage_nodes_are_ready(self):
         ready_counter = 0
         for sn in self.storage_nodes:
@@ -469,7 +471,8 @@ class NeoFSEnv:
         if os.path.isfile(aws_binary):
             try:
                 result = subprocess.run([aws_binary, "--version"], check=True, capture_output=True, text=True)
-                installed_version = result.stdout.split(" ")[1]
+                # for 2.22.35 version output is "aws-cli/2.22.35 Python/3.12.6 Linux/6.14.0-29-generic exe/x86_64.ubuntu.24"
+                installed_version = result.stdout.split(" ")[0].split("/")[1]
                 if installed_version != required_version:
                     logger.warning(
                         f"AWS CLI already installed at {aws_binary}, but version is {installed_version} (expected {required_version})"
@@ -677,6 +680,11 @@ class NeoFSEnv:
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
         try:
+            if allow_ec and parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version(
+                "0.49.1"
+            ):
+                pytest.skip("EC is not supported in versions <= 0.49.1")
+
             neofs_env.deploy_inner_ring_nodes(
                 count=inner_ring_nodes_count,
                 with_main_chain=with_main_chain,
@@ -1045,7 +1053,7 @@ class MainChain(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(50), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(500), reraise=True)
     def _wait_until_ready(self):
         result = self.neofs_env.neo_go().query.height(rpc_endpoint=f"http://{self.rpc_address}")
         logger.info("WAIT UNTIL MAIN CHAIN IS READY:")
@@ -1088,6 +1096,7 @@ class InnerRing(ResurrectableProcess):
         self.chain_meta_data = chain_meta_data
         self.allow_ec = allow_ec
         self.sn_validator_url = sn_validator_url
+        self.allow_ec = allow_ec
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1204,7 +1213,7 @@ class InnerRing(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(12), stop=stop_after_attempt(100), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(1200), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint, post_data="--ir")
@@ -1441,20 +1450,21 @@ class StorageNode(ResurrectableProcess):
         )
         self.pid = self.process.pid
 
-    @retry(wait=wait_fixed(15), stop=stop_after_attempt(30), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(450), reraise=True)
     def _wait_until_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint)
         assert "Health status: READY" in result.stdout, "Health is not ready"
         assert "Network status: ONLINE" in result.stdout, "Network is not online"
 
-    @retry(wait=wait_fixed(15), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(150), reraise=True)
     def _wait_until_not_ready(self):
         neofs_cli = self.neofs_env.neofs_cli(self.cli_config)
         try:
             result = neofs_cli.control.healthcheck(endpoint=self.control_endpoint)
         except Exception as e:
             with allure.step(f"Exception caught: {e}, node is not ready"):
+                time.sleep(2)
                 return
         assert "Health status: READY" not in result.stdout, "Health is ready"
         assert "Network status: ONLINE" not in result.stdout, "Network is online"
@@ -1521,7 +1531,7 @@ class S3_GW(ResurrectableProcess):
         self.process = None
         self.pid = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"https://{self.endpoint}" if self.tls_enabled else f"http://{self.endpoint}"
         resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
@@ -1637,7 +1647,7 @@ class REST_GW(ResurrectableProcess):
         self.process = None
         self.pid = None
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(10), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(100), reraise=True)
     def _wait_until_ready(self):
         endpoint = f"http://{self.endpoint}"
         resp = requests.get(endpoint, verify=False, timeout=DEFAULT_REST_OPERATION_TIMEOUT)

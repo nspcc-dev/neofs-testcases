@@ -8,7 +8,6 @@ from helpers.complex_object_actions import get_nodes_with_object
 from helpers.container import create_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
-from helpers.node_management import restart_storage_nodes
 from helpers.wallet_helpers import create_wallet_with_money, get_neofs_balance
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -46,24 +45,9 @@ class TestContainerPayments:
         neofs_env = neofs_env_with_mainchain
         GAS = 10**12
         GB = 10**9
-        MAX_OBJECT_SIZE = 10**8
-        EPOCH_DURATION = 20
+        MAX_OBJECT_SIZE = 10**7
         CONTAINER_FEE = GAS
-        STORAGE_FEE = GAS
-
-        with allure.step("Set more convenient network config values"):
-            neofs_env.neofs_adm().fschain.set_config(
-                rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                alphabet_wallets=neofs_env.alphabet_wallets_dir,
-                post_data=f"MaxObjectSize={MAX_OBJECT_SIZE} ContainerFee={CONTAINER_FEE} BasicIncomeRate={STORAGE_FEE} EpochDuration={EPOCH_DURATION}",
-            )
-
-            # Temporary workaround for a problem with propagading MaxObjectSize between storage nodes
-            restart_storage_nodes(neofs_env.storage_nodes)
-
-            neofs_epoch.tick_epoch_and_wait(neofs_env=neofs_env)
-
-            objects_count = int(GB / MAX_OBJECT_SIZE) * objects_count_multiplier
+        objects_count = 10 * objects_count_multiplier
 
         with allure.step("Create container and validate that a user was charged with the required amount of GAS"):
             user_wallet_balance_before_container_creation = get_neofs_balance(
@@ -135,7 +119,7 @@ class TestContainerPayments:
                     last_balance = current_balance
             assert len(deltas) == 1, "invalid number of withdrawals from the user wallet per epoch"
             single_node_gain_per_epoch = int((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 1, "Invalid user wallet balance"
+            assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 0.5, "Invalid user wallet balance"
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
@@ -152,4 +136,4 @@ class TestContainerPayments:
                     last_balance = current_balance
             assert len(deltas) == 1, "invalid number of debits to the storage node wallet per epoch"
             single_node_gain_per_epoch = int((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - single_node_gain_per_epoch) <= 1, "Invalid storage node wallet balance"
+            assert abs(deltas[0] - single_node_gain_per_epoch) <= 0.5, "Invalid storage node wallet balance"

@@ -975,7 +975,7 @@ class TestObjectApi(TestNeofsBase):
                 f"Value {val_to_check} is equal"
             )
 
-    @retry(wait=wait_fixed(20), stop=stop_after_attempt(20), reraise=True)
+    @retry(wait=wait_fixed(1), stop=stop_after_attempt(400), reraise=True)
     def wait_until_object_is_completely_deleted(self, cid: str, oid: str):
         for sn in self.neofs_env.storage_nodes:
             response = self.neofs_env.neofs_cli(sn.cli_config).control.object_status(
