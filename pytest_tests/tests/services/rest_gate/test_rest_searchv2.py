@@ -11,9 +11,9 @@ import pytest
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import delete_object, head_object
-from helpers.rest_gate import SearchV2Filter, new_attr_into_header
-from helpers.rest_gate import new_upload_via_rest_gate as put_object_to_random_node_via_rest_gw
+from helpers.rest_gate import SearchV2Filter, attr_into_header
 from helpers.rest_gate import searchv2 as search_object_via_rest_gw
+from helpers.rest_gate import upload_via_rest_gate as put_object_to_random_node_via_rest_gw
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -105,7 +105,7 @@ def test_search_single_filter_by_custom_int_attributes(container: str, neofs_env
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header({int_attribute_name: int_value}),
+                    headers=attr_into_header({int_attribute_name: int_value}),
                 ),
             }
         )
@@ -162,7 +162,7 @@ def test_search_single_filter_by_custom_str_attributes(container: str, neofs_env
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header({str_attribute_name: str_value}),
+                    headers=attr_into_header({str_attribute_name: str_value}),
                 ),
             }
         )
@@ -215,7 +215,7 @@ def test_search_numeric_filter_by_str_attributes(container: str, neofs_env: NeoF
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header({str_attribute_name: str_value}),
+                    headers=attr_into_header({str_attribute_name: str_value}),
                 ),
             }
         )
@@ -241,7 +241,7 @@ def test_search_multiple_filters_same_attribute(container: str, neofs_env: NeoFS
         cid=cid,
         path=file_path,
         endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-        headers=new_attr_into_header({"int_attr": 100, "str_attr": "abcd"}),
+        headers=attr_into_header({"int_attr": 100, "str_attr": "abcd"}),
     )
     testcases = [
         {
@@ -303,7 +303,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header(attrs),
+                    headers=attr_into_header(attrs),
                 ),
             }
         )
@@ -366,7 +366,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header(attrs),
+                    headers=attr_into_header(attrs),
                 ),
             }
         )
@@ -430,13 +430,13 @@ def test_search_by_mixed_attributes_contents(
         cid=cid,
         path=file_path,
         endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-        headers=new_attr_into_header({"str_attr": "345", "int_attr": "abcd"}),
+        headers=attr_into_header({"str_attr": "345", "int_attr": "abcd"}),
     )
     oid2 = put_object_to_random_node_via_rest_gw(
         cid=cid,
         path=file_path,
         endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-        headers=new_attr_into_header({"str_attr": "abcd", "int_attr": "345"}),
+        headers=attr_into_header({"str_attr": "abcd", "int_attr": "345"}),
     )
 
     found_objects, _ = search_objectv2(
@@ -501,7 +501,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                     cid=cid,
                     path=file_path,
                     endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-                    headers=new_attr_into_header(attrs),
+                    headers=attr_into_header(attrs),
                 ),
             }
         )
@@ -697,7 +697,7 @@ def test_search_by_various_attributes(
         cid=cid,
         path=file_path,
         endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-        headers=new_attr_into_header({"str_attr0": "interesting.value_for_some*reason", "int_attr0": 54321}),
+        headers=attr_into_header({"str_attr0": "interesting.value_for_some*reason", "int_attr0": 54321}),
     )
 
     head_info1 = head_object(
@@ -713,7 +713,7 @@ def test_search_by_various_attributes(
         cid=cid,
         path=file_path,
         endpoint=f"http://{neofs_env.rest_gw.endpoint}/v1",
-        headers=new_attr_into_header(
+        headers=attr_into_header(
             {"str_attr0": "interesting.value_for_some*reason", "str_attr1": "oops", "int_attr0": 54321}
         ),
     )
