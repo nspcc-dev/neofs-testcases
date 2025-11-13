@@ -45,13 +45,8 @@ class TestRestOptions(TestNeofsRestBase):
             "/auth",
             "/auth/bearer",
             f"/accounting/balance/{self.wallet.address}",
-            "/objects",
-            f"/objects/{user_container}/search",
-            f"/objects/{user_container}/{user_object}",
             "/containers",
             f"/containers/{user_container}",
             f"/containers/{user_container}/eacl",
-            f"/get/{user_container}/{user_object}",
-            f"/get_by_attribute/{user_container}/key/value",
         ):
             verify_options_request(f"{gw_endpoint}{rest_gw_path}")

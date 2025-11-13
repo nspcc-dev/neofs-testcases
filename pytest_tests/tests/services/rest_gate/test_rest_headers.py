@@ -5,20 +5,14 @@ import allure
 import pytest
 from helpers.container import (
     create_container,
-    delete_container,
-    list_containers,
-    wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import delete_object
 from helpers.rest_gate import (
-    attr_into_str_header,
-    attr_into_str_header_curl,
+    attr_into_header,
     get_object_by_attr_and_verify_hashes,
     try_to_get_object_and_expect_error,
-    try_to_get_object_via_passed_request_and_expect_error,
     upload_via_rest_gate,
-    upload_via_rest_gate_curl,
 )
 from helpers.storage_object_info import StorageObjectInfo
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -67,7 +61,7 @@ class Test_rest_headers(TestNeofsRestBase):
                 cid=cid,
                 path=file_path,
                 endpoint=gw_endpoint,
-                headers=attr_into_str_header(attributes),
+                headers=attr_into_header(attributes),
             )
             storage_object = StorageObjectInfo(cid, storage_object_id)
             storage_object.size = os.path.getsize(file_path)
@@ -157,74 +151,5 @@ class Test_rest_headers(TestNeofsRestBase):
                 file_name=storage_object_1.file_path,
                 cid=storage_object_1.cid,
                 attrs=key_value_pair,
-                endpoint=gw_endpoint,
-            )
-
-    @allure.title("[Negative] Try to put object and get right after container is deleted")
-    @pytest.mark.simple
-    def test_negative_put_and_get_object3(self, gw_endpoint):
-        """
-        Test to attempt to put object and try to download it right after the container has been deleted
-
-        Steps:
-        1. [Negative] Allocate and attempt to put object#3 via http with attributes: [Writer=Leo Tolstoy, Writer=peace, peace=peace]
-            Expected: "Error duplication of attributes detected"
-        2. Delete container
-        3. [Negative] Try to download object with attributes [peace=peace]
-            Expected: "HTTP request sent, awaiting response... 404 Not Found"
-        """
-        cid = create_container(
-            wallet=self.wallet.path,
-            shell=self.shell,
-            endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE,
-            basic_acl=PUBLIC_ACL,
-        )
-        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-        upload_via_rest_gate(
-            cid=cid,
-            path=file_path,
-            endpoint=gw_endpoint,
-            headers=attr_into_str_header(self.OBJECT_ATTRIBUTES[0]),
-        )
-
-        with allure.step(
-            "[Negative] Allocate and attemt to put object#3 via http with attributes: [Writer=Leo Tolstoy, Writer=peace, peace=peace]"
-        ):
-            file_path_3 = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-            attrs_obj3 = {"Writer": "Leo Tolstoy", "peace": "peace"}
-            headers = attr_into_str_header_curl(attrs_obj3)
-            headers.append(" ".join(attr_into_str_header_curl({"Writer": "peace"})))
-            error_pattern = "key duplication error: X-Attribute-Writer"
-            upload_via_rest_gate_curl(
-                cid=cid,
-                filepath=file_path_3,
-                endpoint=gw_endpoint,
-                headers=headers,
-                error_pattern=error_pattern,
-            )
-        with allure.step("Delete container and verify container deletion"):
-            delete_container(
-                wallet=self.wallet.path,
-                cid=cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            self.tick_epochs_and_wait(1)
-            wait_for_container_deletion(
-                self.wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            assert cid not in list_containers(self.wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-        with allure.step("[Negative] Try to download (wget) object via wget with attributes [peace=peace]"):
-            error_pattern = "404 Not Found"
-            try_to_get_object_via_passed_request_and_expect_error(
-                cid=cid,
-                oid="",
-                error_pattern=error_pattern,
-                attrs=attrs_obj3,
-                http_request_path=None,
                 endpoint=gw_endpoint,
             )

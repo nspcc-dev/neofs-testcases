@@ -3,12 +3,7 @@ import logging
 import allure
 import pytest
 from helpers.file_helper import generate_file
-from helpers.rest_gate import (
-    create_container,
-    delete_container,
-    get_container_info,
-    upload_via_rest_gate,
-)
+from helpers.rest_gate import create_container, delete_container, get_container_info, upload_via_rest_gate
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE, PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from rest_gw.rest_base import TestNeofsRestBase

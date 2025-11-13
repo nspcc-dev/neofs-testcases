@@ -26,7 +26,7 @@ from helpers.rest_gate import (
     get_container_info,
     get_epoch_duration_via_rest_gate,
     get_via_rest_gate,
-    new_upload_via_rest_gate,
+    upload_via_rest_gate,
 )
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
@@ -401,7 +401,7 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
 
     get_container_info(gw_endpoint, cid)
     get_epoch_duration_via_rest_gate(gw_endpoint)
-    oid = new_upload_via_rest_gate(
+    oid = upload_via_rest_gate(
         cid=cid,
         path=generate_file(simple_object_size),
         endpoint=gw_endpoint,
