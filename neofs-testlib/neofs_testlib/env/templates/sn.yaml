@@ -25,6 +25,8 @@ fschain:
     - ws://{{ fschain_endpoint }}/ws
     {%- endfor %}
 
+policer:
+  replication_cooldown: 1m
 
 node:
   wallet:

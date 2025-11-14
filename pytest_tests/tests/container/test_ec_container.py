@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
+from helpers.complex_object_actions import get_nodes_with_object
 from helpers.container import (
     create_container,
     delete_container,
@@ -21,8 +22,9 @@ from helpers.neofs_verbs import (
     put_object,
     search_objectv2,
 )
-from helpers.node_management import wait_all_storage_nodes_returned
+from helpers.node_management import drop_object, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 
 def parse_ec_nodes_count(output: str) -> list:
@@ -54,6 +56,29 @@ def generate_ranges(source_file_size: int) -> list[tuple[int, int]]:
     ]
 
     return range_test_cases
+
+
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(300), reraise=True)
+def object_is_accessible(wallet_path: str, cid: str, oid: str, neofs_env: NeoFSEnv, endpoint: str):
+    head_object(
+        wallet_path,
+        cid,
+        oid,
+        shell=neofs_env.shell,
+        endpoint=endpoint,
+    )
+
+
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(300), reraise=True)
+def object_is_not_accessible(wallet_path: str, cid: str, oid: str, neofs_env: NeoFSEnv, endpoint: str):
+    with pytest.raises(Exception):
+        head_object(
+            wallet_path,
+            cid,
+            oid,
+            shell=neofs_env.shell,
+            endpoint=endpoint,
+        )
 
 
 @pytest.mark.sanity
@@ -678,3 +703,128 @@ def test_ec_multiple_containers(default_wallet: NodeWallet, neofs_env: NeoFSEnv)
         with allure.step("Clean up all containers"):
             for container_info in containers:
                 delete_container(wallet.path, container_info["cid"], shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+
+
+@pytest.mark.sanity
+@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
+@pytest.mark.parametrize(
+    "data_shards,parity_shards",
+    [
+        (3, 1),
+        (2, 1),
+        (1, 1),
+        (1, 2),
+        (2, 2),
+        (1, 3),
+    ],
+    ids=[
+        "EC_3/1",
+        "EC_2/1",
+        "EC_1/1",
+        "EC_1/2",
+        "EC_2/2",
+        "EC_1/3",
+    ],
+)
+@pytest.mark.parametrize(
+    "object_size",
+    [
+        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+    ],
+)
+@pytest.mark.simple
+def test_ec_recovery(
+    default_wallet: NodeWallet, neofs_env: NeoFSEnv, data_shards: int, parity_shards: int, object_size: str
+):
+    wallet = default_wallet
+
+    with allure.step("Create EC container"):
+        placement_rule = f"EC {data_shards}/{parity_shards} CBF 1"
+        cid = create_container(
+            wallet.path,
+            rule=placement_rule,
+            name="ec-container",
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+
+        containers = list_containers(wallet.path, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+        assert cid in containers, f"Expected container {cid} in containers: {containers}"
+
+    with allure.step("Put object to EC container"):
+        source_file_size = neofs_env.get_object_size(object_size)
+        source_file_path = generate_file(source_file_size)
+
+        main_oid = put_object(
+            wallet.path,
+            source_file_path,
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+        )
+
+    with allure.step("Verify object placement in EC container"):
+        result = (
+            neofs_env.neofs_cli(neofs_env.storage_nodes[0].cli_config)
+            .object.nodes(rpc_endpoint=neofs_env.storage_nodes[0].endpoint, cid=cid, oid=main_oid)
+            .stdout
+        )
+        assert f"EC {data_shards}/{parity_shards}" in result, (
+            f"Expected placement rule {placement_rule} in nodes output: {result}"
+        )
+
+        expected_nodes = data_shards + parity_shards
+        actual_nodes = parse_ec_nodes_count(result)
+        assert len(actual_nodes) == expected_nodes, (
+            f"Expected {expected_nodes} nodes (data: {data_shards}, parity: {parity_shards}), but found {len(actual_nodes)} nodes in output: {result}"
+        )
+
+    with allure.step("Search for the object and its parts in EC container"):
+        found_objects, _ = search_objectv2(
+            rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell
+        )
+
+        if object_size == "simple_object_size":
+            assert len(found_objects) == expected_nodes + 1, (
+                f"Invalid number of found objects in EC container, expected {expected_nodes + 1}, found {len(found_objects)}"
+            )
+
+    with allure.step("Drop one of the objects parts"):
+        object_to_recover = random.choice([o for o in found_objects if o["id"] != main_oid])
+        head_object(
+            default_wallet.path,
+            cid,
+            object_to_recover["id"],
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+        nodes_with_object = get_nodes_with_object(
+            cid,
+            object_to_recover["id"],
+            shell=neofs_env.shell,
+            nodes=neofs_env.storage_nodes,
+            neofs_env=neofs_env,
+        )
+        node_to_drop_object_from = random.choice(nodes_with_object)
+        drop_object(node_to_drop_object_from, cid, object_to_recover["id"])
+        object_is_not_accessible(
+            default_wallet.path, cid, object_to_recover["id"], neofs_env, node_to_drop_object_from.endpoint
+        )
+
+    with allure.step("Verify main object is still accessible after dropping one part"):
+        head_object(
+            default_wallet.path,
+            cid,
+            main_oid,
+            shell=neofs_env.shell,
+            endpoint=node_to_drop_object_from.endpoint,
+        )
+
+    with allure.step("Wait until the dropped part is recovered"):
+        object_is_accessible(
+            default_wallet.path,
+            cid,
+            object_to_recover["id"],
+            neofs_env,
+            node_to_drop_object_from.endpoint,
+        )
