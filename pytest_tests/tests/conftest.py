@@ -91,7 +91,7 @@ def neofs_env_function_scope(temp_directory, artifacts_directory, request):
     neofs_env.finalize(request)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def neofs_env_chain_meta_data(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(request, with_s3_gw=False, with_rest_gw=False, chain_meta_data=True)
     yield neofs_env

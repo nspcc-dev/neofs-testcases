@@ -21,6 +21,7 @@ from helpers.neofs_verbs import (
     search_object,
     search_objectv2,
 )
+from helpers.node_management import start_storage_nodes
 from helpers.test_control import wait_for_success
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -1815,15 +1816,18 @@ def test_searchv2_meta_enabled_containers(
         for sn in neofs_env.storage_nodes[1:]:
             sn.kill()
 
-    with allure.step("Search from alive node should return all created objects"):
-        found_objects, _ = search_objectv2(
-            rpc_endpoint=alive_node.endpoint,
-            wallet=default_wallet.path,
-            cid=cid,
-            shell=neofs_env.shell,
-        )
+    try:
+        with allure.step("Search from alive node should return all created objects"):
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=alive_node.endpoint,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+            )
 
-        assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
+            assert len(found_objects) == len(neofs_env.storage_nodes) * 2, "invalid number of found objects"
+    finally:
+        start_storage_nodes(neofs_env.storage_nodes[1:])
 
 
 @allure.title("Test ROOT object search for big objects")
