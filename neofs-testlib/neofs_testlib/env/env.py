@@ -223,6 +223,8 @@ class NeoFSEnv:
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
+        replication_cooldown="1m",
+        object_batch_size=None,
     ):
         logger.info(f"Going to deploy {count} storage nodes")
         deploy_threads = []
@@ -239,6 +241,8 @@ class NeoFSEnv:
                 shards_count=shards_count,
                 gc_remover_batch_size=gc_remover_batch_size,
                 gc_sleep_interval=gc_sleep_interval,
+                replication_cooldown=replication_cooldown,
+                object_batch_size=object_batch_size,
             )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
@@ -675,6 +679,8 @@ class NeoFSEnv:
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
+        replication_cooldown="1m",
+        object_batch_size=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -711,6 +717,8 @@ class NeoFSEnv:
                     shards_count=shards_count,
                     gc_remover_batch_size=gc_remover_batch_size,
                     gc_sleep_interval=gc_sleep_interval,
+                    replication_cooldown=replication_cooldown,
+                    object_batch_size=object_batch_size,
                 )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
@@ -1238,6 +1246,8 @@ class StorageNode(ResurrectableProcess):
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
+        replication_cooldown="1m",
+        object_batch_size=None,
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
@@ -1274,6 +1284,8 @@ class StorageNode(ResurrectableProcess):
         self.attrs = {}
         self.node_attrs = node_attrs
         self.writecache = writecache
+        self.replication_cooldown = replication_cooldown
+        self.object_batch_size = object_batch_size
         if attrs:
             self.attrs.update(attrs)
 
@@ -1323,6 +1335,8 @@ class StorageNode(ResurrectableProcess):
                     prometheus_address=self.prometheus_address,
                     attrs=self.node_attrs,
                     metadata_path=self.metadata_path,
+                    replication_cooldown=self.replication_cooldown,
+                    object_batch_size=self.object_batch_size,
                 )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
@@ -1386,6 +1400,8 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
+                replication_cooldown=self.replication_cooldown,
+                object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
 
@@ -1414,6 +1430,8 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
+                replication_cooldown=self.replication_cooldown,
+                object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
 

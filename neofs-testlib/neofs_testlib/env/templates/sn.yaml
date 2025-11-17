@@ -25,9 +25,6 @@ fschain:
     - ws://{{ fschain_endpoint }}/ws
     {%- endfor %}
 
-policer:
-  replication_cooldown: 1m
-
 node:
   wallet:
     path: "{{ wallet.path }}"
@@ -44,6 +41,16 @@ node:
 
 metadata:
   path: {{ metadata_path }}
+
+{% if replication_cooldown or object_batch_size %}
+policer:
+  {% if replication_cooldown %}
+  replication_cooldown: {{ replication_cooldown }}
+  {% endif %}
+  {% if object_batch_size %}
+  object_batch_size: {{ object_batch_size }}
+  {% endif %}
+{% endif %}
 
 # Storage engine configuration
 storage:    

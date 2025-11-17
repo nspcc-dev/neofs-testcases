@@ -32,6 +32,7 @@ storage:
   sn2: {{ default_password }}
   sn3: {{ default_password }}
   sn4: {{ default_password }}
+  sn5: {{ default_password }}
   s3: {{ default_password }}
   http: {{ default_password }}
   rest: {{ default_password }}
