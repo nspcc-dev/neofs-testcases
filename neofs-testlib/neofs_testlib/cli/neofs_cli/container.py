@@ -282,7 +282,6 @@ class NeofsCliContainer(CliCommand):
     def nodes(
         self,
         rpc_endpoint: str,
-        wallet: str,
         cid: str,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
@@ -291,7 +290,6 @@ class NeofsCliContainer(CliCommand):
 
         Args:
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
-            wallet: WIF (NEP-2) string or path to the wallet or binary key.
             cid: Container ID.
             shell_timeout: Shell timeout for the command.
 
