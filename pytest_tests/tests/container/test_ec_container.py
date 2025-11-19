@@ -42,6 +42,48 @@ def parse_ec_nodes_count(output: str) -> list:
     return [{"port": int(port)} for port in ports]
 
 
+def parse_container_nodes_output(output: str) -> list[dict]:
+    nodes = []
+    lines = output.strip().split("\n")
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        node_match = re.match(r"Node (\d+): ([a-f0-9]+) (ONLINE|OFFLINE) (.+)", line)
+        if node_match:
+            node_num = int(node_match.group(1))
+            node_id = node_match.group(2)
+            status = node_match.group(3)
+            endpoint = node_match.group(4)
+
+            node_data = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
+
+            i += 1
+            while i < len(lines) and lines[i].strip() and not re.match(r"^Node \d+:", lines[i].strip()):
+                prop_line = lines[i].strip()
+                if ":" in prop_line:
+                    key, value = prop_line.split(":", 1)
+                    key = key.strip()
+                    value = value.strip()
+
+                    if key in ["Price", "Capacity"]:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass
+
+                    node_data[key] = value
+
+                i += 1
+
+            nodes.append(node_data)
+        else:
+            i += 1
+
+    return nodes
+
+
 def generate_ranges(source_file_size: int) -> list[tuple[int, int]]:
     mid_point = source_file_size // 2
     quarter_point = source_file_size // 4
@@ -703,6 +745,99 @@ def test_ec_multiple_containers(default_wallet: NodeWallet, neofs_env: NeoFSEnv)
         with allure.step("Clean up all containers"):
             for container_info in containers:
                 delete_container(wallet.path, container_info["cid"], shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+
+
+@pytest.mark.parametrize(
+    "data_shards,parity_shards",
+    [
+        (3, 1),
+    ],
+    ids=[
+        "EC_3/1",
+    ],
+)
+@pytest.mark.parametrize(
+    "object_size",
+    [
+        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+    ],
+)
+def test_ec_suboptimal_placement(
+    default_wallet: NodeWallet, neofs_env_slow_policer: NeoFSEnv, data_shards: int, parity_shards: int, object_size: str
+):
+    neofs_env = neofs_env_slow_policer
+    wallet = default_wallet
+
+    with allure.step("Create EC container"):
+        placement_rule = f"EC {data_shards}/{parity_shards} CBF 1"
+        cid = create_container(
+            wallet.path,
+            rule=placement_rule,
+            name="ec-container",
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+
+        containers = list_containers(wallet.path, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+        assert cid in containers, f"Expected container {cid} in containers: {containers}"
+
+    with allure.step("Put object to EC container"):
+        source_file_size = neofs_env.get_object_size(object_size)
+        source_file_path = generate_file(source_file_size)
+
+        main_oid = put_object(
+            wallet.path,
+            source_file_path,
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+        )
+
+    with allure.step("Get containers node before adding new SN"):
+        parse_container_nodes_output(
+            neofs_env.neofs_cli(neofs_env.storage_nodes[0].cli_config)
+            .container.nodes(rpc_endpoint=neofs_env.storage_nodes[0].endpoint, cid=cid)
+            .stdout
+        )
+
+    with allure.step("Add new SN with a lower price"):
+        existing_sn = neofs_env.storage_nodes[0]
+        neofs_env.deploy_storage_nodes(
+            count=1,
+            node_attrs={0: ["UN-LOCODE:RU MOW", "Price:1"]},
+            fschain_endpoints=existing_sn.fschain_endpoints,
+        )
+        neofs_env.neofs_adm().fschain.force_new_epoch(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+        )
+
+    with allure.step("Get containers node after adding new SN"):
+        containers_nodes_after = parse_container_nodes_output(
+            neofs_env.neofs_cli(neofs_env.storage_nodes[0].cli_config)
+            .container.nodes(rpc_endpoint=neofs_env.storage_nodes[0].endpoint, cid=cid)
+            .stdout
+        )
+        assert any([n["Price"] == 1 for n in containers_nodes_after]), (
+            "New node wasn't added to container nodes after adding new SN"
+        )
+
+    with allure.step("Verify object operations from EC container"):
+        for sn in neofs_env.storage_nodes:
+            get_object(
+                default_wallet.path,
+                cid,
+                main_oid,
+                neofs_env.shell,
+                sn.endpoint,
+            )
+            head_object(
+                default_wallet.path,
+                cid,
+                main_oid,
+                neofs_env.shell,
+                sn.endpoint,
+            )
 
 
 @pytest.mark.sanity
