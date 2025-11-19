@@ -1781,10 +1781,7 @@ def test_search_filters_attributes_limits(
 
 
 @pytest.mark.parametrize("meta_info_consistency", ["strict", "optimistic"])
-def test_searchv2_meta_enabled_containers(
-    neofs_env_chain_meta_data: NeoFSEnv, default_wallet: NodeWallet, meta_info_consistency: str
-):
-    neofs_env = neofs_env_chain_meta_data
+def test_searchv2_meta_enabled_containers(neofs_env: NeoFSEnv, default_wallet: NodeWallet, meta_info_consistency: str):
     with allure.step(f"Create container with __NEOFS__METAINFO_CONSISTENCY={meta_info_consistency}"):
         cid = create_container(
             default_wallet.path,
