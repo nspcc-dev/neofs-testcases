@@ -25,7 +25,7 @@ permissions: write-all
 
 jobs:
   run_system_tests:
-    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@master
+    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@ezayats/tests-optimization
     with:
       neofs_network_domain: ${{ vars.TEST_RESULTS_NEOFS_NETWORK_DOMAIN }}
       neofs_http_gate: ${{ vars.TEST_RESULTS_HTTP_GATE }}

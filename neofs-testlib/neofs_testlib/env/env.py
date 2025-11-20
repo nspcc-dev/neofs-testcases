@@ -174,7 +174,7 @@ class NeoFSEnv:
 
     @allure.step("Deploy inner ring nodes")
     def deploy_inner_ring_nodes(
-        self, count=1, with_main_chain=False, chain_meta_data=False, sn_validator_url=None, allow_ec=False
+        self, count=1, with_main_chain=False, chain_meta_data=True, sn_validator_url=None, allow_ec=False
     ):
         for _ in range(count):
             new_inner_ring_node = InnerRing(
@@ -672,7 +672,7 @@ class NeoFSEnv:
         with_s3_gw=True,
         with_rest_gw=True,
         request=None,
-        chain_meta_data=False,
+        chain_meta_data=True,
         sn_validator_url=None,
         allow_ec=False,
         fschain_endpoints: Optional[list[str]] = None,
@@ -1073,7 +1073,7 @@ class MainChain(ResurrectableProcess):
 
 class InnerRing(ResurrectableProcess):
     def __init__(
-        self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=False, sn_validator_url=None, allow_ec=False
+        self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=True, sn_validator_url=None, allow_ec=False
     ):
         self.neofs_env = neofs_env
         self.ir_number = ir_number

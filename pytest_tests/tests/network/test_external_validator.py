@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import allure
@@ -63,7 +64,7 @@ class Validator(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response_config["response_body"]).encode())
 
 
-@pytest.fixture
+@contextmanager
 def validator():
     server = HTTPServer(("localhost", SN_VALIDATOR_DEFAULT_PORT), Validator)
     thread = threading.Thread(target=server.serve_forever)
@@ -73,7 +74,7 @@ def validator():
     thread.join()
 
 
-@pytest.fixture
+@contextmanager
 def invalid_nonce_setting():
     global invalid_nonce
     invalid_nonce = True
@@ -81,7 +82,7 @@ def invalid_nonce_setting():
     invalid_nonce = False
 
 
-@pytest.fixture
+@contextmanager
 def invalid_signature_setting():
     global invalid_signature
     invalid_signature = True
@@ -89,7 +90,7 @@ def invalid_signature_setting():
     invalid_signature = False
 
 
-@pytest.fixture
+@contextmanager
 def invalid_response_code():
     response_config["status_code"] = 400
     yield
@@ -104,100 +105,49 @@ def _wait_until_ready(neofs_env: NeoFSEnv, sn: StorageNode):
     assert "Network status: ONLINE" in result.stdout, "Network is not online"
 
 
+def start_new_sn_with_validator(neofs_env: NeoFSEnv, expect_success: bool = True):
+    with allure.step("Start storage node and wait until ready"):
+        new_storage_node = StorageNode(
+            neofs_env,
+            len(neofs_env.storage_nodes) + 1,
+            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
+        )
+        neofs_env.storage_nodes.append(new_storage_node)
+        new_storage_node.start(wait_until_ready=False)
+        neofs_env._wait_until_all_storage_nodes_are_ready()
+        neofs_env.neofs_adm().fschain.force_new_epoch(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+        )
+        if expect_success:
+            _wait_until_ready(neofs_env, new_storage_node)
+        else:
+            with pytest.raises(Exception):
+                _wait_until_ready(neofs_env, new_storage_node)
+
+
 @allure.title("Verify SN is accepted by the network with external validator")
-def test_sn_validator_happy_path(neofs_env_ir_only_with_sn_validator: NeoFSEnv, validator):
+def test_sn_validator(neofs_env_ir_only_with_sn_validator: NeoFSEnv):
     neofs_env = neofs_env_ir_only_with_sn_validator
     with allure.step("Get private key from IR"):
         global ir_private_key
         ir_private_key = wallet_helpers.get_private_key(neofs_env.inner_ring_nodes[0].alphabet_wallet)
 
     with allure.step("Start storage node and wait until ready"):
-        new_storage_node = StorageNode(
-            neofs_env,
-            len(neofs_env.storage_nodes) + 1,
-            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
-        )
-        neofs_env.storage_nodes.append(new_storage_node)
-        new_storage_node.start(wait_until_ready=False)
-        neofs_env._wait_until_all_storage_nodes_are_ready()
-        neofs_env.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        )
-        _wait_until_ready(neofs_env, new_storage_node)
+        with validator():
+            start_new_sn_with_validator(neofs_env)
 
+    with allure.step("Verify SN is not accepted by the network with invalid nonce"):
+        with invalid_nonce_setting():
+            with validator():
+                start_new_sn_with_validator(neofs_env, False)
 
-@allure.title("Verify SN is not accepted by the network with invalid nonce")
-def test_sn_validator_invalid_nonce(neofs_env_ir_only_with_sn_validator: NeoFSEnv, validator, invalid_nonce_setting):
-    neofs_env = neofs_env_ir_only_with_sn_validator
-    with allure.step("Get private key from IR"):
-        global ir_private_key
-        ir_private_key = wallet_helpers.get_private_key(neofs_env.inner_ring_nodes[0].alphabet_wallet)
+    with allure.step("Verify SN is not accepted by the network with invalid signature"):
+        with invalid_signature_setting():
+            with validator():
+                start_new_sn_with_validator(neofs_env, False)
 
-    with allure.step("Start storage node and wait until ready"):
-        new_storage_node = StorageNode(
-            neofs_env,
-            len(neofs_env.storage_nodes) + 1,
-            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
-        )
-        neofs_env.storage_nodes.append(new_storage_node)
-        new_storage_node.start(wait_until_ready=False)
-        neofs_env._wait_until_all_storage_nodes_are_ready()
-        neofs_env.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        )
-        with pytest.raises(Exception):
-            _wait_until_ready(neofs_env, new_storage_node)
-
-
-@allure.title("Verify SN is not accepted by the network with invalid signature")
-def test_sn_validator_invalid_signature(
-    neofs_env_ir_only_with_sn_validator: NeoFSEnv, validator, invalid_signature_setting
-):
-    neofs_env = neofs_env_ir_only_with_sn_validator
-    with allure.step("Get private key from IR"):
-        global ir_private_key
-        ir_private_key = wallet_helpers.get_private_key(neofs_env.inner_ring_nodes[0].alphabet_wallet)
-
-    with allure.step("Start storage node and wait until ready"):
-        new_storage_node = StorageNode(
-            neofs_env,
-            len(neofs_env.storage_nodes) + 1,
-            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
-        )
-        neofs_env.storage_nodes.append(new_storage_node)
-        new_storage_node.start(wait_until_ready=False)
-        neofs_env._wait_until_all_storage_nodes_are_ready()
-        neofs_env.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        )
-        with pytest.raises(Exception):
-            _wait_until_ready(neofs_env, new_storage_node)
-
-
-@allure.title("Verify SN is not accepted by the network with invalid response code")
-def test_sn_validator_invalid_response_code(
-    neofs_env_ir_only_with_sn_validator: NeoFSEnv, validator, invalid_response_code
-):
-    neofs_env = neofs_env_ir_only_with_sn_validator
-    with allure.step("Get private key from IR"):
-        global ir_private_key
-        ir_private_key = wallet_helpers.get_private_key(neofs_env.inner_ring_nodes[0].alphabet_wallet)
-
-    with allure.step("Start storage node and wait until ready"):
-        new_storage_node = StorageNode(
-            neofs_env,
-            len(neofs_env.storage_nodes) + 1,
-            node_attrs=["UN-LOCODE:RU MOW", "Price:22"],
-        )
-        neofs_env.storage_nodes.append(new_storage_node)
-        new_storage_node.start(wait_until_ready=False)
-        neofs_env._wait_until_all_storage_nodes_are_ready()
-        neofs_env.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        )
-        with pytest.raises(Exception):
-            _wait_until_ready(neofs_env, new_storage_node)
+    with allure.step("Verify SN is not accepted by the network with invalid response code"):
+        with invalid_response_code():
+            with validator():
+                start_new_sn_with_validator(neofs_env, False)
