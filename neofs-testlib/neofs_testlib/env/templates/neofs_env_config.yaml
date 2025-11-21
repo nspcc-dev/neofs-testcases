@@ -26,28 +26,28 @@ binaries:
 
     neofs_s3_gw:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.41.3'
+        version: 'v0.41.5'
         file: 'neofs-s3-gw-{{ arch }}'
 
     neofs_s3_authmate:
         repo: 'nspcc-dev/neofs-s3-gw'
-        version: 'v0.41.3'
+        version: 'v0.41.5'
         file: 'neofs-s3-authmate-{{ arch }}'
 
     neofs_rest_gw:
         repo: 'nspcc-dev/neofs-rest-gw'
-        version: 'v0.14.2'
+        version: 'v0.15.1'
         file: 'neofs-rest-gw-{{ arch }}'
 
     neo_go:
         repo: 'nspcc-dev/neo-go'
-        version: 'v0.113.0'
+        version: 'v0.114.0'
         file: 'neo-go-{{ arch }}'
 
     neofs_contract:
         repo: 'nspcc-dev/neofs-contract'
-        version: 'v0.24.0'
-        file: 'neofs-contract-v0.24.0.tar.gz'
+        version: 'v0.25.1'
+        file: 'neofs-contract-v0.25.1.tar.gz'
 
     warp:
         repo: 'minio/warp'
