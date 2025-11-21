@@ -29,7 +29,7 @@ OBJECT_HEADER_LENGTH_LIMIT = ".*object header length exceeds the limit.*"
 
 LIFETIME_REQUIRED = ".*at least one of the flags in the group [expire-at lifetime] is required.*"
 LOCK_OBJECT_REMOVAL = "lock object removal"
-LOCK_OBJECT_EXPIRATION = "lock object expiration: {expiration_epoch}; current: {current_epoch}"
+LOCK_OBJECT_EXPIRATION = "(lock object expiration: {expiration_epoch}; current: {current_epoch}|object has expired)"
 INVALID_RANGE_ZERO_LENGTH = "invalid '{range}' range: zero length"
 INVALID_RANGE_OVERFLOW = "invalid '{range}' range: uint64 overflow"
 INVALID_OFFSET_SPECIFIER = "invalid '{range}' range offset specifier"
