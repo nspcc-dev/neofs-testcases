@@ -44,7 +44,7 @@ def get_or_create_neofs_env(
     shards_count=2,
     gc_remover_batch_size=200,
     gc_sleep_interval=STORAGE_GC_TIME,
-    replication_cooldown="1m",
+    replication_cooldown="10s",
     object_batch_size=None,
 ):
     NeoFSEnv.cleanup_unused_ports()
