@@ -365,7 +365,7 @@ jobs:
             if: '!contains(toJson(matrix), ''"shard"'')'
             timeout-minutes: 120
             run: |
-              source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results ${{ inputs.tests_path }}
+              source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results --allure-no-capture ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
           - name: Run sharded tests
