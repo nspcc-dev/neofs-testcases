@@ -187,7 +187,9 @@ class TestFailoverStorage:
 
         with allure.step("Try to put object and expect error"):
             source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-            with pytest.raises(Exception, match=r".*incomplete object PUT by placement.*"):
+            with pytest.raises(
+                Exception, match=r"(incomplete object PUT by placement|Object partially \(incomplete status\) stored)"
+            ):
                 put_object(
                     wallet.path,
                     source_file_path,
