@@ -223,7 +223,7 @@ class NeoFSEnv:
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
-        replication_cooldown="1m",
+        replication_cooldown="10s",
         object_batch_size=None,
     ):
         logger.info(f"Going to deploy {count} storage nodes")
@@ -679,7 +679,7 @@ class NeoFSEnv:
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
-        replication_cooldown="1m",
+        replication_cooldown="10s",
         object_batch_size=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
@@ -1246,7 +1246,7 @@ class StorageNode(ResurrectableProcess):
         shards_count=2,
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
-        replication_cooldown="1m",
+        replication_cooldown="10s",
         object_batch_size=None,
     ):
         self.neofs_env = neofs_env
