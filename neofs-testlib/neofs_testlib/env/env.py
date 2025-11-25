@@ -204,14 +204,20 @@ class NeoFSEnv:
             ir_node.start(wait_until_ready=False, with_main_chain=with_main_chain)
 
         with allure.step("Wait until all IR nodes are READY"):
-            for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
-                with allure.step(f"Wait until IR: {ir_node} is READY"):
-                    try:
+            try:
+                for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
+                    with allure.step(f"Wait until IR: {ir_node} is READY"):
                         ir_node._wait_until_ready()
-                    except Exception as e:
-                        allure.attach.file(ir_node.stderr, name=f"ir{ir_node_idx} node stderr", extension="txt")
-                        allure.attach.file(ir_node.stdout, name=f"ir{ir_node_idx} node stdout", extension="txt")
-                        raise e
+            except Exception as e:
+                for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
+                    temp_logs_dir = self._generate_temp_dir(prefix=f"ir{ir_node_idx}_logs")
+                    shutil.copy(ir_node.stderr, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stderr.log"))
+                    shutil.copy(ir_node.stdout, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stdout.log"))
+                    zip_path = shutil.make_archive(
+                        os.path.join(os.path.dirname(ir_node.stderr), f"ir{ir_node_idx}_logs"), "zip", temp_logs_dir
+                    )
+                    allure.attach.file(zip_path, name=f"ir{ir_node_idx} node logs", extension="zip")
+                raise e
 
     @allure.step("Deploy storage node")
     def deploy_storage_nodes(
@@ -252,9 +258,12 @@ class NeoFSEnv:
         try:
             self._wait_until_all_storage_nodes_are_ready()
         except Exception as e:
+            temp_logs_dir = self._generate_temp_dir(prefix="storage_nodes_logs")
             for sn in self.storage_nodes:
-                allure.attach.file(sn.stderr, name=f"sn{sn.sn_number} stderr", extension="txt")
-                allure.attach.file(sn.stdout, name=f"sn{sn.sn_number} stdout", extension="txt")
+                shutil.copy(sn.stderr, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stderr.log"))
+                shutil.copy(sn.stdout, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stdout.log"))
+            zip_path = shutil.make_archive(os.path.join(self._env_dir, "storage_nodes_logs"), "zip", temp_logs_dir)
+            allure.attach.file(zip_path, name="storage nodes logs", extension="zip")
             raise e
         # tick epoch to speed up storage nodes bootstrap
         self.neofs_adm().fschain.force_new_epoch(
