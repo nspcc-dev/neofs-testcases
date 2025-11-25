@@ -25,6 +25,7 @@ exit_code = pytest.main(
         "-q",
         "--show-capture=no",
         f"--alluredir={os.environ.get('GITHUB_WORKSPACE', '.')}/allure-results",
+        "--allure-no-capture",
         *selected,
     ]
 )

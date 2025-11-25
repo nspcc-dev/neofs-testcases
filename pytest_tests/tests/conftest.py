@@ -24,6 +24,11 @@ from neofs_testlib.shell import Shell
 get_reporter().register_handler(AllureHandler())
 logger = logging.getLogger("NeoLogger")
 
+logging.getLogger("boto3").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("s3transfer").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 def pytest_addoption(parser):
     parser.addoption("--persist-env", action="store_true", default=False, help="persist deployed env")
