@@ -83,6 +83,7 @@ def neofs_env(temp_directory, artifacts_directory, request):
         with_rest_gw=True,
         chain_meta_data=params.get("chain_meta_data", False),
         allow_ec=params.get("allow_ec", False),
+        replication_cooldown=params.get("replication_cooldown", "10s"),
     )
     yield neofs_env
     neofs_env.finalize(request)

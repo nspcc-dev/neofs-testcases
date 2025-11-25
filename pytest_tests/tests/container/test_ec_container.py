@@ -336,7 +336,12 @@ def test_ec_container_sanity(
         wait_for_container_deletion(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
+@pytest.mark.parametrize(
+    "neofs_env",
+    [{"allow_ec": True, "replication_cooldown": "1h"}],
+    ids=["allow_ec=True,replication_cooldown=1h"],
+    indirect=True,
+)
 @pytest.mark.parametrize(
     "data_shards,parity_shards,excess_failures",
     [
