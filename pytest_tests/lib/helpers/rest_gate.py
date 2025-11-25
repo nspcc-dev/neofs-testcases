@@ -16,6 +16,7 @@ from helpers.common import (
     DEFAULT_REST_OPERATION_TIMEOUT,
     get_assets_dir_path,
 )
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from helpers.complex_object_actions import get_nodes_without_object
 from helpers.file_helper import get_file_hash
 from helpers.neofs_verbs import get_object
@@ -372,6 +373,12 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
     return epoch_duration
 
 
+@retry(
+    retry=retry_if_exception_type(requests.exceptions.ConnectionError),
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(1),
+    reraise=True,
+)
 def verify_options_request(request):
     options_resp = requests.options(request, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
     assert options_resp.status_code == 200, "Invalid status code for OPTIONS request"
