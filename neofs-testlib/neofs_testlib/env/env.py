@@ -1369,14 +1369,15 @@ class StorageNode(ResurrectableProcess):
             else:
                 AssertionError("Storage node has been already stopped")
 
-    def kill(self):
+    def kill(self, wait_until_not_ready=True):
         with allure.step(f"Kill SN: {self.endpoint}; {self.stderr}"):
             if self.process:
                 self.process.kill()
                 self.process = None
                 self.pid = None
-                with allure.step("Wait until storage node is not ready"):
-                    self._wait_until_not_ready()
+                if wait_until_not_ready:
+                    with allure.step("Wait until storage node is not ready"):
+                        self._wait_until_not_ready()
             else:
                 AssertionError("Storage node has been already killed")
 

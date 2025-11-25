@@ -404,8 +404,11 @@ def test_ec_beyond_tolerance_failures(
                 break
             node_to_kill = random.choice(available_nodes)
             available_nodes.remove(node_to_kill)
-            node_to_kill.kill()
+            node_to_kill.kill(wait_until_not_ready=False)
             stopped_nodes.append(node_to_kill)
+
+        for node in stopped_nodes:
+            node._wait_until_not_ready()
 
         alive_nodes = [sn for sn in neofs_env.storage_nodes if sn not in stopped_nodes]
 
