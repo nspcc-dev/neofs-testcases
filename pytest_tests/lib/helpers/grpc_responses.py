@@ -38,7 +38,7 @@ INVALID_LENGTH_SPECIFIER = "invalid '{range}' range length specifier"
 NOT_CONTAINER_OWNER = "provided account differs with the container owner"
 NOT_SESSION_CONTAINER_OWNER = "session issuer differs with the container owner"
 TIMED_OUT = "timed out after \\d+ seconds"
-CONTAINER_DELETION_TIMED_OUT = ".*timeout.*"
+CONTAINER_DELETION_TIMED_OUT = "(timeout|context deadline exceeded)"
 CONTAINER_CREATION_TIMED_OUT = ".*timeout.*"
 
 EACL_TIMED_OUT = ".*timeout.*"
