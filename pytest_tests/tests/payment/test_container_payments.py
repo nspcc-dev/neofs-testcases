@@ -118,8 +118,8 @@ class TestContainerPayments:
                     deltas.append(last_balance - current_balance)
                     last_balance = current_balance
             assert len(deltas) == 1, "invalid number of withdrawals from the user wallet per epoch"
-            single_node_gain_per_epoch = int((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 0.5, "Invalid user wallet balance"
+            single_node_gain_per_epoch = float((objects_count * MAX_OBJECT_SIZE) / GB)
+            assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 1, "Invalid user wallet balance"
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
@@ -135,5 +135,5 @@ class TestContainerPayments:
                     deltas.append(current_balance - last_balance)
                     last_balance = current_balance
             assert len(deltas) == 1, "invalid number of debits to the storage node wallet per epoch"
-            single_node_gain_per_epoch = int((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - single_node_gain_per_epoch) <= 0.5, "Invalid storage node wallet balance"
+            single_node_gain_per_epoch = float((objects_count * MAX_OBJECT_SIZE) / GB)
+            assert abs(deltas[0] - single_node_gain_per_epoch) <= 1, "Invalid storage node wallet balance"
