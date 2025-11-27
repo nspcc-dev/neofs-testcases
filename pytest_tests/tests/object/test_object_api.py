@@ -5,7 +5,7 @@ import sys
 
 import allure
 import pytest
-from helpers.common import TEST_FILES_DIR, get_assets_dir_path
+from helpers.common import STORAGE_GC_TIME, TEST_FILES_DIR, get_assets_dir_path
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
@@ -41,7 +41,7 @@ from helpers.neofs_verbs import (
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises
-from helpers.utility import wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_time, wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -52,6 +52,8 @@ logger = logging.getLogger("NeoLogger")
 
 CLEANUP_TIMEOUT = 10
 COMMON_ATTRIBUTE = {"common_key": "common_value"}
+# Calculate max retry attempts for object deletion based on STORAGE_GC_TIME
+GC_MAX_RETRY_ATTEMPTS = int(parse_time(STORAGE_GC_TIME)) + 1
 # Will upload object for each attribute set
 OBJECT_ATTRIBUTES = [
     None,
@@ -925,14 +927,11 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Try to get object parts"):
             for part in parts:
-                with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
-                    get_object(
-                        default_wallet.path,
-                        container,
-                        part[0],
-                        self.shell,
-                        self.neofs_env.sn_rpc,
-                    )
+                self.verify_object_part_deleted(
+                    default_wallet.path,
+                    container,
+                    part[0],
+                )
 
     @pytest.mark.complex
     def test_object_can_be_get_without_link_object(self, default_wallet: NodeWallet, container: str):
@@ -985,6 +984,21 @@ class TestObjectApi(TestNeofsBase):
                 wallet=sn.wallet.path,
             )
             assert "empty response" in response.stdout, "Object is not deleted by GC"
+
+    @retry(
+        wait=wait_fixed(1),
+        stop=stop_after_attempt(GC_MAX_RETRY_ATTEMPTS),
+        reraise=True,
+    )
+    def verify_object_part_deleted(self, wallet_path: str, container: str, part_oid: str):
+        with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
+            get_object(
+                wallet_path,
+                container,
+                part_oid,
+                self.shell,
+                self.neofs_env.sn_rpc,
+            )
 
     @pytest.mark.parametrize(
         "object_size",
