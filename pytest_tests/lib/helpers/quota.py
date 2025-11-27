@@ -3,6 +3,7 @@ import re
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
+from tenacity import retry, stop_after_delay, wait_fixed
 
 
 class TestQuotaBase(TestNeofsBase):
@@ -65,3 +66,88 @@ class TestQuotaBase(TestNeofsBase):
         assert quota_dict["hard"] == expected_hard, (
             f"Invalid hard quota, expected: {expected_hard}, got: {quota_dict['hard']}"
         )
+
+    @retry(stop=stop_after_delay(10), wait=wait_fixed(1), reraise=True)
+    def wait_until_quota_values_reported(
+        self, expected_reports_count: int, cid: str, previous_report: str = None
+    ) -> str:
+        neofs_adm = self.neofs_env.neofs_adm()
+        report_output = neofs_adm.fschain.load_report(
+            cid=cid,
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+        ).stdout
+
+        reports_pattern = re.compile(r"Report #\d+:")
+        actual_reports_count = len(reports_pattern.findall(report_output))
+
+        if previous_report:
+            if actual_reports_count >= expected_reports_count:
+                return report_output
+
+            if self._has_report_been_updated(previous_report, report_output):
+                return report_output
+
+            raise AssertionError(
+                f"Expected either {expected_reports_count} reports or an updated report, "
+                f"but found {actual_reports_count} reports with no updates. "
+                f"Previous report:\n{previous_report}\nCurrent report:\n{report_output}"
+            )
+
+        if actual_reports_count < expected_reports_count:
+            raise AssertionError(
+                f"Expected {expected_reports_count} reports, but found {actual_reports_count}. Output:\n{report_output}"
+            )
+
+        return report_output
+
+    def _has_report_been_updated(self, previous_report: str, current_report: str) -> bool:
+        report_detail_pattern = re.compile(
+            r"Reporter's pubic Key: (?P<key>[a-f0-9]+):\s+"
+            r"Size: (?P<size>\d+)\s+"
+            r"Objects: (?P<objects>\d+)\s+"
+            r"Update epoch: (?P<epoch>\d+)",
+            re.MULTILINE,
+        )
+
+        previous_reports = {}
+        for match in report_detail_pattern.finditer(previous_report):
+            key = match.group("key")
+            previous_reports[key] = {
+                "size": int(match.group("size")),
+                "objects": int(match.group("objects")),
+                "epoch": int(match.group("epoch")),
+            }
+
+        current_reports = {}
+        for match in report_detail_pattern.finditer(current_report):
+            key = match.group("key")
+            current_reports[key] = {
+                "size": int(match.group("size")),
+                "objects": int(match.group("objects")),
+                "epoch": int(match.group("epoch")),
+            }
+
+        for key, prev_data in previous_reports.items():
+            if key in current_reports:
+                curr_data = current_reports[key]
+                if (
+                    prev_data["size"] != curr_data["size"]
+                    or prev_data["objects"] != curr_data["objects"]
+                    or prev_data["epoch"] != curr_data["epoch"]
+                ):
+                    return True
+
+        return False
+
+    def _get_expected_reports_count(self, placement_rule: str) -> int:
+        match = re.search(r"REP\s+(\d+)", placement_rule)
+        if match:
+            return int(match.group(1))
+        return 1
+
+    def get_quota_report(self, cid: str) -> str:
+        neofs_adm = self.neofs_env.neofs_adm()
+        return neofs_adm.fschain.load_report(
+            cid=cid,
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+        ).stdout

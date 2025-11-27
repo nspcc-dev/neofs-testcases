@@ -542,3 +542,18 @@ class NeofsAdmFSChain(CliCommand):
                     if param not in ["self", "wallet_password"]
                 },
             )
+
+    def load_report(self, rpc_endpoint: str, cid: str) -> CommandResult:
+        """Inspect storage load reports
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint.
+            cid: Inspected container, base58 encoded.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "fschain load-report",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
