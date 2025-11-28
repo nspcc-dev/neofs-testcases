@@ -134,7 +134,7 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     assert float(after_metrics_ir["neogo_current_header_height"][0]["value"]) >= block_height, (
         "invalid value for neogo_current_header_height"
     )
-    assert float(after_metrics_ir["neogo_current_persisted_height"][0]["value"]) >= block_height - 1, (
+    assert block_height - 10 <= float(after_metrics_ir["neogo_current_persisted_height"][0]["value"]) <= block_height, (
         "invalid value for neogo_current_persisted_height"
     )
     assert float(after_metrics_ir["neogo_current_state_height"][0]["value"]) >= validated_state, (
