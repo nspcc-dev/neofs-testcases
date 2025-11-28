@@ -9,43 +9,39 @@ from neofs_testlib.protobuf.generated.object import types_pb2 as object_types_pb
 from neofs_testlib.protobuf.generated.session import types_pb2 as session_types_pb2
 
 
-def test_put_storage_group_object_no_longer_supported(default_wallet: NodeWallet, neofs_env_single_sn: NeoFSEnv):
+def test_put_storage_group_object_no_longer_supported(default_wallet: NodeWallet, neofs_env: NeoFSEnv):
     with allure.step("Create an empty container for a SG object"):
         cid = create_container(
             default_wallet.path,
-            shell=neofs_env_single_sn.shell,
-            endpoint=neofs_env_single_sn.sn_rpc,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
             rule="REP 1",
         )
     with allure.step("Try to put a storage group object via grpc"):
-        response = put_object(
-            object_types_pb2.ObjectType.STORAGE_GROUP, default_wallet, neofs_env_single_sn, b"payload", cid
-        )
+        response = put_object(object_types_pb2.ObjectType.STORAGE_GROUP, default_wallet, neofs_env, b"payload", cid)
         assert response.meta_header.status.message == "strorage group type is no longer supported"
 
 
 def test_put_tombstone_object_without_delete_permission(
-    default_wallet: NodeWallet, not_owner_wallet: NodeWallet, neofs_env_single_sn: NeoFSEnv
+    default_wallet: NodeWallet, not_owner_wallet: NodeWallet, neofs_env: NeoFSEnv
 ):
     with allure.step("Create container and put an object to associate with a tombstone"):
         cid = create_container(
             default_wallet.path,
-            shell=neofs_env_single_sn.shell,
-            endpoint=neofs_env_single_sn.sn_rpc,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
             rule="REP 1",
             basic_acl=ALLOW_ALL_OPERATIONS_EXCEPT_DELETE,
         )
 
-        file_path = generate_file(neofs_env_single_sn.get_object_size("simple_object_size"))
-        oid = put_object_via_cli(
-            default_wallet.path, file_path, cid, neofs_env_single_sn.shell, neofs_env_single_sn.sn_rpc
-        )
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+        oid = put_object_via_cli(default_wallet.path, file_path, cid, neofs_env.shell, neofs_env.sn_rpc)
 
     with allure.step("Try to put a tombstone object via grpc with a wallet that doesn't have DELETE permission"):
         response = put_object(
             object_types_pb2.ObjectType.TOMBSTONE,
             not_owner_wallet,
-            neofs_env_single_sn,
+            neofs_env,
             b"payload",
             cid,
             oid,
@@ -57,7 +53,7 @@ def test_put_tombstone_object_without_delete_permission(
         response = put_object(
             object_types_pb2.ObjectType.TOMBSTONE,
             not_owner_wallet,
-            neofs_env_single_sn,
+            neofs_env,
             b"payload",
             cid,
             oid,
