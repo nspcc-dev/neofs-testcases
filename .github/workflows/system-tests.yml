@@ -368,12 +368,22 @@ jobs:
               source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results --allure-no-capture ${{ inputs.tests_path }}
             working-directory: neofs-testcases
 
+          - name: Calculate total shards
+            if: contains(toJson(matrix), '"shard"')
+            id: calc_shards
+            run: |
+              # Extract all shard indices from the matrix and calculate total
+              MATRIX='${{ inputs.os }}'
+              TOTAL_SHARDS=$(echo "$MATRIX" | jq '[.[] | select(has("shard")) | .shard] | max + 1')
+              echo "total_shards=$TOTAL_SHARDS" >> $GITHUB_OUTPUT
+              echo "Total shards detected: $TOTAL_SHARDS"
+
           - name: Run sharded tests
             if: contains(toJson(matrix), '"shard"')
             id: run_sharded_tests
             run: |
               source venv.pytest/bin/activate
-              python run-tests.py ${{ inputs.tests_parallel_level }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}
+              python run-tests.py ${{ steps.calc_shards.outputs.total_shards }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}
             working-directory: neofs-testcases
 
           - name: Mark shard job result
