@@ -117,7 +117,8 @@ class TestContainerQuota(TestQuotaBase):
         if is_soft:
             initial_line_count = self._get_log_line_count()
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        prev_report = self.wait_until_quota_values_reported(cid, expected_objects=3)
 
         with allure.step("Add object that exceeds quota"):
             large_size = quota_value // 2  # 100 bytes (120 + 100 = 220 > 200 quota)
@@ -131,7 +132,12 @@ class TestContainerQuota(TestQuotaBase):
                     put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
         if is_soft:
-            self.tick_epochs_and_wait(2)
+            self.tick_epochs_and_wait(1)
+            prev_report = self.wait_until_quota_values_reported(
+                cid,
+                prev_report,
+                expected_objects=4,
+            )
 
             with allure.step("Continue adding more objects - should keep warning"):
                 line_count_before_additional = self._get_log_line_count()
@@ -240,7 +246,9 @@ class TestContainerQuota(TestQuotaBase):
                     default_wallet.path, file_path_small, cid2, shell=self.shell, endpoint=self.neofs_env.sn_rpc
                 )
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        self.wait_until_quota_values_reported(cid1, expected_objects=1)
+        self.wait_until_quota_values_reported(cid2, expected_objects=1)
 
         with allure.step("Try to exceed quota in first container"):
             file_path = generate_file(30)  # 130 + 30 = 160 > 150 quota
@@ -340,7 +348,8 @@ class TestContainerQuota(TestQuotaBase):
                 default_wallet, cid, expected_soft=expected_soft, expected_hard=expected_hard
             )
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        self.wait_until_quota_values_reported(cid, expected_objects=1)
 
         if updated_quota > initial_quota:
             with allure.step("Increased quota should allow larger objects"):
@@ -445,7 +454,8 @@ class TestContainerQuota(TestQuotaBase):
                 self.neofs_env.sn_rpc,
             )
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        prev_report = self.wait_until_quota_values_reported(cid, expected_objects=2)
 
         with allure.step("Verify container quota is full"):
             file_path_exceed = generate_file(50)
@@ -477,7 +487,13 @@ class TestContainerQuota(TestQuotaBase):
                 self.neofs_env.sn_rpc,
             )
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        expected_objects_after_delete = 2 if is_soft else 1
+        prev_report = self.wait_until_quota_values_reported(
+            cid,
+            prev_report,
+            expected_objects=expected_objects_after_delete,
+        )
 
         with allure.step("Verify container quota is reclaimed - should be able to put object again"):
             file_path_after_delete = generate_file(quota_value // 2 - 10)
@@ -501,7 +517,13 @@ class TestContainerQuota(TestQuotaBase):
                 self.neofs_env.sn_rpc,
             )
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        expected_objects_final = 2 if is_soft else 1
+        self.wait_until_quota_values_reported(
+            cid,
+            prev_report,
+            expected_objects=expected_objects_final,
+        )
 
         with allure.step("Verify significant container quota space is available after deleting both objects"):
             file_path_large = generate_file(quota_value // 2 - 20)
@@ -671,7 +693,8 @@ class TestContainerQuota(TestQuotaBase):
         if is_soft:
             initial_line_count = self._get_log_line_count()
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        self.wait_until_quota_values_reported(cid, expected_objects=2)
 
         with allure.step("Try to put another small object"):
             file_path = generate_file(10)
@@ -744,7 +767,9 @@ class TestContainerQuota(TestQuotaBase):
             )
             self.get_and_verify_container_quota(default_wallet, cid, expected_soft=0, expected_hard=0)
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        if is_soft:
+            self.wait_until_quota_values_reported(cid, expected_objects=1)
 
         with allure.step("Verify no limits are enforced after quota reset to 0"):
             large_file_path = generate_file(initial_quota * 5)
@@ -815,7 +840,8 @@ class TestContainerQuota(TestQuotaBase):
             )
             self._check_soft_quota_warning_in_logs(cid, start_line=initial_line_count, expect_warning=False)
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        prev_report = self.wait_until_quota_values_reported(cid, expected_objects=1)
 
         with allure.step("Put object that exceeds soft quota but stays within hard quota - warning expected"):
             line_count_before_soft_exceed = self._get_log_line_count()
@@ -830,7 +856,12 @@ class TestContainerQuota(TestQuotaBase):
             )
             self._check_soft_quota_warning_in_logs(cid, start_line=line_count_before_soft_exceed, expect_warning=True)
 
-        self.tick_epochs_and_wait(2)
+        self.tick_epochs_and_wait(1)
+        self.wait_until_quota_values_reported(
+            cid,
+            prev_report,
+            expected_objects=2,
+        )
 
         with allure.step("Try to put object that would exceed hard quota - should fail"):
             file_path = generate_file(60)  # 60 bytes (150 + 60 = 210 > 200 hard quota)
