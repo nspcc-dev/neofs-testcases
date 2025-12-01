@@ -31,8 +31,8 @@ def set_homomorphic_hash_disabled(neofs_env: NeoFSEnv, value: bool):
 
 
 @pytest.fixture
-def s3_client(default_wallet: NodeWallet, neofs_env_single_sn: NeoFSEnv) -> Any:
-    set_homomorphic_hash_disabled(neofs_env_single_sn, True)
+def s3_client(default_wallet: NodeWallet, neofs_env: NeoFSEnv) -> Any:
+    set_homomorphic_hash_disabled(neofs_env, True)
 
     s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
     (
@@ -41,15 +41,16 @@ def s3_client(default_wallet: NodeWallet, neofs_env_single_sn: NeoFSEnv) -> Any:
         access_key_id,
         secret_access_key,
         owner_private_key,
-    ) = init_s3_credentials(default_wallet, neofs_env_single_sn, s3_bearer_rules_file=s3_bearer_rules_file)
+    ) = init_s3_credentials(default_wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file)
 
-    cli = neofs_env_single_sn.neofs_cli(neofs_env_single_sn.generate_cli_config(default_wallet))
-    result = cli.container.list(rpc_endpoint=neofs_env_single_sn.sn_rpc, wallet=default_wallet.path)
+    cli = neofs_env.neofs_cli(neofs_env.generate_cli_config(default_wallet))
+    result = cli.container.list(rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path)
     containers_list = result.stdout.split()
     assert cid in containers_list, f"Expected cid {cid} in {containers_list}"
 
-    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.endpoint}")
-    yield neofs_env_single_sn, client
+    client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env.s3_gw.endpoint}")
+    yield neofs_env, client
+    set_homomorphic_hash_disabled(neofs_env, False)
 
 
 @allure.title("Test S3 Object Multipart API with disabled homomorphic hashing")
