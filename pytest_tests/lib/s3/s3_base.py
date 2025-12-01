@@ -63,6 +63,10 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         request.cls.neofs_env = neofs_env
         yield
 
+    @pytest.fixture(scope="class", params=["REP 1", "EC 3/1 CBF 1"])
+    def placement_policy(self, request: FixtureRequest) -> str:
+        return request.param
+
     @pytest.fixture(scope="class", autouse=True)
     @allure.title("[Class/Autouse]: Create S3 client")
     def s3_client(  # noqa
@@ -70,17 +74,19 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         default_wallet: NodeWallet,
         request: FixtureRequest,
         neofs_env: NeoFSEnv,
+        placement_policy: str,
     ) -> Any:
         wallet = default_wallet
         s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
-        policy = None if isinstance(request.param, str) else request.param[1]
         (
             cid,
             bucket,
             access_key_id,
             secret_access_key,
             owner_private_key,
-        ) = init_s3_credentials(wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file, policy=policy)
+        ) = init_s3_credentials(
+            wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file, placement_policy=placement_policy
+        )
 
         cli = neofs_env.neofs_cli(neofs_env.generate_cli_config(wallet))
         result = cli.container.list(rpc_endpoint=neofs_env.sn_rpc, wallet=wallet.path)
@@ -143,6 +149,7 @@ def init_s3_credentials(
     neofs_env: NeoFSEnv,
     s3_bearer_rules_file: Optional[str] = None,
     policy: Optional[dict] = None,
+    placement_policy: Optional[str] = "REP 1",
 ) -> tuple:
     bucket = str(uuid.uuid4())
     s3_bearer_rules = s3_bearer_rules_file or "pytest_tests/data/s3_bearer_rules.json"
@@ -153,7 +160,7 @@ def init_s3_credentials(
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
         f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
-        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
+        f"--bearer-rules {s3_bearer_rules} --container-placement-policy '{placement_policy}' "
         f"--container-policy {policy}"
     )
 
