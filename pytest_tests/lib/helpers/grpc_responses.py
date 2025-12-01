@@ -23,6 +23,7 @@ EXPIRED_SESSION_TOKEN = "code = 4097.*message = expired session token"
 # OBJECT_IS_LOCKED = "code = 2050.*message = object is locked"
 # LOCK_NON_REGULAR_OBJECT = "code = 2051.*message = ..." will be available once 2092 is fixed
 LINK_OBJECT_FOUND = "code = 1024.*message = found link object"
+EC_ATTRIBUTES_FOUND = "code = 1024.*message = object has EC attributes"
 OBJECT_IS_LOCKED = "code = 2050"
 LOCK_NON_REGULAR_OBJECT = "code = 2051"
 OBJECT_HEADER_LENGTH_LIMIT = ".*object header length exceeds the limit.*"

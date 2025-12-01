@@ -2,7 +2,7 @@ import logging
 
 import allure
 import pytest
-from helpers.container import create_container
+from helpers.container import DEFAULT_PLACEMENT_RULE, EC_3_1_PLACEMENT_RULE, create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.grpc_responses import OBJECT_NOT_FOUND
 from helpers.neofs_verbs import get_object_from_random_node, put_object_to_random_node
@@ -23,12 +23,20 @@ class TestObjectApiLifetime(TestNeofsBase):
             pytest.param("complex_object_size", "expire_at", id="complex object, expire_at", marks=pytest.mark.complex),
         ],
     )
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param(DEFAULT_PLACEMENT_RULE, id="simple object", marks=pytest.mark.simple),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="complex object", marks=pytest.mark.complex),
+        ],
+    )
     def test_object_api_lifetime(
         self,
         default_wallet: NodeWallet,
         request: FixtureRequest,
         object_size: int,
         expiration_flag: str,
+        container_policy: str,
     ):
         """
         Test object deleted after expiration epoch.
@@ -38,7 +46,7 @@ class TestObjectApiLifetime(TestNeofsBase):
 
         wallet = default_wallet
         endpoint = self.neofs_env.sn_rpc
-        cid = create_container(wallet.path, self.shell, endpoint)
+        cid = create_container(wallet.path, self.shell, endpoint, rule=container_policy)
 
         file_path = generate_file(self.neofs_env.get_object_size(object_size))
         file_hash = get_file_hash(file_path)
@@ -66,14 +74,21 @@ class TestObjectApiLifetime(TestNeofsBase):
             with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
                 get_object_from_random_node(wallet.path, cid, oid, self.shell, neofs_env=self.neofs_env)
 
-    def test_put_of_already_expired_object(self, default_wallet: NodeWallet):
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param(DEFAULT_PLACEMENT_RULE, id="simple object", marks=pytest.mark.simple),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_put_of_already_expired_object(self, default_wallet: NodeWallet, container_policy: str):
         """
         Test put of an object with expired epoch.
         """
 
         wallet = default_wallet
         endpoint = self.neofs_env.sn_rpc
-        cid = create_container(wallet.path, self.shell, endpoint)
+        cid = create_container(wallet.path, self.shell, endpoint, rule=container_policy)
 
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         current_epoch = self.ensure_fresh_epoch()

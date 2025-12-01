@@ -220,10 +220,7 @@ def verify_get_storage_group(
                 wallet,
                 cid,
                 obj,
-                shell=shell,
-                nodes=neofs_env.storage_nodes,
-                bearer=bearer,
-                wallet_config=wallet_config,
+                neofs_env.storage_nodes,
             )
 
             obj_parts.append(link_oid)
