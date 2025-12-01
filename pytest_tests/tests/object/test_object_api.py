@@ -13,7 +13,7 @@ from helpers.complex_object_actions import (
     get_object_chunks,
     get_simple_object_copies,
 )
-from helpers.container import create_container, delete_container
+from helpers.container import DEFAULT_PLACEMENT_RULE, create_container, delete_container, generate_ranges_for_ec_object
 from helpers.file_helper import generate_file, get_file_content, get_file_hash
 from helpers.grpc_responses import (
     INVALID_LENGTH_SPECIFIER,
@@ -116,8 +116,26 @@ def generate_ranges(
 
 @pytest.fixture(
     params=[
-        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
-        pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        pytest.param(
+            {"object_size": "simple_object_size", "container_policy": DEFAULT_PLACEMENT_RULE},
+            id="simple object,regular policy",
+            marks=pytest.mark.simple,
+        ),
+        pytest.param(
+            {"object_size": "complex_object_size", "container_policy": DEFAULT_PLACEMENT_RULE},
+            id="complex object, regular policy",
+            marks=pytest.mark.complex,
+        ),
+        pytest.param(
+            {"object_size": "simple_object_size", "container_policy": "EC 1/1 CBF 1"},
+            id="simple object, ec policy",
+            marks=pytest.mark.simple,
+        ),
+        pytest.param(
+            {"object_size": "complex_object_size", "container_policy": "EC 1/1 CBF 1"},
+            id="complex object, ec policy",
+            marks=pytest.mark.complex,
+        ),
     ],
 )
 def storage_objects(
@@ -125,9 +143,11 @@ def storage_objects(
 ) -> list[StorageObjectInfo]:
     wallet = default_wallet
     # Separate containers for complex/simple objects to avoid side-effects
-    cid = create_container(wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
+    cid = create_container(
+        wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule=request.param["container_policy"]
+    )
 
-    file_path = generate_file(neofs_env.get_object_size(request.param))
+    file_path = generate_file(neofs_env.get_object_size(request.param["object_size"]))
     file_hash = get_file_hash(file_path)
 
     storage_objects = []
@@ -145,7 +165,7 @@ def storage_objects(
             )
 
             storage_object = StorageObjectInfo(cid, storage_object_id)
-            storage_object.size = neofs_env.get_object_size(request.param)
+            storage_object.size = neofs_env.get_object_size(request.param["object_size"])
             storage_object.wallet_file_path = wallet.path
             storage_object.file_path = file_path
             storage_object.file_hash = file_hash
@@ -160,9 +180,14 @@ def storage_objects(
         delete_objects(storage_objects, client_shell, neofs_env)
 
 
-@pytest.fixture
-def container(default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
-    cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
+@pytest.fixture(
+    params=[
+        pytest.param(DEFAULT_PLACEMENT_RULE, id="regular policy"),
+        pytest.param("EC 3/1 CBF 1", id="ec policy"),
+    ],
+)
+def container(request: FixtureRequest, default_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv) -> str:
+    cid = create_container(default_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule=request.param)
     yield cid
     delete_container(default_wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
@@ -431,8 +456,15 @@ class TestObjectApi(TestNeofsBase):
             pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
         ],
     )
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param(DEFAULT_PLACEMENT_RULE, id="simple object", marks=pytest.mark.simple),
+            pytest.param("EC 3/1 CBF 1", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
     def test_object_search_should_return_tombstone_items(
-        self, default_wallet: NodeWallet, request: FixtureRequest, object_size: int
+        self, default_wallet: NodeWallet, request: FixtureRequest, object_size: int, container_policy: str
     ):
         """
         Validate object search with removed items
@@ -440,7 +472,7 @@ class TestObjectApi(TestNeofsBase):
         allure.dynamic.title(f"Validate object search with removed items for {request.node.callspec.id}")
 
         wallet = default_wallet
-        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc)
+        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc, rule=container_policy)
 
         with allure.step("Upload file"):
             file_path = generate_file(self.neofs_env.get_object_size(object_size))
@@ -552,9 +584,16 @@ class TestObjectApi(TestNeofsBase):
         oids = [storage_object.oid for storage_object in storage_objects[:2]]
         file_path = storage_objects[0].file_path
 
-        file_ranges_to_test = generate_ranges(
-            storage_objects[0], self.neofs_env.max_object_size, self.shell, self.neofs_env
-        )
+        if (
+            request.node.callspec.params.get("storage_objects", {}).get("object_size") == "complex_object_size"
+            and request.node.callspec.params.get("storage_objects", {}).get("container_policy") == "EC 1/1 CBF 1"
+        ):
+            file_ranges_to_test = generate_ranges_for_ec_object(storage_objects[0].size)
+        else:
+            file_ranges_to_test = generate_ranges(
+                storage_objects[0], self.neofs_env.max_object_size, self.shell, self.neofs_env
+            )
+
         logging.info(f"Ranges used in test {file_ranges_to_test}")
 
         for range_start, range_len in file_ranges_to_test:
@@ -600,6 +639,12 @@ class TestObjectApi(TestNeofsBase):
         Validate get_range for object by native gRPC API
         """
         allure.dynamic.title(f"Validate native get_range object API for {request.node.callspec.id}")
+
+        if (
+            request.node.callspec.params.get("storage_objects", {}).get("object_size") == "complex_object_size"
+            and request.node.callspec.params.get("storage_objects", {}).get("container_policy") == "EC 1/1 CBF 1"
+        ):
+            pytest.skip("https://github.com/nspcc-dev/neofs-node/issues/3713")
 
         wallet = storage_objects[0].wallet_file_path
         cid = storage_objects[0].cid
@@ -897,7 +942,12 @@ class TestObjectApi(TestNeofsBase):
 
     @allure.title("Big object parts are removed after expiration")
     @pytest.mark.complex
-    def test_object_parts_are_unavailable_after_expiration(self, default_wallet: NodeWallet, container: str):
+    def test_object_parts_are_unavailable_after_expiration(
+        self, default_wallet: NodeWallet, container: str, request: FixtureRequest
+    ):
+        if request.node.callspec.params.get("container") == "EC 3/1 CBF 1":
+            pytest.skip("https://github.com/nspcc-dev/neofs-node/issues/3712")
+
         with allure.step("Get current epoch"):
             epoch = self.ensure_fresh_epoch()
 
@@ -993,11 +1043,20 @@ class TestObjectApi(TestNeofsBase):
             pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
         ],
     )
-    def test_object_delete_by_gc(self, default_wallet: NodeWallet, request: FixtureRequest, object_size: str):
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param(DEFAULT_PLACEMENT_RULE, id="simple object", marks=pytest.mark.simple),
+            pytest.param("EC 3/1 CBF 1", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_object_delete_by_gc(
+        self, default_wallet: NodeWallet, request: FixtureRequest, object_size: str, container_policy: str
+    ):
         allure.dynamic.title(f"Verify that an object of {object_size} is deleted entirely by GC")
 
         wallet = default_wallet
-        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc)
+        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc, rule=container_policy)
 
         file_path = generate_file(self.neofs_env.get_object_size(object_size))
         oid = put_object(default_wallet.path, file_path, cid, self.neofs_env.shell, self.neofs_env.sn_rpc)

@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 import allure
 from helpers.common import WALLET_CONFIG
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
-from helpers.neofs_verbs import get_object, head_object
+from helpers.neofs_verbs import get_object, head_object, search_objectv2
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from neofs_testlib.shell import Shell
@@ -48,6 +48,16 @@ def get_object_chunks(
             bearer=bearer,
             is_direct=False,
         )
+
+        if not link_object_id:
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=wallet_file_path,
+                cid=cid,
+                shell=neofs_env.shell,
+                filters=["$Object:objectType NE LINK"],
+            )
+            return [(found_obj["id"], 1) for found_obj in found_objects if found_obj["id"] != oid]
 
         link_obj_path = get_object(
             wallet=wallet_file_path, cid=cid, oid=link_object_id, shell=shell, endpoint=neofs_env.sn_rpc, bearer=bearer
