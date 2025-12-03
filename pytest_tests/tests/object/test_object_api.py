@@ -118,7 +118,7 @@ def generate_ranges(
     params=[
         pytest.param(
             {"object_size": "simple_object_size", "container_policy": DEFAULT_PLACEMENT_RULE},
-            id="simple object,regular policy",
+            id="simple object, regular policy",
             marks=pytest.mark.simple,
         ),
         pytest.param(
