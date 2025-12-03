@@ -26,6 +26,11 @@ from rest_gw.rest_utils import get_object_and_verify_hashes
 logger = logging.getLogger("NeoLogger")
 OBJECT_NOT_FOUND_ERROR = "404"
 
+PLACEMENT_RULE_PARAMS = [
+    pytest.param("REP 2 IN X CBF 2 SELECT 2 FROM * AS X", id="rep-2"),
+    pytest.param("EC 3/1 CBF 1", id="ec"),
+]
+
 
 @allure.link(
     "https://github.com/nspcc-dev/neofs-rest-gw?tab=readme-ov-file#neofs-rest-gw",
@@ -56,7 +61,14 @@ class TestRestGate(TestNeofsRestBase):
     @allure.title("Test Put over gRPC, Get over REST")
     @pytest.mark.complex
     @pytest.mark.simple
-    def test_put_grpc_get_rest(self, gw_endpoint):
+    @pytest.mark.parametrize(
+        "placement_rule",
+        [
+            pytest.param("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", id="rep-1"),
+            pytest.param("EC 3/1 CBF 1", id="ec"),
+        ],
+    )
+    def test_put_grpc_get_rest(self, gw_endpoint, placement_rule):
         """
         Test that object can be put using gRPC interface and get using REST gateway.
 
@@ -75,7 +87,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_1,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path_simple, file_path_large = (
@@ -112,12 +124,13 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Verify Content-Disposition header")
     @pytest.mark.simple
-    def test_put_http_get_http_content_disposition(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_http_get_http_content_disposition(self, gw_params, placement_rule):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -158,12 +171,13 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Verify Content-Type if uploaded without any Content-Type specified")
     @pytest.mark.simple
-    def test_put_http_get_http_without_content_type(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_http_get_http_without_content_type(self, gw_params, placement_rule):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -203,12 +217,13 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Verify Content-Type if uploaded with X-Attribute-Content-Type")
     @pytest.mark.simple
-    def test_put_http_get_http_with_x_atribute_content_type(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_http_get_http_with_x_atribute_content_type(self, gw_params, placement_rule):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -232,12 +247,13 @@ class TestRestGate(TestNeofsRestBase):
             assert resp.headers["Content-Type"] == "CoolContentType"
 
     @allure.title("Verify Content-Type if uploaded with Content-Type")
-    def test_put_http_get_http_with_content_type(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_http_get_http_with_content_type(self, gw_params, placement_rule):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -261,12 +277,13 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Verify special HTTP headers")
     @pytest.mark.simple
-    def test_put_http_get_http_special_attributes(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_http_get_http_special_attributes(self, gw_params, placement_rule):
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -294,7 +311,8 @@ class TestRestGate(TestNeofsRestBase):
     @allure.title("Test Put over REST, Get over REST")
     @pytest.mark.complex
     @pytest.mark.simple
-    def test_put_rest_get_rest(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_rest_get_rest(self, gw_params, placement_rule):
         """
         Test that object can be put and get using REST interface.
 
@@ -311,7 +329,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path_simple, file_path_large = (
@@ -367,8 +385,9 @@ class TestRestGate(TestNeofsRestBase):
             "not-so-zero bytes value",
         ],
     )
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
     @pytest.mark.simple
-    def test_put_rest_get_rest_with_headers(self, attributes: dict, gw_params):
+    def test_put_rest_get_rest_with_headers(self, attributes: dict, gw_params, placement_rule):
         """
         Test that object can be downloaded using different attributes in HTTP header.
 
@@ -385,7 +404,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -409,14 +428,15 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Test Expiration-Epoch in HTTP header")
     @pytest.mark.simple
-    def test_expiration_epoch_in_rest(self, gw_params, fresh_epoch):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_expiration_epoch_in_rest(self, gw_params, fresh_epoch, placement_rule):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=endpoint,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -459,14 +479,15 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Test other Expiration-Epoch settings in HTTP header")
     @pytest.mark.simple
-    def test_expiration_headers_in_rest(self, gw_params, fresh_epoch):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_expiration_headers_in_rest(self, gw_params, fresh_epoch, placement_rule):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=endpoint,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -510,14 +531,15 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Test Negative Expiration-Epoch settings in HTTP header")
     @pytest.mark.simple
-    def test_negative_expiration_headers_in_rest(self, gw_params, fresh_epoch):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_negative_expiration_headers_in_rest(self, gw_params, fresh_epoch, placement_rule):
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
             self.wallet.path,
             shell=self.shell,
             endpoint=endpoint,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -550,7 +572,8 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Test Put over REST, Get over REST for large object")
     @pytest.mark.complex
-    def test_put_rest_get_rest_large_file(self, gw_params):
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    def test_put_rest_get_rest_large_file(self, gw_params, placement_rule):
         """
         This test checks upload and download with 'large' object.
         Large is object with size up to 20Mb.
@@ -559,7 +582,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
 
@@ -581,8 +604,9 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Object with latest timestamp is returned when get by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
     @pytest.mark.simple
-    def test_sorting_order_get_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
+    def test_sorting_order_get_by_same_attribute(self, gw_params: dict, default_timestamp: bool, placement_rule):
         with allure.step(f"Restart rest gw with {default_timestamp=}"):
             self.neofs_env.rest_gw.default_timestamp = default_timestamp
             self.neofs_env.rest_gw.stop()
@@ -592,7 +616,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -649,8 +673,9 @@ class TestRestGate(TestNeofsRestBase):
 
     @allure.title("Object with latest timestamp is returned when head by same attribute")
     @pytest.mark.parametrize("default_timestamp", [True, False])
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
     @pytest.mark.simple
-    def test_sorting_order_head_by_same_attribute(self, gw_params: dict, default_timestamp: bool):
+    def test_sorting_order_head_by_same_attribute(self, gw_params: dict, default_timestamp: bool, placement_rule):
         with allure.step(f"Restart rest gw with {default_timestamp=}"):
             self.neofs_env.rest_gw.default_timestamp = default_timestamp
             self.neofs_env.rest_gw.stop()
@@ -660,7 +685,7 @@ class TestRestGate(TestNeofsRestBase):
             self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_2,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -726,7 +751,14 @@ class TestRestGate(TestNeofsRestBase):
             pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
         ],
     )
-    def test_object_put_get_attributes(self, object_size: int, gw_params: dict):
+    @pytest.mark.parametrize(
+        "placement_rule",
+        [
+            pytest.param("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", id="rep-1"),
+            pytest.param("EC 3/1 CBF 1", id="ec"),
+        ],
+    )
+    def test_object_put_get_attributes(self, object_size: int, gw_params: dict, placement_rule):
         """
         Test that object can be put using gRPC interface and get using HTTP.
 
@@ -754,7 +786,7 @@ class TestRestGate(TestNeofsRestBase):
                 self.wallet.path,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                rule=self.PLACEMENT_RULE_1,
+                rule=placement_rule,
                 basic_acl=PUBLIC_ACL,
             )
 
@@ -811,12 +843,19 @@ class TestRestGate(TestNeofsRestBase):
                     endpoint=gw_params["endpoint"],
                 )
 
-    def test_get_object_after_container_deleted(self, gw_params: dict):
+    @pytest.mark.parametrize(
+        "placement_rule",
+        [
+            pytest.param("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", id="rep-1"),
+            pytest.param("EC 3/1 CBF 1", id="ec"),
+        ],
+    )
+    def test_get_object_after_container_deleted(self, gw_params: dict, placement_rule):
         cid = create_container(
             wallet=self.wallet.path,
             shell=self.shell,
             endpoint=self.neofs_env.sn_rpc,
-            rule=self.PLACEMENT_RULE_1,
+            rule=placement_rule,
             basic_acl=PUBLIC_ACL,
         )
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
