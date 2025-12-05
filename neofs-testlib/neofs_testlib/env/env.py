@@ -1194,11 +1194,11 @@ class InnerRing(ResurrectableProcess):
                     len(self.neofs_env.inner_ring_nodes) - (len(self.neofs_env.inner_ring_nodes) - 1) / 3 - 1
                 ),
                 set_roles_in_genesis=str(False if len(self.neofs_env.inner_ring_nodes) == 1 else True).lower(),
-                fschain_autodeploy=fschain_autodeploy,
+                fschain_autodeploy=f"{not fschain_autodeploy}".lower(),
                 control_public_key=wallet_utils.get_last_public_key_from_wallet(
                     self.alphabet_wallet.path, self.alphabet_wallet.password
                 ),
-                without_mainnet=f"{not with_main_chain}".lower(),
+                with_main_chain=f"{with_main_chain}".lower(),
                 main_chain_rpc="localhost:1234" if not with_main_chain else self.neofs_env.main_chain.rpc_address,
                 neofs_contract_hash="123" if not with_main_chain else self.neofs_env.main_chain.neofs_contract_hash,
                 pprof_address=self.pprof_address,
