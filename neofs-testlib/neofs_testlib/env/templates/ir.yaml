@@ -9,18 +9,19 @@ wallet:
   address: {{ wallet.address }} # Account address in the wallet; ignore to use default address
   password: {{ wallet.password }}                            # Account password in the wallet
 
-# Toggling the sidechain-only mode
-without_mainnet: {{ without_mainnet }}
-
 # Neo main chain RPC settings
 mainnet:
+  enabled: {{ with_main_chain }}
   endpoints: # List of websocket RPC endpoints in mainchain; ignore if mainchain is disabled
     - ws://{{ main_chain_rpc }}/ws
   dial_timeout: 5s # Timeout for RPC client connection to mainchain; ignore if mainchain is disabled
   reconnections_number: 5  # number of reconnection attempts
   reconnections_delay: 5s  # time delay b/w reconnection attempts
+  contracts:
+    neofs: {{ neofs_contract_hash }}
 
 fschain:
+  disable_autodeploy: {{ fschain_autodeploy }}
   validators:  # List of hex-encoded 33-byte public keys of sidechain validators to vote for at application startup
     {%- for public_key in public_keys %}
     - {{ public_key }} # Hex-encoded public key
@@ -60,8 +61,6 @@ fschain:
         min: {{ peers_min_number }}
     set_roles_in_genesis: {{ set_roles_in_genesis }}
 
-fschain_autodeploy: {{ fschain_autodeploy }}
-
 nns:
   system_email: usr@domain.io
 
@@ -71,15 +70,9 @@ control:
   grpc:
     endpoint: {{ grpc_address }}  # Endpoint that is listened by the control service; disabled by default
 
-governance:
-  disable: false # Disable synchronization of sidechain committee and mainchain role management contract; ignore if mainchain is disabled
-
 node:
   persistent_state:
     path: {{ ir_state_file }}  # Path to application state file
-
-fee:
-  main_chain: 0                 # Fixed8 value of extra GAS fee for mainchain contract invocation; ignore if notary is enabled in mainchain
 
 timers:
   collect_basic_income:
@@ -109,9 +102,6 @@ indexer:
 
 settlement:
   basic_income_rate: 0 # Optional: override basic income rate value from network config; applied only in debug mode
-
-contracts:
-  neofs: {{ neofs_contract_hash }}      # Address of NeoFS contract in mainchain; ignore if mainchain is disabled
 
 pprof:
   enabled: true
