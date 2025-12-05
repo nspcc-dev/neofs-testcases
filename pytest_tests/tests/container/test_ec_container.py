@@ -9,6 +9,7 @@ from helpers.complex_object_actions import get_nodes_with_object
 from helpers.container import (
     create_container,
     delete_container,
+    generate_ranges_for_ec_object,
     list_containers,
     wait_for_container_deletion,
 )
@@ -82,22 +83,6 @@ def parse_container_nodes_output(output: str) -> list[dict]:
             i += 1
 
     return nodes
-
-
-def generate_ranges(source_file_size: int) -> list[tuple[int, int]]:
-    mid_point = source_file_size // 2
-    quarter_point = source_file_size // 4
-    three_quarter_point = 3 * source_file_size // 4
-
-    range_test_cases = [
-        (0, source_file_size),
-        (0, mid_point),
-        (mid_point, source_file_size - mid_point),
-        (quarter_point, mid_point - quarter_point),
-        (three_quarter_point, source_file_size - three_quarter_point),
-    ]
-
-    return range_test_cases
 
 
 @retry(wait=wait_fixed(1), stop=stop_after_attempt(300), reraise=True)
@@ -199,7 +184,7 @@ def test_ec_container_sanity(
                 sn.endpoint,
             )
 
-            for range_start, range_len in generate_ranges(source_file_size):
+            for range_start, range_len in generate_ranges_for_ec_object(source_file_size):
                 if range_len > 0:
                     range_cut = f"{range_start}:{range_len}"
                     _, range_content = get_range(
@@ -669,7 +654,7 @@ def test_ec_multiple_containers(default_wallet: NodeWallet, neofs_env: NeoFSEnv)
                         sn.endpoint,
                     )
 
-                    for range_start, range_len in generate_ranges(source_file_size):
+                    for range_start, range_len in generate_ranges_for_ec_object(source_file_size):
                         if range_len > 0:
                             range_cut = f"{range_start}:{range_len}"
                             _, range_content = get_range(

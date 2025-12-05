@@ -42,9 +42,17 @@ def user_wallet():
         return create_wallet()
 
 
-@pytest.fixture(scope="module")
-def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv):
-    container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
+@pytest.fixture(
+    scope="module",
+    params=[
+        pytest.param(DEFAULT_PLACEMENT_RULE, id="regular policy"),
+        pytest.param("EC 3/1 CBF 1", id="ec policy"),
+    ],
+)
+def user_container(
+    user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
+) -> StorageContainer:
+    container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule=request.param)
     return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
 
 
@@ -706,7 +714,14 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                     node.set_metabase_resync(False)
 
     @pytest.mark.simple
-    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet):
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param("REP 1 CBF 1", id="simple object", marks=pytest.mark.simple),
+            pytest.param("EC 3/1 CBF 1", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet, container_policy: str):
         with allure.step("Create container"):
             wallet = default_wallet
             source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -714,7 +729,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                 wallet.path,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                rule="REP 1 CBF 1",
+                rule=container_policy,
                 basic_acl=PUBLIC_ACL,
             )
 

@@ -251,3 +251,19 @@ def search_container_by_name(wallet: str, name: str, shell: Shell, endpoint: str
         if cont_info.get("attributes").get("Name", None) == name:
             return cid
     return None
+
+
+def generate_ranges_for_ec_object(source_file_size: int) -> list[tuple[int, int]]:
+    mid_point = source_file_size // 2
+    quarter_point = source_file_size // 4
+    three_quarter_point = 3 * source_file_size // 4
+
+    range_test_cases = [
+        (0, source_file_size),
+        (0, mid_point),
+        (mid_point, source_file_size - mid_point),
+        (quarter_point, mid_point - quarter_point),
+        (three_quarter_point, source_file_size - three_quarter_point),
+    ]
+
+    return range_test_cases
