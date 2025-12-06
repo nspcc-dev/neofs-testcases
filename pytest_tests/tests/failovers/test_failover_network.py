@@ -11,7 +11,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.iptables_helper import IpTablesHelper
 from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object_to_random_node
-from helpers.node_management import storage_node_healthcheck, wait_all_storage_nodes_returned
+from helpers.node_management import storage_node_healthcheck
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 
@@ -29,20 +29,9 @@ class TestFailoverNetwork:
 
         yield
 
-        not_empty = len(blocked_nodes) != 0
         for node in list(blocked_nodes):
             with allure.step(f"Restore network at host for {node}"):
                 IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
-            blocked_nodes.remove(node)
-        if not_empty:
-            wait_all_storage_nodes_returned(self.neofs_env)
-
-        for node in self.neofs_env.storage_nodes:
-            node.kill()
-        for node in self.neofs_env.storage_nodes:
-            node.start(fresh=False)
-
-        wait_all_storage_nodes_returned(self.neofs_env)
 
     @allure.title("Block Storage node traffic")
     @pytest.mark.simple
