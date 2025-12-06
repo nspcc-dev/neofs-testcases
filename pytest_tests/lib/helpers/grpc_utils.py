@@ -8,7 +8,7 @@ from ecdsa import NIST256p, SigningKey
 from helpers.tzhash import TZHash
 from helpers.utility import get_signature_slice, sign_ecdsa
 from neo3.wallet.wallet import Wallet
-from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.protobuf.generated.object import service_pb2 as object_service_pb2
 from neofs_testlib.protobuf.generated.object import types_pb2 as object_types_pb2
 from neofs_testlib.protobuf.generated.refs import types_pb2 as refs_types_pb2
@@ -254,7 +254,7 @@ def put_object_via_grpc(
 def put_object(
     object_type: object_types_pb2.ObjectType,
     wallet: NodeWallet,
-    neofs_env: NeoFSEnv,
+    sn_endpoint: str,
     payload: bytes,
     cid: str,
     oid: str = None,
@@ -272,7 +272,7 @@ def put_object(
         version.major = 2
         version.minor = 18
 
-        session_id, session_key = get_session_token(wallet, neofs_env.storage_nodes[0].endpoint)
+        session_id, session_key = get_session_token(wallet, sn_endpoint)
 
         header = get_put_object_request_header(
             owner_id, version, container_id, object_type, payload, oid, homo_hash=homo_hash
@@ -297,5 +297,5 @@ def put_object(
         allure.attach(str(chunk_request), "Chunk Request", allure.attachment_type.TEXT)
 
     with allure.step("Send put request via grpc to a storage node"):
-        response = put_object_via_grpc(neofs_env.storage_nodes[0].endpoint, init_request, chunk_request)
+        response = put_object_via_grpc(sn_endpoint, init_request, chunk_request)
         return response

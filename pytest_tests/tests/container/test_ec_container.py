@@ -10,6 +10,7 @@ from helpers.container import (
     create_container,
     delete_container,
     list_containers,
+    parse_container_nodes_output,
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file, get_file_content, get_file_hash
@@ -40,48 +41,6 @@ def parse_ec_nodes_count(output: str) -> list:
     node_pattern = r"Node \d+: [a-f0-9]+ ONLINE /dns4/localhost/tcp/(\d+)"
     ports = re.findall(node_pattern, output)
     return [{"port": int(port)} for port in ports]
-
-
-def parse_container_nodes_output(output: str) -> list[dict]:
-    nodes = []
-    lines = output.strip().split("\n")
-
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-
-        node_match = re.match(r"Node (\d+): ([a-f0-9]+) (ONLINE|OFFLINE) (.+)", line)
-        if node_match:
-            node_num = int(node_match.group(1))
-            node_id = node_match.group(2)
-            status = node_match.group(3)
-            endpoint = node_match.group(4)
-
-            node_data = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
-
-            i += 1
-            while i < len(lines) and lines[i].strip() and not re.match(r"^Node \d+:", lines[i].strip()):
-                prop_line = lines[i].strip()
-                if ":" in prop_line:
-                    key, value = prop_line.split(":", 1)
-                    key = key.strip()
-                    value = value.strip()
-
-                    if key in ["Price", "Capacity"]:
-                        try:
-                            value = int(value)
-                        except ValueError:
-                            pass
-
-                    node_data[key] = value
-
-                i += 1
-
-            nodes.append(node_data)
-        else:
-            i += 1
-
-    return nodes
 
 
 def generate_ranges(source_file_size: int) -> list[tuple[int, int]]:

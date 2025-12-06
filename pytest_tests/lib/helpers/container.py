@@ -6,6 +6,7 @@ This module contains keywords that utilize `neofs-cli container` commands.
 
 import json
 import logging
+import re
 from time import sleep
 from typing import Optional, Union
 
@@ -251,3 +252,45 @@ def search_container_by_name(wallet: str, name: str, shell: Shell, endpoint: str
         if cont_info.get("attributes").get("Name", None) == name:
             return cid
     return None
+
+
+def parse_container_nodes_output(output: str) -> list[dict]:
+    nodes = []
+    lines = output.strip().split("\n")
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        node_match = re.match(r"Node (\d+): ([a-f0-9]+) (ONLINE|OFFLINE) (.+)", line)
+        if node_match:
+            node_num = int(node_match.group(1))
+            node_id = node_match.group(2)
+            status = node_match.group(3)
+            endpoint = node_match.group(4)
+
+            node_data = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
+
+            i += 1
+            while i < len(lines) and lines[i].strip() and not re.match(r"^Node \d+:", lines[i].strip()):
+                prop_line = lines[i].strip()
+                if ":" in prop_line:
+                    key, value = prop_line.split(":", 1)
+                    key = key.strip()
+                    value = value.strip()
+
+                    if key in ["Price", "Capacity"]:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass
+
+                    node_data[key] = value
+
+                i += 1
+
+            nodes.append(node_data)
+        else:
+            i += 1
+
+    return nodes
