@@ -38,6 +38,6 @@ jobs:
       tests_parallel_level: 4
       os: >
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"},
-        {"runner": "macos-14", "binary": "darwin-arm64", "shard": 0},
-        {"runner": "macos-14", "binary": "darwin-arm64", "shard": 1}]
+        {"runner": "macos-latest", "binary": "darwin-arm64", "shard": 0},
+        {"runner": "macos-latest", "binary": "darwin-arm64", "shard": 1}]
     secrets: inherit
