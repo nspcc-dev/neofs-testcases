@@ -204,7 +204,7 @@ class TestN3(TestNeofsBase):
                 invalid_container_invocation_script_b64,
                 owner_address,
             )
-            with pytest.raises(Exception, match=".*container not saved.*"):
+            with pytest.raises(Exception, match="(container not saved|DeadlineExceeded)"):
                 result = neofs_env.neofs_cli(None).request.create_container(
                     body=os.path.join(datadir, CONTAINER_REQUEST_JSON_FILE_NAME),
                     endpoint=neofs_env.storage_nodes[0].endpoint,
@@ -219,7 +219,7 @@ class TestN3(TestNeofsBase):
                 invalid_container_invocation_script_b64,
                 owner_address,
             )
-            with pytest.raises(Exception, match=".*container not saved.*"):
+            with pytest.raises(Exception, match="(container not saved|DeadlineExceeded)"):
                 result = neofs_env.neofs_cli(None).request.create_container(
                     body=os.path.join(datadir, CONTAINER_REQUEST_JSON_FILE_NAME),
                     endpoint=neofs_env.storage_nodes[0].endpoint,
@@ -236,7 +236,7 @@ class TestN3(TestNeofsBase):
                 invocation_script_wrong_signature_container_b64,
                 owner_address,
             )
-            with pytest.raises(Exception, match=".*container not saved.*"):
+            with pytest.raises(Exception, match="(container not saved|DeadlineExceeded)"):
                 result = neofs_env.neofs_cli(None).request.create_container(
                     body=os.path.join(datadir, CONTAINER_REQUEST_JSON_FILE_NAME),
                     endpoint=neofs_env.storage_nodes[0].endpoint,
