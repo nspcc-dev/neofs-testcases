@@ -301,6 +301,7 @@ class NeoGoWallet(CliCommand):
         wallet_password: Optional[str] = None,
         out: Optional[str] = None,
         timeout: int = 10,
+        await_: bool = False,
     ) -> CommandResult:
         """Cosign transaction with multisig/contract/additional account.
 
@@ -327,9 +328,13 @@ class NeoGoWallet(CliCommand):
         """
         assert bool(wallet) ^ bool(wallet_config), self.WALLET_SOURCE_ERROR_MSG
         exec_param = {
-            param: param_value for param, param_value in locals().items() if param not in ["self", "wallet_password"]
+            param: param_value
+            for param, param_value in locals().items()
+            if param not in ["self", "wallet_password", "await_", "input_file"]
         }
         exec_param["timeout"] = f"{timeout}s"
+        exec_param["await"] = await_
+        exec_param["in"] = input_file
         if wallet_password is not None:
             return self._execute_with_password("wallet sign", wallet_password, **exec_param)
 

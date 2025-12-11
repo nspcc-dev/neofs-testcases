@@ -92,7 +92,7 @@ class NeofsAdmFSChain(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
-    def dump_hashes(self, rpc_endpoint: str, domain: str) -> CommandResult:
+    def dump_hashes(self, rpc_endpoint: str, domain: Optional[str] = "") -> CommandResult:
         """Dump deployed contract hashes.
 
         Args:
@@ -557,3 +557,23 @@ class NeofsAdmFSChain(CliCommand):
             "fschain load-report",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
+
+    def parse_dump_hashes(self, dump_hashes_output: str) -> dict[str, str]:
+        """
+        Output example:
+        nns         (v0.25.1):  9c25d2bfc9a6591d71033fc11789e007f08c4be8  unknown
+        alphabet0   (v0.25.1):  46b8daace5d593cc4827ca85ddd01724808f70b6  2035-12-11 13:45:06.498 -0500 EST
+        netmap      (v0.25.1):  b6a5075356f9049f1e8eaabd782b2ed0d20f06ed  2035-12-11 13:45:06.089 -0500 EST
+        balance     (v0.25.1):  1001c19b4995b409dcbecfcb839211a90d6ebed3  2035-12-11 13:45:06.208 -0500 EST
+        container   (v0.25.1):  d08104f4360670e77f7f6b0db63636061393fce1  2035-12-11 13:45:05.76 -0500 EST
+        proxy       (v0.25.1):  9bb65796ccd8abbea5ad9758dd338c9af200f3d6  2035-12-11 13:45:05.862 -0500 EST
+        reputation  (v0.25.1):  302fb076ab7483eecdc8cf6de26affea1244db7a  2035-12-11 13:45:06.321 -0500 EST
+        """
+        hashes = {}
+        for line in dump_hashes_output.strip().split("\n"):
+            parts = line.split()
+            if len(parts) >= 3:
+                contract_name = parts[0]
+                contract_hash = parts[2]
+                hashes[contract_name] = contract_hash
+        return hashes
