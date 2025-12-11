@@ -28,6 +28,7 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -269,7 +270,13 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         after_metrics_sn = get_metrics(sn)
         allure.attach(json.dumps(dict(after_metrics_sn)), "sn metrics object drop", allure.attachment_type.JSON)
 
-    for metric in ("neofs_node_engine_delete_time_bucket",):
+    deletion_metric = "neofs_node_engine_delete_time_bucket"
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) > parse_version(
+        "0.50.2"
+    ):
+        deletion_metric = "neofs_node_engine_drop_time_bucket"
+
+    for metric in (deletion_metric,):
         assert len([m for _, m in enumerate(after_metrics_sn[metric]) if m["value"] >= 1]) >= 1, (
             f"invalid value for {metric}"
         )
