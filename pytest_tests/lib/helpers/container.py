@@ -21,6 +21,8 @@ logger = logging.getLogger("NeoLogger")
 DEFAULT_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
 SINGLE_PLACEMENT_RULE = "REP 1 IN X CBF 1 SELECT 4 FROM * AS X"
 REP_2_FOR_3_NODES_PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 3 FROM * AS X"
+EC_1_1_PLACEMENT_RULE = "EC 1/1 CBF 1"
+EC_3_1_PLACEMENT_RULE = "EC 3/1 CBF 1"
 
 
 @allure.step("Create Container")
@@ -294,3 +296,19 @@ def parse_container_nodes_output(output: str) -> list[dict]:
             i += 1
 
     return nodes
+
+
+def generate_ranges_for_ec_object(source_file_size: int) -> list[tuple[int, int]]:
+    mid_point = source_file_size // 2
+    quarter_point = source_file_size // 4
+    three_quarter_point = 3 * source_file_size // 4
+
+    range_test_cases = [
+        (0, source_file_size),
+        (0, mid_point),
+        (mid_point, source_file_size - mid_point),
+        (quarter_point, mid_point - quarter_point),
+        (three_quarter_point, source_file_size - three_quarter_point),
+    ]
+
+    return range_test_cases

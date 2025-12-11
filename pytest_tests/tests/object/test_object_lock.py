@@ -5,8 +5,13 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import STORAGE_GC_TIME
-from helpers.complex_object_actions import get_link_object, get_nodes_with_object, get_object_chunks
-from helpers.container import DEFAULT_PLACEMENT_RULE, create_container
+from helpers.complex_object_actions import (
+    get_ec_object_chunks,
+    get_link_object,
+    get_nodes_with_object,
+    get_object_chunks,
+)
+from helpers.container import DEFAULT_PLACEMENT_RULE, EC_3_1_PLACEMENT_RULE, create_container
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     LIFETIME_REQUIRED,
@@ -22,7 +27,7 @@ from helpers.node_management import delete_node_metadata, drop_object, start_sto
 from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.storage_object_info import LockObjectInfo, StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises, wait_for_success
-from helpers.utility import parse_time, wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_time, parse_version, wait_for_gc_pass_on_storage_nodes
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
@@ -42,9 +47,17 @@ def user_wallet():
         return create_wallet()
 
 
-@pytest.fixture(scope="module")
-def user_container(user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv):
-    container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc)
+@pytest.fixture(
+    scope="module",
+    params=[
+        pytest.param(DEFAULT_PLACEMENT_RULE, id="regular policy"),
+        pytest.param(EC_3_1_PLACEMENT_RULE, id="ec policy"),
+    ],
+)
+def user_container(
+    user_wallet: NodeWallet, client_shell: Shell, neofs_env: NeoFSEnv, request: FixtureRequest
+) -> StorageContainer:
+    container_id = create_container(user_wallet.path, shell=client_shell, endpoint=neofs_env.sn_rpc, rule=request.param)
     return StorageContainer(StorageContainerInfo(container_id, user_wallet), client_shell, neofs_env)
 
 
@@ -520,8 +533,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
             new_locked_storage_object.wallet_file_path,
             new_locked_storage_object.cid,
             new_locked_storage_object.oid,
-            self.shell,
-            self.neofs_env.storage_nodes,
+            self.neofs_env,
         )
 
         with allure.step(f"Drop link object with id {link_object_id} from nodes"):
@@ -545,15 +557,25 @@ class TestObjectLockWithGrpc(TestNeofsBase):
         indirect=True,
     )
     def test_chunks_of_locked_complex_object_can_be_dropped(
-        self, new_locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv
+        self, new_locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv, request: FixtureRequest
     ):
-        chunk_objects = get_object_chunks(
-            new_locked_storage_object.wallet_file_path,
-            new_locked_storage_object.cid,
-            new_locked_storage_object.oid,
-            self.shell,
-            self.neofs_env,
-        )
+        if request.node.callspec.params.get("user_container") == EC_3_1_PLACEMENT_RULE and parse_version(
+            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
+        ) <= parse_version("0.50.2"):
+            chunk_objects = get_ec_object_chunks(
+                new_locked_storage_object.wallet_file_path,
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                self.neofs_env,
+            )
+        else:
+            chunk_objects = get_object_chunks(
+                new_locked_storage_object.wallet_file_path,
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                self.shell,
+                self.neofs_env,
+            )
 
         for chunk in chunk_objects:
             with allure.step(f"Drop chunk object with id {chunk[0]} from nodes"):
@@ -706,7 +728,14 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                     node.set_metabase_resync(False)
 
     @pytest.mark.simple
-    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet):
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param("REP 1 CBF 1", id="simple object", marks=pytest.mark.simple),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_locked_object_removal_from_not_owner_node(self, default_wallet: NodeWallet, container_policy: str):
         with allure.step("Create container"):
             wallet = default_wallet
             source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -714,7 +743,7 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                 wallet.path,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                rule="REP 1 CBF 1",
+                rule=container_policy,
                 basic_acl=PUBLIC_ACL,
             )
 

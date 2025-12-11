@@ -45,7 +45,7 @@ def get_or_create_neofs_env(
     with_rest_gw=True,
     chain_meta_data=True,
     sn_validator_url=None,
-    allow_ec=False,
+    allow_ec=True,
     shards_count=2,
     gc_remover_batch_size=200,
     gc_sleep_interval=STORAGE_GC_TIME,
@@ -87,7 +87,7 @@ def neofs_env(temp_directory, artifacts_directory, request):
         with_s3_gw=True,
         with_rest_gw=True,
         chain_meta_data=params.get("chain_meta_data", True),
-        allow_ec=params.get("allow_ec", False),
+        allow_ec=params.get("allow_ec", True),
         replication_cooldown=params.get("replication_cooldown", "10s"),
     )
     yield neofs_env

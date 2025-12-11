@@ -15,7 +15,7 @@ from helpers.acl import (
     wait_for_cache_expired,
 )
 from helpers.complex_object_actions import wait_object_replication
-from helpers.container import create_container
+from helpers.container import EC_3_1_PLACEMENT_RULE, create_container
 from helpers.container_access import check_full_access_to_container, check_no_access_to_container
 from helpers.grpc_responses import (
     EACL_CHANGE_PROHIBITED,
@@ -40,16 +40,21 @@ from neofs_testlib.env.env import NeoFSEnv
 
 
 class TestEACLContainer(TestNeofsBase):
-    @pytest.fixture(scope="function")
-    def eacl_full_placement_container_with_object(self, wallets, file_path) -> tuple[str, str, str]:
+    @pytest.fixture(
+        scope="function",
+        params=[
+            pytest.param("REP 4 IN X CBF 1 SELECT 4 FROM * AS X", id="regular policy"),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="ec policy"),
+        ],
+    )
+    def eacl_full_placement_container_with_object(self, request, wallets, file_path) -> tuple[str, str, str]:
         user_wallet = wallets.get_wallet()
         storage_nodes = self.neofs_env.storage_nodes
         node_count = len(storage_nodes)
         with allure.step("Create eACL public container with full placement rule"):
-            full_placement_rule = f"REP {node_count} IN X CBF 1 SELECT {node_count} FROM * AS X"
             cid = create_container(
                 wallet=user_wallet.wallet_path,
-                rule=full_placement_rule,
+                rule=request.param,
                 basic_acl=PUBLIC_ACL,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
@@ -70,15 +75,14 @@ class TestEACLContainer(TestNeofsBase):
 
         yield cid, oid, file_path
 
-    def test_eacl_can_not_be_set_with_final_bit(self, wallets):
+    @pytest.mark.parametrize("placement_rule", ["REP 4 IN X CBF 1 SELECT 4 FROM * AS X", EC_3_1_PLACEMENT_RULE])
+    def test_eacl_can_not_be_set_with_final_bit(self, wallets, placement_rule):
         with allure.step("Create container with the final bit set"):
             user_wallet = wallets.get_wallet()
-            node_count = len(self.neofs_env.storage_nodes)
-            full_placement_rule = f"REP {node_count} IN X CBF 1 SELECT {node_count} FROM * AS X"
 
             cid = create_container(
                 wallet=user_wallet.wallet_path,
-                rule=full_placement_rule,
+                rule=placement_rule,
                 basic_acl=PUBLIC_ACL_F,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,

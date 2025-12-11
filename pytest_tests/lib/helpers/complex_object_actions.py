@@ -4,9 +4,8 @@ import time
 from typing import Optional, Tuple
 
 import allure
-from helpers.common import WALLET_CONFIG
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
-from helpers.neofs_verbs import get_object, head_object
+from helpers.neofs_verbs import get_object, head_object, search_objectv2
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from neofs_testlib.shell import Shell
@@ -43,10 +42,7 @@ def get_object_chunks(
             wallet_file_path,
             cid,
             oid,
-            shell,
-            neofs_env.storage_nodes,
-            bearer=bearer,
-            is_direct=False,
+            neofs_env,
         )
 
         link_obj_path = get_object(
@@ -61,6 +57,37 @@ def get_object_chunks(
         children = [x.translate(str.maketrans("", "", string.punctuation)) for x in raw_children]
 
         return [(x.split()[-1], int(x.split()[1])) for x in children]
+
+
+def get_ec_object_chunks(
+    wallet_file_path: string,
+    cid: string,
+    oid: string,
+    neofs_env: NeoFSEnv,
+) -> list[Tuple[str, int]]:
+    """
+    Get complex objects' IDs (no link object)
+
+    Args:
+    wallet_file_path: wallet to use
+    cid: object's container
+    oid: object's ID
+    neofs_env: NeoFSEnv
+
+    Returns:
+    list of tuples (object_id, object_size) of ec object chunks
+    object_size is left for backward compatibility with regular get_object_chunks
+    """
+
+    with allure.step(f"Get complex object chunks (f{oid})"):
+        found_objects, _ = search_objectv2(
+            rpc_endpoint=neofs_env.sn_rpc,
+            wallet=wallet_file_path,
+            cid=cid,
+            shell=neofs_env.shell,
+            filters=["$Object:objectType NE LINK"],
+        )
+        return [(found_obj["id"], 1) for found_obj in found_objects if found_obj["id"] != oid]
 
 
 def get_complex_object_split_ranges(
@@ -108,11 +135,7 @@ def get_link_object(
     wallet: str,
     cid: str,
     oid: str,
-    shell: Shell,
-    nodes: list[StorageNode],
-    bearer: str = "",
-    wallet_config: str = WALLET_CONFIG,
-    is_direct: bool = True,
+    neofs_env: NeoFSEnv,
 ):
     """
     Args:
@@ -120,37 +143,22 @@ def get_link_object(
                         are requested
         cid (str): Container ID which stores the Large Object
         oid (str): Large Object ID
-        shell: executor for cli command
-        nodes: list of nodes to do search on
-        bearer (optional, str): path to Bearer token file
-        wallet_config (optional, str): path to the neofs-cli config file
-        is_direct: send request directly to the node or not; this flag
-                   turns into `--ttl 1` key
+        neofs_env: NeoFSEnv
     Returns:
         (str): Link Object ID
         When no Link Object ID is found after all Storage Nodes polling,
         the function throws an error.
     """
-    for node in nodes:
-        endpoint = node.endpoint
-        try:
-            resp = head_object(
-                wallet,
-                cid,
-                oid,
-                shell=shell,
-                endpoint=endpoint,
-                is_raw=True,
-                is_direct=is_direct,
-                bearer=bearer,
-                wallet_config=wallet_config,
-            )
-            if resp["link"]:
-                return resp["link"]
-        except Exception:
-            logger.info(f"No Link Object found on {endpoint}; continue")
-    logger.error(f"No Link Object for {cid}/{oid} found among all Storage Nodes")
-    return None
+    found_objects, _ = search_objectv2(
+        rpc_endpoint=neofs_env.sn_rpc,
+        wallet=wallet,
+        cid=cid,
+        shell=neofs_env.shell,
+        filters=["$Object:objectType EQ LINK", f"$Object:split.parent EQ {oid}"],
+    )
+    if not found_objects:
+        raise AssertionError(f"No link object found for {cid=}; {oid=}")
+    return found_objects[0]["id"]
 
 
 @allure.step("Get Last Object")
