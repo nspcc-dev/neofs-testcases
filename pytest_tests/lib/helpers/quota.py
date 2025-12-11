@@ -1,5 +1,7 @@
 import re
 
+import pytest
+from helpers.neofs_verbs import get_netmap_netinfo
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
@@ -14,6 +16,30 @@ class TestQuotaBase(TestNeofsBase):
         r"Update epoch: (?P<epoch>\d+)",
         re.MULTILINE,
     )
+
+    @pytest.fixture(scope="class", autouse=True)
+    def set_short_epoch_duration(self):
+        storage_node = self.neofs_env.storage_nodes[0]
+        net_info = get_netmap_netinfo(
+            wallet=storage_node.wallet.path,
+            wallet_config=storage_node.cli_config,
+            endpoint=storage_node.endpoint,
+            shell=self.shell,
+        )
+        original_epoch_duration = net_info["epoch_duration"]
+        self.neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
+            post_data="EpochDuration=20",
+        )
+        self.ensure_fresh_epoch()
+        yield
+        self.neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
+            post_data=f"EpochDuration={original_epoch_duration}",
+        )
+        self.ensure_fresh_epoch()
 
     def _check_soft_quota_warning_in_logs(self, cid: str, start_line: int = 0, expect_warning: bool = True):
         with open(self.neofs_env.storage_nodes[0].stderr) as sn_node_logs:
