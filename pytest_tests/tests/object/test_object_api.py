@@ -31,6 +31,7 @@ from helpers.grpc_responses import (
     INVALID_RANGE_ZERO_LENGTH,
     INVALID_SEARCH_QUERY,
     LINK_OBJECT_FOUND,
+    LINK_OBJECT_REMOVAL,
     OBJECT_ALREADY_REMOVED,
     OBJECT_HEADER_LENGTH_LIMIT,
     OBJECT_NOT_FOUND,
@@ -884,7 +885,7 @@ class TestObjectApi(TestNeofsBase):
         link_oid = get_link_object(default_wallet.path, container, oid, neofs_env=self.neofs_env)
 
         with allure.step(f"Trying to delete link object {link_oid}"):
-            with pytest.raises(Exception, match=LINK_OBJECT_FOUND):
+            with pytest.raises(Exception, match=LINK_OBJECT_REMOVAL):
                 delete_object(
                     default_wallet.path,
                     container,
