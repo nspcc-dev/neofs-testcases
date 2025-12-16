@@ -68,7 +68,6 @@ def object_is_not_accessible(wallet_path: str, cid: str, oid: str, neofs_env: Ne
 
 
 @pytest.mark.sanity
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
 @pytest.mark.parametrize(
     "data_shards,parity_shards",
     [
@@ -282,8 +281,8 @@ def test_ec_container_sanity(
 
 @pytest.mark.parametrize(
     "neofs_env",
-    [{"allow_ec": True, "replication_cooldown": "1h"}],
-    ids=["allow_ec=True,replication_cooldown=1h"],
+    [{"replication_cooldown": "1h"}],
+    ids=["replication_cooldown=1h"],
     indirect=True,
 )
 @pytest.mark.parametrize(
@@ -386,7 +385,6 @@ def test_ec_beyond_tolerance_failures(
         delete_container(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
 @pytest.mark.parametrize(
     "data_shards,parity_shards",
     [
@@ -497,7 +495,6 @@ def test_ec_multiple_objects_concurrent_operations(
         delete_container(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
 @pytest.mark.parametrize(
     "invalid_rule,expected_error",
     [
@@ -531,7 +528,6 @@ def test_ec_invalid_placement_policies(
         )
 
 
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
 def test_ec_multiple_containers(default_wallet: NodeWallet, neofs_env: NeoFSEnv):
     wallet = default_wallet
     containers = []
@@ -793,7 +789,6 @@ def test_ec_suboptimal_placement(
 
 
 @pytest.mark.sanity
-@pytest.mark.parametrize("neofs_env", [{"allow_ec": True}], ids=["allow_ec=True"], indirect=True)
 @pytest.mark.parametrize(
     "data_shards,parity_shards",
     [
