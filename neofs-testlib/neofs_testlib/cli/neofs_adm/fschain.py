@@ -92,7 +92,7 @@ class NeofsAdmFSChain(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
-    def dump_hashes(self, rpc_endpoint: str, domain: str) -> CommandResult:
+    def dump_hashes(self, rpc_endpoint: str, domain: Optional[str] = "") -> CommandResult:
         """Dump deployed contract hashes.
 
         Args:
