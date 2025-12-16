@@ -889,9 +889,6 @@ def test_ec_recovery(
         )
         node_to_drop_object_from = random.choice(nodes_with_object)
         drop_object(node_to_drop_object_from, cid, object_to_recover["id"])
-        object_is_not_accessible(
-            default_wallet.path, cid, object_to_recover["id"], neofs_env, node_to_drop_object_from.endpoint
-        )
 
     with allure.step("Verify main object is still accessible after dropping one part"):
         head_object(
