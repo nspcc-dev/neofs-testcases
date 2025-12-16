@@ -105,9 +105,9 @@ class TestCli(TestCase):
 
         expected_command = (
             f"{self.neofs_go_exec_path} --config_path {self.config_file} wallet sign "
-            f"--input-file '{self.file1}' --address '{self.address}' "
+            f"--address '{self.address}' "
             f"--rpc-endpoint '{self.rpc_endpoint}' --wallet '{self.wallet}' "
-            f"--out '{self.file2}' --timeout '{self.timeout}s'"
+            f"--out '{self.file2}' --timeout '{self.timeout}s' --in '{self.file1}'"
         )
 
         shell.exec.assert_called_once_with(
