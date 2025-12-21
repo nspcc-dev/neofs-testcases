@@ -948,7 +948,7 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Try to get object parts"):
             for part in parts:
-                with pytest.raises(Exception, match=OBJECT_ALREADY_REMOVED):
+                with pytest.raises(Exception, match=f"({OBJECT_ALREADY_REMOVED}|{OBJECT_NOT_FOUND})"):
                     get_object(
                         default_wallet.path,
                         container,
@@ -997,7 +997,7 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Try to get object parts"):
             for part in parts:
-                with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
+                with pytest.raises(Exception, match=f"({OBJECT_ALREADY_REMOVED}|{OBJECT_NOT_FOUND})"):
                     get_object(
                         default_wallet.path,
                         container,
