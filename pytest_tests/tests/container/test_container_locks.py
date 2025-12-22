@@ -258,8 +258,17 @@ class TestContainerLocks(TestNeofsBase):
             wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_multiple_containers_different_lock_times(self, default_wallet):
-        current_time = int(time.time())
-        lock_times = [current_time + 5, current_time + BASIC_LOCK_TIME, current_time + 15]
+        FIRST_LOCK_OFFSET = 10
+        SECOND_LOCK_OFFSET = 15
+        THIRD_LOCK_OFFSET = 20
+
+        start_time = time.time()
+        current_time = int(start_time)
+        lock_times = [
+            current_time + FIRST_LOCK_OFFSET,
+            current_time + SECOND_LOCK_OFFSET,
+            current_time + THIRD_LOCK_OFFSET,
+        ]
         created_containers = []
 
         with allure.step("Create containers with different lock times"):
@@ -283,8 +292,15 @@ class TestContainerLocks(TestNeofsBase):
                 )
                 assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
 
-        with allure.step("Wait for first lock to expire (5s) and delete first container"):
-            time.sleep(5)
+        elapsed = time.time() - start_time
+        assert elapsed < FIRST_LOCK_OFFSET - 2, (
+            f"Container setup took too long ({elapsed:.2f}s). "
+            f"Expected less than {FIRST_LOCK_OFFSET - 2}s to safely test first lock expiration."
+        )
+
+        with allure.step(f"Wait for first lock to expire (~{FIRST_LOCK_OFFSET}s) and delete first container"):
+            wait_time = FIRST_LOCK_OFFSET - elapsed + 1
+            time.sleep(wait_time)
             delete_container(
                 default_wallet.path,
                 created_containers[0][0],
@@ -293,12 +309,20 @@ class TestContainerLocks(TestNeofsBase):
             )
 
         with allure.step("Verify other containers still locked"):
+            elapsed = time.time() - start_time
+            assert elapsed < SECOND_LOCK_OFFSET - 1, (
+                f"Test execution took too long ({elapsed:.2f}s). "
+                f"Second container may have already unlocked (lock time: {SECOND_LOCK_OFFSET}s)."
+            )
+
             for cid, _ in created_containers[1:]:
                 with pytest.raises(Exception, match="container is locked"):
                     delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-        with allure.step("Wait for second lock to expire (5s more) and delete second container"):
-            time.sleep(5)
+        with allure.step(f"Wait for second lock to expire (~{SECOND_LOCK_OFFSET}s) and delete second container"):
+            current_elapsed = time.time() - start_time
+            wait_time = SECOND_LOCK_OFFSET - current_elapsed + 1
+            time.sleep(wait_time)
             delete_container(
                 default_wallet.path,
                 created_containers[1][0],
@@ -307,6 +331,12 @@ class TestContainerLocks(TestNeofsBase):
             )
 
         with allure.step("Verify third container still locked"):
+            elapsed = time.time() - start_time
+            assert elapsed < THIRD_LOCK_OFFSET - 1, (
+                f"Test execution took too long ({elapsed:.2f}s). "
+                f"Third container may have already unlocked (lock time: {THIRD_LOCK_OFFSET}s)."
+            )
+
             with pytest.raises(Exception, match="container is locked"):
                 delete_container(
                     default_wallet.path,
@@ -315,8 +345,10 @@ class TestContainerLocks(TestNeofsBase):
                     endpoint=self.neofs_env.sn_rpc,
                 )
 
-        with allure.step("Wait for third lock to expire (5s more) and delete third container"):
-            time.sleep(5)
+        with allure.step(f"Wait for third lock to expire (~{THIRD_LOCK_OFFSET}s) and delete third container"):
+            current_elapsed = time.time() - start_time
+            wait_time = THIRD_LOCK_OFFSET - current_elapsed + 1
+            time.sleep(wait_time)
             delete_container(
                 default_wallet.path,
                 created_containers[2][0],
@@ -377,11 +409,11 @@ class TestContainerLocks(TestNeofsBase):
                 rule="REP 1",
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": int(time.time()) + 1},
+                attributes={"__NEOFS__LOCK_UNTIL": int(time.time()) + 5},
             )
 
         with allure.step("Wait for lock to expire"):
-            time.sleep(2)
+            time.sleep(5)
 
         with allure.step("Remove expired __NEOFS__LOCK_UNTIL attribute"):
             set_container_attributes(
