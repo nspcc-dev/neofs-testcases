@@ -27,17 +27,19 @@ class TestContainerPayments:
             os.remove(f)
 
     @pytest.mark.parametrize(
-        "replicas_number, objects_count_multiplier",
+        "container_rule, replicas_number, objects_count_multiplier",
         [
-            (1, 3),
-            (2, 2),
-            (3, 1),
+            ("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", 1, 3),
+            ("REP 2 IN X CBF 1 SELECT 2 FROM * AS X", 2, 2),
+            ("REP 3 IN X CBF 1 SELECT 3 FROM * AS X", 3, 1),
+            ("EC 2/1 CBF 1", 3, 1),
         ],
     )
     def test_container_payments(
         self,
         neofs_env_with_mainchain: NeoFSEnv,
         wallet_with_money: NodeWallet,
+        container_rule: str,
         replicas_number: int,
         objects_count_multiplier: int,
         _cleanup_files,
@@ -55,7 +57,7 @@ class TestContainerPayments:
             )
             cid = create_container(
                 wallet_with_money.path,
-                rule=f"REP {replicas_number} IN X CBF 1 SELECT {replicas_number} FROM * AS X",
+                rule=container_rule,
                 shell=neofs_env.shell,
                 endpoint=neofs_env.sn_rpc,
             )
