@@ -20,7 +20,7 @@ def init_wallet(wallet_path: str, wallet_password: str) -> str:
     account = neo3_account.Account.create_new(wallet_password)
     wallet.account_add(account)
     with open(wallet_path, "w") as out:
-        json.dump(wallet.to_json(), out)
+        json.dump(wallet.to_json(wallet_password), out)
     logger.info(f"Init new wallet: {wallet_path}, address: {account.address}")
     return account.address
 
