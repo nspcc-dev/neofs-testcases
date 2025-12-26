@@ -123,9 +123,9 @@ jobs:
           - run: go version
 
           - name: Set up Python
-            uses: actions/setup-python@v5
+            uses: actions/setup-python@v6.1.0
             with:
-                python-version: '3.12'
+                python-version: '3.13'
           - run: python --version
 
           - name: Checkout neofs-testcases repository

@@ -150,9 +150,7 @@ def create_wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
 def get_private_key(wallet: NodeWallet) -> bytes:
     neo3_wallet: Wallet = load_wallet(wallet.path, passwords=[wallet.password] * 3)
     acc = neo3_wallet.accounts[0]
-    return acc.private_key_from_nep2(
-        acc.encrypted_key.decode("utf-8"), wallet.password, _scrypt_parameters=acc.scrypt_parameters
-    )
+    return acc.private_key
 
 
 def sign_string(str_to_sign: str, private_key: bytes) -> str:

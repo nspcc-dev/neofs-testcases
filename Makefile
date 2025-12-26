@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 
 VENV_DIR := venv.pytest
-PYTHON := python3.12
-PIP := pip3.12
+PYTHON := python3.13
+PIP := pip3.13
 ENV_FILE := .env
 BINARIES := neo-go neofs-adm neofs-cli neofs-ir neofs-lens neofs-node neofs-rest-gw neofs-s3-authmate neofs-s3-gw
 

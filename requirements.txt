@@ -7,7 +7,7 @@ boto3==1.35.28
 docker==7.0.0
 isort==5.13.2
 jinja2==3.1.6
-neo-mamba==2.6.0
+neo-mamba==3.3.0
 paramiko==3.5.0
 pexpect==4.9.0
 pytest==8.3.3

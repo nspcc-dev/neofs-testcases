@@ -104,9 +104,7 @@ def calculate_invocation_script(datadir: str, container: bytes) -> str:
 
     neo3_wallet: Wallet = load_wallet(os.path.join(datadir, "user_wallet.json"), "user")
     acc = neo3_wallet.accounts[0]
-    private_key = acc.private_key_from_nep2(
-        acc.encrypted_key.decode("utf-8"), "user", _scrypt_parameters=acc.scrypt_parameters
-    )
+    private_key = acc.private_key
     signing_key = SigningKey.from_string(private_key, curve=NIST256p)
     r, s = sign_ecdsa(signing_key, hashlib.sha256(signed_data).digest(), hashlib.sha256)
     signature = get_signature_slice(NIST256p, r, s)

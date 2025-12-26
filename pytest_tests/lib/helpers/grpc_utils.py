@@ -33,9 +33,7 @@ def get_wallet_keys(default_wallet: NodeWallet):
     neo3_wallet: Wallet = load_wallet(default_wallet.path, default_wallet.password)
     acc = neo3_wallet.accounts[0]
     public_key = acc.public_key.encode_point(True)
-    private_key = acc.private_key_from_nep2(
-        acc.encrypted_key.decode("utf-8"), default_wallet.password, _scrypt_parameters=acc.scrypt_parameters
-    )
+    private_key = acc.private_key
     return public_key, private_key
 
 
