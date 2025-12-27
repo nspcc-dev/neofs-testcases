@@ -20,9 +20,7 @@ def generate_credentials(
     neo3_wallet: Wallet = load_wallet(wallet.path, wallet.password)
     acc = neo3_wallet.accounts[0]
     token = get_container_token(gw_endpoint, acc.address, verb=verb, bearer_for_all_users=bearer_for_all_users)
-    private_key = acc.private_key_from_nep2(
-        acc.encrypted_key.decode("utf-8"), wallet.password, _scrypt_parameters=acc.scrypt_parameters
-    )
+    private_key = acc.private_key
 
     if wallet_connect:
         prefix = b"\x01\x00\x01\xf0"

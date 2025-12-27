@@ -47,7 +47,7 @@ class TestWallet(TestCase):
         wallet.account_add(account2)
 
         with open(wallet_file_path, "w") as out:
-            json.dump(wallet.to_json(), out)
+            json.dump(wallet.to_json(self.DEFAULT_PASSWORD), out)
 
         with open(wallet_file_path, "r") as wallet_file:
             wallet = Wallet.from_json(json.load(wallet_file), passwords=[self.DEFAULT_PASSWORD, self.DEFAULT_PASSWORD])
