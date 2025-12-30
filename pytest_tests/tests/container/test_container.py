@@ -46,7 +46,7 @@ class TestContainer(TestNeofsBase):
         for account in accounts:
             wallet.account_add(account)
         with open(wallet_path, "w") as out:
-            json.dump(wallet.to_json(self.DEFAULT_PASSWORD), out)
+            json.dump(wallet.to_json(self.neofs_env.default_password), out)
         return wallet_path
 
     def _refill_gas(self, wallet_path: str, address: str, amount: str = "200.0"):
