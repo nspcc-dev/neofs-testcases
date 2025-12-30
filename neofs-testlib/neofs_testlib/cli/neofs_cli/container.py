@@ -300,3 +300,61 @@ class NeofsCliContainer(CliCommand):
             "container nodes",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def set_attribute(
+        self,
+        address: str,
+        attribute: str,
+        value: str,
+        cid: str,
+        rpc_endpoint: str,
+        wallet: str,
+        shell_timeout: Optional[int] = None,
+    ) -> CommandResult:
+        """
+        Set attribute for container
+
+        Args:
+            address: Address of wallet account
+            attribute: attribute to be set
+            value: value for the attribute
+            cid: Container ID.
+            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>')
+            wallet: Path to the wallet
+            shell_timeout: Shell timeout for the command.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "container set-attribute",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
+
+    def remove_attribute(
+        self,
+        address: str,
+        attribute: str,
+        cid: str,
+        rpc_endpoint: str,
+        wallet: str,
+        shell_timeout: Optional[int] = None,
+    ) -> CommandResult:
+        """
+        Remove container attribute
+
+        Args:
+            address: Address of wallet account
+            attribute: attribute to be set
+            cid: Container ID.
+            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>')
+            wallet: Path to the wallet
+            shell_timeout: Shell timeout for the command.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "container remove-attribute",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )

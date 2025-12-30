@@ -382,9 +382,7 @@ class TestContainerLocks(TestNeofsBase):
 
         with allure.step("Try to remove __NEOFS__LOCK_UNTIL while lock is active"):
             with pytest.raises(Exception):
-                set_container_attributes(
-                    default_wallet, cid, self.neofs_env, remove_attributes=["__NEOFS__LOCK_UNTIL"], force=False
-                )
+                set_container_attributes(default_wallet, cid, self.neofs_env, remove_attributes=["__NEOFS__LOCK_UNTIL"])
 
         with allure.step("Verify lock attribute is still present"):
             container_info = get_container(

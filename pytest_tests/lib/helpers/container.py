@@ -11,7 +11,6 @@ from time import sleep
 from typing import Optional, Union
 
 import allure
-import base58
 from helpers.common import NEOFS_CLI_EXEC, WALLET_CONFIG
 from helpers.json_transformers import json_reencode
 from neofs_testlib.cli import NeofsCli
@@ -231,7 +230,6 @@ def set_container_attributes(
     neofs_env: NeoFSEnv,
     attributes: Optional[dict[str, Union[str, int]]] = None,
     remove_attributes: Optional[list[str]] = None,
-    force=True,
 ) -> None:
     """
     Set or remove container attributes by invoking the container contract methods.
@@ -247,57 +245,30 @@ def set_container_attributes(
     if not attributes and not remove_attributes:
         raise ValueError("Either attributes or remove_attributes must be provided")
 
+    cli_config = neofs_env.generate_cli_config(wallet)
+
     with allure.step(
         f"{'Set' if attributes else ''}{' and ' if attributes and remove_attributes else ''}{'Remove' if remove_attributes else ''} Container Attributes"
     ):
-        neofs_env.neofs_adm().fschain.refill_gas(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-            storage_wallet=wallet.path,
-            gas=200,
-            wallet_address=wallet.address,
-        )
-
-        neofs_adm = neofs_env.neofs_adm()
-        dump_output = neofs_adm.fschain.dump_hashes(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-        ).stdout
-
-        contracts_hashes = {}
-        for line in dump_output.strip().split("\n"):
-            parts = line.split()
-            if len(parts) >= 3:
-                contract_name = parts[0]
-                contract_hash = parts[2]
-                contracts_hashes[contract_name] = contract_hash
-
-        neo_go_wallet_config = neofs_env.generate_neo_go_config(wallet)
-
-        cid_bytes = base58.b58decode(cid)
-        cid_hex = cid_bytes.hex()
-
         if attributes:
             for key, value in attributes.items():
-                neofs_env.neo_go().contract.invokefunction(
-                    contracts_hashes["container"],
-                    rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                    wallet_config=neo_go_wallet_config,
-                    method="setAttribute",
-                    arguments=f"bytes:{cid_hex} string:{key} string:{value} null",
-                    multisig_hash=f"{wallet.address}:CalledByEntry",
-                    force=force,
+                neofs_env.neofs_cli(cli_config).container.set_attribute(
+                    wallet.address,
+                    key,
+                    value,
+                    cid=cid,
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=wallet.path,
                 )
 
         if remove_attributes:
             for key in remove_attributes:
-                neofs_env.neo_go().contract.invokefunction(
-                    contracts_hashes["container"],
-                    rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-                    wallet_config=neo_go_wallet_config,
-                    method="removeAttribute",
-                    arguments=f"bytes:{cid_hex} string:{key}",
-                    multisig_hash=f"{wallet.address}:CalledByEntry",
-                    force=force,
+                neofs_env.neofs_cli(cli_config).container.remove_attribute(
+                    wallet.address,
+                    key,
+                    cid=cid,
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=wallet.path,
                 )
 
 
