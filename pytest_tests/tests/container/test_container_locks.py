@@ -207,6 +207,9 @@ class TestContainerLocks(TestNeofsBase):
             )
             assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(first_lock_time)
 
+        with allure.step("Wait 1 sec for the unix epoch tick"):
+            time.sleep(1)
+
         with allure.step("Update lock to extend expiration time"):
             extended_lock_time = int(time.time()) + BASIC_LOCK_TIME
             set_container_attributes(
@@ -246,12 +249,13 @@ class TestContainerLocks(TestNeofsBase):
             )
 
         with allure.step("Try to set __NEOFS__LOCK_UNTIL to past epoch value"):
-            set_container_attributes(
-                default_wallet,
-                cid,
-                self.neofs_env,
-                attributes={"__NEOFS__LOCK_UNTIL": int(time.time()) - 10},
-            )
+            with pytest.raises(Exception, match=r".*lock expiration time .* is not later than current .*"):
+                set_container_attributes(
+                    default_wallet,
+                    cid,
+                    self.neofs_env,
+                    attributes={"__NEOFS__LOCK_UNTIL": int(time.time()) - 10},
+                )
 
         with allure.step("Verify container can still be deleted"):
             delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
