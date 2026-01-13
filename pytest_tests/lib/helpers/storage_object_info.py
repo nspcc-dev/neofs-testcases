@@ -46,7 +46,10 @@ class StorageObjectInfo(ObjectRef):
 def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, shell: Shell, endpoint: str):
     header = head_object(wallet_path, cid, oid_ts, shell=shell, endpoint=endpoint)["header"]
 
-    s_oid = header["sessionToken"]["body"]["object"]["target"]["objects"]
+    if "object" in header["sessionToken"]["body"]:
+        s_oid = header["sessionToken"]["body"]["object"]["target"]["objects"]
+    else:
+        s_oid = header["sessionToken"]["body"]["contexts"][0]["objects"][0]
     logger.info(f"Header Session OIDs is {s_oid}")
     logger.info(f"OID is {oid}")
 
@@ -59,9 +62,16 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
 
     assert header["ownerID"] == addr, "Tombstone Owner ID is wrong"
     assert header["objectType"] == "TOMBSTONE", "Header Type isn't Tombstone"
-    assert header["sessionToken"]["body"]["object"]["verb"] == "DELETE", "Header Session Type isn't DELETE"
-    assert header["sessionToken"]["body"]["object"]["target"]["container"] == cid, "Header Session ID is wrong"
-    assert oid in header["sessionToken"]["body"]["object"]["target"]["objects"], "Header Session OID is wrong"
+    if "object" in header["sessionToken"]["body"]:
+        assert header["sessionToken"]["body"]["object"]["verb"] == "DELETE", "Header Session Type isn't DELETE"
+        assert header["sessionToken"]["body"]["object"]["target"]["container"] == cid, "Header Session ID is wrong"
+        assert oid in header["sessionToken"]["body"]["object"]["target"]["objects"], "Header Session OID is wrong"
+    else:
+        assert "OBJECT_DELETE" in header["sessionToken"]["body"]["contexts"][0]["verbs"], (
+            "Header Session Type isn't DELETE"
+        )
+        assert header["sessionToken"]["body"]["contexts"][0]["container"] == cid, "Header Session ID is wrong"
+        assert oid in header["sessionToken"]["body"]["contexts"][0]["objects"], "Header Session OID is wrong"
 
 
 @allure.step("Delete Objects")

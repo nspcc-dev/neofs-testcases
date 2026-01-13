@@ -81,7 +81,10 @@ def decode_tombstone(data: dict) -> dict:
     """
     try:
         data = decode_simple_header(data)
-        data["header"]["sessionToken"] = decode_session_token(data["header"]["sessionToken"])
+        if data["header"]["sessionToken"] is not None:
+            data["header"]["sessionToken"] = decode_session_token(data["header"]["sessionToken"])
+        else:
+            data["header"]["sessionToken"] = decode_session_tokenv2(data["header"]["sessionTokenV2"])
     except Exception as exc:
         raise ValueError(f"failed to decode JSON output: {exc}") from exc
     return data
@@ -93,6 +96,17 @@ def decode_session_token(data: dict) -> dict:
     information about session token.
     """
     target = data["body"]["object"]["target"]
+    target["container"] = json_reencode(target["container"]["value"])
+    target["objects"] = [json_reencode(obj["value"]) for obj in target["objects"]]
+    return data
+
+
+def decode_session_tokenv2(data: dict) -> dict:
+    """
+    This function reencodes a fragment of header which contains
+    information about session token.
+    """
+    target = data["body"]["contexts"][0]
     target["container"] = json_reencode(target["container"]["value"])
     target["objects"] = [json_reencode(obj["value"]) for obj in target["objects"]]
     return data
