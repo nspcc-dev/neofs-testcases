@@ -407,19 +407,32 @@ class NeofsAdmFSChain(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
-    def estimations(self, rpc_endpoint: str, cid: str, epoch: str) -> CommandResult:
-        """Set NeoFS config settings.
+    def load_summary(self, rpc_endpoint: str) -> CommandResult:
+        """Get load summary
 
         Args:
             rpc_endpoint: N3 RPC node endpoint.
-            cid: Inspected container, base58 encoded.
-            epoch: Epoch for estimations, 0 for current, negative for relative epochs
 
         Returns:
             Command's result.
         """
         return self._execute(
-            "fschain estimations",
+            "fschain load-summary",
+            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
+        )
+
+    def load_report(self, rpc_endpoint: str, cid: str) -> CommandResult:
+        """Inspect storage load reports
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint.
+            cid: Inspected container, base58 encoded.
+
+        Returns:
+            Command's result.
+        """
+        return self._execute(
+            "fschain load-report",
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 

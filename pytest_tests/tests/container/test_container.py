@@ -4,6 +4,7 @@ import uuid
 
 import allure
 import base58
+import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import (
     get_assets_dir_path,
@@ -19,9 +20,9 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
-from helpers.neofs_verbs import get_object, put_object_to_random_node
+from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
-from helpers.utility import parse_version, placement_policy_from_container
+from helpers.utility import parse_load_report, parse_load_summary, parse_version, placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neo3.wallet import account as neo3_account
 from neo3.wallet import wallet as neo3_wallet
@@ -40,6 +41,30 @@ def object_should_be_gc_marked(neofs_env: NeoFSEnv, node: StorageNode, cid: str,
 
 
 class TestContainer(TestNeofsBase):
+    @pytest.fixture
+    def set_short_epoch_duration(self):
+        storage_node = self.neofs_env.storage_nodes[0]
+        net_info = get_netmap_netinfo(
+            wallet=storage_node.wallet.path,
+            wallet_config=storage_node.cli_config,
+            endpoint=storage_node.endpoint,
+            shell=self.shell,
+        )
+        original_epoch_duration = net_info["epoch_duration"]
+        self.neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
+            post_data="EpochDuration=20",
+        )
+        self.ensure_fresh_epoch()
+        yield
+        self.neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
+            post_data=f"EpochDuration={original_epoch_duration}",
+        )
+        self.ensure_fresh_epoch()
+
     def _create_multi_account_wallet(self, accounts: list[neo3_account.Account], prefix: str) -> str:
         wallet_path = os.path.join(get_assets_dir_path(), f"{prefix}-{str(uuid.uuid4())}.json")
         wallet = neo3_wallet.Wallet()
@@ -1032,4 +1057,69 @@ class TestContainer(TestNeofsBase):
                 endpoint=self.neofs_env.sn_rpc,
                 await_mode=True,
                 force=True,
+            )
+
+    def test_container_estimations(self, default_wallet, set_short_epoch_duration):
+        objects_count = 10
+        object_size = 1000
+        with allure.step("Create container"):
+            cid = create_container(
+                wallet=default_wallet.path,
+                rule="REP 1 IN X CBF 1 SELECT 1 FROM * AS X",
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step(f"Create {objects_count} objects"):
+            created_objects = []
+            files = [generate_file(object_size) for _ in range(objects_count)]
+
+            for f in files:
+                created_objects.append(
+                    put_object_to_random_node(default_wallet.path, f, cid, shell=self.shell, neofs_env=self.neofs_env)
+                )
+
+        with allure.step("Wait for an epoch to pass"):
+            neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
+
+        with allure.step("Verify estimations summary output"):
+            load_summary_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
+                .stdout.strip()
+            )
+            load_summary_entries = parse_load_summary(load_summary_output)
+
+            matching_entry = next((entry for entry in load_summary_entries if entry[0] == cid), None)
+            assert matching_entry is not None, f"Container {cid} not found in load_summary output"
+
+            summary_cid, summary_num_objects, summary_container_size = matching_entry
+
+            assert summary_cid == cid, f"Container ID mismatch in load_summary: expected {cid}, got {summary_cid}"
+            assert summary_num_objects == objects_count, (
+                f"Number of objects mismatch in load_summary: expected {objects_count}, got {summary_num_objects}"
+            )
+            assert summary_container_size == objects_count * object_size, (
+                f"Container size mismatch in load_summary: expected {objects_count * object_size}, "
+                f"got {summary_container_size}"
+            )
+
+        with allure.step("Verify estimations report"):
+            load_report_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_report(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}", cid=cid)
+                .stdout.strip()
+            )
+            load_report_entries = parse_load_report(load_report_output)
+
+            expected_num_objects = objects_count
+            expected_size = objects_count * object_size
+
+            matching_entries = [
+                entry for entry in load_report_entries if entry[1] == expected_num_objects and entry[2] == expected_size
+            ]
+
+            assert len(matching_entries) == 1, (
+                f"Expected exactly 1 report entry matching our container, but found {len(matching_entries)}. "
+                f"Expected: objects={expected_num_objects}, size={expected_size}"
             )
