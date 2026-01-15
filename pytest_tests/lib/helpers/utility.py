@@ -125,3 +125,75 @@ def get_signature_slice(curve, r: int, s: int) -> bytes:
     r_bytes = r.to_bytes(byte_len, byteorder="big")
     s_bytes = s.to_bytes(byte_len, byteorder="big")
     return r_bytes + s_bytes
+
+
+def parse_load_summary(output: str) -> list[Tuple[str, int, int]]:
+    """Parse fschain load_summary output.
+
+    Args:
+        output: Output from neofs_adm fschain load_summary command.
+            Expected format with multiple lines, each containing container ID, number of objects, and container size.
+
+    Returns:
+        List of tuples (container_id, number_of_objects, container_size).
+
+    Example:
+        >>> parse_load_summary("2XYYqGGFTRs3YNGVbjAfvrQd4xfEBn5QnTC4NG8Hr1BS: Number of objects: 30, container size: 300000000\\n2YqzP3EnFACkgE4Pxz9NTReZHTQmm7Fdp63ydtjBqHjh: Number of objects: 30, container size: 150000000")
+        [('2XYYqGGFTRs3YNGVbjAfvrQd4xfEBn5QnTC4NG8Hr1BS', 30, 300000000), ('2YqzP3EnFACkgE4Pxz9NTReZHTQmm7Fdp63ydtjBqHjh', 30, 150000000)]
+    """
+    pattern = (
+        r"(?P<cid>[A-Za-z0-9]+):\s*"
+        r"Number of objects:\s*(?P<num_objects>\d+),\s*"
+        r"container size:\s*(?P<container_size>\d+)"
+    )
+    matches = re.finditer(pattern, output.strip())
+    results = []
+    for match in matches:
+        results.append(
+            (
+                match.group("cid"),
+                int(match.group("num_objects")),
+                int(match.group("container_size")),
+            )
+        )
+
+    if not results:
+        raise ValueError(f"String format does not match expected pattern: {output=}")
+
+    return results
+
+
+def parse_load_report(output: str) -> list[Tuple[str, int, int]]:
+    """Parse fschain load_report output.
+
+    Args:
+        output: Output from neofs_adm fschain load_report command.
+            Expected format with multiple report entries, each including reporter's public key, size, and objects count.
+
+    Returns:
+        List of tuples (public_key, number_of_objects, size).
+
+    Example:
+        >>> parse_load_report("Report #0:\\n  Reporter's pubic Key: 30b34a9f...:\\n  Size: 300000000\\n  Objects: 30\\n  Update epoch: 6\\n  Reports number: 1\\n\\nReport #1:\\n  Reporter's pubic Key: d4f8fa...:\\n  Size: 100000000\\n  Objects: 10\\n  Update epoch: 19\\n  Reports number: 3")
+        [('30b34a9f...', 30, 300000000), ('d4f8fa...', 10, 100000000)]
+    """
+    pattern = (
+        r"Reporter's pubic Key:\s*(?P<public_key>[a-f0-9]+):\s*\n"
+        r"\s*Size:\s*(?P<size>\d+)\s*\n"
+        r"\s*Objects:\s*(?P<num_objects>\d+)"
+    )
+    matches = re.finditer(pattern, output.strip())
+    results = []
+    for match in matches:
+        results.append(
+            (
+                match.group("public_key"),
+                int(match.group("num_objects")),
+                int(match.group("size")),
+            )
+        )
+
+    if not results:
+        raise ValueError(f"String format does not match expected pattern: {output=}")
+
+    return results
