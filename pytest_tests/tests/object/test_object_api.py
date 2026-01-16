@@ -1083,3 +1083,123 @@ class TestObjectApi(TestNeofsBase):
         head_object(default_wallet.path, cid, oid, self.neofs_env.shell, self.neofs_env.sn_rpc)
         delete_object(default_wallet.path, cid, oid, shell=self.neofs_env.shell, endpoint=self.neofs_env.sn_rpc)
         self.wait_until_object_is_completely_deleted(cid, oid)
+
+    @pytest.mark.parametrize(
+        "object_size",
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "container_policy",
+        [
+            pytest.param(DEFAULT_PLACEMENT_RULE, id="REP PLACEMENT"),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="EC_3_1 PLACEMENT"),
+        ],
+    )
+    def test_raw_object_get_head(self, default_wallet: NodeWallet, object_size: str, container_policy: str):
+        wallet = default_wallet
+        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc, rule=container_policy)
+
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
+        oid = put_object(default_wallet.path, file_path, cid, self.neofs_env.shell, self.neofs_env.sn_rpc)
+
+        head_info = head_object(
+            default_wallet.path, cid, oid, shell=self.neofs_env.shell, endpoint=self.neofs_env.sn_rpc, is_raw=True
+        )
+
+        if object_size == "complex_object_size":
+            assert head_info["link"], "Link object is not found in raw head response"
+            assert head_info["firstPart"], "First part is not found in raw head response"
+        else:
+            assert "link" not in head_info, "Link object is found in raw head response for simple object"
+            assert "firstPart" not in head_info, "First part is found in raw head response for simple object"
+
+        range_start = 0
+        range_len = 10
+        range_cut = f"{range_start}:{range_len}"
+        if object_size == "complex_object_size":
+            raw_range_info, _ = get_range(
+                default_wallet.path,
+                cid,
+                oid,
+                shell=self.neofs_env.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                range_cut=range_cut,
+                is_raw=True,
+                complex_object=True,
+            )
+
+            assert raw_range_info["linking_object"] == head_info["link"], (
+                "Linking object in raw range response is not equal to link object in raw head response"
+            )
+            assert raw_range_info["first_object"] == head_info["firstPart"], (
+                "First object in raw range response is not equal to first part in raw head response"
+            )
+        else:
+            if container_policy == EC_3_1_PLACEMENT_RULE:
+                with pytest.raises(Exception, match=".*logical error: 1 EC parts.*"):
+                    get_range(
+                        default_wallet.path,
+                        cid,
+                        oid,
+                        shell=self.neofs_env.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        range_cut=range_cut,
+                        is_raw=True,
+                    )
+            else:
+                _, range_content = get_range(
+                    default_wallet.path,
+                    cid,
+                    oid,
+                    shell=self.neofs_env.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    range_cut=range_cut,
+                    is_raw=True,
+                )
+                assert get_file_content(file_path, content_len=range_len, mode="rb", offset=0) == range_content, (
+                    f"Expected range content to match {range_start}:{range_len} slice of file payload"
+                )
+
+        if object_size == "complex_object_size":
+            raw_get_info = get_object(
+                default_wallet.path,
+                cid,
+                oid,
+                shell=self.neofs_env.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                is_raw=True,
+                complex_object=True,
+            )
+
+            assert raw_get_info["linking_object"] == head_info["link"], (
+                "Linking object in raw get response is not equal to link object in raw head response"
+            )
+            assert raw_get_info["first_object"] == head_info["firstPart"], (
+                "First object in raw get response is not equal to first part in raw head response"
+            )
+        else:
+            if container_policy == EC_3_1_PLACEMENT_RULE:
+                with pytest.raises(Exception, match=".*logical error: 1 EC parts.*"):
+                    get_object(
+                        default_wallet.path,
+                        cid,
+                        oid,
+                        shell=self.neofs_env.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        is_raw=True,
+                    )
+            else:
+                simple_object_path = get_object(
+                    default_wallet.path,
+                    cid,
+                    oid,
+                    shell=self.neofs_env.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    is_raw=True,
+                )
+                assert get_file_hash(simple_object_path) == get_file_hash(file_path), (
+                    "Expected file hash to match original file hash"
+                )

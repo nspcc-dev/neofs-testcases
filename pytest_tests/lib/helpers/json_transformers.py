@@ -38,6 +38,7 @@ def decode_split_header(data: dict) -> dict:
         data["splitId"] = json_reencode(data["splitId"])
         data["lastPart"] = json_reencode(data["lastPart"]["value"]) if data["lastPart"] else None
         data["link"] = json_reencode(data["link"]["value"]) if data["link"] else None
+        data["firstPart"] = json_reencode(data["firstPart"]["value"]) if data["firstPart"] else None
     except Exception as exc:
         raise ValueError(f"failed to decode JSON output: {exc}") from exc
 

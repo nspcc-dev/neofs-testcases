@@ -84,6 +84,38 @@ def get_object_from_random_node(
     )
 
 
+def parse_raw_output(stdout: str) -> dict:
+    """
+    Parse the stdout of a raw object range response for complex (split) objects.
+
+    Expected stdout format::
+
+        Object is complex, split information received.
+        Linking object: <linking_object_id>
+        First object: <first_object_id>
+
+    Args:
+        stdout: raw stdout string returned by ``get_range`` when ``is_raw=True``.
+
+    Returns:
+        dict with keys:
+            - ``linking_object``: ID of the linking object, or ``None`` if not present.
+            - ``first_object``:   ID of the first object, or ``None`` if not present.
+    """
+
+    result = {"linking_object": None, "first_object": None}
+
+    linking_match = re.search(r"Linking object:\s+(\S+)", stdout)
+    if linking_match:
+        result["linking_object"] = linking_match.group(1)
+
+    first_match = re.search(r"First object:\s+(\S+)", stdout)
+    if first_match:
+        result["first_object"] = first_match.group(1)
+
+    return result
+
+
 @allure.step("Get object from {endpoint}")
 def get_object(
     wallet: str,
@@ -97,6 +129,8 @@ def get_object(
     wallet_config: Optional[str] = None,
     no_progress: bool = True,
     session: Optional[str] = None,
+    is_raw: bool = False,
+    complex_object: bool = False,
 ) -> str:
     """
     GET from NeoFS.
@@ -122,7 +156,7 @@ def get_object(
     file_path = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, write_object)
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    cli.object.get(
+    stdout = cli.object.get(
         rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
@@ -132,7 +166,11 @@ def get_object(
         no_progress=no_progress,
         xhdr=xhdr,
         session=session,
-    )
+        raw=is_raw,
+    ).stdout
+
+    if complex_object:
+        return parse_raw_output(stdout.strip())
 
     return file_path
 
@@ -357,6 +395,8 @@ def get_range(
     bearer: str = "",
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
+    is_raw: bool = False,
+    complex_object: bool = False,
 ):
     """
     GETRANGE an Object.
@@ -378,7 +418,7 @@ def get_range(
     range_file_path = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, str(uuid.uuid4()))
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    cli.object.range(
+    stdout = cli.object.range(
         rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
@@ -388,7 +428,11 @@ def get_range(
         bearer=bearer,
         xhdr=xhdr,
         session=session,
-    )
+        raw=is_raw,
+    ).stdout
+
+    if complex_object:
+        return parse_raw_output(stdout.strip()), None
 
     with open(range_file_path, "rb") as file:
         content = file.read()
