@@ -97,6 +97,7 @@ def get_object(
     wallet_config: Optional[str] = None,
     no_progress: bool = True,
     session: Optional[str] = None,
+    is_raw: bool = False,
 ) -> str:
     """
     GET from NeoFS.
@@ -132,6 +133,7 @@ def get_object(
         no_progress=no_progress,
         xhdr=xhdr,
         session=session,
+        raw=is_raw
     )
 
     return file_path
@@ -357,6 +359,7 @@ def get_range(
     bearer: str = "",
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
+    is_raw: bool = False,
 ):
     """
     GETRANGE an Object.
@@ -388,6 +391,7 @@ def get_range(
         bearer=bearer,
         xhdr=xhdr,
         session=session,
+        raw=is_raw,
     )
 
     with open(range_file_path, "rb") as file:
