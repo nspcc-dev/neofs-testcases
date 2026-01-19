@@ -59,6 +59,9 @@ INVALID_NBF = ".*token is not valid yet.*"
 
 INVALID_TOKEN_FORMAT = ".*read container session: invalid format.*"
 INVALID_VERB = ".*wrong container session operation.*"
+SESSION_VALIDATION_FAILED = ".*session validation failed.*"
+INVALID_V2_SESSION_TOKEN = ".*invalid V2 session token.*"
+SESSION_TOKEN_DOESNOT_AUTHORIZE = ".*session token does not authorize.*"
 
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
