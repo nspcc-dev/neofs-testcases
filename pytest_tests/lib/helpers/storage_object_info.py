@@ -49,7 +49,7 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
     if "object" in header["sessionToken"]["body"]:
         s_oid = header["sessionToken"]["body"]["object"]["target"]["objects"]
     else:
-        s_oid = header["sessionToken"]["body"]["contexts"][0]["objects"][0]
+        s_oid = "empty"
     logger.info(f"Header Session OIDs is {s_oid}")
     logger.info(f"OID is {oid}")
 
@@ -71,7 +71,6 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
             "Header Session Type isn't DELETE"
         )
         assert header["sessionToken"]["body"]["contexts"][0]["container"] == cid, "Header Session ID is wrong"
-        assert oid in header["sessionToken"]["body"]["contexts"][0]["objects"], "Header Session OID is wrong"
 
 
 @allure.step("Delete Objects")

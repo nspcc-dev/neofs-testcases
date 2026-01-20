@@ -108,7 +108,6 @@ def decode_session_tokenv2(data: dict) -> dict:
     """
     target = data["body"]["contexts"][0]
     target["container"] = json_reencode(target["container"]["value"])
-    target["objects"] = [json_reencode(obj["value"]) for obj in target["objects"]]
     return data
 
 
