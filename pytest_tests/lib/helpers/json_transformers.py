@@ -104,11 +104,10 @@ def decode_session_token(data: dict) -> dict:
 def decode_session_tokenv2(data: dict) -> dict:
     """
     This function reencodes a fragment of header which contains
-    information about session token.
+    information about session token v2.
     """
     target = data["body"]["contexts"][0]
     target["container"] = json_reencode(target["container"]["value"])
-    target["objects"] = [json_reencode(obj["value"]) for obj in target["objects"]]
     return data
 
 
