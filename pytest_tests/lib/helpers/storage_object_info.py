@@ -64,13 +64,13 @@ def verify_head_tombstone(wallet_path: str, cid: str, oid_ts: str, oid: str, she
     assert header["objectType"] == "TOMBSTONE", "Header Type isn't Tombstone"
     if "object" in header["sessionToken"]["body"]:
         assert header["sessionToken"]["body"]["object"]["verb"] == "DELETE", "Header Session Type isn't DELETE"
-        assert header["sessionToken"]["body"]["object"]["target"]["container"] == cid, "Header Session ID is wrong"
+        assert header["sessionToken"]["body"]["object"]["target"]["container"] == cid, "Header Session CID is wrong"
         assert oid in header["sessionToken"]["body"]["object"]["target"]["objects"], "Header Session OID is wrong"
     else:
         assert "OBJECT_DELETE" in header["sessionToken"]["body"]["contexts"][0]["verbs"], (
             "Header Session Type isn't DELETE"
         )
-        assert header["sessionToken"]["body"]["contexts"][0]["container"] == cid, "Header Session ID is wrong"
+        assert header["sessionToken"]["body"]["contexts"][0]["container"] == cid, "Header Session CID is wrong"
 
 
 @allure.step("Delete Objects")
