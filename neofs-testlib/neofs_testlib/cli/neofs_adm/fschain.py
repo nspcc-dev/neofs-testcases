@@ -556,21 +556,6 @@ class NeofsAdmFSChain(CliCommand):
                 },
             )
 
-    def load_report(self, rpc_endpoint: str, cid: str) -> CommandResult:
-        """Inspect storage load reports
-
-        Args:
-            rpc_endpoint: N3 RPC node endpoint.
-            cid: Inspected container, base58 encoded.
-
-        Returns:
-            Command's result.
-        """
-        return self._execute(
-            "fschain load-report",
-            **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
-        )
-
     def parse_dump_hashes(self, dump_hashes_output: str) -> dict[str, str]:
         """
         Output example:
