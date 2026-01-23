@@ -185,13 +185,20 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     for metric in metrics_to_verify:
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
 
-    assert after_metrics_sn["neofs_node_engine_range_time_count"][0]["value"] == 2, (
-        "invalid value for neofs_node_engine_range_time_count"
-    )
+    range_bucket_metric = "neofs_node_engine_range_time_bucket"
+    range_count_metric = "neofs_node_engine_range_time_count"
+
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) > parse_version(
+        "0.50.2"
+    ):
+        range_bucket_metric = "neofs_node_engine_get_range_stream_time_bucket"
+        range_count_metric = "neofs_node_engine_get_range_stream_time_count"
+
+    assert after_metrics_sn[range_count_metric][0]["value"] == 2, f"invalid value for {range_count_metric}"
 
     metrics_to_verify = [
         "neofs_node_engine_put_time_bucket",
-        "neofs_node_engine_range_time_bucket",
+        range_bucket_metric,
         "neofs_node_engine_search_time_bucket",
         "neofs_node_object_rpc_get_time_bucket",
         "neofs_node_object_rpc_range_time_bucket",
