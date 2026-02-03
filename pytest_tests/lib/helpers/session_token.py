@@ -261,6 +261,66 @@ def create_session_token(
     return session_token
 
 
+@allure.step("Create Session Token V2")
+def create_session_token_v2(
+    shell: Shell,
+    owner_wallet: NodeWallet,
+    rpc_endpoint: str,
+    subjects: Optional[list[str]] = None,
+    subject_nns: Optional[list[str]] = None,
+    contexts: Optional[list[str]] = None,
+    lifetime: Optional[int] = None,
+    expire_at: Optional[int] = None,
+    origin: Optional[str] = None,
+    final: bool = False,
+    force: bool = False,
+) -> str:
+    """
+    Create V2 session token with subjects and multiple contexts.
+
+    V2 tokens support:
+    - Multiple subjects (accounts authorized to use the token)
+    - Multiple NNS subjects (NNS domain names authorized to use the token)
+    - Multiple contexts (container + object operations)
+    - Server-side session key storage via SessionCreate RPC
+    - Token delegation chains via --origin flag
+
+    Args:
+        shell: Shell instance.
+        owner_wallet: Wallet of the token issuer (who signs the token).
+        rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
+        subjects: List of subject user IDs authorized to use the token.
+        subject_nns: List of subject NNS names authorized to use the token.
+        contexts: List of context specs in format: containerID:verbs[:objectID1,objectID2,...].
+        lifetime: Duration in seconds for token to stay valid (default 36000).
+        expire_at: Expiration time in seconds for token to stay valid.
+        origin: Path to origin token file for token delegation chain.
+        final: Set the final flag in the token, disallowing further delegation.
+
+    Returns:
+        The path to the generated and signed session token file.
+    """
+    session_token = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, str(uuid.uuid4()))
+    neofscli = NeofsCli(shell=shell, neofs_cli_exec_path=NEOFS_CLI_EXEC, config_file=WALLET_CONFIG)
+    neofscli.session.create_v2(
+        address=owner_wallet.address,
+        wallet=owner_wallet.path,
+        rpc_endpoint=rpc_endpoint,
+        out=session_token,
+        lifetime=lifetime,
+        expire_at=expire_at,
+        subject=subjects,
+        subject_nns=subject_nns,
+        context=contexts,
+        origin=origin,
+        final=final,
+        json=True,
+        force=force,
+    )
+
+    return session_token
+
+
 @allure.step("Sign Session Token")
 def sign_session_token(shell: Shell, session_token_file: str, wlt: NodeWallet) -> str:
     """
