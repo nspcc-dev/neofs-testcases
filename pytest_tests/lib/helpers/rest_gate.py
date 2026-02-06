@@ -385,12 +385,23 @@ def create_container(
     container_name: str,
     placement_policy: str,
     basic_acl: str,
-    bearer_token: str,
-    bearer_signature: str,
-    bearer_signature_key: str,
+    session_token: str,
     wallet_connect=False,
-    new_api=True,
 ) -> str:
+    """
+    Create container via REST gateway using session token v2.
+
+    Args:
+        endpoint: REST gateway endpoint
+        container_name: Name of the container
+        placement_policy: Placement policy string
+        basic_acl: Basic ACL string
+        session_token: Complete signed session token (base64 encoded)
+        wallet_connect: Use WalletConnect signature scheme
+
+    Returns:
+        str: Container ID
+    """
     request = f"{endpoint}/containers"
     body = {
         "containerName": container_name,
@@ -398,19 +409,14 @@ def create_container(
         "basicAcl": basic_acl,
     }
     headers = {
-        "Authorization": f"Bearer {bearer_token}",
-        "X-Bearer-Signature": bearer_signature,
-        "X-Bearer-Signature-Key": bearer_signature_key,
+        "Authorization": f"Bearer {session_token}",
     }
     params = {}
 
     if wallet_connect:
         params["walletConnect"] = "true"
 
-    if new_api:
-        resp = requests.post(request, json=body, headers=headers, params=params, timeout=60)
-    else:
-        resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
+    resp = requests.post(request, json=body, headers=headers, params=params, timeout=60)
 
     if not resp.ok:
         raise Exception(
@@ -421,7 +427,7 @@ def create_container(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.json(), req_type="PUT")
+    _attach_allure_step(request, resp.json(), req_type="POST")
 
     assert resp.json().get("containerId"), f"CID not found in response {resp.json()}"
 
@@ -433,24 +439,32 @@ def get_container_token(
     endpoint: str,
     bearer_owner_id: str,
     bearer_lifetime: int = 100,
-    verb="PUT",
-    bearer_for_all_users: bool = None,
-) -> str:
-    request = f"{endpoint}/auth"
-    body = [
-        {"container": {"verb": verb}, "name": str(uuid.uuid4())},
-    ]
-    headers = {
-        "X-Bearer-Owner-Id": bearer_owner_id,
-        "X-Bearer-Lifetime": str(bearer_lifetime),
+    verb="CONTAINER_PUT",
+) -> tuple[str, str]:
+    """
+    Get unsigned session token for container operations via /v2/auth/session.
+
+    Args:
+        endpoint: REST gateway endpoint
+        bearer_owner_id: Token issuer ID (account address)
+        bearer_lifetime: Token lifetime in seconds
+        verb: Container operation verb (CONTAINER_PUT, CONTAINER_DELETE, CONTAINER_SET_EACL, etc.)
+
+    Returns:
+        tuple: (unsigned_token, lock) - both as base64 strings
+    """
+    request = f"{endpoint.replace('v1', 'v2')}/auth/session"
+
+    body = {
+        "owner": bearer_owner_id,
+        "targets": [bearer_owner_id],
+        "contexts": [{"verbs": [verb]}],
+        "expiration-duration": f"{bearer_lifetime}s",
     }
-    if bearer_for_all_users is not None:
-        headers["X-Bearer-For-All-Users"] = str(bearer_for_all_users)
 
     resp = requests.post(
         request,
         json=body,
-        headers=headers,
         timeout=60,
     )
 
@@ -466,7 +480,61 @@ def get_container_token(
     logger.info(f"Response: {resp.json()}")
     _attach_allure_step(request, resp.json(), req_type="POST")
 
-    return resp.json()[0]["token"]
+    return resp.json()["token"], resp.json()["lock"]
+
+
+@allure.step("Complete session token via REST GW")
+def complete_session_token(
+    endpoint: str,
+    unsigned_token: str,
+    lock: str,
+    signature: str,
+    public_key: str,
+    scheme: str = "WALLETCONNECT",
+) -> str:
+    """
+    Complete session token by attaching signature.
+
+    Args:
+        endpoint: REST gateway endpoint
+        unsigned_token: Base64 encoded unsigned token from /v2/auth/session
+        lock: Base64 encoded lock from /v2/auth/session
+        signature: Base64 encoded signature
+        public_key: Hex encoded public key (or base64 for N3 scheme)
+        scheme: Signature scheme (WALLETCONNECT, SHA512, DETERMINISTIC_SHA256, N3)
+
+    Returns:
+        str: Base64 encoded complete signed token (lock + signed_token)
+    """
+    request = f"{endpoint.replace('v1', 'v2')}/auth/session/complete"
+
+    body = {
+        "token": unsigned_token,
+        "lock": lock,
+        "value": signature,
+        "key": public_key,
+        "scheme": scheme,
+    }
+
+    resp = requests.post(
+        request,
+        json=body,
+        timeout=60,
+    )
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to complete session token via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    _attach_allure_step(request, resp.json(), req_type="POST")
+
+    return resp.json()["token"]
 
 
 @allure.step("Get containers list via REST GW")
@@ -533,17 +601,25 @@ def get_container_eacl(endpoint: str, container_id: str) -> dict:
 def delete_container(
     endpoint: str,
     container_id: str,
-    bearer_token: str,
-    bearer_signature: str,
-    bearer_signature_key: str,
+    session_token: str,
     wallet_connect=False,
 ) -> dict:
+    """
+    Delete container via REST gateway using session token v2.
+
+    Args:
+        endpoint: REST gateway endpoint
+        container_id: Container ID to delete
+        session_token: Complete signed session token (base64 encoded)
+        wallet_connect: Use WalletConnect signature scheme
+
+    Returns:
+        dict: Response from REST gateway
+    """
     request = f"{endpoint}/containers/{container_id}"
 
     headers = {
-        "Authorization": f"Bearer {bearer_token}",
-        "X-Bearer-Signature": bearer_signature,
-        "X-Bearer-Signature-Key": bearer_signature_key,
+        "Authorization": f"Bearer {session_token}",
     }
     params = {}
 
