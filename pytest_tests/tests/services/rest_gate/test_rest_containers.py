@@ -22,14 +22,10 @@ class TestRestContainers(TestNeofsRestBase):
         TestRestContainers.wallet = default_wallet
 
     @pytest.mark.parametrize("wallet_connect", [True, False])
-    @pytest.mark.parametrize("new_api", [True, False])
-    @pytest.mark.parametrize("bearer_for_all_users", [True, False, None])
     @pytest.mark.simple
-    def test_rest_gw_containers_sanity(
-        self, gw_endpoint: str, wallet_connect: bool, new_api: bool, bearer_for_all_users: bool
-    ):
-        session_token, signature, pub_key = generate_credentials(
-            gw_endpoint, self.wallet, wallet_connect=wallet_connect, bearer_for_all_users=bearer_for_all_users
+    def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool):
+        session_token = generate_credentials(
+            gw_endpoint, self.wallet, verb="CONTAINER_PUT", wallet_connect=wallet_connect
         )
         cid = create_container(
             gw_endpoint,
@@ -37,10 +33,7 @@ class TestRestContainers(TestNeofsRestBase):
             self.PLACEMENT_RULE,
             PUBLIC_ACL,
             session_token,
-            signature,
-            pub_key,
             wallet_connect=wallet_connect,
-            new_api=new_api,
         )
 
         resp = get_container_info(gw_endpoint, cid)
@@ -56,7 +49,7 @@ class TestRestContainers(TestNeofsRestBase):
             endpoint=gw_endpoint,
         )
 
-        session_token, signature, pub_key = generate_credentials(
-            gw_endpoint, self.wallet, verb="DELETE", wallet_connect=wallet_connect
+        session_token = generate_credentials(
+            gw_endpoint, self.wallet, verb="CONTAINER_DELETE", wallet_connect=wallet_connect
         )
-        delete_container(gw_endpoint, cid, session_token, signature, pub_key, wallet_connect=wallet_connect)
+        delete_container(gw_endpoint, cid, session_token, wallet_connect=wallet_connect)

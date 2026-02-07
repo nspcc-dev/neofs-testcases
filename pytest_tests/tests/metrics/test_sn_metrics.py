@@ -400,17 +400,14 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
     simple_object_size = int(SIMPLE_OBJECT_SIZE)
     gw_endpoint = f"http://{neofs_env_single_sn.rest_gw.endpoint}/v1"
 
-    session_token, signature, pub_key = generate_credentials(gw_endpoint, default_wallet, wallet_connect=True)
+    session_token = generate_credentials(gw_endpoint, default_wallet, verb="CONTAINER_PUT", wallet_connect=True)
     cid = create_container_rest_gw(
         gw_endpoint,
         "rest_gw_container",
         "REP 1",
         PUBLIC_ACL,
         session_token,
-        signature,
-        pub_key,
         wallet_connect=True,
-        new_api=False,
     )
 
     get_container_info(gw_endpoint, cid)
@@ -440,11 +437,10 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
     )
 
     for metric in (
-        "auth",
+        "v2_auth",
         "get_container",
         "get_network_info",
         "new_upload_container_object",
-        "put_container",
     ):
         assert (
             len(
@@ -491,7 +487,5 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
             f"neofs_rest_gw_pool_{metric}_count"
         )
 
-    session_token, signature, pub_key = generate_credentials(
-        gw_endpoint, default_wallet, verb="DELETE", wallet_connect=True
-    )
-    delete_container_rest_gw(gw_endpoint, cid, session_token, signature, pub_key, wallet_connect=True)
+    session_token = generate_credentials(gw_endpoint, default_wallet, verb="CONTAINER_DELETE", wallet_connect=True)
+    delete_container_rest_gw(gw_endpoint, cid, session_token, wallet_connect=True)
