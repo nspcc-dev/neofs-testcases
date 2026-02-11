@@ -35,7 +35,6 @@ jobs:
       neofs_manual_expiration_period: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
       neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
       neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
-      neofs_rest_gw_commit: 'master'
       tests_parallel_level: 4
       os: >
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"},
