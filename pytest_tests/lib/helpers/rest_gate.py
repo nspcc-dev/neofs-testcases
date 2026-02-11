@@ -456,7 +456,7 @@ def get_container_token(
     request = f"{endpoint.replace('v1', 'v2')}/auth/session"
 
     body = {
-        "owner": bearer_owner_id,
+        "issuer": bearer_owner_id,
         "targets": [bearer_owner_id],
         "contexts": [{"verbs": [verb]}],
         "expiration-duration": f"{bearer_lifetime}s",
@@ -511,7 +511,7 @@ def complete_session_token(
     body = {
         "token": unsigned_token,
         "lock": lock,
-        "value": signature,
+        "signature": signature,
         "key": public_key,
         "scheme": scheme,
     }
