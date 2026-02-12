@@ -15,6 +15,8 @@ from helpers.file_helper import generate_file
 from helpers.neofs_verbs import (
     delete_object,
     generate_filter_json_file,
+    get_object,
+    get_range,
     head_object,
     put_object,
     put_object_to_random_node,
@@ -855,52 +857,72 @@ def test_search_by_system_attributes(
 @pytest.mark.complex
 def test_search_by_split_attributes(
     default_wallet: NodeWallet,
-    container: str,
     neofs_env: NeoFSEnv,
 ):
-    cid = container
-    created_objects = []
-    for idx in range(3):
-        file_path = generate_file(neofs_env.get_object_size("complex_object_size") * (idx + 1))
-        oid = put_object_to_random_node(
-            default_wallet.path,
-            file_path,
-            cid,
-            shell=neofs_env.shell,
-            neofs_env=neofs_env,
-        )
-        head_info = head_object(
-            default_wallet.path, cid, oid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc, is_raw=True
-        )
-        head_info = head_object(
-            default_wallet.path,
-            cid,
-            head_info["link"],
-            shell=neofs_env.shell,
-            endpoint=neofs_env.sn_rpc,
-        )
-        system_attributes = {
-            "$Object:split.parent": head_info["header"]["split"]["parent"],
-            "$Object:split.first": head_info["header"]["split"]["first"],
-        }
-        created_objects.append({"id": oid, "attrs": system_attributes})
-
-    for system_attr in system_attributes.keys():
-        for created_obj in created_objects:
-            created_obj_attr_value = created_obj["attrs"][system_attr]
-            found_objects, _ = search_objectv2(
-                rpc_endpoint=neofs_env.sn_rpc,
-                wallet=default_wallet.path,
-                cid=cid,
+    rule = "EC 3/1 CBF 1" if neofs_env.inner_ring_nodes[0].chain_meta_data else "REP 3 CBF 3"
+    cid = create_container(
+        default_wallet.path,
+        shell=neofs_env.shell,
+        endpoint=neofs_env.sn_rpc,
+        rule=rule,
+        attributes={"__NEOFS__METAINFO_CONSISTENCY": "strict"}
+        if neofs_env.inner_ring_nodes[0].chain_meta_data
+        else None,
+    )
+    try:
+        created_objects = []
+        for idx in range(3):
+            file_path = generate_file(neofs_env.get_object_size("complex_object_size") * (idx + 1))
+            oid = put_object_to_random_node(
+                default_wallet.path,
+                file_path,
+                cid,
                 shell=neofs_env.shell,
-                filters=[f"{system_attr} EQ {created_obj_attr_value}"],
-                attributes=[system_attr],
+                neofs_env=neofs_env,
             )
-            assert len(found_objects) > 0, "no objects found"
-            for found_obj in found_objects:
-                assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
-                    f"Invalid object returned from searchv2: {found_obj}"
+            get_range(
+                default_wallet.path,
+                cid,
+                oid,
+                shell=neofs_env.shell,
+                endpoint=neofs_env.sn_rpc,
+                range_cut="0:1",
+            )
+            get_object(default_wallet.path, cid, oid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc, is_raw=True)
+            head_info = head_object(
+                default_wallet.path, cid, oid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc, is_raw=True
+            )
+            head_info = head_object(
+                default_wallet.path,
+                cid,
+                head_info["link"],
+                shell=neofs_env.shell,
+                endpoint=neofs_env.sn_rpc,
+            )
+            system_attributes = {
+                "$Object:split.parent": head_info["header"]["split"]["parent"],
+                "$Object:split.first": head_info["header"]["split"]["first"],
+            }
+            created_objects.append({"id": oid, "attrs": system_attributes})
+
+        for system_attr in system_attributes.keys():
+            for created_obj in created_objects:
+                created_obj_attr_value = created_obj["attrs"][system_attr]
+                found_objects, _ = search_objectv2(
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=default_wallet.path,
+                    cid=cid,
+                    shell=neofs_env.shell,
+                    filters=[f"{system_attr} EQ {created_obj_attr_value}"],
+                    attributes=[system_attr],
                 )
+                assert len(found_objects) > 0, "no objects found"
+                for found_obj in found_objects:
+                    assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
+                        f"Invalid object returned from searchv2: {found_obj}"
+                    )
+    finally:
+        delete_container(default_wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.mark.complex
