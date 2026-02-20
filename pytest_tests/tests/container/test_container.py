@@ -20,7 +20,7 @@ from helpers.container import (
 )
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
-from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object_to_random_node
+from helpers.neofs_verbs import delete_object, get_netmap_netinfo, get_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import parse_load_report, parse_load_summary, parse_version, placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
@@ -1059,13 +1059,29 @@ class TestContainer(TestNeofsBase):
                 force=True,
             )
 
-    def test_container_estimations(self, default_wallet, set_short_epoch_duration):
+    @pytest.mark.parametrize(
+        "placement_rule,object_multiplier,size_multiplier",
+        [
+            ("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", 1, 1),
+            ("REP 3 IN X CBF 1 SELECT 3 FROM * AS X", 3, 3),
+            ("EC 3/1 CBF 1", 4, 4 / 3),
+        ],
+        ids=["REP 1", "REP 3", "EC 3/1"],
+    )
+    def test_container_estimations(
+        self,
+        default_wallet,
+        set_short_epoch_duration,
+        placement_rule,
+        object_multiplier,
+        size_multiplier,
+    ):
         objects_count = 10
         object_size = 1000
-        with allure.step("Create container"):
+        with allure.step(f"Create container with policy {placement_rule}"):
             cid = create_container(
                 wallet=default_wallet.path,
-                rule="REP 1 IN X CBF 1 SELECT 1 FROM * AS X",
+                rule=placement_rule,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
             )
@@ -1094,15 +1110,27 @@ class TestContainer(TestNeofsBase):
             assert matching_entry is not None, f"Container {cid} not found in load_summary output"
 
             summary_cid, summary_num_objects, summary_container_size = matching_entry
+            expected_total_objects = int(objects_count * object_multiplier)
+            expected_total_size = int(objects_count * object_size * size_multiplier)
 
             assert summary_cid == cid, f"Container ID mismatch in load_summary: expected {cid}, got {summary_cid}"
-            assert summary_num_objects == objects_count, (
-                f"Number of objects mismatch in load_summary: expected {objects_count}, got {summary_num_objects}"
+            assert summary_num_objects == expected_total_objects, (
+                f"Number of objects mismatch in load_summary for {placement_rule}: "
+                f"expected {expected_total_objects}, got {summary_num_objects}"
             )
-            assert summary_container_size == objects_count * object_size, (
-                f"Container size mismatch in load_summary: expected {objects_count * object_size}, "
-                f"got {summary_container_size}"
-            )
+            if "EC" in placement_rule:
+                size_tolerance = 0.05
+                size_diff = abs(summary_container_size - expected_total_size)
+                assert size_diff / expected_total_size <= size_tolerance, (
+                    f"Container size mismatch in load_summary for {placement_rule}: "
+                    f"expected approximately {expected_total_size}, got {summary_container_size} "
+                    f"(difference: {size_diff}, tolerance: {size_tolerance * 100}%)"
+                )
+            else:
+                assert summary_container_size == expected_total_size, (
+                    f"Container size mismatch in load_summary for {placement_rule}: "
+                    f"expected {expected_total_size}, got {summary_container_size}"
+                )
 
         with allure.step("Verify estimations report"):
             load_report_output = (
@@ -1112,14 +1140,206 @@ class TestContainer(TestNeofsBase):
             )
             load_report_entries = parse_load_report(load_report_output)
 
-            expected_num_objects = objects_count
-            expected_size = objects_count * object_size
+            total_objects_reported = sum(entry[1] for entry in load_report_entries)
+            total_size_reported = sum(entry[2] for entry in load_report_entries)
 
-            matching_entries = [
-                entry for entry in load_report_entries if entry[1] == expected_num_objects and entry[2] == expected_size
-            ]
-
-            assert len(matching_entries) == 1, (
-                f"Expected exactly 1 report entry matching our container, but found {len(matching_entries)}. "
-                f"Expected: objects={expected_num_objects}, size={expected_size}"
+            assert total_objects_reported == expected_total_objects, (
+                f"Total objects reported mismatch for {placement_rule}: "
+                f"expected {expected_total_objects}, got {total_objects_reported}"
             )
+            if "EC" in placement_rule:
+                size_tolerance = 0.05
+                size_diff = abs(total_size_reported - expected_total_size)
+                assert size_diff / expected_total_size <= size_tolerance, (
+                    f"Total size reported mismatch for {placement_rule}: "
+                    f"expected approximately {expected_total_size}, got {total_size_reported} "
+                    f"(difference: {size_diff}, tolerance: {size_tolerance * 100}%)"
+                )
+            else:
+                assert total_size_reported == expected_total_size, (
+                    f"Total size reported mismatch for {placement_rule}: "
+                    f"expected {expected_total_size}, got {total_size_reported}"
+                )
+
+    @pytest.mark.parametrize(
+        "placement_rule,object_multiplier,size_multiplier",
+        [
+            ("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", 1, 1),
+            ("REP 3 IN X CBF 1 SELECT 3 FROM * AS X", 3, 3),
+            ("EC 3/1 CBF 1", 4, 4 / 3),
+        ],
+        ids=["REP 1", "REP 3", "EC 3/1"],
+    )
+    def test_container_estimations_after_delete(
+        self, default_wallet, set_short_epoch_duration, placement_rule, object_multiplier, size_multiplier
+    ):
+        """Test that container estimations update correctly after deleting objects."""
+        initial_objects_count = 10
+        objects_to_delete = 3
+        object_size = 1000
+
+        with allure.step(f"Create container with policy {placement_rule}"):
+            cid = create_container(
+                wallet=default_wallet.path,
+                rule=placement_rule,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step(f"Create {initial_objects_count} objects"):
+            created_objects = []
+            files = [generate_file(object_size) for _ in range(initial_objects_count)]
+
+            for f in files:
+                oid = put_object_to_random_node(default_wallet.path, f, cid, shell=self.shell, neofs_env=self.neofs_env)
+                created_objects.append(oid)
+
+        with allure.step("Wait for an epoch to pass"):
+            neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
+
+        with allure.step("Verify initial estimations"):
+            load_summary_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
+                .stdout.strip()
+            )
+            load_summary_entries = parse_load_summary(load_summary_output)
+            matching_entry = next((entry for entry in load_summary_entries if entry[0] == cid), None)
+            assert matching_entry is not None, f"Container {cid} not found in load_summary output"
+
+        with allure.step(f"Delete {objects_to_delete} objects"):
+            for oid in created_objects[:objects_to_delete]:
+                delete_object(
+                    wallet=default_wallet.path,
+                    cid=cid,
+                    oid=oid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+
+        with allure.step("Wait for an epoch to pass for estimations to update"):
+            neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
+
+        with allure.step("Verify estimations decreased after deletion"):
+            load_summary_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
+                .stdout.strip()
+            )
+            load_summary_entries = parse_load_summary(load_summary_output)
+            matching_entry = next((entry for entry in load_summary_entries if entry[0] == cid), None)
+            assert matching_entry is not None, f"Container {cid} not found in load_summary output after deletion"
+
+            remaining_objects = initial_objects_count - objects_to_delete
+            expected_objects = int(remaining_objects * object_multiplier)
+            expected_size = int(remaining_objects * object_size * size_multiplier)
+
+            actual_objects = matching_entry[1]
+            actual_size = matching_entry[2]
+
+            assert actual_objects == expected_objects, (
+                f"Objects count mismatch after deletion for {placement_rule}: "
+                f"expected {expected_objects}, got {actual_objects}"
+            )
+
+            if "EC" in placement_rule:
+                size_tolerance = 0.05
+                size_diff = abs(actual_size - expected_size)
+                assert size_diff / expected_size <= size_tolerance, (
+                    f"Size mismatch after deletion for {placement_rule}: "
+                    f"expected approximately {expected_size}, got {actual_size} "
+                    f"(difference: {size_diff}, tolerance: {size_tolerance * 100}%)"
+                )
+            else:
+                assert actual_size == expected_size, (
+                    f"Size mismatch after deletion for {placement_rule}: expected {expected_size}, got {actual_size}"
+                )
+
+    @pytest.mark.parametrize(
+        "placement_rule,object_multiplier,size_multiplier",
+        [
+            ("REP 1 IN X CBF 1 SELECT 1 FROM * AS X", 1, 1),
+            ("REP 3 IN X CBF 1 SELECT 3 FROM * AS X", 3, 3),
+            ("EC 3/1 CBF 1", 4, 4 / 3),
+        ],
+        ids=["REP 1", "REP 3", "EC 3/1"],
+    )
+    def test_container_estimations_after_add(
+        self, default_wallet, set_short_epoch_duration, placement_rule, object_multiplier, size_multiplier
+    ):
+        """Test that container estimations update correctly after adding new objects."""
+        initial_objects_count = 5
+        additional_objects_count = 7
+        object_size = 1000
+
+        with allure.step(f"Create container with policy {placement_rule}"):
+            cid = create_container(
+                wallet=default_wallet.path,
+                rule=placement_rule,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step(f"Create {initial_objects_count} initial objects"):
+            files = [generate_file(object_size) for _ in range(initial_objects_count)]
+
+            for f in files:
+                put_object_to_random_node(default_wallet.path, f, cid, shell=self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Wait for an epoch to pass"):
+            neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
+
+        with allure.step("Verify initial estimations"):
+            load_summary_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
+                .stdout.strip()
+            )
+            load_summary_entries = parse_load_summary(load_summary_output)
+            matching_entry = next((entry for entry in load_summary_entries if entry[0] == cid), None)
+            assert matching_entry is not None, f"Container {cid} not found in load_summary output"
+
+        with allure.step(f"Add {additional_objects_count} more objects"):
+            additional_files = [generate_file(object_size) for _ in range(additional_objects_count)]
+
+            for f in additional_files:
+                put_object_to_random_node(default_wallet.path, f, cid, shell=self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Wait for an epoch to pass for estimations to update"):
+            neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
+
+        with allure.step("Verify estimations increased after adding objects"):
+            load_summary_output = (
+                self.neofs_env.neofs_adm()
+                .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
+                .stdout.strip()
+            )
+            load_summary_entries = parse_load_summary(load_summary_output)
+            matching_entry = next((entry for entry in load_summary_entries if entry[0] == cid), None)
+            assert matching_entry is not None, f"Container {cid} not found in load_summary output after adding objects"
+
+            total_objects = initial_objects_count + additional_objects_count
+            expected_objects = int(total_objects * object_multiplier)
+            expected_size = int(total_objects * object_size * size_multiplier)
+
+            actual_objects = matching_entry[1]
+            actual_size = matching_entry[2]
+
+            assert actual_objects == expected_objects, (
+                f"Objects count mismatch after adding objects for {placement_rule}: "
+                f"expected {expected_objects}, got {actual_objects}"
+            )
+
+            if "EC" in placement_rule:
+                size_tolerance = 0.05
+                size_diff = abs(actual_size - expected_size)
+                assert size_diff / expected_size <= size_tolerance, (
+                    f"Size mismatch after adding objects for {placement_rule}: "
+                    f"expected approximately {expected_size}, got {actual_size} "
+                    f"(difference: {size_diff}, tolerance: {size_tolerance * 100}%)"
+                )
+            else:
+                assert actual_size == expected_size, (
+                    f"Size mismatch after adding objects for {placement_rule}: "
+                    f"expected {expected_size}, got {actual_size}"
+                )
