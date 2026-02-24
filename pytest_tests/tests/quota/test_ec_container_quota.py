@@ -577,7 +577,6 @@ class TestContainerQuota(TestQuotaBase):
             )
 
     @pytest.mark.parametrize("quota_type,quota_value", [("hard", 200)])
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/3767")
     def test_ec_container_object_lifetime_and_quota_reclaim(
         self, default_wallet: NodeWallet, quota_type: str, quota_value: int
     ):

@@ -12,9 +12,9 @@ from neofs_testlib.env.env import NodeWallet
 
 
 class TestContainerQuota(TestQuotaBase):
-    @pytest.mark.parametrize("quota_type,quota_value", [("hard", 100), ("soft", 100)])
     @pytest.mark.sanity
-    def test_container_quota(self, default_wallet: NodeWallet, quota_type: str, quota_value: int):
+    def test_container_quota_hard(self, default_wallet: NodeWallet):
+        quota_value = 100
         placement_rule = "REP 1"
         cid = create_container(
             default_wallet.path,
@@ -30,35 +30,25 @@ class TestContainerQuota(TestQuotaBase):
             gas="100.0",
         )
 
-        is_soft = quota_type == "soft"
-        with allure.step(f"Set container {quota_type} quota to {quota_value}"):
+        with allure.step(f"Set container hard quota to {quota_value}"):
             neofs_adm.fschain.container_quota(
                 rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
                 cid=cid,
                 wallet=default_wallet.path,
                 wallet_password=default_wallet.password,
-                soft=is_soft,
+                soft=False,
                 post_data=str(quota_value),
             )
-            expected_soft = quota_value if is_soft else 0
-            expected_hard = quota_value if not is_soft else 0
-            self.get_and_verify_container_quota(
-                default_wallet, cid, expected_soft=expected_soft, expected_hard=expected_hard
-            )
+            self.get_and_verify_container_quota(default_wallet, cid, expected_soft=0, expected_hard=quota_value)
 
         self.tick_epochs_and_wait(2)
 
-        with allure.step("Try to put object bigger than quota size"):
+        with allure.step("Try to put object bigger than quota size - should fail"):
             file_path = generate_file(quota_value + 1)
-            if is_soft:
-                oid = put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-                self._check_soft_quota_warning_in_logs(cid, expect_warning=True)
-                initial_line_count = self._get_log_line_count()
-            else:
-                with pytest.raises(Exception, match=r".*size quota limits are exceeded.*"):
-                    put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            with pytest.raises(Exception, match=r".*size quota limits are exceeded.*"):
+                put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-        with allure.step("Try to put object of the equal to quota size"):
+        with allure.step("Put object equal to quota size - should succeed"):
             file_path = generate_file(quota_value)
             oid = put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             get_object(
@@ -68,8 +58,66 @@ class TestContainerQuota(TestQuotaBase):
                 self.neofs_env.shell,
                 self.neofs_env.sn_rpc,
             )
-            if is_soft:
-                self._check_soft_quota_warning_in_logs(cid, start_line=initial_line_count, expect_warning=False)
+
+    @pytest.mark.sanity
+    def test_container_quota_soft(self, default_wallet: NodeWallet):
+        quota_value = 100
+        placement_rule = "REP 1"
+        cid = create_container(
+            default_wallet.path,
+            rule=placement_rule,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+        )
+        neofs_adm: NeofsAdm = self.neofs_env.neofs_adm()
+        neofs_adm.fschain.refill_gas(
+            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
+            storage_wallet=default_wallet.path,
+            gas="100.0",
+        )
+
+        with allure.step(f"Set container soft quota to {quota_value}"):
+            neofs_adm.fschain.container_quota(
+                rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
+                cid=cid,
+                wallet=default_wallet.path,
+                wallet_password=default_wallet.password,
+                soft=True,
+                post_data=str(quota_value),
+            )
+            self.get_and_verify_container_quota(default_wallet, cid, expected_soft=quota_value, expected_hard=0)
+
+        self.tick_epochs_and_wait(2)
+
+        with allure.step("Put object equal to quota size - should succeed without warning"):
+            initial_line_count = self._get_log_line_count()
+            file_path = generate_file(quota_value)
+            oid = put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            get_object(
+                default_wallet.path,
+                cid,
+                oid,
+                self.neofs_env.shell,
+                self.neofs_env.sn_rpc,
+            )
+            self._check_soft_quota_warning_in_logs(cid, start_line=initial_line_count, expect_warning=False)
+
+        self.tick_epochs_and_wait(1)
+        self.wait_until_quota_values_reported(cid, expected_objects=1)
+
+        with allure.step("Put another object to exceed quota - should succeed with warning"):
+            line_count_before_exceed = self._get_log_line_count()
+            file_path = generate_file(10)
+            oid2 = put_object(default_wallet.path, file_path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            get_object(
+                default_wallet.path,
+                cid,
+                oid2,
+                self.neofs_env.shell,
+                self.neofs_env.sn_rpc,
+            )
+            self._check_soft_quota_warning_in_logs(cid, start_line=line_count_before_exceed, expect_warning=True)
 
     @pytest.mark.parametrize("quota_type,quota_value", [("hard", 200), ("soft", 200)])
     def test_container_quota_multiple_objects(self, default_wallet: NodeWallet, quota_type: str, quota_value: int):
