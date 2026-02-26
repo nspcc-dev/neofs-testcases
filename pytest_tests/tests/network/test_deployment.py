@@ -6,6 +6,7 @@ from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object_from_random_node, put_object, put_object_to_random_node
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet, create_wallet_with_money
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
@@ -113,14 +114,27 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
     with allure.step("Get object info from write cache"):
         neofs_lens = neofs_env.neofs_lens()
         storage_nodes_with_cached_object = []
+
+        use_fstree = parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.51.1")
+
         for sn in neofs_env.storage_nodes:
             for shard in sn.shards:
                 shard_wc_path = shard.wc_path
-                object_address = neofs_lens.write_cache.list(shard_wc_path).stdout.strip()
+
+                if use_fstree:
+                    object_address = neofs_lens.fstree.list(shard_wc_path).stdout.strip()
+                else:
+                    object_address = neofs_lens.write_cache.list(shard_wc_path).stdout.strip()
+
                 if object_address:
-                    object_info = parse_object_info_data(
-                        neofs_lens.write_cache.get(object_address, shard_wc_path).stdout
-                    )
+                    if use_fstree:
+                        object_info = parse_object_info_data(
+                            neofs_lens.fstree.get(object_address, shard_wc_path).stdout
+                        )
+                    else:
+                        object_info = parse_object_info_data(
+                            neofs_lens.write_cache.get(object_address, shard_wc_path).stdout
+                        )
                     assert object_info["CID"] == cid, "Invalid value in the write cache"
                     assert object_info["ID"] == oid, "Invalid value in the write cache"
                     assert int(object_info["PayloadSize"]) == size, "Invalid value in the write cache"
