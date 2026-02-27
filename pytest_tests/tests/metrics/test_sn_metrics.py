@@ -32,7 +32,7 @@ from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from rest_gw.rest_utils import generate_credentials
+from rest_gw.rest_utils import generate_session_token_v2
 from s3 import s3_bucket, s3_object
 from s3.s3_base import configure_boto3_client, init_s3_credentials
 
@@ -400,7 +400,7 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
     simple_object_size = int(SIMPLE_OBJECT_SIZE)
     gw_endpoint = f"http://{neofs_env_single_sn.rest_gw.endpoint}/v1"
 
-    session_token = generate_credentials(gw_endpoint, default_wallet, verb="CONTAINER_PUT", wallet_connect=True)
+    session_token = generate_session_token_v2(gw_endpoint, default_wallet, [{"verbs": ["CONTAINER_PUT"]}], wallet_connect=True)
     cid = create_container_rest_gw(
         gw_endpoint,
         "rest_gw_container",
@@ -487,5 +487,5 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
             f"neofs_rest_gw_pool_{metric}_count"
         )
 
-    session_token = generate_credentials(gw_endpoint, default_wallet, verb="CONTAINER_DELETE", wallet_connect=True)
+    session_token = generate_session_token_v2(gw_endpoint, default_wallet, [{"verbs": ["CONTAINER_DELETE"]}], wallet_connect=True)
     delete_container_rest_gw(gw_endpoint, cid, session_token, wallet_connect=True)
