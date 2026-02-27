@@ -7,7 +7,7 @@ from helpers.rest_gate import create_container, delete_container, get_container_
 from helpers.wellknown_acl import EACL_PUBLIC_READ_WRITE, PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from rest_gw.rest_base import TestNeofsRestBase
-from rest_gw.rest_utils import generate_credentials
+from rest_gw.rest_utils import generate_session_token_v2
 
 logger = logging.getLogger("NeoLogger")
 
@@ -24,8 +24,8 @@ class TestRestContainers(TestNeofsRestBase):
     @pytest.mark.parametrize("wallet_connect", [True, False])
     @pytest.mark.simple
     def test_rest_gw_containers_sanity(self, gw_endpoint: str, wallet_connect: bool):
-        session_token = generate_credentials(
-            gw_endpoint, self.wallet, verb="CONTAINER_PUT", wallet_connect=wallet_connect
+        session_token = generate_session_token_v2(
+            gw_endpoint, self.wallet, [{"verbs": ["CONTAINER_PUT"]}], wallet_connect=wallet_connect
         )
         cid = create_container(
             gw_endpoint,
@@ -49,7 +49,7 @@ class TestRestContainers(TestNeofsRestBase):
             endpoint=gw_endpoint,
         )
 
-        session_token = generate_credentials(
-            gw_endpoint, self.wallet, verb="CONTAINER_DELETE", wallet_connect=wallet_connect
+        session_token = generate_session_token_v2(
+            gw_endpoint, self.wallet, [{"verbs": ["CONTAINER_DELETE"]}], wallet_connect=wallet_connect
         )
         delete_container(gw_endpoint, cid, session_token, wallet_connect=wallet_connect)

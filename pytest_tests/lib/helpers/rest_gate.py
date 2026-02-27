@@ -65,6 +65,9 @@ def get_via_rest_gate(
     return_response=False,
     download=False,
     skip_options_verify=False,
+    headers: dict = None,
+    session_token: str = None,
+    expect_error: bool = False,
 ) -> Union[str, requests.Response]:
     """
     This function gets given object from REST gate
@@ -72,19 +75,27 @@ def get_via_rest_gate(
     oid:          object ID
     endpoint:     REST gate endpoint
     return_response: (optional) either return internal requests.Response object or not
+    headers:      (optional) additional HTTP headers to include in the request
+    session_token: (optional) session token; adds Authorization: Bearer header automatically
+    expect_error: (optional) if True, return response instead of raising on error
     """
 
-    # if `request_path` parameter ommited, use default
     download_attribute = ""
     if download:
         download_attribute = "?download=true"
     request = f"{endpoint}/objects/{cid}/by_id/{oid}{download_attribute}"
 
+    req_headers = dict(headers) if headers else {}
+    if session_token:
+        req_headers["Authorization"] = f"Bearer {session_token}"
+
     if not skip_options_verify:
         verify_options_request(request)
-    resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    resp = requests.get(request, stream=True, headers=req_headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok:
+        if expect_error:
+            return resp
         raise Exception(
             f"""Failed to get object via REST gate:
                 request: {resp.request.path_url},
@@ -95,12 +106,12 @@ def get_via_rest_gate(
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
+    if return_response or expect_error:
+        return resp
     file_path = os.path.join(get_assets_dir_path(), f"{cid}_{oid}")
     with open(file_path, "wb") as file:
         shutil.copyfileobj(resp.raw, file)
-    if not return_response:
-        return file_path
-    return resp
+    return file_path
 
 
 @allure.step("Head via REST Gate")
@@ -108,19 +119,27 @@ def head_via_rest_gate(
     cid: str,
     oid: str,
     endpoint: str,
-) -> Union[str, requests.Response]:
+    session_token: str = None,
+    expect_error: bool = False,
+) -> requests.Response:
     """
     This function heads given object from REST gate
     cid:          container id to get object from
     oid:          object ID
     endpoint:     REST gate endpoint
+    session_token: (optional) session token; adds Authorization: Bearer header automatically
+    expect_error: (optional) if True, return response instead of raising on error
     """
     request = f"{endpoint}/objects/{cid}/by_id/{oid}"
 
-    verify_options_request(request)
-    resp = requests.head(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    headers = {}
+    if session_token:
+        headers["Authorization"] = f"Bearer {session_token}"
 
-    if not resp.ok:
+    verify_options_request(request)
+    resp = requests.head(request, stream=True, headers=headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+
+    if not resp.ok and not expect_error:
         raise Exception(
             f"""Failed to head object via REST gate:
                 request: {resp.request.path_url},
@@ -131,7 +150,7 @@ def head_via_rest_gate(
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    return resp.headers
+    return resp
 
 
 @allure.step("Get via REST Gate by attribute")
@@ -169,13 +188,12 @@ def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, ski
 
 
 @allure.step("Head via REST Gate by attribute")
-def head_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str):
+def head_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str) -> requests.Response:
     """
     This function heads given object from REST gate
     cid:          CID to get object from
     attribute:    attribute {name: attribute} value pair
     endpoint:     REST gate endpoint
-    request_path: (optional) REST request path, if ommited - use default [{endpoint}/objects/{Key}/by_attribute/{Value}]
     """
     attr_name = list(attribute.keys())[0]
     attr_value = quote(str(attribute.get(attr_name)))
@@ -195,7 +213,7 @@ def head_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str):
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
 
-    return resp.headers
+    return resp
 
 
 def _attach_allure_step(request: str, status_code: int, req_type="GET"):
@@ -234,10 +252,10 @@ def head_object_by_attr_and_verify(
     attrs: dict,
     endpoint: str,
 ) -> None:
-    headers_with_oid = head_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint)
-    headers_with_attr = head_via_rest_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint)
-    assert headers_with_oid["X-Object-Id"] == headers_with_attr["X-Object-Id"], (
-        f"headers not equal, expected: {headers_with_oid['X-Object-Id']}, got: {headers_with_attr['X-Object-Id']}"
+    resp_oid = head_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint)
+    resp_attr = head_via_rest_gate_by_attribute(cid=cid, attribute=attrs, endpoint=endpoint)
+    assert resp_oid.headers["X-Object-Id"] == resp_attr.headers["X-Object-Id"], (
+        f"headers not equal, expected: {resp_oid.headers['X-Object-Id']}, got: {resp_attr.headers['X-Object-Id']}"
     )
 
 
@@ -294,6 +312,7 @@ def upload_via_rest_gate(
     cookies: dict = None,
     file_content_type: str = None,
     error_pattern: Optional[str] = None,
+    session_token: str = None,
 ) -> str:
     """
     This function upload given object through REST gate
@@ -302,6 +321,7 @@ def upload_via_rest_gate(
     endpoint: REST gate endpoint
     headers:  Object header
     file_content_type: Content-Type header
+    session_token: (optional) session token; adds Authorization: Bearer header automatically
     """
     request = f"{endpoint}/objects/{cid}"
 
@@ -310,6 +330,9 @@ def upload_via_rest_gate(
 
     if headers is None:
         headers = {}
+
+    if session_token:
+        headers["Authorization"] = f"Bearer {session_token}"
 
     if file_content_type:
         headers["Content-Type"] = file_content_type
@@ -325,7 +348,7 @@ def upload_via_rest_gate(
             assert match, f"Expected {resp.text} to match {error_pattern}"
             return ""
         raise Exception(
-            f"""Failed to get object via REST gate:
+            f"""Failed to upload object via REST gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}"""
@@ -434,43 +457,54 @@ def create_container(
     return resp.json().get("containerId")
 
 
-@allure.step("Get token for container operations via REST GW")
-def get_container_token(
+@allure.step("Get unsigned session token via REST GW")
+def get_unsigned_session_token(
     endpoint: str,
-    bearer_owner_id: str,
-    bearer_lifetime: int = 100,
-    verb="CONTAINER_PUT",
+    issuer: str,
+    contexts: list[dict],
+    lifetime: int = 100,
+    targets: list[str] = None,
+    origin: str = None,
+    final: bool = False,
 ) -> tuple[str, str]:
     """
-    Get unsigned session token for container operations via /v2/auth/session.
+    Get unsigned session token via /v2/auth/session.
 
     Args:
         endpoint: REST gateway endpoint
-        bearer_owner_id: Token issuer ID (account address)
-        bearer_lifetime: Token lifetime in seconds
-        verb: Container operation verb (CONTAINER_PUT, CONTAINER_DELETE, CONTAINER_SET_EACL, etc.)
+        issuer: Token issuer ID (account address)
+        contexts: List of context dicts with verbs (and optionally containerID).
+                  Example: [{"containerID": "cid", "verbs": ["OBJECT_GET"]}]
+                  or [{"verbs": ["CONTAINER_PUT"]}] for container operations without a specific container.
+        lifetime: Token lifetime in seconds
+        targets: List of target addresses (if None, uses issuer address)
+        origin: Already-extracted session token for delegation (base64 encoded session token, not bearer)
+        final: Mark token as final (prevents further delegation)
 
     Returns:
         tuple: (unsigned_token, lock) - both as base64 strings
     """
     request = f"{endpoint.replace('v1', 'v2')}/auth/session"
 
-    body = {
-        "issuer": bearer_owner_id,
-        "targets": [bearer_owner_id],
-        "contexts": [{"verbs": [verb]}],
-        "expiration-duration": f"{bearer_lifetime}s",
-    }
+    if targets is None:
+        targets = [issuer]
 
-    resp = requests.post(
-        request,
-        json=body,
-        timeout=60,
-    )
+    body = {
+        "issuer": issuer,
+        "targets": targets,
+        "contexts": contexts,
+        "expiration-duration": f"{lifetime}s",
+    }
+    if origin:
+        body["origin"] = origin
+    if final:
+        body["final"] = True
+
+    resp = requests.post(request, json=body, timeout=60)
 
     if not resp.ok:
         raise Exception(
-            f"""Failed to get auth token via REST gate:
+            f"""Failed to get session token via REST gate:
                 request: {resp.request.path_url},
                 response: {resp.text},
                 status code: {resp.status_code} {resp.reason}"""
@@ -578,9 +612,24 @@ def get_container_info(endpoint: str, container_id: str) -> dict:
 
 
 @allure.step("Get container eacl via REST GW")
-def get_container_eacl(endpoint: str, container_id: str) -> dict:
+def get_container_eacl(endpoint: str, container_id: str, session_token: Optional[str] = None) -> dict:
+    """
+    Get container eACL via REST gateway.
+
+    Args:
+        endpoint: REST gateway endpoint
+        container_id: Container ID
+        session_token: Optional session token for authorization
+
+    Returns:
+        dict: eACL information
+    """
     request = f"{endpoint}/containers/{container_id}/eacl"
-    resp = requests.get(request, timeout=60)
+    headers = {}
+    if session_token:
+        headers["Authorization"] = f"Bearer {session_token}"
+
+    resp = requests.get(request, headers=headers if headers else None, timeout=60)
 
     if not resp.ok:
         raise Exception(
@@ -649,10 +698,12 @@ def searchv2(
     cid: str,
     cursor: Optional[str] = None,
     limit: Optional[int] = None,
-    filters: Optional[list[SearchV2Filter]] = None,
+    filters: Optional[list] = None,
     attributes: Optional[list[str]] = None,
-) -> str:
-    request = f"{endpoint}/v2/objects/{cid}/search"
+    session_token: str = None,
+) -> dict:
+    base = endpoint.replace("/v1", "/v2") if "/v1" in endpoint else f"{endpoint}/v2"
+    request = f"{base}/objects/{cid}/search"
 
     params = {}
     if cursor:
@@ -663,14 +714,15 @@ def searchv2(
 
     search_request = {}
     if filters:
-        search_request["filters"] = [f.to_json() for f in filters]
+        search_request["filters"] = [f.to_json() if hasattr(f, "to_json") else f for f in filters]
 
     if attributes:
         search_request["attributes"] = attributes
 
-    headers = {
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if session_token:
+        headers["Authorization"] = f"Bearer {session_token}"
+
     resp = requests.post(request, params=params, json=search_request, headers=headers)
 
     if not resp.ok:
@@ -685,3 +737,36 @@ def searchv2(
 
     _attach_allure_step(f"{request=}; {params=}; {search_request=}", resp.json(), req_type="POST")
     return resp.json()
+
+
+@allure.step("Delete object via REST GW")
+def delete_object(endpoint: str, cid: str, oid: str, session_token: str) -> dict:
+    """
+    Delete object via REST gateway using session token.
+
+    Args:
+        endpoint: REST gateway endpoint
+        cid: Container ID
+        oid: Object ID
+        session_token: Complete signed session token (base64 encoded)
+
+    Returns:
+        dict: Response from REST gateway
+    """
+    request = f"{endpoint}/objects/{cid}/{oid}"
+    headers = {"Authorization": f"Bearer {session_token}"}
+
+    resp = requests.delete(request, headers=headers, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+
+    if not resp.ok:
+        raise Exception(
+            f"""Failed to delete object via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    _attach_allure_step(request, resp.status_code, req_type="DELETE")
+
+    return resp.status_code
