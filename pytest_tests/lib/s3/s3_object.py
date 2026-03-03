@@ -296,6 +296,7 @@ def get_object_s3(
     object_key: str,
     version_id: Optional[str] = None,
     range: Optional[list] = None,
+    part_number: Optional[int] = None,
     full_output: bool = False,
 ):
     filename = os.path.join(get_assets_dir_path(), str(uuid.uuid4()))
@@ -310,15 +311,23 @@ def get_object_s3(
         if range:
             params["Range"] = f"bytes={range[0]}-{range[1]}"
 
+        if part_number:
+            params["PartNumber"] = part_number
+
         response = s3_client.get_object(**params)
         log_command_execution("S3 Get objects result", response)
 
         if not isinstance(s3_client, AwsCliClient):
+            bytes_written = 0
             with open(f"{filename}", "wb") as get_file:
                 chunk = response["Body"].read(1024)
                 while chunk:
                     get_file.write(chunk)
+                    bytes_written += len(chunk)
                     chunk = response["Body"].read(1024)
+            logger.info(
+                f"Saved {bytes_written} bytes to {filename} (expected ContentLength: {response.get('ContentLength', 'N/A')})"
+            )
         return response if full_output else filename
 
     except ClientError as err:
