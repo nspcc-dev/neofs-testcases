@@ -344,16 +344,6 @@ def not_owner_wallet(temp_directory) -> NodeWallet:
     return create_wallet()
 
 
-@pytest.fixture(scope="function")
-@allure.title("Enable metabase resync on start")
-def enable_metabase_resync_on_start(neofs_env: NeoFSEnv):
-    for node in neofs_env.storage_nodes:
-        node.set_metabase_resync(True)
-    yield
-    for node in neofs_env.storage_nodes:
-        node.set_metabase_resync(False)
-
-
 @pytest.fixture(scope="module")
 def file_path(artifacts_directory):
     yield generate_file(int(SIMPLE_OBJECT_SIZE))

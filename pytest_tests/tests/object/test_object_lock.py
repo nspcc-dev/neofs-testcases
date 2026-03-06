@@ -669,9 +669,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
             assert len(nodes_with_object_after_first_try) >= rep_setting, "Invalid number of nodes with an object"
 
-        with allure.step("Enable metabase resync"):
-            for node in neofs_env.storage_nodes:
-                node.set_metabase_resync(True)
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
+            with allure.step("Enable metabase resync"):
+                for node in neofs_env.storage_nodes:
+                    node.set_metabase_resync(True)
 
         with allure.step("Log nodes with object"):
             get_nodes_with_object(
@@ -696,6 +697,12 @@ class TestObjectLockWithGrpc(TestNeofsBase):
             with allure.step("Delete metabase files from storage nodes"):
                 for node in self.neofs_env.storage_nodes:
                     delete_node_metadata(node)
+
+            if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.51.1"):
+                with allure.step("Metabase resync"):
+                    for node in neofs_env.storage_nodes:
+                        for shard in node.shards:
+                            self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
 
             with allure.step("Start nodes after metabase deletion"):
                 start_storage_nodes(self.neofs_env.storage_nodes)
@@ -723,9 +730,10 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                         self.neofs_env.sn_rpc,
                     )
         finally:
-            with allure.step("Disable metabase resync"):
-                for node in neofs_env.storage_nodes:
-                    node.set_metabase_resync(False)
+            if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
+                with allure.step("Disable metabase resync"):
+                    for node in neofs_env.storage_nodes:
+                        node.set_metabase_resync(False)
 
     @pytest.mark.simple
     @pytest.mark.parametrize(
