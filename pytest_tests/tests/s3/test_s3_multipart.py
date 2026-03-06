@@ -1,3 +1,5 @@
+import logging
+import os
 import random
 from collections import defaultdict
 
@@ -12,6 +14,8 @@ from helpers.s3_helper import (
 )
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
+
+logger = logging.getLogger("NeoLogger")
 
 PART_SIZE = 5 * 1024 * 1024
 
@@ -330,3 +334,59 @@ class TestS3Multipart(TestNeofsS3Base):
                     break
 
             assert len(all_parts) == parts_count, f"Expected {parts_count} parts, got {len(all_parts)}"
+
+    @allure.title("Test S3 Get Specific Part of Multipart Object")
+    @pytest.mark.boto3_only
+    def test_s3_get_multipart_object_part(self):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client)
+        set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
+        parts_count = 5
+        file_name_large = generate_file(PART_SIZE * parts_count)
+        object_key = object_key_from_file_path(file_name_large)
+        part_files = split_file(file_name_large, parts_count)
+        parts = []
+
+        with allure.step("Upload multipart object"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_id, file_path in enumerate(part_files, start=1):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_id, file_path)
+                parts.append((part_id, etag))
+            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+
+        with allure.step("Verify parts can be retrieved individually and reconstruct the full object"):
+            first_part_response = s3_object.get_object_s3(
+                self.s3_client, bucket, object_key, part_number=1, full_output=True
+            )
+
+            logger.info("Response keys:", list(first_part_response.keys()))
+
+            actual_parts_count = first_part_response.get("PartsCount")
+
+            assert actual_parts_count is not None, "Expected 'PartsCount' in response metadata"
+            actual_parts_count = int(actual_parts_count)
+
+            logger.info(f"Object has {actual_parts_count} parts in S3 (original upload had {parts_count} parts)")
+
+            reconstructed_file = os.path.join(os.path.dirname(file_name_large), f"reconstructed_{object_key}")
+            with open(reconstructed_file, "wb") as outfile:
+                for part_number in range(1, actual_parts_count + 1):
+                    part_file = s3_object.get_object_s3(self.s3_client, bucket, object_key, part_number=part_number)
+                    part_size = os.path.getsize(part_file)
+                    logger.info(f"Part {part_number}/{actual_parts_count}: size={part_size} bytes")
+
+                    with open(part_file, "rb") as infile:
+                        outfile.write(infile.read())
+
+                    os.remove(part_file)
+
+            reconstructed_hash = get_file_hash(reconstructed_file)
+            original_hash = get_file_hash(file_name_large)
+            reconstructed_size = os.path.getsize(reconstructed_file)
+            original_size = os.path.getsize(file_name_large)
+
+            assert reconstructed_hash == original_hash, (
+                f"Reconstructed object doesn't match original. "
+                f"Reconstructed size: {reconstructed_size}, Original size: {original_size}"
+            )
+
+            os.remove(reconstructed_file)
