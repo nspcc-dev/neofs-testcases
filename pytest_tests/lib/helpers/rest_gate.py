@@ -612,11 +612,11 @@ def get_container_info(endpoint: str, container_id: str) -> dict:
 
 
 @allure.step("Get container eacl via REST GW")
-def get_container_eacl(endpoint: str, container_id: str) -> dict:
+def get_container_eacl(endpoint: str, container_id: str, expect_error: bool = False) -> dict:
     request = f"{endpoint}/containers/{container_id}/eacl"
     resp = requests.get(request, timeout=60)
 
-    if not resp.ok:
+    if not resp.ok and not expect_error:
         raise Exception(
             f"""Failed to get container eacl via REST gate:
                 request: {resp.request.path_url},
@@ -629,6 +629,68 @@ def get_container_eacl(endpoint: str, container_id: str) -> dict:
     _attach_allure_step(request, resp.json(), req_type="GET")
 
     return resp.json()
+
+
+@allure.step("Put container eacl via REST GW")
+def put_container_eacl(
+    endpoint: str,
+    container_id: str,
+    eacl_records: list,
+    session_token: str,
+    wallet_connect: bool = False,
+    expect_error: bool = False,
+    expected_error_message: str = None,
+) -> dict:
+    """
+    Put container EACL via REST gateway using session token v2.
+
+    Args:
+        endpoint: REST gateway endpoint
+        container_id: Container ID
+        eacl_records: List of EACL records (each record is a dict with action, operation, filters, targets)
+        session_token: Complete signed session token (base64 encoded)
+        wallet_connect: Use WalletConnect signature scheme
+        expect_error: If True, don't raise exception on error
+        expected_error_message: Expected error message substring to verify
+
+    Returns:
+        dict: Response from REST gateway
+    """
+    request = f"{endpoint}/containers/{container_id}/eacl"
+
+    body = {
+        "containerId": container_id,
+        "records": eacl_records,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {session_token}",
+    }
+    params = {}
+
+    if wallet_connect:
+        params["walletConnect"] = "true"
+
+    resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
+
+    if not resp.ok and not expect_error:
+        raise Exception(
+            f"""Failed to put container eacl via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    if expect_error and expected_error_message:
+        assert expected_error_message in resp.text, (
+            f"Expected error message '{expected_error_message}' not found in: {resp.text}"
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json() if resp.ok else resp.text}")
+    _attach_allure_step(request, resp.json() if resp.ok else resp.text, req_type="PUT")
+
+    return resp.json() if resp.ok else {"error": resp.text, "status_code": resp.status_code}
 
 
 @allure.step("Delete container via REST GW")
