@@ -24,6 +24,8 @@ class NeofsLensFstree(CliCommand):
         self,
         address: str,
         path: str,
+        out: str = None,
+        payload_only: bool = False,
     ) -> CommandResult:
         """
         Get specific object from a fstree (for neofs-node version > 0.51.1).
@@ -31,10 +33,16 @@ class NeofsLensFstree(CliCommand):
         Args:
                 address: Object address
                 path: Path to storage engine component
+                out: File to save object payload (optional)
+                payload_only: Save only object payload (optional)
         Returns:
                 Command's result.
         """
         return self._execute(
             "fstree get",
-            **{param: value for param, value in locals().items() if param not in ["self"]},
+            **{
+                param: value
+                for param, value in locals().items()
+                if param not in ["self"] and value is not None and value is not False
+            },
         )
