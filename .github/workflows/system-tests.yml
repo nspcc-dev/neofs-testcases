@@ -189,7 +189,7 @@ jobs:
               sudo chmod a+x neofs-cli
               sudo chmod a+x neofs-adm
               sudo chmod a+x neofs-ir
-              sudo chmod a+x neofs-lens
+              sudo chmod a+x neofs-lancet
               sudo chmod a+x neofs-node
             working-directory: neofs-testcases
 
@@ -220,14 +220,14 @@ jobs:
               file: 'neofs-ir-${{ matrix.binary }}'
               target: 'neofs-testcases/neofs-ir'
 
-          - name: Download neofs-lens
+          - name: Download neofs-lancet
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
             uses: dsaltares/fetch-gh-release-asset@1.1.2
             with:
               repo: 'nspcc-dev/neofs-node'
               version: 'tags/${{ inputs.neofs_node_tag }}'
-              file: 'neofs-lens-${{ matrix.binary }}'
-              target: 'neofs-testcases/neofs-lens'
+              file: 'neofs-lancet-${{ matrix.binary }}'
+              target: 'neofs-testcases/neofs-lancet'
 
           - name: Download neofs-node
             if: ${{ inputs.neofs_node_tag != 'from_tests' }}
@@ -244,7 +244,7 @@ jobs:
               sudo chmod a+x neofs-cli
               sudo chmod a+x neofs-adm
               sudo chmod a+x neofs-ir
-              sudo chmod a+x neofs-lens
+              sudo chmod a+x neofs-lancet
               sudo chmod a+x neofs-node
             working-directory: neofs-testcases
 
