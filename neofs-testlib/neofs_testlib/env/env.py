@@ -104,7 +104,8 @@ class NeoFSEnv:
         self.neofs_env_config = neofs_env_config
         self.neofs_adm_path = os.getenv("NEOFS_ADM_BIN", "./neofs-adm")
         self.neofs_cli_path = os.getenv("NEOFS_CLI_BIN", "./neofs-cli")
-        self.neofs_lens_path = os.getenv("NEOFS_LENS_BIN", "./neofs-lens")
+        default_lens_path = "./neofs-lancet" if os.path.isfile("./neofs-lancet") else "./neofs-lens"
+        self.neofs_lens_path = os.getenv("NEOFS_LENS_BIN", default_lens_path)
         self.neo_go_path = os.getenv("NEO_GO_BIN", "./neo-go")
         self.neofs_ir_path = os.getenv("NEOFS_IR_BIN", "./neofs-ir")
         self.neofs_node_path = os.getenv("NEOFS_NODE_BIN", "./neofs-node")

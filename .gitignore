@@ -32,6 +32,7 @@ neofs-adm
 neofs-cli
 neofs-ir
 neofs-lens
+neofs-lancet
 neofs-node
 neofs-rest-gw
 neofs-s3-authmate
