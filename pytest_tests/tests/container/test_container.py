@@ -1177,6 +1177,11 @@ class TestContainer(TestNeofsBase):
         initial_objects_count = 10
         objects_to_delete = 3
         object_size = 1000
+        num_shards_per_sn = len(self.neofs_env.storage_nodes[0].shards)
+
+        count_tombstones = parse_version(
+            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
+        ) > parse_version("0.51.1")
 
         with allure.step(f"Create container with policy {placement_rule}"):
             cid = create_container(
@@ -1220,7 +1225,7 @@ class TestContainer(TestNeofsBase):
         with allure.step("Wait for an epoch to pass for estimations to update"):
             neofs_epoch.wait_until_new_epoch(self.neofs_env, neofs_epoch.get_epoch(self.neofs_env))
 
-        with allure.step("Verify estimations decreased after deletion"):
+        with allure.step("Verify estimations after deletion"):
             load_summary_output = (
                 self.neofs_env.neofs_adm()
                 .fschain.load_summary(rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}")
@@ -1231,16 +1236,31 @@ class TestContainer(TestNeofsBase):
             assert matching_entry is not None, f"Container {cid} not found in load_summary output after deletion"
 
             remaining_objects = initial_objects_count - objects_to_delete
-            expected_objects = int(remaining_objects * object_multiplier)
+            expected_regular_objects = int(remaining_objects * object_multiplier)
+
+            tombstones_count = 0
+
+            if count_tombstones:
+                tombstones_count = int(objects_to_delete * object_multiplier * num_shards_per_sn)
+
+            expected_objects = expected_regular_objects + tombstones_count
+
             expected_size = int(remaining_objects * object_size * size_multiplier)
 
             actual_objects = matching_entry[1]
             actual_size = matching_entry[2]
 
-            assert actual_objects == expected_objects, (
-                f"Objects count mismatch after deletion for {placement_rule}: "
-                f"expected {expected_objects}, got {actual_objects}"
-            )
+            if count_tombstones:
+                assert actual_objects == expected_objects, (
+                    f"Objects count mismatch after deletion for {placement_rule}: "
+                    f"expected {expected_objects} (regular: {expected_regular_objects} + tombstones: {tombstones_count}), "
+                    f"got {actual_objects}"
+                )
+            else:
+                assert actual_objects == expected_objects, (
+                    f"Objects count mismatch after deletion for {placement_rule}: "
+                    f"expected {expected_objects}, got {actual_objects}"
+                )
 
             if "EC" in placement_rule:
                 size_tolerance = 0.05
