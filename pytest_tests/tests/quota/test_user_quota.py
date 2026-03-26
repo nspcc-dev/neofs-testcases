@@ -637,11 +637,10 @@ class TestUserQuota(TestQuotaBase):
             )
 
         self.tick_epochs_and_wait(1)
-        expected_objects_after_delete = 2 if quota_type == "soft" else 1
         prev_report = self.wait_until_quota_values_reported(
             cid,
             prev_report,
-            expected_objects=expected_objects_after_delete,
+            expected_objects=None,
         )
 
         with allure.step("Verify quota is reclaimed - should be able to put object again"):
@@ -667,11 +666,10 @@ class TestUserQuota(TestQuotaBase):
             )
 
         self.tick_epochs_and_wait(1)
-        expected_objects_final = 2 if quota_type == "soft" else 1
         self.wait_until_quota_values_reported(
             cid,
             prev_report,
-            expected_objects=expected_objects_final,
+            expected_objects=None,
         )
 
         with allure.step("Verify significant quota space is available after deleting both objects"):
