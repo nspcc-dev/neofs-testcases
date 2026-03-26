@@ -3,14 +3,11 @@ name: NeoFS System Tests
 on:
   workflow_call:
     inputs:
-      neofs_network_domain:
+      neofs_rest_gate:
         type: string
-        description: 'NeoFS network domain to deploy tests report'
-        required: true
-      neofs_http_gate:
-        type: string
-        description: 'NeoFS http gate address to deploy tests report'
-        required: true 
+        description: 'NeoFS rest gate address to deploy tests report'
+        required: false 
+        default: 'https://rest.fs.neo.org'
       neofs_store_objects_cid:
         type: string
         description: 'NeoFS container id to deploy tests report'
@@ -419,15 +416,13 @@ jobs:
           
           - name: Upload Allure results from sharded run
             if: always() && contains(toJson(matrix), '"shard"')
-            uses: nspcc-dev/gh-push-to-neofs@v0.3.1
+            uses: nspcc-dev/gh-push-to-neofs@v0.4.0
             env:
               NEOFS_ATTRIBUTES: ${{ env.NEOFS_ATTRIBUTES }}
               ALLURE_SHARDED_RESULTS_DIR: ${{ env.ALLURE_SHARDED_RESULTS_DIR }}
             with:
               NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
               NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
-              NEOFS_NETWORK_DOMAIN: ${{ inputs.neofs_network_domain }}
-              NEOFS_HTTP_GATE: ${{ inputs.neofs_http_gate }}
               STORE_OBJECTS_CID: ${{ inputs.neofs_store_objects_cid }}
               LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
               PATH_TO_FILES_DIR: ${{ env.ALLURE_SHARDED_RESULTS_DIR }}
@@ -437,12 +432,11 @@ jobs:
           - name: Publish to NeoFS
             id: put_report
             if: always() && steps.prepare_venv.outcome == 'success' && !contains(toJson(matrix), 'shard')
-            uses: nspcc-dev/gh-push-allure-report-to-neofs@master
+            uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.2.0
             with:
               NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
               NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
-              NEOFS_NETWORK_DOMAIN: ${{ inputs.neofs_network_domain }}
-              NEOFS_HTTP_GATE: ${{ inputs.neofs_http_gate }}
+              HTTP_URL_PREFIX: ${{ inputs.neofs_rest_gate }}/${{ inputs.neofs_store_objects_cid }}/
               STORE_OBJECTS_CID: ${{ inputs.neofs_store_objects_cid }}
               PR_LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
               MASTER_LIFETIME: ${{ inputs.neofs_master_expiration_period }}
@@ -533,7 +527,7 @@ jobs:
         
               if [ -n "$shard" ]; then
                 zip_name="allure-results-${runner}-${{ github.run_number }}-${shard}.zip"
-                url="https://${{ inputs.neofs_http_gate }}/${{ inputs.neofs_store_objects_cid }}/allure-results-${runner}-${{ github.run_number }}-${shard}/${zip_name}"
+                url="${{ inputs.neofs_rest_gate }}/${{ inputs.neofs_store_objects_cid }}/${zip_name}"
                 echo "Discovered URL: $url"
         
                 wget "$url" -O "$zip_name"
@@ -571,12 +565,11 @@ jobs:
         - name: Publish to NeoFS
           if: steps.shard_status.outputs.no_shards == 'false'
           id: put_report
-          uses: nspcc-dev/gh-push-allure-report-to-neofs@master
+          uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.2.0
           with:
             NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
             NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
-            NEOFS_NETWORK_DOMAIN: ${{ inputs.neofs_network_domain }}
-            NEOFS_HTTP_GATE: ${{ inputs.neofs_http_gate }}
+            HTTP_URL_PREFIX: ${{ inputs.neofs_rest_gate }}/${{ inputs.neofs_store_objects_cid }}/
             STORE_OBJECTS_CID: ${{ inputs.neofs_store_objects_cid }}
             PR_LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
             MASTER_LIFETIME: ${{ inputs.neofs_master_expiration_period }}
