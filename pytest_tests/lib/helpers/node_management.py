@@ -1,6 +1,8 @@
 import logging
+import os
 import random
 import re
+import shutil
 import threading
 import time
 from dataclasses import dataclass
@@ -179,6 +181,127 @@ def delete_node_metadata(node: StorageNode) -> None:
         node: node for which metadata should be deleted.
     """
     node.delete_metadata()
+
+
+def find_and_extract_lock_objects(node: StorageNode, neofs_env: NeoFSEnv) -> list[dict]:
+    lock_objects = []
+
+    for shard in node.shards:
+        fstree_path = shard.fstree_path
+
+        result = neofs_env.neofs_lens().fstree.list(fstree_path)
+        object_addresses = result.stdout.strip().split("\n")
+
+        for address in object_addresses:
+            if not address.strip():
+                continue
+
+            obj_info = neofs_env.neofs_lens().fstree.get(address, fstree_path)
+
+            if "Type: LOCK" in obj_info.stdout:
+                parts = address.split("/")
+                if len(parts) == 2:
+                    cid, oid = parts[0], parts[1]
+
+                    temp_dir = "/tmp/lock_objects"
+                    os.makedirs(temp_dir, exist_ok=True)
+                    temp_path = os.path.join(temp_dir, f"lock_{oid}")
+
+                    neofs_env.neofs_lens().fstree.get(address, fstree_path, out=temp_path)
+
+                    fstree_file_path = os.path.join(fstree_path, cid, oid)
+
+                    lock_objects.append(
+                        {
+                            "cid": cid,
+                            "oid": oid,
+                            "temp_path": temp_path,
+                            "fstree_file_path": fstree_file_path,
+                            "shard_path": fstree_path,
+                            "address": address,
+                        }
+                    )
+                    logger.info(f"Found and extracted LOCK object: {address} to {temp_path}")
+
+    return lock_objects
+
+
+def check_tombstone_objects_exist(nodes: list[StorageNode], neofs_env: NeoFSEnv) -> bool:
+    for node in nodes:
+        for shard in node.shards:
+            fstree_path = shard.fstree_path
+
+            result = neofs_env.neofs_lens().fstree.list(fstree_path)
+            object_addresses = result.stdout.strip().split("\n")
+
+            for address in object_addresses:
+                if not address.strip():
+                    continue
+
+                obj_info = neofs_env.neofs_lens().fstree.get(address, fstree_path)
+                if "Type: TOMBSTONE" in obj_info.stdout:
+                    logger.info(f"Found TOMBSTONE object: {address}")
+                    return True
+
+    return False
+
+
+def restore_lock_objects(lock_objects: list[dict]) -> None:
+    for lock_obj in lock_objects:
+        fstree_dir = os.path.dirname(lock_obj["fstree_file_path"])
+        os.makedirs(fstree_dir, exist_ok=True)
+
+        shutil.copy2(lock_obj["temp_path"], lock_obj["fstree_file_path"])
+
+
+def corrupt_fstree_structure(node: StorageNode, corruption_type: str = "random") -> None:
+    valid_types = ["empty_file", "corrupted_file", "renamed_file", "random"]
+    if corruption_type not in valid_types:
+        raise ValueError(f"Invalid corruption_type: {corruption_type}. Must be one of {valid_types}")
+
+    node.stop()
+
+    for shard in node.shards:
+        fstree_path = shard.fstree_path
+
+        object_files = []
+        for root, _, files in os.walk(fstree_path):
+            for file in files:
+                if "." in file and file != ".fstree.json":
+                    object_files.append(os.path.join(root, file))
+
+        if not object_files:
+            logger.warning(f"No object files found in {fstree_path}")
+            continue
+
+        files_to_corrupt = random.sample(object_files, min(len(object_files), max(1, len(object_files) // 3)))
+
+        for file_path in files_to_corrupt:
+            if corruption_type == "random":
+                strategy = random.choice(["empty_file", "corrupted_file", "renamed_file"])
+            else:
+                strategy = corruption_type
+
+            if strategy == "empty_file":
+                logger.info(f"Emptying file: {file_path}")
+                with open(file_path, "w") as f:
+                    f.write("")
+
+            elif strategy == "corrupted_file":
+                file_size = os.path.getsize(file_path)
+                logger.info(f"Shredding file with random bytes: {file_path} (size: {file_size})")
+                with open(file_path, "wb") as f:
+                    f.write(os.urandom(file_size))
+
+            elif strategy == "renamed_file":
+                base_name = os.path.basename(file_path)
+                if "." in base_name:
+                    dir_name = os.path.dirname(file_path)
+                    prefix, postfix = base_name.rsplit(".", 1)
+                    new_postfix = postfix[::-1]
+                    new_file_path = os.path.join(dir_name, f"{prefix}.{new_postfix}")
+                    logger.info(f"Renaming {file_path} to {new_file_path}")
+                    os.rename(file_path, new_file_path)
 
 
 @allure.step("Exclude node {node_to_exclude} from network map")
