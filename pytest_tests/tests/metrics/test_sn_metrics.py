@@ -149,6 +149,9 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     assert size_metrics_for_container["value"] == simple_object_size, (
         "invalid value for neofs_node_engine_container_size"
     )
+    assert after_metrics_sn["neofs_node_object_get_payload"][0]["value"] == simple_object_size, (
+        "invalid value for neofs_node_object_get_payload"
+    )
     assert after_metrics_sn["neofs_node_object_put_payload"][0]["value"] == simple_object_size, (
         "invalid value for neofs_node_object_put_payload"
     )
