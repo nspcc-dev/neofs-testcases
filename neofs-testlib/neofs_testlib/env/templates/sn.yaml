@@ -62,6 +62,7 @@ storage:
 
       metabase:
         path: {{ shard.metabase_path }}  # Path to the metabase
+        max_batch_delay: 1ms
 
       blobstor:
         type: fstree
