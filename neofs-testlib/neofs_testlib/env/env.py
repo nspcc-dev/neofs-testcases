@@ -584,7 +584,7 @@ class NeoFSEnv:
                 binaries = [
                     (self.neofs_adm_path, "neofs_adm"),
                     (self.neofs_cli_path, "neofs_cli"),
-                    (self.neofs_lens_path, "neofs_lens"),
+                    (self.neofs_lens_path, "neofs_lancet"),
                     (self.neo_go_path, "neo_go"),
                     (self.neofs_ir_path, "neofs_ir"),
                     (self.neofs_node_path, "neofs_node"),
