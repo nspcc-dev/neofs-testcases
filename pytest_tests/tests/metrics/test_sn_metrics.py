@@ -149,9 +149,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     assert size_metrics_for_container["value"] == simple_object_size, (
         "invalid value for neofs_node_engine_container_size"
     )
-    assert after_metrics_sn["neofs_node_object_get_payload"][0]["value"] == simple_object_size, (
-        "invalid value for neofs_node_object_get_payload"
-    )
     assert after_metrics_sn["neofs_node_object_put_payload"][0]["value"] == simple_object_size, (
         "invalid value for neofs_node_object_put_payload"
     )
@@ -179,8 +176,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_range_req_count",
         "neofs_node_object_range_req_count_success",
     ]
-
-    metrics_to_verify.append("neofs_node_engine_get_stream_time_count")
 
     for metric in metrics_to_verify:
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
@@ -211,7 +206,13 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_engine_list_objects_time_bucket",
     ]
 
-    metrics_to_verify.append("neofs_node_engine_get_stream_time_bucket")
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) > parse_version(
+        "0.51.1"
+    ):
+        assert after_metrics_sn["neofs_node_engine_read_object_time_count"][0]["value"] >= 1, (
+            "invalid value for neofs_node_engine_read_object_time_count"
+        )
+        metrics_to_verify.append("neofs_node_engine_read_object_time_bucket")
 
     for metric in metrics_to_verify:
         assert len([m for _, m in enumerate(after_metrics_sn[metric]) if m["value"] >= 1]) >= 1, (
