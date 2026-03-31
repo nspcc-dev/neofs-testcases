@@ -155,6 +155,7 @@ class NeoGoNep11(CliCommand):
         exec_param["await"] = await_
         exec_param["from"] = from_address
         exec_param["to"] = to_address
+        exec_param["sysgas"] = "0.5"
         exec_param["post_data"] = f"-- {signer}:CalledByEntry" if signer else ""
 
         return self._execute(
