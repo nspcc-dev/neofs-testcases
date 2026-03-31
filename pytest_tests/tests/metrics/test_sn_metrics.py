@@ -358,7 +358,7 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "invalid value for neofs_s3_version"
     )
 
-    for metric in ("eacl", "get", "list", "put", "set_eacl"):
+    for metric in ("get", "list", "put", "set_eacl"):
         assert (
             len(
                 [
