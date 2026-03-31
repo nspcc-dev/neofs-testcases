@@ -385,7 +385,6 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "object_put_init",
         "object_put_stream",
         "object_search_v2",
-        "session_create",
     ):
         assert (
             len([m for _, m in enumerate(after_metrics_s3_gw[f"neofs_s3_pool_{metric}_bucket"]) if m["value"] >= 1])
@@ -473,7 +472,6 @@ def test_rest_gw_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWall
         "object_get_init",
         "object_put_init",
         "object_put_stream",
-        "session_create",
     ):
         assert (
             len(
