@@ -21,7 +21,6 @@ from helpers.neofs_verbs import (
 )
 from helpers.nns import get_contract_hashes, register_nns_domain_with_record
 from helpers.session_token import create_session_token_v2
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 
@@ -29,11 +28,6 @@ logger = logging.getLogger("NeoLogger")
 
 
 class TestSessionTokenV2(TestNeofsBase):
-    @pytest.fixture(autouse=True)
-    def check_node_version(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("V2 session token tests require fresh neofs-node")
-
     def _create_session_token_with_delegation(
         self,
         owner_wallet,

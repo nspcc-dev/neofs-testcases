@@ -22,7 +22,7 @@ from helpers.file_helper import generate_file
 from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
 from helpers.neofs_verbs import delete_object, get_netmap_netinfo, get_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
-from helpers.utility import parse_load_report, parse_load_summary, parse_version, placement_policy_from_container
+from helpers.utility import parse_load_report, parse_load_summary, placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neo3.wallet import account as neo3_account
 from neo3.wallet import wallet as neo3_wallet
@@ -455,8 +455,6 @@ class TestContainer(TestNeofsBase):
         assert all(cid in containers for cid in cids), f"Expected containers {cids} in containers: {containers}"
 
     def test_container_ownership_transfer(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Transfer ownership tests require fresh neofs-contracts")
         with allure.step("Prepare wallets"):
             current_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             new_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
@@ -554,8 +552,6 @@ class TestContainer(TestNeofsBase):
             )
 
     def test_container_ownership_transfer_chain(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Transfer ownership tests require fresh neofs-contracts")
         """Test multiple consecutive ownership transfers (A -> B -> C)"""
         with allure.step("Prepare wallets for three owners"):
             owner_a_account = neo3_account.Account.create_new(self.neofs_env.default_password)
@@ -666,8 +662,6 @@ class TestContainer(TestNeofsBase):
             )
 
     def test_container_ownership_transfer_with_multiple_objects(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Transfer ownership tests require fresh neofs-contracts")
         """Test ownership transfer with container containing multiple objects"""
         with allure.step("Prepare wallets"):
             current_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
@@ -775,8 +769,6 @@ class TestContainer(TestNeofsBase):
             )
 
     def test_container_ownership_transfer_roundtrip(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Transfer ownership tests require fresh neofs-contracts")
         """Test ownership transfer back to original owner (A -> B -> A)"""
         with allure.step("Prepare wallets"):
             owner_a_account = neo3_account.Account.create_new(self.neofs_env.default_password)
@@ -883,8 +875,6 @@ class TestContainer(TestNeofsBase):
             )
 
     def test_container_ownership_swap(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Transfer ownership tests require fresh neofs-contracts")
         """Test swapping ownership of two containers between two owners (A->containerA, B->containerB => A->containerB, B->containerA)"""
         with allure.step("Prepare wallets for two owners"):
             owner_a_account = neo3_account.Account.create_new(self.neofs_env.default_password)
@@ -1179,10 +1169,6 @@ class TestContainer(TestNeofsBase):
         object_size = 1000
         num_shards_per_sn = len(self.neofs_env.storage_nodes[0].shards)
 
-        count_tombstones = parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-        ) > parse_version("0.51.1")
-
         with allure.step(f"Create container with policy {placement_rule}"):
             cid = create_container(
                 wallet=default_wallet.path,
@@ -1238,10 +1224,7 @@ class TestContainer(TestNeofsBase):
             remaining_objects = initial_objects_count - objects_to_delete
             expected_regular_objects = int(remaining_objects * object_multiplier)
 
-            tombstones_count = 0
-
-            if count_tombstones:
-                tombstones_count = int(objects_to_delete * object_multiplier * num_shards_per_sn)
+            tombstones_count = int(objects_to_delete * object_multiplier * num_shards_per_sn)
 
             expected_objects = expected_regular_objects + tombstones_count
 
@@ -1250,17 +1233,11 @@ class TestContainer(TestNeofsBase):
             actual_objects = matching_entry[1]
             actual_size = matching_entry[2]
 
-            if count_tombstones:
-                assert actual_objects == expected_objects, (
-                    f"Objects count mismatch after deletion for {placement_rule}: "
-                    f"expected {expected_objects} (regular: {expected_regular_objects} + tombstones: {tombstones_count}), "
-                    f"got {actual_objects}"
-                )
-            else:
-                assert actual_objects == expected_objects, (
-                    f"Objects count mismatch after deletion for {placement_rule}: "
-                    f"expected {expected_objects}, got {actual_objects}"
-                )
+            assert actual_objects == expected_objects, (
+                f"Objects count mismatch after deletion for {placement_rule}: "
+                f"expected {expected_objects} (regular: {expected_regular_objects} + tombstones: {tombstones_count}), "
+                f"got {actual_objects}"
+            )
 
             if "EC" in placement_rule:
                 size_tolerance = 0.05

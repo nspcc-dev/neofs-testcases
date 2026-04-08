@@ -6,7 +6,6 @@ import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.common import STORAGE_GC_TIME
 from helpers.complex_object_actions import (
-    get_ec_object_chunks,
     get_link_object,
     get_nodes_with_object,
     get_object_chunks,
@@ -27,7 +26,7 @@ from helpers.node_management import delete_node_metadata, drop_object, start_sto
 from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.storage_object_info import LockObjectInfo, StorageObjectInfo, delete_objects
 from helpers.test_control import expect_not_raises, wait_for_success
-from helpers.utility import parse_time, parse_version, wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_time, wait_for_gc_pass_on_storage_nodes
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
@@ -559,23 +558,13 @@ class TestObjectLockWithGrpc(TestNeofsBase):
     def test_chunks_of_locked_complex_object_can_be_dropped(
         self, new_locked_storage_object: StorageObjectInfo, neofs_env: NeoFSEnv, request: FixtureRequest
     ):
-        if request.node.callspec.params.get("user_container") == EC_3_1_PLACEMENT_RULE and parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-        ) <= parse_version("0.50.2"):
-            chunk_objects = get_ec_object_chunks(
-                new_locked_storage_object.wallet_file_path,
-                new_locked_storage_object.cid,
-                new_locked_storage_object.oid,
-                self.neofs_env,
-            )
-        else:
-            chunk_objects = get_object_chunks(
-                new_locked_storage_object.wallet_file_path,
-                new_locked_storage_object.cid,
-                new_locked_storage_object.oid,
-                self.shell,
-                self.neofs_env,
-            )
+        chunk_objects = get_object_chunks(
+            new_locked_storage_object.wallet_file_path,
+            new_locked_storage_object.cid,
+            new_locked_storage_object.oid,
+            self.shell,
+            self.neofs_env,
+        )
 
         for chunk in chunk_objects:
             with allure.step(f"Drop chunk object with id {chunk[0]} from nodes"):
@@ -669,11 +658,6 @@ class TestObjectLockWithGrpc(TestNeofsBase):
 
             assert len(nodes_with_object_after_first_try) >= rep_setting, "Invalid number of nodes with an object"
 
-        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
-            with allure.step("Enable metabase resync"):
-                for node in neofs_env.storage_nodes:
-                    node.set_metabase_resync(True)
-
         with allure.step("Log nodes with object"):
             get_nodes_with_object(
                 new_locked_storage_object.cid,
@@ -693,47 +677,38 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                     self.neofs_env.sn_rpc,
                 )
 
-        try:
-            with allure.step("Delete metabase files from storage nodes"):
-                for node in self.neofs_env.storage_nodes:
-                    delete_node_metadata(node)
+        with allure.step("Delete metabase files from storage nodes"):
+            for node in self.neofs_env.storage_nodes:
+                delete_node_metadata(node)
 
-            if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) > parse_version("0.51.1"):
-                with allure.step("Metabase resync"):
-                    for node in neofs_env.storage_nodes:
-                        for shard in node.shards:
-                            self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
+        with allure.step("Metabase resync"):
+            for node in neofs_env.storage_nodes:
+                for shard in node.shards:
+                    self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
 
-            with allure.step("Start nodes after metabase deletion"):
-                start_storage_nodes(self.neofs_env.storage_nodes)
+        with allure.step("Start nodes after metabase deletion"):
+            start_storage_nodes(self.neofs_env.storage_nodes)
 
-            with allure.step("Get nodes with object"):
-                nodes_with_object_after_metabase_deletion = get_nodes_with_object(
-                    new_locked_storage_object.cid,
-                    new_locked_storage_object.oid,
-                    shell=self.shell,
-                    nodes=self.neofs_env.storage_nodes,
-                    neofs_env=neofs_env,
-                )
-
-            assert len(nodes_with_object_after_metabase_deletion) >= rep_setting, (
-                "Invalid number of nodes with an object"
+        with allure.step("Get nodes with object"):
+            nodes_with_object_after_metabase_deletion = get_nodes_with_object(
+                new_locked_storage_object.cid,
+                new_locked_storage_object.oid,
+                shell=self.shell,
+                nodes=self.neofs_env.storage_nodes,
+                neofs_env=neofs_env,
             )
 
-            with allure.step(f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"):
-                with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
-                    delete_object(
-                        new_locked_storage_object.wallet_file_path,
-                        new_locked_storage_object.cid,
-                        new_locked_storage_object.oid,
-                        self.shell,
-                        self.neofs_env.sn_rpc,
-                    )
-        finally:
-            if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
-                with allure.step("Disable metabase resync"):
-                    for node in neofs_env.storage_nodes:
-                        node.set_metabase_resync(False)
+        assert len(nodes_with_object_after_metabase_deletion) >= rep_setting, "Invalid number of nodes with an object"
+
+        with allure.step(f"Try to delete object {new_locked_storage_object.oid} after metabase deletion"):
+            with pytest.raises(Exception, match=OBJECT_IS_LOCKED):
+                delete_object(
+                    new_locked_storage_object.wallet_file_path,
+                    new_locked_storage_object.cid,
+                    new_locked_storage_object.oid,
+                    self.shell,
+                    self.neofs_env.sn_rpc,
+                )
 
     @pytest.mark.simple
     @pytest.mark.parametrize(
