@@ -1,5 +1,6 @@
 import logging
 import time
+from contextlib import contextmanager
 
 import allure
 import pytest
@@ -19,6 +20,19 @@ logger = logging.getLogger("NeoLogger")
 BASIC_LOCK_TIME = 10
 
 
+@contextmanager
+def container_lock_timer(lock_duration: int):
+    start_time = time.time()
+    lock_time = int(start_time) + lock_duration
+
+    yield lock_time
+
+    elapsed = time.time() - start_time
+    remaining_time = lock_duration - elapsed + 2
+    if remaining_time > 0:
+        time.sleep(remaining_time)
+
+
 class TestContainerLocks(TestNeofsBase):
     @pytest.fixture(autouse=True)
     def check_node_version(self):
@@ -27,37 +41,36 @@ class TestContainerLocks(TestNeofsBase):
 
     @pytest.mark.sanity
     def test_container_lock_sanity(self, default_wallet):
-        with allure.step("Create a container"):
-            twenty_seconds_later = int(time.time()) + BASIC_LOCK_TIME
-            cid = create_container(
-                default_wallet.path,
-                rule="REP 1",
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": twenty_seconds_later},
-            )
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Create a container"):
+                cid = create_container(
+                    default_wallet.path,
+                    rule="REP 1",
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
-        with allure.step("Verify the created container has correct attributes"):
-            containers = list_containers(default_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-            assert cid in containers, f"Expected container {cid} in containers: {containers}"
+            with allure.step("Verify the created container has correct attributes"):
+                containers = list_containers(default_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+                assert cid in containers, f"Expected container {cid} in containers: {containers}"
 
-            container_info: str = get_container(
-                default_wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
+                container_info: str = get_container(
+                    default_wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
 
-            assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(twenty_seconds_later), (
-                "Invalid __NEOFS__LOCK_UNTIL value"
-            )
+                assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time), (
+                    "Invalid __NEOFS__LOCK_UNTIL value"
+                )
 
-        with allure.step("Try to delete the locked container"):
-            with pytest.raises(Exception, match="container is locked"):
-                delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            with allure.step("Try to delete the locked container"):
+                with pytest.raises(Exception, match="container is locked"):
+                    delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-        with allure.step("Wait until lock is gone and retry deletion"):
-            time.sleep(BASIC_LOCK_TIME)
+        with allure.step("Delete container after lock expires"):
             delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
@@ -79,77 +92,26 @@ class TestContainerLocks(TestNeofsBase):
             )
             assert "__NEOFS__LOCK_UNTIL" not in container_info["attributes"]
 
-        with allure.step("Add lock attribute to the container"):
-            lock_time = int(time.time()) + BASIC_LOCK_TIME
-            set_container_attributes(
-                default_wallet,
-                cid,
-                self.neofs_env,
-                attributes={"__NEOFS__LOCK_UNTIL": lock_time},
-            )
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Add lock attribute to the container"):
+                set_container_attributes(
+                    default_wallet,
+                    cid,
+                    self.neofs_env,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
-        with allure.step("Verify container cannot be deleted while locked"):
-            with pytest.raises(Exception, match="container is locked"):
-                delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-
-        with allure.step("Wait for lock to expire"):
-            time.sleep(BASIC_LOCK_TIME)
+            with allure.step("Verify container cannot be deleted while locked"):
+                with pytest.raises(Exception, match="container is locked"):
+                    delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
         with allure.step("Delete container after lock expires"):
             delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_container_sequential_locks(self, default_wallet):
-        with allure.step("Create a container with first lock"):
-            first_lock_time = int(time.time()) + BASIC_LOCK_TIME
-            cid = create_container(
-                default_wallet.path,
-                rule="REP 1",
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": first_lock_time},
-            )
-
-        with allure.step("Verify first lock is active"):
-            container_info = get_container(
-                default_wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(first_lock_time)
-
-        with allure.step("Verify container cannot be deleted while first lock is active"):
-            with pytest.raises(Exception, match="container is locked"):
-                delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-
-        with allure.step("Wait for first lock to expire"):
-            time.sleep(BASIC_LOCK_TIME)
-
-        with allure.step("Set second lock on the same container"):
-            second_lock_time = int(time.time()) + BASIC_LOCK_TIME
-            set_container_attributes(
-                default_wallet,
-                cid,
-                self.neofs_env,
-                attributes={"__NEOFS__LOCK_UNTIL": second_lock_time},
-            )
-
-        with allure.step("Verify container cannot be deleted while second lock is active"):
-            with pytest.raises(Exception, match="container is locked"):
-                delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-
-        with allure.step("Wait for second lock to expire and delete container"):
-            time.sleep(BASIC_LOCK_TIME)
-            delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-            wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-
-    def test_multiple_containers_with_locks(self, default_wallet):
-        containers = []
-        lock_time = int(time.time()) + BASIC_LOCK_TIME
-
-        with allure.step("Create multiple containers with locks"):
-            for i in range(3):
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Create a container with first lock"):
                 cid = create_container(
                     default_wallet.path,
                     rule="REP 1",
@@ -157,13 +119,8 @@ class TestContainerLocks(TestNeofsBase):
                     endpoint=self.neofs_env.sn_rpc,
                     attributes={"__NEOFS__LOCK_UNTIL": lock_time},
                 )
-                containers.append(cid)
 
-        with allure.step("Verify all containers are created and locked"):
-            all_containers = list_containers(default_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
-            for cid in containers:
-                assert cid in all_containers, f"Container {cid} not found in list"
-
+            with allure.step("Verify first lock is active"):
                 container_info = get_container(
                     default_wallet.path,
                     cid,
@@ -172,13 +129,60 @@ class TestContainerLocks(TestNeofsBase):
                 )
                 assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
 
-        with allure.step("Verify all containers cannot be deleted while locked"):
-            for cid in containers:
+            with allure.step("Verify container cannot be deleted while first lock is active"):
                 with pytest.raises(Exception, match="container is locked"):
                     delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-        with allure.step("Wait for locks to expire"):
-            time.sleep(BASIC_LOCK_TIME)
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Set second lock on the same container"):
+                set_container_attributes(
+                    default_wallet,
+                    cid,
+                    self.neofs_env,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
+
+            with allure.step("Verify container cannot be deleted while second lock is active"):
+                with pytest.raises(Exception, match="container is locked"):
+                    delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+        with allure.step("Delete container after second lock expires"):
+            delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+
+    def test_multiple_containers_with_locks(self, default_wallet):
+        containers = []
+        LOCK_TIME = 30
+
+        with container_lock_timer(LOCK_TIME) as lock_time:
+            with allure.step("Create multiple containers with locks"):
+                for _ in range(3):
+                    cid = create_container(
+                        default_wallet.path,
+                        rule="REP 1",
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                        attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                    )
+                    containers.append(cid)
+
+            with allure.step("Verify all containers are created and locked"):
+                all_containers = list_containers(default_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+                for cid in containers:
+                    assert cid in all_containers, f"Container {cid} not found in list"
+
+                    container_info = get_container(
+                        default_wallet.path,
+                        cid,
+                        shell=self.shell,
+                        endpoint=self.neofs_env.sn_rpc,
+                    )
+                    assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
+
+            with allure.step("Verify all containers cannot be deleted while locked"):
+                for cid in containers:
+                    with pytest.raises(Exception, match="container is locked"):
+                        delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
         with allure.step("Delete all containers after locks expire"):
             for cid in containers:
@@ -188,43 +192,42 @@ class TestContainerLocks(TestNeofsBase):
                 wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_container_lock_update(self, default_wallet):
-        with allure.step("Create a container with initial lock"):
-            first_lock_time = int(time.time()) + BASIC_LOCK_TIME
-            cid = create_container(
-                default_wallet.path,
-                rule="REP 1",
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": first_lock_time},
-            )
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Create a container with initial lock"):
+                cid = create_container(
+                    default_wallet.path,
+                    rule="REP 1",
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
-        with allure.step("Verify initial lock"):
-            container_info = get_container(
-                default_wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(first_lock_time)
+            with allure.step("Verify initial lock"):
+                container_info = get_container(
+                    default_wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+                assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
 
-        with allure.step("Wait 1 sec for the unix epoch tick"):
-            time.sleep(1)
+            with allure.step("Wait 1 sec for the unix epoch tick"):
+                time.sleep(1)
 
-        with allure.step("Update lock to extend expiration time"):
-            extended_lock_time = int(time.time()) + BASIC_LOCK_TIME
-            set_container_attributes(
-                default_wallet,
-                cid,
-                self.neofs_env,
-                attributes={"__NEOFS__LOCK_UNTIL": extended_lock_time},
-            )
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Update lock to extend expiration time"):
+                set_container_attributes(
+                    default_wallet,
+                    cid,
+                    self.neofs_env,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
-        with allure.step("Verify container still cannot be deleted with updated lock"):
-            with pytest.raises(Exception, match="container is locked"):
-                delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            with allure.step("Verify container still cannot be deleted with updated lock"):
+                with pytest.raises(Exception, match="container is locked"):
+                    delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
-        with allure.step("Wait for updated lock to expire and delete container"):
-            time.sleep(BASIC_LOCK_TIME)
+        with allure.step("Delete container after updated lock expires"):
             delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
@@ -365,57 +368,54 @@ class TestContainerLocks(TestNeofsBase):
                 wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_cannot_remove_active_lock_attribute(self, default_wallet):
-        with allure.step("Create a container with lock set to future epoch"):
-            future_time = int(time.time()) + BASIC_LOCK_TIME
-            cid = create_container(
-                default_wallet.path,
-                rule="REP 1",
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": future_time},
-            )
+        with container_lock_timer(BASIC_LOCK_TIME) as lock_time:
+            with allure.step("Create a container with lock set to future epoch"):
+                cid = create_container(
+                    default_wallet.path,
+                    rule="REP 1",
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
-        with allure.step("Verify lock is active"):
-            container_info = get_container(
-                default_wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(future_time)
+            with allure.step("Verify lock is active"):
+                container_info = get_container(
+                    default_wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+                assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
 
-        with allure.step("Try to remove __NEOFS__LOCK_UNTIL while lock is active"):
-            with pytest.raises(Exception):
-                set_container_attributes(default_wallet, cid, self.neofs_env, remove_attributes=["__NEOFS__LOCK_UNTIL"])
+            with allure.step("Try to remove __NEOFS__LOCK_UNTIL while lock is active"):
+                with pytest.raises(Exception):
+                    set_container_attributes(
+                        default_wallet, cid, self.neofs_env, remove_attributes=["__NEOFS__LOCK_UNTIL"]
+                    )
 
-        with allure.step("Verify lock attribute is still present"):
-            container_info = get_container(
-                default_wallet.path,
-                cid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-            )
-            assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(future_time)
-
-        with allure.step("Wait for lock to expire"):
-            time.sleep(BASIC_LOCK_TIME)
+            with allure.step("Verify lock attribute is still present"):
+                container_info = get_container(
+                    default_wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                )
+                assert container_info["attributes"]["__NEOFS__LOCK_UNTIL"] == str(lock_time)
 
         with allure.step("Verify lock has expired and container can be deleted"):
             delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
             wait_for_container_deletion(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     def test_can_remove_expired_lock_attribute(self, default_wallet):
-        with allure.step("Create a container with lock set to near future"):
-            cid = create_container(
-                default_wallet.path,
-                rule="REP 1",
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                attributes={"__NEOFS__LOCK_UNTIL": int(time.time()) + 5},
-            )
-
-        with allure.step("Wait for lock to expire"):
-            time.sleep(5)
+        with container_lock_timer(5) as lock_time:
+            with allure.step("Create a container with lock set to near future"):
+                cid = create_container(
+                    default_wallet.path,
+                    rule="REP 1",
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    attributes={"__NEOFS__LOCK_UNTIL": lock_time},
+                )
 
         with allure.step("Remove expired __NEOFS__LOCK_UNTIL attribute"):
             set_container_attributes(
