@@ -50,7 +50,6 @@ from helpers.neofs_verbs import (
     search_object,
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
-from helpers.test_control import expect_not_raises
 from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -185,9 +184,7 @@ def storage_objects(
 
     yield storage_objects
 
-    # Teardown after all tests done with current param
-    with expect_not_raises():
-        delete_objects(storage_objects, client_shell, neofs_env)
+    delete_container(wallet.path, cid, shell=client_shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.fixture(
