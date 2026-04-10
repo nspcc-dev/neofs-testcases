@@ -12,7 +12,6 @@ from helpers.container import (
     set_container_attributes,
     wait_for_container_deletion,
 )
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 
 logger = logging.getLogger("NeoLogger")
@@ -34,11 +33,6 @@ def container_lock_timer(lock_duration: int):
 
 
 class TestContainerLocks(TestNeofsBase):
-    @pytest.fixture(autouse=True)
-    def check_node_version(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("Container locks tests require fresh neofs-node")
-
     @pytest.mark.sanity
     def test_container_lock_sanity(self, default_wallet):
         with container_lock_timer(BASIC_LOCK_TIME) as lock_time:

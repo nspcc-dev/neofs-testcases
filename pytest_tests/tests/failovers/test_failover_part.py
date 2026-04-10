@@ -19,7 +19,6 @@ from helpers.node_management import (
 )
 from helpers.storage_container import StorageContainer, StorageContainerInfo
 from helpers.test_control import expect_not_raises
-from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
 logger = logging.getLogger("NeoLogger")
@@ -38,46 +37,32 @@ class TestFailoverNodePart:
         self,
         user_container: StorageContainer,
     ):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
+        storage_object = user_container.generate_object(int(SIMPLE_OBJECT_SIZE))
+
+        with allure.step("Delete metabase files from storage nodes"):
             for node in self.neofs_env.storage_nodes:
-                node.set_metabase_resync(True)
+                delete_node_metadata(node)
 
-        try:
-            storage_object = user_container.generate_object(int(SIMPLE_OBJECT_SIZE))
+        with allure.step("Metabase resync"):
+            for node in self.neofs_env.storage_nodes:
+                for shard in node.shards:
+                    self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
 
-            with allure.step("Delete metabase files from storage nodes"):
-                for node in self.neofs_env.storage_nodes:
-                    delete_node_metadata(node)
+        with allure.step("Start nodes after metabase deletion"):
+            start_storage_nodes(self.neofs_env.storage_nodes)
+            wait_all_storage_nodes_returned(self.neofs_env)
 
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version(
-                "0.51.1"
-            ):
-                with allure.step("Metabase resync"):
-                    for node in self.neofs_env.storage_nodes:
-                        for shard in node.shards:
-                            self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
-
-            with allure.step("Start nodes after metabase deletion"):
-                start_storage_nodes(self.neofs_env.storage_nodes)
-                wait_all_storage_nodes_returned(self.neofs_env)
-
-            with allure.step("Try to fetch object from each storage node"):
-                for node in self.neofs_env.storage_nodes:
-                    with expect_not_raises():
-                        get_object(
-                            storage_object.wallet_file_path,
-                            storage_object.cid,
-                            storage_object.oid,
-                            self.shell,
-                            endpoint=node.endpoint,
-                            wallet_config=user_container.get_wallet_config_path(),
-                        )
-        finally:
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                "0.51.1"
-            ):
-                for node in self.neofs_env.storage_nodes:
-                    node.set_metabase_resync(False)
+        with allure.step("Try to fetch object from each storage node"):
+            for node in self.neofs_env.storage_nodes:
+                with expect_not_raises():
+                    get_object(
+                        storage_object.wallet_file_path,
+                        storage_object.cid,
+                        storage_object.oid,
+                        self.shell,
+                        endpoint=node.endpoint,
+                        wallet_config=user_container.get_wallet_config_path(),
+                    )
 
     @allure.title("Delete metadata without resync metabase enabling, delete metadata try to get object")
     def test_delete_metadata(self, user_container: StorageContainer):
@@ -116,20 +101,16 @@ class TestFailoverNodePart:
         user_container: StorageContainer,
         corruption_type: str,
     ):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
-            pytest.skip("Test requires fresh neofs-lens version")
-
         storage_object = user_container.generate_object(int(SIMPLE_OBJECT_SIZE))
 
         with allure.step(f"Corrupt fstree structure on storage nodes ({corruption_type})"):
             for node in self.neofs_env.storage_nodes:
                 corrupt_fstree_structure(node, corruption_type=corruption_type)
 
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) > parse_version("0.51.1"):
-            with allure.step("Metabase resync"):
-                for node in self.neofs_env.storage_nodes:
-                    for shard in node.shards:
-                        self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
+        with allure.step("Metabase resync"):
+            for node in self.neofs_env.storage_nodes:
+                for shard in node.shards:
+                    self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
 
         with allure.step("Start nodes after fstree corruption"):
             start_storage_nodes(self.neofs_env.storage_nodes)
@@ -163,9 +144,6 @@ class TestFailoverNodePart:
         8. Start nodes after restoring LOCK objects
         9. Try to fetch the object from each node (result is undetermined due to inconsistent fstree)
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
-            pytest.skip("Test requires fresh neofs-lens version")
-
         with allure.step("Create a locked object"):
             current_epoch = neofs_epoch.ensure_fresh_epoch(self.neofs_env)
             lock_lifetime = 2

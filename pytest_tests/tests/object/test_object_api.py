@@ -9,7 +9,6 @@ from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
-    get_ec_object_chunks,
     get_link_object,
     get_object_chunks,
     get_simple_object_copies,
@@ -50,7 +49,7 @@ from helpers.neofs_verbs import (
     search_object,
 )
 from helpers.storage_object_info import StorageObjectInfo, delete_objects
-from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
+from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -713,12 +712,7 @@ class TestObjectApi(TestNeofsBase):
 
         file_ranges_to_test = []
 
-        if request.node.callspec.params.get("container") == EC_3_1_PLACEMENT_RULE and parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-        ) <= parse_version("0.50.2"):
-            parts = get_ec_object_chunks(default_wallet.path, container, oid, self.neofs_env)
-        else:
-            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+        parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
 
         # range is inside one child
         file_ranges_to_test.append((0, parts[0][1] - 1))
@@ -892,12 +886,7 @@ class TestObjectApi(TestNeofsBase):
                 )
 
         with allure.step("Trying to delete children"):
-            if request.node.callspec.params.get("container") == EC_3_1_PLACEMENT_RULE and parse_version(
-                self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-            ) <= parse_version("0.50.2"):
-                parts = get_ec_object_chunks(default_wallet.path, container, oid, self.neofs_env)
-            else:
-                parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
             for part in parts:
                 with pytest.raises(Exception, match=f"({LINK_OBJECT_FOUND}|{EC_ATTRIBUTES_FOUND})"):
                     delete_object(
@@ -923,12 +912,7 @@ class TestObjectApi(TestNeofsBase):
                 neofs_env=self.neofs_env,
             )
         with allure.step("Get object parts"):
-            if request.node.callspec.params.get("container") == EC_3_1_PLACEMENT_RULE and parse_version(
-                self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-            ) <= parse_version("0.50.2"):
-                parts = get_ec_object_chunks(default_wallet.path, container, oid, self.neofs_env)
-            else:
-                parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
 
         with allure.step("Delete big object"):
             delete_object(
@@ -959,9 +943,6 @@ class TestObjectApi(TestNeofsBase):
     def test_object_parts_are_unavailable_after_expiration(
         self, default_wallet: NodeWallet, container: str, request: FixtureRequest
     ):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.50.2"):
-            pytest.skip("https://github.com/nspcc-dev/neofs-node/issues/3712")
-
         with allure.step("Get current epoch"):
             epoch = self.ensure_fresh_epoch()
 
@@ -976,12 +957,7 @@ class TestObjectApi(TestNeofsBase):
                 expire_at=epoch + 1,
             )
         with allure.step("Get object parts"):
-            if request.node.callspec.params.get("container") == EC_3_1_PLACEMENT_RULE and parse_version(
-                self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
-            ) <= parse_version("0.50.2"):
-                parts = get_ec_object_chunks(default_wallet.path, container, oid, self.neofs_env)
-            else:
-                parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
+            parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
 
         with allure.step("Tick two epochs"):
             self.tick_epochs_and_wait(2)

@@ -28,7 +28,6 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
-import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -44,7 +43,6 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
-from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -698,11 +696,6 @@ class NeoFSEnv:
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
         try:
-            if allow_ec and parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version(
-                "0.49.1"
-            ):
-                pytest.skip("EC is not supported in versions <= 0.49.1")
-
             neofs_env.deploy_inner_ring_nodes(
                 count=inner_ring_nodes_count,
                 with_main_chain=with_main_chain,
@@ -1446,17 +1439,10 @@ class StorageNode(ResurrectableProcess):
 
     @allure.step("Set metabase resync")
     def set_metabase_resync(self, resync_state: bool):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.51.1"):
-            self.stop()
-            neofs_shard_env_variable = "NEOFS_STORAGE_SHARDS_{idx}_RESYNC_METABASE"
-            for idx, _ in enumerate(self.shards):
-                self.attrs.update({neofs_shard_env_variable.format(idx=idx): f"{resync_state}".lower()})
-            self.start(fresh=False)
-        else:
-            self.stop()
-            for shard in self.shards:
-                self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
-            self.start(fresh=False)
+        self.stop()
+        for shard in self.shards:
+            self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
+        self.start(fresh=False)
 
     def _launch_process(self):
         self.stdout = self.neofs_env._generate_temp_file(self.sn_dir, prefix=f"sn_{self.sn_number}_stdout")

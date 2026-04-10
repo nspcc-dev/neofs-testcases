@@ -11,7 +11,6 @@ from helpers.nns import get_contract_hashes, register_nns_domain_with_record
 from helpers.rest_gate import (
     complete_session_token,
     create_container,
-    delete_container,
     delete_object,
     get_rest_gateway_address,
     get_unsigned_session_token,
@@ -774,17 +773,10 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
             assert resp.ok, f"Delegated token with NNS subjects should work: {resp.text}"
 
     @allure.title("Test V2 Session Token - Multiple Wildcard Containers")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_multiple_wildcard(self, gw_endpoint: str):
         """
         Test session token with multiple wildcard containers.
-
-        Steps:
-        1. Create token with container context (CONTAINER_PUT, CONTAINER_DELETE)
-        2. Create token with object context (OBJECT_PUT, OBJECT_GET)
-        3. Verify container operations work
-        4. Verify object operations work
         """
         with allure.step("Create V2 Session Token with mixed contexts"):
             rest_gw_address = get_rest_gateway_address(gw_endpoint)
@@ -792,24 +784,8 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                 {"verbs": ["CONTAINER_PUT", "CONTAINER_DELETE"]},
                 {"verbs": ["OBJECT_PUT", "OBJECT_GET", "OBJECT_HEAD"]},
             ]
-            session_token = generate_session_token_v2(
-                gw_endpoint, self.owner_wallet, contexts, targets=[rest_gw_address]
-            )
-
-        with allure.step("Test container creation with token"):
-            cid = create_container(gw_endpoint, unique_container_name(), self.PLACEMENT_RULE, PUBLIC_ACL, session_token)
-
-        with allure.step("Test object upload with token"):
-            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-            oid = upload_via_rest_gate(cid, file_path, gw_endpoint, session_token=session_token)
-            assert oid, "Object upload should work"
-
-        with allure.step("Test object get with token"):
-            resp = get_via_rest_gate(cid, oid, gw_endpoint, session_token=session_token, return_response=True)
-            assert resp.ok, "Object GET should work"
-
-        with allure.step("Test container deletion with token"):
-            delete_container(gw_endpoint, cid, session_token)
+            with pytest.raises(Exception, match=".*duplicate container.*"):
+                generate_session_token_v2(gw_endpoint, self.owner_wallet, contexts, targets=[rest_gw_address])
 
     @allure.title("Test V2 Session Token Security - Token Without Lock")
     @pytest.mark.simple
