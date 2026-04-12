@@ -296,6 +296,7 @@ def get_object_s3(
     object_key: str,
     version_id: Optional[str] = None,
     range: Optional[list] = None,
+    part_number: Optional[int] = None,
     full_output: bool = False,
 ):
     filename = os.path.join(get_assets_dir_path(), str(uuid.uuid4()))
@@ -309,6 +310,9 @@ def get_object_s3(
 
         if range:
             params["Range"] = f"bytes={range[0]}-{range[1]}"
+
+        if part_number:
+            params["PartNumber"] = part_number
 
         response = s3_client.get_object(**params)
         log_command_execution("S3 Get objects result", response)
