@@ -49,6 +49,7 @@ EACL_NOT_FOUND = "code = 3073.*message = eACL not found"
 EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS = "table validation: it is prohibited to modify system access"
 EACL_CHANGE_PROHIBITED = ".*container ACL is immutable.*"
 EACL_CHANGE_TIMEOUT = ".*timeout.*"
+EACL_CHANGE_RPC_ERROR = ".*rpc error.*"
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
 INVALID_RULES = ".*unable to parse provided rules.*"
