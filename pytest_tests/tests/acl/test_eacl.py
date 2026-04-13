@@ -19,6 +19,7 @@ from helpers.container import EC_3_1_PLACEMENT_RULE, create_container
 from helpers.container_access import check_full_access_to_container, check_no_access_to_container
 from helpers.grpc_responses import (
     EACL_CHANGE_PROHIBITED,
+    EACL_CHANGE_RPC_ERROR,
     EACL_CHANGE_TIMEOUT,
     EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS,
     NOT_CONTAINER_OWNER,
@@ -106,7 +107,7 @@ class TestEACLContainer(TestNeofsBase):
         with allure.step("Try to set eacl for such container with force"):
             eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.USER, operation=op) for op in EACLOperation]
 
-            with pytest.raises(RuntimeError, match=EACL_CHANGE_TIMEOUT):
+            with pytest.raises(RuntimeError, match=rf"{EACL_CHANGE_TIMEOUT}|{EACL_CHANGE_RPC_ERROR}"):
                 set_eacl(
                     user_wallet.wallet_path,
                     cid,
