@@ -21,7 +21,6 @@ blocked_nodes: list[StorageNode] = []
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="not supported on macos runners")
 class TestFailoverNetwork:
-    @allure.step("Restore network")
     @pytest.fixture
     def restore_network(self, neofs_env_function_scope: NeoFSEnv):
         self.neofs_env = neofs_env_function_scope
