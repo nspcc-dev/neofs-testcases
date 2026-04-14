@@ -65,6 +65,8 @@ SESSION_VALIDATION_FAILED = ".*session validation failed.*"
 INVALID_V2_SESSION_TOKEN = ".*invalid V2 session token.*"
 SESSION_TOKEN_DOESNOT_AUTHORIZE = ".*session token does not authorize.*"
 
+RPC_ERROR = ".*rpc error.*"
+
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:
     """
