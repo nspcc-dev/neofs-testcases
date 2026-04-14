@@ -25,6 +25,7 @@ from helpers.file_helper import generate_file, get_file_content, get_file_hash
 from helpers.grpc_responses import (
     EC_ATTRIBUTES_FOUND,
     INVALID_LENGTH_SPECIFIER,
+    INVALID_NUMERIC_FILTER,
     INVALID_OFFSET_SPECIFIER,
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
@@ -395,7 +396,7 @@ class TestObjectApi(TestNeofsBase):
     def test_object_search_with_numeric_operators_invalid_filters(
         self, default_wallet: NodeWallet, container: str, filters: str
     ):
-        with pytest.raises(Exception, match=INVALID_SEARCH_QUERY):
+        with pytest.raises(Exception, match=rf"{INVALID_SEARCH_QUERY}|{INVALID_NUMERIC_FILTER}"):
             search_object(
                 default_wallet.path,
                 container,

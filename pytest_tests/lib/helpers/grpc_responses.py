@@ -52,6 +52,7 @@ EACL_CHANGE_TIMEOUT = ".*timeout.*"
 EACL_CHANGE_RPC_ERROR = ".*rpc error.*"
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
+INVALID_NUMERIC_FILTER = ".*non-integer value in numeric filter number.*"
 INVALID_RULES = ".*unable to parse provided rules.*"
 
 INVALID_IAT = ".*token should not be issued yet.*"
