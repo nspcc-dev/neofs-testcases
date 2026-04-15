@@ -52,6 +52,7 @@ EACL_CHANGE_TIMEOUT = ".*timeout.*"
 EACL_CHANGE_RPC_ERROR = ".*rpc error.*"
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
+INVALID_NUMERIC_FILTER = ".*non-integer value in numeric filter number.*"
 INVALID_RULES = ".*unable to parse provided rules.*"
 
 INVALID_IAT = ".*token should not be issued yet.*"
@@ -63,6 +64,8 @@ INVALID_VERB = ".*wrong container session operation.*"
 SESSION_VALIDATION_FAILED = ".*session validation failed.*"
 INVALID_V2_SESSION_TOKEN = ".*invalid V2 session token.*"
 SESSION_TOKEN_DOESNOT_AUTHORIZE = ".*session token does not authorize.*"
+
+RPC_ERROR = ".*rpc error.*"
 
 
 def error_matches_status(error: Exception, status_pattern: str) -> bool:

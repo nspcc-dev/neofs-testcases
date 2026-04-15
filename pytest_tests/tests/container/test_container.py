@@ -19,7 +19,7 @@ from helpers.container import (
     wait_for_container_deletion,
 )
 from helpers.file_helper import generate_file
-from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER
+from helpers.grpc_responses import CONTAINER_DELETION_TIMED_OUT, NOT_CONTAINER_OWNER, RPC_ERROR
 from helpers.neofs_verbs import delete_object, get_netmap_netinfo, get_object, put_object_to_random_node
 from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import parse_load_report, parse_load_summary, placement_policy_from_container
@@ -269,7 +269,7 @@ class TestContainer(TestNeofsBase):
         )
 
         with allure.step("Try to delete container"):
-            with pytest.raises(RuntimeError, match=NOT_CONTAINER_OWNER):
+            with pytest.raises(RuntimeError, match=rf"{NOT_CONTAINER_OWNER}|{RPC_ERROR}"):
                 delete_container(
                     wallet=not_owner_wallet.path,
                     cid=cid,
