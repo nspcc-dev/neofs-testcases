@@ -12,6 +12,7 @@ from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.complex_object_actions import get_object_chunks
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
+from helpers.grpc_responses import INVALID_NUMERIC_FILTER
 from helpers.neofs_verbs import (
     delete_object,
     generate_filter_json_file,
@@ -23,6 +24,7 @@ from helpers.neofs_verbs import (
 )
 from helpers.node_management import start_storage_nodes
 from helpers.test_control import wait_for_success
+from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
 logger = logging.getLogger("NeoLogger")
@@ -1620,7 +1622,47 @@ def test_search_invalid_filters(
                 ),
             }
         )
-    for op in ["GE", "GT", "LT", "LE", "EQ", "COMMON_PREFIX"]:
+    for op in ["GE", "GT", "LT", "LE"]:
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+                filters=[f"$Object:creationEpoch {op} abc"],
+                attributes=["$Object:creationEpoch"],
+            )
+            assert len(found_objects) == 0, "invalid number of found objects"
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+                filters=[f"$Object:creationEpoch {op} 0_0"],
+                attributes=["$Object:creationEpoch"],
+            )
+            assert len(found_objects) == 0, "invalid number of found objects"
+        else:
+            with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
+                search_objectv2(
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=default_wallet.path,
+                    cid=cid,
+                    shell=neofs_env.shell,
+                    filters=[f"$Object:creationEpoch {op} abc"],
+                    attributes=["$Object:creationEpoch"],
+                )
+            with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
+                search_objectv2(
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=default_wallet.path,
+                    cid=cid,
+                    shell=neofs_env.shell,
+                    filters=[f"$Object:creationEpoch {op} 0_0"],
+                    attributes=["$Object:creationEpoch"],
+                )
+
+    for op in ["EQ", "COMMON_PREFIX"]:
         found_objects, _ = search_objectv2(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
