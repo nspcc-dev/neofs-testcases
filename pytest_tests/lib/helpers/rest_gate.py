@@ -512,7 +512,8 @@ def get_unsigned_session_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="POST")
+    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
+    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"], resp.json()["lock"]
 
@@ -566,7 +567,8 @@ def complete_session_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="POST")
+    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
+    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"]
 

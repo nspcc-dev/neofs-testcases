@@ -7,6 +7,7 @@ import uuid
 import allure
 import pytest
 from helpers.file_helper import generate_file
+from helpers.grpc_responses import SESSION_TOKEN_V2_VALIDATION
 from helpers.nns import get_contract_hashes, register_nns_domain_with_record
 from helpers.rest_gate import (
     complete_session_token,
@@ -19,6 +20,7 @@ from helpers.rest_gate import (
     searchv2,
     upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.utils.converters import load_wallet
@@ -419,7 +421,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
             assert resp.ok, f"Delegated token should work: {resp.text}"
 
     @allure.title("Test V2 Session Token - Final Flag Prevents Delegation")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_final_flag(self, gw_endpoint: str):
         """
@@ -430,6 +431,11 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         2. Create V2 session token with final=True
         3. Attempt to create delegated token (should fail)
         """
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.17.0"
+        ):
+            pytest.skip("Requires fresh neofs-rest-gw")
+
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -446,13 +452,12 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
             )
 
         with allure.step("Attempt to create delegated token (should fail)"):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
                     gw_endpoint, self.user_wallet, contexts, targets=[user_address], origin=final_token
                 )
 
     @allure.title("Test V2 Session Token - Cannot Extend Verbs in Delegation")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_cannot_extend_verbs(self, gw_endpoint: str):
         """
@@ -464,6 +469,11 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with more verbs (GET, HEAD, PUT)
         4. Verify delegation fails
         """
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.17.0"
+        ):
+            pytest.skip("Requires fresh neofs-rest-gw")
+
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -479,7 +489,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
 
         with allure.step("Attempt to create delegated token with more verbs"):
             extended_contexts = [{"containerID": cid, "verbs": ["OBJECT_GET", "OBJECT_HEAD", "OBJECT_PUT"]}]
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
                     gw_endpoint,
                     self.user_wallet,
@@ -490,7 +500,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                 )
 
     @allure.title("Test V2 Session Token - Cannot Extend Containers in Delegation")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_cannot_extend_containers(self, gw_endpoint: str):
         """
@@ -502,6 +511,10 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token for both containers
         4. Verify delegation fails
         """
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.17.0"
+        ):
+            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create two containers"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid1 = create_container(
@@ -523,7 +536,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                 {"containerID": cid1, "verbs": ["OBJECT_GET", "OBJECT_HEAD"]},
                 {"containerID": cid2, "verbs": ["OBJECT_GET", "OBJECT_HEAD"]},
             ]
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
                     gw_endpoint,
                     self.user_wallet,
@@ -534,7 +547,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                 )
 
     @allure.title("Test V2 Session Token - Cannot Extend Wildcard from Specific Container")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_cannot_extend_to_wildcard(self, gw_endpoint: str):
         """
@@ -546,6 +558,10 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with wildcard container
         4. Verify delegation fails
         """
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.17.0"
+        ):
+            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -561,7 +577,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
 
         with allure.step("Attempt to create delegated token with wildcard"):
             wildcard_contexts = [{"verbs": ["OBJECT_GET", "OBJECT_HEAD"]}]
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
                     gw_endpoint,
                     self.user_wallet,
@@ -572,7 +588,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                 )
 
     @allure.title("Test V2 Session Token - Cannot Extend Lifetime in Delegation")
-    @pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-rest-gw/issues/368")
     @pytest.mark.simple
     def test_rest_v2_session_token_cannot_extend_lifetime(self, gw_endpoint: str):
         """
@@ -584,6 +599,10 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with lifetime=200s
         4. Verify delegation fails
         """
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
+            "0.17.0"
+        ):
+            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -600,7 +619,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
             )
 
         with allure.step("Attempt to create delegated token with longer lifetime"):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
                     gw_endpoint, self.user_wallet, contexts, targets=[user_address], lifetime=200, origin=original_token
                 )

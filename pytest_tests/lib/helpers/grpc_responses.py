@@ -64,6 +64,7 @@ INVALID_VERB = ".*wrong container session operation.*"
 SESSION_VALIDATION_FAILED = ".*session validation failed.*"
 INVALID_V2_SESSION_TOKEN = ".*invalid V2 session token.*"
 SESSION_TOKEN_DOESNOT_AUTHORIZE = ".*session token does not authorize.*"
+SESSION_TOKEN_V2_VALIDATION = ".*session token v2 validation.*"
 
 RPC_ERROR = ".*rpc error.*"
 
