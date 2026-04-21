@@ -53,6 +53,7 @@ EACL_CHANGE_RPC_ERROR = ".*rpc error.*"
 
 INVALID_SEARCH_QUERY = ".*invalid search query.*"
 INVALID_NUMERIC_FILTER = ".*non-integer value in numeric filter number.*"
+TOO_BIG_INT_VALUE = ".*too big integer in numeric filter.*"
 INVALID_RULES = ".*unable to parse provided rules.*"
 
 INVALID_IAT = ".*token should not be issued yet.*"
