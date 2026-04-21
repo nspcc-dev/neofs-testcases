@@ -12,7 +12,7 @@ from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.complex_object_actions import get_object_chunks
 from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
-from helpers.grpc_responses import INVALID_NUMERIC_FILTER
+from helpers.grpc_responses import INVALID_NUMERIC_FILTER, TOO_BIG_INT_VALUE
 from helpers.neofs_verbs import (
     delete_object,
     generate_filter_json_file,
@@ -184,15 +184,26 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
         attributes={int_attribute_name: too_large_int_value},
     )
     for operator_str, comparator in operators.items():
-        found_objects, _ = search_objectv2(
-            rpc_endpoint=neofs_env.sn_rpc,
-            wallet=default_wallet.path,
-            cid=cid,
-            shell=neofs_env.shell,
-            filters=[f"{int_attribute_name} {operator_str} {too_large_int_value}"],
-            attributes=[int_attribute_name],
-        )
-        assert len(found_objects) == 0, "invalid number of objects"
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
+            found_objects, _ = search_objectv2(
+                rpc_endpoint=neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=cid,
+                shell=neofs_env.shell,
+                filters=[f"{int_attribute_name} {operator_str} {too_large_int_value}"],
+                attributes=[int_attribute_name],
+            )
+            assert len(found_objects) == 0, "invalid number of objects"
+        else:
+            with pytest.raises(Exception, match=TOO_BIG_INT_VALUE):
+                search_objectv2(
+                    rpc_endpoint=neofs_env.sn_rpc,
+                    wallet=default_wallet.path,
+                    cid=cid,
+                    shell=neofs_env.shell,
+                    filters=[f"{int_attribute_name} {operator_str} {too_large_int_value}"],
+                    attributes=[int_attribute_name],
+                )
 
 
 @pytest.mark.parametrize(
@@ -241,9 +252,23 @@ def test_search_single_filter_by_custom_str_attributes(
         "LT": lambda obj_val, filter_val: False,
         "LE": lambda obj_val, filter_val: False,
     }
+    numeric_operators = {"GT", "GE", "LT", "LE"}
+    node_version = parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path))
 
     for operator_str, comparator in operators.items():
         for str_value in str_attributes_values:
+            if operator_str in numeric_operators and node_version > parse_version("0.52.0"):
+                with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
+                    search_objectv2(
+                        rpc_endpoint=neofs_env.sn_rpc,
+                        wallet=default_wallet.path,
+                        cid=cid,
+                        shell=neofs_env.shell,
+                        filters=[f"{str_attribute_name} {operator_str} {str_value}"],
+                        attributes=[str_attribute_name],
+                    )
+                continue
+
             found_objects, _ = search_objectv2(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
