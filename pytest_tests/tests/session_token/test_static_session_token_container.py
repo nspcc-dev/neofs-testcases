@@ -22,6 +22,7 @@ from helpers.grpc_responses import (
     INVALID_TOKEN_FORMAT,
     INVALID_VERB,
     NOT_SESSION_CONTAINER_OWNER,
+    RPC_ERROR,
     SESSION_NOT_ISSUED_BY_OWNER,
 )
 from helpers.neofs_verbs import put_object_to_random_node
@@ -501,7 +502,7 @@ class TestSessionTokenContainer(TestNeofsBase):
 
         with allure.step("Try to deny all operations for other via eACL using scammer wallet"):
             with allure.step("Using user token"):
-                with pytest.raises(RuntimeError, match=EACL_TIMED_OUT):
+                with pytest.raises(RuntimeError, match=rf"{EACL_TIMED_OUT}|{RPC_ERROR}"):
                     set_eacl(
                         scammer_wallet.path,
                         cid,

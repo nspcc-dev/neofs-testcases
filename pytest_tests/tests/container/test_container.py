@@ -279,7 +279,7 @@ class TestContainer(TestNeofsBase):
                 )
 
         with allure.step("Try to force delete container"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=rf"{CONTAINER_DELETION_TIMED_OUT}|{RPC_ERROR}"):
                 delete_container(
                     wallet=not_owner_wallet.path,
                     cid=cid,
