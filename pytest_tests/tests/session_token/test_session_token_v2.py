@@ -1,12 +1,16 @@
 import logging
+import os
 import time
+import uuid
 
 import allure
 import pytest
+from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.container import create_container, delete_container, list_containers
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     EXPIRED_SESSION_TOKEN,
+    INVALID_SESSION_TOKEN_OWNER,
     INVALID_V2_SESSION_TOKEN,
     SESSION_TOKEN_DOESNOT_AUTHORIZE,
     SESSION_VALIDATION_FAILED,
@@ -20,7 +24,8 @@ from helpers.neofs_verbs import (
     search_object,
 )
 from helpers.nns import get_contract_hashes, register_nns_domain_with_record
-from helpers.session_token import create_session_token_v2
+from helpers.session_token import build_forged_origin_session_token_v2_binary, create_session_token_v2
+from helpers.wellknown_acl import PRIVATE_ACL_F
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 
@@ -671,6 +676,62 @@ class TestSessionTokenV2(TestNeofsBase):
                 endpoint=self.neofs_env.sn_rpc,
                 session=stranger_token,
             )
+
+    @allure.title("Test V2 Session Token - Forged origin issuer")
+    @pytest.mark.simple
+    def test_v2_session_token_forged_origin_issuer(self, default_wallet, stranger_wallet):
+        """
+        Steps:
+        1. Create a private basic-ACL container as the owner
+        2. Build forged origin protobuf (issuer = owner, signature = stranger)
+        3. Stranger creates a delegated token embedding that origin (force)
+        4. PUT with the malicious token must fail with issuer/signature validation
+        """
+
+        owner_wallet = default_wallet
+        stranger_address = get_last_address_from_wallet(stranger_wallet.path, stranger_wallet.password)
+
+        with allure.step("Create private container as owner"):
+            cid = create_container(
+                owner_wallet.path,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                basic_acl=PRIVATE_ACL_F,
+            )
+
+        with allure.step("Forged origin: body.issuer is owner, signature is stranger's key"):
+            forged_origin_path = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, str(uuid.uuid4()))
+            forged_bin = build_forged_origin_session_token_v2_binary(
+                owner_wallet.address,
+                stranger_wallet,
+                cid,
+            )
+            with open(forged_origin_path, "wb") as f:
+                f.write(forged_bin)
+
+        with allure.step("Delegated token with forged origin (CLI --force)"):
+            malicious_path = create_session_token_v2(
+                shell=self.shell,
+                owner_wallet=stranger_wallet,
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                lifetime=30_000,
+                subjects=[stranger_address],
+                contexts=[f"{cid}:PUT"],
+                origin=forged_origin_path,
+                force=True,
+            )
+
+        with allure.step("Object PUT must be rejected at the storage node"):
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            with pytest.raises(RuntimeError, match=INVALID_SESSION_TOKEN_OWNER):
+                put_object(
+                    wallet=stranger_wallet.path,
+                    path=file_path,
+                    cid=cid,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    session=malicious_path,
+                )
 
     @allure.title("Test V2 Session Token with Final Flag")
     @pytest.mark.simple
