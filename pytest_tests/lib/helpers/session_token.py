@@ -2,19 +2,26 @@ import base64
 import json
 import logging
 import os
+import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
 
 import allure
+import base58
 from helpers.common import NEOFS_CLI_EXEC, TEST_FILES_DIR, WALLET_CONFIG, get_assets_dir_path
 from helpers.data_formatters import get_wallet_public_key
+from helpers.grpc_utils import create_ecdsa_signature
 from helpers.json_transformers import encode_for_json
 from helpers.storage_object_info import StorageObjectInfo
+from neo3.wallet.wallet import Wallet
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NodeWallet
+from neofs_testlib.protobuf.generated.refs import types_pb2 as refs_types_pb2
+from neofs_testlib.protobuf.generated.session import types_pb2 as session_types_pb2
 from neofs_testlib.shell import Shell
+from neofs_testlib.utils.converters import load_wallet
 
 logger = logging.getLogger("NeoLogger")
 
@@ -319,6 +326,55 @@ def create_session_token_v2(
     )
 
     return session_token
+
+
+def build_forged_origin_session_token_v2_binary(
+    issuer_owner_address: str,
+    signing_wallet: NodeWallet,
+    cid: str,
+    *,
+    lifetime_seconds: int = 37_200,
+) -> bytes:
+    neo_w: Wallet = load_wallet(signing_wallet.path, signing_wallet.password)
+    acc = neo_w.accounts[0]
+    public_key = acc.public_key.encode_point(True)
+    private_key = acc.private_key
+
+    owner_pb = refs_types_pb2.OwnerID()
+    owner_pb.value = base58.b58decode(issuer_owner_address)
+
+    signer_owner_pb = refs_types_pb2.OwnerID()
+    signer_owner_pb.value = base58.b58decode(signing_wallet.address)
+
+    now = int(time.time())
+    nbf = now - 7_200
+    span = lifetime_seconds
+    exp = now + span
+
+    ctx = session_types_pb2.SessionContextV2()
+    cnr = refs_types_pb2.ContainerID()
+    cnr.value = base58.b58decode(cid)
+    ctx.container.CopyFrom(cnr)
+    ctx.verbs.append(session_types_pb2.Verb.OBJECT_PUT)
+
+    body = session_types_pb2.SessionTokenV2.Body()
+    body.version = 0
+    body.issuer.CopyFrom(owner_pb)
+    subj = body.subjects.add()
+    subj.owner_id.CopyFrom(signer_owner_pb)
+    body.lifetime.iat = now
+    body.lifetime.nbf = nbf
+    body.lifetime.exp = exp
+    body.contexts.append(ctx)
+    body.final = False
+
+    signed_data = body.SerializeToString(deterministic=True)
+    sig = create_ecdsa_signature(signed_data, public_key, private_key)
+
+    token = session_types_pb2.SessionTokenV2()
+    token.body.CopyFrom(body)
+    token.signature.CopyFrom(sig)
+    return token.SerializeToString(deterministic=True)
 
 
 @allure.step("Sign Session Token")

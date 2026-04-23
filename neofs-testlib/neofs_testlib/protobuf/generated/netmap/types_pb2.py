@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from neofs_testlib.protobuf.generated.refs import types_pb2 as refs_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12netmap/types.proto\x12\x10neo.fs.v2.netmap\x1a\x10refs/types.proto\"\xa5\x01\n\x06\x46ilter\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n\x03key\x18\x02 \x01(\tR\x03key\x12+\n\x02op\x18\x03 \x01(\x0e\x32\x1b.neo.fs.v2.netmap.OperationR\x02op\x12\x14\n\x05value\x18\x04 \x01(\tR\x05value\x12\x32\n\x07\x66ilters\x18\x05 \x03(\x0b\x32\x18.neo.fs.v2.netmap.FilterR\x07\x66ilters\"\x9c\x01\n\x08Selector\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05\x63ount\x18\x02 \x01(\rR\x05\x63ount\x12\x30\n\x06\x63lause\x18\x03 \x01(\x0e\x32\x18.neo.fs.v2.netmap.ClauseR\x06\x63lause\x12\x1c\n\tattribute\x18\x04 \x01(\tR\tattribute\x12\x16\n\x06\x66ilter\x18\x05 \x01(\tR\x06\x66ilter\";\n\x07Replica\x12\x14\n\x05\x63ount\x18\x01 \x01(\rR\x05\x63ount\x12\x1a\n\x08selector\x18\x02 \x01(\tR\x08selector\"\xa9\x02\n\x0fPlacementPolicy\x12\x35\n\x08replicas\x18\x01 \x03(\x0b\x32\x19.neo.fs.v2.netmap.ReplicaR\x08replicas\x12\x36\n\x17\x63ontainer_backup_factor\x18\x02 \x01(\rR\x15\x63ontainerBackupFactor\x12\x38\n\tselectors\x18\x03 \x03(\x0b\x32\x1a.neo.fs.v2.netmap.SelectorR\tselectors\x12\x32\n\x07\x66ilters\x18\x04 \x03(\x0b\x32\x18.neo.fs.v2.netmap.FilterR\x07\x66ilters\x12\x39\n\tsubnet_id\x18\x05 \x01(\x0b\x32\x18.neo.fs.v2.refs.SubnetIDB\x02\x18\x01R\x08subnetId\"\xd8\x02\n\x08NodeInfo\x12\x1d\n\npublic_key\x18\x01 \x01(\x0cR\tpublicKey\x12\x1c\n\taddresses\x18\x02 \x03(\tR\taddresses\x12\x44\n\nattributes\x18\x03 \x03(\x0b\x32$.neo.fs.v2.netmap.NodeInfo.AttributeR\nattributes\x12\x36\n\x05state\x18\x04 \x01(\x0e\x32 .neo.fs.v2.netmap.NodeInfo.StateR\x05state\x1aM\n\tAttribute\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value\x12\x18\n\x07parents\x18\x03 \x03(\tR\x07parents\"B\n\x05State\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\n\n\x06ONLINE\x10\x01\x12\x0b\n\x07OFFLINE\x10\x02\x12\x0f\n\x0bMAINTENANCE\x10\x03\"P\n\x06Netmap\x12\x14\n\x05\x65poch\x18\x01 \x01(\x04R\x05\x65poch\x12\x30\n\x05nodes\x18\x02 \x03(\x0b\x32\x1a.neo.fs.v2.netmap.NodeInfoR\x05nodes\"\x8f\x01\n\rNetworkConfig\x12I\n\nparameters\x18\x01 \x03(\x0b\x32).neo.fs.v2.netmap.NetworkConfig.ParameterR\nparameters\x1a\x33\n\tParameter\x12\x10\n\x03key\x18\x01 \x01(\x0cR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value\"\xbf\x01\n\x0bNetworkInfo\x12#\n\rcurrent_epoch\x18\x01 \x01(\x04R\x0c\x63urrentEpoch\x12!\n\x0cmagic_number\x18\x02 \x01(\x04R\x0bmagicNumber\x12 \n\x0cms_per_block\x18\x03 \x01(\x03R\nmsPerBlock\x12\x46\n\x0enetwork_config\x18\x04 \x01(\x0b\x32\x1f.neo.fs.v2.netmap.NetworkConfigR\rnetworkConfig*g\n\tOperation\x12\x19\n\x15OPERATION_UNSPECIFIED\x10\x00\x12\x06\n\x02\x45Q\x10\x01\x12\x06\n\x02NE\x10\x02\x12\x06\n\x02GT\x10\x03\x12\x06\n\x02GE\x10\x04\x12\x06\n\x02LT\x10\x05\x12\x06\n\x02LE\x10\x06\x12\x06\n\x02OR\x10\x07\x12\x07\n\x03\x41ND\x10\x08*8\n\x06\x43lause\x12\x16\n\x12\x43LAUSE_UNSPECIFIED\x10\x00\x12\x08\n\x04SAME\x10\x01\x12\x0c\n\x08\x44ISTINCT\x10\x02\x42MZ.github.com/nspcc-dev/neofs-sdk-go/proto/netmap\xaa\x02\x1aNeo.FileStorage.API.Netmapb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12netmap/types.proto\x12\x10neo.fs.v2.netmap\x1a\x10refs/types.proto\"\xa5\x01\n\x06\x46ilter\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n\x03key\x18\x02 \x01(\tR\x03key\x12+\n\x02op\x18\x03 \x01(\x0e\x32\x1b.neo.fs.v2.netmap.OperationR\x02op\x12\x14\n\x05value\x18\x04 \x01(\tR\x05value\x12\x32\n\x07\x66ilters\x18\x05 \x03(\x0b\x32\x18.neo.fs.v2.netmap.FilterR\x07\x66ilters\"\x9c\x01\n\x08Selector\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05\x63ount\x18\x02 \x01(\rR\x05\x63ount\x12\x30\n\x06\x63lause\x18\x03 \x01(\x0e\x32\x18.neo.fs.v2.netmap.ClauseR\x06\x63lause\x12\x1c\n\tattribute\x18\x04 \x01(\tR\tattribute\x12\x16\n\x06\x66ilter\x18\x05 \x01(\tR\x06\x66ilter\";\n\x07Replica\x12\x14\n\x05\x63ount\x18\x01 \x01(\rR\x05\x63ount\x12\x1a\n\x08selector\x18\x02 \x01(\tR\x08selector\"\x81\x05\n\x0fPlacementPolicy\x12\x35\n\x08replicas\x18\x01 \x03(\x0b\x32\x19.neo.fs.v2.netmap.ReplicaR\x08replicas\x12\x36\n\x17\x63ontainer_backup_factor\x18\x02 \x01(\rR\x15\x63ontainerBackupFactor\x12\x38\n\tselectors\x18\x03 \x03(\x0b\x32\x1a.neo.fs.v2.netmap.SelectorR\tselectors\x12\x32\n\x07\x66ilters\x18\x04 \x03(\x0b\x32\x18.neo.fs.v2.netmap.FilterR\x07\x66ilters\x12\x39\n\tsubnet_id\x18\x05 \x01(\x0b\x32\x18.neo.fs.v2.refs.SubnetIDB\x02\x18\x01R\x08subnetId\x12\x43\n\x08\x65\x63_rules\x18\x06 \x03(\x0b\x32(.neo.fs.v2.netmap.PlacementPolicy.ECRuleR\x07\x65\x63Rules\x12\x43\n\x07initial\x18\x07 \x01(\x0b\x32).neo.fs.v2.netmap.PlacementPolicy.InitialR\x07initial\x1aT\n\x06\x45\x43Rule\x12\x15\n\rdata_part_num\x18\x01 \x01(\r\x12\x17\n\x0fparity_part_num\x18\x02 \x01(\r\x12\x1a\n\x08selector\x18\x03 \x01(\tR\x08selector\x1av\n\x07Initial\x12%\n\x0ereplica_limits\x18\x01 \x03(\rR\rreplicaLimits\x12!\n\x0cmax_replicas\x18\x02 \x01(\rR\x0bmaxReplicas\x12!\n\x0cprefer_local\x18\x03 \x01(\x08R\x0bpreferLocal\"\xd8\x02\n\x08NodeInfo\x12\x1d\n\npublic_key\x18\x01 \x01(\x0cR\tpublicKey\x12\x1c\n\taddresses\x18\x02 \x03(\tR\taddresses\x12\x44\n\nattributes\x18\x03 \x03(\x0b\x32$.neo.fs.v2.netmap.NodeInfo.AttributeR\nattributes\x12\x36\n\x05state\x18\x04 \x01(\x0e\x32 .neo.fs.v2.netmap.NodeInfo.StateR\x05state\x1aM\n\tAttribute\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value\x12\x18\n\x07parents\x18\x03 \x03(\tR\x07parents\"B\n\x05State\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\n\n\x06ONLINE\x10\x01\x12\x0b\n\x07OFFLINE\x10\x02\x12\x0f\n\x0bMAINTENANCE\x10\x03\"P\n\x06Netmap\x12\x14\n\x05\x65poch\x18\x01 \x01(\x04R\x05\x65poch\x12\x30\n\x05nodes\x18\x02 \x03(\x0b\x32\x1a.neo.fs.v2.netmap.NodeInfoR\x05nodes\"\x8f\x01\n\rNetworkConfig\x12I\n\nparameters\x18\x01 \x03(\x0b\x32).neo.fs.v2.netmap.NetworkConfig.ParameterR\nparameters\x1a\x33\n\tParameter\x12\x10\n\x03key\x18\x01 \x01(\x0cR\x03key\x12\x14\n\x05value\x18\x02 \x01(\x0cR\x05value\"\xbf\x01\n\x0bNetworkInfo\x12#\n\rcurrent_epoch\x18\x01 \x01(\x04R\x0c\x63urrentEpoch\x12!\n\x0cmagic_number\x18\x02 \x01(\x04R\x0bmagicNumber\x12 \n\x0cms_per_block\x18\x03 \x01(\x03R\nmsPerBlock\x12\x46\n\x0enetwork_config\x18\x04 \x01(\x0b\x32\x1f.neo.fs.v2.netmap.NetworkConfigR\rnetworkConfig*g\n\tOperation\x12\x19\n\x15OPERATION_UNSPECIFIED\x10\x00\x12\x06\n\x02\x45Q\x10\x01\x12\x06\n\x02NE\x10\x02\x12\x06\n\x02GT\x10\x03\x12\x06\n\x02GE\x10\x04\x12\x06\n\x02LT\x10\x05\x12\x06\n\x02LE\x10\x06\x12\x06\n\x02OR\x10\x07\x12\x07\n\x03\x41ND\x10\x08*8\n\x06\x43lause\x12\x16\n\x12\x43LAUSE_UNSPECIFIED\x10\x00\x12\x08\n\x04SAME\x10\x01\x12\x0c\n\x08\x44ISTINCT\x10\x02\x42MZ.github.com/nspcc-dev/neofs-sdk-go/proto/netmap\xaa\x02\x1aNeo.FileStorage.API.Netmapb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,10 +35,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'Z.github.com/nspcc-dev/neofs-sdk-go/proto/netmap\252\002\032Neo.FileStorage.API.Netmap'
   _globals['_PLACEMENTPOLICY'].fields_by_name['subnet_id']._loaded_options = None
   _globals['_PLACEMENTPOLICY'].fields_by_name['subnet_id']._serialized_options = b'\030\001'
-  _globals['_OPERATION']._serialized_start=1515
-  _globals['_OPERATION']._serialized_end=1618
-  _globals['_CLAUSE']._serialized_start=1620
-  _globals['_CLAUSE']._serialized_end=1676
+  _globals['_OPERATION']._serialized_start=1859
+  _globals['_OPERATION']._serialized_end=1962
+  _globals['_CLAUSE']._serialized_start=1964
+  _globals['_CLAUSE']._serialized_end=2020
   _globals['_FILTER']._serialized_start=59
   _globals['_FILTER']._serialized_end=224
   _globals['_SELECTOR']._serialized_start=227
@@ -46,19 +46,23 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_REPLICA']._serialized_start=385
   _globals['_REPLICA']._serialized_end=444
   _globals['_PLACEMENTPOLICY']._serialized_start=447
-  _globals['_PLACEMENTPOLICY']._serialized_end=744
-  _globals['_NODEINFO']._serialized_start=747
-  _globals['_NODEINFO']._serialized_end=1091
-  _globals['_NODEINFO_ATTRIBUTE']._serialized_start=946
-  _globals['_NODEINFO_ATTRIBUTE']._serialized_end=1023
-  _globals['_NODEINFO_STATE']._serialized_start=1025
-  _globals['_NODEINFO_STATE']._serialized_end=1091
-  _globals['_NETMAP']._serialized_start=1093
-  _globals['_NETMAP']._serialized_end=1173
-  _globals['_NETWORKCONFIG']._serialized_start=1176
-  _globals['_NETWORKCONFIG']._serialized_end=1319
-  _globals['_NETWORKCONFIG_PARAMETER']._serialized_start=1268
-  _globals['_NETWORKCONFIG_PARAMETER']._serialized_end=1319
-  _globals['_NETWORKINFO']._serialized_start=1322
-  _globals['_NETWORKINFO']._serialized_end=1513
+  _globals['_PLACEMENTPOLICY']._serialized_end=1088
+  _globals['_PLACEMENTPOLICY_ECRULE']._serialized_start=884
+  _globals['_PLACEMENTPOLICY_ECRULE']._serialized_end=968
+  _globals['_PLACEMENTPOLICY_INITIAL']._serialized_start=970
+  _globals['_PLACEMENTPOLICY_INITIAL']._serialized_end=1088
+  _globals['_NODEINFO']._serialized_start=1091
+  _globals['_NODEINFO']._serialized_end=1435
+  _globals['_NODEINFO_ATTRIBUTE']._serialized_start=1290
+  _globals['_NODEINFO_ATTRIBUTE']._serialized_end=1367
+  _globals['_NODEINFO_STATE']._serialized_start=1369
+  _globals['_NODEINFO_STATE']._serialized_end=1435
+  _globals['_NETMAP']._serialized_start=1437
+  _globals['_NETMAP']._serialized_end=1517
+  _globals['_NETWORKCONFIG']._serialized_start=1520
+  _globals['_NETWORKCONFIG']._serialized_end=1663
+  _globals['_NETWORKCONFIG_PARAMETER']._serialized_start=1612
+  _globals['_NETWORKCONFIG_PARAMETER']._serialized_end=1663
+  _globals['_NETWORKINFO']._serialized_start=1666
+  _globals['_NETWORKINFO']._serialized_end=1857
 # @@protoc_insertion_point(module_scope)
