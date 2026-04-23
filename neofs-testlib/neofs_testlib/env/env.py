@@ -1409,6 +1409,12 @@ class StorageNode(ResurrectableProcess):
         if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
             sn_config_template = self.get_config_template()
 
+            disable_post_initial_queue = self.disable_post_initial_queue
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+                "0.52.0"
+            ):
+                disable_post_initial_queue = None
+
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
@@ -1425,7 +1431,7 @@ class StorageNode(ResurrectableProcess):
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
                 replication_cooldown=self.replication_cooldown,
-                disable_post_initial_queue=self.disable_post_initial_queue,
+                disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
@@ -1440,6 +1446,12 @@ class StorageNode(ResurrectableProcess):
         if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
             sn_config_template = self.get_config_template()
 
+            disable_post_initial_queue = self.disable_post_initial_queue
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+                "0.52.0"
+            ):
+                disable_post_initial_queue = None
+
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
@@ -1456,7 +1468,7 @@ class StorageNode(ResurrectableProcess):
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
                 replication_cooldown=self.replication_cooldown,
-                disable_post_initial_queue=self.disable_post_initial_queue,
+                disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
