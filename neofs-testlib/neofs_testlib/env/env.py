@@ -28,6 +28,7 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
+import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -43,6 +44,7 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
+from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -229,6 +231,7 @@ class NeoFSEnv:
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
         replication_cooldown="10s",
+        disable_post_initial_queue=False,
         object_batch_size=None,
     ):
         logger.info(f"Going to deploy {count} storage nodes")
@@ -247,6 +250,7 @@ class NeoFSEnv:
                 gc_remover_batch_size=gc_remover_batch_size,
                 gc_sleep_interval=gc_sleep_interval,
                 replication_cooldown=replication_cooldown,
+                disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=object_batch_size,
             )
             self.storage_nodes.append(new_storage_node)
@@ -688,6 +692,7 @@ class NeoFSEnv:
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
         replication_cooldown="10s",
+        disable_post_initial_queue=False,
         object_batch_size=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
@@ -695,6 +700,13 @@ class NeoFSEnv:
 
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
+
+        if (
+            parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0")
+            and disable_post_initial_queue
+        ):
+            pytest.skip("Requires fresh neofs-node")
+
         try:
             neofs_env.deploy_inner_ring_nodes(
                 count=inner_ring_nodes_count,
@@ -721,6 +733,7 @@ class NeoFSEnv:
                     gc_remover_batch_size=gc_remover_batch_size,
                     gc_sleep_interval=gc_sleep_interval,
                     replication_cooldown=replication_cooldown,
+                    disable_post_initial_queue=disable_post_initial_queue,
                     object_batch_size=object_batch_size,
                 )
             if with_main_chain:
@@ -1248,6 +1261,7 @@ class StorageNode(ResurrectableProcess):
         gc_remover_batch_size=200,
         gc_sleep_interval=STORAGE_GC_TIME,
         replication_cooldown="10s",
+        disable_post_initial_queue=False,
         object_batch_size=None,
     ):
         self.neofs_env = neofs_env
@@ -1286,6 +1300,7 @@ class StorageNode(ResurrectableProcess):
         self.node_attrs = node_attrs
         self.writecache = writecache
         self.replication_cooldown = replication_cooldown
+        self.disable_post_initial_queue = disable_post_initial_queue
         self.object_batch_size = object_batch_size
         if attrs:
             self.attrs.update(attrs)
@@ -1321,6 +1336,12 @@ class StorageNode(ResurrectableProcess):
             if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
                 sn_config_template = self.get_config_template()
 
+                disable_post_initial_queue = self.disable_post_initial_queue
+                if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+                    "0.52.0"
+                ):
+                    disable_post_initial_queue = None
+
                 NeoFSEnv.generate_config_file(
                     config_template=sn_config_template,
                     config_path=self.storage_node_config_path,
@@ -1337,6 +1358,7 @@ class StorageNode(ResurrectableProcess):
                     attrs=self.node_attrs,
                     metadata_path=self.metadata_path,
                     replication_cooldown=self.replication_cooldown,
+                    disable_post_initial_queue=disable_post_initial_queue,
                     object_batch_size=self.object_batch_size,
                 )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
@@ -1403,6 +1425,7 @@ class StorageNode(ResurrectableProcess):
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
                 replication_cooldown=self.replication_cooldown,
+                disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
@@ -1433,6 +1456,7 @@ class StorageNode(ResurrectableProcess):
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
                 replication_cooldown=self.replication_cooldown,
+                disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)

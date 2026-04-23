@@ -50,6 +50,7 @@ def get_or_create_neofs_env(
     gc_remover_batch_size=200,
     gc_sleep_interval=STORAGE_GC_TIME,
     replication_cooldown="10s",
+    disable_post_initial_queue=False,
     object_batch_size=None,
 ):
     NeoFSEnv.cleanup_unused_ports()
@@ -71,6 +72,7 @@ def get_or_create_neofs_env(
             gc_remover_batch_size=gc_remover_batch_size,
             gc_sleep_interval=gc_sleep_interval,
             replication_cooldown=replication_cooldown,
+            disable_post_initial_queue=disable_post_initial_queue,
             object_batch_size=object_batch_size,
         )
     return neofs_env
@@ -89,6 +91,7 @@ def neofs_env(temp_directory, artifacts_directory, request):
         chain_meta_data=params.get("chain_meta_data", True),
         allow_ec=params.get("allow_ec", True),
         replication_cooldown=params.get("replication_cooldown", "10s"),
+        disable_post_initial_queue=params.get("disable_post_initial_queue", False),
     )
     yield neofs_env
     neofs_env.finalize(request)

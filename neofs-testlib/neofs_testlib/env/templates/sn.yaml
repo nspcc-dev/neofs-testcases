@@ -52,6 +52,11 @@ policer:
   {% endif %}
 {% endif %}
 
+{% if disable_post_initial_queue is not none %}
+replicator:
+  disable_post_initial_queue: {{ disable_post_initial_queue }}
+{% endif %}
+
 # Storage engine configuration
 storage:    
   shards:
