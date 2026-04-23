@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 
 import allure
 import pytest
@@ -8,6 +9,7 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object, put_object, put_object_to_random_node
 from helpers.node_management import exclude_node_from_network_map, include_node_to_network_map
+from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -61,8 +63,8 @@ def _multi_vector_policy(initial: dict | None = None) -> str:
 
 _slow_policer = pytest.mark.parametrize(
     "neofs_env",
-    [{"replication_cooldown": "1h"}],
-    ids=["replication_cooldown=1h"],
+    [{"disable_post_initial_queue": True}],
+    ids=["disable_post_initial_queue=True"],
     indirect=True,
 )
 
@@ -116,6 +118,65 @@ def test_initial_placement_max_replicas(
         assert len(nodes_with_object) == max_replicas, (
             f"Expected {max_replicas} initial copy/copies (max_replicas={max_replicas}), "
             f"but found {len(nodes_with_object)} on {nodes_with_object}"
+        )
+
+
+@pytest.mark.parametrize("max_replicas", [1], ids=["max_replicas=1"])
+@allure.title("Initial placement: disable_post_initial_queue=False")
+def test_initial_placement_max_replicas_optimized(
+    default_wallet: NodeWallet,
+    neofs_env: NeoFSEnv,
+    max_replicas: int,
+):
+    if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
+        pytest.skip("Requires fresh neofs-node")
+
+    replicas = 3
+    with allure.step("Create container"):
+        cid = create_container(
+            wallet=default_wallet.path,
+            rule=_policy(replicas=replicas, cbf=1, initial={"maxReplicas": max_replicas}),
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+            basic_acl=PUBLIC_ACL,
+        )
+
+    file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+
+    with allure.step("PUT object"):
+        oid = put_object_to_random_node(
+            wallet=default_wallet.path,
+            path=file_path,
+            cid=cid,
+            shell=neofs_env.shell,
+            neofs_env=neofs_env,
+        )
+
+    with allure.step("Object is immediately retrievable"):
+        got = get_object(
+            wallet=default_wallet.path,
+            cid=cid,
+            oid=oid,
+            endpoint=neofs_env.sn_rpc,
+            shell=neofs_env.shell,
+        )
+        assert get_file_hash(file_path) == get_file_hash(got)
+
+    with allure.step(f"Exactly {replicas} copy/copies exist"):
+        nodes_with_object = []
+        for _ in range(5):
+            nodes_with_object = get_nodes_with_object(
+                cid,
+                oid,
+                shell=neofs_env.shell,
+                nodes=neofs_env.storage_nodes,
+                neofs_env=neofs_env,
+            )
+            if len(nodes_with_object) == replicas:
+                break
+            time.sleep(1)
+        assert len(nodes_with_object) == replicas, (
+            f"Expected {replicas} copy/copies, but found {len(nodes_with_object)} on {nodes_with_object}"
         )
 
 
