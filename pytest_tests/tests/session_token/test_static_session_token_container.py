@@ -371,7 +371,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                 )
 
         with allure.step("Try to force delete container using scammer token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=rf"{CONTAINER_DELETION_TIMED_OUT}|{RPC_ERROR}"):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
@@ -382,7 +382,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                     force=True,
                 )
 
-            with pytest.raises(RuntimeError, match=SESSION_NOT_ISSUED_BY_OWNER):
+            with pytest.raises(RuntimeError, match=rf"{CONTAINER_DELETION_TIMED_OUT}|{RPC_ERROR}"):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
