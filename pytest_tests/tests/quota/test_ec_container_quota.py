@@ -533,16 +533,10 @@ class TestContainerQuota(TestQuotaBase):
         )
 
         with allure.step("Verify container quota is reclaimed - should be able to put object again"):
-            file_path_after_delete = generate_file(max_object_size_for_the_current_quota // 2 - 10)
-            oid3 = put_object(
-                default_wallet.path, file_path_after_delete, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-            )
-            get_object(
-                default_wallet.path,
-                cid,
-                oid3,
-                self.neofs_env.shell,
-                self.neofs_env.sn_rpc,
+            self.wait_until_object_put_succeeds_after_quota_release(
+                wallet_path=default_wallet.path,
+                cid=cid,
+                object_size=max_object_size_for_the_current_quota // 2 - 10,
             )
 
         with allure.step("Delete second object as well"):
@@ -562,16 +556,10 @@ class TestContainerQuota(TestQuotaBase):
         )
 
         with allure.step("Verify significant container quota space is available after deleting both objects"):
-            file_path_large = generate_file(max_object_size_for_the_current_quota // 2 - 20)
-            oid4 = put_object(
-                default_wallet.path, file_path_large, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc
-            )
-            get_object(
-                default_wallet.path,
-                cid,
-                oid4,
-                self.neofs_env.shell,
-                self.neofs_env.sn_rpc,
+            self.wait_until_object_put_succeeds_after_quota_release(
+                wallet_path=default_wallet.path,
+                cid=cid,
+                object_size=max_object_size_for_the_current_quota // 2 - 20,
             )
 
     @pytest.mark.parametrize("quota_type,quota_value", [("hard", 200)])
