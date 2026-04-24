@@ -24,7 +24,23 @@ on:
 permissions: write-all
 
 jobs:
+  run_pr_tests:
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@master
+    with:
+      neofs_store_objects_cid: ${{ vars.TEST_RESULTS_CID }}
+      neofs_pr_expiration_period: ${{ vars.PR_EXPIRATION_PERIOD }}
+      neofs_master_expiration_period: ${{ vars.MASTER_EXPIRATION_PERIOD }}
+      neofs_manual_expiration_period: ${{ vars.MANUAL_RUN_EXPIRATION_PERIOD }}
+      neofs_other_expiration_period: ${{ vars.OTHER_EXPIRATION_PERIOD }}
+      neofs_testcases_commit: ${{ inputs.neofs_testcases_ref }}
+      tests_parallel_level: 4
+      os: >
+        [{"runner": "ubuntu-latest", "binary": "linux-amd64"}]
+    secrets: inherit
+
   run_system_tests:
+    if: ${{ github.event_name != 'pull_request' }}
     uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@master
     with:
       neofs_store_objects_cid: ${{ vars.TEST_RESULTS_CID }}
