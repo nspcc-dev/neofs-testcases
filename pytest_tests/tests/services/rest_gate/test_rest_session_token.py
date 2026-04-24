@@ -408,12 +408,19 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         with allure.step("Create original V2 Session Token"):
             contexts = [{"containerID": cid, "verbs": ["OBJECT_GET", "OBJECT_HEAD"]}]
             user_address = get_last_address_from_wallet(self.user_wallet.path, self.user_wallet.password)
-            original_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, contexts, targets=[user_address])
+            original_token = generate_session_token_v2(
+                gw_endpoint, self.owner_wallet, contexts, targets=[user_address], lifetime=1000
+            )
 
         with allure.step("Create delegated token"):
             reduced_contexts = [{"containerID": cid, "verbs": ["OBJECT_GET"]}]
             delegated_token = generate_session_token_v2(
-                gw_endpoint, self.user_wallet, reduced_contexts, targets=[rest_gw_address], origin=original_token
+                gw_endpoint,
+                self.user_wallet,
+                reduced_contexts,
+                targets=[rest_gw_address],
+                lifetime=900,
+                origin=original_token,
             )
 
         with allure.step("Verify delegated token works"):
@@ -454,7 +461,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         with allure.step("Attempt to create delegated token (should fail)"):
             with pytest.raises(Exception, match=SESSION_TOKEN_V2_VALIDATION):
                 generate_session_token_v2(
-                    gw_endpoint, self.user_wallet, contexts, targets=[user_address], origin=final_token
+                    gw_endpoint, self.user_wallet, contexts, targets=[user_address], lifetime=900, origin=final_token
                 )
 
     @allure.title("Test V2 Session Token - Cannot Extend Verbs in Delegation")
@@ -779,12 +786,19 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
 
         with allure.step("Create original token with REST GW NNS domain as target"):
             contexts = [{"containerID": cid, "verbs": ["OBJECT_GET", "OBJECT_HEAD"]}]
-            original_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, contexts, targets=[user_domain])
+            original_token = generate_session_token_v2(
+                gw_endpoint, self.owner_wallet, contexts, targets=[user_domain], lifetime=1000
+            )
 
         with allure.step("Create delegated token for REST GW with reduced permissions"):
             reduced_contexts = [{"containerID": cid, "verbs": ["OBJECT_GET"]}]
             delegated_token = generate_session_token_v2(
-                gw_endpoint, self.user_wallet, reduced_contexts, targets=[rest_gw_address], origin=original_token
+                gw_endpoint,
+                self.user_wallet,
+                reduced_contexts,
+                targets=[rest_gw_address],
+                lifetime=900,
+                origin=original_token,
             )
 
         with allure.step("Verify delegated token works via REST"):
