@@ -686,6 +686,12 @@ class TestObjectLockWithGrpc(TestNeofsBase):
                 for shard in node.shards:
                     self.neofs_env.neofs_lens().meta.resync(shard.fstree_path, shard.metabase_path)
 
+        with allure.step("Log fstree contents after metabase resync"):
+            neofs_lens = self.neofs_env.neofs_lens()
+            for node in neofs_env.storage_nodes:
+                for shard in node.shards:
+                    neofs_lens.fstree.list(shard.fstree_path)
+
         with allure.step("Start nodes after metabase deletion"):
             start_storage_nodes(self.neofs_env.storage_nodes)
 

@@ -1439,6 +1439,12 @@ class StorageNode(ResurrectableProcess):
     @allure.step("Delete storage node metadata")
     def delete_metadata(self):
         self.stop()
+
+        with allure.step("Log fstree contents before deletion"):
+            neofs_lens = self.neofs_env.neofs_lens()
+            for shard in self.shards:
+                neofs_lens.fstree.list(shard.fstree_path)
+
         for shard in self.shards:
             os.remove(shard.metabase_path)
             shard.metabase_path = self.neofs_env._generate_temp_file(self.sn_dir, prefix="shard_metabase")
