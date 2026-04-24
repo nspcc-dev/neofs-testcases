@@ -1,7 +1,8 @@
 import re
 
 import pytest
-from helpers.neofs_verbs import get_netmap_netinfo
+from helpers.file_helper import generate_file
+from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
@@ -206,3 +207,27 @@ class TestQuotaBase(TestNeofsBase):
             cid=cid,
             rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
         ).stdout
+
+    @retry(stop=stop_after_delay(30), wait=wait_fixed(1), reraise=True)
+    def wait_until_object_put_succeeds_after_quota_release(
+        self,
+        wallet_path: str,
+        cid: str,
+        object_size: int,
+    ) -> str:
+        file_path = generate_file(object_size)
+        oid = put_object(
+            wallet_path,
+            file_path,
+            cid,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+        )
+        get_object(
+            wallet_path,
+            cid,
+            oid,
+            self.neofs_env.shell,
+            self.neofs_env.sn_rpc,
+        )
+        return oid
