@@ -63,8 +63,8 @@ def _multi_vector_policy(initial: dict | None = None) -> str:
 
 _slow_policer = pytest.mark.parametrize(
     "neofs_env",
-    [{"disable_post_initial_queue": True}],
-    ids=["disable_post_initial_queue=True"],
+    [{"disable_post_initial_queue": True, "replication_cooldown": "1h"}],
+    ids=["disable_post_initial_queue=True,replication_cooldown=1h"],
     indirect=True,
 )
 
