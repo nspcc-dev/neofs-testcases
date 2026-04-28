@@ -281,9 +281,7 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
             f"invalid value for {metric}"
         )
 
-    delete_container(
-        default_wallet.path, cid, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc, await_mode=True
-    )
+    delete_container(default_wallet.path, cid, shell=neofs_env_single_sn.shell, endpoint=neofs_env_single_sn.sn_rpc)
 
 
 def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):

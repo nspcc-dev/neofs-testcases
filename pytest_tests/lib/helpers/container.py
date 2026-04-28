@@ -38,7 +38,6 @@ def create_container(
     session_wallet: str = "",
     name: str = None,
     options: dict = None,
-    await_mode: bool = True,
     wait_for_creation: bool = True,
     global_name: bool = False,
 ) -> str:
@@ -60,7 +59,6 @@ def create_container(
         endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
         options (optional, dict): any other options to pass to the call
         name (optional, str): container name attribute
-        await_mode (bool): block execution until container is persisted
         wait_for_creation (): Wait for container shows in container list
 
     Returns:
@@ -93,7 +91,6 @@ def create_container(
         attributes=attributes,
         name=name,
         session=session_token,
-        await_mode=await_mode,
         global_name=global_name,
         **options or {},
     )
@@ -199,7 +196,6 @@ def delete_container(
     endpoint: str,
     force: bool = False,
     session_token: Optional[str] = None,
-    await_mode: bool = False,
 ) -> None:
     """
     A wrapper for `neofs-cli container delete` call.
@@ -220,7 +216,6 @@ def delete_container(
         rpc_endpoint=endpoint,
         force=force,
         session=session_token,
-        await_mode=await_mode,
     )
 
 

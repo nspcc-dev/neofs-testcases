@@ -42,7 +42,6 @@ def put_get_object(neofs_env: NeoFSEnv, wallet: NodeWallet):
         wallet=wallet.path,
         policy="REP 3 IN X CBF 1 SELECT 3 FROM * AS X",
         basic_acl="0FBFBFFF",
-        await_mode=True,
     )
 
     lines = result.stdout.split("\n")

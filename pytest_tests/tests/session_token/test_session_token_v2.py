@@ -240,7 +240,6 @@ class TestSessionTokenV2(TestNeofsBase):
                 session_token=session_token,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
             )
 
         with allure.step("Verify container was deleted"):

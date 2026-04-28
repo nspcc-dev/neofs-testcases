@@ -173,7 +173,6 @@ def set_eacl(
         rpc_endpoint=endpoint,
         cid=cid,
         table=eacl_table_path,
-        await_mode=True,
         session=session_token,
         force=force,
     )

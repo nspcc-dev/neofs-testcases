@@ -44,7 +44,6 @@ class TestCli(TestCase):
             wallet=self.wallet,
             basic_acl=self.basic_acl,
             policy=self.policy,
-            await_mode=True,
             xhdr=self.xhdr,
         )
 
@@ -52,7 +51,7 @@ class TestCli(TestCase):
         expected_command = (
             f"{self.neofs_cli_exec_path} --config {self.config_file} container create "
             f"--rpc-endpoint '{self.rpc_endpoint}' --wallet '{self.wallet}' "
-            f"--basic-acl '{self.basic_acl}' --await --policy '{self.policy}' "
+            f"--basic-acl '{self.basic_acl}' --policy '{self.policy}' "
             f"--xhdr '{xhdr}'"
         )
 
