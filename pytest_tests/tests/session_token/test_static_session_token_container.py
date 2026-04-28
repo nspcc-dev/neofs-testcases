@@ -250,7 +250,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                 session_token=static_sessions[ContainerVerb.DELETE],
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
             )
 
         assert cid not in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
@@ -280,7 +279,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                         session_token=static_sessions[verb],
                         shell=self.shell,
                         endpoint=self.neofs_env.sn_rpc,
-                        await_mode=False,
                     )
                 assert cid in list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
@@ -313,7 +311,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=stranger_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                 )
 
         with allure.step("Try to force delete container using stranger token"):
@@ -324,7 +321,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=stranger_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                     force=True,
                 )
 
@@ -357,7 +353,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=user_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                 )
 
             with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
@@ -367,7 +362,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=stranger_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                 )
 
         with allure.step("Try to force delete container using scammer token"):
@@ -378,7 +372,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=user_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                     force=True,
                 )
 
@@ -389,7 +382,6 @@ class TestSessionTokenContainer(TestNeofsBase):
                     session_token=stranger_token[ContainerVerb.DELETE],
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                     force=True,
                 )
 

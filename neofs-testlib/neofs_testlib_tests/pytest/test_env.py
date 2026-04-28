@@ -145,7 +145,6 @@ def test_gateways_put_get(neofs_env: NeoFSEnv, wallet: NodeWallet, zero_fee, gw_
         wallet=wallet.path,
         policy="REP 1 IN X CBF 1 SELECT 1 FROM * AS X",
         basic_acl="0FBFBFFF",
-        await_mode=True,
     )
 
     lines = result.stdout.split("\n")

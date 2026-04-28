@@ -275,7 +275,6 @@ class TestContainer(TestNeofsBase):
                     cid=cid,
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                 )
 
         with allure.step("Try to force delete container"):
@@ -285,7 +284,6 @@ class TestContainer(TestNeofsBase):
                     cid=cid,
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                     force=True,
                 )
 
@@ -302,7 +300,6 @@ class TestContainer(TestNeofsBase):
                     create_container(
                         wallet.path,
                         rule=placement_rule,
-                        await_mode=False,
                         shell=self.shell,
                         endpoint=self.neofs_env.sn_rpc,
                         wait_for_creation=False,
@@ -362,7 +359,6 @@ class TestContainer(TestNeofsBase):
                     cid,
                     shell=self.shell,
                     endpoint=alive_node_with_object.endpoint,
-                    await_mode=True,
                     force=True,
                 )
 
@@ -506,7 +502,6 @@ class TestContainer(TestNeofsBase):
                     cid,
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
-                    await_mode=True,
                     force=True,
                 )
 
@@ -547,7 +542,6 @@ class TestContainer(TestNeofsBase):
                 cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
 
@@ -657,7 +651,6 @@ class TestContainer(TestNeofsBase):
                 cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
 
@@ -764,7 +757,6 @@ class TestContainer(TestNeofsBase):
                 cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
 
@@ -870,7 +862,6 @@ class TestContainer(TestNeofsBase):
                 cid,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
 
@@ -1037,7 +1028,6 @@ class TestContainer(TestNeofsBase):
                 container_b_id,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
             delete_container(
@@ -1045,7 +1035,6 @@ class TestContainer(TestNeofsBase):
                 container_a_id,
                 shell=self.shell,
                 endpoint=self.neofs_env.sn_rpc,
-                await_mode=True,
                 force=True,
             )
 

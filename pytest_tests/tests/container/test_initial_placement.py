@@ -565,7 +565,6 @@ def test_invalid_initial_policy_identical_to_main(
                 rule=bad_policy,
                 shell=neofs_env.shell,
                 endpoint=neofs_env.sn_rpc,
-                await_mode=False,
                 wait_for_creation=True,
             )
 
@@ -584,6 +583,5 @@ def test_invalid_initial_policy_replica_limits_overflow(
                 rule=bad_policy,
                 shell=neofs_env.shell,
                 endpoint=neofs_env.sn_rpc,
-                await_mode=False,
                 wait_for_creation=True,
             )

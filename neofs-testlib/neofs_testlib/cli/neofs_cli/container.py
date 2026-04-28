@@ -12,7 +12,6 @@ class NeofsCliContainer(CliCommand):
         address: Optional[str] = None,
         attributes: Optional[dict] = None,
         basic_acl: Optional[str] = None,
-        await_mode: bool = False,
         disable_timestamp: bool = False,
         global_name: bool = False,
         name: Optional[str] = None,
@@ -33,7 +32,6 @@ class NeofsCliContainer(CliCommand):
             address: Address of wallet account.
             attributes: Comma separated pairs of container attributes in form of
                 Key1=Value1,Key2=Value2.
-            await_mode: Block execution until container is persisted.
             basic_acl: Hex encoded basic ACL value or keywords like 'public-read-write',
                 'private', 'eacl-public-read' (default "private").
             disable_timestamp: Disable timestamp container attribute.
@@ -63,7 +61,6 @@ class NeofsCliContainer(CliCommand):
         wallet: str,
         cid: str,
         address: Optional[str] = None,
-        await_mode: bool = False,
         session: Optional[str] = None,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
@@ -77,7 +74,6 @@ class NeofsCliContainer(CliCommand):
 
         Args:
             address: Address of wallet account.
-            await_mode: Block execution until container is removed.
             cid: Container ID.
             force: Do not check whether container contains locks and remove immediately.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
@@ -103,7 +99,6 @@ class NeofsCliContainer(CliCommand):
         wallet: str,
         cid: str,
         address: Optional[str] = None,
-        await_mode: bool = False,
         to: Optional[str] = None,
         json_mode: bool = False,
         ttl: Optional[int] = None,
@@ -116,7 +111,6 @@ class NeofsCliContainer(CliCommand):
 
         Args:
             address: Address of wallet account.
-            await_mode: Block execution until container is removed.
             cid: Container ID.
             json_mode: Print or dump container in JSON format.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
@@ -141,7 +135,6 @@ class NeofsCliContainer(CliCommand):
         wallet: str,
         cid: str,
         address: Optional[str] = None,
-        await_mode: bool = False,
         to: Optional[str] = None,
         session: Optional[str] = None,
         ttl: Optional[int] = None,
@@ -154,7 +147,6 @@ class NeofsCliContainer(CliCommand):
 
         Args:
             address: Address of wallet account.
-            await_mode: Block execution until container is removed.
             cid: Container ID.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             to: Path to dump encoded container.
@@ -245,7 +237,6 @@ class NeofsCliContainer(CliCommand):
         wallet: str,
         cid: str,
         address: Optional[str] = None,
-        await_mode: bool = False,
         table: Optional[str] = None,
         session: Optional[str] = None,
         ttl: Optional[int] = None,
@@ -260,7 +251,6 @@ class NeofsCliContainer(CliCommand):
 
         Args:
             address: Address of wallet account.
-            await_mode: Block execution until container is removed.
             cid: Container ID.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             session: Path to a JSON-encoded container session token.
