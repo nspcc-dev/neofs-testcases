@@ -120,6 +120,7 @@ def head_via_rest_gate(
     oid: str,
     endpoint: str,
     session_token: str = None,
+    headers: dict = None,
     expect_error: bool = False,
 ) -> requests.Response:
     """
@@ -128,16 +129,17 @@ def head_via_rest_gate(
     oid:          object ID
     endpoint:     REST gate endpoint
     session_token: (optional) session token; adds Authorization: Bearer header automatically
+    headers:      (optional) additional HTTP headers to include in the request
     expect_error: (optional) if True, return response instead of raising on error
     """
     request = f"{endpoint}/objects/{cid}/by_id/{oid}"
 
-    headers = {}
+    req_headers = dict(headers) if headers else {}
     if session_token:
-        headers["Authorization"] = f"Bearer {session_token}"
+        req_headers["Authorization"] = f"Bearer {session_token}"
 
     verify_options_request(request)
-    resp = requests.head(request, stream=True, headers=headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    resp = requests.head(request, stream=True, headers=req_headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
 
     if not resp.ok and not expect_error:
         raise Exception(
@@ -455,6 +457,114 @@ def create_container(
     assert resp.json().get("containerId"), f"CID not found in response {resp.json()}"
 
     return resp.json().get("containerId")
+
+
+@allure.step("Get unsigned bearer token via REST GW")
+def get_unsigned_bearer_token(
+    endpoint: str,
+    issuer: str,
+    records: list[dict],
+    owner: Optional[str] = None,
+    lifetime: Optional[int] = None,
+    expect_error: bool = False,
+) -> Union[str, requests.Response]:
+    """
+    Get unsigned bearer token via /v2/auth/bearer.
+
+    Args:
+        endpoint: REST gateway endpoint
+        issuer: Token issuer ID (account address) that will sign the token (container owner)
+        records: List of EACL records (dicts) shaping the bearer token EACL.
+        owner: If set, only this account address is authorized to use the token.
+               When the token is used together with a v2 session token the
+               session's issuer (i.e. the actual user) is the request sender,
+               so ``owner`` is typically the user's account in that case.
+        lifetime: Token lifetime in epochs (default - REST gateway's default).
+        expect_error: If True, return the raw response on error instead of raising.
+
+    Returns:
+        str: Base64 encoded unsigned bearer token body, or the raw response on error
+        when ``expect_error`` is True.
+    """
+    request = f"{endpoint.replace('v1', 'v2')}/auth/bearer"
+
+    body: dict = {"issuer": issuer, "records": records}
+    if owner is not None:
+        body["owner"] = owner
+    if lifetime is not None:
+        body["lifetime"] = lifetime
+
+    resp = requests.post(request, json=body, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+
+    if not resp.ok:
+        if expect_error:
+            return resp
+        raise Exception(
+            f"""Failed to form unsigned bearer token via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
+    _attach_allure_step(request_info, resp.json(), req_type="POST")
+
+    return resp.json()["token"]
+
+
+@allure.step("Complete bearer token via REST GW")
+def complete_bearer_token(
+    endpoint: str,
+    token: str,
+    signature: str,
+    public_key: str,
+    scheme: str = "DETERMINISTIC_SHA256",
+    expect_error: bool = False,
+) -> Union[str, requests.Response]:
+    """
+    Complete bearer token by attaching signature via /v2/auth/bearer/complete.
+
+    Args:
+        endpoint: REST gateway endpoint
+        token: Base64 encoded unsigned bearer token body from /v2/auth/bearer
+        signature: Hex encoded signature (or base64 encoded invocScript for N3 scheme)
+        public_key: Hex encoded public key (or base64 encoded verifScript for N3 scheme)
+        scheme: Signature scheme (WALLETCONNECT, SHA512, DETERMINISTIC_SHA256, N3)
+        expect_error: If True, return the raw response on error instead of raising.
+
+    Returns:
+        str: Base64 encoded full signed bearer token, or the raw response on error
+        when ``expect_error`` is True.
+    """
+    request = f"{endpoint.replace('v1', 'v2')}/auth/bearer/complete"
+
+    body = {
+        "token": token,
+        "signature": signature,
+        "key": public_key,
+        "scheme": scheme,
+    }
+
+    resp = requests.post(request, json=body, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+
+    if not resp.ok:
+        if expect_error:
+            return resp
+        raise Exception(
+            f"""Failed to complete bearer token via REST gate:
+                request: {resp.request.path_url},
+                response: {resp.text},
+                status code: {resp.status_code} {resp.reason}"""
+        )
+
+    logger.info(f"Request: {request}")
+    logger.info(f"Response: {resp.json()}")
+    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
+    _attach_allure_step(request_info, resp.json(), req_type="POST")
+
+    return resp.json()["token"]
 
 
 @allure.step("Get unsigned session token via REST GW")
