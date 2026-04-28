@@ -31,7 +31,6 @@ CONFIG_KEYS_MAPPING = {
     "EigenTrustIterations": "number_of_eigentrust_iterations",
     "EigenTrustAlpha": "eigentrust_alpha",
     "WithdrawFee": "withdrawal_fee",
-    "HomomorphicHashingDisabled": "homomorphic_hashing_disabled",
 }
 
 

@@ -190,7 +190,6 @@ class NeofsAdmFSChain(CliCommand):
         container_alias_fee: int = 500,
         container_fee: int = 1000,
         epoch_duration: int = 240,
-        homomorphic_disabled: bool = False,
         local_dump: Optional[str] = None,
         max_object_size: int = 67108864,
     ) -> CommandResult:
@@ -203,7 +202,6 @@ class NeofsAdmFSChain(CliCommand):
             contracts: Path to archive with compiled NeoFS contracts
                 (default fetched from latest github release).
             epoch_duration: Amount of side chain blocks in one NeoFS epoch (default 240).
-            homomorphic_disabled: Disable object homomorphic hashing.
             local_dump: Path to the blocks dump file.
             max_object_size: Max single object size in bytes (default 67108864).
             protocol: Path to the consensus node configuration.
@@ -328,7 +326,7 @@ class NeofsAdmFSChain(CliCommand):
         Args:
             rpc_endpoint: N3 RPC node endpoint.
             alphabet_wallets: Path to alphabet wallets dir.
-            post_data: Config key=value setting, e.g. HomomorphicHashingDisabled=true
+            post_data: Config key=value setting.
 
         Returns:
             Command's result.

@@ -19,7 +19,6 @@ class TestNetworkConfigChange(TestNeofsBase):
             ("EigenTrustIterations", 8),
             ("EigenTrustAlpha", 0.2),
             ("WithdrawFee", 200000000),
-            ("HomomorphicHashingDisabled", True),
         ],
     )
     def test_config_update_single_value(self, key: str, value: Union[str, int, bool], clean_config: None):
@@ -39,7 +38,6 @@ class TestNetworkConfigChange(TestNeofsBase):
         [
             ("MaxObjectSize", "VeryBigSize", int),
             ("BasicIncomeRate", False, int),
-            ("HomomorphicHashingDisabled", 0.2, bool),
         ],
     )
     @allure.title("Set network config key to invalid value")

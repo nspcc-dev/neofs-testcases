@@ -118,7 +118,6 @@ class TestFailoverNetwork:
             "epoch_duration",
             "maximum_object_size",
             "withdrawal_fee",
-            "homomorphic_hashing_disabled",
         ]
 
         for storage_node in self.neofs_env.storage_nodes:
