@@ -4,7 +4,6 @@ network:
   max_object_size: 67108864
   epoch_duration: 240
   basic_income_rate: 100000000
-  homomorphic_hash_disabled: false
   fee:
     candidate: 0
     container: 0

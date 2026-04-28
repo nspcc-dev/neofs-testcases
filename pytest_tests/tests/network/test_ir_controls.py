@@ -93,7 +93,6 @@ def test_control_notary_request_new_epoch(neofs_env_4_ir_4_sn: NeoFSEnv):
         ("EigenTrustIterations", 8),
         ("EigenTrustAlpha", 0.2),
         ("WithdrawFee", 200000000),
-        ("HomomorphicHashingDisabled", True),
     ],
 )
 def test_control_notary_request_new_config_value(neofs_env_4_ir_4_sn: NeoFSEnv, key: str, value: Union[str, int, bool]):
