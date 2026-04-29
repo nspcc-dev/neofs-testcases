@@ -142,8 +142,5 @@ def decode_common_fields(data: dict) -> dict:
     header["ownerID"] = json_reencode(header["ownerID"]["value"])
     header["payloadHash"] = json_reencode(header["payloadHash"]["sum"])
     header["version"] = f"v{header['version']['major']}.{header['version']['minor']}"
-    # Homomorphic hash is optional and its calculation might be disabled in trusted network
-    if header.get("homomorphicHash"):
-        header["homomorphicHash"] = json_reencode(header["homomorphicHash"]["sum"])
 
     return data

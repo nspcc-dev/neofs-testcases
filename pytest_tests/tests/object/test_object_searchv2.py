@@ -836,7 +836,6 @@ def test_search_by_system_attributes(
             "$Object:objectType": head_info["header"]["objectType"],
             "$Object:version": head_info["header"]["version"],
             "$Object:payloadHash": base58.b58decode(head_info["header"]["payloadHash"]).hex(),
-            "$Object:homomorphicHash": base58.b58decode(head_info["header"]["homomorphicHash"]).hex(),
             "$Object:ownerID": head_info["header"]["ownerID"],
         }
         created_objects.append({"id": oid, "attrs": system_attributes})

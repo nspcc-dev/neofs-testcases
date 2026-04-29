@@ -6,7 +6,6 @@ EACL_OBJ_FILTERS = {
     "$Object:payloadLength": "payloadLength",
     "$Object:payloadHash": "payloadHash",
     "$Object:objectType": "objectType",
-    "$Object:homomorphicHash": "homomorphicHash",
     "$Object:version": "version",
 }
 
@@ -18,6 +17,5 @@ VERB_FILTER_DEP = {
     "$Object:payloadLength": ["GET", "PUT", "HEAD"],
     "$Object:payloadHash": ["GET", "PUT", "HEAD"],
     "$Object:objectType": ["GET", "PUT", "HEAD"],
-    "$Object:homomorphicHash": ["GET", "PUT", "HEAD"],
     "$Object:version": ["GET", "PUT", "HEAD"],
 }
