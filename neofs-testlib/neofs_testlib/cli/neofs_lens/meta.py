@@ -24,3 +24,21 @@ class NeofsLensMeta(CliCommand):
             "meta resync",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
+
+    def list(
+        self,
+        path: str,
+        limit: int = 100,
+    ) -> CommandResult:
+        """
+        List objects in metabase (metabase's List method).
+
+        Args:
+                path: Path to metabase directory
+        Returns:
+                Command's result.
+        """
+        return self._execute(
+            "meta list",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
