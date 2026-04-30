@@ -1,8 +1,10 @@
 import logging
 import queue
 import random
+import re
 import threading
 import time
+from typing import Any, Callable
 
 import allure
 import pytest
@@ -14,19 +16,109 @@ from helpers.complex_object_actions import (
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import (
+    delete_object,
     get_netmap_netinfo,
     get_object,
     put_object,
     put_object_to_random_node,
+    search_object,
 )
 from helpers.node_management import storage_node_healthcheck, wait_all_storage_nodes_returned
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
 
 
 class TestFailoverStorage:
+    INCOMPLETE_STATUS_RETRY_DELAY_SEC = 2
+    INCOMPLETE_STATUS_RETRY_ATTEMPTS = 45
+    INCOMPLETE_STATUS_PATTERNS = (
+        "incomplete status",
+        "incomplete object",
+        "object partially",
+        "result may be incomplete",
+    )
+    RETRYABLE_OPERATION_ERROR_PATTERNS = (
+        "context cancelled",
+        "endpoints failed",
+        "i/o timeout",
+        "code = unavailable",
+        "connection refused",
+        "can't create api client",
+        "gRPC dial",
+    )
+
+    def _has_incomplete_status(self, text: str) -> bool:
+        text_lower = text.lower()
+        return any(pattern in text_lower for pattern in self.INCOMPLETE_STATUS_PATTERNS)
+
+    def _has_retryable_operation_error(self, text: str) -> bool:
+        text_lower = text.lower()
+        return any(pattern in text_lower for pattern in self.RETRYABLE_OPERATION_ERROR_PATTERNS)
+
+    class RetryableIncompleteStatusWaitError(AssertionError):
+        """Signals transient state while waiting for incomplete status."""
+
+    @retry(
+        wait=wait_fixed(INCOMPLETE_STATUS_RETRY_DELAY_SEC),
+        stop=stop_after_attempt(INCOMPLETE_STATUS_RETRY_ATTEMPTS),
+        retry=retry_if_exception_type(RetryableIncompleteStatusWaitError),
+        reraise=True,
+    )
+    def _assert_operation_eventually_incomplete(
+        self,
+        operation_name: str,
+        operation: Callable[[], Any],
+        accept_success_result: Callable[[Any], bool] | None = None,
+    ) -> str:
+        try:
+            result = operation()
+        except Exception as exc:
+            error_message = str(exc)
+            if self._has_incomplete_status(error_message):
+                logger.info(f"{operation_name} returned incomplete status as expected: {error_message}")
+                return error_message
+            if self._has_retryable_operation_error(error_message):
+                logger.info(
+                    f"{operation_name} returned transient error before incomplete status, will retry: {error_message}"
+                )
+                raise self.RetryableIncompleteStatusWaitError(error_message) from exc
+            if accept_success_result is not None:
+                oids_in_message = re.findall(r"(\w{43,44})", error_message)
+                if accept_success_result(oids_in_message):
+                    logger.info(f"{operation_name} outcome acceptable (expected OID(s) in CLI output): {error_message}")
+                    return error_message
+            raise
+
+        if accept_success_result is not None and accept_success_result(result):
+            logger.info(f"{operation_name} succeeded with acceptable outcome: {result!r}")
+            return str(result)
+
+        raise self.RetryableIncompleteStatusWaitError(
+            f"{operation_name} unexpectedly succeeded before reporting incomplete status"
+        )
+
+    def _assert_operation_eventually_incomplete_or_fail(
+        self,
+        operation_name: str,
+        operation: Callable[[], Any],
+        accept_success_result: Callable[[Any], bool] | None = None,
+    ) -> str:
+        try:
+            return self._assert_operation_eventually_incomplete(
+                operation_name,
+                operation,
+                accept_success_result=accept_success_result,
+            )
+        except self.RetryableIncompleteStatusWaitError as exc:
+            suffix = " or an acceptable successful result" if accept_success_result is not None else ""
+            raise AssertionError(
+                f"{operation_name} did not return incomplete status{suffix} in "
+                f"{self.INCOMPLETE_STATUS_RETRY_ATTEMPTS * self.INCOMPLETE_STATUS_RETRY_DELAY_SEC}s; last error: {exc}"
+            ) from exc
+
     @pytest.fixture
     def after_run_return_all_stopped_storage_nodes(self, neofs_env_function_scope: NeoFSEnv):
         yield
@@ -42,7 +134,11 @@ class TestFailoverStorage:
     def return_stopped_storage_nodes(self, neofs_env: NeoFSEnv, stopped_nodes: list[StorageNode]) -> None:
         for node in stopped_nodes:
             with allure.step(f"Start {node}"):
-                node.start(fresh=False)
+                try:
+                    node.start(fresh=False)
+                except RuntimeError as exc:
+                    if "already been started" not in str(exc):
+                        raise
 
         wait_all_storage_nodes_returned(neofs_env)
 
@@ -288,3 +384,114 @@ class TestFailoverStorage:
             if not exception_queue.empty():
                 exc = exception_queue.get()
                 raise AssertionError(f"Exception in thread: {exc}")
+
+    @allure.title("Incomplete status on PUT/DELETE/SEARCH with one node down")
+    def test_incomplete_status_single_node_down_rep4(
+        self,
+        default_wallet,
+        neofs_env_function_scope: NeoFSEnv,
+        after_run_return_all_stopped_storage_nodes,
+    ):
+        self.neofs_env = neofs_env_function_scope
+        self.shell = self.neofs_env.shell
+
+        wallet = default_wallet
+        alive_nodes = self.neofs_env.storage_nodes[1:]
+        dead_node = self.neofs_env.storage_nodes[0]
+        operation_endpoint = alive_nodes[0].endpoint
+
+        with allure.step("Create REP 4 container"):
+            cid = create_container(
+                wallet.path,
+                shell=self.shell,
+                endpoint=alive_nodes[0].endpoint,
+                rule="REP 4",
+                basic_acl=PUBLIC_ACL,
+            )
+
+        with allure.step("Put baseline object to use in DELETE/SEARCH checks"):
+            source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            oid = put_object(
+                wallet.path,
+                source_file_path,
+                cid,
+                shell=self.shell,
+                endpoint=alive_nodes[0].endpoint,
+            )
+            wait_object_replication(
+                cid, oid, 4, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
+            )
+
+        with allure.step("Kill one storage node"):
+            dead_node.kill()
+
+        with allure.step("Wait baseline object replicated to alive nodes"):
+            wait_object_replication(cid, oid, 3, shell=self.shell, nodes=alive_nodes, neofs_env=self.neofs_env)
+
+        with allure.step("PUT eventually returns incomplete status"):
+            put_source_file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            put_incomplete_error = self._assert_operation_eventually_incomplete_or_fail(
+                operation_name="PUT",
+                operation=lambda: put_object(
+                    wallet.path,
+                    put_source_file_path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=operation_endpoint,
+                ),
+            )
+            match = re.search(r"OID:\s*([A-Za-z0-9]{43,44})", put_incomplete_error)
+            assert match, f"PUT incomplete response does not contain object id: {put_incomplete_error}"
+            incomplete_put_oid = match.group(1)
+
+        with allure.step("SEARCH incomplete PUT object: incomplete status or success listing that object"):
+            incomplete_put_filter_expr = [f"FileName EQ {put_source_file_path.split('/')[-1]}"]
+            self._assert_operation_eventually_incomplete_or_fail(
+                operation_name="SEARCH",
+                accept_success_result=lambda found: incomplete_put_oid in found,
+                operation=lambda: search_object(
+                    wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=operation_endpoint,
+                    filters=incomplete_put_filter_expr,
+                ),
+            )
+
+        with allure.step("SEARCH baseline object: incomplete status or success listing that object"):
+            filter_expr = [f"FileName EQ {source_file_path.split('/')[-1]}"]
+            self._assert_operation_eventually_incomplete_or_fail(
+                operation_name="SEARCH",
+                accept_success_result=lambda found: oid in found,
+                operation=lambda: search_object(
+                    wallet.path,
+                    cid,
+                    shell=self.shell,
+                    endpoint=operation_endpoint,
+                    filters=filter_expr,
+                ),
+            )
+
+        with allure.step("DELETE incomplete PUT object eventually returns incomplete status"):
+            self._assert_operation_eventually_incomplete_or_fail(
+                operation_name="DELETE",
+                operation=lambda: delete_object(
+                    wallet.path,
+                    cid,
+                    incomplete_put_oid,
+                    shell=self.shell,
+                    endpoint=operation_endpoint,
+                ),
+            )
+
+        with allure.step("DELETE baseline object eventually returns incomplete status"):
+            self._assert_operation_eventually_incomplete_or_fail(
+                operation_name="DELETE",
+                operation=lambda: delete_object(
+                    wallet.path,
+                    cid,
+                    oid,
+                    shell=self.shell,
+                    endpoint=operation_endpoint,
+                ),
+            )
