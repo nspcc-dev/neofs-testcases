@@ -164,7 +164,7 @@ def test_initial_placement_max_replicas_optimized(
 
     with allure.step(f"Exactly {replicas} copy/copies exist"):
         nodes_with_object = []
-        for _ in range(5):
+        for _ in range(10):
             nodes_with_object = get_nodes_with_object(
                 cid,
                 oid,
