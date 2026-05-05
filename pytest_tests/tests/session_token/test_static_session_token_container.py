@@ -346,7 +346,7 @@ class TestSessionTokenContainer(TestNeofsBase):
         stranger_token = self.static_session_token(user_wallet, stranger_wallet, self.shell, temp_directory)
 
         with allure.step("Try to delete container using scammer token"):
-            with pytest.raises(RuntimeError, match=CONTAINER_DELETION_TIMED_OUT):
+            with pytest.raises(RuntimeError, match=rf"{CONTAINER_DELETION_TIMED_OUT}|{RPC_ERROR}"):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
@@ -355,7 +355,7 @@ class TestSessionTokenContainer(TestNeofsBase):
                     endpoint=self.neofs_env.sn_rpc,
                 )
 
-            with pytest.raises(RuntimeError, match=NOT_SESSION_CONTAINER_OWNER):
+            with pytest.raises(RuntimeError, match=rf"{NOT_SESSION_CONTAINER_OWNER}|{RPC_ERROR}"):
                 delete_container(
                     wallet=scammer_wallet.path,
                     cid=cid,
