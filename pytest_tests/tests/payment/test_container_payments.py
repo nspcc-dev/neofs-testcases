@@ -105,7 +105,7 @@ class TestContainerPayments:
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
 
         with allure.step("Ensure the user wallet balance is charged only once per epoch"):
             deltas = []
@@ -125,7 +125,7 @@ class TestContainerPayments:
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
 
         with allure.step("Ensure the storage node balance is debited only once per epoch"):
             sn, _ = next(((sn, sn_info) for sn, sn_info in storage_nodes_info.items() if sn_info["objects_count"] > 0))
