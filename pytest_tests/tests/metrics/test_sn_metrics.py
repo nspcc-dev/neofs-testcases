@@ -28,6 +28,7 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -187,8 +188,16 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
 
     range_bucket_metric = "neofs_node_engine_get_range_stream_time_bucket"
     range_count_metric = "neofs_node_engine_get_range_stream_time_count"
+    range_count_metric_expected_value = 1
 
-    assert after_metrics_sn[range_count_metric][0]["value"] == 2, f"invalid value for {range_count_metric}"
+    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) <= parse_version(
+        "0.52.0"
+    ):
+        range_count_metric_expected_value = 2
+
+    assert after_metrics_sn[range_count_metric][0]["value"] == range_count_metric_expected_value, (
+        f"invalid value for {range_count_metric}"
+    )
 
     metrics_to_verify = [
         "neofs_node_engine_put_time_bucket",
