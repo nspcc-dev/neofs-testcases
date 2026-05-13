@@ -1710,6 +1710,8 @@ class REST_GW(ResurrectableProcess):
 
         rest_config_template = "rest.yaml"
 
+        peers = [{"address": sn.endpoint, "priority": 1, "weight": 1} for sn in self.neofs_env.storage_nodes]
+
         NeoFSEnv.generate_config_file(
             config_template=rest_config_template,
             config_path=self.config_path,
@@ -1719,6 +1721,7 @@ class REST_GW(ResurrectableProcess):
             pprof_address=self.pprof_address,
             metrics_address=self.prometheus_address,
             default_timestamp=self.default_timestamp,
+            peers=peers,
         )
 
     def _launch_process(self):
@@ -1726,17 +1729,11 @@ class REST_GW(ResurrectableProcess):
         self.stderr = self.neofs_env._generate_temp_file(self.rest_gw_dir, prefix="rest_gw_stderr")
         stdout_fp = open(self.stdout, "w")
         stderr_fp = open(self.stderr, "w")
-        rest_gw_env = {}
-
-        for index, sn in enumerate(self.neofs_env.storage_nodes):
-            rest_gw_env[f"REST_GW_POOL_PEERS_{index}_ADDRESS"] = sn.endpoint
-            rest_gw_env[f"REST_GW_POOL_PEERS_{index}_WEIGHT"] = "0.2"
 
         self.process = subprocess.Popen(
             [self.neofs_env.neofs_rest_gw_path, "--config", self.config_path],
             stdout=stdout_fp,
             stderr=stderr_fp,
-            env=rest_gw_env,
         )
         self.pid = self.process.pid
 
