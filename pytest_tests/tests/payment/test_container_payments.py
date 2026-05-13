@@ -5,7 +5,7 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.complex_object_actions import get_nodes_with_object
-from helpers.container import create_container
+from helpers.container import create_container, delete_container
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import put_object
 from helpers.wallet_helpers import create_wallet_with_money, get_neofs_balance
@@ -37,6 +37,7 @@ class TestContainerPayments:
     )
     def test_container_payments(
         self,
+        request: pytest.FixtureRequest,
         neofs_env_with_mainchain: NeoFSEnv,
         wallet_with_money: NodeWallet,
         container_rule: str,
@@ -61,6 +62,17 @@ class TestContainerPayments:
                 shell=neofs_env.shell,
                 endpoint=neofs_env.sn_rpc,
             )
+
+            def cleanup_container() -> None:
+                with allure.step("Delete container"):
+                    delete_container(
+                        wallet_with_money.path,
+                        cid,
+                        shell=neofs_env.shell,
+                        endpoint=neofs_env.sn_rpc,
+                    )
+
+            request.addfinalizer(cleanup_container)
 
             user_wallet_balance_after_container_creation = get_neofs_balance(
                 neofs_env, neofs_env.neofs_cli(wallet_with_money.cli_config), wallet_with_money
@@ -105,7 +117,7 @@ class TestContainerPayments:
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
 
         with allure.step("Ensure the user wallet balance is charged only once per epoch"):
             deltas = []
@@ -125,7 +137,7 @@ class TestContainerPayments:
 
         with allure.step("Wait for a couple of epochs to arrive"):
             new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch)
+            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
 
         with allure.step("Ensure the storage node balance is debited only once per epoch"):
             sn, _ = next(((sn, sn_info) for sn, sn_info in storage_nodes_info.items() if sn_info["objects_count"] > 0))

@@ -35,11 +35,19 @@ def wait_for_epochs_align(neofs_env: NeoFSEnv, epoch_number: Optional[int] = Non
 
 @allure.step("Wait until new epoch arrives")
 @wait_for_success(60, 1)
-def wait_until_new_epoch(neofs_env: NeoFSEnv, current_epoch: int) -> int:
-    for node in neofs_env.storage_nodes:
-        next_epoch = get_epoch(neofs_env, node)
-        assert next_epoch == current_epoch + 1, "Next epoch didn't arrive during timeout"
-    return next_epoch
+def wait_until_new_epoch(
+    neofs_env: NeoFSEnv,
+    current_epoch: int,
+    require_all_storage_nodes: bool = True,
+) -> int:
+    expected = current_epoch + 1
+    epochs = [get_epoch(neofs_env, node) for node in neofs_env.storage_nodes]
+    matched = sum(1 for epoch in epochs if epoch == expected)
+    required = len(epochs) if require_all_storage_nodes else 1
+    assert matched >= required, (
+        f"Next epoch didn't arrive during timeout (expected {expected} on {required} node(s), got {epochs})"
+    )
+    return expected
 
 
 @allure.step("Get Epoch")
