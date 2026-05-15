@@ -1113,6 +1113,9 @@ class InnerRing(ResurrectableProcess):
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.ir_state_file = self.neofs_env._generate_temp_file(self.inner_ring_dir, prefix="ir_state_file")
         self.chain_meta_data = chain_meta_data
+        self.chain_metadata_seed_port = NeoFSEnv.get_available_port()
+        self.chain_metadata_p2p_port = self.chain_metadata_seed_port
+        self.chain_metadata_rpc_port = NeoFSEnv.get_available_port()
         self.sn_validator_url = sn_validator_url
         self.allow_ec = allow_ec
         self.stdout = "Not initialized"
@@ -1182,6 +1185,10 @@ class InnerRing(ResurrectableProcess):
                 ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes
             ]
 
+        chain_meta_data_legacy_format = parse_version(
+            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
+        ) <= parse_version("0.52.0")
+
         if not os.getenv(f"IR{self.ir_number}_CONFIG_PATH", None):
             NeoFSEnv.generate_config_file(
                 config_template=ir_config_template,
@@ -1209,6 +1216,10 @@ class InnerRing(ResurrectableProcess):
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
                 chain_meta_data=self.chain_meta_data,
+                chain_meta_data_legacy_format=chain_meta_data_legacy_format,
+                chain_metadata_seed_port=self.chain_metadata_seed_port,
+                chain_metadata_p2p_port=self.chain_metadata_p2p_port,
+                chain_metadata_rpc_port=self.chain_metadata_rpc_port,
                 sn_validator_url=self.sn_validator_url,
                 allow_ec=self.allow_ec,
             )
