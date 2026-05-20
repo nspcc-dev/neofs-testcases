@@ -55,6 +55,8 @@ class NeofsCliObject(CliCommand):
         header: Optional[str] = None,
         no_progress: bool = False,
         raw: bool = False,
+        binary: bool = False,
+        range: Optional[str] = None,
         session: Optional[str] = None,
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
@@ -67,11 +69,13 @@ class NeofsCliObject(CliCommand):
         Args:
             address: Address of wallet account.
             bearer: File with signed JSON or binary encoded bearer token.
+            binary: Serialize whole object structure into given file.
             cid: Container ID.
             file: File to write object payload to. Default: stdout.
             header: File to write header to. Default: stdout.
             no_progress: Do not show progress bar.
             oid: Object ID.
+            range: Payload range to read in the form ``offset:length``.
             raw: Set raw request option.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
             session: Filepath to a JSON- or binary-encoded token of the object GET session.
