@@ -237,53 +237,6 @@ def get_object_with_range(
     return file_path, content
 
 
-@allure.step("Get Range Hash from {endpoint}")
-def get_range_hash(
-    wallet: str,
-    cid: str,
-    oid: str,
-    range_cut: str,
-    shell: Shell,
-    endpoint: str,
-    bearer: Optional[str] = None,
-    wallet_config: Optional[str] = None,
-    xhdr: Optional[dict] = None,
-    session: Optional[str] = None,
-):
-    """
-    GETRANGEHASH of given Object.
-
-    Args:
-        wallet: wallet on whose behalf GETRANGEHASH is done
-        cid: ID of Container where we get the Object from
-        oid: Object ID
-        shell: executor for cli command
-        bearer: path to Bearer Token file, appends to `--bearer` key
-        range_cut: Range to take hash from in the form offset1:length1,...,
-                        value to pass to the `--range` parameter
-        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        wallet_config: path to the wallet config
-        xhdr: Request X-Headers in form of Key=Values
-        session: Filepath to a JSON- or binary-encoded token of the object RANGEHASH session.
-    Returns:
-        None
-    """
-    cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    result = cli.object.hash(
-        rpc_endpoint=endpoint,
-        wallet=wallet,
-        cid=cid,
-        oid=oid,
-        range=range_cut,
-        bearer=bearer,
-        xhdr=xhdr,
-        session=session,
-    )
-
-    # cutting off output about range offset and length
-    return result.stdout.split(":")[1].strip()
-
-
 @allure.step("Put object to random node")
 def put_object_to_random_node(
     wallet: str,

@@ -43,7 +43,6 @@ from helpers.neofs_verbs import (
     get_object,
     get_object_from_random_node,
     get_range,
-    get_range_hash,
     head_object,
     put_object,
     put_object_to_random_node,
@@ -579,67 +578,6 @@ class TestObjectApi(TestNeofsBase):
                         fail_on_assert=True,
                     )
 
-    @allure.title("Validate native object API get_range_hash")
-    def test_object_get_range_hash(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
-        """
-        Validate get_range_hash for object by native gRPC API
-        """
-        allure.dynamic.title(f"Validate native get_range_hash object API for {request.node.callspec.id}")
-
-        wallet = storage_objects[0].wallet_file_path
-        cid = storage_objects[0].cid
-        oids = [storage_object.oid for storage_object in storage_objects[:2]]
-        file_path = storage_objects[0].file_path
-
-        if (
-            request.node.callspec.params.get("storage_objects", {}).get("object_size") == "complex_object_size"
-            and request.node.callspec.params.get("storage_objects", {}).get("container_policy") == EC_1_1_PLACEMENT_RULE
-        ):
-            file_ranges_to_test = generate_ranges_for_ec_object(storage_objects[0].size)
-        else:
-            file_ranges_to_test = generate_ranges(
-                storage_objects[0], self.neofs_env.max_object_size, self.shell, self.neofs_env
-            )
-
-        logging.info(f"Ranges used in test {file_ranges_to_test}")
-
-        for range_start, range_len in file_ranges_to_test:
-            range_cut = f"{range_start}:{range_len}"
-            with allure.step(f"Get range hash ({range_cut})"):
-                for oid in oids:
-                    range_hash = get_range_hash(
-                        wallet,
-                        cid,
-                        oid,
-                        shell=self.shell,
-                        endpoint=self.neofs_env.sn_rpc,
-                        range_cut=range_cut,
-                    )
-                    assert get_file_hash(file_path, range_len, range_start) == range_hash, (
-                        f"Expected range hash to match {range_cut} slice of file payload"
-                    )
-
-        with allure.step("Verify zero payload ranges"):
-            range_hash = get_range_hash(
-                wallet,
-                cid,
-                oid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                range_cut="0:0",
-            )
-            assert get_file_hash(file_path) == range_hash, "Expected range hash to match full file payload"
-
-            with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
-                get_range_hash(
-                    wallet,
-                    cid,
-                    oid,
-                    shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                    range_cut="5:0",
-                )
-
     @allure.title("Validate native object API get_range")
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
         """
@@ -790,55 +728,6 @@ class TestObjectApi(TestNeofsBase):
                 for oid in oids:
                     with pytest.raises(Exception, match=expected_error):
                         get_range(
-                            wallet,
-                            cid,
-                            oid,
-                            shell=self.shell,
-                            endpoint=self.neofs_env.sn_rpc,
-                            range_cut=range_cut,
-                        )
-
-    @allure.title("Validate native object API get_range_hash negative cases")
-    def test_object_get_range_hash_negatives(
-        self,
-        request: FixtureRequest,
-        storage_objects: list[StorageObjectInfo],
-    ):
-        """
-        Validate get_range_hash negative for object by native gRPC API
-        """
-        allure.dynamic.title(f"Validate native get_range_hash negative object API for {request.node.callspec.id}")
-
-        wallet = storage_objects[0].wallet_file_path
-        cid = storage_objects[0].cid
-        oids = [storage_object.oid for storage_object in storage_objects[:2]]
-        file_size = storage_objects[0].size
-
-        assert RANGE_MIN_LEN < file_size, (
-            f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
-        )
-
-        file_ranges_to_test: list[tuple(int, int, str)] = [
-            # Offset is bigger than the file size, the length is small.
-            (file_size + 1, RANGE_MIN_LEN, OUT_OF_RANGE),
-            # Offset is ok, but offset+length is too big.
-            (file_size - RANGE_MIN_LEN, RANGE_MIN_LEN * 2, OUT_OF_RANGE),
-            # Offset is ok, and length is very-very big (e.g. MaxUint64) so that offset+length is wrapped and still "valid".
-            (RANGE_MIN_LEN, sys.maxsize * 2 + 1, INVALID_RANGE_OVERFLOW),
-            # Length is zero
-            (10, 0, INVALID_RANGE_ZERO_LENGTH),
-            # Negative values
-            (-1, 1, INVALID_OFFSET_SPECIFIER),
-            (10, -5, INVALID_LENGTH_SPECIFIER),
-        ]
-
-        for range_start, range_len, expected_error in file_ranges_to_test:
-            range_cut = f"{range_start}:{range_len}"
-            expected_error = expected_error.format(range=range_cut) if "{range}" in expected_error else expected_error
-            with allure.step(f"Get range hash ({range_cut})"):
-                for oid in oids:
-                    with pytest.raises(Exception, match=expected_error):
-                        get_range_hash(
                             wallet,
                             cid,
                             oid,

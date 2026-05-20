@@ -93,50 +93,6 @@ class NeofsCliObject(CliCommand):
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 
-    def hash(
-        self,
-        rpc_endpoint: str,
-        wallet: str,
-        cid: str,
-        oid: str,
-        address: Optional[str] = None,
-        bearer: Optional[str] = None,
-        range: Optional[str] = None,
-        salt: Optional[str] = None,
-        ttl: Optional[int] = None,
-        session: Optional[str] = None,
-        hash_type: Optional[str] = None,
-        xhdr: Optional[dict] = None,
-        timeout: Optional[str] = None,
-        shell_timeout: Optional[int] = None,
-    ) -> CommandResult:
-        """
-        Get object hash.
-
-        Args:
-            address: Address of wallet account.
-            bearer: File with signed JSON or binary encoded bearer token.
-            cid: Container ID.
-            oid: Object ID.
-            range: Range to take hash from in the form offset1:length1,...
-            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
-            salt: Salt in hex format.
-            ttl: TTL value in request meta header (default 2).
-            session: Filepath to a JSON- or binary-encoded token of the object RANGEHASH session.
-            hash_type: Hash type. Either 'sha256' or 'tz' (default "sha256").
-            wallet: WIF (NEP-2) string or path to the wallet or binary key.
-            xhdr: Dict with request X-Headers.
-            timeout: Timeout for the operation (default 15s).
-            shell_timeout: Shell timeout for the command.
-
-        Returns:
-            Command's result.
-        """
-        return self._execute(
-            "object hash",
-            **{param: value for param, value in locals().items() if param not in ["self", "params"]},
-        )
-
     def head(
         self,
         rpc_endpoint: str,

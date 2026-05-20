@@ -36,7 +36,6 @@ class ObjectVerb(Enum):
     PUT = "PUT"
     DELETE = "DELETE"
     GET = "GET"
-    RANGEHASH = "RANGEHASH"
     RANGE = "RANGE"
     HEAD = "HEAD"
     SEARCH = "SEARCH"

@@ -14,7 +14,6 @@ from helpers.neofs_verbs import (
     delete_object,
     get_object,
     get_range,
-    get_range_hash,
     head_object,
     put_object,
     search_object,
@@ -28,7 +27,6 @@ from helpers.rest_gate import (
     get_via_rest_gate,
     upload_via_rest_gate,
 )
-from helpers.utility import parse_version
 from helpers.wallet_helpers import create_wallet
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -110,15 +108,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         range_cut="0:1",
     )
 
-    get_range_hash(
-        default_wallet.path,
-        cid,
-        oid,
-        range_cut="0:1",
-        shell=neofs_env_single_sn.shell,
-        endpoint=neofs_env_single_sn.sn_rpc,
-    )
-
     block_height, validated_state = parse_node_height(
         neofs_env_single_sn.neo_go().query.height(rpc_endpoint=f"http://{ir.endpoint}").stdout
     )
@@ -174,8 +163,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_rpc_head_time_count",
         "neofs_node_object_put_req_count",
         "neofs_node_object_put_req_count_success",
-        "neofs_node_object_range_hash_req_count",
-        "neofs_node_object_range_hash_req_count_success",
         "neofs_node_object_range_req_count",
         "neofs_node_object_range_req_count_success",
     ]
@@ -183,21 +170,10 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     for metric in metrics_to_verify:
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
 
-    range_bucket_metric = "neofs_node_engine_range_time_bucket"
-    range_count_metric = "neofs_node_engine_range_time_count"
-
     range_bucket_metric = "neofs_node_engine_get_range_stream_time_bucket"
     range_count_metric = "neofs_node_engine_get_range_stream_time_count"
-    range_count_metric_expected_value = 1
 
-    if parse_version(neofs_env_single_sn.get_binary_version(neofs_env_single_sn.neofs_node_path)) <= parse_version(
-        "0.52.0"
-    ):
-        range_count_metric_expected_value = 2
-
-    assert after_metrics_sn[range_count_metric][0]["value"] == range_count_metric_expected_value, (
-        f"invalid value for {range_count_metric}"
-    )
+    assert after_metrics_sn[range_count_metric][0]["value"] == 1, f"invalid value for {range_count_metric}"
 
     metrics_to_verify = [
         "neofs_node_engine_put_time_bucket",
@@ -209,7 +185,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_counter",
         "neofs_node_engine_head_time_bucket",
         "neofs_node_object_rpc_head_time_bucket",
-        "neofs_node_object_rpc_range_hash_time_bucket",
         "neofs_node_object_rpc_put_time_bucket",
         "neofs_node_engine_list_objects_time_bucket",
     ]

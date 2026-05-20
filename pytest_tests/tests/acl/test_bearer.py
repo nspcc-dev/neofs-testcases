@@ -36,7 +36,6 @@ from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
     can_get_object,
-    can_get_range_hash_of_object,
     can_get_range_of_object,
     can_put_object,
     can_search_object,
@@ -137,7 +136,6 @@ class TestACLBearer(TestNeofsBase):
             EACLRole.USER: [EACLOperation.DELETE],
             EACLRole.OTHERS: [
                 EACLOperation.SEARCH,
-                EACLOperation.GET_RANGE_HASH,
                 EACLOperation.GET_RANGE,
             ],
         }
@@ -152,7 +150,6 @@ class TestACLBearer(TestNeofsBase):
             EACLRole.OTHERS: [
                 EACLOperation.GET,
                 EACLOperation.GET_RANGE,
-                EACLOperation.GET_RANGE_HASH,
             ],
         }
 
@@ -478,16 +475,6 @@ class TestACLBearer(TestNeofsBase):
                     bearer=bearer,
                     wallet_config=deny_wallet.config_path,
                 ), f"{operation.value} is not allowed, while it should be"
-            elif operation == EACLOperation.GET_RANGE_HASH:
-                assert can_get_range_hash_of_object(
-                    deny_wallet.wallet_path,
-                    cid,
-                    objects_oids.pop(),
-                    self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
-                    bearer=bearer,
-                    wallet_config=deny_wallet.config_path,
-                ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.SEARCH:
                 assert can_search_object(
                     deny_wallet.wallet_path,
@@ -543,16 +530,6 @@ class TestACLBearer(TestNeofsBase):
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.GET_RANGE:
                     assert not can_get_range_of_object(
-                        deny_wallet.wallet_path,
-                        cid,
-                        objects_oids.pop(),
-                        self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
-                        bearer=bearer,
-                        wallet_config=deny_wallet.config_path,
-                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
-                elif not_allowed_op == EACLOperation.GET_RANGE_HASH:
-                    assert not can_get_range_hash_of_object(
                         deny_wallet.wallet_path,
                         cid,
                         objects_oids.pop(),

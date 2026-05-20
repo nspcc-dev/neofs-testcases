@@ -27,7 +27,6 @@ class EACLOperation(Enum):
     GET = "get"
     HEAD = "head"
     GET_RANGE = "getrange"
-    GET_RANGE_HASH = "getrangehash"
     SEARCH = "search"
     DELETE = "delete"
 
