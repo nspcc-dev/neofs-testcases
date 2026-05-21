@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import os
+import random
 import uuid
 from typing import Any, Optional
 
@@ -8,6 +9,43 @@ import allure
 from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 
 logger = logging.getLogger("NeoLogger")
+
+RANGES_COUNT = 4
+RANGE_MIN_LEN = 10
+RANGE_MAX_LEN = 500
+
+
+def generate_payload_ranges(file_size: int) -> list[tuple[int, int]]:
+    """Generate randomized `(offset, length)` payload ranges for tests.
+
+    Args:
+        file_size: Size of the source payload in bytes.
+
+    Returns:
+        List of `(offset, length)` tuples; every range satisfies
+        `offset >= 0`, `length > 0` and `offset + length <= file_size`.
+    """
+    assert file_size > 0, "file_size must be positive"
+
+    ranges_to_test: list[tuple[int, int]] = []
+
+    edge_len = min(RANGE_MIN_LEN, file_size)
+    ranges_to_test.append((0, edge_len))
+    ranges_to_test.append((file_size - edge_len, edge_len))
+
+    if file_size >= RANGES_COUNT:
+        file_range_step = file_size // RANGES_COUNT
+        for i in range(RANGES_COUNT):
+            quarter_start = file_range_step * i
+            quarter_end = file_range_step * (i + 1) if i < RANGES_COUNT - 1 else file_size
+            quarter_len = quarter_end - quarter_start
+            if quarter_len <= 0:
+                continue
+            range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
+            range_start = random.randint(quarter_start, quarter_start + quarter_len - 1)
+            ranges_to_test.append((range_start, min(range_length, file_size - range_start)))
+
+    return ranges_to_test
 
 
 def generate_file(size: int) -> str:

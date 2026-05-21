@@ -1,6 +1,5 @@
 import logging
 import os
-import random
 import sys
 
 import allure
@@ -21,7 +20,15 @@ from helpers.container import (
     delete_container,
     generate_ranges_for_ec_object,
 )
-from helpers.file_helper import generate_file, get_file_content, get_file_hash
+from helpers.file_helper import (
+    RANGE_MAX_LEN,
+    RANGE_MIN_LEN,
+    RANGES_COUNT,
+    generate_file,
+    generate_payload_ranges,
+    get_file_content,
+    get_file_hash,
+)
 from helpers.grpc_responses import (
     EC_ATTRIBUTES_FOUND,
     INVALID_LENGTH_SPECIFIER,
@@ -67,10 +74,6 @@ OBJECT_ATTRIBUTES = [
     {"key1": 2, "common_key": "common_value"},
 ]
 
-# Config for Range tests
-RANGES_COUNT = 4  # by quarters
-RANGE_MIN_LEN = 10
-RANGE_MAX_LEN = 500
 # Used for static ranges found with issues
 STATIC_RANGES = {}
 OBJECT_NUMERIC_VALUES = [-(2**64) - 1, -1, 0, 1, 10, 2**64 + 1]
@@ -88,17 +91,13 @@ def _id_should_not_be_in_result(id_: int, result: list[int]):
 def generate_ranges(
     storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, neofs_env: NeoFSEnv
 ) -> list[(int, int)]:
-    file_range_step = storage_object.size / RANGES_COUNT
-
-    file_ranges = []
-    file_ranges_to_test = []
-
-    for i in range(0, RANGES_COUNT):
-        file_ranges.append((int(file_range_step * i), int(file_range_step)))
+    file_ranges_to_test: list[tuple[int, int]] = []
 
     # For simple object we can read all file ranges without too much time for testing
     if storage_object.size < max_object_size:
-        file_ranges_to_test.extend(file_ranges)
+        file_range_step = storage_object.size / RANGES_COUNT
+        for i in range(0, RANGES_COUNT):
+            file_ranges_to_test.append((int(file_range_step * i), int(file_range_step)))
     # For complex object we need to fetch multiple child objects from different nodes.
     else:
         assert storage_object.size >= RANGE_MAX_LEN + max_object_size, (
@@ -107,15 +106,7 @@ def generate_ranges(
         file_ranges_to_test.append((RANGE_MAX_LEN, max_object_size - RANGE_MAX_LEN))
         file_ranges_to_test.extend(get_complex_object_split_ranges(storage_object, shell, neofs_env))
 
-    # Special cases to read some bytes from start and some bytes from end of object
-    file_ranges_to_test.append((0, RANGE_MIN_LEN))
-    file_ranges_to_test.append((storage_object.size - RANGE_MIN_LEN, RANGE_MIN_LEN))
-
-    for offset, length in file_ranges:
-        range_length = random.randint(RANGE_MIN_LEN, RANGE_MAX_LEN)
-        range_start = random.randint(offset, offset + length - 1)
-
-        file_ranges_to_test.append((range_start, min(range_length, storage_object.size - range_start)))
+    file_ranges_to_test.extend(generate_payload_ranges(storage_object.size))
 
     file_ranges_to_test.extend(STATIC_RANGES.get(storage_object.size, []))
 
