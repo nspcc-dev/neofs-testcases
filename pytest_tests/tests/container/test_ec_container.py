@@ -14,12 +14,11 @@ from helpers.container import (
     parse_container_nodes_output,
     wait_for_container_deletion,
 )
-from helpers.file_helper import generate_file, get_file_content, get_file_hash
+from helpers.file_helper import generate_file, get_file_content
 from helpers.neofs_verbs import (
     delete_object,
     get_object,
     get_range,
-    get_range_hash,
     head_object,
     put_object,
     search_objectv2,
@@ -157,18 +156,6 @@ def test_ec_container_sanity(
                         get_file_content(source_file_path, content_len=range_len, mode="rb", offset=range_start)
                         == range_content
                     ), f"Expected range content to match {range_cut} slice of file payload"
-
-                    range_hash = get_range_hash(
-                        default_wallet.path,
-                        cid,
-                        main_oid,
-                        shell=neofs_env.shell,
-                        endpoint=sn.endpoint,
-                        range_cut=range_cut,
-                    )
-                    assert get_file_hash(source_file_path, range_len, range_start) == range_hash, (
-                        f"Expected range hash to match {range_cut} slice of file payload"
-                    )
 
     with allure.step("Verify object placement in EC container"):
         result = (

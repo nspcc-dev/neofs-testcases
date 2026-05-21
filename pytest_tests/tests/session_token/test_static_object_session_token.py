@@ -17,7 +17,6 @@ from helpers.neofs_verbs import (
     get_object,
     get_object_from_random_node,
     get_range,
-    get_range_hash,
     head_object,
     put_object_to_random_node,
     search_object,
@@ -171,7 +170,7 @@ class TestObjectStaticSession(TestNeofsBase):
     @allure.title("Validate static session with range operations")
     @pytest.mark.parametrize(
         "method_under_test,verb",
-        [(get_range, ObjectVerb.RANGE), (get_range_hash, ObjectVerb.RANGEHASH)],
+        [(get_range, ObjectVerb.RANGE)],
     )
     def test_static_session_range(
         self,

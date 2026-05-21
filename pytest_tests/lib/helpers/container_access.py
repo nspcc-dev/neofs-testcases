@@ -7,7 +7,6 @@ from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
     can_get_object,
-    can_get_range_hash_of_object,
     can_get_range_of_object,
     can_put_object,
     can_search_object,
@@ -50,16 +49,6 @@ def check_full_access_to_container(
         xhdr=xhdr,
     )
     assert can_get_range_of_object(
-        wallet=wallet,
-        cid=cid,
-        oid=oid,
-        shell=shell,
-        endpoint=endpoint,
-        bearer=bearer,
-        wallet_config=wallet_config,
-        xhdr=xhdr,
-    )
-    assert can_get_range_hash_of_object(
         wallet=wallet,
         cid=cid,
         oid=oid,
@@ -149,17 +138,6 @@ def check_no_access_to_container(
         xhdr=xhdr,
         expected_error=expected_error,
     )
-    assert not can_get_range_hash_of_object(
-        wallet=wallet,
-        cid=cid,
-        oid=oid,
-        shell=shell,
-        endpoint=endpoint,
-        bearer=bearer,
-        wallet_config=wallet_config,
-        xhdr=xhdr,
-        expected_error=expected_error,
-    )
     assert not can_search_object(
         wallet=wallet,
         cid=cid,
@@ -231,10 +209,6 @@ def check_custom_access_to_container(
         )
     if EACLOperation.GET_RANGE.value not in ignore_operations:
         checks[EACLOperation.GET_RANGE.value] = can_get_range_of_object(
-            wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr
-        )
-    if EACLOperation.GET_RANGE_HASH.value not in ignore_operations:
-        checks[EACLOperation.GET_RANGE_HASH.value] = can_get_range_hash_of_object(
             wallet, cid, oid, shell, endpoint, bearer, wallet_config, xhdr
         )
     if EACLOperation.SEARCH.value not in ignore_operations:

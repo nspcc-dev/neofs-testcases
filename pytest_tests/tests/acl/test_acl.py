@@ -13,7 +13,6 @@ from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
     can_get_object,
-    can_get_range_hash_of_object,
     can_get_range_of_object,
     can_put_object,
     can_search_object,
@@ -328,25 +327,6 @@ class TestACLBasic(TestNeofsBase):
                 )
             with allure.step("STORAGE node should NOT be able to GET range of object from container"):
                 assert not can_get_range_of_object(
-                    wallet=storage_wallet.path,
-                    cid=cid,
-                    oid=owner_object_oid,
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet_config,
-                )
-
-            with allure.step("IR node should be able to GET range hash of object from container"):
-                assert can_get_range_hash_of_object(
-                    wallet=ir_wallet.path,
-                    cid=cid,
-                    oid=owner_object_oid,
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet_config,
-                )
-            with allure.step("STORAGE node should be able to GET range hash of object from container"):
-                assert can_get_range_hash_of_object(
                     wallet=storage_wallet.path,
                     cid=cid,
                     oid=owner_object_oid,

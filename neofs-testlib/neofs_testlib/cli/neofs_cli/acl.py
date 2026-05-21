@@ -17,8 +17,7 @@ class NeofsCliACL(CliCommand):
 
         Rule consist of these blocks: <action> <operation> [<filter1> ...] [<target1> ...]
         Action is 'allow' or 'deny'.
-        Operation is an object service verb: 'get', 'head', 'put', 'search', 'delete', 'getrange',
-        or 'getrangehash'.
+        Operation is an object service verb: 'get', 'head', 'put', 'search', 'delete', or 'getrange'.
 
         Filter consists of <typ>:<key><match><value>
          Typ is 'obj' for object applied filter or 'req' for request applied filter.

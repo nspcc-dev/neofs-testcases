@@ -72,18 +72,6 @@
                        "keys":[]
                    }
                ]
-        },
-	{
-           "operation":"GETRANGEHASH",
-           "action":"ALLOW",
-           "filters":[],
-           "targets":
-               [
-                   {
-                       "role":"OTHERS",
-                       "keys":[]
-                   }
-               ]
         }
     ]
 }

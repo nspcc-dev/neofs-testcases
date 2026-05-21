@@ -8,7 +8,6 @@ from helpers.neofs_verbs import (
     delete_object,
     get_object_from_random_node,
     get_range,
-    get_range_hash,
     head_object,
     put_object_to_random_node,
     search_object,
@@ -162,36 +161,6 @@ def can_get_range_of_object(
     with allure.step("Try get range of object"):
         try:
             get_range(
-                wallet,
-                cid,
-                oid,
-                bearer=bearer,
-                range_cut=_generate_random_range_cut(),
-                wallet_config=wallet_config,
-                xhdr=xhdr,
-                shell=shell,
-                endpoint=endpoint,
-            )
-        except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
-            return False
-    return True
-
-
-def can_get_range_hash_of_object(
-    wallet: str,
-    cid: str,
-    oid: str,
-    shell: Shell,
-    endpoint: str,
-    bearer: Optional[str] = None,
-    wallet_config: Optional[str] = None,
-    xhdr: Optional[dict] = None,
-    expected_error: str = OBJECT_ACCESS_DENIED,
-) -> bool:
-    with allure.step("Try get range hash of object"):
-        try:
-            get_range_hash(
                 wallet,
                 cid,
                 oid,

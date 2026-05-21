@@ -174,8 +174,8 @@ def get_object(
     return file_path
 
 
-@allure.step("Get Range Hash from {endpoint}")
-def get_range_hash(
+@allure.step("Get object with range from {endpoint}")
+def get_object_with_range(
     wallet: str,
     cid: str,
     oid: str,
@@ -183,42 +183,58 @@ def get_range_hash(
     shell: Shell,
     endpoint: str,
     bearer: Optional[str] = None,
-    wallet_config: Optional[str] = None,
+    write_object: Optional[str] = None,
     xhdr: Optional[dict] = None,
+    wallet_config: Optional[str] = None,
+    no_progress: bool = True,
     session: Optional[str] = None,
-):
+    is_raw: bool = False,
+) -> tuple[str, bytes]:
     """
-    GETRANGEHASH of given Object.
+    GET payload range data of an object via `neofs-cli object get --range`.
 
     Args:
-        wallet: wallet on whose behalf GETRANGEHASH is done
-        cid: ID of Container where we get the Object from
-        oid: Object ID
-        shell: executor for cli command
-        bearer: path to Bearer Token file, appends to `--bearer` key
-        range_cut: Range to take hash from in the form offset1:length1,...,
-                        value to pass to the `--range` parameter
-        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        wallet_config: path to the wallet config
-        xhdr: Request X-Headers in form of Key=Values
-        session: Filepath to a JSON- or binary-encoded token of the object RANGEHASH session.
+        wallet: wallet on whose behalf the operation is performed.
+        cid: ID of the container that holds the object.
+        oid: ID of the object to read.
+        range_cut: payload range to take data from in the form ``offset:length``.
+        shell: executor for cli command.
+        endpoint: NeoFS endpoint to send request to.
+        bearer: path to bearer token file.
+        write_object: filename to write the range payload to.
+        xhdr: request X-Headers in form of Key=Value.
+        wallet_config: path to the wallet config.
+        no_progress: do not show progress bar.
+        session: path to a JSON-encoded container session token.
+        is_raw: send "raw" request or not.
+
     Returns:
-        None
+        Tuple of:
+            - path to the file with the range payload,
+            - bytes content of the payload range.
     """
+    if not write_object:
+        write_object = str(uuid.uuid4())
+    file_path = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, write_object)
+
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    result = cli.object.hash(
+    cli.object.get(
         rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
         oid=oid,
-        range=range_cut,
+        file=file_path,
         bearer=bearer,
+        no_progress=no_progress,
         xhdr=xhdr,
         session=session,
+        raw=is_raw,
+        range=range_cut,
     )
 
-    # cutting off output about range offset and length
-    return result.stdout.split(":")[1].strip()
+    with open(file_path, "rb") as fp:
+        content = fp.read()
+    return file_path, content
 
 
 @allure.step("Put object to random node")

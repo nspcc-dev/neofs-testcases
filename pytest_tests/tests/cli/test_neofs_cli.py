@@ -35,7 +35,6 @@ def test_neofs_cli_excessive_flags(neofs_env: NeoFSEnv):
         "bearer create expire-at 101123",
         "object delete bearer c1",
         "object get bearer c1",
-        "object hash bearer c1",
         "object head bearer c1",
         "object lock bearer c1",
         "object nodes bearer c1",

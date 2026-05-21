@@ -43,7 +43,7 @@ def _unique_container_name() -> str:
     return f"rest_bearer_v2_{uuid.uuid4()}"
 
 
-_ALL_OBJECT_OPERATIONS = ("GET", "HEAD", "PUT", "DELETE", "SEARCH", "RANGE", "RANGEHASH")
+_ALL_OBJECT_OPERATIONS = ("GET", "HEAD", "PUT", "DELETE", "SEARCH", "RANGE")
 
 _ALL_OBJECT_OPERATIONS_EACL = (
     EACLOperation.GET,
@@ -52,7 +52,6 @@ _ALL_OBJECT_OPERATIONS_EACL = (
     EACLOperation.DELETE,
     EACLOperation.SEARCH,
     EACLOperation.GET_RANGE,
-    EACLOperation.GET_RANGE_HASH,
 )
 
 
@@ -169,7 +168,7 @@ class TestRestBearerV2(TestNeofsRestBase):
         verify_bearer = generate_bearer_token_v2(
             gw_endpoint,
             issuer_wallet=self.owner_wallet,
-            records=_scoped_records_for_others(["GET", "HEAD", "RANGE", "RANGEHASH"]),
+            records=_scoped_records_for_others(["GET", "HEAD", "RANGE"]),
             owner=gw_address,
         )
 
@@ -581,7 +580,7 @@ class TestRestBearerV2(TestNeofsRestBase):
         read_bearer = generate_bearer_token_v2(
             gw_endpoint,
             issuer_wallet=self.owner_wallet,
-            records=_scoped_records_for_others(["GET", "HEAD", "RANGE", "RANGEHASH"]),
+            records=_scoped_records_for_others(["GET", "HEAD", "RANGE"]),
             owner=gw_address,
         )
         read_headers = {"NeoFS-Bearer-Token": read_bearer}
