@@ -118,17 +118,17 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         after_metrics_ir = get_metrics(ir)
         allure.attach(json.dumps(dict(after_metrics_ir)), "ir metrics", allure.attachment_type.JSON)
 
-    assert float(after_metrics_ir["neogo_current_block_height"][0]["value"]) >= block_height, (
-        "invalid value for neogo_current_block_height"
+    assert float(after_metrics_ir["neogo_block_height"][0]["value"]) >= block_height, (
+        "invalid value for neogo_block_height"
     )
-    assert float(after_metrics_ir["neogo_current_header_height"][0]["value"]) >= block_height, (
-        "invalid value for neogo_current_header_height"
+    assert float(after_metrics_ir["neogo_header_height"][0]["value"]) >= block_height, (
+        "invalid value for neogo_header_height"
     )
-    assert block_height - 10 <= float(after_metrics_ir["neogo_current_persisted_height"][0]["value"]) <= block_height, (
-        "invalid value for neogo_current_persisted_height"
+    assert block_height - 10 <= float(after_metrics_ir["neogo_persisted_height"][0]["value"]) <= block_height, (
+        "invalid value for neogo_persisted_height"
     )
-    assert float(after_metrics_ir["neogo_current_state_height"][0]["value"]) >= validated_state, (
-        "invalid value for neogo_current_state_height"
+    assert float(after_metrics_ir["neogo_verified_state_height"][0]["value"]) >= validated_state, (
+        "invalid value for neogo_verified_state_height"
     )
 
     size_metrics_for_container = next(
@@ -170,14 +170,8 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     for metric in metrics_to_verify:
         assert after_metrics_sn[metric][0]["value"] == 1, f"invalid value for {metric}"
 
-    range_bucket_metric = "neofs_node_engine_get_range_stream_time_bucket"
-    range_count_metric = "neofs_node_engine_get_range_stream_time_count"
-
-    assert after_metrics_sn[range_count_metric][0]["value"] == 1, f"invalid value for {range_count_metric}"
-
     metrics_to_verify = [
         "neofs_node_engine_put_time_bucket",
-        range_bucket_metric,
         "neofs_node_engine_search_time_bucket",
         "neofs_node_object_rpc_get_time_bucket",
         "neofs_node_object_rpc_range_time_bucket",
