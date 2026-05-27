@@ -189,7 +189,8 @@ def get_object_with_range(
     no_progress: bool = True,
     session: Optional[str] = None,
     is_raw: bool = False,
-) -> tuple[str, bytes]:
+    payload_only: bool = False,
+) -> tuple[str, bytes, str]:
     """
     GET payload range data of an object via `neofs-cli object get --range`.
 
@@ -207,18 +208,21 @@ def get_object_with_range(
         no_progress: do not show progress bar.
         session: path to a JSON-encoded container session token.
         is_raw: send "raw" request or not.
+        payload_only: skip object header from the response; only the payload
+            range is written to ``file`` and the header is not printed to stdout.
 
     Returns:
         Tuple of:
             - path to the file with the range payload,
-            - bytes content of the payload range.
+            - bytes content of the payload range,
+            - CLI command stdout (contains object header unless `payload_only` is set).
     """
     if not write_object:
         write_object = str(uuid.uuid4())
     file_path = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, write_object)
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    cli.object.get(
+    result = cli.object.get(
         rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
@@ -230,11 +234,12 @@ def get_object_with_range(
         session=session,
         raw=is_raw,
         range=range_cut,
+        payload_only=payload_only,
     )
 
     with open(file_path, "rb") as fp:
         content = fp.read()
-    return file_path, content
+    return file_path, content, result.stdout
 
 
 @allure.step("Put object to random node")

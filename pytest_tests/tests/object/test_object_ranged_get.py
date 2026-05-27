@@ -14,7 +14,12 @@ from helpers.container import (
     delete_container,
     generate_ranges_for_ec_object,
 )
-from helpers.file_helper import generate_file, get_file_content, get_file_hash
+from helpers.file_helper import (
+    generate_file,
+    generate_payload_ranges,
+    get_file_content,
+    get_file_hash,
+)
 from helpers.grpc_responses import (
     INVALID_LENGTH_SPECIFIER,
     INVALID_OFFSET_SPECIFIER,
@@ -36,7 +41,6 @@ from pytest import FixtureRequest
 logger = logging.getLogger("NeoLogger")
 
 SMALL_RANGE_LEN = 10
-RANGED_GET_MIN_VERSION = "0.52.0"
 
 
 @pytest.fixture(
@@ -86,18 +90,13 @@ class TestObjectRangedGet(TestNeofsBase):
         file_path = generate_file(file_size)
         oid = _put_object(self.neofs_env, default_wallet, container, file_path)
 
-        mid = file_size // 2
-        ranges_to_test = [
-            (0, SMALL_RANGE_LEN),
-            (mid, SMALL_RANGE_LEN),
-            (file_size - SMALL_RANGE_LEN, SMALL_RANGE_LEN),
-            (0, file_size),
-        ]
+        ranges_to_test = generate_payload_ranges(file_size) + [(0, file_size)]
+        logger.info(f"Ranges used in test: {ranges_to_test}")
 
-        for offset, length in ranges_to_test:
+        for idx, (offset, length) in enumerate(ranges_to_test):
             range_cut = f"{offset}:{length}"
             with allure.step(f"GET payload range {range_cut}"):
-                _, content = get_object_with_range(
+                _, content, stdout = get_object_with_range(
                     wallet=default_wallet.path,
                     cid=container,
                     oid=oid,
@@ -107,6 +106,12 @@ class TestObjectRangedGet(TestNeofsBase):
                 )
                 expected = get_file_content(file_path, content_len=length, mode="rb", offset=offset)
                 assert content == expected, f"Expected range content to match {range_cut} slice of file payload"
+
+                if idx == 0:
+                    for marker in ("Owner:", "CreatedAt:", "Size:", "Attributes:"):
+                        assert marker in stdout, (
+                            f"Header marker {marker!r} missing from default ranged GET stdout; stdout:\n{stdout}"
+                        )
 
     @allure.title("Ranged GET returns same content as legacy object range")
     @pytest.mark.simple
@@ -119,7 +124,7 @@ class TestObjectRangedGet(TestNeofsBase):
         for offset, length in ranges_to_test:
             range_cut = f"{offset}:{length}"
             with allure.step(f"Compare GET --range {range_cut} with object range"):
-                _, get_content = get_object_with_range(
+                _, get_content, _ = get_object_with_range(
                     wallet=default_wallet.path,
                     cid=container,
                     oid=oid,
@@ -146,7 +151,7 @@ class TestObjectRangedGet(TestNeofsBase):
         oid = _put_object(self.neofs_env, default_wallet, default_container, file_path)
 
         with allure.step("GET payload with --range 0:0"):
-            saved_path, _ = get_object_with_range(
+            saved_path, _, _ = get_object_with_range(
                 wallet=default_wallet.path,
                 cid=default_container,
                 oid=oid,
@@ -183,11 +188,14 @@ class TestObjectRangedGet(TestNeofsBase):
             # spans from the first to the last child
             (0, file_size - 1),
         ]
+        ranges_to_test.extend(generate_payload_ranges(file_size))
+        ranges_to_test.append((0, file_size))
+        logger.info(f"Ranges used in test: {ranges_to_test}")
 
         for offset, length in ranges_to_test:
             range_cut = f"{offset}:{length}"
             with allure.step(f"GET payload range {range_cut} (complex object)"):
-                _, content = get_object_with_range(
+                _, content, _ = get_object_with_range(
                     wallet=default_wallet.path,
                     cid=default_container,
                     oid=oid,
@@ -197,6 +205,58 @@ class TestObjectRangedGet(TestNeofsBase):
                 )
                 expected = get_file_content(file_path, content_len=length, mode="rb", offset=offset)
                 assert content == expected, f"Complex object ranged GET returned wrong bytes for {range_cut}"
+
+    @allure.title("GET with --payload-only omits the object header from stdout")
+    @pytest.mark.simple
+    def test_get_payload_only_omits_header(self, default_wallet: NodeWallet, default_container: str):
+        file_size = self.neofs_env.get_object_size("simple_object_size")
+        file_path = generate_file(file_size)
+        file_hash = get_file_hash(file_path)
+        oid = _put_object(self.neofs_env, default_wallet, default_container, file_path)
+
+        header_markers = ("Owner:", "CreatedAt:", "Size:", "Attributes:")
+
+        with allure.step("Ranged GET with --payload-only does not print the header"):
+            offset = 0
+            length = min(SMALL_RANGE_LEN, file_size)
+            range_cut = f"{offset}:{length}"
+            _, content, stdout = get_object_with_range(
+                wallet=default_wallet.path,
+                cid=default_container,
+                oid=oid,
+                range_cut=range_cut,
+                shell=self.neofs_env.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                payload_only=True,
+            )
+            expected = get_file_content(file_path, content_len=length, mode="rb", offset=offset)
+            assert content == expected, "Ranged payload differs from the expected slice in --payload-only mode"
+            for marker in header_markers:
+                assert marker not in stdout, (
+                    f"Header marker {marker!r} unexpectedly leaked into stdout while "
+                    f"--payload-only was set with --range; stdout:\n{stdout}"
+                )
+
+        with allure.step("Full GET with --payload-only does not print the header"):
+            cli = NeofsCli(self.neofs_env.shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
+            out_file = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, str(uuid.uuid4()))
+            result = cli.object.get(
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=default_container,
+                oid=oid,
+                file=out_file,
+                no_progress=True,
+                payload_only=True,
+            )
+            assert get_file_hash(out_file) == file_hash, (
+                "Full payload retrieved with --payload-only differs from the source file"
+            )
+            for marker in header_markers:
+                assert marker not in result.stdout, (
+                    f"Header marker {marker!r} unexpectedly leaked into stdout while "
+                    f"--payload-only was set without --range; stdout:\n{result.stdout}"
+                )
 
     @allure.title("Ranged GET negative cases for invalid ranges")
     @pytest.mark.simple
