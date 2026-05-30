@@ -1186,7 +1186,7 @@ class InnerRing(ResurrectableProcess):
             ]
 
         chain_meta_data_legacy_format = parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
+            self.neofs_env.get_binary_version(self.neofs_env.neofs_ir_path)
         ) <= parse_version("0.52.0")
 
         if not os.getenv(f"IR{self.ir_number}_CONFIG_PATH", None):
