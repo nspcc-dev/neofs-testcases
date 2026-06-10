@@ -174,7 +174,7 @@ class TestFailoverStorage:
             if hard_restart:
                 node_to_stop.kill()
             else:
-                node_to_stop.stop()
+                node_to_stop.stop(expect_graceful=True)
 
             object_nodes_after_stop = wait_object_replication(
                 cid,

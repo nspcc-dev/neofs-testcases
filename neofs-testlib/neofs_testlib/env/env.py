@@ -77,12 +77,13 @@ class ObjectType(Enum):
 def terminate_process(process: Popen):
     with allure.step(f"Check if process is already terminated: {process.pid}"):
         if process.poll() is not None:
-            return
+            return True
 
     with allure.step(f"Terminate process: {process.pid}"):
         process.terminate()
     try:
         process.wait(timeout=60)
+        return True
     except TimeoutExpired as e:
         with allure.step(f"Didn't manage to terminate process gracefully: {e}, going to kill it."):
             process.kill()
@@ -90,6 +91,7 @@ def terminate_process(process: Popen):
             with allure.step("List available processes in the system"):
                 result = subprocess.run(["ps", "axo", "pid,ppid,comm"], capture_output=True, text=True, timeout=10)
                 allure.attach(result.stdout, "Available processes", allure.attachment_type.TEXT)
+        return False
 
 
 class NeoFSEnv:
@@ -1383,14 +1385,18 @@ class StorageNode(ResurrectableProcess):
             self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
-    def stop(self):
+    def stop(self, expect_graceful=False):
         with allure.step(f"Stop SN: {self.pid=}; {self.endpoint=}; {self.stderr=}"):
             if self.process:
-                terminate_process(self.process)
+                terminated_by_sigterm = terminate_process(self.process)
                 self.process = None
                 self.pid = None
                 with allure.step("Wait until storage node is not ready"):
                     self._wait_until_not_ready()
+                if expect_graceful:
+                    assert terminated_by_sigterm, (
+                        "Storage node was not stopped by SIGTERM within timeout; it had to be force-killed with SIGKILL"
+                    )
             else:
                 AssertionError("Storage node has been already stopped")
 
