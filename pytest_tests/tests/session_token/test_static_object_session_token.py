@@ -216,15 +216,15 @@ class TestObjectStaticSession(TestNeofsBase):
 
         cid = storage_objects[0].cid
         expected_object_ids = [storage_object.oid for storage_object in storage_objects]
-        actual_object_ids = search_object(
-            user_wallet.path,
-            cid,
-            self.shell,
-            endpoint=self.neofs_env.sn_rpc,
+        found_objects, _ = search_object(
+            rpc_endpoint=self.neofs_env.sn_rpc,
+            wallet=user_wallet.path,
+            cid=cid,
+            shell=self.shell,
             session=static_sessions[ObjectVerb.SEARCH],
             root=True,
         )
-        assert set(expected_object_ids) == set(actual_object_ids)
+        assert set(expected_object_ids) == {obj["id"] for obj in found_objects}
 
     @allure.title("Validate static session with object id not in session")
     def test_static_session_unrelated_object(

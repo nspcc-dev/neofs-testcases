@@ -289,50 +289,6 @@ class NeofsCliObject(CliCommand):
         rpc_endpoint: str,
         wallet: str,
         cid: str,
-        address: Optional[str] = None,
-        bearer: Optional[str] = None,
-        filters: Optional[list] = None,
-        oid: Optional[str] = None,
-        phy: bool = False,
-        root: bool = False,
-        session: Optional[str] = None,
-        ttl: Optional[int] = None,
-        xhdr: Optional[dict] = None,
-        timeout: Optional[str] = None,
-        shell_timeout: Optional[int] = None,
-    ) -> CommandResult:
-        """
-        Search object.
-
-        Args:
-            address: Address of wallet account.
-            bearer: File with signed JSON or binary encoded bearer token.
-            cid: Container ID.
-            filters: Repeated filter expressions or files with protobuf JSON.
-            oid: Object ID.
-            phy: Search physically stored objects.
-            root: Search for user objects.
-            rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
-            session: Filepath to a JSON- or binary-encoded token of the object SEARCH session.
-            ttl: TTL value in request meta header (default 2).
-            wallet: WIF (NEP-2) string or path to the wallet or binary key.
-            xhdr: Dict with request X-Headers.
-            timeout: Timeout for the operation (default 15s).
-            shell_timeout: Shell timeout for the command.
-
-        Returns:
-            Command's result.
-        """
-        return self._execute(
-            "object search",
-            **{param: value for param, value in locals().items() if param not in ["self"]},
-        )
-
-    def searchv2(
-        self,
-        rpc_endpoint: str,
-        wallet: str,
-        cid: str,
         filters: Optional[list] = None,
         attributes: Optional[list] = None,
         count: Optional[int] = None,
@@ -374,7 +330,7 @@ class NeofsCliObject(CliCommand):
             Command's result.
         """
         return self._execute(
-            "object searchv2",
+            "object search",
             **{param: value for param, value in locals().items() if param not in ["self"]},
         )
 

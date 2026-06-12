@@ -173,15 +173,15 @@ class TestSessionTokenV2(TestNeofsBase):
             )
 
         with allure.step("Verify SEARCH operation with session token"):
-            search_result = search_object(
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc,
                 wallet=operator_wallet.path,
                 cid=cid,
                 shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
                 session=session_token,
                 root=True,
             )
-            assert oid in search_result, f"Object {oid} not found in search results"
+            assert oid in [obj["id"] for obj in found_objects], f"Object {oid} not found in search results"
 
         with allure.step("Verify DELETE operation with session token"):
             delete_object(
