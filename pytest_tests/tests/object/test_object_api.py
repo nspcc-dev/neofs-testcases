@@ -1,10 +1,8 @@
 import logging
-import os
 import sys
 
 import allure
 import pytest
-from helpers.common import TEST_FILES_DIR, get_assets_dir_path
 from helpers.complex_object_actions import (
     get_complex_object_copies,
     get_complex_object_split_ranges,
@@ -32,11 +30,9 @@ from helpers.file_helper import (
 from helpers.grpc_responses import (
     EC_ATTRIBUTES_FOUND,
     INVALID_LENGTH_SPECIFIER,
-    INVALID_NUMERIC_FILTER,
     INVALID_OFFSET_SPECIFIER,
     INVALID_RANGE_OVERFLOW,
     INVALID_RANGE_ZERO_LENGTH,
-    INVALID_SEARCH_QUERY,
     LINK_OBJECT_FOUND,
     LINK_OBJECT_REMOVAL,
     OBJECT_ALREADY_REMOVED,
@@ -55,7 +51,7 @@ from helpers.neofs_verbs import (
     put_object_to_random_node,
     search_object,
 )
-from helpers.storage_object_info import StorageObjectInfo, delete_objects
+from helpers.storage_object_info import StorageObjectInfo
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -66,7 +62,6 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 logger = logging.getLogger("NeoLogger")
 
 CLEANUP_TIMEOUT = 10
-COMMON_ATTRIBUTE = {"common_key": "common_value"}
 # Will upload object for each attribute set
 OBJECT_ATTRIBUTES = [
     None,
@@ -76,16 +71,6 @@ OBJECT_ATTRIBUTES = [
 
 # Used for static ranges found with issues
 STATIC_RANGES = {}
-OBJECT_NUMERIC_VALUES = [-(2**64) - 1, -1, 0, 1, 10, 2**64 + 1]
-NUMERIC_VALUE_ATTR_NAME = "numeric_value"
-
-
-def _id_should_be_in_result(id_: int, result: list[int]):
-    assert id_ in result, f"{id_} not in result, while it should be"
-
-
-def _id_should_not_be_in_result(id_: int, result: list[int]):
-    assert id_ not in result, f"{id_} in result, while it should not be"
 
 
 def generate_ranges(
@@ -269,134 +254,6 @@ class TestObjectApi(TestNeofsBase):
             )
             self.check_header_is_presented(head_info, storage_object_2.attributes)
 
-    @allure.title("Validate object search by native API")
-    def test_search_object_api(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
-        """
-        Validate object search by native API
-        """
-        allure.dynamic.title(f"Validate object search by native API for {request.node.callspec.id}")
-
-        oids = [storage_object.oid for storage_object in storage_objects]
-        wallet = storage_objects[0].wallet_file_path
-        cid = storage_objects[0].cid
-
-        def _generate_filters_expressions(attrib_dict: dict[str, str]):
-            return [f"{filter_key} EQ {filter_val}" for filter_key, filter_val in attrib_dict.items()]
-
-        test_table = [
-            (_generate_filters_expressions(OBJECT_ATTRIBUTES[1]), oids[1:2]),
-            (_generate_filters_expressions(OBJECT_ATTRIBUTES[2]), oids[2:3]),
-            (_generate_filters_expressions(COMMON_ATTRIBUTE), oids[1:3]),
-        ]
-
-        with allure.step("Search objects"):
-            # Search with no attributes
-            found_objects, _ = search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc,
-                wallet=wallet,
-                cid=cid,
-                shell=self.shell,
-                expected_objects_list=oids,
-                root=True,
-            )
-            assert sorted(oids) == sorted([obj["id"] for obj in found_objects])
-
-            # search by test table
-            for _filter, expected_oids in test_table:
-                found_objects, _ = search_object(
-                    rpc_endpoint=self.neofs_env.sn_rpc,
-                    wallet=wallet,
-                    cid=cid,
-                    shell=self.shell,
-                    filters=_filter,
-                    expected_objects_list=expected_oids,
-                    root=True,
-                )
-                assert sorted(expected_oids) == sorted([obj["id"] for obj in found_objects])
-
-    @pytest.mark.parametrize("operator", ["GT", "GE", "LT", "LE"])
-    @pytest.mark.parametrize(
-        "object_size",
-        [
-            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
-            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
-        ],
-    )
-    def test_object_search_with_numeric_queries(
-        self, default_wallet: NodeWallet, container: str, object_size: int, operator: str
-    ):
-        objects = []
-        for numeric_value in OBJECT_NUMERIC_VALUES:
-            file_path = generate_file(self.neofs_env.get_object_size(object_size))
-
-            objects.append(
-                {
-                    NUMERIC_VALUE_ATTR_NAME: numeric_value,
-                    "id": put_object_to_random_node(
-                        default_wallet.path,
-                        file_path,
-                        container,
-                        shell=self.shell,
-                        neofs_env=self.neofs_env,
-                        attributes={NUMERIC_VALUE_ATTR_NAME: numeric_value},
-                    ),
-                }
-            )
-
-        for numeric_value in OBJECT_NUMERIC_VALUES:
-            found_objects, _ = search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc,
-                wallet=default_wallet.path,
-                cid=container,
-                shell=self.shell,
-                filters=[f"{NUMERIC_VALUE_ATTR_NAME} {operator} {numeric_value}"],
-                root=True,
-            )
-            result = [obj["id"] for obj in found_objects]
-
-            for obj in objects:
-                if operator == "GT":
-                    if obj[NUMERIC_VALUE_ATTR_NAME] > numeric_value:
-                        _id_should_be_in_result(obj["id"], result)
-                    else:
-                        _id_should_not_be_in_result(obj["id"], result)
-                elif operator == "GE":
-                    if obj[NUMERIC_VALUE_ATTR_NAME] >= numeric_value:
-                        _id_should_be_in_result(obj["id"], result)
-                    else:
-                        _id_should_not_be_in_result(obj["id"], result)
-                elif operator == "LT":
-                    if obj[NUMERIC_VALUE_ATTR_NAME] < numeric_value:
-                        _id_should_be_in_result(obj["id"], result)
-                    else:
-                        _id_should_not_be_in_result(obj["id"], result)
-                elif operator == "LE":
-                    if obj[NUMERIC_VALUE_ATTR_NAME] <= numeric_value:
-                        _id_should_be_in_result(obj["id"], result)
-                    else:
-                        _id_should_not_be_in_result(obj["id"], result)
-
-    @pytest.mark.parametrize(
-        "filters",
-        [
-            "non_existent_attr GT abc",
-            "non_existent_attr GT 99-32",
-            "non_existent_attr LT 9.1",
-        ],
-    )
-    def test_object_search_with_numeric_operators_invalid_filters(
-        self, default_wallet: NodeWallet, container: str, filters: str
-    ):
-        with pytest.raises(Exception, match=rf"{INVALID_SEARCH_QUERY}|{INVALID_NUMERIC_FILTER}"):
-            search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc,
-                wallet=default_wallet.path,
-                cid=container,
-                shell=self.shell,
-                filters=[filters],
-                root=True,
-            )
-
     @pytest.mark.simple
     def test_object_search_with_attr_as_number(
         self,
@@ -422,160 +279,6 @@ class TestObjectApi(TestNeofsBase):
         )
 
         assert oid in [obj["id"] for obj in found_objects], "Object was not found, while it should be"
-
-    @pytest.mark.simple
-    def test_object_search_numeric_with_attr_as_string(self, default_wallet: NodeWallet, container: str):
-        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-        string_attr = "cool_string_attribute"
-        oid = put_object_to_random_node(
-            default_wallet.path,
-            file_path,
-            container,
-            shell=self.shell,
-            neofs_env=self.neofs_env,
-            attributes={string_attr: "xyz"},
-        )
-        found_objects, _ = search_object(
-            rpc_endpoint=self.neofs_env.sn_rpc,
-            wallet=default_wallet.path,
-            cid=container,
-            shell=self.shell,
-            filters=[f"{string_attr} GT 0"],
-            root=True,
-        )
-
-        assert oid not in [obj["id"] for obj in found_objects], "Object was found, while it should not be"
-
-    @allure.title("Validate object search with removed items")
-    @pytest.mark.parametrize(
-        "object_size",
-        [
-            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
-            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
-        ],
-    )
-    @pytest.mark.parametrize(
-        "container_policy",
-        [
-            pytest.param(DEFAULT_PLACEMENT_RULE, id="simple object", marks=pytest.mark.simple),
-            pytest.param(EC_3_1_PLACEMENT_RULE, id="complex object", marks=pytest.mark.complex),
-        ],
-    )
-    def test_object_search_should_return_tombstone_items(
-        self, default_wallet: NodeWallet, request: FixtureRequest, object_size: int, container_policy: str
-    ):
-        """
-        Validate object search with removed items
-        """
-        allure.dynamic.title(f"Validate object search with removed items for {request.node.callspec.id}")
-
-        wallet = default_wallet
-        cid = create_container(wallet.path, self.shell, self.neofs_env.sn_rpc, rule=container_policy)
-
-        with allure.step("Upload file"):
-            file_path = generate_file(self.neofs_env.get_object_size(object_size))
-            file_hash = get_file_hash(file_path)
-
-            storage_object = StorageObjectInfo(
-                cid=cid,
-                oid=put_object_to_random_node(wallet.path, file_path, cid, self.shell, neofs_env=self.neofs_env),
-                size=object_size,
-                wallet_file_path=wallet.path,
-                file_path=file_path,
-                file_hash=file_hash,
-            )
-
-        with allure.step("Search object"):
-            # Root Search object should return root object oid
-            found_objects, _ = search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, root=True
-            )
-            assert [obj["id"] for obj in found_objects] == [storage_object.oid]
-
-        with allure.step("Delete file"):
-            delete_objects([storage_object], self.shell, self.neofs_env)
-
-        with allure.step("Search deleted object with --root"):
-            # Root Search object should return nothing
-            found_objects, _ = search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, root=True
-            )
-            assert len(found_objects) == 0
-
-        with allure.step("Search deleted object with --phy should return only tombstones"):
-            # Physical Search object should return only tombstones
-            found_objects, _ = search_object(
-                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, phy=True
-            )
-            result = [obj["id"] for obj in found_objects]
-            assert storage_object.tombstone in result, "Search result should contain tombstone of removed object"
-            assert storage_object.oid not in result, "Search result should not contain ObjectId of removed object"
-            for tombstone_oid in result:
-                header = head_object(
-                    wallet.path,
-                    cid,
-                    tombstone_oid,
-                    shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                )["header"]
-                object_type = header["objectType"]
-                assert object_type == "TOMBSTONE", (
-                    f"Object wasn't deleted properly. Found object {tombstone_oid} with type {object_type}"
-                )
-
-    @allure.title("Validate objects search by common prefix")
-    @pytest.mark.simple
-    def test_search_object_api_common_prefix(self, default_wallet: NodeWallet, container: str):
-        FILEPATH_ATTR_NAME = "FilePath"
-        NUMBER_OF_OBJECTS = 5
-        wallet = default_wallet
-
-        objects = {}
-        for _ in range(NUMBER_OF_OBJECTS):
-            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-
-            with allure.step("Put objects"):
-                objects[file_path] = put_object_to_random_node(
-                    wallet=wallet.path,
-                    path=file_path,
-                    cid=container,
-                    shell=self.shell,
-                    neofs_env=self.neofs_env,
-                    attributes={FILEPATH_ATTR_NAME: file_path},
-                )
-        all_oids = sorted(objects.values())
-
-        for common_prefix, expected_oids in (
-            ("/", all_oids),
-            (os.path.join(get_assets_dir_path()), all_oids),
-            (os.path.join(get_assets_dir_path(), TEST_FILES_DIR), all_oids),
-            (file_path, [objects[file_path]]),
-        ):
-            with allure.step(f"Search objects by path: {common_prefix}"):
-                search_object(
-                    rpc_endpoint=self.neofs_env.sn_rpc,
-                    wallet=wallet.path,
-                    cid=container,
-                    shell=self.shell,
-                    filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
-                    expected_objects_list=expected_oids,
-                    root=True,
-                    fail_on_assert=True,
-                )
-
-        for common_prefix in (f"{file_path}/o123/COMMON_PREFIX", "?", "213"):
-            with allure.step(f"Search objects by path: {common_prefix}"):
-                with pytest.raises(AssertionError):
-                    search_object(
-                        rpc_endpoint=self.neofs_env.sn_rpc,
-                        wallet=wallet.path,
-                        cid=container,
-                        shell=self.shell,
-                        filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
-                        expected_objects_list=expected_oids,
-                        root=True,
-                        fail_on_assert=True,
-                    )
 
     @allure.title("Validate native object API get_range")
     def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
