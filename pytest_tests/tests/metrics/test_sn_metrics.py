@@ -91,10 +91,10 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
     )
 
     search_object(
-        default_wallet.path,
-        cid,
+        rpc_endpoint=neofs_env_single_sn.sn_rpc,
+        wallet=default_wallet.path,
+        cid=cid,
         shell=neofs_env_single_sn.shell,
-        endpoint=neofs_env_single_sn.sn_rpc,
         expected_objects_list=[oid],
         root=True,
     )

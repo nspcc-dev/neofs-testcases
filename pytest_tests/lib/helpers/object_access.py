@@ -190,18 +190,18 @@ def can_search_object(
 ) -> bool:
     with allure.step("Try search object in container"):
         try:
-            oids = search_object(
-                wallet,
-                cid,
+            found_objects, _ = search_object(
+                rpc_endpoint=endpoint,
+                wallet=wallet,
+                cid=cid,
+                shell=shell,
                 bearer=bearer,
                 wallet_config=wallet_config,
                 xhdr=xhdr,
-                shell=shell,
-                endpoint=endpoint,
             )
         except OPERATION_ERROR_TYPE as err:
             assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
             return False
         if oid:
-            return oid in oids
+            return oid in [found_object["id"] for found_object in found_objects]
     return True

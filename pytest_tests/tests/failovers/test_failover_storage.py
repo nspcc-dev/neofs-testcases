@@ -449,13 +449,16 @@ class TestFailoverStorage:
             self._assert_operation_eventually_incomplete_or_fail(
                 operation_name="SEARCH",
                 accept_success_result=lambda found: incomplete_put_oid in found,
-                operation=lambda: search_object(
-                    wallet.path,
-                    cid,
-                    shell=self.shell,
-                    endpoint=operation_endpoint,
-                    filters=incomplete_put_filter_expr,
-                ),
+                operation=lambda: [
+                    obj["id"]
+                    for obj in search_object(
+                        rpc_endpoint=operation_endpoint,
+                        wallet=wallet.path,
+                        cid=cid,
+                        shell=self.shell,
+                        filters=incomplete_put_filter_expr,
+                    )[0]
+                ],
             )
 
         with allure.step("SEARCH baseline object: incomplete status or success listing that object"):
@@ -463,13 +466,16 @@ class TestFailoverStorage:
             self._assert_operation_eventually_incomplete_or_fail(
                 operation_name="SEARCH",
                 accept_success_result=lambda found: oid in found,
-                operation=lambda: search_object(
-                    wallet.path,
-                    cid,
-                    shell=self.shell,
-                    endpoint=operation_endpoint,
-                    filters=filter_expr,
-                ),
+                operation=lambda: [
+                    obj["id"]
+                    for obj in search_object(
+                        rpc_endpoint=operation_endpoint,
+                        wallet=wallet.path,
+                        cid=cid,
+                        shell=self.shell,
+                        filters=filter_expr,
+                    )[0]
+                ],
             )
 
         with allure.step("DELETE incomplete PUT object eventually returns incomplete status"):

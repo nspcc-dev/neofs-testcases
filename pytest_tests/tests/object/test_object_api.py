@@ -291,28 +291,28 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Search objects"):
             # Search with no attributes
-            result = search_object(
-                wallet,
-                cid,
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=wallet,
+                cid=cid,
                 shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
                 expected_objects_list=oids,
                 root=True,
             )
-            assert sorted(oids) == sorted(result)
+            assert sorted(oids) == sorted([obj["id"] for obj in found_objects])
 
             # search by test table
             for _filter, expected_oids in test_table:
-                result = search_object(
-                    wallet,
-                    cid,
+                found_objects, _ = search_object(
+                    rpc_endpoint=self.neofs_env.sn_rpc,
+                    wallet=wallet,
+                    cid=cid,
                     shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
                     filters=_filter,
                     expected_objects_list=expected_oids,
                     root=True,
                 )
-                assert sorted(expected_oids) == sorted(result)
+                assert sorted(expected_oids) == sorted([obj["id"] for obj in found_objects])
 
     @pytest.mark.parametrize("operator", ["GT", "GE", "LT", "LE"])
     @pytest.mark.parametrize(
@@ -344,14 +344,15 @@ class TestObjectApi(TestNeofsBase):
             )
 
         for numeric_value in OBJECT_NUMERIC_VALUES:
-            result = search_object(
-                default_wallet.path,
-                container,
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=container,
                 shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
                 filters=[f"{NUMERIC_VALUE_ATTR_NAME} {operator} {numeric_value}"],
                 root=True,
             )
+            result = [obj["id"] for obj in found_objects]
 
             for obj in objects:
                 if operator == "GT":
@@ -388,10 +389,10 @@ class TestObjectApi(TestNeofsBase):
     ):
         with pytest.raises(Exception, match=rf"{INVALID_SEARCH_QUERY}|{INVALID_NUMERIC_FILTER}"):
             search_object(
-                default_wallet.path,
-                container,
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=default_wallet.path,
+                cid=container,
                 shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
                 filters=[filters],
                 root=True,
             )
@@ -411,16 +412,16 @@ class TestObjectApi(TestNeofsBase):
             neofs_env=self.neofs_env,
             attributes={100: 200},
         )
-        result = search_object(
-            default_wallet.path,
-            container,
+        found_objects, _ = search_object(
+            rpc_endpoint=self.neofs_env.sn_rpc,
+            wallet=default_wallet.path,
+            cid=container,
             shell=self.shell,
-            endpoint=self.neofs_env.sn_rpc,
             filters=["100 GE 200"],
             root=True,
         )
 
-        assert oid in result, "Object was not found, while it should be"
+        assert oid in [obj["id"] for obj in found_objects], "Object was not found, while it should be"
 
     @pytest.mark.simple
     def test_object_search_numeric_with_attr_as_string(self, default_wallet: NodeWallet, container: str):
@@ -434,16 +435,16 @@ class TestObjectApi(TestNeofsBase):
             neofs_env=self.neofs_env,
             attributes={string_attr: "xyz"},
         )
-        result = search_object(
-            default_wallet.path,
-            container,
+        found_objects, _ = search_object(
+            rpc_endpoint=self.neofs_env.sn_rpc,
+            wallet=default_wallet.path,
+            cid=container,
             shell=self.shell,
-            endpoint=self.neofs_env.sn_rpc,
             filters=[f"{string_attr} GT 0"],
             root=True,
         )
 
-        assert oid not in result, "Object was found, while it should not be"
+        assert oid not in [obj["id"] for obj in found_objects], "Object was found, while it should not be"
 
     @allure.title("Validate object search with removed items")
     @pytest.mark.parametrize(
@@ -486,20 +487,27 @@ class TestObjectApi(TestNeofsBase):
 
         with allure.step("Search object"):
             # Root Search object should return root object oid
-            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True)
-            assert result == [storage_object.oid]
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, root=True
+            )
+            assert [obj["id"] for obj in found_objects] == [storage_object.oid]
 
         with allure.step("Delete file"):
             delete_objects([storage_object], self.shell, self.neofs_env)
 
         with allure.step("Search deleted object with --root"):
             # Root Search object should return nothing
-            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, root=True)
-            assert len(result) == 0
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, root=True
+            )
+            assert len(found_objects) == 0
 
         with allure.step("Search deleted object with --phy should return only tombstones"):
             # Physical Search object should return only tombstones
-            result = search_object(wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc, phy=True)
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=self.shell, phy=True
+            )
+            result = [obj["id"] for obj in found_objects]
             assert storage_object.tombstone in result, "Search result should contain tombstone of removed object"
             assert storage_object.oid not in result, "Search result should not contain ObjectId of removed object"
             for tombstone_oid in result:
@@ -545,10 +553,10 @@ class TestObjectApi(TestNeofsBase):
         ):
             with allure.step(f"Search objects by path: {common_prefix}"):
                 search_object(
-                    wallet.path,
-                    container,
+                    rpc_endpoint=self.neofs_env.sn_rpc,
+                    wallet=wallet.path,
+                    cid=container,
                     shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
                     filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
                     expected_objects_list=expected_oids,
                     root=True,
@@ -559,10 +567,10 @@ class TestObjectApi(TestNeofsBase):
             with allure.step(f"Search objects by path: {common_prefix}"):
                 with pytest.raises(AssertionError):
                     search_object(
-                        wallet.path,
-                        container,
+                        rpc_endpoint=self.neofs_env.sn_rpc,
+                        wallet=wallet.path,
+                        cid=container,
                         shell=self.shell,
-                        endpoint=self.neofs_env.sn_rpc,
                         filters=[f"{FILEPATH_ATTR_NAME} COMMON_PREFIX {common_prefix}"],
                         expected_objects_list=expected_oids,
                         root=True,

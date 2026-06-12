@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 import allure
 from helpers.grpc_responses import OBJECT_NOT_FOUND, error_matches_status
-from helpers.neofs_verbs import get_object, head_object, search_objectv2
+from helpers.neofs_verbs import get_object, head_object, search_object
 from helpers.storage_object_info import StorageObjectInfo
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
 from neofs_testlib.shell import Shell
@@ -80,7 +80,7 @@ def get_ec_object_chunks(
     """
 
     with allure.step(f"Get complex object chunks (f{oid})"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=wallet_file_path,
             cid=cid,
@@ -149,7 +149,7 @@ def get_link_object(
         When no Link Object ID is found after all Storage Nodes polling,
         the function throws an error.
     """
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=wallet,
         cid=cid,
