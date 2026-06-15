@@ -20,7 +20,6 @@ from helpers.neofs_verbs import (
     put_object,
     put_object_to_random_node,
     search_object,
-    search_objectv2,
 )
 from helpers.node_management import start_storage_nodes
 from helpers.test_control import wait_for_success
@@ -46,7 +45,7 @@ def get_attribute_value_from_found_object(found_object: dict, attr_name: str) ->
 def expected_number_of_object_found(
     default_wallet: NodeWallet, cid: str, neofs_env: NeoFSEnv, expected_number_of_objects: int
 ):
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -95,7 +94,7 @@ def test_search_sanity(default_wallet: NodeWallet, container: str, neofs_env: Ne
                 neofs_env=neofs_env,
             )
         )
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell
     )
     assert len(found_objects) == len(created_objects), "invalid number of objects"
@@ -142,7 +141,7 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
 
     for operator_str, comparator in operators.items():
         for int_value in int_attributes_values:
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -185,7 +184,7 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
     )
     for operator_str, comparator in operators.items():
         if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -196,7 +195,7 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
             assert len(found_objects) == 0, "invalid number of objects"
         else:
             with pytest.raises(Exception, match=TOO_BIG_INT_VALUE):
-                search_objectv2(
+                search_object(
                     rpc_endpoint=neofs_env.sn_rpc,
                     wallet=default_wallet.path,
                     cid=cid,
@@ -259,7 +258,7 @@ def test_search_single_filter_by_custom_str_attributes(
         for str_value in str_attributes_values:
             if operator_str in numeric_operators and node_version > parse_version("0.52.0"):
                 with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
-                    search_objectv2(
+                    search_object(
                         rpc_endpoint=neofs_env.sn_rpc,
                         wallet=default_wallet.path,
                         cid=cid,
@@ -269,7 +268,7 @@ def test_search_single_filter_by_custom_str_attributes(
                     )
                 continue
 
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -346,7 +345,7 @@ def test_search_multiple_filters_same_attribute(default_wallet: NodeWallet, cont
         },
     ]
     for testcase in testcases:
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -403,7 +402,7 @@ def test_search_empty_attrs_in_filters(default_wallet: NodeWallet, container: st
     ]
 
     for testcase in testcases:
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -458,7 +457,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
 
     for op0, op1, op2 in filters:
         for int_value in int_attributes_values:
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -475,7 +474,7 @@ def test_search_multiple_filters_by_custom_int_attributes(
                 for i, op in enumerate([op0, op1, op2]):
                     attr_name = f"int_attr{i}"
                     assert operators[op](int(get_attribute_value_from_found_object(found_obj, attr_name)), int_value), (
-                        f"Invalid object returned from searchv2: {found_obj}"
+                        f"Invalid object returned from search: {found_obj}"
                     )
 
             for created_obj in created_objects:
@@ -544,7 +543,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
 
     for op0, op1, op2 in filters:
         for str_value in str_attributes_values:
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -561,7 +560,7 @@ def test_search_multiple_filters_by_custom_str_attributes(
                 for i, op in enumerate([op0, op1, op2]):
                     attr_name = f"str_attr{i}"
                     assert operators[op](get_attribute_value_from_found_object(found_obj, attr_name), str_value), (
-                        f"Invalid object returned from searchv2: {found_obj}"
+                        f"Invalid object returned from search: {found_obj}"
                     )
 
             for created_obj in created_objects:
@@ -612,7 +611,7 @@ def test_search_by_mixed_attributes_contents(
         neofs_env=neofs_env,
         attributes={"str_attr": "abcd", "int_attr": "345"},
     )
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -627,7 +626,7 @@ def test_search_by_mixed_attributes_contents(
     assert len(found_objects) == 1, "invalid number of objects"
     assert found_objects[0]["id"] == oid1, "invalid object returned from search"
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -741,7 +740,7 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                     search_filters.append(f"int_attr2 {op2} {int_value}")
                     attributes.append("int_attr2")
 
-                found_objects, _ = search_objectv2(
+                found_objects, _ = search_object(
                     rpc_endpoint=neofs_env.sn_rpc,
                     wallet=default_wallet.path,
                     cid=cid,
@@ -754,27 +753,27 @@ def test_search_multiple_filters_by_custom_mixed_attributes(
                     if op0 in str_operators:
                         assert str_operators[op0](
                             get_attribute_value_from_found_object(found_obj, "str_attr0"), str_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
                     else:
                         assert int_operators[op0](
                             int(get_attribute_value_from_found_object(found_obj, "int_attr0")), int_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
                     if op1 in str_operators:
                         assert str_operators[op1](
                             get_attribute_value_from_found_object(found_obj, "str_attr1"), str_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
                     else:
                         assert int_operators[op1](
                             int(get_attribute_value_from_found_object(found_obj, "int_attr1")), int_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
                     if op2 in str_operators:
                         assert str_operators[op2](
                             get_attribute_value_from_found_object(found_obj, "str_attr2"), str_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
                     else:
                         assert int_operators[op2](
                             int(get_attribute_value_from_found_object(found_obj, "int_attr2")), int_value
-                        ), f"Invalid object returned from searchv2: {found_obj}"
+                        ), f"Invalid object returned from search: {found_obj}"
 
                 for created_obj in created_objects:
                     attrs = created_obj["attrs"]
@@ -843,7 +842,7 @@ def test_search_by_system_attributes(
     for system_attr in system_attributes.keys():
         for created_obj in created_objects:
             created_obj_attr_value = created_obj["attrs"][system_attr]
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -858,11 +857,11 @@ def test_search_by_system_attributes(
                         get_attribute_value_from_found_object(found_obj, system_attr)
                     )
                     assert epoch_from_timestamp == int(created_obj_attr_value), (
-                        f"Invalid object returned from searchv2: {found_obj}"
+                        f"Invalid object returned from search: {found_obj}"
                     )
                 else:
                     assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
-                        f"Invalid object returned from searchv2: {found_obj}"
+                        f"Invalid object returned from search: {found_obj}"
                     )
             assert any(found_obj["id"] == created_obj["id"] for found_obj in found_objects), (
                 f"created object {created_obj['id']} not found in search output"
@@ -914,7 +913,7 @@ def test_search_by_split_attributes(
     for system_attr in system_attributes.keys():
         for created_obj in created_objects:
             created_obj_attr_value = created_obj["attrs"][system_attr]
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -925,7 +924,7 @@ def test_search_by_split_attributes(
             assert len(found_objects) > 0, "no objects found"
             for found_obj in found_objects:
                 assert get_attribute_value_from_found_object(found_obj, system_attr) == created_obj_attr_value, (
-                    f"Invalid object returned from searchv2: {found_obj}"
+                    f"Invalid object returned from search: {found_obj}"
                 )
 
 
@@ -954,7 +953,7 @@ def test_split_object_boundaries(
             shell=neofs_env.shell,
             neofs_env=neofs_env,
         )
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -996,7 +995,7 @@ def test_search_by_non_existing_attributes(
         )
 
     for op in ["GT", "GE", "LT", "LE", "EQ", "NE", "COMMON_PREFIX"]:
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1035,7 +1034,7 @@ def test_search_of_complex_object(
 
     parts = get_object_chunks(default_wallet.path, container, oid, neofs_env.shell, neofs_env)
 
-    found_complex_objects, _ = search_objectv2(
+    found_complex_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1046,7 +1045,7 @@ def test_search_of_complex_object(
 
     assert len(found_complex_objects) == 1, "there is an unexpected number of LINK objects"
 
-    found_complex_objects, _ = search_objectv2(
+    found_complex_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1100,7 +1099,7 @@ def test_search_by_various_attributes(
         attributes={"str_attr0": "interesting.value_for_some*reason", "str_attr1": "oops", "int_attr0": 54321},
     )
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1115,7 +1114,7 @@ def test_search_by_various_attributes(
     assert len(found_objects) == 1, "invalid number of found objects"
     assert found_objects[0]["id"] == oid1, "invalid object returned from search"
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1129,7 +1128,7 @@ def test_search_by_various_attributes(
     )
     assert len(found_objects) == 0, "invalid number of found objects"
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1180,7 +1179,7 @@ def test_search_attrs_ordering(
         )
 
     with allure.step("Verify unfiltered ordering"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1194,7 +1193,7 @@ def test_search_attrs_ordering(
             max_oid = current_oid
 
     with allure.step("Verify numeric ordering"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1213,7 +1212,7 @@ def test_search_attrs_ordering(
             max_length = current_length
 
     with allure.step("Verify lexicographical ordering"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1267,7 +1266,7 @@ def test_search_attrs_ordering_with_cursor(
         )
 
     with allure.step("Verify unfiltered ordering without cursor"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1284,7 +1283,7 @@ def test_search_attrs_ordering_with_cursor(
         cursor = None
         found_objects = []
         for _ in range(len(created_objects)):
-            new_found_objects, cursor = search_objectv2(
+            new_found_objects, cursor = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1306,7 +1305,7 @@ def test_search_attrs_ordering_with_cursor(
         cursor = None
         found_objects = []
         for _ in range(len(created_objects)):
-            new_found_objects, cursor = search_objectv2(
+            new_found_objects, cursor = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1333,7 +1332,7 @@ def test_search_attrs_ordering_with_cursor(
         cursor = None
         found_objects = []
         for _ in range(len(created_objects)):
-            new_found_objects, cursor = search_objectv2(
+            new_found_objects, cursor = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1393,7 +1392,7 @@ def test_search_with_cursor_empty_filters_and_attributes(
             cursor = None
             found_objects = []
             for _ in range(math.ceil(len(created_objects) / count)):
-                new_found_objects, cursor = search_objectv2(
+                new_found_objects, cursor = search_object(
                     rpc_endpoint=neofs_env.sn_rpc,
                     wallet=default_wallet.path,
                     cid=cid,
@@ -1445,7 +1444,7 @@ def test_search_count_and_cursor(
         )
 
     for count_value in [len(created_objects), len(created_objects) + 1]:
-        found_objects, cursor = search_objectv2(
+        found_objects, cursor = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1460,7 +1459,7 @@ def test_search_count_and_cursor(
 
     found_objects = []
 
-    first_found_objects, first_cursor = search_objectv2(
+    first_found_objects, first_cursor = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1474,7 +1473,7 @@ def test_search_count_and_cursor(
 
     found_objects.extend(first_found_objects)
 
-    second_found_objects, cursor = search_objectv2(
+    second_found_objects, cursor = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1489,7 +1488,7 @@ def test_search_count_and_cursor(
 
     found_objects.extend(second_found_objects)
 
-    last_found_objects, last_cursor = search_objectv2(
+    last_found_objects, last_cursor = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1510,7 +1509,7 @@ def test_search_count_and_cursor(
             f"created object {created_obj['id']} not found in search output"
         )
 
-    last_found_objects, last_cursor = search_objectv2(
+    last_found_objects, last_cursor = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1526,7 +1525,7 @@ def test_search_count_and_cursor(
 
     # invalid cursor
     with pytest.raises(Exception):
-        last_found_objects, cursor = search_objectv2(
+        last_found_objects, cursor = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1572,7 +1571,7 @@ def test_search_tombstone_objects(
         neofs_env=neofs_env,
     )
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1591,7 +1590,7 @@ def test_search_tombstone_objects(
         neofs_env.sn_rpc,
     )
 
-    tombstone_objects, _ = search_objectv2(
+    tombstone_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1603,13 +1602,13 @@ def test_search_tombstone_objects(
     assert tombstone_objects[0]["id"] != oid, "invalid tombstone object returned from search"
 
     with allure.step("Verify --root doesn't return tombstones"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell, root=True
         )
         assert len(found_objects) == 0, "invalid number of found objects with --root filter"
 
     with allure.step("Verify --phy returns tombstones"):
-        tombstone_objects, _ = search_objectv2(
+        tombstone_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell, phy=True
         )
 
@@ -1648,7 +1647,7 @@ def test_search_invalid_filters(
         )
     for op in ["GE", "GT", "LT", "LE"]:
         if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1657,7 +1656,7 @@ def test_search_invalid_filters(
                 attributes=["$Object:creationEpoch"],
             )
             assert len(found_objects) == 0, "invalid number of found objects"
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1668,7 +1667,7 @@ def test_search_invalid_filters(
             assert len(found_objects) == 0, "invalid number of found objects"
         else:
             with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
-                search_objectv2(
+                search_object(
                     rpc_endpoint=neofs_env.sn_rpc,
                     wallet=default_wallet.path,
                     cid=cid,
@@ -1677,7 +1676,7 @@ def test_search_invalid_filters(
                     attributes=["$Object:creationEpoch"],
                 )
             with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
-                search_objectv2(
+                search_object(
                     rpc_endpoint=neofs_env.sn_rpc,
                     wallet=default_wallet.path,
                     cid=cid,
@@ -1687,7 +1686,7 @@ def test_search_invalid_filters(
                 )
 
     for op in ["EQ", "COMMON_PREFIX"]:
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1696,7 +1695,7 @@ def test_search_invalid_filters(
             attributes=["$Object:creationEpoch"],
         )
         assert len(found_objects) == 0, "invalid number of found objects"
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1707,7 +1706,7 @@ def test_search_invalid_filters(
         assert len(found_objects) == 0, "invalid number of found objects"
 
     with pytest.raises(Exception, match=r".*unsupported operation.*"):
-        search_objectv2(
+        search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1717,7 +1716,7 @@ def test_search_invalid_filters(
         )
 
     with pytest.raises(Exception, match=r".*unsupported operation.*"):
-        search_objectv2(
+        search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1728,7 +1727,7 @@ def test_search_invalid_filters(
 
     for op in ["GE", "GT", "LT", "LE", "EQ", "NE", "COMMON_PREFIX"]:
         with pytest.raises(Exception, match=r".*unsupported operation.*"):
-            search_objectv2(
+            search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1738,7 +1737,7 @@ def test_search_invalid_filters(
             )
 
     with pytest.raises(Exception, match=r".*unsupported operation.*"):
-        search_objectv2(
+        search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1776,7 +1775,7 @@ def test_search_conflicting_filters(
         ),
     )
 
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1813,7 +1812,7 @@ def test_search_filters_attributes_limits(
         neofs_env=neofs_env,
         attributes={f"int_attr{x}": 1000 + x for x in range(10)},
     )
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
@@ -1826,7 +1825,7 @@ def test_search_filters_attributes_limits(
     assert len(found_objects[0]["attrs"]) == 8, "invalid number of attributes in found object"
 
     with pytest.raises(Exception, match=r".*more than 8 filters.*"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1836,7 +1835,7 @@ def test_search_filters_attributes_limits(
         )
 
     with pytest.raises(Exception, match=r".*more than 8 attributes.*"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc,
             wallet=default_wallet.path,
             cid=cid,
@@ -1847,7 +1846,7 @@ def test_search_filters_attributes_limits(
 
 
 @pytest.mark.parametrize("meta_info_consistency", ["strict", "optimistic"])
-def test_searchv2_meta_enabled_containers(neofs_env: NeoFSEnv, default_wallet: NodeWallet, meta_info_consistency: str):
+def test_search_meta_enabled_containers(neofs_env: NeoFSEnv, default_wallet: NodeWallet, meta_info_consistency: str):
     with allure.step(f"Create container with __NEOFS__METAINFO_CONSISTENCY={meta_info_consistency}"):
         cid = create_container(
             default_wallet.path,
@@ -1881,7 +1880,7 @@ def test_searchv2_meta_enabled_containers(neofs_env: NeoFSEnv, default_wallet: N
 
     try:
         with allure.step("Search from alive node should return all created objects"):
-            found_objects, _ = search_objectv2(
+            found_objects, _ = search_object(
                 rpc_endpoint=alive_node.endpoint,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1905,24 +1904,16 @@ def test_root_search_for_big_object(default_wallet: NodeWallet, container: str, 
         neofs_env=neofs_env,
     )
 
-    found_objects = search_object(
-        default_wallet.path,
-        cid,
-        shell=neofs_env.shell,
-        endpoint=neofs_env.sn_rpc,
-        expected_objects_list=[oid],
-        root=True,
-        fail_on_assert=True,
-    )
-
-    found_objects, _ = search_objectv2(
+    found_objects, _ = search_object(
         rpc_endpoint=neofs_env.sn_rpc,
         wallet=default_wallet.path,
         cid=cid,
         shell=neofs_env.shell,
         root=True,
+        expected_objects_list=[oid],
+        fail_on_assert=True,
     )
-    assert len(found_objects) == 1, "invalid number of objects in searchv2 outut"
+    assert len(found_objects) == 1, "invalid number of objects in search output"
     assert any(found_obj["id"] == oid for found_obj in found_objects), (
-        f"created object {oid} not found in searchv2 output"
+        f"created object {oid} not found in search output"
     )

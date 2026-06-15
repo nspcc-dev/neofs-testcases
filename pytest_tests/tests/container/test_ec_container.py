@@ -21,7 +21,7 @@ from helpers.neofs_verbs import (
     get_range,
     head_object,
     put_object,
-    search_objectv2,
+    search_object,
 )
 from helpers.node_management import drop_object, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -174,7 +174,7 @@ def test_ec_container_sanity(
         )
 
     with allure.step("Search for the object and its parts in EC container"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell
         )
 
@@ -849,7 +849,7 @@ def test_ec_recovery(
         )
 
     with allure.step("Search for the object and its parts in EC container"):
-        found_objects, _ = search_objectv2(
+        found_objects, _ = search_object(
             rpc_endpoint=neofs_env.sn_rpc, wallet=default_wallet.path, cid=cid, shell=neofs_env.shell
         )
 

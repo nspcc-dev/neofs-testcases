@@ -36,13 +36,14 @@ class TestUnfinishedObjectRemoval(TestNeofsS3Base):
             assert len(got_parts) == 1, f"Expected {1} parts, got\n{got_parts}"
 
         with allure.step(f"Find all created objects related to {upload_id}"):
-            oids = search_object(
-                self.wallet.path,
-                cid,
+            found_objects, _ = search_object(
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                wallet=self.wallet.path,
+                cid=cid,
                 shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
                 filters=[f"$Object:split.first EQ {upload_id}"],
             )
+            oids = [obj["id"] for obj in found_objects]
 
         with allure.step(f"Delete all parts related to {upload_id}"):
             for oid in oids:

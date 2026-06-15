@@ -517,72 +517,7 @@ def lock_object(
     return oid.strip()
 
 
-@allure.step("Search object")
-def search_object(
-    wallet: str,
-    cid: str,
-    shell: Shell,
-    endpoint: str,
-    bearer: str = "",
-    filters: Optional[list] = None,
-    expected_objects_list: Optional[list] = None,
-    wallet_config: Optional[str] = None,
-    xhdr: Optional[dict] = None,
-    session: Optional[str] = None,
-    phy: bool = False,
-    root: bool = False,
-    fail_on_assert=False,
-) -> list:
-    """
-    SEARCH an Object.
-
-    Args:
-        wallet: wallet on whose behalf SEARCH is done
-        cid: ID of Container where we get the Object from
-        shell: executor for cli command
-        bearer: path to Bearer Token file, appends to `--bearer` key
-        endpoint: NeoFS endpoint to send request to, appends to `--rpc-endpoint` key
-        filters: list of filter objects
-        expected_objects_list: a list of ObjectIDs to compare found Objects with
-        wallet_config: path to the wallet config
-        xhdr: Request X-Headers in form of Key=Value
-        session: path to a JSON-encoded container session token
-        phy: Search physically stored objects.
-        root: Search for user objects.
-        fail_on_assert: fail if expected_objects_list is not matched to the found objects list.
-
-    Returns:
-        list of found ObjectIDs
-    """
-
-    cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    result = cli.object.search(
-        rpc_endpoint=endpoint,
-        wallet=wallet,
-        cid=cid,
-        bearer=bearer,
-        xhdr=xhdr,
-        filters=filters,
-        session=session,
-        phy=phy,
-        root=root,
-    )
-
-    found_objects = re.findall(r"(\w{43,44})", result.stdout)
-
-    if expected_objects_list:
-        if sorted(found_objects) == sorted(expected_objects_list):
-            logger.info(f"Found objects list '{found_objects}' is equal for expected list '{expected_objects_list}'")
-        else:
-            warning = f"Found object list {found_objects} is not equal to expected list '{expected_objects_list}'"
-            logger.warning(warning)
-            if fail_on_assert:
-                raise AssertionError(warning)
-
-    return found_objects
-
-
-def parse_searchv2_output(raw_output: str) -> tuple[list[dict], Union[str, None]]:
+def parse_search_output(raw_output: str) -> tuple[list[dict], Union[str, None]]:
     lines = raw_output.strip().split("\n")[1:]
 
     objects = []
@@ -630,7 +565,7 @@ def generate_filter_json_file(filters: list[str]) -> str:
 
 
 @allure.step("Search object")
-def search_objectv2(
+def search_object(
     rpc_endpoint: str,
     wallet: str,
     cid: str,
@@ -649,6 +584,8 @@ def search_objectv2(
     xhdr: Optional[dict] = None,
     timeout: Optional[str] = None,
     wallet_config: Optional[str] = None,
+    expected_objects_list: Optional[list] = None,
+    fail_on_assert: bool = False,
 ) -> tuple[list[dict], Union[str, None]]:
     """
     SEARCH an Object.
@@ -670,13 +607,16 @@ def search_objectv2(
         wallet: WIF (NEP-2) string or path to the wallet or binary key.
         xhdr: Dict with request X-Headers.
         timeout: Timeout for the operation (default 15s).
+        expected_objects_list: a list of ObjectIDs to compare found Objects with
+        fail_on_assert: fail if expected_objects_list is not matched to the found objects list.
 
     Returns:
         list of found objects as a dict: [{'oid': '123', 'attrs': [{'attr1': '123'}]}]
+        and a cursor to continue the search, if any
     """
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    result = cli.object.searchv2(
+    result = cli.object.search(
         rpc_endpoint=rpc_endpoint,
         wallet=wallet,
         cid=cid,
@@ -695,7 +635,21 @@ def search_objectv2(
         timeout=timeout,
     )
 
-    return parse_searchv2_output(result.stdout)
+    found_objects, next_cursor = parse_search_output(result.stdout)
+
+    if expected_objects_list:
+        found_objects_ids = [obj["id"] for obj in found_objects]
+        if sorted(found_objects_ids) == sorted(expected_objects_list):
+            logger.info(
+                f"Found objects list '{found_objects_ids}' is equal for expected list '{expected_objects_list}'"
+            )
+        else:
+            warning = f"Found object list {found_objects_ids} is not equal to expected list '{expected_objects_list}'"
+            logger.warning(warning)
+            if fail_on_assert:
+                raise AssertionError(warning)
+
+    return found_objects, next_cursor
 
 
 @allure.step("Get netmap netinfo")
