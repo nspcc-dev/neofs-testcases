@@ -4,6 +4,9 @@ import allure
 import pytest
 from helpers.acl import (
     EACLAccess,
+    EACLFilter,
+    EACLFilters,
+    EACLHeaderType,
     EACLOperation,
     EACLRole,
     EACLRoleExtended,
@@ -16,7 +19,11 @@ from helpers.acl import (
 )
 from helpers.complex_object_actions import wait_object_replication
 from helpers.container import EC_3_1_PLACEMENT_RULE, create_container
-from helpers.container_access import check_full_access_to_container, check_no_access_to_container
+from helpers.container_access import (
+    check_custom_access_to_container,
+    check_full_access_to_container,
+    check_no_access_to_container,
+)
 from helpers.grpc_responses import (
     EACL_CHANGE_PROHIBITED,
     EACL_CHANGE_RPC_ERROR,
@@ -34,6 +41,7 @@ from helpers.object_access import (
     can_put_object,
     can_search_object,
 )
+from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL, PUBLIC_ACL_F
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
@@ -610,3 +618,325 @@ class TestEACLContainer(TestNeofsBase):
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
                 )
+
+
+class TestEACLOnContainerCreation(TestNeofsBase):
+    @pytest.fixture(autouse=True)
+    def _skip_old_node(self):
+        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.53.0"):
+            pytest.skip("setting eACL on container creation is not supported before neofs-node 0.53.0")
+
+    @allure.title("eACL denying everyone is applied right on container creation ({placement_rule})")
+    @pytest.mark.parametrize(
+        "placement_rule",
+        [
+            pytest.param("REP 4 IN X CBF 1 SELECT 4 FROM * AS X", id="regular policy"),
+            pytest.param(EC_3_1_PLACEMENT_RULE, id="ec policy"),
+        ],
+    )
+    def test_set_eacl_on_container_creation(self, wallets, file_path, placement_rule):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+
+        with allure.step("Build eACL table denying all operations for OTHERS"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Create public container with the eACL table within the same create call"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                rule=placement_rule,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                eacl=eacl_table,
+            )
+
+        with allure.step("eACL must be set already, without an extra set-eacl call"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc) is not None, (
+                "eACL was not set during container creation"
+            )
+
+        with allure.step("Owner puts a test object into the container"):
+            oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step("OTHERS has no access to the container"):
+            check_no_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+
+        with allure.step("Owner still has full access to the container"):
+            check_full_access_to_container(
+                user_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+
+    @allure.title("Single simple eACL set on container creation enforces only the denied operation")
+    @pytest.mark.parametrize("denied_operation", [EACLOperation.PUT, EACLOperation.DELETE])
+    def test_set_simple_eacl_on_container_creation(self, wallets, file_path, denied_operation):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+
+        with allure.step(f"Build eACL table denying only {denied_operation.value} for OTHERS"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=denied_operation)]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Create public container with the eACL table within the same create call"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                eacl=eacl_table,
+            )
+
+        with allure.step("eACL must be set already, without an extra set-eacl call"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc) is not None, (
+                "eACL was not set during container creation"
+            )
+
+        with allure.step("Owner puts a test object into the container"):
+            oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step(f"OTHERS can do everything but {denied_operation.value}"):
+            check_custom_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+                deny_operations=[denied_operation],
+            )
+
+    @allure.title("Filter-based eACL set on creation is enforced per object header")
+    def test_set_eacl_with_object_filter_on_container_creation(self, wallets, file_path):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+        attribute = {"check_key": "check_value"}
+
+        with allure.step("Build eACL denying GET/HEAD for OTHERS only for objects with a given attribute"):
+            obj_filter = EACLFilter(key="check_key", value="check_value", header_type=EACLHeaderType.OBJECT)
+            eacl_deny = [
+                EACLRule(
+                    access=EACLAccess.DENY,
+                    role=EACLRole.OTHERS,
+                    filters=EACLFilters([obj_filter]),
+                    operation=op,
+                )
+                for op in (EACLOperation.GET, EACLOperation.HEAD)
+            ]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Create public container with the filter-based eACL within the same create call"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                eacl=eacl_table,
+            )
+
+        with allure.step("Owner puts one object with the filtered attribute and one without"):
+            oid_with_attr = put_object_to_random_node(
+                user_wallet.wallet_path,
+                file_path,
+                cid,
+                attributes=attribute,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+            oid_without_attr = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step("OTHERS can GET/HEAD the object without the filtered attribute"):
+            assert can_get_object(
+                other_wallet.wallet_path, cid, oid_without_attr, file_path, self.shell, neofs_env=self.neofs_env
+            ), "GET must be allowed for an object that does not match the filter"
+            assert can_get_head_object(
+                other_wallet.wallet_path, cid, oid_without_attr, self.shell, endpoint=self.neofs_env.sn_rpc
+            ), "HEAD must be allowed for an object that does not match the filter"
+
+        with allure.step("OTHERS cannot GET/HEAD the object carrying the filtered attribute"):
+            assert not can_get_object(
+                other_wallet.wallet_path, cid, oid_with_attr, file_path, self.shell, neofs_env=self.neofs_env
+            ), "GET must be denied for an object that matches the filter"
+            assert not can_get_head_object(
+                other_wallet.wallet_path, cid, oid_with_attr, self.shell, endpoint=self.neofs_env.sn_rpc
+            ), "HEAD must be denied for an object that matches the filter"
+
+    @allure.title("Container is not created when its eACL can not be applied: final bit set")
+    def test_eacl_on_container_creation_rejected_with_final_bit(self, wallets):
+        user_wallet = wallets.get_wallet()
+
+        with allure.step("Build a valid eACL table"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Creating a final-bit container with an eACL must be rejected by the Inner Ring"):
+            with pytest.raises(
+                RuntimeError, match="'eacl' flag is not empty, but container does not allow extended ACL"
+            ):
+                create_container(
+                    wallet=user_wallet.wallet_path,
+                    basic_acl=PUBLIC_ACL_F,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    eacl=eacl_table,
+                )
+
+    @allure.title("Container is not created when eACL table has a different container ID set")
+    def test_eacl_with_foreign_cid_rejected_on_container_creation(self, wallets):
+        user_wallet = wallets.get_wallet()
+
+        with allure.step("Create a container whose CID will be baked into the eACL table"):
+            foreign_cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("Build an eACL table that explicitly targets the foreign container ID"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            eacl_table = create_eacl(
+                cid=foreign_cid, rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Creating a new container with this eACL table must be rejected"):
+            with pytest.raises(RuntimeError, match="container ID set, but calculated container ID is"):
+                create_container(
+                    wallet=user_wallet.wallet_path,
+                    basic_acl=PUBLIC_ACL,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    eacl=eacl_table,
+                )
+
+    @allure.title("The 'force' flag overrides a different container ID set in the eACL table on creation")
+    def test_eacl_with_foreign_cid_overridden_by_force_on_container_creation(self, wallets, file_path):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+
+        with allure.step("Create a container whose CID will be baked into the eACL table"):
+            foreign_cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("Build an eACL table that explicitly targets the foreign container ID"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            eacl_table = create_eacl(
+                cid=foreign_cid, rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Creating a new container with '--force' overrides the table's container ID"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                eacl=eacl_table,
+                force=True,
+            )
+            assert cid != foreign_cid, "a brand new container ID is expected"
+
+        with allure.step("eACL must be set on the new container, not on the foreign one"):
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc) is not None, (
+                "eACL was not set during container creation"
+            )
+
+        with allure.step("Owner puts a test object into the new container"):
+            oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step("OTHERS has no access to the new container, confirming the overridden eACL is enforced"):
+            check_no_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+
+    @allure.title("eACL set on container creation can still be replaced in the usual manner")
+    def test_eacl_set_on_creation_can_be_replaced(self, wallets, file_path):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+
+        with allure.step("Build eACL table denying all operations for OTHERS"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Create public container with the deny-all eACL within the same create call"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                eacl=eacl_table,
+            )
+
+        with allure.step("Owner puts a test object into the container"):
+            oid = put_object_to_random_node(
+                user_wallet.wallet_path, file_path, cid, shell=self.shell, neofs_env=self.neofs_env
+            )
+
+        with allure.step("OTHERS has no access while the creation-time eACL is in force"):
+            check_no_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+
+        with allure.step("Replace the eACL via the usual set-eacl call, allowing everything for OTHERS"):
+            eacl_allow = [EACLRule(access=EACLAccess.ALLOW, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+            set_eacl(
+                user_wallet.wallet_path,
+                cid,
+                create_eacl(cid, eacl_allow, shell=self.shell, wallet_config=user_wallet.config_path),
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            wait_for_cache_expired()
+
+        with allure.step("OTHERS now has full access, confirming the eACL was replaced"):
+            check_full_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                oid,
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
