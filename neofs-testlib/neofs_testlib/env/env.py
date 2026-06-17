@@ -1303,6 +1303,9 @@ class StorageNode(ResurrectableProcess):
         self.pprof_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.prometheus_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.metadata_path = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}_metadata")
+        self.metadata_seed_port = self.neofs_env.inner_ring_nodes[0].chain_metadata_seed_port
+        self.metadata_p2p_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
+        self.metadata_rpc_address = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}"
         self.fschain_endpoints = fschain_endpoints
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
@@ -1325,6 +1328,9 @@ class StorageNode(ResurrectableProcess):
             - Control endpoint: {self.control_endpoint}
             - Pprof address: {self.pprof_address}
             - Prometheus address: {self.prometheus_address}
+            - Metadata seed port: {self.metadata_seed_port}
+            - Metadata p2p address: {self.metadata_p2p_address}
+            - Metadata rpc address: {self.metadata_rpc_address}
             - Attributes: {self.attrs}
             - Process ID: {self.pid}
             - STDOUT: {self.stdout}
@@ -1333,6 +1339,11 @@ class StorageNode(ResurrectableProcess):
 
     def get_config_template(self):
         return "sn.yaml"
+
+    def _metadata_legacy_format(self):
+        return parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+            "0.53.0"
+        )
 
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
@@ -1370,6 +1381,10 @@ class StorageNode(ResurrectableProcess):
                     prometheus_address=self.prometheus_address,
                     attrs=self.node_attrs,
                     metadata_path=self.metadata_path,
+                    metadata_legacy_format=self._metadata_legacy_format(),
+                    metadata_seed_port=self.metadata_seed_port,
+                    metadata_p2p_address=self.metadata_p2p_address,
+                    metadata_rpc_address=self.metadata_rpc_address,
                     replication_cooldown=self.replication_cooldown,
                     disable_post_initial_queue=disable_post_initial_queue,
                     object_batch_size=self.object_batch_size,
@@ -1447,6 +1462,10 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
+                metadata_legacy_format=self._metadata_legacy_format(),
+                metadata_seed_port=self.metadata_seed_port,
+                metadata_p2p_address=self.metadata_p2p_address,
+                metadata_rpc_address=self.metadata_rpc_address,
                 replication_cooldown=self.replication_cooldown,
                 disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
@@ -1484,6 +1503,10 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
+                metadata_legacy_format=self._metadata_legacy_format(),
+                metadata_seed_port=self.metadata_seed_port,
+                metadata_p2p_address=self.metadata_p2p_address,
+                metadata_rpc_address=self.metadata_rpc_address,
                 replication_cooldown=self.replication_cooldown,
                 disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
