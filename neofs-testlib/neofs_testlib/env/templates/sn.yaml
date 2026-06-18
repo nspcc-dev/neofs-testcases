@@ -41,6 +41,13 @@ node:
 
 metadata:
   path: {{ metadata_path }}
+{%- if not metadata_legacy_format %}
+  seed_port: {{ metadata_seed_port }}
+  p2p_addresses:
+    - "{{ metadata_p2p_address }}"
+  rpc_addresses:
+    - "{{ metadata_rpc_address }}"
+{%- endif %}
 
 {% if replication_cooldown or object_batch_size %}
 policer:
