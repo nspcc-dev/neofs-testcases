@@ -40,6 +40,8 @@ def create_container(
     options: dict = None,
     wait_for_creation: bool = True,
     global_name: bool = False,
+    eacl: str = None,
+    force: bool = False,
 ) -> str:
     """
     A wrapper for `neofs-cli container create` call.
@@ -60,6 +62,12 @@ def create_container(
         options (optional, dict): any other options to pass to the call
         name (optional, str): container name attribute
         wait_for_creation (): Wait for container shows in container list
+        eacl (optional, str): path to a file with JSON or binary encoded EACL table
+                            that will be set within the same Container.Put RPC call
+                            (appended to `--eacl` key)
+        force (optional, bool): skip validation checks, e.g. override the container ID
+                            set in the eACL table with the calculated one
+                            (appended to `--force` key)
 
     Returns:
         (str): CID of the created container
@@ -92,6 +100,8 @@ def create_container(
         name=name,
         session=session_token,
         global_name=global_name,
+        eacl=eacl,
+        force=force,
         **options or {},
     )
 

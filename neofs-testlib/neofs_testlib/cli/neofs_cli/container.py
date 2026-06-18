@@ -13,6 +13,8 @@ class NeofsCliContainer(CliCommand):
         attributes: Optional[dict] = None,
         basic_acl: Optional[str] = None,
         disable_timestamp: bool = False,
+        eacl: Optional[str] = None,
+        force: bool = False,
         global_name: bool = False,
         name: Optional[str] = None,
         nonce: Optional[str] = None,
@@ -35,6 +37,10 @@ class NeofsCliContainer(CliCommand):
             basic_acl: Hex encoded basic ACL value or keywords like 'public-read-write',
                 'private', 'eacl-public-read' (default "private").
             disable_timestamp: Disable timestamp container attribute.
+            eacl: Path to file with JSON or binary encoded EACL table that will be set
+                after container creation (within the same Container.Put RPC call).
+            force: Skip validation checks (e.g. override the container ID set in the
+                eACL table with the calculated one).
             name: Container name attribute.
             nonce: UUIDv4 nonce value for container.
             policy: QL-encoded or JSON-encoded placement policy or path to file with it.
