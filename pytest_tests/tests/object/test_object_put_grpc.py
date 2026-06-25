@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 
 import allure
 from helpers.container import create_container, parse_container_nodes_output
@@ -74,4 +75,7 @@ def test_put_tombstone_object_without_delete_permission(
             oid,
             object_context_verb=session_types_pb2.ObjectSessionContext.PUT,
         )
-        assert response.meta_header.status.message == "malformed request: session token verb is invalid"
+        assert (
+            response.meta_header.status.code == 1028
+            and re.search(r".*session token verb is invalid", response.meta_header.status.message) is not None
+        )
