@@ -26,7 +26,7 @@ permissions: write-all
 jobs:
   run_pr_tests:
     if: ${{ github.event_name == 'pull_request' }}
-    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@master
+    uses: nspcc-dev/neofs-testcases/.github/workflows/system-tests.yml@ezayats/lightweight-allure
     with:
       neofs_store_objects_cid: ${{ vars.TEST_RESULTS_CID }}
       neofs_pr_expiration_period: ${{ vars.PR_EXPIRATION_PERIOD }}
