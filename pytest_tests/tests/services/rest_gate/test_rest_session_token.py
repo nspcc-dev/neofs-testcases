@@ -20,7 +20,6 @@ from helpers.rest_gate import (
     searchv2,
     upload_via_rest_gate,
 )
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.utils.converters import load_wallet
@@ -438,11 +437,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         2. Create V2 session token with final=True
         3. Attempt to create delegated token (should fail)
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.17.0"
-        ):
-            pytest.skip("Requires fresh neofs-rest-gw")
-
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -476,11 +470,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with more verbs (GET, HEAD, PUT)
         4. Verify delegation fails
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.17.0"
-        ):
-            pytest.skip("Requires fresh neofs-rest-gw")
-
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -518,10 +507,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token for both containers
         4. Verify delegation fails
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.17.0"
-        ):
-            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create two containers"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid1 = create_container(
@@ -565,10 +550,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with wildcard container
         4. Verify delegation fails
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.17.0"
-        ):
-            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(
@@ -606,10 +587,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         3. Attempt to create delegated token with lifetime=200s
         4. Verify delegation fails
         """
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)) <= parse_version(
-            "0.17.0"
-        ):
-            pytest.skip("Requires fresh neofs-rest-gw")
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
             cid = create_container(

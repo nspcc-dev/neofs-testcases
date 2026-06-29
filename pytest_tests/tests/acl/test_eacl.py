@@ -41,7 +41,6 @@ from helpers.object_access import (
     can_put_object,
     can_search_object,
 )
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL, PUBLIC_ACL_F
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
@@ -621,11 +620,6 @@ class TestEACLContainer(TestNeofsBase):
 
 
 class TestEACLOnContainerCreation(TestNeofsBase):
-    @pytest.fixture(autouse=True)
-    def _skip_old_node(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.53.0"):
-            pytest.skip("setting eACL on container creation is not supported before neofs-node 0.53.0")
-
     @allure.title("eACL denying everyone is applied right on container creation ({placement_rule})")
     @pytest.mark.parametrize(
         "placement_rule",

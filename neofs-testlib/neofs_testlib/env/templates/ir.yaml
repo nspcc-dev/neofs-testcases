@@ -114,16 +114,12 @@ prometheus:
   shutdown_timeout: 30s
 
 experimental:
-{% if chain_meta_data_legacy_format %}
-  chain_meta_data: {{ chain_meta_data }}
-{% else %}
 {% if chain_meta_data %}
   chain_meta_data:
     enabled: true
     seed_port: {{ chain_metadata_seed_port }}
     p2p_port: {{ chain_metadata_p2p_port }}
     rpc_port: {{ chain_metadata_rpc_port }}
-{% endif %}
 {% endif %}
 {% if allow_ec %}
   allow_ec: {{ allow_ec }}

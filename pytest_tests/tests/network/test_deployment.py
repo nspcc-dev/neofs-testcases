@@ -148,7 +148,6 @@ def test_sn_deployment_with_writecache(neofs_env_with_writecache: NeoFSEnv):
                 prometheus_address=sn.prometheus_address,
                 attrs=sn.node_attrs,
                 metadata_path=sn.metadata_path,
-                metadata_legacy_format=sn._metadata_legacy_format(),
                 metadata_seed_port=sn.metadata_seed_port,
                 metadata_p2p_address=sn.metadata_p2p_address,
                 metadata_rpc_address=sn.metadata_rpc_address,

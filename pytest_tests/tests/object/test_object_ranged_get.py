@@ -32,7 +32,6 @@ from helpers.neofs_verbs import (
     get_range,
     put_object_to_random_node,
 )
-from helpers.utility import parse_version
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -78,11 +77,6 @@ def _put_object(neofs_env: NeoFSEnv, wallet: NodeWallet, cid: str, file_path: st
 
 
 class TestObjectRangedGet(TestNeofsBase):
-    @pytest.fixture(autouse=True)
-    def _skip_old_node(self):
-        if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-            pytest.skip("ranged GET is not supported on old neofs-node")
-
     @allure.title("Validate ranged GET for a simple object")
     @pytest.mark.simple
     def test_ranged_get_simple_object(self, request: FixtureRequest, default_wallet: NodeWallet, container: str):

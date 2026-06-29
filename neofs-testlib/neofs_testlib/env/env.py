@@ -28,7 +28,6 @@ from typing import Optional
 import allure
 import jinja2
 import psutil
-import pytest
 import requests
 import yaml
 from helpers.common import (
@@ -44,7 +43,6 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
-from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -703,12 +701,6 @@ class NeoFSEnv:
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
         neofs_env.download_binaries()
 
-        if (
-            parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0")
-            and disable_post_initial_queue
-        ):
-            pytest.skip("Requires fresh neofs-node")
-
         try:
             neofs_env.deploy_inner_ring_nodes(
                 count=inner_ring_nodes_count,
@@ -1187,10 +1179,6 @@ class InnerRing(ResurrectableProcess):
                 ir_node.p2p_address for ir_node in self.neofs_env.inner_ring_nodes
             ]
 
-        chain_meta_data_legacy_format = parse_version(
-            self.neofs_env.get_binary_version(self.neofs_env.neofs_ir_path)
-        ) <= parse_version("0.52.0")
-
         if not os.getenv(f"IR{self.ir_number}_CONFIG_PATH", None):
             NeoFSEnv.generate_config_file(
                 config_template=ir_config_template,
@@ -1218,7 +1206,6 @@ class InnerRing(ResurrectableProcess):
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
                 chain_meta_data=self.chain_meta_data,
-                chain_meta_data_legacy_format=chain_meta_data_legacy_format,
                 chain_metadata_seed_port=self.chain_metadata_seed_port,
                 chain_metadata_p2p_port=self.chain_metadata_p2p_port,
                 chain_metadata_rpc_port=self.chain_metadata_rpc_port,
@@ -1340,11 +1327,6 @@ class StorageNode(ResurrectableProcess):
     def get_config_template(self):
         return "sn.yaml"
 
-    def _metadata_legacy_format(self):
-        return parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-            "0.53.0"
-        )
-
     @allure.step("Start storage node")
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
         if self.process is not None or self.pid is not None:
@@ -1359,12 +1341,6 @@ class StorageNode(ResurrectableProcess):
 
             if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
                 sn_config_template = self.get_config_template()
-
-                disable_post_initial_queue = self.disable_post_initial_queue
-                if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                    "0.52.0"
-                ):
-                    disable_post_initial_queue = None
 
                 NeoFSEnv.generate_config_file(
                     config_template=sn_config_template,
@@ -1381,12 +1357,11 @@ class StorageNode(ResurrectableProcess):
                     prometheus_address=self.prometheus_address,
                     attrs=self.node_attrs,
                     metadata_path=self.metadata_path,
-                    metadata_legacy_format=self._metadata_legacy_format(),
                     metadata_seed_port=self.metadata_seed_port,
                     metadata_p2p_address=self.metadata_p2p_address,
                     metadata_rpc_address=self.metadata_rpc_address,
                     replication_cooldown=self.replication_cooldown,
-                    disable_post_initial_queue=disable_post_initial_queue,
+                    disable_post_initial_queue=self.disable_post_initial_queue,
                     object_batch_size=self.object_batch_size,
                 )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
@@ -1441,12 +1416,6 @@ class StorageNode(ResurrectableProcess):
         if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
             sn_config_template = self.get_config_template()
 
-            disable_post_initial_queue = self.disable_post_initial_queue
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                "0.52.0"
-            ):
-                disable_post_initial_queue = None
-
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
@@ -1462,12 +1431,11 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
-                metadata_legacy_format=self._metadata_legacy_format(),
                 metadata_seed_port=self.metadata_seed_port,
                 metadata_p2p_address=self.metadata_p2p_address,
                 metadata_rpc_address=self.metadata_rpc_address,
                 replication_cooldown=self.replication_cooldown,
-                disable_post_initial_queue=disable_post_initial_queue,
+                disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
@@ -1482,12 +1450,6 @@ class StorageNode(ResurrectableProcess):
         if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
             sn_config_template = self.get_config_template()
 
-            disable_post_initial_queue = self.disable_post_initial_queue
-            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
-                "0.52.0"
-            ):
-                disable_post_initial_queue = None
-
             NeoFSEnv.generate_config_file(
                 config_template=sn_config_template,
                 config_path=self.storage_node_config_path,
@@ -1503,12 +1465,11 @@ class StorageNode(ResurrectableProcess):
                 prometheus_address=self.prometheus_address,
                 attrs=self.node_attrs,
                 metadata_path=self.metadata_path,
-                metadata_legacy_format=self._metadata_legacy_format(),
                 metadata_seed_port=self.metadata_seed_port,
                 metadata_p2p_address=self.metadata_p2p_address,
                 metadata_rpc_address=self.metadata_rpc_address,
                 replication_cooldown=self.replication_cooldown,
-                disable_post_initial_queue=disable_post_initial_queue,
+                disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
             )
         time.sleep(1)
