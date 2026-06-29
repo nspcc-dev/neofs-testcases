@@ -23,7 +23,6 @@ from helpers.neofs_verbs import (
 )
 from helpers.node_management import start_storage_nodes
 from helpers.test_control import wait_for_success
-from helpers.utility import parse_version
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
 logger = logging.getLogger("NeoLogger")
@@ -183,8 +182,8 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
         attributes={int_attribute_name: too_large_int_value},
     )
     for operator_str, comparator in operators.items():
-        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-            found_objects, _ = search_object(
+        with pytest.raises(Exception, match=TOO_BIG_INT_VALUE):
+            search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -192,17 +191,6 @@ def test_search_single_filter_by_custom_int_attributes(default_wallet: NodeWalle
                 filters=[f"{int_attribute_name} {operator_str} {too_large_int_value}"],
                 attributes=[int_attribute_name],
             )
-            assert len(found_objects) == 0, "invalid number of objects"
-        else:
-            with pytest.raises(Exception, match=TOO_BIG_INT_VALUE):
-                search_object(
-                    rpc_endpoint=neofs_env.sn_rpc,
-                    wallet=default_wallet.path,
-                    cid=cid,
-                    shell=neofs_env.shell,
-                    filters=[f"{int_attribute_name} {operator_str} {too_large_int_value}"],
-                    attributes=[int_attribute_name],
-                )
 
 
 @pytest.mark.parametrize(
@@ -252,11 +240,10 @@ def test_search_single_filter_by_custom_str_attributes(
         "LE": lambda obj_val, filter_val: False,
     }
     numeric_operators = {"GT", "GE", "LT", "LE"}
-    node_version = parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path))
 
     for operator_str, comparator in operators.items():
         for str_value in str_attributes_values:
-            if operator_str in numeric_operators and node_version > parse_version("0.52.0"):
+            if operator_str in numeric_operators:
                 with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
                     search_object(
                         rpc_endpoint=neofs_env.sn_rpc,
@@ -1646,8 +1633,8 @@ def test_search_invalid_filters(
             }
         )
     for op in ["GE", "GT", "LT", "LE"]:
-        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-            found_objects, _ = search_object(
+        with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
+            search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1655,8 +1642,8 @@ def test_search_invalid_filters(
                 filters=[f"$Object:creationEpoch {op} abc"],
                 attributes=["$Object:creationEpoch"],
             )
-            assert len(found_objects) == 0, "invalid number of found objects"
-            found_objects, _ = search_object(
+        with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
+            search_object(
                 rpc_endpoint=neofs_env.sn_rpc,
                 wallet=default_wallet.path,
                 cid=cid,
@@ -1664,26 +1651,6 @@ def test_search_invalid_filters(
                 filters=[f"$Object:creationEpoch {op} 0_0"],
                 attributes=["$Object:creationEpoch"],
             )
-            assert len(found_objects) == 0, "invalid number of found objects"
-        else:
-            with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
-                search_object(
-                    rpc_endpoint=neofs_env.sn_rpc,
-                    wallet=default_wallet.path,
-                    cid=cid,
-                    shell=neofs_env.shell,
-                    filters=[f"$Object:creationEpoch {op} abc"],
-                    attributes=["$Object:creationEpoch"],
-                )
-            with pytest.raises(Exception, match=INVALID_NUMERIC_FILTER):
-                search_object(
-                    rpc_endpoint=neofs_env.sn_rpc,
-                    wallet=default_wallet.path,
-                    cid=cid,
-                    shell=neofs_env.shell,
-                    filters=[f"$Object:creationEpoch {op} 0_0"],
-                    attributes=["$Object:creationEpoch"],
-                )
 
     for op in ["EQ", "COMMON_PREFIX"]:
         found_objects, _ = search_object(

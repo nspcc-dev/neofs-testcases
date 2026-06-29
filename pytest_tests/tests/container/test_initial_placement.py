@@ -9,7 +9,6 @@ from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object, put_object, put_object_to_random_node
 from helpers.node_management import exclude_node_from_network_map, include_node_to_network_map
-from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -128,9 +127,6 @@ def test_initial_placement_max_replicas_optimized(
     neofs_env: NeoFSEnv,
     max_replicas: int,
 ):
-    if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.52.0"):
-        pytest.skip("Requires fresh neofs-node")
-
     replicas = 3
     with allure.step("Create container"):
         cid = create_container(
