@@ -49,14 +49,13 @@ def wallet() -> NodeWallet:
 @pytest.fixture
 def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
     bucket = str(uuid.uuid4())
-    s3_bearer_rules = "pytest_tests/s3_bearer_rules.json"
 
     gate_public_key = get_last_public_key_from_wallet(neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password)
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
         f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
-        f"--bearer-rules {s3_bearer_rules} --container-placement-policy 'REP 1' "
+        f"--container-placement-policy 'REP 1' "
         f"--container-policy container_policy.json"
     )
     output = _run_with_passwd(cmd, wallet.password)

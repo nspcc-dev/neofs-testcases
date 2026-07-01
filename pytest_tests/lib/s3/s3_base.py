@@ -1,7 +1,6 @@
 import fcntl
 import json
 import logging
-import os
 import random
 import re
 import string
@@ -77,16 +76,13 @@ class TestNeofsS3Base(NeofsEnvTestBase):
         placement_policy: str,
     ) -> Any:
         wallet = default_wallet
-        s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
         (
             cid,
             bucket,
             access_key_id,
             secret_access_key,
             owner_private_key,
-        ) = init_s3_credentials(
-            wallet, neofs_env, s3_bearer_rules_file=s3_bearer_rules_file, placement_policy=placement_policy
-        )
+        ) = init_s3_credentials(wallet, neofs_env, placement_policy=placement_policy)
 
         cli = neofs_env.neofs_cli(neofs_env.generate_cli_config(wallet))
         result = cli.container.list(rpc_endpoint=neofs_env.sn_rpc, wallet=wallet.path)
@@ -147,12 +143,10 @@ class TestNeofsS3Base(NeofsEnvTestBase):
 def init_s3_credentials(
     wallet: NodeWallet,
     neofs_env: NeoFSEnv,
-    s3_bearer_rules_file: Optional[str] = None,
     policy: Optional[dict] = None,
     placement_policy: Optional[str] = "REP 1",
 ) -> tuple:
     bucket = str(uuid.uuid4())
-    s3_bearer_rules = s3_bearer_rules_file or "pytest_tests/data/s3_bearer_rules.json"
     policy = policy or "pytest_tests/data/container_policy.json"
 
     gate_public_key = get_last_public_key_from_wallet(neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password)
@@ -160,7 +154,7 @@ def init_s3_credentials(
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "
         f"--peer {neofs_env.storage_nodes[0].endpoint} --container-friendly-name {bucket} "
-        f"--bearer-rules {s3_bearer_rules} --container-placement-policy '{placement_policy}' "
+        f"--container-placement-policy '{placement_policy}' "
         f"--container-policy {policy}"
     )
 

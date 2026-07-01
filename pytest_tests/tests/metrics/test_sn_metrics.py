@@ -47,9 +47,9 @@ def parse_node_height(stdout: str) -> tuple[float, float]:
 @pytest.fixture()
 def s3_boto_client(temp_directory, neofs_env_single_sn: NeoFSEnv):
     wallet = create_wallet()
-    s3_bearer_rules_file = f"{os.getcwd()}/pytest_tests/data/s3_bearer_rules.json"
     _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
-        wallet, neofs_env_single_sn, s3_bearer_rules_file=s3_bearer_rules_file
+        wallet,
+        neofs_env_single_sn,
     )
     client = configure_boto3_client(access_key_id, secret_access_key, f"https://{neofs_env_single_sn.s3_gw.endpoint}")
     yield client
