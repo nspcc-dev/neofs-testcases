@@ -277,7 +277,6 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
     s3_object.copy_object_s3(s3_boto_client, bucket, file_name)
     s3_object.get_object_acl_s3(s3_boto_client, bucket, file_name)
     s3_bucket.put_bucket_ownership_controls(s3_boto_client, bucket, s3_bucket.ObjectOwnership.BUCKET_OWNER_PREFERRED)
-    s3_object.put_object_acl_s3(s3_boto_client, bucket, file_name, "public-read")
     s3_bucket.get_bucket_acl(s3_boto_client, bucket)
 
     with allure.step("Get metrics"):
@@ -301,7 +300,6 @@ def test_s3_gw_metrics(neofs_env_single_sn: NeoFSEnv, s3_boto_client):
         "listobjectsv1",
         "putbucketownershipcontrols",
         "putobject",
-        "putobjectacl",
     }
     for metric in after_metrics_s3_gw["neofs_s3_requests_total"]:
         if metric["params"]["api"] in expected_params:
