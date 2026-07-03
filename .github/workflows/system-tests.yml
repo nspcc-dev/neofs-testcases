@@ -113,7 +113,7 @@ jobs:
         timeout-minutes: 500
         steps:
           - name: Set up Go
-            uses: actions/setup-go@v5
+            uses: actions/setup-go@v6
             with:
               cache: true
               go-version: '1.22'
@@ -126,7 +126,7 @@ jobs:
           - run: python --version
 
           - name: Checkout neofs-testcases repository
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
               repository: nspcc-dev/neofs-testcases
               ref: ${{ inputs.neofs_testcases_commit }}
@@ -138,7 +138,7 @@ jobs:
             working-directory: neofs-testcases
 
           - name: Checkout xk6-neofs repository
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
               repository: nspcc-dev/xk6-neofs
               ref: 'v0.2.1'
@@ -162,7 +162,7 @@ jobs:
 
           - name: Checkout neofs-node repository
             if: ${{ inputs.neofs_node_commit != 'from_tests' }}
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
               repository: nspcc-dev/neofs-node
               ref: ${{ inputs.neofs_node_commit }}
@@ -247,7 +247,7 @@ jobs:
 
           - name: Checkout neofs-s3-gw repository
             if: ${{ inputs.neofs_s3_gw_commit != 'from_tests' }}
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
               repository: nspcc-dev/neofs-s3-gw
               ref: ${{ inputs.neofs_s3_gw_commit }}
@@ -297,7 +297,7 @@ jobs:
 
           - name: Checkout neofs-rest-gw repository
             if: ${{ inputs.neofs_rest_gw_commit != 'from_tests' }}
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
               repository: nspcc-dev/neofs-rest-gw
               ref: ${{ inputs.neofs_rest_gw_commit }}
