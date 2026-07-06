@@ -89,13 +89,10 @@ class NeofsUploader:
 
         if not cli_path.exists():
             logger.info("Downloading neofs-cli for NeoFS upload")
-            # Imported lazily to avoid a circular import (env.py imports this module).
             from neofs_testlib.env.env import NeoFSEnv
 
             cli_params = NeoFSEnv._generate_default_neofs_env_config()["binaries"]["neofs_cli"]
-            NeoFSEnv.download_binary(
-                cli_params["repo"], cli_params["version"], cli_params["file"], str(cli_path)
-            )
+            NeoFSEnv.download_binary(cli_params["repo"], cli_params["version"], cli_params["file"], str(cli_path))
 
         self._cli_path = str(cli_path)
         return self._cli_path

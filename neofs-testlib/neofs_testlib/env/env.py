@@ -264,8 +264,10 @@ class NeoFSEnv:
         except Exception as e:
             temp_logs_dir = self._generate_temp_dir(prefix="storage_nodes_logs")
             for sn in self.storage_nodes:
-                shutil.copy(sn.stderr, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stderr.log"))
-                shutil.copy(sn.stdout, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stdout.log"))
+                if os.path.isfile(sn.stderr):
+                    shutil.copy(sn.stderr, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stderr.log"))
+                if os.path.isfile(sn.stdout):
+                    shutil.copy(sn.stdout, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stdout.log"))
             zip_path = shutil.make_archive(os.path.join(self._env_dir, "storage_nodes_logs"), "zip", temp_logs_dir)
             self._attach_logs_archive(zip_path, name="storage nodes logs")
             raise e
