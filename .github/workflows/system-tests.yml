@@ -361,6 +361,12 @@ jobs:
             id: run_tests
             if: '!contains(toJson(matrix), ''"shard"'')'
             timeout-minutes: 120
+            env:
+              NEOFS_LOGS_CID: ${{ inputs.neofs_store_objects_cid }}
+              NEOFS_LOGS_WALLET_B64: ${{ secrets.TEST_RESULTS_WALLET }}
+              NEOFS_LOGS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
+              NEOFS_LOGS_LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
+              NEOFS_LOGS_PIPELINE_ID: ${{ github.run_number }}
             run: |
               source venv.pytest/bin/activate && pytest --timeout=1500 -n ${{ inputs.tests_parallel_level }} --show-capture=no -m "${{ inputs.marks }}" --alluredir=${GITHUB_WORKSPACE}/allure-results --allure-no-capture ${{ inputs.tests_path }}
             working-directory: neofs-testcases
@@ -378,6 +384,12 @@ jobs:
           - name: Run sharded tests
             if: contains(toJson(matrix), '"shard"')
             id: run_sharded_tests
+            env:
+              NEOFS_LOGS_CID: ${{ inputs.neofs_store_objects_cid }}
+              NEOFS_LOGS_WALLET_B64: ${{ secrets.TEST_RESULTS_WALLET }}
+              NEOFS_LOGS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
+              NEOFS_LOGS_LIFETIME: ${{ inputs.neofs_pr_expiration_period }}
+              NEOFS_LOGS_PIPELINE_ID: ${{ github.run_number }}
             run: |
               source venv.pytest/bin/activate
               python run-tests.py ${{ steps.calc_shards.outputs.total_shards }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}

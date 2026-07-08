@@ -48,6 +48,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
+from neofs_testlib.utils.log_uploader import NeofsConfig, NeofsUploader, build_logs_neofs_path
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
@@ -217,7 +218,7 @@ class NeoFSEnv:
                     zip_path = shutil.make_archive(
                         os.path.join(os.path.dirname(ir_node.stderr), f"ir{ir_node_idx}_logs"), "zip", temp_logs_dir
                     )
-                    allure.attach.file(zip_path, name=f"ir{ir_node_idx} node logs", extension="zip")
+                    self._attach_logs_archive(zip_path, name=f"ir{ir_node_idx} node logs")
                 raise e
 
     @allure.step("Deploy storage node")
@@ -263,10 +264,12 @@ class NeoFSEnv:
         except Exception as e:
             temp_logs_dir = self._generate_temp_dir(prefix="storage_nodes_logs")
             for sn in self.storage_nodes:
-                shutil.copy(sn.stderr, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stderr.log"))
-                shutil.copy(sn.stdout, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stdout.log"))
+                if os.path.isfile(sn.stderr):
+                    shutil.copy(sn.stderr, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stderr.log"))
+                if os.path.isfile(sn.stdout):
+                    shutil.copy(sn.stdout, os.path.join(temp_logs_dir, f"sn{sn.sn_number}_stdout.log"))
             zip_path = shutil.make_archive(os.path.join(self._env_dir, "storage_nodes_logs"), "zip", temp_logs_dir)
-            allure.attach.file(zip_path, name="storage nodes logs", extension="zip")
+            self._attach_logs_archive(zip_path, name="storage nodes logs")
             raise e
         # tick epoch to speed up storage nodes bootstrap
         self.neofs_adm().fschain.force_new_epoch(
@@ -793,12 +796,10 @@ class NeoFSEnv:
                 logger.warning(f"Failed to remove some files during env cleanup: {e}")
 
             if request.session.testsfailed or force_collect_logs:
-                shutil.make_archive(os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir)
-                allure.attach.file(
-                    os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}.zip"),
-                    name="neofs env files",
-                    extension="zip",
+                zip_path = shutil.make_archive(
+                    os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir
                 )
+                self._attach_logs_archive(zip_path, name="neofs env files")
 
             shutil.rmtree(self._env_dir, ignore_errors=True)
 
@@ -946,6 +947,23 @@ class NeoFSEnv:
         dir_path = f"{self._env_dir}/{prefix}_{''.join(random.choices(string.ascii_lowercase, k=10))}"
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         return dir_path
+
+    def _attach_logs_archive(self, archive_path: str, name: str) -> None:
+        neofs_config = NeofsConfig.from_env()
+        if neofs_config is None:
+            logger.warning("NeoFS upload is not configured, attaching logs archive directly to allure")
+            allure.attach.file(archive_path, name=name, extension="zip")
+            return
+
+        try:
+            uploader = NeofsUploader(neofs_config, cli_path=self.neofs_cli_path, work_dir=self._env_dir)
+            neofs_path = build_logs_neofs_path(neofs_config, self._id, name)
+            url = uploader.upload_file(archive_path, neofs_path, content_type="application/zip")
+            logger.info(f"Uploaded logs archive '{name}' to NeoFS: {url}")
+            allure.attach(url, name=f"{name} (NeoFS URL)", attachment_type=allure.attachment_type.TEXT)
+        except Exception as exc:
+            logger.error(f"Failed to upload logs archive '{name}' to NeoFS: {exc}, attaching file directly")
+            allure.attach.file(archive_path, name=name, extension="zip")
 
 
 class ResurrectableProcess:
