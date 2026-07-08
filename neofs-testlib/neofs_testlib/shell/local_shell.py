@@ -6,8 +6,9 @@ from datetime import UTC, datetime
 from typing import IO, Optional
 
 import pexpect
+
 from neofs_testlib.defaults import Options
-from neofs_testlib.reporter import get_reporter
+from neofs_testlib.reporter import get_reporter, should_report_command, truncate_command_output
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
 logger = logging.getLogger("neofs.testlib.shell")
@@ -155,7 +156,9 @@ class LocalShell(Shell):
             f"\nOutput: {result.stdout if result else ''}"
         )
 
-        if result:
+        # Successful commands are not attached to the report to keep it small;
+        # full detail is kept for failures and can be forced via NEOFS_ALLURE_FULL_LOGS.
+        if result and should_report_command(result.return_code != 0):
             elapsed_time = end_time - start_time
             command_attachment = (
                 f"COMMAND: {command}\n"
@@ -165,4 +168,4 @@ class LocalShell(Shell):
                 f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {elapsed_time}"
             )
             with reporter.step(f"COMMAND: {command}"):
-                reporter.attach(command_attachment, "Command execution.txt")
+                reporter.attach(truncate_command_output(command_attachment), "Command execution.txt")

@@ -15,6 +15,7 @@ from typing import Union
 
 import allure
 import pexpect
+from neofs_testlib.reporter import should_report_command, truncate_command_output
 
 logger = logging.getLogger("NeoLogger")
 COLOR_GREEN = "\033[92m"
@@ -124,6 +125,10 @@ def _configure_aws_cli(cmd: str, key_id: str, access_key: str, out_format: str =
 
 
 def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: datetime, end_time: datetime) -> None:
+    # Successful commands are not attached to the report to keep it small;
+    # full detail is kept for failures and can be forced via NEOFS_ALLURE_FULL_LOGS.
+    if not should_report_command(return_code != 0):
+        return
     command_attachment = (
         f"COMMAND: '{cmd}'\n"
         f"OUTPUT:\n {output}\n"
@@ -131,14 +136,18 @@ def _attach_allure_log(cmd: str, output: str, return_code: int, start_time: date
         f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {end_time - start_time}"
     )
     with allure.step(f"COMMAND: {shorten(cmd, width=60, placeholder='...')}"):
-        allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)
+        allure.attach(truncate_command_output(command_attachment), "Command execution", allure.attachment_type.TEXT)
 
 
 def log_command_execution(cmd: str, output: Union[str, dict]) -> None:
     logger.info(f"{cmd}: {output}")
+    # This logs the result of a successful operation; skip it unless full logs
+    # are requested to avoid bloating the report with per-operation attachments.
+    if not should_report_command(False):
+        return
     with suppress(Exception):
         json_output = json.dumps(output, indent=4, sort_keys=True)
         output = json_output
     command_attachment = f"COMMAND: '{cmd}'\nOUTPUT:\n {output}\n"
     with allure.step(f"COMMAND: {shorten(cmd, width=60, placeholder='...')}"):
-        allure.attach(command_attachment, "Command execution", allure.attachment_type.TEXT)
+        allure.attach(truncate_command_output(command_attachment), "Command execution", allure.attachment_type.TEXT)
