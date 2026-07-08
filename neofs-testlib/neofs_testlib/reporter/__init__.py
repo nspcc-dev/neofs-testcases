@@ -1,4 +1,9 @@
 from neofs_testlib.reporter.allure_handler import AllureHandler
+from neofs_testlib.reporter.command_logging import (
+    full_command_logs_enabled,
+    should_report_command,
+    truncate_command_output,
+)
 from neofs_testlib.reporter.interfaces import ReporterHandler
 from neofs_testlib.reporter.reporter import Reporter
 

@@ -19,7 +19,7 @@ from paramiko import (
 )
 from paramiko.ssh_exception import AuthenticationException
 
-from neofs_testlib.reporter import get_reporter
+from neofs_testlib.reporter import get_reporter, should_report_command, truncate_command_output
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
 logger = logging.getLogger("neofs.testlib.shell")
@@ -38,27 +38,29 @@ def log_command(func):
     @wraps(func)
     def wrapper(shell: "SSHShell", command: str, options: CommandOptions, *args, **kwargs) -> CommandResult:
         command_info = command.removeprefix("$ProgressPreference='SilentlyContinue'\n")
-        with reporter.step(command_info):
-            logger.info(f'Execute command "{command}" on "{shell.host}"')
 
-            start_time = datetime.now(UTC)
-            result = func(shell, command, options, *args, **kwargs)
-            end_time = datetime.now(UTC)
+        start_time = datetime.now(UTC)
+        result = func(shell, command, options, *args, **kwargs)
+        end_time = datetime.now(UTC)
 
-            elapsed_time = end_time - start_time
-            log_message = (
-                f"HOST: {shell.host}\n"
-                f"COMMAND:\n{textwrap.indent(command, ' ')}\n"
-                f"RC:\n {result.return_code}\n"
-                f"STDOUT:\n{textwrap.indent(result.stdout, ' ')}\n"
-                f"STDERR:\n{textwrap.indent(result.stderr, ' ')}\n"
-                f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {elapsed_time}"
-            )
+        elapsed_time = end_time - start_time
+        log_message = (
+            f"HOST: {shell.host}\n"
+            f"COMMAND:\n{textwrap.indent(command, ' ')}\n"
+            f"RC:\n {result.return_code}\n"
+            f"STDOUT:\n{textwrap.indent(result.stdout, ' ')}\n"
+            f"STDERR:\n{textwrap.indent(result.stderr, ' ')}\n"
+            f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {elapsed_time}"
+        )
 
-            if not options.no_log:
-                logger.info(log_message)
+        if not options.no_log:
+            logger.info(log_message)
 
-            reporter.attach(log_message, "SSH command.txt")
+        # Successful commands are not attached to the report to keep it small;
+        # full detail is kept for failures and can be forced via NEOFS_ALLURE_FULL_LOGS.
+        if should_report_command(result.return_code != 0):
+            with reporter.step(command_info):
+                reporter.attach(truncate_command_output(log_message), "SSH command.txt")
         return result
 
     return wrapper
