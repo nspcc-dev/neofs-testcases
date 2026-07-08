@@ -253,7 +253,9 @@ def generate_session_token_v2(
         wallet_connect=wallet_connect,
     )
 
-    return complete_session_token(gw_endpoint, unsigned_token, lock, signature, pub_key, scheme=scheme)
+    return complete_session_token(
+        gw_endpoint, unsigned_token, lock, signature, pub_key, scheme=scheme, origin=extracted_origin
+    )
 
 
 def get_object_and_verify_hashes(

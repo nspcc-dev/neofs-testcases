@@ -636,6 +636,7 @@ def complete_session_token(
     signature: str,
     public_key: str,
     scheme: str = "WALLETCONNECT",
+    origin: str = None,
 ) -> str:
     """
     Complete session token by attaching signature.
@@ -647,6 +648,7 @@ def complete_session_token(
         signature: Base64 encoded signature
         public_key: Hex encoded public key (or base64 for N3 scheme)
         scheme: Signature scheme (WALLETCONNECT, SHA512, DETERMINISTIC_SHA256, N3)
+        origin: Origin session token to extend
 
     Returns:
         str: Base64 encoded complete signed token (lock + signed_token)
@@ -660,6 +662,8 @@ def complete_session_token(
         "key": public_key,
         "scheme": scheme,
     }
+    if origin:
+        body["origin"] = origin
 
     resp = requests.post(
         request,
