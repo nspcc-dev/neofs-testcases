@@ -20,8 +20,9 @@ from helpers.rest_gate import (
     searchv2,
     upload_via_rest_gate,
 )
-from helpers.wellknown_acl import PUBLIC_ACL
+from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
+from neofs_testlib.protobuf.generated.session import types_pb2 as session_types_pb2
 from neofs_testlib.utils.converters import load_wallet
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 from rest_gw.rest_base import TestNeofsRestBase
@@ -32,6 +33,13 @@ logger = logging.getLogger("NeoLogger")
 
 def unique_container_name() -> str:
     return f"rest_session_{uuid.uuid4()}"
+
+
+def parse_session_token_v2(complete_token: str) -> session_types_pb2.SessionTokenV2:
+    token_bytes = base64.standard_b64decode(complete_token)[32:]
+    session_token = session_types_pb2.SessionTokenV2()
+    session_token.ParseFromString(token_bytes)
+    return session_token
 
 
 class TestRestSessionTokenV2(TestNeofsRestBase):
@@ -425,6 +433,118 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         with allure.step("Verify delegated token works"):
             resp = get_via_rest_gate(cid, oid, gw_endpoint, session_token=delegated_token, return_response=True)
             assert resp.ok, f"Delegated token should work: {resp.text}"
+
+    @allure.title("Test V2 Session Token - Extension Preserves Origin Token")
+    @pytest.mark.simple
+    def test_rest_v2_session_token_extension_preserves_origin(self, gw_endpoint: str):
+        with allure.step("Create private container"):
+            container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
+            # A private container makes the delegation chain mandatory to read the object: the user
+            # is not the owner, so only a token that carries the origin can authorize a read.
+            cid = create_container(
+                gw_endpoint, unique_container_name(), self.PLACEMENT_RULE, PRIVATE_ACL_F, container_token
+            )
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Get addresses"):
+            rest_gw_address = get_rest_gateway_address(gw_endpoint)
+            user_address = get_last_address_from_wallet(self.user_wallet.path, self.user_wallet.password)
+
+        with allure.step("Upload object with session token"):
+            upload_token = generate_session_token_v2(
+                gw_endpoint,
+                self.owner_wallet,
+                [{"containerID": cid, "verbs": ["OBJECT_PUT"]}],
+                targets=[rest_gw_address],
+            )
+            oid = upload_via_rest_gate(cid, file_path, gw_endpoint, session_token=upload_token)
+
+        with allure.step("Owner creates original V2 session token targeting the user"):
+            contexts = [{"containerID": cid, "verbs": ["OBJECT_GET", "OBJECT_HEAD"]}]
+            original_token = generate_session_token_v2(
+                gw_endpoint, self.owner_wallet, contexts, targets=[user_address], lifetime=1000
+            )
+            origin_session_token = extract_session_token_from_bearer(original_token)
+
+        with allure.step("User builds and signs an extended token with the origin"):
+            user_neo3_wallet = load_wallet(self.user_wallet.path, self.user_wallet.password)
+            user_acc = user_neo3_wallet.accounts[0]
+            reduced_contexts = [{"containerID": cid, "verbs": ["OBJECT_GET"]}]
+            unsigned_token, lock = get_unsigned_session_token(
+                gw_endpoint,
+                issuer=user_acc.address,
+                contexts=reduced_contexts,
+                lifetime=900,
+                targets=[rest_gw_address],
+                origin=origin_session_token,
+            )
+            signature, pub_key, scheme = sign_session_token(
+                unsigned_token, user_acc.private_key, user_acc.public_key.to_array(), wallet_connect=False
+            )
+
+        with allure.step("Complete extended token without origin - origin must be absent"):
+            token_without_origin = complete_session_token(
+                gw_endpoint, unsigned_token, lock, signature, pub_key, scheme=scheme
+            )
+            parsed_without_origin = parse_session_token_v2(token_without_origin)
+            assert not parsed_without_origin.HasField("origin"), (
+                "Completed token must not embed an origin when it is not supplied at completion"
+            )
+
+        with allure.step("Verify token completed without origin is rejected when used"):
+            resp = get_via_rest_gate(cid, oid, gw_endpoint, session_token=token_without_origin, expect_error=True)
+            assert not resp.ok, "Token completed without origin has a broken delegation chain and must be rejected"
+
+        with allure.step("Complete extended token with origin - origin must be preserved"):
+            token_with_origin = complete_session_token(
+                gw_endpoint, unsigned_token, lock, signature, pub_key, scheme=scheme, origin=origin_session_token
+            )
+            parsed_with_origin = parse_session_token_v2(token_with_origin)
+            assert parsed_with_origin.HasField("origin"), (
+                "Completed token must embed the origin token supplied at completion"
+            )
+
+        with allure.step("Verify embedded origin matches the original token"):
+            expected_origin = session_types_pb2.SessionTokenV2()
+            expected_origin.ParseFromString(base64.standard_b64decode(origin_session_token))
+            assert parsed_with_origin.origin.body.SerializeToString(
+                deterministic=True
+            ) == expected_origin.body.SerializeToString(deterministic=True), (
+                "Embedded origin token body does not match the original token"
+            )
+            assert parsed_with_origin.origin.signature.SerializeToString(
+                deterministic=True
+            ) == expected_origin.signature.SerializeToString(deterministic=True), (
+                "Embedded origin token signature does not match the original token"
+            )
+
+        with allure.step("Verify origin is not part of the signed data"):
+            assert parsed_with_origin.body.SerializeToString(
+                deterministic=True
+            ) == parsed_without_origin.body.SerializeToString(deterministic=True), (
+                "Outer token body must be identical regardless of origin (origin is not signed)"
+            )
+            assert parsed_with_origin.signature.SerializeToString(
+                deterministic=True
+            ) == parsed_without_origin.signature.SerializeToString(deterministic=True), (
+                "Outer token signature must be identical regardless of origin (origin is not signed)"
+            )
+
+        with allure.step("Verify extended token with origin works via REST"):
+            resp = get_via_rest_gate(cid, oid, gw_endpoint, session_token=token_with_origin, return_response=True)
+            assert resp.ok, f"Extended token with origin should work: {resp.text}"
+
+        with allure.step("Verify completion with a malformed origin is rejected"):
+            with pytest.raises(Exception, match="invalid origin token"):
+                complete_session_token(
+                    gw_endpoint,
+                    unsigned_token,
+                    lock,
+                    signature,
+                    pub_key,
+                    scheme=scheme,
+                    origin="@@not-a-valid-token@@",
+                )
 
     @allure.title("Test V2 Session Token - Final Flag Prevents Delegation")
     @pytest.mark.simple
