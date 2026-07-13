@@ -7,6 +7,7 @@ from helpers.container import create_container, parse_container_nodes_output
 from helpers.file_helper import generate_file
 from helpers.grpc_utils import put_object
 from helpers.neofs_verbs import put_object as put_object_via_cli
+from helpers.utility import parse_version
 from helpers.wellknown_acl import ALLOW_ALL_OPERATIONS_EXCEPT_DELETE
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.protobuf.generated.object import types_pb2 as object_types_pb2
@@ -75,7 +76,15 @@ def test_put_tombstone_object_without_delete_permission(
             oid,
             object_context_verb=session_types_pb2.ObjectSessionContext.PUT,
         )
-        assert (
-            response.meta_header.status.code == 1028
-            and re.search(r".*session token verb is invalid", response.meta_header.status.message) is not None
-        )
+        if parse_version(neofs_env.get_binary_version(neofs_env.neofs_node_path)) <= parse_version("0.54.0"):
+            assert (
+                response.meta_header.status.code == 1028
+                and re.search(r".*session token verb is invalid", response.meta_header.status.message) is not None
+            )
+        else:
+            details = " ".join(detail.value.decode(errors="ignore") for detail in response.meta_header.status.details)
+            assert (
+                response.meta_header.status.code == 2048
+                and response.meta_header.status.message == "access to object operation denied"
+                and re.search(r".*session token verb is invalid", details) is not None
+            )

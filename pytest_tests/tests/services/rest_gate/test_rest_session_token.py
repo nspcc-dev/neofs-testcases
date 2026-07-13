@@ -20,6 +20,7 @@ from helpers.rest_gate import (
     searchv2,
     upload_via_rest_gate,
 )
+from helpers.utility import parse_version
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_testlib.env.env import NodeWallet
 from neofs_testlib.protobuf.generated.session import types_pb2 as session_types_pb2
@@ -376,8 +377,14 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
             assert resp.ok, f"GET should work: {resp.text}"
 
         with allure.step("Verify PUT operation is rejected"):
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+                "0.54.0"
+            ):
+                error_pattern = "invalid"
+            else:
+                error_pattern = "access to object operation denied"
             new_oid = upload_via_rest_gate(
-                cid, file_path, gw_endpoint, session_token=session_token, error_pattern="invalid"
+                cid, file_path, gw_endpoint, session_token=session_token, error_pattern=error_pattern
             )
             assert not new_oid, "PUT should be rejected"
 
@@ -755,8 +762,14 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
 
         with allure.step("Attempt to use token for object PUT operation"):
             file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            if parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)) <= parse_version(
+                "0.54.0"
+            ):
+                error_pattern = "invalid"
+            else:
+                error_pattern = "access to object operation denied"
             result = upload_via_rest_gate(
-                cid, file_path, gw_endpoint, session_token=session_token, error_pattern="invalid"
+                cid, file_path, gw_endpoint, session_token=session_token, error_pattern=error_pattern
             )
             assert not result, "Object PUT with container-only token should fail"
 
