@@ -3,14 +3,18 @@ import os
 
 import allure
 import pytest
+from helpers.complex_object_actions import get_link_object
 from helpers.container import (
     create_container,
 )
 from helpers.file_helper import generate_file
-from helpers.neofs_verbs import delete_object
+from helpers.neofs_verbs import delete_object, lock_object, put_object_to_random_node
 from helpers.rest_gate import (
     attr_into_header,
     get_object_by_attr_and_verify_hashes,
+    get_via_rest_gate,
+    head_via_rest_gate,
+    head_via_rest_gate_by_attribute,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
@@ -20,6 +24,8 @@ from pytest import FixtureRequest
 from rest_gw.rest_base import TestNeofsRestBase
 
 logger = logging.getLogger("NeoLogger")
+
+OBJECT_TYPE_HEADER = "X-Object-Type"
 
 
 @pytest.mark.sanity
@@ -152,4 +158,183 @@ class Test_rest_headers(TestNeofsRestBase):
                 cid=storage_object_1.cid,
                 attrs=key_value_pair,
                 endpoint=gw_endpoint,
+            )
+
+
+@pytest.mark.sanity
+class Test_rest_object_type(TestNeofsRestBase):
+    """Verify the ``X-Object-Type`` response header returned by the REST gateway.
+
+    The gateway exposes the NeoFS object type (REGULAR/TOMBSTONE/LOCK/LINK) via the
+    ``X-Object-Type`` header on object GET, HEAD and get-by-attribute responses.
+    """
+
+    PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+    LOCK_LIFETIME = 5
+
+    @pytest.fixture(scope="class", autouse=True)
+    @allure.title("[Class/Autouse]: Prepare wallet and deposit")
+    def prepare_wallet(self, default_wallet):
+        Test_rest_object_type.wallet = default_wallet
+
+    @pytest.fixture(scope="class")
+    def container(self) -> str:
+        return create_container(
+            wallet=self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=self.PLACEMENT_RULE,
+            basic_acl=PUBLIC_ACL,
+        )
+
+    @allure.title("REGULAR object type in X-Object-Type header ({object_size})")
+    @pytest.mark.parametrize(
+        "object_size",
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_regular_object_type(self, container: str, gw_endpoint: str, object_size: str):
+        """
+        Test that a regular object reports the REGULAR type via X-Object-Type.
+
+        Steps:
+        1. Upload an object via REST gate (with a user attribute).
+        2. HEAD the object by id and verify X-Object-Type == REGULAR.
+        3. GET the object by id and verify X-Object-Type == REGULAR.
+        4. HEAD the object by attribute and verify X-Object-Type == REGULAR.
+        """
+        attributes = {"FileName": "regular_object"}
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
+
+        with allure.step("Upload object via REST gate"):
+            oid = upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers=attr_into_header(attributes),
+            )
+
+        with allure.step("HEAD object by id and verify X-Object-Type is REGULAR"):
+            resp = head_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "REGULAR", (
+                f"Expected {OBJECT_TYPE_HEADER}=REGULAR on HEAD, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
+            )
+
+        with allure.step("GET object by id and verify X-Object-Type is REGULAR"):
+            resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "REGULAR", (
+                f"Expected {OBJECT_TYPE_HEADER}=REGULAR on GET, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
+            )
+
+        with allure.step("HEAD object by attribute and verify X-Object-Type is REGULAR"):
+            resp = head_via_rest_gate_by_attribute(cid=container, attribute=attributes, endpoint=gw_endpoint)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "REGULAR", (
+                f"Expected {OBJECT_TYPE_HEADER}=REGULAR on HEAD by attribute, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
+            )
+
+    @allure.title("LOCK object type in X-Object-Type header")
+    @pytest.mark.simple
+    def test_lock_object_type(self, container: str, gw_endpoint: str):
+        """
+        Test that a lock object reports the LOCK type via X-Object-Type.
+
+        Steps:
+        1. Upload a regular object.
+        2. Lock it, obtaining the lock object id.
+        3. HEAD the lock object by id and verify X-Object-Type == LOCK.
+        """
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Upload object and lock it"):
+            oid = put_object_to_random_node(
+                wallet=self.wallet.path,
+                path=file_path,
+                cid=container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+            lock_oid = lock_object(
+                wallet=self.wallet.path,
+                cid=container,
+                oid=oid,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                lifetime=self.LOCK_LIFETIME,
+            )
+
+        with allure.step("HEAD lock object by id and verify X-Object-Type is LOCK"):
+            resp = head_via_rest_gate(cid=container, oid=lock_oid, endpoint=gw_endpoint)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "LOCK", (
+                f"Expected {OBJECT_TYPE_HEADER}=LOCK, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
+            )
+
+    @allure.title("TOMBSTONE object type in X-Object-Type header")
+    @pytest.mark.simple
+    def test_tombstone_object_type(self, container: str, gw_endpoint: str):
+        """
+        Test that a tombstone object reports the TOMBSTONE type via X-Object-Type.
+
+        Steps:
+        1. Upload a regular object.
+        2. Delete it, obtaining the tombstone object id.
+        3. HEAD the tombstone object by id and verify X-Object-Type == TOMBSTONE.
+        """
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Upload object and delete it"):
+            oid = put_object_to_random_node(
+                wallet=self.wallet.path,
+                path=file_path,
+                cid=container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+            tombstone_oid = delete_object(
+                wallet=self.wallet.path,
+                cid=container,
+                oid=oid,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+
+        with allure.step("HEAD tombstone object by id and verify X-Object-Type is TOMBSTONE"):
+            resp = head_via_rest_gate(cid=container, oid=tombstone_oid, endpoint=gw_endpoint)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "TOMBSTONE", (
+                f"Expected {OBJECT_TYPE_HEADER}=TOMBSTONE, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
+            )
+
+    @allure.title("LINK object type in X-Object-Type header")
+    @pytest.mark.complex
+    def test_link_object_type(self, container: str, gw_endpoint: str):
+        """
+        Test that a link object reports the LINK type via X-Object-Type.
+
+        Steps:
+        1. Upload a complex (split) object.
+        2. Resolve the link object id of the complex object.
+        3. HEAD the link object by id and verify X-Object-Type == LINK.
+        """
+        file_path = generate_file(self.neofs_env.get_object_size("complex_object_size"))
+
+        with allure.step("Upload complex object and resolve its link object"):
+            oid = put_object_to_random_node(
+                wallet=self.wallet.path,
+                path=file_path,
+                cid=container,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+            )
+            link_oid = get_link_object(
+                wallet=self.wallet.path,
+                cid=container,
+                oid=oid,
+                neofs_env=self.neofs_env,
+            )
+
+        with allure.step("HEAD link object by id and verify X-Object-Type is LINK"):
+            resp = head_via_rest_gate(cid=container, oid=link_oid, endpoint=gw_endpoint)
+            assert resp.headers.get(OBJECT_TYPE_HEADER) == "LINK", (
+                f"Expected {OBJECT_TYPE_HEADER}=LINK, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
             )
