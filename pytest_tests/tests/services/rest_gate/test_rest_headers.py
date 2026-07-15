@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+import uuid
 
 import allure
 import pytest
@@ -10,9 +12,13 @@ from helpers.container import (
 from helpers.file_helper import generate_file
 from helpers.neofs_verbs import delete_object, lock_object, put_object_to_random_node
 from helpers.rest_gate import (
+    assert_hashes_are_equal,
     attr_into_header,
+    attr_into_header_base64,
+    decode_x_attributes_base64,
     get_object_by_attr_and_verify_hashes,
     get_via_rest_gate,
+    get_via_rest_gate_by_attribute,
     head_via_rest_gate,
     head_via_rest_gate_by_attribute,
     try_to_get_object_and_expect_error,
@@ -26,6 +32,10 @@ from rest_gw.rest_base import TestNeofsRestBase
 logger = logging.getLogger("NeoLogger")
 
 OBJECT_TYPE_HEADER = "X-Object-Type"
+X_ATTRIBUTES_HEADER = "X-Attributes"
+X_ATTRIBUTES_BASE64_HEADER = "X-Attributes-Base64"
+CONTENT_DISPOSITION_HEADER = "Content-Disposition"
+FILENAME_ATTRIBUTE = "FileName"
 
 
 @pytest.mark.sanity
@@ -338,3 +348,238 @@ class Test_rest_object_type(TestNeofsRestBase):
             assert resp.headers.get(OBJECT_TYPE_HEADER) == "LINK", (
                 f"Expected {OBJECT_TYPE_HEADER}=LINK, got {resp.headers.get(OBJECT_TYPE_HEADER)}"
             )
+
+
+@pytest.mark.sanity
+class Test_rest_encoded_attributes(TestNeofsRestBase):
+    PLACEMENT_RULE = "REP 2 IN X CBF 1 SELECT 4 FROM * AS X"
+
+    @pytest.fixture(scope="class", autouse=True)
+    @allure.title("[Class/Autouse]: Prepare wallet and deposit")
+    def prepare_wallet(self, default_wallet):
+        Test_rest_encoded_attributes.wallet = default_wallet
+
+    @pytest.fixture(scope="class")
+    def container(self) -> str:
+        return create_container(
+            wallet=self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=self.PLACEMENT_RULE,
+            basic_acl=PUBLIC_ACL,
+        )
+
+    @staticmethod
+    def _verify_encoded_attributes(resp, expected: dict) -> dict:
+        encoded = resp.headers.get(X_ATTRIBUTES_BASE64_HEADER)
+        assert encoded, f"Expected {X_ATTRIBUTES_BASE64_HEADER} header in response, got headers: {dict(resp.headers)}"
+        decoded = decode_x_attributes_base64(encoded)
+        for key, value in expected.items():
+            assert decoded.get(key) == value, (
+                f"Attribute {key!r} mismatch in {X_ATTRIBUTES_BASE64_HEADER}: "
+                f"expected {value!r}, got {decoded.get(key)!r}"
+            )
+        return decoded
+
+    @allure.title("Non-ASCII attributes full round-trip via X-Attributes-Base64 ({object_size})")
+    @pytest.mark.parametrize(
+        "object_size",
+        [
+            pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+            pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+        ],
+    )
+    def test_non_ascii_attributes_round_trip(self, container: str, gw_endpoint: str, object_size: str):
+        unique = uuid.uuid4().hex
+        non_ascii_value = f"Война и мир {unique}"
+        non_ascii_key = "Автор"
+        non_ascii_key_value = f"Толстой {unique}"
+        attributes = {
+            "Writer": "Лев Толстой",
+            "Chapter": non_ascii_value,
+            "Emoji": "🚀 neofs rocket",
+            "Mixed": "a$b-Ünïcödé",
+            non_ascii_key: non_ascii_key_value,
+        }
+        file_path = generate_file(self.neofs_env.get_object_size(object_size))
+
+        with allure.step("Upload object with non-ASCII keys and values via X-Attributes-Base64 header"):
+            oid = upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers=attr_into_header_base64(attributes),
+            )
+
+        with allure.step("HEAD object and verify X-Attributes-Base64 attributes and omitted plain header"):
+            resp = head_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            self._verify_encoded_attributes(resp, attributes)
+            assert resp.headers.get(X_ATTRIBUTES_HEADER) is None, (
+                f"Plain {X_ATTRIBUTES_HEADER} header must be omitted for non-ASCII attributes, "
+                f"got {resp.headers.get(X_ATTRIBUTES_HEADER)!r}"
+            )
+
+        with allure.step("GET object by id and verify non-ASCII attributes and payload"):
+            resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
+            self._verify_encoded_attributes(resp, attributes)
+            got_file_path = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            assert_hashes_are_equal(file_path, got_file_path, got_file_path)
+
+        with allure.step("GET object by non-ASCII attribute value and by non-ASCII attribute key"):
+            get_object_by_attr_and_verify_hashes(
+                oid=oid,
+                file_name=file_path,
+                cid=container,
+                attrs={"Chapter": non_ascii_value},
+                endpoint=gw_endpoint,
+            )
+            get_object_by_attr_and_verify_hashes(
+                oid=oid,
+                file_name=file_path,
+                cid=container,
+                attrs={non_ascii_key: non_ascii_key_value},
+                endpoint=gw_endpoint,
+            )
+
+        with allure.step("HEAD object by non-ASCII attribute and verify object id and attributes"):
+            resp = head_via_rest_gate_by_attribute(
+                cid=container, attribute={"Chapter": non_ascii_value}, endpoint=gw_endpoint
+            )
+            assert resp.headers.get("X-Object-Id") == oid, (
+                f"Expected X-Object-Id={oid}, got {resp.headers.get('X-Object-Id')}"
+            )
+            self._verify_encoded_attributes(resp, attributes)
+
+    @allure.title("Plain X-Attributes header is emitted only for header-safe attributes")
+    @pytest.mark.simple
+    @pytest.mark.parametrize(
+        "attributes, upload_base64, expect_plain",
+        [
+            pytest.param(
+                {"Writer": "Leo Tolstoy", "Chapter": "War and Peace"},
+                False,
+                True,
+                id="ascii only",
+            ),
+            pytest.param({"Writer": "Лев Толстой", "Chapter": "Война и мир"}, True, False, id="non-ascii value"),
+            pytest.param({"Автор": "Tolstoy", "Book": "War and Peace"}, True, False, id="non-ascii key"),
+            pytest.param(
+                {"AsciiKey": "ascii value", "Number": "12345", "Кириллица": "Значение"},
+                True,
+                False,
+                id="mixed ascii and non-ascii",
+            ),
+            pytest.param({"Quote": 'he said "hi"', "Plain": "ok"}, True, False, id="ascii header-unsafe value"),
+        ],
+    )
+    def test_plain_x_attributes_header_gating(
+        self, container: str, gw_endpoint: str, attributes: dict, upload_base64: bool, expect_plain: bool
+    ):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+        headers = attr_into_header_base64(attributes) if upload_base64 else attr_into_header(attributes)
+
+        with allure.step(f"Upload object (base64={upload_base64}) with attributes {attributes}"):
+            oid = upload_via_rest_gate(cid=container, path=file_path, endpoint=gw_endpoint, headers=headers)
+
+        with allure.step("HEAD object and verify X-Attributes-Base64 carries all attributes"):
+            resp = head_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            decoded = self._verify_encoded_attributes(resp, attributes)
+
+        with allure.step(f"Verify plain X-Attributes header is {'present' if expect_plain else 'omitted'}"):
+            plain = resp.headers.get(X_ATTRIBUTES_HEADER)
+            if expect_plain:
+                assert plain is not None, (
+                    f"Plain {X_ATTRIBUTES_HEADER} header must be present for header-safe ASCII attributes"
+                )
+                assert json.loads(plain) == decoded, (
+                    f"{X_ATTRIBUTES_HEADER} (plain JSON) must match {X_ATTRIBUTES_BASE64_HEADER}: "
+                    f"{plain!r} != {decoded}"
+                )
+            else:
+                assert plain is None, (
+                    f"Plain {X_ATTRIBUTES_HEADER} header must be omitted for header-unsafe attributes, got {plain!r}"
+                )
+
+    @allure.title("X-Attributes-Base64 takes precedence over X-Attributes on upload")
+    @pytest.mark.simple
+    def test_base64_header_takes_precedence(self, container: str, gw_endpoint: str):
+        marker = uuid.uuid4().hex
+        plain_attributes = {"Source": "plain-header", "Marker": f"plain-{marker}"}
+        base64_attributes = {"Source": "base64-header", "Marker": f"base64-{marker}"}
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Upload object with conflicting X-Attributes and X-Attributes-Base64 headers"):
+            headers = {**attr_into_header(plain_attributes), **attr_into_header_base64(base64_attributes)}
+            oid = upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers=headers,
+            )
+
+        with allure.step("HEAD object and verify X-Attributes-Base64 values win"):
+            resp = head_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            decoded = self._verify_encoded_attributes(resp, base64_attributes)
+            assert decoded.get("Source") != plain_attributes["Source"], (
+                f"X-Attributes-Base64 must take precedence, got Source={decoded.get('Source')!r}"
+            )
+
+        with allure.step("Verify object is resolvable by the X-Attributes-Base64 attribute value"):
+            resp = get_via_rest_gate_by_attribute(
+                cid=container,
+                attribute={"Marker": base64_attributes["Marker"]},
+                endpoint=gw_endpoint,
+                return_response=True,
+            )
+            self._verify_encoded_attributes(resp, base64_attributes)
+
+    @allure.title("Upload with malformed X-Attributes-Base64 header is rejected")
+    @pytest.mark.simple
+    def test_upload_invalid_base64_attributes_returns_error(self, container: str, gw_endpoint: str):
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Upload object with an invalid (non-base64) X-Attributes-Base64 header"):
+            upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers={X_ATTRIBUTES_BASE64_HEADER: "@@@ not valid base64 @@@"},
+                error_pattern="could not decode header X-Attributes-Base64",
+            )
+
+    @allure.title("Content-Disposition filename is omitted for a non-ASCII FileName")
+    @pytest.mark.simple
+    def test_non_ascii_filename_content_disposition(self, container: str, gw_endpoint: str):
+        ascii_name = f"war_and_peace_{uuid.uuid4().hex}.txt"
+        non_ascii_name = f"Война_и_мир_{uuid.uuid4().hex}.txt"
+
+        with allure.step("Upload object with an ASCII FileName and verify Content-Disposition"):
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            oid = upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers=attr_into_header_base64({FILENAME_ATTRIBUTE: ascii_name}),
+            )
+            resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
+            content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
+            assert f"filename={ascii_name}" in content_disposition, (
+                f"Expected filename={ascii_name!r} in {CONTENT_DISPOSITION_HEADER}, got {content_disposition!r}"
+            )
+
+        with allure.step("Upload object with a non-ASCII FileName"):
+            file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+            oid = upload_via_rest_gate(
+                cid=container,
+                path=file_path,
+                endpoint=gw_endpoint,
+                headers=attr_into_header_base64({FILENAME_ATTRIBUTE: non_ascii_name}),
+            )
+
+        with allure.step("Verify Content-Disposition omits filename= but X-Attributes-Base64 keeps FileName"):
+            resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
+            content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
+            assert "filename=" not in content_disposition, (
+                f"{CONTENT_DISPOSITION_HEADER} must not carry a non-ASCII filename, got {content_disposition!r}"
+            )
+            self._verify_encoded_attributes(resp, {FILENAME_ATTRIBUTE: non_ascii_name})

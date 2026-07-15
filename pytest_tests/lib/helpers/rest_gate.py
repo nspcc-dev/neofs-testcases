@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -156,13 +157,16 @@ def head_via_rest_gate(
 
 
 @allure.step("Get via REST Gate by attribute")
-def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, skip_options_verify=False):
+def get_via_rest_gate_by_attribute(
+    cid: str, attribute: dict, endpoint: str, skip_options_verify=False, return_response=False
+):
     """
     This function gets given object from REST gate
     cid:          CID to get object from
     attribute:    attribute {name: attribute} value pair
     endpoint:     REST gate endpoint
     request_path: (optional) REST request path, if ommited - use default [{endpoint}/objects/{Key}/by_attribute/{Value}]
+    return_response: (optional) either return internal requests.Response object or not
     """
     attr_name = list(attribute.keys())[0]
     attr_value = quote(str(attribute.get(attr_name)))
@@ -182,6 +186,9 @@ def get_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str, ski
 
     logger.info(f"Request: {request}")
     _attach_allure_step(request, resp.status_code)
+
+    if return_response:
+        return resp
 
     file_path = os.path.join(get_assets_dir_path(), f"{cid}_{str(uuid.uuid4())}")
     with open(file_path, "wb") as file:
@@ -368,6 +375,16 @@ def attr_into_header(attrs: dict) -> dict:
     str_attrs = {k: str(v) if isinstance(v, int) else v for k, v in attrs.items()}
     json_string = json.dumps(str_attrs)
     return {"X-Attributes": json_string}
+
+
+def attr_into_header_base64(attrs: dict) -> dict:
+    str_attrs = {k: str(v) if isinstance(v, int) else v for k, v in attrs.items()}
+    json_bytes = json.dumps(str_attrs, ensure_ascii=False).encode("utf-8")
+    return {"X-Attributes-Base64": base64.b64encode(json_bytes).decode("ascii")}
+
+
+def decode_x_attributes_base64(header_value: str) -> dict:
+    return json.loads(base64.b64decode(header_value).decode("utf-8"))
 
 
 @allure.step("Get epoch duration via REST Gate")
