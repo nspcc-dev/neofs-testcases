@@ -5,14 +5,24 @@ import uuid
 
 import allure
 import pytest
+from helpers.acl import (
+    EACLAccess,
+    EACLOperation,
+    EACLRole,
+    EACLRule,
+    create_eacl,
+    get_eacl,
+    wait_for_cache_expired,
+)
 from helpers.common import TEST_FILES_DIR, get_assets_dir_path
-from helpers.container import create_container, delete_container, list_containers
+from helpers.container import create_container, delete_container, list_containers, wait_for_container_creation
 from helpers.file_helper import generate_file
 from helpers.grpc_responses import (
     EXPIRED_SESSION_TOKEN,
     INVALID_SESSION_TOKEN_OWNER,
     INVALID_V2_SESSION_TOKEN,
     SESSION_TOKEN_DOESNOT_AUTHORIZE,
+    SESSION_TOKEN_NOT_AUTHORIZED_FOR_SETEACL,
     SESSION_VALIDATION_FAILED,
 )
 from helpers.neofs_verbs import (
@@ -25,7 +35,7 @@ from helpers.neofs_verbs import (
 )
 from helpers.nns import get_contract_hashes, register_nns_domain_with_record
 from helpers.session_token import build_forged_origin_session_token_v2_binary, create_session_token_v2
-from helpers.wellknown_acl import PRIVATE_ACL_F
+from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.utils.wallet import get_last_address_from_wallet
 
@@ -88,6 +98,10 @@ class TestSessionTokenV2(TestNeofsBase):
             )
 
         return session_token
+
+    def _build_deny_all_eacl_table(self, source_cid: str) -> str:
+        eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in EACLOperation]
+        return create_eacl(source_cid, eacl_deny, shell=self.shell)
 
     @allure.title("Test V2 Session Token with Object Operations")
     @pytest.mark.parametrize(
@@ -1769,4 +1783,140 @@ class TestSessionTokenV2(TestNeofsBase):
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
                     session=session_token,
+                )
+
+    @allure.title("Test V2 Session Token - Create Container With eACL In The Same RPC")
+    @pytest.mark.parametrize("use_delegation", [False, True], ids=["owner-direct", "delegation"])
+    @pytest.mark.simple
+    def test_v2_session_token_container_create_with_eacl(self, default_wallet, user_wallet, use_delegation):
+        with allure.step("Init wallets"):
+            owner_wallet = default_wallet
+            operator_wallet = owner_wallet if not use_delegation else user_wallet
+
+        with allure.step("Create V2 Session Token with CONTAINERPUT and CONTAINERSET verbs"):
+            contexts = ["0:CONTAINERPUT,CONTAINERSET"]
+
+            session_token = self._create_session_token_with_delegation(
+                owner_wallet=owner_wallet,
+                user_wallet=user_wallet,
+                contexts=contexts,
+                use_delegation=use_delegation,
+            )
+
+        with allure.step("Build eACL table denying all operations for OTHERS"):
+            source_cid = create_container(
+                owner_wallet.path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            eacl_table = self._build_deny_all_eacl_table(source_cid)
+
+        with allure.step("Create container with eACL table in the same RPC using V2 session token"):
+            cid = create_container(
+                operator_wallet.path,
+                basic_acl=PUBLIC_ACL,
+                eacl=eacl_table,
+                force=True,
+                session_token=session_token,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+                wait_for_creation=False,
+            )
+
+        with allure.step("Verify container was created and belongs to owner"):
+            wait_for_container_creation(owner_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            containers = list_containers(owner_wallet.path, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+            assert cid in containers, f"Container {cid} not found in owner's containers"
+
+        with allure.step("Verify eACL table was set within the container creation RPC"):
+            eacl = None
+            for _ in range(10):
+                eacl = get_eacl(owner_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
+                if eacl is not None:
+                    break
+                wait_for_cache_expired()
+            assert eacl is not None, f"eACL table was not set for container {cid}"
+
+    @allure.title("Test V2 Session Token - Container With eACL Requires setEacl Verb")
+    @pytest.mark.parametrize("use_delegation", [False, True], ids=["owner-direct", "delegation"])
+    @pytest.mark.simple
+    def test_v2_session_token_container_create_with_eacl_missing_seteacl_verb(
+        self, default_wallet, user_wallet, use_delegation
+    ):
+        with allure.step("Init wallets"):
+            owner_wallet = default_wallet
+            operator_wallet = owner_wallet if not use_delegation else user_wallet
+
+        with allure.step("Create V2 Session Token with only CONTAINERPUT verb"):
+            contexts = ["0:CONTAINERPUT"]
+
+            session_token = self._create_session_token_with_delegation(
+                owner_wallet=owner_wallet,
+                user_wallet=user_wallet,
+                contexts=contexts,
+                use_delegation=use_delegation,
+            )
+
+        with allure.step("Build eACL table"):
+            source_cid = create_container(
+                owner_wallet.path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            eacl_table = self._build_deny_all_eacl_table(source_cid)
+
+        with allure.step("Container creation with eACL must be rejected without CONTAINERSET verb"):
+            with pytest.raises(RuntimeError, match=SESSION_TOKEN_NOT_AUTHORIZED_FOR_SETEACL):
+                create_container(
+                    operator_wallet.path,
+                    basic_acl=PUBLIC_ACL,
+                    eacl=eacl_table,
+                    force=True,
+                    session_token=session_token,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    wait_for_creation=False,
+                )
+
+    @allure.title("Test V2 Session Token - Container With eACL Requires containerPut Verb")
+    @pytest.mark.simple
+    def test_v2_session_token_container_create_with_eacl_missing_put_verb(self, default_wallet):
+        with allure.step("Init wallet"):
+            owner_wallet = default_wallet
+            owner_address = get_last_address_from_wallet(owner_wallet.path, owner_wallet.password)
+
+        with allure.step("Create V2 Session Token with only CONTAINERSET verb"):
+            contexts = ["0:CONTAINERSET"]
+
+            session_token = create_session_token_v2(
+                shell=self.shell,
+                owner_wallet=owner_wallet,
+                rpc_endpoint=self.neofs_env.sn_rpc,
+                lifetime=1000,
+                subjects=[owner_address],
+                contexts=contexts,
+            )
+
+        with allure.step("Build eACL table"):
+            source_cid = create_container(
+                owner_wallet.path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            eacl_table = self._build_deny_all_eacl_table(source_cid)
+
+        with allure.step("Container creation with eACL must be rejected without CONTAINERPUT verb"):
+            with pytest.raises(RuntimeError, match=SESSION_TOKEN_DOESNOT_AUTHORIZE):
+                create_container(
+                    owner_wallet.path,
+                    basic_acl=PUBLIC_ACL,
+                    eacl=eacl_table,
+                    force=True,
+                    session_token=session_token,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    wait_for_creation=False,
                 )

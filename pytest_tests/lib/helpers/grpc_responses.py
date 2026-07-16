@@ -66,6 +66,7 @@ SESSION_VALIDATION_FAILED = ".*session validation failed.*"
 INVALID_V2_SESSION_TOKEN = ".*invalid V2 session token.*"
 SESSION_TOKEN_DOESNOT_AUTHORIZE = ".*session token does not authorize.*"
 SESSION_TOKEN_V2_VALIDATION = ".*session token v2 validation.*"
+SESSION_TOKEN_NOT_AUTHORIZED_FOR_SETEACL = ".*CONTAINER_SET_EACL.*eACL table is provided.*"
 
 RPC_ERROR = ".*rpc error.*"
 
