@@ -26,7 +26,8 @@ from helpers.neofs_verbs import (
 )
 from helpers.node_management import drop_object, storage_node_by_port, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from tenacity import retry, stop_after_attempt, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import stop_after_attempt, wait_fixed
 
 EC_PART_HASHES_ATTR = "__NEOFS__EC_PART_HASHES"
 EC_RULE_IDX_ATTR = "__NEOFS__EC_RULE_IDX"

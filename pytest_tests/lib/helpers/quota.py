@@ -6,7 +6,8 @@ from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.cli import NeofsAdm
 from neofs_testlib.env.env import NodeWallet
-from tenacity import retry, stop_after_delay, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import stop_after_delay, wait_fixed
 
 
 class TestQuotaBase(TestNeofsBase):
