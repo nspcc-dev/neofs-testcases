@@ -8,7 +8,7 @@ from typing import IO, Optional
 import pexpect
 
 from neofs_testlib.defaults import Options
-from neofs_testlib.reporter import get_reporter, should_report_command, truncate_command_output
+from neofs_testlib.reporter import get_reporter, report_command, should_report_command, truncate_command_output
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
 logger = logging.getLogger("neofs.testlib.shell")
@@ -167,5 +167,9 @@ class LocalShell(Shell):
                 f"STDERR:\n{result.stderr}\n"
                 f"Start / End / Elapsed\t {start_time.time()} / {end_time.time()} / {elapsed_time}"
             )
-            with reporter.step(f"COMMAND: {command}"):
-                reporter.attach(truncate_command_output(command_attachment), "Command execution.txt")
+
+            def _emit() -> None:
+                with reporter.step(f"COMMAND: {command}"):
+                    reporter.attach(truncate_command_output(command_attachment), "Command execution.txt")
+
+            report_command(_emit)
