@@ -9,7 +9,8 @@ import pytest
 from helpers import wallet_helpers
 from helpers.common import SN_VALIDATOR_DEFAULT_PORT
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
-from tenacity import retry, stop_after_attempt, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
 
