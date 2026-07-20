@@ -7,6 +7,7 @@ from helpers.container import create_container, parse_container_nodes_output
 from helpers.file_helper import generate_file
 from helpers.grpc_utils import put_object
 from helpers.neofs_verbs import put_object as put_object_via_cli
+from helpers.node_management import netmap_endpoint_port, storage_node_by_port
 from helpers.utility import parse_version
 from helpers.wellknown_acl import ALLOW_ALL_OPERATIONS_EXCEPT_DELETE
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
@@ -33,9 +34,12 @@ def test_put_storage_group_object_no_longer_supported(default_wallet: NodeWallet
         )
 
         node = random.choice(nodes)
-        node_endpoint = f"localhost:{node['endpoint'].split('/')[-1]}"
+        storage_node = storage_node_by_port(neofs_env, netmap_endpoint_port(node["endpoint"]))
+        assert storage_node is not None, f"No storage node serves netmap address {node['endpoint']}"
 
-        response = put_object(object_types_pb2.ObjectType.STORAGE_GROUP, default_wallet, node_endpoint, b"payload", cid)
+        response = put_object(
+            object_types_pb2.ObjectType.STORAGE_GROUP, default_wallet, storage_node.endpoint, b"payload", cid
+        )
         assert response.meta_header.status.message == "strorage group type is no longer supported"
 
 

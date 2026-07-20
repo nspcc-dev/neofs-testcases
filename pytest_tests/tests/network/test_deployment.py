@@ -1,11 +1,13 @@
 import os
+import re
 from pathlib import Path
 
 import allure
 from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
-from helpers.neofs_verbs import get_object_from_random_node, put_object, put_object_to_random_node
+from helpers.neofs_verbs import get_object, get_object_from_random_node, put_object, put_object_to_random_node
+from helpers.node_management import get_netmap_snapshot
 from helpers.wallet_helpers import create_wallet, create_wallet_with_money
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
@@ -215,6 +217,38 @@ def test_7_ir_node_deployment_with_main_chain(neofs_env_7_ir_with_mainchain: Neo
             neofs_env.shell,
             neofs_env.sn_rpc,
         )
+
+
+@allure.title("TLS node registers only its TLS port in netmap yet serves both TLS and plain ports")
+def test_tls_node_dual_port_access(neofs_env: NeoFSEnv):
+    """A TLS-enabled SN listens on two open gRPC ports: a TLS one (advertised in NetMap) and a
+    plaintext one (not advertised). Object access must succeed through either port."""
+    tls_node = next(sn for sn in neofs_env.storage_nodes if sn.tls_enabled)
+    plain_port = tls_node.endpoint.split(":")[-1]
+    tls_port = tls_node.tls_endpoint.split(":")[-1]
+
+    with allure.step("Only the TLS port is registered in netmap; the plain port is not"):
+        snapshot = get_netmap_snapshot(tls_node, neofs_env.shell)
+        assert re.search(rf"\b{tls_port}\b", snapshot), f"TLS port {tls_port} must be advertised in netmap:\n{snapshot}"
+        assert not re.search(rf"\b{plain_port}\b", snapshot), (
+            f"Plain port {plain_port} must NOT be advertised in netmap:\n{snapshot}"
+        )
+        assert "tls" in snapshot.lower(), f"TLS marker missing from netmap snapshot:\n{snapshot}"
+
+    wallet = create_wallet()
+    cid = create_container(wallet.path, rule="REP 1", shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+    file_path = generate_file(int(SIMPLE_OBJECT_SIZE))
+    original_hash = get_file_hash(file_path)
+
+    with allure.step("Put via the plain (unregistered) port, get via the TLS (registered) port"):
+        oid = put_object(wallet.path, file_path, cid, neofs_env.shell, endpoint=tls_node.rpc_endpoint)
+        downloaded = get_object(wallet.path, cid, oid, neofs_env.shell, endpoint=tls_node.tls_rpc_endpoint)
+        assert get_file_hash(downloaded) == original_hash, "Payload differs when crossing plain->TLS ports"
+
+    with allure.step("Put via the TLS port, get via the plain port"):
+        oid = put_object(wallet.path, file_path, cid, neofs_env.shell, endpoint=tls_node.tls_rpc_endpoint)
+        downloaded = get_object(wallet.path, cid, oid, neofs_env.shell, endpoint=tls_node.rpc_endpoint)
+        assert get_file_hash(downloaded) == original_hash, "Payload differs when crossing TLS->plain ports"
 
 
 @allure.title("SN does not die on startup when the first endpoint is unavailable")

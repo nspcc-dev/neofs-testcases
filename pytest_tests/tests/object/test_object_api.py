@@ -768,3 +768,81 @@ class TestObjectApi(TestNeofsBase):
                 assert get_file_hash(simple_object_path) == get_file_hash(file_path), (
                     "Expected file hash to match original file hash"
                 )
+
+
+def _tls_storage_node(neofs_env: NeoFSEnv):
+    return next(sn for sn in neofs_env.storage_nodes if sn.tls_enabled)
+
+
+def _open_storage_node(neofs_env: NeoFSEnv):
+    return next(sn for sn in neofs_env.storage_nodes if not sn.tls_enabled)
+
+
+class TestObjectApiTLS(TestNeofsBase):
+    """Cross-endpoint object access between a TLS (grpcs) node and a plaintext (open) node."""
+
+    @allure.title("Object put via TLS node is readable via an open node")
+    def test_put_on_tls_node_get_via_open_node(self, default_wallet: NodeWallet):
+        tls_node = _tls_storage_node(self.neofs_env)
+        open_node = _open_storage_node(self.neofs_env)
+
+        cid = create_container(
+            default_wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule="REP 1",
+        )
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Put object via the TLS (grpcs) endpoint"):
+            oid = put_object(
+                default_wallet.path,
+                file_path,
+                cid,
+                shell=self.shell,
+                endpoint=tls_node.tls_rpc_endpoint,
+            )
+
+        with allure.step("Get object via an open (plaintext) node"):
+            downloaded = get_object(
+                default_wallet.path,
+                cid,
+                oid,
+                shell=self.shell,
+                endpoint=open_node.rpc_endpoint,
+            )
+
+        assert get_file_hash(downloaded) == get_file_hash(file_path), "Object payload differs across endpoints"
+
+    @allure.title("Object put via an open node is readable via the TLS node")
+    def test_put_on_open_node_get_via_tls_node(self, default_wallet: NodeWallet):
+        tls_node = _tls_storage_node(self.neofs_env)
+        open_node = _open_storage_node(self.neofs_env)
+
+        cid = create_container(
+            default_wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule="REP 1",
+        )
+        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Put object via an open (plaintext) node"):
+            oid = put_object(
+                default_wallet.path,
+                file_path,
+                cid,
+                shell=self.shell,
+                endpoint=open_node.rpc_endpoint,
+            )
+
+        with allure.step("Get object via the TLS (grpcs) endpoint"):
+            downloaded = get_object(
+                default_wallet.path,
+                cid,
+                oid,
+                shell=self.shell,
+                endpoint=tls_node.tls_rpc_endpoint,
+            )
+
+        assert get_file_hash(downloaded) == get_file_hash(file_path), "Object payload differs across endpoints"

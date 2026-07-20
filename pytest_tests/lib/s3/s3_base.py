@@ -145,11 +145,13 @@ def init_s3_credentials(
     neofs_env: NeoFSEnv,
     policy: Optional[dict] = None,
     placement_policy: Optional[str] = "REP 1",
+    s3_gw=None,
 ) -> tuple:
     bucket = str(uuid.uuid4())
     policy = policy or "pytest_tests/data/container_policy.json"
 
-    gate_public_key = get_last_public_key_from_wallet(neofs_env.s3_gw.wallet.path, neofs_env.s3_gw.wallet.password)
+    s3_gw = s3_gw or neofs_env.s3_gw
+    gate_public_key = get_last_public_key_from_wallet(s3_gw.wallet.path, s3_gw.wallet.password)
     cmd = (
         f"{neofs_env.neofs_s3_authmate_path} --debug --with-log --timeout 1m "
         f"issue-secret --wallet {wallet.path} --gate-public-key={gate_public_key} "

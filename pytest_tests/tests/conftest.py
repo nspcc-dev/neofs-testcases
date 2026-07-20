@@ -52,6 +52,7 @@ def get_or_create_neofs_env(
     replication_cooldown="10s",
     disable_post_initial_queue=False,
     object_batch_size=None,
+    sn_with_tls_index=None,
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -74,6 +75,7 @@ def get_or_create_neofs_env(
             replication_cooldown=replication_cooldown,
             disable_post_initial_queue=disable_post_initial_queue,
             object_batch_size=object_batch_size,
+            sn_with_tls_index=sn_with_tls_index,
         )
     return neofs_env
 
@@ -92,6 +94,7 @@ def neofs_env(temp_directory, artifacts_directory, request):
         allow_ec=params.get("allow_ec", True),
         replication_cooldown=params.get("replication_cooldown", "10s"),
         disable_post_initial_queue=params.get("disable_post_initial_queue", False),
+        sn_with_tls_index=params.get("sn_with_tls_index", 0),
     )
     yield neofs_env
     neofs_env.finalize(request)
@@ -175,6 +178,7 @@ def neofs_env_4_ir(temp_directory, artifacts_directory, request):
         inner_ring_nodes_count=4,
         with_s3_gw=False,
         with_rest_gw=False,
+        sn_with_tls_index=0,
     )
     yield neofs_env
     neofs_env.finalize(request)
@@ -188,6 +192,7 @@ def neofs_env_4_ir_4_sn(temp_directory, artifacts_directory, request):
         inner_ring_nodes_count=4,
         with_s3_gw=False,
         with_rest_gw=False,
+        sn_with_tls_index=0,
     )
     yield neofs_env
     neofs_env.finalize(request)
@@ -201,6 +206,7 @@ def neofs_env_7_ir(temp_directory, artifacts_directory, request):
         inner_ring_nodes_count=7,
         with_s3_gw=False,
         with_rest_gw=False,
+        sn_with_tls_index=0,
     )
     yield neofs_env
     neofs_env.finalize(request)
@@ -215,6 +221,7 @@ def neofs_env_4_ir_with_mainchain(temp_directory, artifacts_directory, request):
         inner_ring_nodes_count=4,
         with_s3_gw=False,
         with_rest_gw=False,
+        sn_with_tls_index=0,
     )
     yield neofs_env
     neofs_env.finalize(request)
@@ -229,6 +236,7 @@ def neofs_env_7_ir_with_mainchain(temp_directory, artifacts_directory, request):
         inner_ring_nodes_count=7,
         with_s3_gw=False,
         with_rest_gw=False,
+        sn_with_tls_index=0,
     )
     yield neofs_env
     neofs_env.finalize(request)

@@ -88,6 +88,33 @@ def get_locode_from_random_node(neofs_env: NeoFSEnv) -> str:
     return locode
 
 
+def netmap_endpoint_port(endpoint: str) -> int:
+    """Extract the gRPC port from an address as netmap reports it.
+
+    Netmap advertises multiaddrs, and TLS nodes get a `/tls` suffix
+    (`/dns4/localhost/tcp/<port>/tls`), so the trailing segment is not always the port.
+    """
+    multiaddr_port = re.search(r"/tcp/(\d+)", endpoint)
+    if multiaddr_port:
+        return int(multiaddr_port.group(1))
+    return int(endpoint.rsplit(":", 1)[-1])
+
+
+def storage_node_by_port(neofs_env: NeoFSEnv, port: int) -> Optional[StorageNode]:
+    """Find the storage node serving the given gRPC port, whether it is the plain or the TLS one.
+
+    A TLS node listens on both and advertises only the TLS port in netmap, so matching against
+    `StorageNode.endpoint` alone would fail to resolve it.
+    """
+    for storage_node in neofs_env.storage_nodes:
+        ports = {netmap_endpoint_port(storage_node.endpoint)}
+        if storage_node.tls_enabled:
+            ports.add(netmap_endpoint_port(storage_node.tls_endpoint))
+        if port in ports:
+            return storage_node
+    return None
+
+
 @allure.step("Healthcheck for storage node {node}")
 def storage_node_healthcheck(node: StorageNode) -> HealthStatus:
     """
