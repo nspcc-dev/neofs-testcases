@@ -8,6 +8,7 @@ import platform
 import random
 import shutil
 import socket
+import ssl
 import stat
 import string
 import subprocess
@@ -124,6 +125,9 @@ class NeoFSEnv:
         self.rest_gw = None
         self.main_chain = None
         self.max_object_size = None
+        self.tls_cert_path = None
+        self.tls_key_path = None
+        self.tls_ca_bundle_path = None
 
     @property
     def fschain_rpc(self):
@@ -134,7 +138,7 @@ class NeoFSEnv:
     @property
     def sn_rpc(self):
         if len(self.storage_nodes) > 0:
-            return self.storage_nodes[0].endpoint
+            return self.storage_nodes[0].rpc_endpoint
         raise ValueError("No storage nodes configured in this env")
 
     @property
@@ -174,17 +178,81 @@ class NeoFSEnv:
         NeoFSEnv.generate_config_file(config_template="neo_go_cfg.yaml", config_path=neo_go_config_path, wallet=wallet)
         return neo_go_config_path
 
+    @allure.step("Provision TLS certificate")
+    def generate_tls_cert(self):
+        if self.tls_cert_path and os.path.isfile(self.tls_cert_path):
+            return
+        tls_dir = self._generate_temp_dir(prefix="tls")
+        self.tls_cert_path = self._generate_temp_file(tls_dir, extension="crt", prefix="tls_cert")
+        self.tls_key_path = self._generate_temp_file(tls_dir, extension="key", prefix="tls_key")
+        cert_template = files("neofs_testlib.env.templates").joinpath("node_tls.crt").read_text()
+        Path(self.tls_cert_path).write_text(cert_template)
+        key_template = files("neofs_testlib.env.templates").joinpath("node_tls.key").read_text()
+        Path(self.tls_key_path).write_text(key_template)
+        self.tls_ca_bundle_path = self._generate_temp_file(tls_dir, extension="pem", prefix="tls_ca_bundle")
+        ca_contents = ""
+        default_ca = ssl.get_default_verify_paths().cafile
+        if default_ca and os.path.isfile(default_ca):
+            ca_contents = Path(default_ca).read_text()
+        ca_contents += "\n" + cert_template
+        Path(self.tls_ca_bundle_path).write_text(ca_contents)
+        os.environ["SSL_CERT_FILE"] = str(self.tls_ca_bundle_path)
+        if sys.platform == "darwin":
+            self._trust_cert_macos()
+
+    def _trust_cert_macos(self):
+        system_keychain = "/Library/Keychains/System.keychain"
+        already_trusted = subprocess.run(
+            ["security", "verify-cert", "-c", str(self.tls_cert_path), "-p", "ssl"],
+            capture_output=True,
+            text=True,
+        )
+        if already_trusted.returncode == 0:
+            return
+        add_cert_args = [
+            "security",
+            "add-trusted-cert",
+            "-d",
+            "-r",
+            "trustRoot",
+            "-p",
+            "ssl",
+            "-k",
+            system_keychain,
+            str(self.tls_cert_path),
+        ]
+        result = subprocess.run(["sudo", "-n", *add_cert_args], capture_output=True, text=True)
+        if result.returncode != 0 and sys.stdin.isatty():
+            result = subprocess.run(["sudo", *add_cert_args])
+        if result.returncode != 0:
+            stderr = getattr(result, "stderr", "") or ""
+            logger.warning(
+                "Could not add the TLS certificate to the macOS System keychain trust store "
+                "(requires passwordless sudo in CI); TLS-enabled nodes may be unreachable from clients. "
+                f"stderr: {stderr.strip()}"
+            )
+
     @allure.step("Deploy inner ring nodes")
     def deploy_inner_ring_nodes(
-        self, count=1, with_main_chain=False, chain_meta_data=True, sn_validator_url=None, allow_ec=True
+        self,
+        count=1,
+        with_main_chain=False,
+        chain_meta_data=True,
+        sn_validator_url=None,
+        allow_ec=True,
+        ir_with_tls_index=None,
     ):
+        if ir_with_tls_index is not None:
+            self.generate_tls_cert()
         for _ in range(count):
+            new_ir_index = len(self.inner_ring_nodes)
             new_inner_ring_node = InnerRing(
                 self,
-                len(self.inner_ring_nodes) + 1,
+                new_ir_index + 1,
                 chain_meta_data=chain_meta_data,
                 sn_validator_url=sn_validator_url,
                 allow_ec=allow_ec,
+                with_tls=ir_with_tls_index is not None and new_ir_index == ir_with_tls_index,
             )
             new_inner_ring_node.generate_network_config()
             self.inner_ring_nodes.append(new_inner_ring_node)
@@ -234,16 +302,20 @@ class NeoFSEnv:
         replication_cooldown="10s",
         disable_post_initial_queue=False,
         object_batch_size=None,
+        sn_with_tls_index=None,
     ):
         logger.info(f"Going to deploy {count} storage nodes")
+        if sn_with_tls_index is not None:
+            self.generate_tls_cert()
         deploy_threads = []
         for idx in range(count):
             node_attrs_list = None
             if node_attrs:
                 node_attrs_list = node_attrs.get(idx, None)
+            new_sn_index = len(self.storage_nodes)
             new_storage_node = StorageNode(
                 self,
-                len(self.storage_nodes) + 1,
+                new_sn_index + 1,
                 writecache=writecache,
                 node_attrs=node_attrs_list,
                 fschain_endpoints=fschain_endpoints,
@@ -253,6 +325,7 @@ class NeoFSEnv:
                 replication_cooldown=replication_cooldown,
                 disable_post_initial_queue=disable_post_initial_queue,
                 object_batch_size=object_batch_size,
+                with_tls=sn_with_tls_index is not None and new_sn_index == sn_with_tls_index,
             )
             self.storage_nodes.append(new_storage_node)
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
@@ -697,6 +770,8 @@ class NeoFSEnv:
         replication_cooldown="10s",
         disable_post_initial_queue=False,
         object_batch_size=None,
+        ir_with_tls_index=None,
+        sn_with_tls_index=None,
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
@@ -711,6 +786,7 @@ class NeoFSEnv:
                 chain_meta_data=chain_meta_data,
                 sn_validator_url=sn_validator_url,
                 allow_ec=allow_ec,
+                ir_with_tls_index=ir_with_tls_index,
             )
 
             if storage_nodes_count:
@@ -732,6 +808,7 @@ class NeoFSEnv:
                     replication_cooldown=replication_cooldown,
                     disable_post_initial_queue=disable_post_initial_queue,
                     object_batch_size=object_batch_size,
+                    sn_with_tls_index=sn_with_tls_index,
                 )
             if with_main_chain:
                 neofs_adm = neofs_env.neofs_adm()
@@ -765,7 +842,7 @@ class NeoFSEnv:
             net_info = get_netmap_netinfo(
                 wallet=storage_node.wallet.path,
                 wallet_config=storage_node.cli_config,
-                endpoint=storage_node.endpoint,
+                endpoint=storage_node.rpc_endpoint,
                 shell=neofs_env.shell,
             )
             neofs_env.max_object_size = net_info["maximum_object_size"]
@@ -1100,7 +1177,15 @@ class MainChain(ResurrectableProcess):
 
 
 class InnerRing(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv, ir_number: int, chain_meta_data=True, sn_validator_url=None, allow_ec=True):
+    def __init__(
+        self,
+        neofs_env: NeoFSEnv,
+        ir_number: int,
+        chain_meta_data=True,
+        sn_validator_url=None,
+        allow_ec=True,
+        with_tls=False,
+    ):
         self.neofs_env = neofs_env
         self.ir_number = ir_number
         self.inner_ring_dir = self.neofs_env._generate_temp_dir("inner_ring")
@@ -1130,6 +1215,8 @@ class InnerRing(ResurrectableProcess):
         self.chain_metadata_rpc_port = NeoFSEnv.get_available_port()
         self.sn_validator_url = sn_validator_url
         self.allow_ec = allow_ec
+        self.tls_enabled = with_tls
+        self.tls_endpoint = f"{self.neofs_env.domain}:{NeoFSEnv.get_available_port()}" if with_tls else None
         self.stdout = "Not initialized"
         self.stderr = "Not initialized"
         self.process = None
@@ -1141,6 +1228,7 @@ class InnerRing(ResurrectableProcess):
             - Alphabet wallet: {self.alphabet_wallet}
             - IR Config path: {self.ir_node_config_path}
             - Endpoint: {self.endpoint}
+            - TLS endpoint: {self.tls_endpoint}
             - Control endpoint: {self.control_endpoint}
             - P2P address: {self.p2p_address}
             - Pprof address: {self.pprof_address}
@@ -1181,6 +1269,8 @@ class InnerRing(ResurrectableProcess):
     ):
         if self.process is not None:
             raise RuntimeError("This inner ring node instance has already been started")
+        if self.tls_enabled:
+            self.neofs_env.generate_tls_cert()
         logger.info(f"Generating IR config at: {self.ir_node_config_path}")
         ir_config_template = "ir.yaml"
 
@@ -1229,6 +1319,10 @@ class InnerRing(ResurrectableProcess):
                 chain_metadata_rpc_port=self.chain_metadata_rpc_port,
                 sn_validator_url=self.sn_validator_url,
                 allow_ec=self.allow_ec,
+                tls_enabled=self.tls_enabled,
+                tls_rpc_address=self.tls_endpoint,
+                tls_cert_path=self.neofs_env.tls_cert_path,
+                tls_key_path=self.neofs_env.tls_key_path,
             )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
@@ -1281,6 +1375,7 @@ class StorageNode(ResurrectableProcess):
         replication_cooldown="10s",
         disable_post_initial_queue=False,
         object_batch_size=None,
+        with_tls=False,
     ):
         self.neofs_env = neofs_env
         self.sn_dir = self.neofs_env._generate_temp_dir(prefix=f"sn_{sn_number}")
@@ -1323,8 +1418,15 @@ class StorageNode(ResurrectableProcess):
         self.replication_cooldown = replication_cooldown
         self.disable_post_initial_queue = disable_post_initial_queue
         self.object_batch_size = object_batch_size
+        self.tls_enabled = with_tls
         if attrs:
             self.attrs.update(attrs)
+
+    @property
+    def rpc_endpoint(self):
+        if self.tls_enabled:
+            return f"grpcs://{self.endpoint}"
+        return self.endpoint
 
     def __str__(self):
         return f"""
@@ -1349,6 +1451,8 @@ class StorageNode(ResurrectableProcess):
     def start(self, fresh=True, prepared_wallet: Optional[NodeWallet] = None, wait_until_ready=True):
         if self.process is not None or self.pid is not None:
             raise RuntimeError(f"This storage node instance has already been started \n{self}")
+        if self.tls_enabled:
+            self.neofs_env.generate_tls_cert()
         if fresh:
             logger.info("Generating wallet for storage node")
             if prepared_wallet:
@@ -1381,6 +1485,10 @@ class StorageNode(ResurrectableProcess):
                     replication_cooldown=self.replication_cooldown,
                     disable_post_initial_queue=self.disable_post_initial_queue,
                     object_batch_size=self.object_batch_size,
+                    tls_enabled=self.tls_enabled,
+                    grpc_endpoint=self.endpoint,
+                    tls_cert_path=self.neofs_env.tls_cert_path,
+                    tls_key_path=self.neofs_env.tls_key_path,
                 )
             logger.info(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
@@ -1455,6 +1563,10 @@ class StorageNode(ResurrectableProcess):
                 replication_cooldown=self.replication_cooldown,
                 disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
+                tls_enabled=self.tls_enabled,
+                grpc_endpoint=self.endpoint,
+                tls_cert_path=self.neofs_env.tls_cert_path,
+                tls_key_path=self.neofs_env.tls_key_path,
             )
         time.sleep(1)
 
@@ -1489,6 +1601,10 @@ class StorageNode(ResurrectableProcess):
                 replication_cooldown=self.replication_cooldown,
                 disable_post_initial_queue=self.disable_post_initial_queue,
                 object_batch_size=self.object_batch_size,
+                tls_enabled=self.tls_enabled,
+                grpc_endpoint=self.endpoint,
+                tls_cert_path=self.neofs_env.tls_cert_path,
+                tls_key_path=self.neofs_env.tls_key_path,
             )
         time.sleep(1)
 
@@ -1507,10 +1623,13 @@ class StorageNode(ResurrectableProcess):
         env_dict = {
             "NEOFS_NODE_WALLET_PATH": self.wallet.path,
             "NEOFS_NODE_WALLET_PASSWORD": self.wallet.password,
-            "NEOFS_NODE_ADDRESSES": self.endpoint,
-            "NEOFS_GRPC_0_ENDPOINT": self.endpoint,
+            "NEOFS_NODE_ADDRESSES": self.rpc_endpoint,
             "NEOFS_CONTROL_GRPC_ENDPOINT": self.control_endpoint,
         }
+        if not self.tls_enabled:
+            env_dict["NEOFS_GRPC_0_ENDPOINT"] = self.endpoint
+        if self.neofs_env.tls_ca_bundle_path:
+            env_dict["SSL_CERT_FILE"] = str(self.neofs_env.tls_ca_bundle_path)
         env_dict.update(self.attrs)
         self.process = subprocess.Popen(
             [self.neofs_env.neofs_node_path, "--config", self.storage_node_config_path],

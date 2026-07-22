@@ -53,6 +53,14 @@ fschain:
       listen: # Optional list of network addresses to listen Neo RPC on. By default, protocol is not served
         # TCP addresses in 'host:port' format
         - {{ rpc_address }}
+{% if tls_enabled %}
+      tls:
+        enabled: true
+        listen:
+          - {{ tls_rpc_address }}
+        cert_file: {{ tls_cert_path }}
+        key_file: {{ tls_key_path }}
+{% endif %}
     p2p: # Optional P2P settings
       listen: # Optional list of network addresses to listen Neo P2P on. By default, protocol is not served
         # TCP addresses in 'host:port' format
