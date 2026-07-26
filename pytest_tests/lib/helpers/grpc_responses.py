@@ -37,6 +37,15 @@ INVALID_RANGE_OVERFLOW = "invalid '{range}' range: uint64 overflow"
 INVALID_OFFSET_SPECIFIER = "invalid '{range}' range offset specifier"
 INVALID_LENGTH_SPECIFIER = "invalid '{range}' range length specifier"
 
+# Extended range (--extended-range) CLI validation errors.
+EXTENDED_RANGE_INVALID_FORM = "invalid --extended-range value.*expected first:last, first:, or :length"
+EXTENDED_RANGE_REVERSED_BOUNDS = "invalid --extended-range bounds: first position exceeds last"
+EXTENDED_RANGE_ZERO_SUFFIX = "invalid --extended-range suffix: length must be positive"
+EXTENDED_RANGE_BAD_FIRST = "invalid first position in --extended-range"
+EXTENDED_RANGE_BAD_LAST = "invalid last position or suffix length in --extended-range"
+RANGE_WITH_EXTENDED_RANGE = "--range cannot be used with --extended-range"
+BINARY_WITH_RANGE = "--binary cannot be used with a range"
+
 NOT_CONTAINER_OWNER = "provided account differs with the container owner"
 NOT_SESSION_CONTAINER_OWNER = "session issuer differs with the container owner"
 TIMED_OUT = "timed out after \\d+ seconds"
