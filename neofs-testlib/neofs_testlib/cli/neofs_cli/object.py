@@ -57,6 +57,7 @@ class NeofsCliObject(CliCommand):
         raw: bool = False,
         binary: bool = False,
         range: Optional[str] = None,
+        extended_range: Optional[str] = None,
         payload_only: bool = False,
         session: Optional[str] = None,
         ttl: Optional[int] = None,
@@ -77,6 +78,9 @@ class NeofsCliObject(CliCommand):
             no_progress: Do not show progress bar.
             oid: Object ID.
             range: Payload range to read in the form ``offset:length``.
+            extended_range: Extended payload range in one of the forms
+                ``first:last`` (inclusive bounds), ``first:`` (from ``first`` to
+                the payload end) or ``:length`` (the last ``length`` bytes).
             payload_only: Request only payload for a payload range (skip header in response).
             raw: Set raw request option.
             rpc_endpoint: Remote node address (as 'multiaddr' or '<host>:<port>').
