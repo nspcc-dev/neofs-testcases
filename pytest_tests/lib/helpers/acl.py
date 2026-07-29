@@ -194,6 +194,33 @@ def create_eacl(cid: str, rules_list: List[EACLRule], shell: Shell, wallet_confi
     return table_file_path
 
 
+def add_eacl_record_comments(eacl_table_path: str, comments: List[Union[str, bytes]]) -> str:
+    with open(eacl_table_path, "r") as table_file:
+        table = json.load(table_file)
+
+    assert len(table["records"]) == len(comments), "exactly one comment per eACL record is expected"
+
+    raw_comments = {}
+    for record, comment in zip(table["records"], comments):
+        if isinstance(comment, bytes):
+            placeholder = f"raw-comment-{uuid.uuid4()}"
+            raw_comments[placeholder.encode("utf-8")] = comment
+            comment = placeholder
+        record["comment"] = comment
+
+    table_data = json.dumps(table).encode("utf-8")
+    for placeholder, raw_comment in raw_comments.items():
+        table_data = table_data.replace(placeholder, raw_comment)
+
+    commented_table_path = os.path.join(get_assets_dir_path(), TEST_FILES_DIR, f"eacl_table_{str(uuid.uuid4())}.json")
+    with open(commented_table_path, "wb") as commented_table_file:
+        commented_table_file.write(table_data)
+
+    logger.info(f"Generated eACL with comments:\n{table_data}")
+
+    return commented_table_path
+
+
 def form_bearertoken_file(
     wallet_path: str,
     cid: str,
