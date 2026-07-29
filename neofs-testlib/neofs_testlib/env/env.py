@@ -213,8 +213,10 @@ class NeoFSEnv:
             except Exception as e:
                 for ir_node_idx, ir_node in enumerate(self.inner_ring_nodes):
                     temp_logs_dir = self._generate_temp_dir(prefix=f"ir{ir_node_idx}_logs")
-                    shutil.copy(ir_node.stderr, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stderr.log"))
-                    shutil.copy(ir_node.stdout, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stdout.log"))
+                    if os.path.isfile(ir_node.stderr):
+                        shutil.copy(ir_node.stderr, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stderr.log"))
+                    if os.path.isfile(ir_node.stdout):
+                        shutil.copy(ir_node.stdout, os.path.join(temp_logs_dir, f"ir{ir_node_idx}_stdout.log"))
                     zip_path = shutil.make_archive(
                         os.path.join(os.path.dirname(ir_node.stderr), f"ir{ir_node_idx}_logs"), "zip", temp_logs_dir
                     )

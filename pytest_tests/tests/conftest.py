@@ -296,7 +296,7 @@ def artifacts_directory(request, temp_directory: str) -> None:
     if not request.config.getoption("--persist-env") and not request.config.getoption("--load-env"):
         for dir_name in dirs:
             with allure.step(f"Remove {dir_name} directory"):
-                remove_dir(full_path)
+                remove_dir(os.path.join(temp_directory, dir_name))
 
 
 @pytest.fixture(scope="module")
@@ -354,7 +354,6 @@ def file_path(artifacts_directory):
 
 def create_dir(dir_path: str) -> None:
     with allure.step("Create directory"):
-        remove_dir(dir_path)
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 
 

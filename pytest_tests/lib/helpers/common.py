@@ -77,4 +77,5 @@ with open(WALLET_CONFIG, "w") as file:
 
 @lru_cache(maxsize=1)
 def get_assets_dir_path() -> str:
-    return os.path.join(os.getcwd(), TEST_RUN_DIR)
+    worker_id = os.getenv("PYTEST_XDIST_WORKER", "master")
+    return os.path.join(os.getcwd(), f"{TEST_RUN_DIR}-{worker_id}-{os.getpid()}")
