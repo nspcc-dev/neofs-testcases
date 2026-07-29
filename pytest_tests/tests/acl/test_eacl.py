@@ -12,6 +12,7 @@ from helpers.acl import (
     EACLRoleExtended,
     EACLRoleExtendedType,
     EACLRule,
+    add_eacl_record_comments,
     create_eacl,
     get_eacl,
     set_eacl,
@@ -29,6 +30,7 @@ from helpers.grpc_responses import (
     EACL_CHANGE_RPC_ERROR,
     EACL_CHANGE_TIMEOUT,
     EACL_PROHIBITED_TO_MODIFY_SYSTEM_ACCESS,
+    EACL_UNSUPPORTED_FORMAT,
     NOT_CONTAINER_OWNER,
 )
 from helpers.neofs_verbs import put_object_to_random_node
@@ -41,6 +43,7 @@ from helpers.object_access import (
     can_put_object,
     can_search_object,
 )
+from helpers.utility import parse_version
 from helpers.wellknown_acl import PUBLIC_ACL, PUBLIC_ACL_F
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv
@@ -616,6 +619,127 @@ class TestEACLContainer(TestNeofsBase):
                     ),
                     shell=self.shell,
                     endpoint=self.neofs_env.sn_rpc,
+                )
+
+
+class TestEACLRecordComments(TestNeofsBase):
+    @pytest.fixture(scope="class", autouse=True)
+    def skip_if_eacl_comments_unsupported(self, neofs_env: NeoFSEnv) -> None:
+        node_version = neofs_env.get_binary_version(neofs_env.neofs_node_path)
+        if parse_version(node_version) <= parse_version("0.54.0"):
+            pytest.skip(f"eACL record comments are not supported by neofs-node {node_version} (<= {'0.54.0'})")
+
+    @allure.title("eACL record comments are stored as is and do not affect access rights")
+    def test_eacl_record_comments_can_be_set_and_read(self, wallets, eacl_container_with_objects):
+        user_wallet = wallets.get_wallet()
+        other_wallet = wallets.get_wallet(EACLRole.OTHERS)
+        cid, object_oids, file_path = eacl_container_with_objects
+        denied_operations = [EACLOperation.GET, EACLOperation.HEAD]
+        comments = ["plain ascii comment", "юникод ✓ комментарий"]
+
+        with allure.step(f"Deny {[op.value for op in denied_operations]} for OTHERS, one comment per record"):
+            eacl_deny = [
+                EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=op) for op in denied_operations
+            ]
+            eacl_table = create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path)
+            set_eacl(
+                user_wallet.wallet_path,
+                cid,
+                add_eacl_record_comments(eacl_table, comments),
+                shell=self.shell,
+                endpoint=self.neofs_env.sn_rpc,
+            )
+            wait_for_cache_expired()
+
+        with allure.step("Every comment is returned back by get-eacl"):
+            stored_eacl = get_eacl(user_wallet.wallet_path, cid, self.shell, self.neofs_env.sn_rpc)
+            for comment in comments:
+                assert comment in stored_eacl, f"comment '{comment}' is missing from the stored eACL:\n{stored_eacl}"
+
+        with allure.step("Commented records are enforced the same way as records without comments"):
+            check_custom_access_to_container(
+                other_wallet.wallet_path,
+                cid,
+                object_oids[0],
+                file_path,
+                shell=self.shell,
+                neofs_env=self.neofs_env,
+                deny_operations=denied_operations,
+            )
+
+    @allure.title("eACL with an invalid record comment is rejected")
+    @pytest.mark.parametrize(
+        "invalid_comment",
+        [
+            pytest.param("zero\u0000byte", id="zero byte"),
+            pytest.param(b"non utf-8 \xff\xfe", id="non-utf-8"),
+        ],
+    )
+    def test_eacl_with_invalid_record_comment_is_rejected(self, wallets, invalid_comment):
+        user_wallet = wallets.get_wallet()
+        endpoint = self.neofs_env.sn_rpc
+
+        with allure.step("Create eACL public container"):
+            cid = create_container(
+                wallet=user_wallet.wallet_path,
+                basic_acl=PUBLIC_ACL,
+                shell=self.shell,
+                endpoint=endpoint,
+            )
+
+        with allure.step("The same table with a valid comment is accepted"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=EACLOperation.GET)]
+            eacl_table = create_eacl(cid, eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path)
+            set_eacl(
+                user_wallet.wallet_path,
+                cid,
+                add_eacl_record_comments(eacl_table, ["valid comment"]),
+                shell=self.shell,
+                endpoint=endpoint,
+            )
+            wait_for_cache_expired()
+            valid_eacl = get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint)
+            assert valid_eacl is not None, "eACL with a valid comment was not set"
+
+        with allure.step("Setting the same table with the invalid comment fails"):
+            with pytest.raises(RuntimeError, match=EACL_UNSUPPORTED_FORMAT):
+                set_eacl(
+                    user_wallet.wallet_path,
+                    cid,
+                    add_eacl_record_comments(eacl_table, [invalid_comment]),
+                    shell=self.shell,
+                    endpoint=endpoint,
+                )
+
+        with allure.step("The previously set eACL is left intact"):
+            wait_for_cache_expired()
+            assert get_eacl(user_wallet.wallet_path, cid, self.shell, endpoint) == valid_eacl
+
+    @allure.title("Container is not created when its eACL has an invalid record comment")
+    @pytest.mark.parametrize(
+        "invalid_comment",
+        [
+            pytest.param("zero\u0000byte", id="zero byte"),
+            pytest.param(b"non utf-8 \xff\xfe", id="non-utf-8"),
+        ],
+    )
+    def test_container_creation_rejected_with_invalid_eacl_record_comment(self, wallets, invalid_comment):
+        user_wallet = wallets.get_wallet()
+
+        with allure.step("Build an eACL table carrying the invalid comment"):
+            eacl_deny = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=EACLOperation.GET)]
+            eacl_table = create_eacl(
+                cid="", rules_list=eacl_deny, shell=self.shell, wallet_config=user_wallet.config_path
+            )
+
+        with allure.step("Container creation with such an eACL must be rejected"):
+            with pytest.raises(RuntimeError, match=EACL_UNSUPPORTED_FORMAT):
+                create_container(
+                    wallet=user_wallet.wallet_path,
+                    basic_acl=PUBLIC_ACL,
+                    shell=self.shell,
+                    endpoint=self.neofs_env.sn_rpc,
+                    eacl=add_eacl_record_comments(eacl_table, [invalid_comment]),
                 )
 
 
