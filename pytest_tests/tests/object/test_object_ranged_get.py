@@ -334,14 +334,16 @@ class TestObjectRangedGet(TestNeofsBase):
 
     @allure.title("Ranged GET rejects --binary together with --range")
     @pytest.mark.simple
-    def test_ranged_get_binary_rejected(self, default_wallet: NodeWallet, default_container: str):
+    def test_ranged_get_binary_rejected(
+        self, skip_if_extended_range_unsupported, default_wallet: NodeWallet, default_container: str
+    ):
         file_size = self.neofs_env.get_object_size("simple_object_size")
         file_path = generate_file(file_size)
         oid = _put_object(self.neofs_env, default_wallet, default_container, file_path)
 
         cli = NeofsCli(self.neofs_env.shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
         out_file = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, str(uuid.uuid4()))
-        with pytest.raises(Exception, match=r"--binary cannot be used with --range"):
+        with pytest.raises(Exception, match=BINARY_WITH_RANGE):
             cli.object.get(
                 rpc_endpoint=self.neofs_env.sn_rpc,
                 wallet=default_wallet.path,
