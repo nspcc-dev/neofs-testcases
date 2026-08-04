@@ -55,9 +55,10 @@ from helpers.storage_object_info import StorageObjectInfo
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.reporter import retry
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
 

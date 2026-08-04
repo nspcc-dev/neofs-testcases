@@ -4,9 +4,10 @@ import uuid
 from typing import Optional
 
 import allure
+from neofs_testlib.reporter import retry
 from neofs_testlib.shell import Shell
 from neofs_testlib.shell.interfaces import CommandOptions
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import stop_after_attempt, wait_fixed
 
 
 class RemoteProcess:

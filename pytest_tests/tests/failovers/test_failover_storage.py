@@ -26,7 +26,8 @@ from helpers.neofs_verbs import (
 from helpers.node_management import storage_node_healthcheck, wait_all_storage_nodes_returned
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import retry_if_exception_type, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
 

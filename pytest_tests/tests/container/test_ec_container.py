@@ -25,7 +25,8 @@ from helpers.neofs_verbs import (
 )
 from helpers.node_management import drop_object, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
-from tenacity import retry, stop_after_attempt, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import stop_after_attempt, wait_fixed
 
 
 def parse_ec_nodes_count(output: str) -> list:
