@@ -3,6 +3,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import allure
+import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.complex_object_actions import get_nodes_with_object
@@ -14,7 +15,7 @@ from helpers.container import (
     parse_container_nodes_output,
     wait_for_container_deletion,
 )
-from helpers.file_helper import generate_file, get_file_content
+from helpers.file_helper import generate_file, get_file_content, get_file_hash
 from helpers.neofs_verbs import (
     delete_object,
     get_object,
@@ -26,6 +27,11 @@ from helpers.neofs_verbs import (
 from helpers.node_management import drop_object, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from tenacity import retry, stop_after_attempt, wait_fixed
+
+EC_PART_HASHES_ATTR = "__NEOFS__EC_PART_HASHES"
+EC_RULE_IDX_ATTR = "__NEOFS__EC_RULE_IDX"
+EC_PART_IDX_ATTR = "__NEOFS__EC_PART_IDX"
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def parse_ec_nodes_count(output: str) -> list:
@@ -933,6 +939,214 @@ def test_ec_recovery(
 def _build_ec_policy(ec_rules: list[tuple[int, int]], cbf: int = 1) -> str:
     rules = " ".join(f"EC {data}/{parity}" for data, parity in ec_rules)
     return f"{rules} CBF {cbf}"
+
+
+def _object_attributes(head_info: dict) -> dict:
+    attrs = head_info["header"].get("attributes")
+    if isinstance(attrs, list):
+        return {attr["key"]: attr["value"] for attr in attrs}
+    return attrs or {}
+
+
+def _parse_ec_part_hashes(value: str) -> list[str]:
+    assert value, f"expected non-empty {EC_PART_HASHES_ATTR} attribute"
+    hashes = value.split(",")
+    for part_hash in hashes:
+        assert _SHA256_HEX_RE.fullmatch(part_hash), (
+            f"invalid sha256 hex in {EC_PART_HASHES_ATTR}: {part_hash!r} (full value: {value})"
+        )
+    return hashes
+
+
+def _payload_checksum_hex(head_info: dict) -> str:
+    return base58.b58decode(head_info["header"]["payloadHash"]).hex()
+
+
+def _ec_part_hash_index(ec_rules: list[tuple[int, int]], rule_idx: int, part_idx: int) -> int:
+    offset = 0
+    for idx, (data_shards, parity_shards) in enumerate(ec_rules):
+        if idx == rule_idx:
+            return offset + part_idx
+        offset += data_shards + parity_shards
+    raise AssertionError(f"EC rule index {rule_idx} is out of range for rules {ec_rules}")
+
+
+def _expected_ec_part_hashes_count(ec_rules: list[tuple[int, int]]) -> int:
+    return sum(data + parity for data, parity in ec_rules)
+
+
+@pytest.mark.sanity
+@pytest.mark.parametrize(
+    "ec_rules",
+    [
+        [(3, 1)],
+        [(2, 1), (1, 2)],
+    ],
+    ids=[
+        "EC_3/1",
+        "EC_2/1_and_1/2",
+    ],
+)
+@pytest.mark.parametrize(
+    "object_size",
+    [
+        pytest.param("simple_object_size", id="simple object", marks=pytest.mark.simple),
+        pytest.param("complex_object_size", id="complex object", marks=pytest.mark.complex),
+    ],
+)
+def test_ec_parent_part_hashes(
+    default_wallet: NodeWallet, neofs_env: NeoFSEnv, ec_rules: list[tuple[int, int]], object_size: str
+):
+    wallet = default_wallet
+    expected_hashes_count = _expected_ec_part_hashes_count(ec_rules)
+
+    with allure.step(f"Create EC container with rules {ec_rules}"):
+        placement_rule = _build_ec_policy(ec_rules)
+        cid = create_container(
+            wallet.path,
+            rule=placement_rule,
+            name="ec-part-hashes-container",
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+
+    with allure.step("Put object to EC container"):
+        source_file_path = generate_file(neofs_env.get_object_size(object_size))
+        main_oid = put_object(
+            wallet.path,
+            source_file_path,
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+        )
+
+    with allure.step("Collect EC parents and parts"):
+        found_objects, _ = search_object(
+            rpc_endpoint=neofs_env.sn_rpc, wallet=wallet.path, cid=cid, shell=neofs_env.shell
+        )
+        assert found_objects, "expected objects in EC container after put"
+
+        parent_hashes: dict[str, list[str]] = {}
+        ec_parts: list[dict] = []
+
+        for obj in found_objects:
+            oid = obj["id"]
+            head_info = head_object(
+                wallet.path,
+                cid,
+                oid,
+                shell=neofs_env.shell,
+                endpoint=neofs_env.sn_rpc,
+            )
+            attrs = _object_attributes(head_info)
+
+            if EC_PART_HASHES_ATTR in attrs:
+                assert EC_RULE_IDX_ATTR not in attrs and EC_PART_IDX_ATTR not in attrs, (
+                    f"EC parent {oid} must not have part index attributes, got: {attrs}"
+                )
+                hashes = _parse_ec_part_hashes(attrs[EC_PART_HASHES_ATTR])
+                assert len(hashes) == expected_hashes_count, (
+                    f"EC parent {oid}: expected {expected_hashes_count} hashes for rules {ec_rules}, "
+                    f"got {len(hashes)}: {attrs[EC_PART_HASHES_ATTR]}"
+                )
+                parent_hashes[oid] = hashes
+
+            if EC_RULE_IDX_ATTR in attrs or EC_PART_IDX_ATTR in attrs:
+                assert EC_RULE_IDX_ATTR in attrs and EC_PART_IDX_ATTR in attrs, (
+                    f"EC part {oid} must have both {EC_RULE_IDX_ATTR} and {EC_PART_IDX_ATTR}, got: {attrs}"
+                )
+                assert EC_PART_HASHES_ATTR not in attrs, (
+                    f"EC part {oid} must not have {EC_PART_HASHES_ATTR}, got: {attrs}"
+                )
+                split = head_info["header"].get("split") or {}
+                parent_oid = split.get("parent")
+                assert parent_oid, f"EC part {oid} is missing split parent id: {head_info['header']}"
+                rule_idx = int(attrs[EC_RULE_IDX_ATTR])
+                part_idx = int(attrs[EC_PART_IDX_ATTR])
+                assert 0 <= rule_idx < len(ec_rules), (
+                    f"EC part {oid} has out-of-range {EC_RULE_IDX_ATTR}={rule_idx} for rules {ec_rules}"
+                )
+                data_shards, parity_shards = ec_rules[rule_idx]
+                assert 0 <= part_idx < data_shards + parity_shards, (
+                    f"EC part {oid} has out-of-range {EC_PART_IDX_ATTR}={part_idx} for EC {data_shards}/{parity_shards}"
+                )
+                ec_parts.append(
+                    {
+                        "id": oid,
+                        "rule_idx": rule_idx,
+                        "part_idx": part_idx,
+                        "parent_oid": parent_oid,
+                        "payload_hash": _payload_checksum_hex(head_info),
+                    }
+                )
+
+        assert ec_parts, "expected at least one EC part with rule/part index attributes"
+
+        if object_size == "simple_object_size":
+            assert main_oid in parent_hashes, (
+                f"simple EC parent {main_oid} must have {EC_PART_HASHES_ATTR}, parents found: {sorted(parent_hashes)}"
+            )
+
+    with allure.step("Verify every EC part checksum against parent __NEOFS__EC_PART_HASHES"):
+        matched: dict[str, set[int]] = {oid: set() for oid in parent_hashes}
+
+        for part in ec_parts:
+            parent_oid = part["parent_oid"]
+            if parent_oid not in parent_hashes:
+                parent_head = head_object(
+                    wallet.path,
+                    cid,
+                    parent_oid,
+                    shell=neofs_env.shell,
+                    endpoint=neofs_env.sn_rpc,
+                )
+                assert "header" in parent_head, (
+                    f"EC part {part['id']} parent {parent_oid} HEAD returned no object header"
+                )
+                parent_attrs = _object_attributes(parent_head)
+                assert EC_PART_HASHES_ATTR in parent_attrs, (
+                    f"EC part {part['id']} parent {parent_oid} is missing {EC_PART_HASHES_ATTR}: {parent_attrs}"
+                )
+                hashes = _parse_ec_part_hashes(parent_attrs[EC_PART_HASHES_ATTR])
+                assert len(hashes) == expected_hashes_count, (
+                    f"EC parent {parent_oid}: expected {expected_hashes_count} hashes for rules "
+                    f"{ec_rules}, got {len(hashes)}: {parent_attrs[EC_PART_HASHES_ATTR]}"
+                )
+                parent_hashes[parent_oid] = hashes
+                matched[parent_oid] = set()
+
+            hash_idx = _ec_part_hash_index(ec_rules, part["rule_idx"], part["part_idx"])
+            expected_hash = parent_hashes[parent_oid][hash_idx]
+            assert part["payload_hash"] == expected_hash, (
+                f"EC part {part['id']} (rule={part['rule_idx']}, part={part['part_idx']}) "
+                f"payload checksum {part['payload_hash']} != parent {parent_oid} "
+                f"{EC_PART_HASHES_ATTR}[{hash_idx}]={expected_hash}"
+            )
+
+            part_file = get_object(
+                wallet.path,
+                cid,
+                part["id"],
+                neofs_env.shell,
+                neofs_env.sn_rpc,
+                is_raw=True,
+            )
+            actual_payload_hash = get_file_hash(part_file)
+            assert actual_payload_hash == expected_hash, (
+                f"EC part {part['id']} raw payload sha256 {actual_payload_hash} != "
+                f"parent {EC_PART_HASHES_ATTR}[{hash_idx}]={expected_hash}"
+            )
+            matched[parent_oid].add(hash_idx)
+
+        for parent_oid, hashes in parent_hashes.items():
+            assert matched[parent_oid] == set(range(len(hashes))), (
+                f"EC parent {parent_oid}: expected parts for all hash indexes "
+                f"0..{len(hashes) - 1}, matched {sorted(matched[parent_oid])}"
+            )
+
+    with allure.step("Clean up container"):
+        delete_object(wallet.path, cid, main_oid, neofs_env.shell, neofs_env.sn_rpc)
+        delete_container(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
 @pytest.mark.parametrize(
