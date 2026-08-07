@@ -24,8 +24,9 @@ from helpers.s3_helper import (
     verify_acls,
 )
 from helpers.wallet_helpers import create_wallet
+from neofs_testlib.env.env import S3_GW, NeoFSEnv, NodeWallet
 from s3 import s3_bucket, s3_object
-from s3.s3_base import TestNeofsS3Base
+from s3.s3_base import TestNeofsS3Base, configure_boto3_client, init_s3_credentials
 
 
 def pytest_generate_tests(metafunc):
@@ -864,3 +865,34 @@ class TestS3Object(TestNeofsS3Base):
             self.neofs_env.s3_gw.stop()
             self.neofs_env.s3_gw.internal_slicer = False
             self.neofs_env.s3_gw.start(fresh=False)
+
+
+@allure.title("S3 GW connected to a TLS storage node performs object round-trip")
+def test_s3_gw_connected_to_tls_node(neofs_env: NeoFSEnv, default_wallet: NodeWallet):
+    tls_node = next(sn for sn in neofs_env.storage_nodes if sn.tls_enabled)
+
+    with allure.step("Deploy an S3 GW whose only pool peer is the TLS (grpcs) node endpoint"):
+        s3_gw = S3_GW(neofs_env, peer_addresses=[tls_node.tls_rpc_endpoint])
+        s3_gw.start()
+
+    try:
+        with allure.step("Issue S3 credentials for the TLS-backed gateway"):
+            _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
+                default_wallet, neofs_env, s3_gw=s3_gw, placement_policy="REP 1"
+            )
+            client = configure_boto3_client(access_key_id, secret_access_key, f"https://{s3_gw.endpoint}")
+
+        bucket = s3_bucket.create_bucket_s3(client, bucket_configuration="rep-1")
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+        file_name = os.path.basename(file_path)
+
+        with allure.step("Put and get the object back through the TLS-backed gateway"):
+            s3_object.put_object_s3(client, bucket, file_path)
+            got_object = s3_object.get_object_s3(client, bucket, file_name)
+            assert get_file_hash(got_object) == get_file_hash(file_path), "Object payload differs via TLS-backed S3 GW"
+
+        with allure.step("Cleanup"):
+            s3_object.delete_object_s3(client, bucket, file_name)
+            s3_bucket.delete_bucket_s3(client, bucket)
+    finally:
+        s3_gw.stop()

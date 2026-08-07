@@ -24,7 +24,7 @@ from helpers.neofs_verbs import (
     put_object,
     search_object,
 )
-from helpers.node_management import drop_object, wait_all_storage_nodes_returned
+from helpers.node_management import drop_object, storage_node_by_port, wait_all_storage_nodes_returned
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -76,10 +76,9 @@ def parse_ec_descriptors(output: str) -> list[dict]:
 def storage_nodes_by_ports(neofs_env: NeoFSEnv, ports: list[int]) -> list:
     nodes = []
     for port in ports:
-        for storage_node in neofs_env.storage_nodes:
-            if f":{port}" in storage_node.endpoint and storage_node not in nodes:
-                nodes.append(storage_node)
-                break
+        storage_node = storage_node_by_port(neofs_env, port)
+        if storage_node is not None and storage_node not in nodes:
+            nodes.append(storage_node)
     return nodes
 
 

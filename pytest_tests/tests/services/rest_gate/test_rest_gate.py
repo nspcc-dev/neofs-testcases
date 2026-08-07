@@ -7,7 +7,7 @@ import allure
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
 from helpers.container import create_container, delete_container, list_containers, wait_for_container_deletion
-from helpers.file_helper import generate_file, generate_file_with_content
+from helpers.file_helper import generate_file, generate_file_with_content, get_file_hash
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.rest_gate import (
     attr_into_header,
@@ -20,6 +20,7 @@ from helpers.rest_gate import (
 )
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
+from neofs_testlib.env.env import REST_GW, NeoFSEnv, NodeWallet
 from rest_gw.rest_base import TestNeofsRestBase
 from rest_gw.rest_utils import get_object_and_verify_hashes
 
@@ -887,3 +888,30 @@ class TestRestGate(TestNeofsRestBase):
                 error_pattern=OBJECT_NOT_FOUND_ERROR,
                 endpoint=gw_params["endpoint"],
             )
+
+
+@allure.title("REST GW connected to a TLS storage node performs object round-trip")
+def test_rest_gw_connected_to_tls_node(neofs_env: NeoFSEnv, default_wallet: NodeWallet):
+    tls_node = next(sn for sn in neofs_env.storage_nodes if sn.tls_enabled)
+
+    with allure.step("Deploy a REST GW whose only pool peer is the TLS (grpcs) node endpoint"):
+        rest_gw = REST_GW(neofs_env, peer_addresses=[tls_node.tls_rpc_endpoint])
+        rest_gw.start()
+
+    try:
+        endpoint = f"http://{rest_gw.endpoint}/v1"
+        cid = create_container(
+            default_wallet.path,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+            rule="REP 1",
+            basic_acl=PUBLIC_ACL,
+        )
+        file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+
+        with allure.step("Upload and download the object through the TLS-backed REST gateway"):
+            oid = upload_via_rest_gate(cid=cid, path=file_path, endpoint=endpoint)
+            got_file = get_via_rest_gate(cid=cid, oid=oid, endpoint=endpoint)
+            assert get_file_hash(got_file) == get_file_hash(file_path), "Object payload differs via TLS-backed REST GW"
+    finally:
+        rest_gw.stop()
