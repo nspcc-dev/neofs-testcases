@@ -41,11 +41,11 @@ class TestRestOptions(TestNeofsRestBase):
 
     def test_rest_options_requests(self, gw_endpoint, user_container, user_object):
         for rest_gw_path in (
-            "/auth",
-            "/auth/bearer",
-            f"/accounting/balance/{self.wallet.address}",
-            "/containers",
-            f"/containers/{user_container}",
-            f"/containers/{user_container}/eacl",
+            "/v2/auth/bearer",
+            "/v2/auth/session",
+            f"/v1/accounting/balance/{self.wallet.address}",
+            "/v1/containers",
+            f"/v1/containers/{user_container}",
+            f"/v1/containers/{user_container}/eacl",
         ):
-            verify_options_request(f"{gw_endpoint}{rest_gw_path}")
+            verify_options_request(f"{gw_endpoint.removesuffix('v1')}{rest_gw_path}")
