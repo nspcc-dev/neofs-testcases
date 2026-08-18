@@ -23,7 +23,9 @@ grpc:
     tls:
       enabled: true
       certificate: {{ tls_cert_path }}
+      {% if tls_key_path %}
       key: {{ tls_key_path }}
+      {% endif %}
 {% endif %}
 
 # FS chain section

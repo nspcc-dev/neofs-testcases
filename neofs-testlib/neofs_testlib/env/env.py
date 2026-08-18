@@ -50,6 +50,7 @@ from helpers.common import (
     get_assets_dir_path,
 )
 from helpers.neofs_verbs import get_netmap_netinfo
+from helpers.utility import parse_version
 from neo3.wallet import account as neo3_account
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -187,7 +188,7 @@ class NeoFSEnv:
         return neo_go_config_path
 
     @allure.step("Provision node-key TLS certificate")
-    def generate_node_tls_cert(self, wallet: "NodeWallet", cert_path: str, key_path: str):
+    def generate_node_tls_cert(self, wallet: "NodeWallet", cert_path: str, key_path: Optional[str] = None):
         wif = wallet_utils.get_wif_from_wallet_with_neogo(
             self.neo_go_path, wallet.path, wallet.address, wallet.password
         )
@@ -232,13 +233,14 @@ class NeoFSEnv:
             .sign(private_key, hashes.SHA256())
         )
         Path(cert_path).write_bytes(cert.public_bytes(serialization.Encoding.PEM))
-        Path(key_path).write_bytes(
-            private_key.private_bytes(
-                serialization.Encoding.PEM,
-                serialization.PrivateFormat.PKCS8,
-                serialization.NoEncryption(),
+        if key_path:
+            Path(key_path).write_bytes(
+                private_key.private_bytes(
+                    serialization.Encoding.PEM,
+                    serialization.PrivateFormat.PKCS8,
+                    serialization.NoEncryption(),
+                )
             )
-        )
         self.trust_tls_cert(cert_path)
 
     def init_tls_ca_bundle(self):
@@ -1065,6 +1067,10 @@ class NeoFSEnv:
                 return line.split("Version:")[1].strip()
         return ""
 
+    def requires_tls_key_config(self) -> bool:
+        node_version = self.get_binary_version(self.neofs_node_path)
+        return parse_version(node_version) <= parse_version("0.55.0")
+
     def get_object_size(self, object_type: str) -> int:
         if object_type == ObjectType.SIMPLE.value:
             return int(SIMPLE_OBJECT_SIZE) if int(SIMPLE_OBJECT_SIZE) < self.max_object_size else self.max_object_size
@@ -1517,9 +1523,10 @@ class StorageNode(ResurrectableProcess):
         self.tls_cert_path = self.neofs_env._generate_temp_file(
             self.sn_dir, extension="crt", prefix=f"sn_{self.sn_number}_tls_cert"
         )
-        self.tls_key_path = self.neofs_env._generate_temp_file(
-            self.sn_dir, extension="key", prefix=f"sn_{self.sn_number}_tls_key"
-        )
+        if self.neofs_env.requires_tls_key_config():
+            self.tls_key_path = self.neofs_env._generate_temp_file(
+                self.sn_dir, extension="key", prefix=f"sn_{self.sn_number}_tls_key"
+            )
         self.neofs_env.generate_node_tls_cert(self.wallet, self.tls_cert_path, self.tls_key_path)
 
     @allure.step("Start storage node")
