@@ -158,9 +158,21 @@ class TestS3(TestNeofsS3Base):
             assert set(key_to_path.keys()) == set(objects), f"Expected exact objects saved. Got {objects}"
             for obj_key in objects:
                 got_object = s3_object.get_object_s3(self.s3_client, bucket, obj_key)
-                assert get_file_hash(got_object) == get_file_hash(key_to_path.get(obj_key)), (
-                    "Expected hashes are the same"
-                )
+                a = get_file_hash(got_object)
+                b = get_file_hash(key_to_path.get(obj_key))
+                if a != b:
+                    allure.attach(
+                        f"expected: {get_file_content(key_to_path.get(obj_key), mode='rb')}",
+                        "expected payload",
+                        allure.attachment_type.TEXT,
+                    )
+                    allure.attach(
+                        f"actual: {get_file_content(got_object, mode='rb')}",
+                        "actual payload",
+                        allure.attachment_type.TEXT,
+                    )
+
+                assert a == b, "Expected hashes are the same"
 
     @allure.title("Test S3 Object versioning")
     @pytest.mark.simple
@@ -282,7 +294,20 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Check we can get whole object from bucket"):
             got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
-            assert get_file_hash(got_object) == get_file_hash(file_name_large)
+            a = get_file_hash(got_object)
+            b = get_file_hash(file_name_large)
+            if a != b:
+                allure.attach(
+                    f"expected: {get_file_content(file_name_large, mode='rb')}",
+                    "expected payload",
+                    allure.attachment_type.TEXT,
+                )
+                allure.attach(
+                    f"actual: {get_file_content(got_object, mode='rb')}",
+                    "actual payload",
+                    allure.attachment_type.TEXT,
+                )
+            assert a == b
 
         self.check_object_attributes(bucket, object_key, parts_count)
 
@@ -423,7 +448,20 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Check copied object has the same content"):
             got_copied_file = s3_object.get_object_s3(self.s3_client, bucket, copy_obj_path)
-            assert get_file_hash(file_path_simple) == get_file_hash(got_copied_file), "Hashes must be the same"
+            a = get_file_hash(file_path_simple)
+            b = get_file_hash(got_copied_file)
+            if a != b:
+                allure.attach(
+                    f"expected: {get_file_content(file_path_simple, mode='rb')}",
+                    "expected payload",
+                    allure.attachment_type.TEXT,
+                )
+                allure.attach(
+                    f"actual: {get_file_content(got_copied_file, mode='rb')}",
+                    "actual payload",
+                    allure.attachment_type.TEXT,
+                )
+            assert a == b, "Hashes must be the same"
 
         with allure.step("Delete one object from bucket"):
             s3_object.delete_object_s3(self.s3_client, bucket, file_name_simple)
@@ -470,7 +508,20 @@ class TestS3(TestNeofsS3Base):
 
         with allure.step("Check copied object has the same content"):
             got_copied_file_b2 = s3_object.get_object_s3(self.s3_client, bucket_2, copy_obj_path_b2)
-            assert get_file_hash(file_path_large) == get_file_hash(got_copied_file_b2), "Hashes must be the same"
+            a = get_file_hash(file_path_large)
+            b = get_file_hash(got_copied_file_b2)
+            if a != b:
+                allure.attach(
+                    f"expected: {get_file_content(file_path_large, mode='rb')}",
+                    "expected payload",
+                    allure.attachment_type.TEXT,
+                )
+                allure.attach(
+                    f"actual: {get_file_content(got_copied_file_b2, mode='rb')}",
+                    "actual payload",
+                    allure.attachment_type.TEXT,
+                )
+            assert a == b, "Hashes must be the same"
 
         with allure.step("Delete one object from first bucket"):
             s3_object.delete_object_s3(self.s3_client, bucket_1, file_name_simple)
