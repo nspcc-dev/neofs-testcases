@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import allure
 import pytest
-from helpers.file_helper import generate_file, get_file_hash, split_file
+from helpers.file_helper import generate_file, get_file_hash, split_file, get_file_content
 from helpers.s3_helper import (
     check_objects_in_bucket,
     object_key_from_file_path,
@@ -194,7 +194,23 @@ class TestS3Multipart(TestNeofsS3Base):
 
         with allure.step("Check we can get whole object from bucket"):
             got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
-            assert get_file_hash(got_object) == get_file_hash(file_name_large)
+            # assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
+            a = get_file_hash(got_object)
+            b = get_file_hash(file_name_large)
+            if a != b:
+                allure.attach(
+                    f"expected: {get_file_content(file_name_large, mode='rb')}",
+                    "expected payload",
+                    allure.attachment_type.TEXT,
+                )
+                allure.attach(
+                    f"actual: {get_file_content(got_object, mode='rb')}",
+                    "actual payload",
+                    allure.attachment_type.TEXT,
+                )
+
+            assert a == b, "Expected hashes are the same"
 
     @allure.title("Test S3 Object List Multipart Uploads Pagination via boto3")
     @pytest.mark.boto3_only
