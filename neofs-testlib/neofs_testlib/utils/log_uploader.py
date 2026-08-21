@@ -154,8 +154,8 @@ class NeofsUploader:
         raise RuntimeError(f"Failed to upload {local_path} to NeoFS after {self.UPLOAD_RETRIES} attempts: {last_error}")
 
 
-def build_logs_neofs_path(config: Optional[NeofsConfig], env_id: str, name: str) -> str:
+def build_logs_neofs_path(config: Optional[NeofsConfig], env_id: str, name: str, extension: str = "zip") -> str:
     pipeline_id = (config.pipeline_id if config else None) or "local"
     safe_name = name.replace(" ", "_").replace("/", "_")
     unique = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
-    return f"neofs-env-logs/{pipeline_id}/{env_id}/{unique}/{safe_name}.zip"
+    return f"neofs-env-logs/{pipeline_id}/{env_id}/{unique}/{safe_name}.{extension}"

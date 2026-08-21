@@ -14,6 +14,9 @@ RANGES_COUNT = 4
 RANGE_MIN_LEN = 10
 RANGE_MAX_LEN = 500
 
+# Size of a block payloads are compared by when their hashes differ.
+DIFF_BLOCK_SIZE = 512
+
 
 def generate_payload_ranges(file_size: int) -> list[tuple[int, int]]:
     """Generate randomized `(offset, length)` payload ranges for tests.
@@ -203,3 +206,49 @@ def get_file_content(
             content = file.read()
 
     return content
+
+
+def _merge_block_indexes(indexes: list[int]) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    for index in indexes:
+        if ranges and ranges[-1][1] == index - 1:
+            ranges[-1] = (ranges[-1][0], index)
+        else:
+            ranges.append((index, index))
+
+    return ranges
+
+
+def get_diff_ranges(expected_path: str, actual_path: str, block_size: int = DIFF_BLOCK_SIZE) -> str:
+    expected_size, actual_size = os.path.getsize(expected_path), os.path.getsize(actual_path)
+
+    diff_indexes = []
+    blocks_count = 0
+    with open(expected_path, "rb") as expected_file, open(actual_path, "rb") as actual_file:
+        while True:
+            expected_block = expected_file.read(block_size)
+            actual_block = actual_file.read(block_size)
+            if not expected_block and not actual_block:
+                break
+            if expected_block != actual_block:
+                diff_indexes.append(blocks_count)
+            blocks_count += 1
+
+    lines = [
+        f"block size: {block_size}",
+        f"expected size: {expected_size}",
+        f"actual size: {actual_size}",
+        f"differing blocks: {len(diff_indexes)} of {blocks_count}",
+        "",
+        "differing ranges:",
+    ]
+
+    if not diff_indexes:
+        lines.append("  none")
+
+    last_offset = max(expected_size, actual_size) - 1
+    for first, last in _merge_block_indexes(diff_indexes):
+        start, end = first * block_size, min((last + 1) * block_size - 1, last_offset)
+        lines.append(f"  bytes {start}-{end}, blocks {first}-{last}")
+
+    return "\n".join(lines)

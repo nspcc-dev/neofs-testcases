@@ -1094,21 +1094,26 @@ class NeoFSEnv:
         return dir_path
 
     def _attach_logs_archive(self, archive_path: str, name: str) -> None:
+        self.attach_file(archive_path, name, extension="zip", content_type="application/zip")
+
+    def attach_file(
+        self, file_path: str, name: str, extension: str = "bin", content_type: str = "application/octet-stream"
+    ) -> None:
         neofs_config = NeofsConfig.from_env()
         if neofs_config is None:
-            logger.warning("NeoFS upload is not configured, attaching logs archive directly to allure")
-            allure.attach.file(archive_path, name=name, extension="zip")
+            logger.warning(f"NeoFS upload is not configured, attaching '{name}' directly to allure")
+            allure.attach.file(file_path, name=name, extension=extension)
             return
 
         try:
             uploader = NeofsUploader(neofs_config, cli_path=self.neofs_cli_path, work_dir=self._env_dir)
-            neofs_path = build_logs_neofs_path(neofs_config, self._id, name)
-            url = uploader.upload_file(archive_path, neofs_path, content_type="application/zip")
-            logger.info(f"Uploaded logs archive '{name}' to NeoFS: {url}")
+            neofs_path = build_logs_neofs_path(neofs_config, self._id, name, extension=extension)
+            url = uploader.upload_file(file_path, neofs_path, content_type=content_type)
+            logger.info(f"Uploaded '{name}' to NeoFS: {url}")
             allure.attach(url, name=f"{name} (NeoFS URL)", attachment_type=allure.attachment_type.TEXT)
         except Exception as exc:
-            logger.error(f"Failed to upload logs archive '{name}' to NeoFS: {exc}, attaching file directly")
-            allure.attach.file(archive_path, name=name, extension="zip")
+            logger.error(f"Failed to upload '{name}' to NeoFS: {exc}, attaching file directly")
+            allure.attach.file(file_path, name=name, extension=extension)
 
 
 class ResurrectableProcess:
