@@ -161,14 +161,17 @@ class TestS3(TestNeofsS3Base):
                 a = get_file_hash(got_object)
                 b = get_file_hash(key_to_path.get(obj_key))
                 if a != b:
+                    a_content = get_file_content(got_object, mode='rb')
+                    b_content = get_file_content(key_to_path.get(obj_key), mode='rb')
+
                     allure.attach(
-                        f"expected: {get_file_content(key_to_path.get(obj_key), mode='rb')}",
-                        "expected payload",
+                        f"{a_content}",
+                        f"expected payload, size:{len(a_content)}",
                         allure.attachment_type.TEXT,
                     )
                     allure.attach(
-                        f"actual: {get_file_content(got_object, mode='rb')}",
-                        "actual payload",
+                        f"{b_content}",
+                        f"actual payload, size:{len(b_content)}",
                         allure.attachment_type.TEXT,
                     )
 
