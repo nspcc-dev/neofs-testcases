@@ -197,6 +197,12 @@ class TestS3Multipart(TestNeofsS3Base):
             a = get_file_hash(file_name_large)
             b = get_file_hash(got_object)
             if a != b:
+                allure.attach(
+                    self.neofs_env.max_object_size,
+                    "max_object_size",
+                    allure.attachment_type.TEXT,
+                )
+
                 self.neofs_env.attach_file(file_name_large, "expected payload")
                 self.neofs_env.attach_file(got_object, "actual payload")
                 allure.attach(

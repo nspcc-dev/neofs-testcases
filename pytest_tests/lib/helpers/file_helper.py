@@ -15,7 +15,7 @@ RANGE_MIN_LEN = 10
 RANGE_MAX_LEN = 500
 
 # Size of a block payloads are compared by when their hashes differ.
-DIFF_BLOCK_SIZE = 512
+DIFF_BLOCK_SIZE = 524288 # 512kb
 
 
 def generate_payload_ranges(file_size: int) -> list[tuple[int, int]]:

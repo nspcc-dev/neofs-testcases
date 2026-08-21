@@ -427,6 +427,12 @@ class TestS3(TestNeofsS3Base):
             a = get_file_hash(file_path_simple)
             b = get_file_hash(got_copied_file)
             if a != b:
+                allure.attach(
+                    self.neofs_env.max_object_size,
+                    "max_object_size",
+                    allure.attachment_type.TEXT,
+                )
+
                 self.neofs_env.attach_file(file_path_simple, "expected payload")
                 self.neofs_env.attach_file(got_copied_file, "actual payload")
                 allure.attach(
@@ -484,6 +490,12 @@ class TestS3(TestNeofsS3Base):
             a = get_file_hash(file_path_large)
             b = get_file_hash(got_copied_file_b2)
             if a != b:
+                allure.attach(
+                    self.neofs_env.max_object_size,
+                    "max_object_size",
+                    allure.attachment_type.TEXT,
+                )
+
                 self.neofs_env.attach_file(file_path_large, "expected payload")
                 self.neofs_env.attach_file(got_copied_file_b2, "actual payload")
                 allure.attach(
