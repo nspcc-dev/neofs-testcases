@@ -203,6 +203,8 @@ class NeoFSEnv:
         self.main_chain = None
         self.max_object_size = None
         self.tls_ca_bundle_path = None
+        self.time_per_block = "50ms"
+        self.max_time_per_block = "500ms"
 
     @property
     def fschain_rpc(self):
@@ -886,11 +888,15 @@ class NeoFSEnv:
         disable_post_initial_queue=False,
         object_batch_size=None,
         sn_with_tls_index=None,
+        time_per_block="50ms",
+        max_time_per_block="500ms",
     ) -> "NeoFSEnv":
         if not neofs_env_config:
             neofs_env_config = cls._generate_default_neofs_env_config()
 
         neofs_env = NeoFSEnv(neofs_env_config=neofs_env_config)
+        neofs_env.time_per_block = time_per_block
+        neofs_env.max_time_per_block = max_time_per_block
         neofs_env.download_binaries()
 
         if sn_with_tls_index is not None:
@@ -1414,6 +1420,8 @@ class InnerRing(ResurrectableProcess):
                 chain_metadata_rpc_port=self.chain_metadata_rpc_port,
                 sn_validator_url=self.sn_validator_url,
                 allow_ec=self.allow_ec,
+                time_per_block=self.neofs_env.time_per_block,
+                max_time_per_block=self.neofs_env.max_time_per_block,
             )
         logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()

@@ -53,6 +53,8 @@ def get_or_create_neofs_env(
     disable_post_initial_queue=False,
     object_batch_size=None,
     sn_with_tls_index=None,
+    time_per_block="50ms",
+    max_time_per_block="500ms",
 ):
     NeoFSEnv.cleanup_unused_ports()
     if request.config.getoption("--load-env"):
@@ -76,6 +78,8 @@ def get_or_create_neofs_env(
             disable_post_initial_queue=disable_post_initial_queue,
             object_batch_size=object_batch_size,
             sn_with_tls_index=sn_with_tls_index,
+            time_per_block=time_per_block,
+            max_time_per_block=max_time_per_block,
         )
     return neofs_env
 
@@ -260,6 +264,29 @@ def neofs_env_with_mainchain(temp_directory, artifacts_directory, request):
         # Temporary workaround for a problem with propagading MaxObjectSize between storage nodes
         restart_storage_nodes(neofs_env.storage_nodes)
 
+        neofs_epoch.tick_epoch_and_wait(neofs_env=neofs_env)
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
+@pytest.fixture(scope="module")
+def neofs_env_payments(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        with_main_chain=True,
+        with_s3_gw=False,
+        with_rest_gw=False,
+        time_per_block="1s",
+        max_time_per_block="2s",
+    )
+    GAS = 10**12
+    with allure.step("Set more convenient network config values"):
+        neofs_env.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+            alphabet_wallets=neofs_env.alphabet_wallets_dir,
+            post_data=f"MaxObjectSize={10**7} ContainerFee={GAS} BasicIncomeRate={GAS} EpochDuration=20",
+        )
+        restart_storage_nodes(neofs_env.storage_nodes)
         neofs_epoch.tick_epoch_and_wait(neofs_env=neofs_env)
     yield neofs_env
     neofs_env.finalize(request)

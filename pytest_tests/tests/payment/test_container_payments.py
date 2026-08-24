@@ -15,8 +15,8 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.fixture
-def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
-    return create_wallet_with_money(neofs_env_with_mainchain)
+def wallet_with_money(neofs_env_payments: NeoFSEnv) -> NodeWallet:
+    return create_wallet_with_money(neofs_env_payments)
 
 
 class TestContainerPayments:
@@ -38,14 +38,14 @@ class TestContainerPayments:
     def test_container_payments(
         self,
         request: pytest.FixtureRequest,
-        neofs_env_with_mainchain: NeoFSEnv,
+        neofs_env_payments: NeoFSEnv,
         wallet_with_money: NodeWallet,
         container_rule: str,
         replicas_number: int,
         objects_count_multiplier: int,
         _cleanup_files,
     ):
-        neofs_env = neofs_env_with_mainchain
+        neofs_env = neofs_env_payments
         GAS = 10**12
         GB = 10**9
         MAX_OBJECT_SIZE = 10**7
