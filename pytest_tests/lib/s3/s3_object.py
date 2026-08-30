@@ -289,13 +289,19 @@ def copy_object_s3(s3_client, bucket: str, object_key: str, bucket_dst: Optional
         ) from err
 
 
+def _range_header(range: list | str) -> str:
+    if isinstance(range, str):
+        return range if range.startswith("bytes=") else f"bytes={range}"
+    return f"bytes={range[0]}-{range[1]}"
+
+
 @allure.step("Get object S3")
 def get_object_s3(
     s3_client,
     bucket: str,
     object_key: str,
     version_id: Optional[str] = None,
-    range: Optional[list] = None,
+    range: Optional[list | str] = None,
     part_number: Optional[int] = None,
     full_output: bool = False,
 ):
@@ -309,7 +315,7 @@ def get_object_s3(
             params["file_path"] = filename
 
         if range:
-            params["Range"] = f"bytes={range[0]}-{range[1]}"
+            params["Range"] = _range_header(range)
 
         if part_number:
             params["PartNumber"] = part_number
@@ -324,6 +330,31 @@ def get_object_s3(
                     get_file.write(chunk)
                     chunk = response["Body"].read(1024)
         return response if full_output else filename
+
+    except ClientError as err:
+        raise Exception(
+            f"Error Message: {err.response['Error']['Message']}\n"
+            f"Http status code: {err.response['ResponseMetadata']['HTTPStatusCode']}"
+        ) from err
+
+
+@allure.step("Get object S3 with HTTP range")
+def get_object_range_s3(s3_client, bucket: str, object_key: str, range_header: str) -> tuple[bytes, dict]:
+    filename = os.path.join(get_assets_dir_path(), str(uuid.uuid4()))
+    try:
+        params = {"Bucket": bucket, "Key": object_key, "Range": _range_header(range_header)}
+        if isinstance(s3_client, AwsCliClient):
+            params["file_path"] = filename
+
+        response = s3_client.get_object(**params)
+        log_command_execution("S3 Get object range result", response)
+
+        if isinstance(s3_client, AwsCliClient):
+            with open(filename, "rb") as get_file:
+                content = get_file.read()
+        else:
+            content = response["Body"].read()
+        return content, response
 
     except ClientError as err:
         raise Exception(
