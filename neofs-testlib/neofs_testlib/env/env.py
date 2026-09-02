@@ -20,6 +20,7 @@ import threading
 import time
 import uuid
 from collections import namedtuple
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from importlib.resources import files
@@ -65,6 +66,70 @@ _binary_downloads_thread_lock = threading.Lock()
 
 _tls_ca_bundle_lock = threading.Lock()
 _tls_ca_bundle_path = None
+
+
+_PORT_RANGE_START = 20000
+_PORT_RANGE_END = 32767
+
+
+def _is_pid_alive(pid: int) -> bool:
+    return pid > 0 and psutil.pid_exists(pid)
+
+
+def _read_port_reservations() -> dict[int, int]:
+    reservations: dict[int, int] = {}
+    if not os.path.exists(ALLOCATED_PORTS_FILE):
+        return reservations
+    with open(ALLOCATED_PORTS_FILE, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            try:
+                port = int(parts[0])
+                pid = int(parts[1]) if len(parts) > 1 else 0
+            except ValueError:
+                continue
+            reservations[port] = pid
+    return reservations
+
+
+def _write_port_reservations(reservations: dict[int, int]) -> None:
+    dir_name = os.path.dirname(ALLOCATED_PORTS_FILE) or "/tmp"
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name, prefix="allocated_ports.")
+    try:
+        with os.fdopen(fd, "w") as f:
+            for port, pid in sorted(reservations.items()):
+                f.write(f"{port} {pid}\n")
+        os.replace(tmp_path, ALLOCATED_PORTS_FILE)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
+@contextmanager
+def _ports_allocation_lock():
+    with _thread_lock:
+        with open(ALLOCATED_PORTS_LOCK_FILE, "a+") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
+def _can_bind_port(port: int) -> bool:
+    for host in ("127.0.0.1", ""):
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            probe.bind((host, port))
+        except OSError:
+            return False
+        finally:
+            probe.close()
+    return True
 
 
 @dataclass
@@ -952,67 +1017,36 @@ class NeoFSEnv:
 
     @staticmethod
     def get_available_port() -> str:
-        with _thread_lock:
-            with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
-                fcntl.flock(lock_file, fcntl.LOCK_EX)
-                try:
-                    if os.path.exists(ALLOCATED_PORTS_FILE):
-                        with open(ALLOCATED_PORTS_FILE, "r") as f:
-                            reserved_ports = set(map(int, f.read().splitlines()))
-                    else:
-                        reserved_ports = set()
-
-                    while True:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        s.bind(("", 0))
-                        port = s.getsockname()[1]
-                        s.close()
-
-                        if port not in reserved_ports:
-                            reserved_ports.add(port)
-                            break
-
-                    with open(ALLOCATED_PORTS_FILE, "w") as f:
-                        for p in reserved_ports:
-                            f.write(f"{p}\n")
-                finally:
-                    fcntl.flock(lock_file, fcntl.LOCK_UN)
-        return port
+        with _ports_allocation_lock():
+            reservations = _read_port_reservations()
+            my_pid = os.getpid()
+            for port in range(_PORT_RANGE_START, _PORT_RANGE_END + 1):
+                owner_pid = reservations.get(port)
+                if owner_pid is not None and _is_pid_alive(owner_pid):
+                    continue
+                if not _can_bind_port(port):
+                    continue
+                reservations[port] = my_pid
+                _write_port_reservations(reservations)
+                return str(port)
+        raise RuntimeError(f"No free TCP port in range {_PORT_RANGE_START}-{_PORT_RANGE_END}")
 
     @staticmethod
     def cleanup_unused_ports():
-        with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
-            fcntl.flock(lock_file, fcntl.LOCK_EX)
-
-            try:
-                if os.path.exists(ALLOCATED_PORTS_FILE):
-                    with open(ALLOCATED_PORTS_FILE, "r") as f:
-                        reserved_ports = set(map(int, f.read().splitlines()))
-                else:
-                    reserved_ports = set()
-
-                still_used_ports = set()
-
-                for port in reserved_ports:
-                    if NeoFSEnv.is_port_in_use(port):
-                        still_used_ports.add(port)
-
-                with open(ALLOCATED_PORTS_FILE, "w") as f:
-                    for port in still_used_ports:
-                        f.write(f"{port}\n")
-            finally:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
+        with _ports_allocation_lock():
+            reservations = _read_port_reservations()
+            my_pid = os.getpid()
+            still_needed = {}
+            for port, owner_pid in reservations.items():
+                if NeoFSEnv.is_port_in_use(port):
+                    still_needed[port] = owner_pid
+                elif owner_pid != my_pid and _is_pid_alive(owner_pid):
+                    still_needed[port] = owner_pid
+            _write_port_reservations(still_needed)
 
     @staticmethod
-    def is_port_in_use(port: str):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.bind(("", port))
-        except OSError:
-            return True
-        finally:
-            s.close()
-        return False
+    def is_port_in_use(port: int | str):
+        return not _can_bind_port(int(port))
 
     @staticmethod
     @retry(wait=wait_exponential(multiplier=1, min=2, max=15), stop=stop_after_attempt(5), reraise=True)
