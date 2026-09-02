@@ -113,7 +113,7 @@ def get_wif_from_wallet_with_neogo(neo_go_exec_path: str, wallet_path: str, addr
         wallet_config_path = wallet_config_file.name
     try:
         result = subprocess.run(
-            [neo_go_exec_path, "wallet", "export", "--wallet-config", wallet_config_path, "--decrypt", address],
+            [neo_go_exec_path, "wallet", "export", "--wallet-config", wallet_config_path, "--format", "wif", address],
             capture_output=True,
             text=True,
             check=True,
