@@ -52,7 +52,7 @@ from helpers.common import (
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
 from neo3.wallet import account as neo3_account
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
@@ -61,6 +61,7 @@ from neofs_testlib.utils.log_uploader import NeofsConfig, NeofsUploader, build_l
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
+_binary_downloads_thread_lock = threading.Lock()
 
 _tls_ca_bundle_lock = threading.Lock()
 _tls_ca_bundle_path = None
@@ -716,59 +717,45 @@ class NeoFSEnv:
 
     @allure.step("Download binaries")
     def download_binaries(self):
-        with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
-            fcntl.flock(lock_file, fcntl.LOCK_EX)
-            try:
-                logger.info("Going to download missing binaries and contracts, if needed")
-                deploy_threads = []
+        with _binary_downloads_thread_lock:
+            with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
+                fcntl.flock(lock_file, fcntl.LOCK_EX)
+                try:
+                    logger.info("Going to download missing binaries and contracts, if needed")
+                    binaries = [
+                        (self.neofs_adm_path, "neofs_adm"),
+                        (self.neofs_cli_path, "neofs_cli"),
+                        (self.neofs_lens_path, "neofs_lancet"),
+                        (self.neo_go_path, "neo_go"),
+                        (self.neofs_ir_path, "neofs_ir"),
+                        (self.neofs_node_path, "neofs_node"),
+                        (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
+                        (self.neofs_s3_gw_path, "neofs_s3_gw"),
+                        (self.neofs_rest_gw_path, "neofs_rest_gw"),
+                        (self.neofs_contract_dir, "neofs_contract"),
+                        (self.warp_path, "warp"),
+                    ]
 
-                binaries = [
-                    (self.neofs_adm_path, "neofs_adm"),
-                    (self.neofs_cli_path, "neofs_cli"),
-                    (self.neofs_lens_path, "neofs_lancet"),
-                    (self.neo_go_path, "neo_go"),
-                    (self.neofs_ir_path, "neofs_ir"),
-                    (self.neofs_node_path, "neofs_node"),
-                    (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
-                    (self.neofs_s3_gw_path, "neofs_s3_gw"),
-                    (self.neofs_rest_gw_path, "neofs_rest_gw"),
-                    (self.neofs_contract_dir, "neofs_contract"),
-                    (self.warp_path, "warp"),
-                ]
-
-                for binary in binaries:
-                    binary_path, binary_name = binary
-                    if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
+                    for binary_path, binary_name in binaries:
+                        if os.path.isfile(binary_path) or os.path.isdir(binary_path):
+                            logger.info(f"'{binary_path}' already exists, will not be downloaded")
+                            continue
                         neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
                         allure_step_name = "Downloading "
                         allure_step_name += f" {neofs_binary_params['repo']}/"
                         allure_step_name += f"{neofs_binary_params['version']}/"
                         allure_step_name += f"{neofs_binary_params['file']}"
                         with allure.step(allure_step_name):
-                            deploy_threads.append(
-                                threading.Thread(
-                                    target=NeoFSEnv.download_binary,
-                                    args=(
-                                        neofs_binary_params["repo"],
-                                        neofs_binary_params["version"],
-                                        neofs_binary_params["file"],
-                                        binary_path,
-                                    ),
-                                )
+                            NeoFSEnv.download_binary(
+                                neofs_binary_params["repo"],
+                                neofs_binary_params["version"],
+                                neofs_binary_params["file"],
+                                binary_path,
                             )
-                    else:
-                        logger.info(f"'{binary_path}' already exists, will not be downloaded")
 
-                if len(deploy_threads) > 0:
-                    for t in deploy_threads:
-                        t.start()
-                    logger.info("Wait until all binaries are downloaded")
-                    for t in deploy_threads:
-                        t.join()
-
-                self.download_and_install_awscli()
-            finally:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
+                    self.download_and_install_awscli()
+                finally:
+                    fcntl.flock(lock_file, fcntl.LOCK_UN)
 
     def _is_binary_compatible(self, expected_platform: str = None, expected_arch: str = None) -> bool:
         if expected_platform is None or expected_arch is None:
@@ -1028,6 +1015,7 @@ class NeoFSEnv:
         return False
 
     @staticmethod
+    @retry(wait=wait_exponential(multiplier=1, min=2, max=15), stop=stop_after_attempt(5), reraise=True)
     def download_binary(repo: str, version: str, file: str, target: str):
         download_url = f"https://github.com/{repo}/releases/download/{version}/{file}"
         resp = requests.get(download_url, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
@@ -1035,30 +1023,40 @@ class NeoFSEnv:
             raise AssertionError(
                 f"Can not download binary from url: {download_url}: {resp.status_code}/{resp.reason}/{resp.json()}"
             )
-        with open(target, mode="wb") as binary_file:
-            binary_file.write(resp.content)
-        if "contract" in file:
-            # unpack contracts file into dir
-            tar_file = tarfile.open(target)
-            tar_file.extractall()
-            tar_file.close()
-            os.remove(target)
-            logger.info(f"rename: {file.rstrip('.tar.gz')} into {target}")
-            os.rename(file.rstrip(".tar.gz"), target)
-        elif "warp" in file:
-            temp_dir = f"temp_dir_{uuid.uuid4()}"
-            with tarfile.open(target) as tar_file:
-                tar_file.extractall(
-                    path=temp_dir, filter=lambda tarinfo, _: tarinfo if tarinfo.name == "warp" else None
-                )
-            os.remove(target)
-            shutil.move(f"{temp_dir}/warp", target)
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC)
-        else:
-            # make binary executable
-            current_perm = os.stat(target)
-            os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
+        tmp_target = f"{target}.tmp.{os.getpid()}.{uuid.uuid4().hex}"
+        extract_dir = f"{tmp_target}_extract"
+        try:
+            with open(tmp_target, mode="wb") as binary_file:
+                binary_file.write(resp.content)
+            if "contract" in file:
+                os.makedirs(extract_dir, exist_ok=True)
+                with tarfile.open(tmp_target) as tar_file:
+                    tar_file.extractall(path=extract_dir)
+                archive_root = file.removesuffix(".tar.gz")
+                extracted = os.path.join(extract_dir, archive_root)
+                if not os.path.exists(extracted):
+                    entries = os.listdir(extract_dir)
+                    if len(entries) != 1:
+                        raise AssertionError(f"Unexpected contract archive layout in {extract_dir}: {entries}")
+                    extracted = os.path.join(extract_dir, entries[0])
+                logger.info(f"rename: {extracted} into {target}")
+                os.replace(extracted, target)
+            elif "warp" in file:
+                os.makedirs(extract_dir, exist_ok=True)
+                with tarfile.open(tmp_target) as tar_file:
+                    tar_file.extractall(
+                        path=extract_dir, filter=lambda tarinfo, _: tarinfo if tarinfo.name == "warp" else None
+                    )
+                os.replace(os.path.join(extract_dir, "warp"), target)
+                os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC)
+            else:
+                current_perm = os.stat(tmp_target)
+                os.chmod(tmp_target, current_perm.st_mode | stat.S_IEXEC)
+                os.replace(tmp_target, target)
+        finally:
+            if os.path.exists(tmp_target):
+                os.remove(tmp_target)
+            shutil.rmtree(extract_dir, ignore_errors=True)
 
     def get_binary_version(self, binary_path: str) -> str:
         raw_version_output = self._run_single_command(binary_path, "--version")
