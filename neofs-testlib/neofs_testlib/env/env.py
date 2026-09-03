@@ -20,6 +20,7 @@ import threading
 import time
 import uuid
 from collections import namedtuple
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from importlib.resources import files
@@ -52,7 +53,7 @@ from helpers.common import (
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
 from neo3.wallet import account as neo3_account
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
 from neofs_testlib.shell import LocalShell
@@ -61,9 +62,74 @@ from neofs_testlib.utils.log_uploader import NeofsConfig, NeofsUploader, build_l
 
 logger = logging.getLogger("neofs.testlib.env")
 _thread_lock = threading.Lock()
+_binary_downloads_thread_lock = threading.Lock()
 
 _tls_ca_bundle_lock = threading.Lock()
 _tls_ca_bundle_path = None
+
+
+_PORT_RANGE_START = 20000
+_PORT_RANGE_END = 32767
+
+
+def _is_pid_alive(pid: int) -> bool:
+    return pid > 0 and psutil.pid_exists(pid)
+
+
+def _read_port_reservations() -> dict[int, int]:
+    reservations: dict[int, int] = {}
+    if not os.path.exists(ALLOCATED_PORTS_FILE):
+        return reservations
+    with open(ALLOCATED_PORTS_FILE, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            try:
+                port = int(parts[0])
+                pid = int(parts[1]) if len(parts) > 1 else 0
+            except ValueError:
+                continue
+            reservations[port] = pid
+    return reservations
+
+
+def _write_port_reservations(reservations: dict[int, int]) -> None:
+    dir_name = os.path.dirname(ALLOCATED_PORTS_FILE) or "/tmp"
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name, prefix="allocated_ports.")
+    try:
+        with os.fdopen(fd, "w") as f:
+            for port, pid in sorted(reservations.items()):
+                f.write(f"{port} {pid}\n")
+        os.replace(tmp_path, ALLOCATED_PORTS_FILE)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
+@contextmanager
+def _ports_allocation_lock():
+    with _thread_lock:
+        with open(ALLOCATED_PORTS_LOCK_FILE, "a+") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
+def _can_bind_port(port: int) -> bool:
+    for host in ("127.0.0.1", ""):
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            probe.bind((host, port))
+        except OSError:
+            return False
+        finally:
+            probe.close()
+    return True
 
 
 @dataclass
@@ -716,59 +782,45 @@ class NeoFSEnv:
 
     @allure.step("Download binaries")
     def download_binaries(self):
-        with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
-            fcntl.flock(lock_file, fcntl.LOCK_EX)
-            try:
-                logger.info("Going to download missing binaries and contracts, if needed")
-                deploy_threads = []
+        with _binary_downloads_thread_lock:
+            with open(BINARY_DOWNLOADS_LOCK_FILE, "w") as lock_file:
+                fcntl.flock(lock_file, fcntl.LOCK_EX)
+                try:
+                    logger.info("Going to download missing binaries and contracts, if needed")
+                    binaries = [
+                        (self.neofs_adm_path, "neofs_adm"),
+                        (self.neofs_cli_path, "neofs_cli"),
+                        (self.neofs_lens_path, "neofs_lancet"),
+                        (self.neo_go_path, "neo_go"),
+                        (self.neofs_ir_path, "neofs_ir"),
+                        (self.neofs_node_path, "neofs_node"),
+                        (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
+                        (self.neofs_s3_gw_path, "neofs_s3_gw"),
+                        (self.neofs_rest_gw_path, "neofs_rest_gw"),
+                        (self.neofs_contract_dir, "neofs_contract"),
+                        (self.warp_path, "warp"),
+                    ]
 
-                binaries = [
-                    (self.neofs_adm_path, "neofs_adm"),
-                    (self.neofs_cli_path, "neofs_cli"),
-                    (self.neofs_lens_path, "neofs_lancet"),
-                    (self.neo_go_path, "neo_go"),
-                    (self.neofs_ir_path, "neofs_ir"),
-                    (self.neofs_node_path, "neofs_node"),
-                    (self.neofs_s3_authmate_path, "neofs_s3_authmate"),
-                    (self.neofs_s3_gw_path, "neofs_s3_gw"),
-                    (self.neofs_rest_gw_path, "neofs_rest_gw"),
-                    (self.neofs_contract_dir, "neofs_contract"),
-                    (self.warp_path, "warp"),
-                ]
-
-                for binary in binaries:
-                    binary_path, binary_name = binary
-                    if not os.path.isfile(binary_path) and not os.path.isdir(binary_path):
+                    for binary_path, binary_name in binaries:
+                        if os.path.isfile(binary_path) or os.path.isdir(binary_path):
+                            logger.info(f"'{binary_path}' already exists, will not be downloaded")
+                            continue
                         neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
                         allure_step_name = "Downloading "
                         allure_step_name += f" {neofs_binary_params['repo']}/"
                         allure_step_name += f"{neofs_binary_params['version']}/"
                         allure_step_name += f"{neofs_binary_params['file']}"
                         with allure.step(allure_step_name):
-                            deploy_threads.append(
-                                threading.Thread(
-                                    target=NeoFSEnv.download_binary,
-                                    args=(
-                                        neofs_binary_params["repo"],
-                                        neofs_binary_params["version"],
-                                        neofs_binary_params["file"],
-                                        binary_path,
-                                    ),
-                                )
+                            NeoFSEnv.download_binary(
+                                neofs_binary_params["repo"],
+                                neofs_binary_params["version"],
+                                neofs_binary_params["file"],
+                                binary_path,
                             )
-                    else:
-                        logger.info(f"'{binary_path}' already exists, will not be downloaded")
 
-                if len(deploy_threads) > 0:
-                    for t in deploy_threads:
-                        t.start()
-                    logger.info("Wait until all binaries are downloaded")
-                    for t in deploy_threads:
-                        t.join()
-
-                self.download_and_install_awscli()
-            finally:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
+                    self.download_and_install_awscli()
+                finally:
+                    fcntl.flock(lock_file, fcntl.LOCK_UN)
 
     def _is_binary_compatible(self, expected_platform: str = None, expected_arch: str = None) -> bool:
         if expected_platform is None or expected_arch is None:
@@ -965,69 +1017,39 @@ class NeoFSEnv:
 
     @staticmethod
     def get_available_port() -> str:
-        with _thread_lock:
-            with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
-                fcntl.flock(lock_file, fcntl.LOCK_EX)
-                try:
-                    if os.path.exists(ALLOCATED_PORTS_FILE):
-                        with open(ALLOCATED_PORTS_FILE, "r") as f:
-                            reserved_ports = set(map(int, f.read().splitlines()))
-                    else:
-                        reserved_ports = set()
-
-                    while True:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        s.bind(("", 0))
-                        port = s.getsockname()[1]
-                        s.close()
-
-                        if port not in reserved_ports:
-                            reserved_ports.add(port)
-                            break
-
-                    with open(ALLOCATED_PORTS_FILE, "w") as f:
-                        for p in reserved_ports:
-                            f.write(f"{p}\n")
-                finally:
-                    fcntl.flock(lock_file, fcntl.LOCK_UN)
-        return port
+        with _ports_allocation_lock():
+            reservations = _read_port_reservations()
+            my_pid = os.getpid()
+            for port in range(_PORT_RANGE_START, _PORT_RANGE_END + 1):
+                owner_pid = reservations.get(port)
+                if owner_pid is not None and _is_pid_alive(owner_pid):
+                    continue
+                if not _can_bind_port(port):
+                    continue
+                reservations[port] = my_pid
+                _write_port_reservations(reservations)
+                return str(port)
+        raise RuntimeError(f"No free TCP port in range {_PORT_RANGE_START}-{_PORT_RANGE_END}")
 
     @staticmethod
     def cleanup_unused_ports():
-        with open(ALLOCATED_PORTS_LOCK_FILE, "w") as lock_file:
-            fcntl.flock(lock_file, fcntl.LOCK_EX)
-
-            try:
-                if os.path.exists(ALLOCATED_PORTS_FILE):
-                    with open(ALLOCATED_PORTS_FILE, "r") as f:
-                        reserved_ports = set(map(int, f.read().splitlines()))
-                else:
-                    reserved_ports = set()
-
-                still_used_ports = set()
-
-                for port in reserved_ports:
-                    if NeoFSEnv.is_port_in_use(port):
-                        still_used_ports.add(port)
-
-                with open(ALLOCATED_PORTS_FILE, "w") as f:
-                    for port in still_used_ports:
-                        f.write(f"{port}\n")
-            finally:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
+        with _ports_allocation_lock():
+            reservations = _read_port_reservations()
+            my_pid = os.getpid()
+            still_needed = {}
+            for port, owner_pid in reservations.items():
+                if NeoFSEnv.is_port_in_use(port):
+                    still_needed[port] = owner_pid
+                elif owner_pid != my_pid and _is_pid_alive(owner_pid):
+                    still_needed[port] = owner_pid
+            _write_port_reservations(still_needed)
 
     @staticmethod
-    def is_port_in_use(port: str):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.bind(("", port))
-        except OSError:
-            return True
-        finally:
-            s.close()
-        return False
+    def is_port_in_use(port: int | str):
+        return not _can_bind_port(int(port))
 
     @staticmethod
+    @retry(wait=wait_exponential(multiplier=1, min=2, max=15), stop=stop_after_attempt(5), reraise=True)
     def download_binary(repo: str, version: str, file: str, target: str):
         download_url = f"https://github.com/{repo}/releases/download/{version}/{file}"
         resp = requests.get(download_url, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
@@ -1035,30 +1057,40 @@ class NeoFSEnv:
             raise AssertionError(
                 f"Can not download binary from url: {download_url}: {resp.status_code}/{resp.reason}/{resp.json()}"
             )
-        with open(target, mode="wb") as binary_file:
-            binary_file.write(resp.content)
-        if "contract" in file:
-            # unpack contracts file into dir
-            tar_file = tarfile.open(target)
-            tar_file.extractall()
-            tar_file.close()
-            os.remove(target)
-            logger.info(f"rename: {file.rstrip('.tar.gz')} into {target}")
-            os.rename(file.rstrip(".tar.gz"), target)
-        elif "warp" in file:
-            temp_dir = f"temp_dir_{uuid.uuid4()}"
-            with tarfile.open(target) as tar_file:
-                tar_file.extractall(
-                    path=temp_dir, filter=lambda tarinfo, _: tarinfo if tarinfo.name == "warp" else None
-                )
-            os.remove(target)
-            shutil.move(f"{temp_dir}/warp", target)
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC)
-        else:
-            # make binary executable
-            current_perm = os.stat(target)
-            os.chmod(target, current_perm.st_mode | stat.S_IEXEC)
+        tmp_target = f"{target}.tmp.{os.getpid()}.{uuid.uuid4().hex}"
+        extract_dir = f"{tmp_target}_extract"
+        try:
+            with open(tmp_target, mode="wb") as binary_file:
+                binary_file.write(resp.content)
+            if "contract" in file:
+                os.makedirs(extract_dir, exist_ok=True)
+                with tarfile.open(tmp_target) as tar_file:
+                    tar_file.extractall(path=extract_dir)
+                archive_root = file.removesuffix(".tar.gz")
+                extracted = os.path.join(extract_dir, archive_root)
+                if not os.path.exists(extracted):
+                    entries = os.listdir(extract_dir)
+                    if len(entries) != 1:
+                        raise AssertionError(f"Unexpected contract archive layout in {extract_dir}: {entries}")
+                    extracted = os.path.join(extract_dir, entries[0])
+                logger.info(f"rename: {extracted} into {target}")
+                os.replace(extracted, target)
+            elif "warp" in file:
+                os.makedirs(extract_dir, exist_ok=True)
+                with tarfile.open(tmp_target) as tar_file:
+                    tar_file.extractall(
+                        path=extract_dir, filter=lambda tarinfo, _: tarinfo if tarinfo.name == "warp" else None
+                    )
+                os.replace(os.path.join(extract_dir, "warp"), target)
+                os.chmod(target, os.stat(target).st_mode | stat.S_IEXEC)
+            else:
+                current_perm = os.stat(tmp_target)
+                os.chmod(tmp_target, current_perm.st_mode | stat.S_IEXEC)
+                os.replace(tmp_target, target)
+        finally:
+            if os.path.exists(tmp_target):
+                os.remove(tmp_target)
+            shutil.rmtree(extract_dir, ignore_errors=True)
 
     def get_binary_version(self, binary_path: str) -> str:
         raw_version_output = self._run_single_command(binary_path, "--version")
