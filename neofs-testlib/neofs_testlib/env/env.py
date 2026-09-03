@@ -992,7 +992,7 @@ class NeoFSEnv:
                 zip_path = shutil.make_archive(
                     os.path.join(get_assets_dir_path(), f"neofs_env_{self._id}"), "zip", self._env_dir
                 )
-                self._attach_logs_archive(zip_path, name="neofs env files")
+                self._attach_logs_archive(zip_path, name="NeoFS ENV LOGS")
 
             shutil.rmtree(self._env_dir, ignore_errors=True)
 
@@ -1138,6 +1138,7 @@ class NeoFSEnv:
             url = uploader.upload_file(archive_path, neofs_path, content_type="application/zip")
             logger.info(f"Uploaded logs archive '{name}' to NeoFS: {url}")
             allure.attach(url, name=f"{name} (NeoFS URL)", attachment_type=allure.attachment_type.TEXT)
+            allure.dynamic.link(url, name=f"{name} (Click Here)")
         except Exception as exc:
             logger.error(f"Failed to upload logs archive '{name}' to NeoFS: {exc}, attaching file directly")
             allure.attach.file(archive_path, name=name, extension="zip")
