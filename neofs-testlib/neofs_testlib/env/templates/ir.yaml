@@ -43,8 +43,8 @@ fschain:
       #
       # If 'path' exists, it should correspond to the selected variant
       path: {{ ir_storage_path }} # File system path to the storage. Ignored for 'inmemory' storage.
-    time_per_block: 50ms
-    max_time_per_block: 500ms
+    time_per_block: {{ time_per_block }}
+    max_time_per_block: {{ max_time_per_block }}
     seed_nodes:
       {%- for seed_nodes_address in seed_nodes_addresses %}
       - {{ seed_nodes_address }}
