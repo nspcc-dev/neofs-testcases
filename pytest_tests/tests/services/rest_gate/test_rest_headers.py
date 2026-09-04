@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+from urllib.parse import quote
 
 import allure
 import pytest
@@ -547,11 +548,28 @@ class Test_rest_encoded_attributes(TestNeofsRestBase):
                 error_pattern="could not decode header X-Attributes-Base64",
             )
 
-    @allure.title("Content-Disposition filename is omitted for a non-ASCII FileName")
+    @staticmethod
+    def _rfc5987_content_disposition(disposition: str, file_name: str) -> str:
+        return f"{disposition}; filename*=utf-8''{quote(file_name)}"
+
+    @allure.title("Content-Disposition uses RFC 5987 filename* for a non-ASCII FileName")
     @pytest.mark.simple
     def test_non_ascii_filename_content_disposition(self, container: str, gw_endpoint: str):
+        """
+        Test that a non-ASCII FileName is exposed via Content-Disposition
+        using the RFC 5987 filename* parameter (not a raw filename= value).
+
+        Steps:
+        1. Upload an object with an ASCII FileName and verify filename=.
+        2. Upload an object with a non-ASCII FileName.
+        3. GET and HEAD by id and verify filename*=utf-8''<percent-encoded>.
+        4. GET with download=true and verify attachment; filename*.
+        5. Confirm X-Attributes-Base64 still carries FileName and plain X-Attributes is omitted.
+        """
         ascii_name = f"war_and_peace_{uuid.uuid4().hex}.txt"
         non_ascii_name = f"Война_и_мир_{uuid.uuid4().hex}.txt"
+        expected_inline = self._rfc5987_content_disposition("inline", non_ascii_name)
+        expected_attachment = self._rfc5987_content_disposition("attachment", non_ascii_name)
 
         with allure.step("Upload object with an ASCII FileName and verify Content-Disposition"):
             file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
@@ -563,7 +581,7 @@ class Test_rest_encoded_attributes(TestNeofsRestBase):
             )
             resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
             content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
-            assert f"filename={ascii_name}" in content_disposition, (
+            assert content_disposition == f"inline; filename={ascii_name}", (
                 f"Expected filename={ascii_name!r} in {CONTENT_DISPOSITION_HEADER}, got {content_disposition!r}"
             )
 
@@ -576,10 +594,33 @@ class Test_rest_encoded_attributes(TestNeofsRestBase):
                 headers=attr_into_header_base64({FILENAME_ATTRIBUTE: non_ascii_name}),
             )
 
-        with allure.step("Verify Content-Disposition omits filename= but X-Attributes-Base64 keeps FileName"):
+        with allure.step("GET object and verify Content-Disposition uses filename*"):
             resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True)
             content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
-            assert "filename=" not in content_disposition, (
-                f"{CONTENT_DISPOSITION_HEADER} must not carry a non-ASCII filename, got {content_disposition!r}"
+            assert content_disposition == expected_inline, (
+                f"Expected {CONTENT_DISPOSITION_HEADER}={expected_inline!r}, got {content_disposition!r}"
+            )
+            assert non_ascii_name not in content_disposition, (
+                f"{CONTENT_DISPOSITION_HEADER} must not carry a raw non-ASCII filename, got {content_disposition!r}"
             )
             self._verify_encoded_attributes(resp, {FILENAME_ATTRIBUTE: non_ascii_name})
+            assert resp.headers.get(X_ATTRIBUTES_HEADER) is None, (
+                f"Plain {X_ATTRIBUTES_HEADER} header must be omitted for a non-ASCII FileName, "
+                f"got {resp.headers.get(X_ATTRIBUTES_HEADER)!r}"
+            )
+
+        with allure.step("HEAD object and verify the same Content-Disposition"):
+            resp = head_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint)
+            content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
+            assert content_disposition == expected_inline, (
+                f"Expected {CONTENT_DISPOSITION_HEADER}={expected_inline!r} on HEAD, got {content_disposition!r}"
+            )
+            self._verify_encoded_attributes(resp, {FILENAME_ATTRIBUTE: non_ascii_name})
+
+        with allure.step("GET with download=true uses attachment and filename*"):
+            resp = get_via_rest_gate(cid=container, oid=oid, endpoint=gw_endpoint, return_response=True, download=True)
+            content_disposition = resp.headers.get(CONTENT_DISPOSITION_HEADER, "")
+            assert content_disposition == expected_attachment, (
+                f"Expected {CONTENT_DISPOSITION_HEADER}={expected_attachment!r} on download, "
+                f"got {content_disposition!r}"
+            )
