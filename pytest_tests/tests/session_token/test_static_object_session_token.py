@@ -16,7 +16,6 @@ from helpers.neofs_verbs import (
     delete_object,
     get_object,
     get_object_from_random_node,
-    get_range,
     head_object,
     put_object_to_random_node,
     search_object,
@@ -34,15 +33,12 @@ from helpers.session_token import (
     sign_session_token,
 )
 from helpers.storage_object_info import StorageObjectInfo
-from helpers.test_control import expect_not_raises
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 
 logger = logging.getLogger("NeoLogger")
-
-RANGE_OFFSET_FOR_COMPLEX_OBJECT = 200
 
 
 @pytest.fixture
@@ -86,24 +82,6 @@ def storage_objects(
             storage_objects.append(storage_object)
 
     yield storage_objects
-
-
-@allure.step("Get ranges for test")
-def get_ranges(storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, endpoint: str) -> list[str]:
-    """
-    Returns ranges to test range/hash methods via static session
-    """
-    object_size = storage_object.size
-
-    if object_size > max_object_size:
-        assert object_size >= max_object_size + RANGE_OFFSET_FOR_COMPLEX_OBJECT
-        return [
-            "0:10",
-            f"{object_size - 10}:10",
-            f"{max_object_size - RANGE_OFFSET_FOR_COMPLEX_OBJECT}:{RANGE_OFFSET_FOR_COMPLEX_OBJECT * 2}",
-        ]
-    else:
-        return ["0:10", f"{object_size - 10}:10"]
 
 
 @pytest.fixture
@@ -166,40 +144,6 @@ class TestObjectStaticSession(TestNeofsBase):
                     endpoint=node.endpoint,
                     session=static_sessions[verb],
                 )
-
-    @allure.title("Validate static session with range operations")
-    @pytest.mark.parametrize(
-        "method_under_test,verb",
-        [(get_range, ObjectVerb.RANGE)],
-    )
-    def test_static_session_range(
-        self,
-        user_wallet: NodeWallet,
-        storage_objects: list[StorageObjectInfo],
-        static_sessions: dict[ObjectVerb, str],
-        method_under_test,
-        verb: ObjectVerb,
-        request: FixtureRequest,
-    ):
-        """
-        Validate static session with range operations
-        """
-        allure.dynamic.title(f"Validate static session with range operations for {request.node.callspec.id}")
-        storage_object = storage_objects[0]
-        ranges_to_test = get_ranges(storage_object, self.neofs_env.max_object_size, self.shell, self.neofs_env.sn_rpc)
-
-        for range_to_test in ranges_to_test:
-            with allure.step(f"Check range {range_to_test}"):
-                with expect_not_raises():
-                    method_under_test(
-                        user_wallet.path,
-                        storage_object.cid,
-                        storage_object.oid,
-                        shell=self.shell,
-                        endpoint=self.neofs_env.sn_rpc,
-                        session=static_sessions[verb],
-                        range_cut=range_to_test,
-                    )
 
     @allure.title("Validate static session with search operation")
     def test_static_session_search(

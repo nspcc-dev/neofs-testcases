@@ -39,7 +39,6 @@ from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
     can_get_object,
-    can_get_range_of_object,
     can_put_object,
     can_search_object,
 )
@@ -262,14 +261,6 @@ class TestEACLContainer(TestNeofsBase):
                     self.shell,
                     endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
                 ), f"{operation.value} is not allowed, while it should be"
-            elif operation == EACLOperation.GET_RANGE:
-                assert can_get_range_of_object(
-                    user_wallet.wallet_path,
-                    cid,
-                    object_oids.pop(),
-                    self.shell,
-                    endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
-                ), f"{operation.value} is not allowed, while it should be"
             elif operation == EACLOperation.SEARCH:
                 assert can_search_object(
                     user_wallet.wallet_path,
@@ -307,14 +298,6 @@ class TestEACLContainer(TestNeofsBase):
                     ), f"{not_allowed_op.value} is allowed, while it shouldn't"
                 elif not_allowed_op == EACLOperation.HEAD:
                     assert not can_get_head_object(
-                        user_wallet.wallet_path,
-                        cid,
-                        object_oids.pop(),
-                        self.shell,
-                        endpoint=random.choice(self.neofs_env.storage_nodes).endpoint,
-                    ), f"{not_allowed_op.value} is allowed, while it shouldn't"
-                elif not_allowed_op == EACLOperation.GET_RANGE:
-                    assert not can_get_range_of_object(
                         user_wallet.wallet_path,
                         cid,
                         object_oids.pop(),
@@ -551,25 +534,6 @@ class TestEACLContainer(TestNeofsBase):
                 oid=object_oids[0],
                 wallet_config=storage_wallet.config_path,
             )
-
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=ir_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet.config_path,
-                )
-            with pytest.raises(AssertionError):
-                assert can_get_range_of_object(
-                    wallet=storage_wallet.wallet_path,
-                    cid=cid,
-                    oid=object_oids[0],
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=storage_wallet.config_path,
-                )
 
             with pytest.raises(AssertionError):
                 assert can_delete_object(

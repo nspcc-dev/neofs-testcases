@@ -13,7 +13,6 @@ from helpers.object_access import (
     can_delete_object,
     can_get_head_object,
     can_get_object,
-    can_get_range_of_object,
     can_put_object,
     can_search_object,
 )
@@ -201,11 +200,9 @@ class TestACLBasic(TestNeofsBase):
             GET object from container
             GET head of object from container
             SEARCH object in container
-            GET range hash of object from container
 
         IR node should NOT be able to perform the following operations:
             PUT object to container
-            GET range of object from container
             DELETE object from container
 
         STORAGE node should be able to perform the following operations:
@@ -213,10 +210,8 @@ class TestACLBasic(TestNeofsBase):
             GET object from container
             GET head of object from container
             SEARCH object in container
-            GET range hash of object from container
 
         STORAGE node should NOT be able to perform the following operations:
-            GET range of object from container
             DELETE object from container
         """
         endpoint = random.choice(self.neofs_env.storage_nodes).endpoint
@@ -313,25 +308,6 @@ class TestACLBasic(TestNeofsBase):
                     shell=self.shell,
                     endpoint=endpoint,
                     oid=owner_object_oid,
-                    wallet_config=storage_wallet_config,
-                )
-
-            with allure.step("IR node should NOT be able to GET range of object from container"):
-                assert not can_get_range_of_object(
-                    wallet=ir_wallet.path,
-                    cid=cid,
-                    oid=owner_object_oid,
-                    shell=self.shell,
-                    endpoint=endpoint,
-                    wallet_config=ir_wallet_config,
-                )
-            with allure.step("STORAGE node should NOT be able to GET range of object from container"):
-                assert not can_get_range_of_object(
-                    wallet=storage_wallet.path,
-                    cid=cid,
-                    oid=owner_object_oid,
-                    shell=self.shell,
-                    endpoint=endpoint,
                     wallet_config=storage_wallet_config,
                 )
 

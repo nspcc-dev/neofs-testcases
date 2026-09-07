@@ -12,7 +12,6 @@ from helpers.container import (
     EC_3_1_PLACEMENT_RULE,
     create_container,
     delete_container,
-    generate_ranges_for_ec_object,
 )
 from helpers.file_helper import (
     generate_file,
@@ -37,7 +36,6 @@ from helpers.grpc_responses import (
 from helpers.neofs_verbs import (
     get_object_with_extended_range,
     get_object_with_range,
-    get_range,
     put_object_to_random_node,
 )
 from helpers.utility import parse_version
@@ -151,35 +149,6 @@ class TestObjectRangedGet(TestNeofsBase):
                             f"Header marker {marker!r} missing from default ranged GET stdout; stdout:\n{stdout}"
                         )
 
-    @allure.title("Ranged GET returns same content as legacy object range")
-    @pytest.mark.simple
-    def test_ranged_get_matches_object_range(self, request: FixtureRequest, default_wallet: NodeWallet, container: str):
-        file_size = self.neofs_env.get_object_size("simple_object_size")
-        file_path = generate_file(file_size)
-        oid = _put_object(self.neofs_env, default_wallet, container, file_path)
-
-        ranges_to_test = generate_ranges_for_ec_object(file_size)
-        for offset, length in ranges_to_test:
-            range_cut = f"{offset}:{length}"
-            with allure.step(f"Compare GET --range {range_cut} with object range"):
-                _, get_content, _ = get_object_with_range(
-                    wallet=default_wallet.path,
-                    cid=container,
-                    oid=oid,
-                    range_cut=range_cut,
-                    shell=self.neofs_env.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                )
-                _, range_content = get_range(
-                    wallet=default_wallet.path,
-                    cid=container,
-                    oid=oid,
-                    shell=self.neofs_env.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                    range_cut=range_cut,
-                )
-                assert get_content == range_content, f"GET --range and object range diverged on {range_cut}"
-
     @allure.title("Ranged GET with zero offset and zero length returns the full payload")
     @pytest.mark.simple
     def test_ranged_get_zero_range_returns_full_payload(self, default_wallet: NodeWallet, default_container: str):
@@ -206,8 +175,7 @@ class TestObjectRangedGet(TestNeofsBase):
     def test_ranged_get_complex_object_spans_children(self, default_wallet: NodeWallet, default_container: str):
         """Ranges that span multiple split children must be assembled correctly.
 
-        This mirrors ``test_object_get_range_complex`` from ``test_object_api.py``
-        but exercises the new ``object get --range`` code path on the node.
+        Exercises ``object get --range`` across split-object child boundaries.
         """
         file_size = self.neofs_env.get_object_size("complex_object_size")
         file_path = generate_file(file_size)

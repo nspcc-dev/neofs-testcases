@@ -1,11 +1,9 @@
 import logging
-import sys
 
 import allure
 import pytest
 from helpers.complex_object_actions import (
     get_complex_object_copies,
-    get_complex_object_split_ranges,
     get_link_object,
     get_object_chunks,
     get_simple_object_copies,
@@ -16,29 +14,19 @@ from helpers.container import (
     EC_3_1_PLACEMENT_RULE,
     create_container,
     delete_container,
-    generate_ranges_for_ec_object,
 )
 from helpers.file_helper import (
-    RANGE_MAX_LEN,
-    RANGE_MIN_LEN,
-    RANGES_COUNT,
     generate_file,
-    generate_payload_ranges,
     get_file_content,
     get_file_hash,
 )
 from helpers.grpc_responses import (
     EC_ATTRIBUTES_FOUND,
-    INVALID_LENGTH_SPECIFIER,
-    INVALID_OFFSET_SPECIFIER,
-    INVALID_RANGE_OVERFLOW,
-    INVALID_RANGE_ZERO_LENGTH,
     LINK_OBJECT_FOUND,
     LINK_OBJECT_REMOVAL,
     OBJECT_ALREADY_REMOVED,
     OBJECT_HEADER_LENGTH_LIMIT,
     OBJECT_NOT_FOUND,
-    OUT_OF_RANGE,
 )
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
@@ -68,34 +56,6 @@ OBJECT_ATTRIBUTES = [
     {"key1": 1, "key2": "abc", "common_key": "common_value"},
     {"key1": 2, "common_key": "common_value"},
 ]
-
-# Used for static ranges found with issues
-STATIC_RANGES = {}
-
-
-def generate_ranges(
-    storage_object: StorageObjectInfo, max_object_size: int, shell: Shell, neofs_env: NeoFSEnv
-) -> list[(int, int)]:
-    file_ranges_to_test: list[tuple[int, int]] = []
-
-    # For simple object we can read all file ranges without too much time for testing
-    if storage_object.size < max_object_size:
-        file_range_step = storage_object.size / RANGES_COUNT
-        for i in range(0, RANGES_COUNT):
-            file_ranges_to_test.append((int(file_range_step * i), int(file_range_step)))
-    # For complex object we need to fetch multiple child objects from different nodes.
-    else:
-        assert storage_object.size >= RANGE_MAX_LEN + max_object_size, (
-            f"Complex object size should be at least {max_object_size + RANGE_MAX_LEN}. Current: {storage_object.size}"
-        )
-        file_ranges_to_test.append((RANGE_MAX_LEN, max_object_size - RANGE_MAX_LEN))
-        file_ranges_to_test.extend(get_complex_object_split_ranges(storage_object, shell, neofs_env))
-
-    file_ranges_to_test.extend(generate_payload_ranges(storage_object.size))
-
-    file_ranges_to_test.extend(STATIC_RANGES.get(storage_object.size, []))
-
-    return file_ranges_to_test
 
 
 @pytest.fixture(
@@ -279,164 +239,6 @@ class TestObjectApi(TestNeofsBase):
         )
 
         assert oid in [obj["id"] for obj in found_objects], "Object was not found, while it should be"
-
-    @allure.title("Validate native object API get_range")
-    def test_object_get_range(self, request: FixtureRequest, storage_objects: list[StorageObjectInfo]):
-        """
-        Validate get_range for object by native gRPC API
-        """
-        allure.dynamic.title(f"Validate native get_range object API for {request.node.callspec.id}")
-
-        wallet = storage_objects[0].wallet_file_path
-        cid = storage_objects[0].cid
-        oids = [storage_object.oid for storage_object in storage_objects[:2]]
-        file_path = storage_objects[0].file_path
-
-        file_ranges_to_test = generate_ranges_for_ec_object(storage_objects[0].size)
-        logging.info(f"Ranges used in test {file_ranges_to_test}")
-
-        for range_start, range_len in file_ranges_to_test:
-            range_cut = f"{range_start}:{range_len}"
-            with allure.step(f"Get range ({range_cut})"):
-                for oid in oids:
-                    _, range_content = get_range(
-                        wallet,
-                        cid,
-                        oid,
-                        shell=self.shell,
-                        endpoint=self.neofs_env.sn_rpc,
-                        range_cut=range_cut,
-                    )
-                    assert (
-                        get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start)
-                        == range_content
-                    ), f"Expected range content to match {range_cut} slice of file payload"
-
-        with allure.step("Verify zero payload ranges"):
-            _, range_content = get_range(
-                wallet,
-                cid,
-                oid,
-                shell=self.shell,
-                endpoint=self.neofs_env.sn_rpc,
-                range_cut="0:0",
-            )
-            assert get_file_content(file_path, mode="rb") == range_content, (
-                "Expected range content to match full file payload"
-            )
-
-            with pytest.raises(Exception, match=r".*zero length with non-zero offset.*"):
-                get_range(
-                    wallet,
-                    cid,
-                    oid,
-                    shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                    range_cut="5:0",
-                )
-
-    @allure.title("Validate native object API get_range for a complex object")
-    @pytest.mark.complex
-    def test_object_get_range_complex(self, default_wallet: NodeWallet, container: str, request: FixtureRequest):
-        """
-        Validate get_range for object by native gRPC API for a complex object
-        """
-        four_chunked_size = self.neofs_env.get_object_size("complex_object_size")
-        file_path = generate_file(four_chunked_size)
-        oid = put_object_to_random_node(
-            default_wallet.path,
-            file_path,
-            container,
-            shell=self.shell,
-            neofs_env=self.neofs_env,
-        )
-
-        file_ranges_to_test = []
-
-        parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
-
-        # range is inside one child
-        file_ranges_to_test.append((0, parts[0][1] - 1))
-        # range matches child
-        file_ranges_to_test.append((parts[0][1], parts[1][1]))
-        # range requires more than one child and includes the first child
-        file_ranges_to_test.append((0, parts[0][1] + parts[1][1] - 1))
-        # range requires more than one child and includes the last child
-        file_ranges_to_test.append(
-            (parts[0][1] + 1, self.neofs_env.get_object_size("complex_object_size") - parts[0][1] - 1)
-        )
-        # range requires more than one child and does not include the first and the last child
-        file_ranges_to_test.append(
-            (parts[0][1] + 1, self.neofs_env.get_object_size("complex_object_size") - parts[0][1] - parts[-1][1] - 1)
-        )
-        # range requires more than two children and includes the first and the last child
-        file_ranges_to_test.append((0, self.neofs_env.get_object_size("complex_object_size") - 1))
-
-        logging.info(f"Ranges used in test {file_ranges_to_test}")
-
-        for range_start, range_len in file_ranges_to_test:
-            range_cut = f"{range_start}:{range_len}"
-            with allure.step(f"Get range ({range_cut})"):
-                _, range_content = get_range(
-                    default_wallet.path,
-                    container,
-                    oid,
-                    shell=self.shell,
-                    endpoint=self.neofs_env.sn_rpc,
-                    range_cut=range_cut,
-                )
-                assert (
-                    get_file_content(file_path, content_len=range_len, mode="rb", offset=range_start) == range_content
-                ), f"Expected range content to match {range_cut} slice of file payload"
-
-    @allure.title("Validate native object API get_range negative cases")
-    def test_object_get_range_negatives(
-        self,
-        request: FixtureRequest,
-        storage_objects: list[StorageObjectInfo],
-    ):
-        """
-        Validate get_range negative for object by native gRPC API
-        """
-        allure.dynamic.title(f"Validate native get_range negative object API for {request.node.callspec.id}")
-
-        wallet = storage_objects[0].wallet_file_path
-        cid = storage_objects[0].cid
-        oids = [storage_object.oid for storage_object in storage_objects[:2]]
-        file_size = storage_objects[0].size
-
-        assert RANGE_MIN_LEN < file_size, (
-            f"Incorrect test setup. File size ({file_size}) is less than RANGE_MIN_LEN ({RANGE_MIN_LEN})"
-        )
-
-        file_ranges_to_test: list[tuple(int, int, str)] = [
-            # Offset is bigger than the file size, the length is small.
-            (file_size + 1, RANGE_MIN_LEN, OUT_OF_RANGE),
-            # Offset is ok, but offset+length is too big.
-            (file_size - RANGE_MIN_LEN, RANGE_MIN_LEN * 2, OUT_OF_RANGE),
-            # Offset is ok, and length is very-very big (e.g. MaxUint64) so that offset+length is wrapped and still "valid".
-            (RANGE_MIN_LEN, sys.maxsize * 2 + 1, INVALID_RANGE_OVERFLOW),
-            # Length is zero
-            (10, 0, INVALID_RANGE_ZERO_LENGTH),
-            # Negative values
-            (-1, 1, INVALID_OFFSET_SPECIFIER),
-            (10, -5, INVALID_LENGTH_SPECIFIER),
-        ]
-
-        for range_start, range_len, expected_error in file_ranges_to_test:
-            range_cut = f"{range_start}:{range_len}"
-            expected_error = expected_error.format(range=range_cut) if "{range}" in expected_error else expected_error
-            with allure.step(f"Get range ({range_cut})"):
-                for oid in oids:
-                    with pytest.raises(Exception, match=expected_error):
-                        get_range(
-                            wallet,
-                            cid,
-                            oid,
-                            shell=self.shell,
-                            endpoint=self.neofs_env.sn_rpc,
-                            range_cut=range_cut,
-                        )
 
     @pytest.mark.simple
     def test_put_object_header_limitation(self, default_wallet: NodeWallet, container: str):
