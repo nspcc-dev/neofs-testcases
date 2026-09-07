@@ -89,6 +89,10 @@ For example:
 pytest -s pytest_tests/tests/services/rest_gate/test_rest_bearer.py --load-env env_files/persisted_env_awxyrbxdwu 
 ```
 
+One of the storage nodes serves TLS, so its certificate has to be trusted by clients. On macOS this means
+adding it to the keychain, therefore the first local run asks for your password. It happens only once,
+all the following runs reuse the same certificate.
+
 If for debug purposes it is needed to provide a custom config for S3 GW, REST GW, Storage Nodes, Inner Ring Nodes or Main Chain nodes,
 it can be done via following env vars:
 ```
