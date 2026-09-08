@@ -15,8 +15,8 @@ logger = logging.getLogger("NeoLogger")
 
 
 @pytest.fixture
-def wallet_with_money(neofs_env_with_mainchain: NeoFSEnv) -> NodeWallet:
-    return create_wallet_with_money(neofs_env_with_mainchain)
+def wallet_with_money(neofs_env_payments: NeoFSEnv) -> NodeWallet:
+    return create_wallet_with_money(neofs_env_payments)
 
 
 class TestContainerPayments:
@@ -38,14 +38,14 @@ class TestContainerPayments:
     def test_container_payments(
         self,
         request: pytest.FixtureRequest,
-        neofs_env_with_mainchain: NeoFSEnv,
+        neofs_env_payments: NeoFSEnv,
         wallet_with_money: NodeWallet,
         container_rule: str,
         replicas_number: int,
         objects_count_multiplier: int,
         _cleanup_files,
     ):
-        neofs_env = neofs_env_with_mainchain
+        neofs_env = neofs_env_payments
         GAS = 10**12
         GB = 10**9
         MAX_OBJECT_SIZE = 10**7
@@ -115,39 +115,36 @@ class TestContainerPayments:
                 ):
                     storage_nodes_info[sn]["objects_count"] += 1
 
-        with allure.step("Wait for a couple of epochs to arrive"):
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
+        sn, _ = next((item for item in storage_nodes_info.items() if item[1]["objects_count"] > 0))
+        single_node_gain_per_epoch = float((objects_count * MAX_OBJECT_SIZE) / GB)
 
-        with allure.step("Ensure the user wallet balance is charged only once per epoch"):
-            deltas = []
-            last_balance = get_neofs_balance(
-                neofs_env, neofs_env.neofs_cli(wallet_with_money.cli_config), wallet_with_money
-            )
-            while neofs_epoch.get_epoch(neofs_env, neofs_env.storage_nodes[0]) == new_epoch:
-                current_balance = get_neofs_balance(
+        last_user_balance = get_neofs_balance(
+            neofs_env, neofs_env.neofs_cli(wallet_with_money.cli_config), wallet_with_money
+        )
+        last_sn_balance = get_neofs_balance(neofs_env, neofs_env.neofs_cli(sn.cli_config), sn.wallet)
+        user_deltas = []
+        sn_deltas = []
+
+        with allure.step("Wait for a couple of epochs to arrive"):
+            start_epoch = neofs_epoch.get_epoch(neofs_env)
+            while neofs_epoch.get_epoch(neofs_env) < start_epoch + 2:
+                current_user_balance = get_neofs_balance(
                     neofs_env, neofs_env.neofs_cli(wallet_with_money.cli_config), wallet_with_money
                 )
-                if current_balance < last_balance:
-                    deltas.append(last_balance - current_balance)
-                    last_balance = current_balance
-            assert len(deltas) == 1, "invalid number of withdrawals from the user wallet per epoch"
-            single_node_gain_per_epoch = float((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 1, "Invalid user wallet balance"
+                current_sn_balance = get_neofs_balance(neofs_env, neofs_env.neofs_cli(sn.cli_config), sn.wallet)
+                if current_user_balance < last_user_balance:
+                    user_deltas.append(last_user_balance - current_user_balance)
+                    last_user_balance = current_user_balance
+                if current_sn_balance > last_sn_balance:
+                    sn_deltas.append(current_sn_balance - last_sn_balance)
+                    last_sn_balance = current_sn_balance
 
-        with allure.step("Wait for a couple of epochs to arrive"):
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, neofs_epoch.get_epoch(neofs_env))
-            new_epoch = neofs_epoch.wait_until_new_epoch(neofs_env, new_epoch, require_all_storage_nodes=False)
+        with allure.step("Ensure the user wallet balance is charged only once per epoch"):
+            assert len(user_deltas) == 1, "invalid number of withdrawals from the user wallet per epoch"
+            assert abs(user_deltas[0] - (single_node_gain_per_epoch * replicas_number)) <= 1, (
+                "Invalid user wallet balance"
+            )
 
         with allure.step("Ensure the storage node balance is debited only once per epoch"):
-            sn, _ = next(((sn, sn_info) for sn, sn_info in storage_nodes_info.items() if sn_info["objects_count"] > 0))
-            deltas = []
-            last_balance = get_neofs_balance(neofs_env, neofs_env.neofs_cli(sn.cli_config), sn.wallet)
-            while neofs_epoch.get_epoch(neofs_env, sn) == new_epoch:
-                current_balance = get_neofs_balance(neofs_env, neofs_env.neofs_cli(sn.cli_config), sn.wallet)
-                if current_balance > last_balance:
-                    deltas.append(current_balance - last_balance)
-                    last_balance = current_balance
-            assert len(deltas) == 1, "invalid number of debits to the storage node wallet per epoch"
-            single_node_gain_per_epoch = float((objects_count * MAX_OBJECT_SIZE) / GB)
-            assert abs(deltas[0] - single_node_gain_per_epoch) <= 1, "Invalid storage node wallet balance"
+            assert len(sn_deltas) == 1, "invalid number of debits to the storage node wallet per epoch"
+            assert abs(sn_deltas[0] - single_node_gain_per_epoch) <= 1, "Invalid storage node wallet balance"
