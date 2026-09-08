@@ -1,4 +1,3 @@
-import random
 from typing import Optional
 
 import allure
@@ -7,7 +6,6 @@ from helpers.grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
 from helpers.neofs_verbs import (
     delete_object,
     get_object_from_random_node,
-    get_range,
     head_object,
     put_object_to_random_node,
     search_object,
@@ -129,43 +127,6 @@ def can_get_head_object(
                 cid,
                 oid,
                 bearer=bearer,
-                wallet_config=wallet_config,
-                xhdr=xhdr,
-                shell=shell,
-                endpoint=endpoint,
-            )
-        except OPERATION_ERROR_TYPE as err:
-            assert error_matches_status(err, expected_error), f"Expected {err} to match {expected_error}"
-            return False
-    return True
-
-
-def _generate_random_range_cut(offset: int = 0, length: int = 10):
-    # [X:0] requests are not allowed
-    offset = random.randint(offset, length - 1)
-    length = length - random.randint(offset, length - 1)
-    return f"{offset}:{length}"
-
-
-def can_get_range_of_object(
-    wallet: str,
-    cid: str,
-    oid: str,
-    shell: Shell,
-    endpoint: str,
-    bearer: Optional[str] = None,
-    wallet_config: Optional[str] = None,
-    xhdr: Optional[dict] = None,
-    expected_error: str = OBJECT_ACCESS_DENIED,
-) -> bool:
-    with allure.step("Try get range of object"):
-        try:
-            get_range(
-                wallet,
-                cid,
-                oid,
-                bearer=bearer,
-                range_cut=_generate_random_range_cut(),
                 wallet_config=wallet_config,
                 xhdr=xhdr,
                 shell=shell,

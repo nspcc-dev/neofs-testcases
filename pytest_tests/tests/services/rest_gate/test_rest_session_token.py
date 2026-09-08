@@ -73,8 +73,7 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
         5. Head object using session token
         6. Search objects using session token
         7. Get object range using session token
-        8. Get object range hash using session token
-        9. Delete object using session token
+        8. Delete object using session token
         """
         with allure.step("Create container"):
             container_token = generate_session_token_v2(gw_endpoint, self.owner_wallet, [{"verbs": ["CONTAINER_PUT"]}])
@@ -96,7 +95,6 @@ class TestRestSessionTokenV2(TestNeofsRestBase):
                         "OBJECT_HEAD",
                         "OBJECT_DELETE",
                         "OBJECT_SEARCH",
-                        "OBJECT_RANGE",
                     ],
                 }
             ]

@@ -13,7 +13,6 @@ from helpers.metrics import get_metrics, wait_for_metric_to_arrive
 from helpers.neofs_verbs import (
     delete_object,
     get_object,
-    get_range,
     head_object,
     put_object,
     search_object,
@@ -99,15 +98,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         root=True,
     )
 
-    get_range(
-        default_wallet.path,
-        cid,
-        oid,
-        shell=neofs_env_single_sn.shell,
-        endpoint=neofs_env_single_sn.sn_rpc,
-        range_cut="0:1",
-    )
-
     block_height, validated_state = parse_node_height(
         neofs_env_single_sn.neo_go().query.height(rpc_endpoint=f"http://{ir.endpoint}").stdout
     )
@@ -153,7 +143,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_get_req_count",
         "neofs_node_object_get_req_count_success",
         "neofs_node_object_rpc_get_time_count",
-        "neofs_node_object_rpc_range_time_count",
         "neofs_node_object_rpc_search_time_count",
         "neofs_node_object_search_req_count",
         "neofs_node_object_search_req_count_success",
@@ -163,8 +152,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_object_rpc_head_time_count",
         "neofs_node_object_put_req_count",
         "neofs_node_object_put_req_count_success",
-        "neofs_node_object_range_req_count",
-        "neofs_node_object_range_req_count_success",
     ]
 
     for metric in metrics_to_verify:
@@ -174,7 +161,6 @@ def test_sn_ir_metrics(neofs_env_single_sn: NeoFSEnv, default_wallet: NodeWallet
         "neofs_node_engine_put_time_bucket",
         "neofs_node_engine_search_time_bucket",
         "neofs_node_object_rpc_get_time_bucket",
-        "neofs_node_object_rpc_range_time_bucket",
         "neofs_node_object_rpc_search_time_bucket",
         "neofs_node_object_counter",
         "neofs_node_engine_head_time_bucket",

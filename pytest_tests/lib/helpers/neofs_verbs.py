@@ -85,7 +85,7 @@ def get_object_from_random_node(
 
 def parse_raw_output(stdout: str) -> dict:
     """
-    Parse the stdout of a raw object range response for complex (split) objects.
+    Parse the stdout of a raw object get/range response for complex (split) objects.
 
     Expected stdout format::
 
@@ -94,7 +94,7 @@ def parse_raw_output(stdout: str) -> dict:
         First object: <first_object_id>
 
     Args:
-        stdout: raw stdout string returned by ``get_range`` when ``is_raw=True``.
+        stdout: raw stdout string returned by ``get_object``/``get_range`` when ``is_raw=True``.
 
     Returns:
         dict with keys:
@@ -497,10 +497,10 @@ def get_range(
     complex_object: bool = False,
 ):
     """
-    GETRANGE an Object.
+    GET a payload range of an Object via ``object get --range``.
 
     Args:
-        wallet: wallet on whose behalf GETRANGE is done
+        wallet: wallet on whose behalf GET is done
         cid: ID of Container where we get the Object from
         oid: ID of Object we are going to request
         range_cut: range to take data from in the form offset:length
@@ -516,7 +516,7 @@ def get_range(
     range_file_path = os.path.join(get_assets_dir_path(), TEST_OBJECTS_DIR, str(uuid.uuid4()))
 
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, wallet_config or WALLET_CONFIG)
-    stdout = cli.object.range(
+    stdout = cli.object.get(
         rpc_endpoint=endpoint,
         wallet=wallet,
         cid=cid,
@@ -527,6 +527,7 @@ def get_range(
         xhdr=xhdr,
         session=session,
         raw=is_raw,
+        no_progress=True,
     ).stdout
 
     if complex_object:

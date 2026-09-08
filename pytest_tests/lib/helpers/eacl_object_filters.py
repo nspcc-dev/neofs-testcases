@@ -10,8 +10,8 @@ EACL_OBJ_FILTERS = {
 }
 
 VERB_FILTER_DEP = {
-    "$Object:objectID": ["GET", "HEAD", "DELETE", "RANGE"],
-    "$Object:containerID": ["GET", "PUT", "HEAD", "DELETE", "SEARCH", "RANGE"],
+    "$Object:objectID": ["GET", "HEAD", "DELETE"],
+    "$Object:containerID": ["GET", "PUT", "HEAD", "DELETE", "SEARCH"],
     "$Object:ownerID": ["GET", "HEAD"],
     "$Object:creationEpoch": ["GET", "PUT", "HEAD"],
     "$Object:payloadLength": ["GET", "PUT", "HEAD"],

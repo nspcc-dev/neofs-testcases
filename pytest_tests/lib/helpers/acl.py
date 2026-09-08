@@ -26,7 +26,6 @@ class EACLOperation(Enum):
     PUT = "put"
     GET = "get"
     HEAD = "head"
-    GET_RANGE = "getrange"
     SEARCH = "search"
     DELETE = "delete"
 

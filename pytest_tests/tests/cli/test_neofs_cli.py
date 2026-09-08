@@ -39,7 +39,6 @@ def test_neofs_cli_excessive_flags(neofs_env: NeoFSEnv):
         "object lock bearer c1",
         "object nodes bearer c1",
         "object put bearer c1",
-        "object range bearer c1",
         "object search bearer c1",
         "session create address 10123",
         "storagegroup delete address 10123",
