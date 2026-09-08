@@ -1,10 +1,8 @@
 import json
 import logging
-import os
-import subprocess
-import tempfile
 
 from neo3.wallet import account as neo3_account
+from neo3.wallet import scrypt_parameters as scrypt
 from neo3.wallet import wallet as neo3_wallet
 
 from neofs_testlib.cli.neogo import NeoGo
@@ -107,19 +105,16 @@ def get_last_public_key_from_wallet_with_neogo(neo_go: NeoGo, wallet_path: str) 
     return public_key
 
 
-def get_wif_from_wallet_with_neogo(neo_go_exec_path: str, wallet_path: str, address: str, password: str) -> str:
-    with tempfile.NamedTemporaryFile("w", suffix=".yml", delete=False) as wallet_config_file:
-        wallet_config_file.write(f"Path: {wallet_path}\nPassword: {password}\n")
-        wallet_config_path = wallet_config_file.name
-    try:
-        result = subprocess.run(
-            [neo_go_exec_path, "wallet", "export", "--wallet-config", wallet_config_path, "--format", "wif", address],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    finally:
-        os.unlink(wallet_config_path)
-    wif = [line.strip() for line in result.stdout.splitlines() if line.strip()][-1]
-    logger.info(f"exported WIF for address {address}")
-    return wif
+def get_private_key_from_wallet(wallet_path: str, address: str, password: str) -> bytes:
+    with open(wallet_path) as wallet_file:
+        wallet_json = json.load(wallet_file)
+
+    scrypt_json = wallet_json.get("scrypt")
+    scrypt_params = scrypt.ScryptParameters(**scrypt_json) if scrypt_json else None
+
+    for account in wallet_json["accounts"]:
+        if account["address"] == address:
+            logger.info(f"got private key for address {address}")
+            return neo3_account.Account.private_key_from_nep2(account["key"], password, scrypt_params)
+
+    raise ValueError(f"Address {address} is not found in wallet {wallet_path}")

@@ -52,7 +52,6 @@ from helpers.common import (
 )
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
-from neo3.wallet import account as neo3_account
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -66,6 +65,14 @@ _binary_downloads_thread_lock = threading.Lock()
 
 _tls_ca_bundle_lock = threading.Lock()
 _tls_ca_bundle_path = None
+
+_local_ca_lock = threading.Lock()
+_local_ca_trusted = False
+_local_ca_cert_path = Path.home() / ".neofs-testlib" / "local_ca.pem"
+_local_ca_key_path = Path.home() / ".neofs-testlib" / "local_ca.key"
+_macos_system_keychain = "/Library/Keychains/System.keychain"
+# enough for a user to notice the macOS dialog and confirm it, it only shows up once per CA
+_macos_trust_prompt_timeout = 120
 
 
 _PORT_RANGE_START = 20000
@@ -255,22 +262,19 @@ class NeoFSEnv:
 
     @allure.step("Provision node-key TLS certificate")
     def generate_node_tls_cert(self, wallet: "NodeWallet", cert_path: str, key_path: Optional[str] = None):
-        wif = wallet_utils.get_wif_from_wallet_with_neogo(
-            self.neo_go_path, wallet.path, wallet.address, wallet.password
-        )
-        raw_key = neo3_account.Account.private_key_from_wif(wif)
+        raw_key = wallet_utils.get_private_key_from_wallet(wallet.path, wallet.address, wallet.password)
         private_key = ec.derive_private_key(int.from_bytes(raw_key, "big"), ec.SECP256R1())
+        ca_cert, ca_key = self.init_local_ca()
         now = datetime.datetime.now(datetime.timezone.utc)
-        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.domain)])
         cert = (
             x509.CertificateBuilder()
-            .subject_name(name)
-            .issuer_name(name)
+            .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.domain)]))
+            .issuer_name(ca_cert.subject)
             .public_key(private_key.public_key())
             .serial_number(x509.random_serial_number())
             .not_valid_before(now - datetime.timedelta(hours=1))
             .not_valid_after(now + datetime.timedelta(days=825))
-            .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
             .add_extension(
                 x509.KeyUsage(
                     digital_signature=True,
@@ -278,7 +282,7 @@ class NeoFSEnv:
                     key_encipherment=False,
                     data_encipherment=False,
                     key_agreement=False,
-                    key_cert_sign=True,
+                    key_cert_sign=False,
                     crl_sign=False,
                     encipher_only=False,
                     decipher_only=False,
@@ -296,7 +300,7 @@ class NeoFSEnv:
                 ),
                 critical=False,
             )
-            .sign(private_key, hashes.SHA256())
+            .sign(ca_key, hashes.SHA256())
         )
         Path(cert_path).write_bytes(cert.public_bytes(serialization.Encoding.PEM))
         if key_path:
@@ -307,7 +311,80 @@ class NeoFSEnv:
                     serialization.NoEncryption(),
                 )
             )
-        self.trust_tls_cert(cert_path)
+
+    def init_local_ca(self) -> tuple[x509.Certificate, ec.EllipticCurvePrivateKey]:
+        """
+        Node TLS certificates are signed by a CA that is reused between runs, so that clients have to
+        be taught to trust it only once. That matters on macOS, where the only way to make go binaries
+        accept a certificate is to put it into the platform trust store, which is an interactive
+        operation unless the run has passwordless sudo at hand.
+        """
+        global _local_ca_trusted
+        with _local_ca_lock:
+            ca_cert, ca_key = self._read_local_ca()
+            if ca_cert is None:
+                ca_cert, ca_key = self._create_local_ca()
+            if not _local_ca_trusted:
+                self.trust_tls_cert(str(_local_ca_cert_path))
+                _local_ca_trusted = True
+        return ca_cert, ca_key
+
+    @staticmethod
+    def _read_local_ca() -> tuple[Optional[x509.Certificate], Optional[ec.EllipticCurvePrivateKey]]:
+        if not (_local_ca_cert_path.is_file() and _local_ca_key_path.is_file()):
+            return None, None
+        try:
+            ca_cert = x509.load_pem_x509_certificate(_local_ca_cert_path.read_bytes())
+            ca_key = serialization.load_pem_private_key(_local_ca_key_path.read_bytes(), password=None)
+        except ValueError as exc:
+            logger.warning(f"Could not read the local CA at {_local_ca_cert_path}, going to recreate it: {exc}")
+            return None, None
+        if ca_cert.not_valid_after_utc <= datetime.datetime.now(datetime.timezone.utc):
+            return None, None
+        return ca_cert, ca_key
+
+    @staticmethod
+    def _create_local_ca() -> tuple[x509.Certificate, ec.EllipticCurvePrivateKey]:
+        ca_key = ec.generate_private_key(ec.SECP256R1())
+        now = datetime.datetime.now(datetime.timezone.utc)
+        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "NeoFS testlib local CA")])
+        ca_cert = (
+            x509.CertificateBuilder()
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(ca_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now - datetime.timedelta(hours=1))
+            .not_valid_after(now + datetime.timedelta(days=3650))
+            .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .add_extension(
+                x509.KeyUsage(
+                    digital_signature=True,
+                    content_commitment=False,
+                    key_encipherment=False,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    key_cert_sign=True,
+                    crl_sign=True,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                critical=True,
+            )
+            .sign(ca_key, hashes.SHA256())
+        )
+        _local_ca_cert_path.parent.mkdir(parents=True, exist_ok=True)
+        _local_ca_cert_path.write_bytes(ca_cert.public_bytes(serialization.Encoding.PEM))
+        _local_ca_key_path.write_bytes(
+            ca_key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            )
+        )
+        _local_ca_key_path.chmod(0o600)
+        logger.info(f"Created a local CA for node TLS certificates at {_local_ca_cert_path}")
+        return ca_cert, ca_key
 
     def init_tls_ca_bundle(self):
         global _tls_ca_bundle_path
@@ -330,40 +407,65 @@ class NeoFSEnv:
             self._trust_cert_macos(cert_path)
 
     def _trust_cert_macos(self, cert_path: str):
-        system_keychain = "/Library/Keychains/System.keychain"
-        try:
-            already_trusted = subprocess.run(
-                ["security", "verify-cert", "-c", str(cert_path), "-p", "ssl"],
-                capture_output=True,
-                text=True,
-            )
-            if already_trusted.returncode == 0:
-                return
-            add_cert_args = [
-                "security",
-                "add-trusted-cert",
-                "-d",
-                "-r",
-                "trustRoot",
-                "-p",
-                "ssl",
-                "-k",
-                system_keychain,
-                str(cert_path),
-            ]
-            result = subprocess.run(["sudo", "-n", *add_cert_args], capture_output=True, text=True)
-            if result.returncode != 0 and sys.stdin.isatty():
-                result = subprocess.run(["sudo", *add_cert_args])
-        except OSError as exc:
-            logger.warning(f"Could not run 'security'/'sudo' to trust the TLS certificate on macOS: {exc}")
+        # go ignores SSL_CERT_FILE on macOS and always verifies against the platform trust store,
+        # so the certificate has to be registered there for neofs binaries to accept it
+        if self._is_cert_trusted_macos(cert_path):
             return
-        if result.returncode != 0:
-            stderr = getattr(result, "stderr", "") or ""
-            logger.warning(
-                "Could not add the TLS certificate to the macOS System keychain trust store "
-                "(requires passwordless sudo in CI); TLS-enabled nodes may be unreachable from clients. "
-                f"stderr: {stderr.strip()}"
+
+        add_cert_args = ["-r", "trustRoot", "-p", "ssl", "-k"]
+        # CI runners provide passwordless sudo, adding to the system keychain as root asks nothing
+        commands = [["sudo", "-n", "security", "add-trusted-cert", "-d", *add_cert_args, _macos_system_keychain]]
+        # the login keychain is writable without admin rights, but macOS asks the user to confirm it
+        login_keychain = self._macos_login_keychain()
+        if login_keychain:
+            commands.append(["security", "add-trusted-cert", *add_cert_args, login_keychain])
+
+        for command in commands:
+            if command[0] != "sudo":
+                logger.warning(
+                    f"Going to add {cert_path} to the macOS trust store, "
+                    "confirm the dialog macOS is about to show to let clients talk to TLS-enabled nodes"
+                )
+            try:
+                result = subprocess.run(
+                    [*command, str(cert_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=_macos_trust_prompt_timeout,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                logger.warning(f"Could not run '{command[0]}' to trust the TLS certificate on macOS: {exc}")
+                continue
+            if result.returncode == 0:
+                return
+            logger.warning(f"Could not trust the TLS certificate via '{command[0]}': {result.stderr.strip()}")
+
+        logger.warning(
+            "Could not add the TLS certificate to the macOS trust store, TLS-enabled nodes are unreachable "
+            f"from clients until {cert_path} is trusted manually"
+        )
+
+    @staticmethod
+    def _is_cert_trusted_macos(cert_path: str) -> bool:
+        try:
+            result = subprocess.run(
+                ["security", "verify-cert", "-c", str(cert_path), "-p", "ssl"], capture_output=True, text=True
             )
+        except OSError as exc:
+            logger.warning(f"Could not run 'security' to check the macOS trust store: {exc}")
+            return False
+        return result.returncode == 0
+
+    @staticmethod
+    def _macos_login_keychain() -> Optional[str]:
+        try:
+            result = subprocess.run(["security", "login-keychain"], capture_output=True, text=True)
+        except OSError as exc:
+            logger.warning(f"Could not run 'security' to locate the macOS login keychain: {exc}")
+            return None
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip().strip('"')
 
     @allure.step("Deploy inner ring nodes")
     def deploy_inner_ring_nodes(
