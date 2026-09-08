@@ -1,7 +1,8 @@
 import socket
 
 from neofs_testlib.env.env import NeoFSEnv
-from tenacity import retry, stop_after_attempt, wait_fixed
+from neofs_testlib.reporter import retry
+from tenacity import stop_after_attempt, wait_fixed
 
 
 @retry(wait=wait_fixed(1), stop=stop_after_attempt(50), reraise=True)

@@ -19,7 +19,7 @@ from paramiko import (
 )
 from paramiko.ssh_exception import AuthenticationException
 
-from neofs_testlib.reporter import get_reporter, should_report_command, truncate_command_output
+from neofs_testlib.reporter import get_reporter, report_command, should_report_command, truncate_command_output
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
 logger = logging.getLogger("neofs.testlib.shell")
@@ -59,8 +59,12 @@ def log_command(func):
         # Successful commands are not attached to the report to keep it small;
         # full detail is kept for failures and can be forced via NEOFS_ALLURE_FULL_LOGS.
         if should_report_command(result.return_code != 0):
-            with reporter.step(command_info):
-                reporter.attach(truncate_command_output(log_message), "SSH command.txt")
+
+            def _emit() -> None:
+                with reporter.step(command_info):
+                    reporter.attach(truncate_command_output(log_message), "SSH command.txt")
+
+            report_command(_emit)
         return result
 
     return wrapper

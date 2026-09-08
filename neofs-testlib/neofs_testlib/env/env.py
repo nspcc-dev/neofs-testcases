@@ -53,9 +53,10 @@ from helpers.common import (
 from helpers.neofs_verbs import get_netmap_netinfo
 from helpers.utility import parse_version
 from neo3.wallet import account as neo3_account
-from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
+from tenacity import stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
+from neofs_testlib.reporter import retry
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
 from neofs_testlib.utils.log_uploader import NeofsConfig, NeofsUploader, build_logs_neofs_path

@@ -20,6 +20,7 @@ from helpers.common import (
 from helpers.complex_object_actions import get_nodes_without_object
 from helpers.file_helper import get_file_hash
 from helpers.neofs_verbs import get_object
+from neofs_testlib.reporter import should_report_command
 from neofs_testlib.shell import Shell
 
 logger = logging.getLogger("NeoLogger")
@@ -93,6 +94,7 @@ def get_via_rest_gate(
     if not skip_options_verify:
         verify_options_request(request)
     resp = requests.get(request, stream=True, headers=req_headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp)
 
     if not resp.ok:
         if expect_error:
@@ -105,7 +107,6 @@ def get_via_rest_gate(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code)
 
     if return_response or expect_error:
         return resp
@@ -141,6 +142,7 @@ def head_via_rest_gate(
 
     verify_options_request(request)
     resp = requests.head(request, stream=True, headers=req_headers or None, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp)
 
     if not resp.ok and not expect_error:
         raise Exception(
@@ -151,7 +153,6 @@ def head_via_rest_gate(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code)
 
     return resp
 
@@ -175,6 +176,7 @@ def get_via_rest_gate_by_attribute(
     if not skip_options_verify:
         verify_options_request(request)
     resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp)
 
     if not resp.ok:
         raise Exception(
@@ -185,7 +187,6 @@ def get_via_rest_gate_by_attribute(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code)
 
     if return_response:
         return resp
@@ -210,6 +211,7 @@ def head_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str) ->
 
     verify_options_request(request)
     resp = requests.head(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp)
 
     if not resp.ok:
         raise Exception(
@@ -220,13 +222,15 @@ def head_via_rest_gate_by_attribute(cid: str, attribute: dict, endpoint: str) ->
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code)
 
     return resp
 
 
-def _attach_allure_step(request: str, status_code: int, req_type="GET"):
-    command_attachment = f"REQUEST: '{request}'\nRESPONSE:\n {status_code}\n"
+def _attach_allure_step(request: str, resp: requests.Response, req_type="GET"):
+    if not should_report_command(is_error=not resp.ok):
+        return
+
+    command_attachment = f"REQUEST: '{request}'\nRESPONSE:\n {resp.status_code}\n{resp.text}\n"
     with allure.step(f"{req_type} Request"):
         allure.attach(command_attachment, f"{req_type} Request", allure.attachment_type.TEXT)
 
@@ -350,6 +354,7 @@ def upload_via_rest_gate(
     resp = requests.post(
         request, data=file_content, headers=headers, cookies=cookies, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT
     )
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         if error_pattern:
@@ -364,7 +369,6 @@ def upload_via_rest_gate(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.json(), req_type="POST")
 
     assert resp.json().get("object_id"), f"OID found in response {resp}"
 
@@ -398,6 +402,7 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
 
     verify_options_request(request)
     resp = requests.get(request, stream=True, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp)
 
     if not resp.ok:
         raise Exception(
@@ -408,7 +413,6 @@ def get_epoch_duration_via_rest_gate(endpoint: str) -> int:
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.json())
 
     epoch_duration = resp.json().get("epochDuration")
     return epoch_duration
@@ -459,6 +463,7 @@ def create_container(
         params["walletConnect"] = "true"
 
     resp = requests.post(request, json=body, headers=headers, params=params, timeout=60)
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         raise Exception(
@@ -469,7 +474,6 @@ def create_container(
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.json(), req_type="POST")
 
     assert resp.json().get("containerId"), f"CID not found in response {resp.json()}"
 
@@ -512,6 +516,7 @@ def get_unsigned_bearer_token(
         body["lifetime"] = lifetime
 
     resp = requests.post(request, json=body, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         if expect_error:
@@ -525,8 +530,6 @@ def get_unsigned_bearer_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
-    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"]
 
@@ -565,6 +568,7 @@ def complete_bearer_token(
     }
 
     resp = requests.post(request, json=body, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         if expect_error:
@@ -578,8 +582,6 @@ def complete_bearer_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
-    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"]
 
@@ -628,6 +630,7 @@ def get_unsigned_session_token(
         body["final"] = True
 
     resp = requests.post(request, json=body, timeout=60)
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         raise Exception(
@@ -639,8 +642,6 @@ def get_unsigned_session_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
-    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"], resp.json()["lock"]
 
@@ -687,6 +688,7 @@ def complete_session_token(
         json=body,
         timeout=60,
     )
+    _attach_allure_step(request, resp, req_type="POST")
 
     if not resp.ok:
         raise Exception(
@@ -698,8 +700,6 @@ def complete_session_token(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    request_info = json.dumps({"url": request, "headers": dict(resp.request.headers), "body": body}, indent=2)
-    _attach_allure_step(request_info, resp.json(), req_type="POST")
 
     return resp.json()["token"]
 
@@ -708,6 +708,7 @@ def complete_session_token(
 def get_containers_list(endpoint: str) -> dict:
     request = f"{endpoint}/containers"
     resp = requests.get(request, timeout=60)
+    _attach_allure_step(request, resp, req_type="GET")
 
     if not resp.ok:
         raise Exception(
@@ -719,7 +720,6 @@ def get_containers_list(endpoint: str) -> dict:
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="GET")
 
     return resp.json()
 
@@ -728,6 +728,7 @@ def get_containers_list(endpoint: str) -> dict:
 def get_container_info(endpoint: str, container_id: str) -> dict:
     request = f"{endpoint}/containers/{container_id}"
     resp = requests.get(request, timeout=60)
+    _attach_allure_step(request, resp, req_type="GET")
 
     if not resp.ok:
         raise Exception(
@@ -739,7 +740,6 @@ def get_container_info(endpoint: str, container_id: str) -> dict:
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="GET")
 
     return resp.json()
 
@@ -748,6 +748,7 @@ def get_container_info(endpoint: str, container_id: str) -> dict:
 def get_container_eacl(endpoint: str, container_id: str, expect_error: bool = False) -> dict:
     request = f"{endpoint}/containers/{container_id}/eacl"
     resp = requests.get(request, timeout=60)
+    _attach_allure_step(request, resp, req_type="GET")
 
     if not resp.ok and not expect_error:
         raise Exception(
@@ -759,7 +760,6 @@ def get_container_eacl(endpoint: str, container_id: str, expect_error: bool = Fa
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="GET")
 
     return resp.json()
 
@@ -805,6 +805,7 @@ def put_container_eacl(
         params["walletConnect"] = "true"
 
     resp = requests.put(request, json=body, headers=headers, params=params, timeout=60)
+    _attach_allure_step(request, resp, req_type="PUT")
 
     if not resp.ok and not expect_error:
         raise Exception(
@@ -821,7 +822,6 @@ def put_container_eacl(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json() if resp.ok else resp.text}")
-    _attach_allure_step(request, resp.json() if resp.ok else resp.text, req_type="PUT")
 
     return resp.json() if resp.ok else {"error": resp.text, "status_code": resp.status_code}
 
@@ -856,6 +856,7 @@ def delete_container(
         params["walletConnect"] = "true"
 
     resp = requests.delete(request, headers=headers, params=params, timeout=60)
+    _attach_allure_step(request, resp, req_type="DELETE")
 
     if not resp.ok:
         raise Exception(
@@ -867,7 +868,6 @@ def delete_container(
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="DELETE")
 
     return resp.json()
 
@@ -905,6 +905,7 @@ def searchv2(
         headers["Authorization"] = f"Bearer {session_token}"
 
     resp = requests.post(request, params=params, json=search_request, headers=headers)
+    _attach_allure_step(f"{request=}; {params=}; {search_request=}", resp, req_type="POST")
 
     if not resp.ok:
         raise AssertionError(
@@ -916,7 +917,6 @@ def searchv2(
                 status code: {resp.status_code} {resp.reason}"""
         )
 
-    _attach_allure_step(f"{request=}; {params=}; {search_request=}", resp.json(), req_type="POST")
     return resp.json()
 
 
@@ -938,6 +938,7 @@ def delete_object(endpoint: str, cid: str, oid: str, session_token: str) -> dict
     headers = {"Authorization": f"Bearer {session_token}"}
 
     resp = requests.delete(request, headers=headers, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp, req_type="DELETE")
 
     if not resp.ok:
         raise Exception(
@@ -948,7 +949,6 @@ def delete_object(endpoint: str, cid: str, oid: str, session_token: str) -> dict
         )
 
     logger.info(f"Request: {request}")
-    _attach_allure_step(request, resp.status_code, req_type="DELETE")
 
     return resp.status_code
 
@@ -966,6 +966,7 @@ def get_rest_gateway_address(endpoint: str) -> str:
     """
     request = f"{endpoint}/gateway"
     resp = requests.get(request, timeout=DEFAULT_REST_OPERATION_TIMEOUT)
+    _attach_allure_step(request, resp, req_type="GET")
 
     if not resp.ok:
         raise Exception(
@@ -977,7 +978,6 @@ def get_rest_gateway_address(endpoint: str) -> str:
 
     logger.info(f"Request: {request}")
     logger.info(f"Response: {resp.json()}")
-    _attach_allure_step(request, resp.json(), req_type="GET")
 
     address = resp.json().get("address")
     if not address:
