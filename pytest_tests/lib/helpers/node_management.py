@@ -343,6 +343,7 @@ def exclude_node_from_network_map(
     )
 
     storage_node_set_status(node_to_exclude, status="offline")
+    node_to_exclude.stop()
 
     time.sleep(parse_time(FSCHAIN_BLOCK_TIME))
     neofs_epoch.tick_epoch_and_wait(neofs_env)
@@ -358,6 +359,10 @@ def include_node_to_network_map(
     shell: Shell,
     neofs_env: NeoFSEnv,
 ) -> None:
+    if node_to_include.process is None:
+        node_to_include.start(fresh=False)
+        time.sleep(parse_time(FSCHAIN_BLOCK_TIME))
+
     storage_node_set_status(node_to_include, status="online")
 
     # Per suggestion of @fyrchik we need to wait for 2 blocks after we set status and after tick epoch.
