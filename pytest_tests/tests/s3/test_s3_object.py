@@ -877,7 +877,7 @@ def test_s3_gw_connected_to_tls_node(neofs_env: NeoFSEnv, default_wallet: NodeWa
 
     try:
         with allure.step("Issue S3 credentials for the TLS-backed gateway"):
-            _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
+            _, _, access_key_id, secret_access_key = init_s3_credentials(
                 default_wallet, neofs_env, s3_gw=s3_gw, placement_policy="REP 1"
             )
             client = configure_boto3_client(access_key_id, secret_access_key, f"https://{s3_gw.endpoint}")
