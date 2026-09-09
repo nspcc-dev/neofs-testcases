@@ -81,7 +81,6 @@ class TestNeofsS3Base(NeofsEnvTestBase):
             bucket,
             access_key_id,
             secret_access_key,
-            owner_private_key,
         ) = init_s3_credentials(wallet, neofs_env, placement_policy=placement_policy)
 
         cli = neofs_env.neofs_cli(neofs_env.generate_cli_config(wallet))
@@ -178,7 +177,6 @@ def init_s3_credentials(
                         bucket,
                         parsed_json_block["access_key_id"],
                         parsed_json_block["secret_access_key"],
-                        parsed_json_block["owner_private_key"],
                     )
             except json.JSONDecodeError:
                 raise AssertionError(f"Could not parse info from output\n{output}")

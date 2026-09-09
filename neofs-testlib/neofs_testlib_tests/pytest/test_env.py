@@ -72,7 +72,6 @@ def s3_creds(neofs_env: NeoFSEnv, zero_fee, wallet: NodeWallet) -> tuple:
                 bucket,
                 parsed_json_block["access_key_id"],
                 parsed_json_block["secret_access_key"],
-                parsed_json_block["owner_private_key"],
             )
     raise AssertionError("Can't get s3 creds")
 
