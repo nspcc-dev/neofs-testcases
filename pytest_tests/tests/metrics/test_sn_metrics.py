@@ -46,7 +46,7 @@ def parse_node_height(stdout: str) -> tuple[float, float]:
 @pytest.fixture()
 def s3_boto_client(temp_directory, neofs_env_single_sn: NeoFSEnv):
     wallet = create_wallet()
-    _, _, access_key_id, secret_access_key, _ = init_s3_credentials(
+    _, _, access_key_id, secret_access_key = init_s3_credentials(
         wallet,
         neofs_env_single_sn,
     )
