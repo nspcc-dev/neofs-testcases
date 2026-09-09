@@ -323,7 +323,7 @@ def parse_container_nodes_output(output: str) -> list[dict]:
             node_num = int(node_match.group(1))
             node_id = node_match.group(2)
             status = node_match.group(3)
-            endpoint = node_match.group(4)
+            endpoint = node_match.group(4).strip()
 
             node_data = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
 

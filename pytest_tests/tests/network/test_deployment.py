@@ -233,7 +233,7 @@ def test_tls_node_dual_port_access(neofs_env: NeoFSEnv):
         assert not re.search(rf"\b{plain_port}\b", snapshot), (
             f"Plain port {plain_port} must NOT be advertised in netmap:\n{snapshot}"
         )
-        assert "tls" in snapshot.lower(), f"TLS marker missing from netmap snapshot:\n{snapshot}"
+        assert re.search(r"(?:/tls\b|grpcs://)", snapshot), f"TLS marker missing from netmap snapshot:\n{snapshot}"
 
     wallet = create_wallet()
     cid = create_container(wallet.path, rule="REP 1", shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)

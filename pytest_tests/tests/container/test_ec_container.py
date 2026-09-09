@@ -24,7 +24,12 @@ from helpers.neofs_verbs import (
     put_object,
     search_object,
 )
-from helpers.node_management import drop_object, storage_node_by_port, wait_all_storage_nodes_returned
+from helpers.node_management import (
+    drop_object,
+    netmap_endpoint_port,
+    storage_node_by_port,
+    wait_all_storage_nodes_returned,
+)
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -32,6 +37,8 @@ EC_PART_HASHES_ATTR = "__NEOFS__EC_PART_HASHES"
 EC_RULE_IDX_ATTR = "__NEOFS__EC_RULE_IDX"
 EC_PART_IDX_ATTR = "__NEOFS__EC_PART_IDX"
 _SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+_EC_NODE_ADDR = r"Node \d+: [a-f0-9]+ (?:ONLINE|OFFLINE|MAINTENANCE) (\S+)"
+_EC_ONLINE_NODE_ADDR = r"Node \d+: [a-f0-9]+ ONLINE (\S+)"
 
 
 def parse_ec_nodes_count(output: str) -> list:
@@ -44,14 +51,13 @@ def parse_ec_nodes_count(output: str) -> list:
     Returns:
         list: List of dictionaries with port information for each node
     """
-    node_pattern = r"Node \d+: [a-f0-9]+ ONLINE /dns4/localhost/tcp/(\d+)"
-    ports = re.findall(node_pattern, output)
-    return [{"port": int(port)} for port in ports]
+    addresses = re.findall(_EC_ONLINE_NODE_ADDR, output)
+    return [{"port": netmap_endpoint_port(addr)} for addr in addresses]
 
 
 def parse_ec_descriptors(output: str) -> list[dict]:
     header_pattern = re.compile(r"EC descriptor #\d+, EC (\d+)/(\d+):")
-    node_pattern = re.compile(r"Node \d+: [a-f0-9]+ (?:ONLINE|OFFLINE|MAINTENANCE) /dns4/localhost/tcp/(\d+)")
+    node_pattern = re.compile(_EC_NODE_ADDR)
 
     descriptors = []
     current = None
@@ -68,7 +74,7 @@ def parse_ec_descriptors(output: str) -> list[dict]:
 
         node_match = node_pattern.search(line)
         if node_match and current is not None:
-            current["ports"].append(int(node_match.group(1)))
+            current["ports"].append(netmap_endpoint_port(node_match.group(1)))
 
     return descriptors
 
