@@ -19,11 +19,17 @@ def ensure_fresh_epoch(neofs_env: NeoFSEnv, alive_node: Optional[StorageNode] = 
     return epoch
 
 
+def running_storage_nodes(neofs_env: NeoFSEnv) -> list[StorageNode]:
+    return [node for node in neofs_env.storage_nodes if node.process is not None]
+
+
 @allure.step("Wait for epochs align in whole cluster")
 @wait_for_success(60, 5)
 def wait_for_epochs_align(neofs_env: NeoFSEnv, epoch_number: Optional[int] = None) -> bool:
     epochs = []
-    for node in neofs_env.storage_nodes:
+    nodes = running_storage_nodes(neofs_env)
+    assert nodes, "No running storage nodes to check epoch alignment"
+    for node in nodes:
         current_epoch = get_epoch(neofs_env, node)
         assert epoch_number is None or current_epoch > epoch_number, (
             f"Epoch {current_epoch} wasn't ticked yet. Expected epoch > {epoch_number}"
@@ -41,7 +47,9 @@ def wait_until_new_epoch(
     require_all_storage_nodes: bool = True,
 ) -> int:
     expected = current_epoch + 1
-    epochs = [get_epoch(neofs_env, node) for node in neofs_env.storage_nodes]
+    nodes = running_storage_nodes(neofs_env)
+    assert nodes, "No running storage nodes to wait for a new epoch"
+    epochs = [get_epoch(neofs_env, node) for node in nodes]
     matched = sum(1 for epoch in epochs if epoch == expected)
     required = len(epochs) if require_all_storage_nodes else 1
     assert matched >= required, (
