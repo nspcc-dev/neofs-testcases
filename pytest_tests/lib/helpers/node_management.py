@@ -88,16 +88,36 @@ def get_locode_from_random_node(neofs_env: NeoFSEnv) -> str:
     return locode
 
 
+_DEFAULT_URI_PORTS = {
+    "grpc": 80,
+    "grpcs": 443,
+}
+
+
 def netmap_endpoint_port(endpoint: str) -> int:
     """Extract the gRPC port from an address as netmap reports it.
 
-    Netmap advertises multiaddrs, and TLS nodes get a `/tls` suffix
-    (`/dns4/localhost/tcp/<port>/tls`), so the trailing segment is not always the port.
+    Netmap may advertise a URI (`grpcs://localhost:8080`, `localhost:8080`) or a
+    multiaddr (`/dns4/localhost/tcp/8080`, optionally with a `/tls` suffix).
+    Multiaddr support is transitional and will be dropped eventually.
     """
+    endpoint = endpoint.strip()
+
     multiaddr_port = re.search(r"/tcp/(\d+)", endpoint)
     if multiaddr_port:
         return int(multiaddr_port.group(1))
-    return int(endpoint.rsplit(":", 1)[-1])
+
+    uri_port = re.search(r":(\d+)$", endpoint)
+    if uri_port:
+        return int(uri_port.group(1))
+
+    scheme_match = re.match(r"^([a-zA-Z][a-zA-Z0-9+.-]*)://", endpoint)
+    if scheme_match:
+        default_port = _DEFAULT_URI_PORTS.get(scheme_match.group(1).lower())
+        if default_port is not None:
+            return default_port
+
+    raise ValueError(f"Cannot extract port from netmap endpoint: {endpoint!r}")
 
 
 def storage_node_by_port(neofs_env: NeoFSEnv, port: int) -> Optional[StorageNode]:
