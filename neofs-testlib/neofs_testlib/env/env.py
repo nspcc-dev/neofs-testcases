@@ -2120,6 +2120,14 @@ class XK6:
         self.neofs_env.generate_storage_wallet(self.wallet, label="xk6")
         self.config = neofs_env.generate_cli_config(self.wallet)
 
+    def _preset_python(self) -> str:
+        venv_python = os.path.join(self.xk6_dir, ".venv", "bin", "python")
+        if not os.path.exists(venv_python):
+            result = self.neofs_env.shell.exec(f"make -C {self.xk6_dir} install_preset")
+            assert not result.return_code, "Failed to install xk6 preset Python dependencies"
+            assert os.path.exists(venv_python), f"xk6 preset venv python not found: {venv_python}"
+        return venv_python
+
     @allure.step("Run K6 Loader")
     def run(
         self,
@@ -2166,6 +2174,7 @@ class XK6:
             raise RuntimeError("Invalid xk6 directory")
 
         command = (
+            f"{self._preset_python()} "
             f"{self.xk6_dir}/scenarios/preset/preset_grpc.py "
             f"--size {size}  "
             f"--containers {containers} "
