@@ -111,6 +111,18 @@ def object_is_not_accessible(wallet_path: str, cid: str, oid: str, neofs_env: Ne
         )
 
 
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(300), reraise=True)
+def object_is_stored_on_cluster(cid: str, oid: str, neofs_env: NeoFSEnv):
+    nodes = get_nodes_with_object(
+        cid,
+        oid,
+        shell=neofs_env.shell,
+        nodes=neofs_env.storage_nodes,
+        neofs_env=neofs_env,
+    )
+    assert nodes, f"object {oid} is not stored on any storage node"
+
+
 @pytest.mark.sanity
 @pytest.mark.parametrize(
     "data_shards,parity_shards",
@@ -980,6 +992,26 @@ def _expected_ec_part_hashes_count(ec_rules: list[tuple[int, int]]) -> int:
     return sum(data + parity for data, parity in ec_rules)
 
 
+def _collect_ec_parts_by_rule(wallet_path: str, cid: str, neofs_env: NeoFSEnv) -> dict[int, list[str]]:
+    found_objects, _ = search_object(rpc_endpoint=neofs_env.sn_rpc, wallet=wallet_path, cid=cid, shell=neofs_env.shell)
+    parts: dict[int, list[str]] = {}
+    for obj in found_objects:
+        oid = obj["id"]
+        head_info = head_object(
+            wallet_path,
+            cid,
+            oid,
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+        attrs = _object_attributes(head_info)
+        if EC_RULE_IDX_ATTR not in attrs:
+            continue
+        rule_idx = int(attrs[EC_RULE_IDX_ATTR])
+        parts.setdefault(rule_idx, []).append(oid)
+    return parts
+
+
 @pytest.mark.sanity
 @pytest.mark.parametrize(
     "ec_rules",
@@ -1394,6 +1426,103 @@ def test_ec_container_cross_rule_fault_tolerance(
         )
 
     with allure.step("Clean up container"):
+        delete_container(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+
+
+@pytest.mark.sanity
+@pytest.mark.parametrize(
+    "ec_rules,rule_to_drop",
+    [
+        ([(2, 1), (1, 2)], 0),
+        ([(2, 1), (1, 2)], 1),
+    ],
+    ids=[
+        "drop_EC_2/1",
+        "drop_EC_1/2",
+    ],
+)
+@pytest.mark.simple
+@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/3848")
+def test_ec_rule_restore(
+    default_wallet: NodeWallet, neofs_env: NeoFSEnv, ec_rules: list[tuple[int, int]], rule_to_drop: int
+):
+    wallet = default_wallet
+    dropped_data, dropped_parity = ec_rules[rule_to_drop]
+    kept_rule_idx = 1 - rule_to_drop
+
+    with allure.step(f"Create EC container with rules {ec_rules}"):
+        placement_rule = _build_ec_policy(ec_rules)
+        cid = create_container(
+            wallet.path,
+            rule=placement_rule,
+            name="ec-rule-restore-container",
+            shell=neofs_env.shell,
+            endpoint=neofs_env.sn_rpc,
+        )
+
+    with allure.step("Put object to EC container"):
+        source_file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
+        main_oid = put_object(
+            wallet.path,
+            source_file_path,
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+        )
+
+    with allure.step("Collect EC parts for every rule"):
+        parts_by_rule = _collect_ec_parts_by_rule(wallet.path, cid, neofs_env)
+        assert set(parts_by_rule) == set(range(len(ec_rules))), (
+            f"Expected parts for rules {list(range(len(ec_rules)))}, found {sorted(parts_by_rule)}"
+        )
+        for rule_idx, (data_shards, parity_shards) in enumerate(ec_rules):
+            expected_parts = data_shards + parity_shards
+            assert len(parts_by_rule[rule_idx]) == expected_parts, (
+                f"Expected {expected_parts} parts for EC {data_shards}/{parity_shards} "
+                f"(rule {rule_idx}), found {len(parts_by_rule[rule_idx])}: {parts_by_rule[rule_idx]}"
+            )
+
+        source_rule_parts = parts_by_rule[kept_rule_idx]
+        parts_to_drop = parts_by_rule[rule_to_drop]
+        assert len(parts_to_drop) > dropped_parity, (
+            "test must drop more parts than the damaged rule can reconstruct on its own"
+        )
+
+        holders = []
+        for oid in parts_to_drop:
+            nodes_with_object = get_nodes_with_object(
+                cid,
+                oid,
+                shell=neofs_env.shell,
+                nodes=neofs_env.storage_nodes,
+                neofs_env=neofs_env,
+            )
+            assert nodes_with_object, f"expected at least one node storing part {oid}"
+            for node in nodes_with_object:
+                holders.append((oid, node))
+
+    with allure.step(
+        f"Drop all {len(parts_to_drop)} objects of EC {dropped_data}/{dropped_parity} (rule {rule_to_drop})"
+    ):
+        for oid, node in holders:
+            drop_object(node, cid, oid)
+
+    with allure.step("Verify the other rule still has its parts"):
+        for oid in source_rule_parts:
+            head_object(
+                wallet.path,
+                cid,
+                oid,
+                shell=neofs_env.shell,
+                endpoint=neofs_env.sn_rpc,
+            )
+
+    with allure.step("Wait until dropped parts are reconstructed from the other EC rule"):
+        for oid in parts_to_drop:
+            object_is_stored_on_cluster(cid, oid, neofs_env)
+
+    with allure.step("Clean up container"):
+        delete_object(wallet.path, cid, main_oid, neofs_env.shell, neofs_env.sn_rpc)
         delete_container(wallet.path, cid, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
 
 
