@@ -8,7 +8,7 @@ from helpers.complex_object_actions import get_nodes_with_object, wait_object_re
 from helpers.container import create_container
 from helpers.file_helper import generate_file, get_file_hash
 from helpers.neofs_verbs import get_object, put_object, put_object_to_random_node
-from helpers.node_management import exclude_node_from_network_map, include_node_to_network_map
+from helpers.node_management import start_storage_nodes, stop_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 
@@ -384,12 +384,12 @@ def test_initial_placement_multi_vector_replica_limits(
 
 @_slow_policer
 @allure.title("Initial placement: PUT succeeds with fewer nodes than main REP requires")
-def test_initial_placement_with_excluded_nodes(
+def test_initial_placement_with_stopped_nodes(
     default_wallet: NodeWallet,
     neofs_env: NeoFSEnv,
 ):
     alive_node = neofs_env.storage_nodes[0]
-    nodes_to_exclude = neofs_env.storage_nodes[1:3]
+    nodes_to_stop = neofs_env.storage_nodes[1:3]
 
     with allure.step("Create container"):
         cid = create_container(
@@ -400,14 +400,8 @@ def test_initial_placement_with_excluded_nodes(
             basic_acl=PUBLIC_ACL,
         )
 
-    with allure.step("Exclude 2 nodes from the netmap"):
-        for node in nodes_to_exclude:
-            exclude_node_from_network_map(
-                node,
-                alive_node,
-                shell=neofs_env.shell,
-                neofs_env=neofs_env,
-            )
+    with allure.step("Stop 2 nodes without evicting them from the netmap"):
+        stop_storage_nodes(nodes_to_stop)
 
     file_path = generate_file(neofs_env.get_object_size("simple_object_size"))
 
@@ -440,19 +434,13 @@ def test_initial_placement_with_excluded_nodes(
                 neofs_env=neofs_env,
             )
             assert len(nodes_with_object) == 1, (
-                f"Expected exactly 1 initial copy (max_replicas=1, 2 netmap nodes), "
+                f"Expected exactly 1 initial copy (max_replicas=1, 2 nodes stopped), "
                 f"but found {len(nodes_with_object)} on {nodes_with_object}"
             )
 
     finally:
-        with allure.step("Restore excluded nodes to the netmap"):
-            for node in nodes_to_exclude:
-                include_node_to_network_map(
-                    node,
-                    alive_node,
-                    shell=neofs_env.shell,
-                    neofs_env=neofs_env,
-                )
+        with allure.step("Start stopped nodes"):
+            start_storage_nodes(nodes_to_stop)
 
 
 @allure.title("Initial placement + policer: max_replicas=1 then full REP 2")
