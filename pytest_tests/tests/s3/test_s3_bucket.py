@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import allure
@@ -11,6 +12,7 @@ from helpers.s3_helper import (
     set_bucket_versioning,
     verify_acls,
 )
+from helpers.utility import parse_version
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
@@ -191,3 +193,30 @@ class TestS3Bucket(TestNeofsS3Base):
             s3_bucket.put_bucket_policy(self.s3_client, bucket, custom_policy)
         with allure.step("GetBucketPolicy"):
             s3_bucket.get_bucket_policy(self.s3_client, bucket)
+
+
+class TestS3BucketLocationConstraint(TestNeofsS3Base):
+    @pytest.fixture(scope="class")
+    def placement_policy(self) -> str:
+        return "REP 100"
+
+    @allure.title("Test S3: location constraint satisfiability")
+    def test_s3_location_constraint_satisfiability(self):
+        bucket_name = str(uuid.uuid4())
+        s3_gw_version = parse_version(self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path))
+        if s3_gw_version <= parse_version("0.46.0"):
+            error_pattern = r".*(We encountered an internal error|Http status code: 500).*"
+        else:
+            error_pattern = (
+                r".*(InvalidLocationConstraint|The specified location constraint is not valid|Http status code: 409).*"
+            )
+        with allure.step("Try to create a bucket with a placement policy the cluster cannot satisfy"):
+            with pytest.raises(Exception, match=error_pattern):
+                s3_bucket.create_bucket_s3(
+                    self.s3_client,
+                    bucket_configuration="rep-unsatisfiable",
+                    bucket_name=bucket_name,
+                )
+
+        with allure.step("Ensure the rejected bucket was not created"):
+            assert bucket_name not in s3_bucket.list_buckets_s3(self.s3_client)
