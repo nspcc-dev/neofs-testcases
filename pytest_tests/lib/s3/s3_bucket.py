@@ -31,8 +31,9 @@ def create_bucket_s3(
     grant_read: Optional[str] = None,
     grant_full_control: Optional[str] = None,
     bucket_configuration: Optional[str] = None,
+    bucket_name: Optional[str] = None,
 ) -> str:
-    bucket_name = str(uuid.uuid4())
+    bucket_name = bucket_name or str(uuid.uuid4())
 
     try:
         params = {"Bucket": bucket_name}

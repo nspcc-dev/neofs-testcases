@@ -1,6 +1,7 @@
 {
     "rep-1": "REP 1",
     "rep-3": "REP 3",
+    "rep-unsatisfiable": "REP 100",
     "complex": "REP 1 IN X CBF 1 SELECT 1 FROM * AS X",
     "EC": "EC 3/1 CBF 1"
 }
