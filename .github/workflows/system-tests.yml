@@ -399,6 +399,22 @@ jobs:
               python run-tests.py ${{ steps.calc_shards.outputs.total_shards }} ${{ matrix.shard }} ${{ inputs.tests_path }} ${{ inputs.marks }}
             working-directory: neofs-testcases
 
+          - name: Write Allure environment
+            if: always() && steps.prepare_venv.outcome == 'success'
+            env:
+              OS_RUNNER: ${{ matrix.runner }}
+              OS_BINARY: ${{ matrix.binary }}
+              GITHUB_PR_URL: ${{ github.event.pull_request.html_url }}
+            run: |
+              mkdir -p "$ALLURE_RESULTS_DIR"
+              {
+                echo "OS_RUNNER=$OS_RUNNER"
+                echo "OS_BINARY=$OS_BINARY"
+                if [ -n "$GITHUB_PR_URL" ]; then
+                  echo "GITHUB_PR_URL=$GITHUB_PR_URL"
+                fi
+              } > "$ALLURE_RESULTS_DIR/environment.properties"
+
           - name: Mark shard job result
             if: always() && contains(toJson(matrix), '"shard"')
             run: |
@@ -448,7 +464,7 @@ jobs:
           - name: Publish to NeoFS
             id: put_report
             if: always() && steps.prepare_venv.outcome == 'success' && !contains(toJson(matrix), 'shard')
-            uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.0
+            uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.1
             with:
               NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
               NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
@@ -581,7 +597,7 @@ jobs:
         - name: Publish to NeoFS
           if: steps.shard_status.outputs.no_shards == 'false'
           id: put_report
-          uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.0
+          uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.1
           with:
             NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
             NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
