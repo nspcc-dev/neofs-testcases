@@ -17,6 +17,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -33,6 +34,8 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                Omitted, the CLI does not send a revision.
             shell_timeout: Shell timeout for the command.
 
         Returns:
@@ -208,6 +211,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -232,6 +236,8 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                Omitted, the CLI does not send a revision.
             shell_timeout: Shell timeout for the command.
 
         Returns:
@@ -260,6 +266,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -282,6 +289,8 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                Omitted, the CLI does not send a revision.
             shell_timeout: Shell timeout for the command.
 
         Returns:

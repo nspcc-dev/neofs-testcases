@@ -249,6 +249,7 @@ class NeofsCliContainer(CliCommand):
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
         force: Optional[bool] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -265,6 +266,8 @@ class NeofsCliContainer(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                Omitted, the CLI reads the latest known revision and sends that.
             shell_timeout: Shell timeout for the command.
 
         Returns:
