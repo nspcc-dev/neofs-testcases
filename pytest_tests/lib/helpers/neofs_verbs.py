@@ -392,6 +392,7 @@ def put_object(
     session: Optional[str] = None,
     lifetime: Optional[int] = None,
     timeout: Optional[str] = "180s",
+    container_revision: Optional[int] = None,
 ):
     """
     PUT of given file.
@@ -428,6 +429,7 @@ def put_object(
         xhdr=xhdr,
         session=session,
         timeout=timeout,
+        container_revision=container_revision,
     )
 
     # splitting CLI output to lines and taking the penultimate line
@@ -665,6 +667,7 @@ def search_object(
     wallet_config: Optional[str] = None,
     expected_objects_list: Optional[list] = None,
     fail_on_assert: bool = False,
+    container_revision: Optional[int] = None,
 ) -> tuple[list[dict], Union[str, None]]:
     """
     SEARCH an Object.
@@ -712,6 +715,7 @@ def search_object(
         ttl=ttl,
         xhdr=xhdr,
         timeout=timeout,
+        container_revision=container_revision,
     )
 
     found_objects, next_cursor = parse_search_output(result.stdout)
