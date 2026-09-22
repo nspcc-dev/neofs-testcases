@@ -198,7 +198,7 @@ class TestS3Bucket(TestNeofsS3Base):
 class TestS3BucketLocationConstraint(TestNeofsS3Base):
     @pytest.fixture(scope="class")
     def placement_policy(self) -> str:
-        return "REP 100"
+        return "REP 1"
 
     @allure.title("Test S3: location constraint satisfiability")
     def test_s3_location_constraint_satisfiability(self):
