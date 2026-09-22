@@ -208,6 +208,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -232,15 +233,17 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                ``0`` is sent when passed explicitly.
             shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
         """
-        return self._execute(
-            "object put",
-            **{param: value for param, value in locals().items() if param not in ["self"]},
-        )
+        params = {param: value for param, value in locals().items() if param not in ["self"]}
+        if container_revision is not None:
+            params["container_revision"] = str(container_revision)
+        return self._execute("object put", **params)
 
     def search(
         self,
@@ -260,6 +263,7 @@ class NeofsCliObject(CliCommand):
         ttl: Optional[int] = None,
         xhdr: Optional[dict] = None,
         timeout: Optional[str] = None,
+        container_revision: Optional[int] = None,
         shell_timeout: Optional[int] = None,
     ) -> CommandResult:
         """
@@ -282,15 +286,17 @@ class NeofsCliObject(CliCommand):
             wallet: WIF (NEP-2) string or path to the wallet or binary key.
             xhdr: Dict with request X-Headers.
             timeout: Timeout for the operation (default 15s).
+            container_revision: Container revision to pin on the request.
+                ``0`` is sent when passed explicitly.
             shell_timeout: Shell timeout for the command.
 
         Returns:
             Command's result.
         """
-        return self._execute(
-            "object search",
-            **{param: value for param, value in locals().items() if param not in ["self"]},
-        )
+        params = {param: value for param, value in locals().items() if param not in ["self"]}
+        if container_revision is not None:
+            params["container_revision"] = str(container_revision)
+        return self._execute("object search", **params)
 
     def nodes(
         self,

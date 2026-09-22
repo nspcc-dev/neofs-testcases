@@ -164,6 +164,7 @@ def set_eacl(
     endpoint: str,
     session_token: Optional[str] = None,
     force: Optional[bool] = None,
+    container_revision: Optional[int] = None,
 ) -> None:
     cli = NeofsCli(shell, NEOFS_CLI_EXEC, WALLET_CONFIG)
     cli.container.set_eacl(
@@ -173,6 +174,7 @@ def set_eacl(
         table=eacl_table_path,
         session=session_token,
         force=force,
+        container_revision=container_revision,
     )
 
 
