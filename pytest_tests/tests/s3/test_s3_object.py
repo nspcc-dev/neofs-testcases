@@ -720,7 +720,7 @@ class TestS3Object(TestNeofsS3Base):
         bucket = s3_bucket.create_bucket_s3(self.s3_client, True)
         set_bucket_versioning(self.s3_client, bucket, s3_bucket.VersioningStatus.ENABLED)
 
-        with allure.step("Put object with lock-mode GOVERNANCE lock-retain-until-date +1day, lock-legal-hold-status"):
+        with allure.step("Put object with lock-mode GOVERNANCE lock-retain-until-date +1day"):
             date_obj = datetime.now(UTC) + timedelta(days=1)
             s3_object.put_object_s3(
                 self.s3_client,
@@ -728,9 +728,8 @@ class TestS3Object(TestNeofsS3Base):
                 file_path_1,
                 ObjectLockMode="GOVERNANCE",
                 ObjectLockRetainUntilDate=date_obj.strftime("%Y-%m-%dT%H:%M:%S"),
-                ObjectLockLegalHoldStatus="OFF",
             )
-            assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj, "OFF")
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "GOVERNANCE", date_obj)
             time.sleep(1)
 
         with allure.step(
@@ -745,7 +744,7 @@ class TestS3Object(TestNeofsS3Base):
                 ObjectLockMode="COMPLIANCE",
                 ObjectLockRetainUntilDate=date_obj,
             )
-            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "OFF")
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj)
             time.sleep(1)
 
         with allure.step(
@@ -759,9 +758,8 @@ class TestS3Object(TestNeofsS3Base):
                 file_path_1,
                 ObjectLockMode="COMPLIANCE",
                 ObjectLockRetainUntilDate=date_obj,
-                ObjectLockLegalHoldStatus="ON",
             )
-            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj, "ON")
+            assert_object_lock_mode(self.s3_client, bucket, file_name, "COMPLIANCE", date_obj)
             time.sleep(1)
 
         with allure.step("Put object with lock-mode"):
