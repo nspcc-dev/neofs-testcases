@@ -1,5 +1,3 @@
-import time
-
 import allure
 import pytest
 from helpers.container import create_container
@@ -630,12 +628,12 @@ class TestContainerQuota(TestQuotaBase):
             )
 
         self.tick_epochs_and_wait(1)
-        time.sleep(5)
-        self.tick_epochs_and_wait(1)
         prev_report = self.wait_until_quota_values_reported(
             cid,
             expected_objects=2 * (data_shards + parity_shards),
         )
+
+        self.tick_epochs_and_wait(1)
         wait_for_gc_pass_on_storage_nodes()
         self.tick_epochs_and_wait(1)
         self.wait_until_quota_values_reported(
