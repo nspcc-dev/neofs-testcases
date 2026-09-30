@@ -6,13 +6,18 @@ This module contains keywords that utilize `neofs-cli container` commands.
 
 import json
 import logging
+import os
 import re
+import uuid
 from time import sleep
 from typing import Optional, Union
 
 import allure
-from helpers.common import NEOFS_CLI_EXEC, WALLET_CONFIG
+import base58
+from helpers.common import NEOFS_CLI_EXEC, WALLET_CONFIG, get_assets_dir_path
 from helpers.json_transformers import json_reencode
+from neo3.wallet import account as neo3_account
+from neo3.wallet import wallet as neo3_wallet
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
@@ -350,6 +355,131 @@ def parse_container_nodes_output(output: str) -> list[dict]:
             i += 1
 
     return nodes
+
+
+def create_multi_account_wallet(neofs_env: NeoFSEnv, accounts: list[neo3_account.Account], prefix: str) -> str:
+    wallet_path = os.path.join(get_assets_dir_path(), f"{prefix}-{uuid.uuid4()}.json")
+    wallet = neo3_wallet.Wallet()
+    for account in accounts:
+        wallet.account_add(account)
+    with open(wallet_path, "w") as out:
+        json.dump(wallet.to_json(neofs_env.default_password), out)
+    return wallet_path
+
+
+def refill_gas(neofs_env: NeoFSEnv, wallet_path: str, address: str, amount: str = "200.0") -> None:
+    neofs_env.neofs_adm().fschain.refill_gas(
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+        alphabet_wallets=neofs_env.alphabet_wallets_dir,
+        storage_wallet=wallet_path,
+        gas=amount,
+        wallet_address=address,
+    )
+
+
+def perform_ownership_transfer(
+    neofs_env: NeoFSEnv,
+    from_wallet_path: str,
+    from_address: str,
+    to_wallet_path: str,
+    to_address: str,
+    multi_wallet_path: str,
+    token_id: str = None,
+) -> dict:
+    balance = neofs_env.neo_go().nep11.balance(
+        wallet=from_wallet_path,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+    if not token_id:
+        token_id = balance["token_ids"][0]
+
+    transaction_file = neofs_env._generate_temp_file(neofs_env._env_dir, prefix="transfer_transaction")
+    multi_wallet_config = neofs_env.generate_neo_go_config(
+        NodeWallet(path=multi_wallet_path, address=from_address, password=neofs_env.default_password)
+    )
+    neofs_env.neo_go().nep11.transfer(
+        wallet_config=multi_wallet_config,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+        from_address=from_address,
+        to_address=to_address,
+        id=token_id,
+        token=balance["contract_hash"],
+        signer=to_address,
+        out=transaction_file,
+    )
+    new_owner_wallet_config = neofs_env.generate_neo_go_config(
+        NodeWallet(path=to_wallet_path, address=to_address, password=neofs_env.default_password)
+    )
+    neofs_env.neo_go().wallet.sign(
+        input_file=transaction_file,
+        address=to_address,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+        wallet_config=new_owner_wallet_config,
+        await_=True,
+    )
+    return neofs_env.neo_go().nep11.balance(
+        wallet=to_wallet_path,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+
+
+@allure.step("Validate NEP11 attributes")
+def validate_nep11_attributes(
+    neofs_env: NeoFSEnv,
+    wallet_path: str,
+    expected_owner_address: str,
+    expected_cid: str,
+) -> None:
+    cid_in_hex = base58.b58decode(expected_cid).hex()
+    balance = neofs_env.neo_go().nep11.balance(
+        wallet=wallet_path,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+    assert balance["account_address"] == expected_owner_address, "Unexpected account address in balance result"
+    neofs_adm = neofs_env.neofs_adm()
+    contracts_hashes = neofs_adm.fschain.parse_dump_hashes(
+        neofs_adm.fschain.dump_hashes(rpc_endpoint=f"http://{neofs_env.fschain_rpc}").stdout
+    )
+    assert balance["contract_hash"] == contracts_hashes["container"], "Unexpected container id"
+
+    token_ids = balance["token_ids"]
+    assert len(token_ids) > 0, f"No tokens found for {expected_owner_address}"
+
+    matching_token_id = None
+    for token_id in token_ids:
+        props = neofs_env.neo_go().nep11.properties(
+            token=balance["contract_hash"],
+            id=token_id,
+            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+        )
+        if props["name"] == expected_cid and token_id == cid_in_hex:
+            matching_token_id = token_id
+            break
+
+    assert matching_token_id is not None, f"No token found with container ID {expected_cid} among {token_ids}"
+
+    owner_address = neofs_env.neo_go().nep11.owner_of(
+        token=balance["contract_hash"],
+        id=matching_token_id,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+    assert owner_address == expected_owner_address, f"Invalid owner of {balance['container_id']}/{matching_token_id}"
+
+    tokens_of_owner = neofs_env.neo_go().nep11.tokens_of(
+        token=balance["contract_hash"],
+        address=expected_owner_address,
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+    assert matching_token_id == tokens_of_owner or matching_token_id in tokens_of_owner.split("\n"), (
+        f"Token {matching_token_id} not found in tokens_of result for {expected_owner_address}"
+    )
+
+    all_tokens_str = neofs_env.neo_go().nep11.tokens(
+        token=balance["contract_hash"],
+        rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
+    )
+    all_tokens = all_tokens_str.split("\n")
+    assert matching_token_id in all_tokens, f"Token {matching_token_id} not in {all_tokens}"
 
 
 def generate_ranges_for_ec_object(source_file_size: int) -> list[tuple[int, int]]:

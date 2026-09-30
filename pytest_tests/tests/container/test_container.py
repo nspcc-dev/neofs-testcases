@@ -1,20 +1,18 @@
 import json
-import os
-import uuid
 
 import allure
-import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
-from helpers.common import (
-    get_assets_dir_path,
-)
 from helpers.complex_object_actions import wait_object_replication
 from helpers.container import (
     create_container,
+    create_multi_account_wallet,
     delete_container,
     get_container,
     list_containers,
+    perform_ownership_transfer,
+    refill_gas,
+    validate_nep11_attributes,
     wait_for_container_creation,
     wait_for_container_deletion,
 )
@@ -25,7 +23,6 @@ from helpers.node_management import wait_all_storage_nodes_returned
 from helpers.utility import parse_load_report, parse_load_summary, placement_policy_from_container
 from helpers.wellknown_acl import PRIVATE_ACL_F, PUBLIC_ACL
 from neo3.wallet import account as neo3_account
-from neo3.wallet import wallet as neo3_wallet
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
@@ -64,146 +61,6 @@ class TestContainer(TestNeofsBase):
             post_data=f"EpochDuration={original_epoch_duration}",
         )
         self.ensure_fresh_epoch()
-
-    def _create_multi_account_wallet(self, accounts: list[neo3_account.Account], prefix: str) -> str:
-        wallet_path = os.path.join(get_assets_dir_path(), f"{prefix}-{str(uuid.uuid4())}.json")
-        wallet = neo3_wallet.Wallet()
-        for account in accounts:
-            wallet.account_add(account)
-        with open(wallet_path, "w") as out:
-            json.dump(wallet.to_json(self.neofs_env.default_password), out)
-        return wallet_path
-
-    def _refill_gas(self, wallet_path: str, address: str, amount: str = "200.0"):
-        self.neofs_env.neofs_adm().fschain.refill_gas(
-            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            alphabet_wallets=self.neofs_env.alphabet_wallets_dir,
-            storage_wallet=wallet_path,
-            gas=amount,
-            wallet_address=address,
-        )
-
-    def _validate_nep11_attributes(
-        self,
-        wallet_path: str,
-        expected_owner_address: str,
-        expected_cid: str,
-    ):
-        with allure.step("Validate NEP11 attributes"):
-            cid_in_hex = base58.b58decode(expected_cid).hex()
-            balance = self.neofs_env.neo_go().nep11.balance(
-                wallet=wallet_path,
-                rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            )
-            assert balance["account_address"] == expected_owner_address, "Unexpected account address in balance result"
-            neofs_adm = self.neofs_env.neofs_adm()
-            contracts_hashes = neofs_adm.fschain.parse_dump_hashes(
-                neofs_adm.fschain.dump_hashes(
-                    rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-                ).stdout
-            )
-            assert balance["contract_hash"] == contracts_hashes["container"], "Unexpected container id"
-
-            # Find the token ID that matches the expected container
-            token_ids = balance["token_ids"]
-            assert len(token_ids) > 0, f"No tokens found for {expected_owner_address}"
-
-            matching_token_id = None
-            for token_id in token_ids:
-                props = self.neofs_env.neo_go().nep11.properties(
-                    token=balance["contract_hash"],
-                    id=token_id,
-                    rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-                )
-                if props["name"] == expected_cid and token_id == cid_in_hex:
-                    matching_token_id = token_id
-                    break
-
-            assert matching_token_id is not None, f"No token found with container ID {expected_cid} among {token_ids}"
-
-            owner_address = self.neofs_env.neo_go().nep11.owner_of(
-                token=balance["contract_hash"],
-                id=matching_token_id,
-                rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            )
-            assert owner_address == expected_owner_address, (
-                f"Invalid owner of {balance['container_id']}/{matching_token_id}"
-            )
-
-            tokens_of_owner = self.neofs_env.neo_go().nep11.tokens_of(
-                token=balance["contract_hash"],
-                address=expected_owner_address,
-                rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            )
-            assert matching_token_id == tokens_of_owner or matching_token_id in tokens_of_owner.split("\n"), (
-                f"Token {matching_token_id} not found in tokens_of result for {expected_owner_address}"
-            )
-
-            all_tokens_str = self.neofs_env.neo_go().nep11.tokens(
-                token=balance["contract_hash"],
-                rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            )
-            all_tokens = all_tokens_str.split("\n")
-            assert matching_token_id in all_tokens, f"Token {matching_token_id} not in {all_tokens}"
-
-    def _perform_ownership_transfer(
-        self,
-        from_wallet_path: str,
-        from_address: str,
-        to_wallet_path: str,
-        to_address: str,
-        multi_wallet_path: str,
-        token_id: str = None,
-    ) -> dict:
-        balance = self.neofs_env.neo_go().nep11.balance(
-            wallet=from_wallet_path,
-            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-        )
-
-        if not token_id:
-            token_id = balance["token_ids"][0]
-
-        transaction_file = self.neofs_env._generate_temp_file(self.neofs_env._env_dir, prefix="transfer_transaction")
-
-        multi_wallet_config = self.neofs_env.generate_neo_go_config(
-            NodeWallet(
-                path=multi_wallet_path,
-                address=from_address,
-                password=self.neofs_env.default_password,
-            )
-        )
-
-        self.neofs_env.neo_go().nep11.transfer(
-            wallet_config=multi_wallet_config,
-            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            from_address=from_address,
-            to_address=to_address,
-            id=token_id,
-            token=balance["contract_hash"],
-            signer=to_address,
-            out=transaction_file,
-        )
-
-        new_owner_wallet_config = self.neofs_env.generate_neo_go_config(
-            NodeWallet(
-                path=to_wallet_path,
-                address=to_address,
-                password=self.neofs_env.default_password,
-            )
-        )
-
-        self.neofs_env.neo_go().wallet.sign(
-            input_file=transaction_file,
-            address=to_address,
-            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-            wallet_config=new_owner_wallet_config,
-            await_=True,
-        )
-
-        return self.neofs_env.neo_go().nep11.balance(
-            wallet=to_wallet_path,
-            rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
-        )
 
     @pytest.mark.parametrize("name", ["", "test-container"], ids=["No name", "Set particular name"])
     @pytest.mark.sanity
@@ -455,12 +312,12 @@ class TestContainer(TestNeofsBase):
             current_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             new_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
 
-            current_owner_wallet_path = self._create_multi_account_wallet(
-                [current_owner_account], "current-owner-wallet"
+            current_owner_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [current_owner_account], "current-owner-wallet"
             )
-            new_owner_wallet_path = self._create_multi_account_wallet([new_owner_account], "new-owner-wallet")
-            multi_acc_wallet_path = self._create_multi_account_wallet(
-                [current_owner_account, new_owner_account], "multi-acc-wallet"
+            new_owner_wallet_path = create_multi_account_wallet(self.neofs_env, [new_owner_account], "new-owner-wallet")
+            multi_acc_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [current_owner_account, new_owner_account], "multi-acc-wallet"
             )
 
         with allure.step("Create container and put an object"):
@@ -475,13 +332,14 @@ class TestContainer(TestNeofsBase):
             )
 
         with allure.step("Add some gas to make transfer command"):
-            self._refill_gas(current_owner_wallet_path, current_owner_account.address)
-            self._refill_gas(new_owner_wallet_path, new_owner_account.address)
+            refill_gas(self.neofs_env, current_owner_wallet_path, current_owner_account.address)
+            refill_gas(self.neofs_env, new_owner_wallet_path, new_owner_account.address)
 
-        self._validate_nep11_attributes(current_owner_wallet_path, current_owner_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, current_owner_wallet_path, current_owner_account.address, cid)
 
         with allure.step("Perform ownership transfer"):
-            balance = self._perform_ownership_transfer(
+            balance = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=current_owner_wallet_path,
                 from_address=current_owner_account.address,
                 to_wallet_path=new_owner_wallet_path,
@@ -493,7 +351,7 @@ class TestContainer(TestNeofsBase):
                 "Unexpected account address in balance result"
             )
 
-        self._validate_nep11_attributes(new_owner_wallet_path, new_owner_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, new_owner_wallet_path, new_owner_account.address, cid)
 
         with allure.step("Verify old owner can't delete a container"):
             with pytest.raises(Exception):
@@ -552,15 +410,15 @@ class TestContainer(TestNeofsBase):
             owner_b_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             owner_c_account = neo3_account.Account.create_new(self.neofs_env.default_password)
 
-            owner_a_wallet_path = self._create_multi_account_wallet([owner_a_account], "owner-a-wallet")
-            owner_b_wallet_path = self._create_multi_account_wallet([owner_b_account], "owner-b-wallet")
-            owner_c_wallet_path = self._create_multi_account_wallet([owner_c_account], "owner-c-wallet")
+            owner_a_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_a_account], "owner-a-wallet")
+            owner_b_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_b_account], "owner-b-wallet")
+            owner_c_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_c_account], "owner-c-wallet")
 
-            multi_acc_wallet_ab_path = self._create_multi_account_wallet(
-                [owner_a_account, owner_b_account], "multi-acc-wallet-ab"
+            multi_acc_wallet_ab_path = create_multi_account_wallet(
+                self.neofs_env, [owner_a_account, owner_b_account], "multi-acc-wallet-ab"
             )
-            multi_acc_wallet_bc_path = self._create_multi_account_wallet(
-                [owner_b_account, owner_c_account], "multi-acc-wallet-bc"
+            multi_acc_wallet_bc_path = create_multi_account_wallet(
+                self.neofs_env, [owner_b_account, owner_c_account], "multi-acc-wallet-bc"
             )
 
         with allure.step("Create container and put an object as owner A"):
@@ -575,14 +433,15 @@ class TestContainer(TestNeofsBase):
             )
 
         with allure.step("Refill gas for all owners"):
-            self._refill_gas(owner_a_wallet_path, owner_a_account.address)
-            self._refill_gas(owner_b_wallet_path, owner_b_account.address)
-            self._refill_gas(owner_c_wallet_path, owner_c_account.address)
+            refill_gas(self.neofs_env, owner_a_wallet_path, owner_a_account.address)
+            refill_gas(self.neofs_env, owner_b_wallet_path, owner_b_account.address)
+            refill_gas(self.neofs_env, owner_c_wallet_path, owner_c_account.address)
 
-        self._validate_nep11_attributes(owner_a_wallet_path, owner_a_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_a_wallet_path, owner_a_account.address, cid)
 
         with allure.step("Transfer ownership from A to B"):
-            balance_b = self._perform_ownership_transfer(
+            balance_b = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_a_wallet_path,
                 from_address=owner_a_account.address,
                 to_wallet_path=owner_b_wallet_path,
@@ -591,7 +450,7 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_b["account_address"] == owner_b_account.address
 
-        self._validate_nep11_attributes(owner_b_wallet_path, owner_b_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_b_wallet_path, owner_b_account.address, cid)
 
         with allure.step("Verify owner B can access the object"):
             get_object(
@@ -603,7 +462,8 @@ class TestContainer(TestNeofsBase):
             )
 
         with allure.step("Transfer ownership from B to C"):
-            balance_c = self._perform_ownership_transfer(
+            balance_c = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_b_wallet_path,
                 from_address=owner_b_account.address,
                 to_wallet_path=owner_c_wallet_path,
@@ -612,7 +472,7 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_c["account_address"] == owner_c_account.address
 
-        self._validate_nep11_attributes(owner_c_wallet_path, owner_c_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_c_wallet_path, owner_c_account.address, cid)
 
         with allure.step("Verify owner A can't access the object"):
             with pytest.raises(Exception, match="operation denied"):
@@ -660,12 +520,12 @@ class TestContainer(TestNeofsBase):
             current_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             new_owner_account = neo3_account.Account.create_new(self.neofs_env.default_password)
 
-            current_owner_wallet_path = self._create_multi_account_wallet(
-                [current_owner_account], "current-owner-wallet"
+            current_owner_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [current_owner_account], "current-owner-wallet"
             )
-            new_owner_wallet_path = self._create_multi_account_wallet([new_owner_account], "new-owner-wallet")
-            multi_acc_wallet_path = self._create_multi_account_wallet(
-                [current_owner_account, new_owner_account], "multi-acc-wallet"
+            new_owner_wallet_path = create_multi_account_wallet(self.neofs_env, [new_owner_account], "new-owner-wallet")
+            multi_acc_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [current_owner_account, new_owner_account], "multi-acc-wallet"
             )
 
         with allure.step("Create container and put multiple objects"):
@@ -684,10 +544,10 @@ class TestContainer(TestNeofsBase):
                 object_ids.append(oid)
 
         with allure.step("Refill gas for wallets"):
-            self._refill_gas(current_owner_wallet_path, current_owner_account.address)
-            self._refill_gas(new_owner_wallet_path, new_owner_account.address)
+            refill_gas(self.neofs_env, current_owner_wallet_path, current_owner_account.address)
+            refill_gas(self.neofs_env, new_owner_wallet_path, new_owner_account.address)
 
-        self._validate_nep11_attributes(current_owner_wallet_path, current_owner_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, current_owner_wallet_path, current_owner_account.address, cid)
 
         with allure.step("Verify current owner can access all objects before transfer"):
             for oid in object_ids:
@@ -700,7 +560,8 @@ class TestContainer(TestNeofsBase):
                 )
 
         with allure.step("Perform ownership transfer"):
-            self._perform_ownership_transfer(
+            perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=current_owner_wallet_path,
                 from_address=current_owner_account.address,
                 to_wallet_path=new_owner_wallet_path,
@@ -708,7 +569,7 @@ class TestContainer(TestNeofsBase):
                 multi_wallet_path=multi_acc_wallet_path,
             )
 
-        self._validate_nep11_attributes(new_owner_wallet_path, new_owner_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, new_owner_wallet_path, new_owner_account.address, cid)
 
         with allure.step("Verify old owner can't access any objects"):
             for oid in object_ids:
@@ -766,11 +627,11 @@ class TestContainer(TestNeofsBase):
             owner_a_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             owner_b_account = neo3_account.Account.create_new(self.neofs_env.default_password)
 
-            owner_a_wallet_path = self._create_multi_account_wallet([owner_a_account], "owner-a-wallet")
-            owner_b_wallet_path = self._create_multi_account_wallet([owner_b_account], "owner-b-wallet")
+            owner_a_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_a_account], "owner-a-wallet")
+            owner_b_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_b_account], "owner-b-wallet")
 
-            multi_acc_wallet_path = self._create_multi_account_wallet(
-                [owner_a_account, owner_b_account], "multi-acc-wallet"
+            multi_acc_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [owner_a_account, owner_b_account], "multi-acc-wallet"
             )
 
         with allure.step("Create container and put an object as owner A"):
@@ -785,13 +646,14 @@ class TestContainer(TestNeofsBase):
             )
 
         with allure.step("Refill gas for both owners"):
-            self._refill_gas(owner_a_wallet_path, owner_a_account.address)
-            self._refill_gas(owner_b_wallet_path, owner_b_account.address)
+            refill_gas(self.neofs_env, owner_a_wallet_path, owner_a_account.address)
+            refill_gas(self.neofs_env, owner_b_wallet_path, owner_b_account.address)
 
-        self._validate_nep11_attributes(owner_a_wallet_path, owner_a_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_a_wallet_path, owner_a_account.address, cid)
 
         with allure.step("Transfer ownership from A to B"):
-            balance_b = self._perform_ownership_transfer(
+            balance_b = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_a_wallet_path,
                 from_address=owner_a_account.address,
                 to_wallet_path=owner_b_wallet_path,
@@ -800,7 +662,7 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_b["account_address"] == owner_b_account.address
 
-        self._validate_nep11_attributes(owner_b_wallet_path, owner_b_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_b_wallet_path, owner_b_account.address, cid)
 
         with allure.step("Verify owner B can access the object"):
             get_object(
@@ -822,7 +684,8 @@ class TestContainer(TestNeofsBase):
                 )
 
         with allure.step("Transfer ownership back from B to A"):
-            balance_a_final = self._perform_ownership_transfer(
+            balance_a_final = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_b_wallet_path,
                 from_address=owner_b_account.address,
                 to_wallet_path=owner_a_wallet_path,
@@ -831,7 +694,7 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_a_final["account_address"] == owner_a_account.address
 
-        self._validate_nep11_attributes(owner_a_wallet_path, owner_a_account.address, cid)
+        validate_nep11_attributes(self.neofs_env, owner_a_wallet_path, owner_a_account.address, cid)
 
         with allure.step("Verify owner A can access the original object"):
             get_object(
@@ -871,11 +734,11 @@ class TestContainer(TestNeofsBase):
             owner_a_account = neo3_account.Account.create_new(self.neofs_env.default_password)
             owner_b_account = neo3_account.Account.create_new(self.neofs_env.default_password)
 
-            owner_a_wallet_path = self._create_multi_account_wallet([owner_a_account], "owner-a-wallet")
-            owner_b_wallet_path = self._create_multi_account_wallet([owner_b_account], "owner-b-wallet")
+            owner_a_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_a_account], "owner-a-wallet")
+            owner_b_wallet_path = create_multi_account_wallet(self.neofs_env, [owner_b_account], "owner-b-wallet")
 
-            multi_acc_wallet_path = self._create_multi_account_wallet(
-                [owner_a_account, owner_b_account], "multi-acc-wallet"
+            multi_acc_wallet_path = create_multi_account_wallet(
+                self.neofs_env, [owner_a_account, owner_b_account], "multi-acc-wallet"
             )
 
         with allure.step("Create container A owned by owner A"):
@@ -901,16 +764,16 @@ class TestContainer(TestNeofsBase):
             )
 
         with allure.step("Refill gas for both owners"):
-            self._refill_gas(owner_a_wallet_path, owner_a_account.address)
-            self._refill_gas(owner_b_wallet_path, owner_b_account.address)
+            refill_gas(self.neofs_env, owner_a_wallet_path, owner_a_account.address)
+            refill_gas(self.neofs_env, owner_b_wallet_path, owner_b_account.address)
 
         with allure.step("Validate initial ownership state"):
-            self._validate_nep11_attributes(owner_a_wallet_path, owner_a_account.address, container_a_id)
+            validate_nep11_attributes(self.neofs_env, owner_a_wallet_path, owner_a_account.address, container_a_id)
             owner_a_initial_balance = self.neofs_env.neo_go().nep11.balance(
                 wallet=owner_a_wallet_path,
                 rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
             )
-            self._validate_nep11_attributes(owner_b_wallet_path, owner_b_account.address, container_b_id)
+            validate_nep11_attributes(self.neofs_env, owner_b_wallet_path, owner_b_account.address, container_b_id)
             owner_b_initial_balance = self.neofs_env.neo_go().nep11.balance(
                 wallet=owner_b_wallet_path,
                 rpc_endpoint=f"http://{self.neofs_env.fschain_rpc}",
@@ -951,7 +814,8 @@ class TestContainer(TestNeofsBase):
                 )
 
         with allure.step("Transfer container A from owner A to owner B"):
-            balance_b_container_a = self._perform_ownership_transfer(
+            balance_b_container_a = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_a_wallet_path,
                 from_address=owner_a_account.address,
                 to_wallet_path=owner_b_wallet_path,
@@ -961,10 +825,11 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_b_container_a["account_address"] == owner_b_account.address
 
-        self._validate_nep11_attributes(owner_b_wallet_path, owner_b_account.address, container_a_id)
+        validate_nep11_attributes(self.neofs_env, owner_b_wallet_path, owner_b_account.address, container_a_id)
 
         with allure.step("Transfer container B from owner B to owner A"):
-            balance_a_container_b = self._perform_ownership_transfer(
+            balance_a_container_b = perform_ownership_transfer(
+                self.neofs_env,
                 from_wallet_path=owner_b_wallet_path,
                 from_address=owner_b_account.address,
                 to_wallet_path=owner_a_wallet_path,
@@ -974,7 +839,7 @@ class TestContainer(TestNeofsBase):
             )
             assert balance_a_container_b["account_address"] == owner_a_account.address
 
-        self._validate_nep11_attributes(owner_a_wallet_path, owner_a_account.address, container_b_id)
+        validate_nep11_attributes(self.neofs_env, owner_a_wallet_path, owner_a_account.address, container_b_id)
 
         with allure.step("Verify owner A can now access container B but not container A"):
             get_object(

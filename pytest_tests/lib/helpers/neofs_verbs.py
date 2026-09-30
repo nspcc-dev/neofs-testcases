@@ -392,6 +392,7 @@ def put_object(
     session: Optional[str] = None,
     lifetime: Optional[int] = None,
     timeout: Optional[str] = "180s",
+    container_revision: Optional[int] = None,
 ):
     """
     PUT of given file.
@@ -428,6 +429,7 @@ def put_object(
         xhdr=xhdr,
         session=session,
         timeout=timeout,
+        container_revision=container_revision,
     )
 
     # splitting CLI output to lines and taking the penultimate line
@@ -447,6 +449,7 @@ def delete_object(
     wallet_config: Optional[str] = None,
     xhdr: Optional[dict] = None,
     session: Optional[str] = None,
+    container_revision: Optional[int] = None,
 ):
     """
     DELETE an Object.
@@ -461,6 +464,7 @@ def delete_object(
         wallet_config: path to the wallet config
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
+        container_revision: Container revision to pin on the request.
     Returns:
         (str): Tombstone ID
     """
@@ -474,6 +478,7 @@ def delete_object(
         bearer=bearer,
         xhdr=xhdr,
         session=session,
+        container_revision=container_revision,
     )
 
     id_str = result.stdout.split("\n")[1]
@@ -665,6 +670,7 @@ def search_object(
     wallet_config: Optional[str] = None,
     expected_objects_list: Optional[list] = None,
     fail_on_assert: bool = False,
+    container_revision: Optional[int] = None,
 ) -> tuple[list[dict], Union[str, None]]:
     """
     SEARCH an Object.
@@ -712,6 +718,7 @@ def search_object(
         ttl=ttl,
         xhdr=xhdr,
         timeout=timeout,
+        container_revision=container_revision,
     )
 
     found_objects, next_cursor = parse_search_output(result.stdout)
