@@ -204,7 +204,6 @@ class AwsCliClient:
         ACL: Optional[str] = None,
         ObjectLockMode: Optional[str] = None,
         ObjectLockRetainUntilDate: Optional[datetime] = None,
-        ObjectLockLegalHoldStatus: Optional[str] = None,
         GrantFullControl: Optional[str] = None,
         GrantRead: Optional[str] = None,
     ) -> dict:
@@ -224,8 +223,6 @@ class AwsCliClient:
             cmd += f" --object-lock-mode {ObjectLockMode}"
         if ObjectLockRetainUntilDate:
             cmd += f' --object-lock-retain-until-date "{ObjectLockRetainUntilDate}"'
-        if ObjectLockLegalHoldStatus:
-            cmd += f" --object-lock-legal-hold-status {ObjectLockLegalHoldStatus}"
         if GrantFullControl:
             cmd += f" --grant-full-control '{GrantFullControl}'"
         if GrantRead:
@@ -419,15 +416,6 @@ class AwsCliClient:
         )
         if BypassGovernanceRetention is not None:
             cmd += " --bypass-governance-retention"
-        output = _cmd_run(cmd)
-        return self._to_json(output)
-
-    def put_object_legal_hold(self, Bucket: str, Key: str, LegalHold: dict, VersionId: Optional[str] = None) -> dict:
-        version = f" --version-id {VersionId}" if VersionId else ""
-        cmd = (
-            f"{aws_binary_path} {self.common_flags} s3api  put-object-legal-hold --bucket {Bucket} --key {Key} "
-            f"{version} --legal-hold '{json.dumps(LegalHold)}' --endpoint {self.s3gate_endpoint}"
-        )
         output = _cmd_run(cmd)
         return self._to_json(output)
 

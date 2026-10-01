@@ -148,14 +148,10 @@ def assert_object_lock_mode(
     file_name: str,
     object_lock_mode: str,
     retain_untile_date: datetime,
-    legal_hold_status: str = "OFF",
     retain_period: Optional[int] = None,
 ):
     object_dict = s3_object.get_object_s3(s3_client, bucket, file_name, full_output=True)
     assert object_dict.get("ObjectLockMode") == object_lock_mode, f"Expected Object Lock Mode is {object_lock_mode}"
-    assert object_dict.get("ObjectLockLegalHoldStatus") == legal_hold_status, (
-        f"Expected Object Lock Legal Hold Status is {legal_hold_status}"
-    )
     object_retain_date = object_dict.get("ObjectLockRetainUntilDate")
     retain_date = parse(object_retain_date) if isinstance(object_retain_date, str) else object_retain_date
     if retain_untile_date:

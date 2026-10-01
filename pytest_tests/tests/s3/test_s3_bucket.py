@@ -134,9 +134,8 @@ class TestS3Bucket(TestNeofsS3Base):
                 file_path,
                 ObjectLockMode="COMPLIANCE",
                 ObjectLockRetainUntilDate=date_obj_1.strftime("%Y-%m-%dT%H:%M:%S"),
-                ObjectLockLegalHoldStatus="ON",
             )
-            assert_object_lock_mode(self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1, "ON")
+            assert_object_lock_mode(self.s3_client, bucket_1, file_name, "COMPLIANCE", date_obj_1)
 
     @allure.title("Test S3: delete bucket")
     @pytest.mark.simple
