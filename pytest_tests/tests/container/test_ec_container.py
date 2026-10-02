@@ -1442,7 +1442,6 @@ def test_ec_container_cross_rule_fault_tolerance(
     ],
 )
 @pytest.mark.simple
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/3848")
 def test_ec_rule_restore(
     default_wallet: NodeWallet, neofs_env: NeoFSEnv, ec_rules: list[tuple[int, int]], rule_to_drop: int
 ):
