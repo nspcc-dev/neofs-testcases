@@ -151,7 +151,7 @@ def get_session_token(wallet: NodeWallet, endpoint: str, epoch=1, expiration=100
 
     meta_header = session_types_pb2.RequestMetaHeader()
     meta_header.version.major = 2
-    meta_header.version.minor = 18
+    meta_header.version.minor = 27
     meta_header.epoch = epoch
     session_create_request.meta_header.CopyFrom(meta_header)
 
@@ -268,7 +268,7 @@ def put_object(
 
         version = refs_types_pb2.Version()
         version.major = 2
-        version.minor = 18
+        version.minor = 27
 
         session_id, session_key = get_session_token(wallet, sn_endpoint)
 
