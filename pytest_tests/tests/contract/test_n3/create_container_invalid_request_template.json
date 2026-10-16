@@ -1,6 +1,6 @@
 {
     "Container": {
-        "Version": "2.16",
+        "Version": "2.22",
         "Nonce": "8db34c87-f470-42a2-9684-970f3db74b15",
         "Owner": "{{ owner }}",
         "BasicACL": "eacl-public-read-write",
