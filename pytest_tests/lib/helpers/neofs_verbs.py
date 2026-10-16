@@ -481,7 +481,9 @@ def delete_object(
         container_revision=container_revision,
     )
 
-    id_str = next(line for line in result.stdout.split("\n") if line.startswith("Tombstone"))
+    id_str = next(
+        line.strip() for line in result.stdout.split("\n") if line.strip().startswith("ID:")
+    )
     tombstone = id_str.split(":")[1]
     return tombstone.strip()
 
