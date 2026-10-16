@@ -481,7 +481,7 @@ def delete_object(
         container_revision=container_revision,
     )
 
-    id_str = result.stdout.split("\n")[1]
+    id_str = result.stdout.split("\n")[-2]
     tombstone = id_str.split(":")[1]
     return tombstone.strip()
 
