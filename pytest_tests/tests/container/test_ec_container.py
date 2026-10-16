@@ -6,6 +6,7 @@ import allure
 import base58
 import neofs_env.neofs_epoch as neofs_epoch
 import pytest
+from helpers.utility import parse_version
 from helpers.complex_object_actions import get_nodes_with_object
 from helpers.container import (
     create_container,
@@ -1442,10 +1443,13 @@ def test_ec_container_cross_rule_fault_tolerance(
     ],
 )
 @pytest.mark.simple
-@pytest.mark.skip(reason="https://github.com/nspcc-dev/neofs-node/issues/3848")
 def test_ec_rule_restore(
     default_wallet: NodeWallet, neofs_env: NeoFSEnv, ec_rules: list[tuple[int, int]], rule_to_drop: int
 ):
+    node_version = neofs_env.get_binary_version(neofs_env.neofs_node_path)
+    if parse_version(node_version) <= parse_version("0.57.0"):
+        pytest.skip(f"multi-rule EC restoration is not supported by neofs-node {node_version} (<= 0.57.0)")
+
     wallet = default_wallet
     dropped_data, dropped_parity = ec_rules[rule_to_drop]
     kept_rule_idx = 1 - rule_to_drop
