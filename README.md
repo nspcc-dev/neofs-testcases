@@ -108,7 +108,33 @@ IR3_CONFIG_PATH
 IR4_CONFIG_PATH
 MAINCHAIN_CONFIG_PATH
 ```
-Full path to a custom config file should be specified. 
+Full path to a custom config file should be specified. A gateway config is used as-is, so it must already contain this environment's listen address, wallet, storage-node peers and, for S3, the TLS certificate and key.
+
+`NEOFS_S3_GW_BIN` and `NEOFS_REST_GW_BIN` select the gateway binary for a fresh deploy. The defaults are `./neofs-s3-gw` and `./neofs-rest-gw` in the repo root.
+
+```shell
+NEOFS_S3_GW_BIN=/path/to/neofs-s3-gw pytest -s pytest_tests/tests/s3/test_s3_bucket.py --persist-env
+NEOFS_REST_GW_BIN=/path/to/neofs-rest-gw pytest -s pytest_tests/tests/services/rest_gate/test_rest_options.py --persist-env
+```
+
+To retry a failed test against a binary and config of your own, without redeploying the chain and storage nodes:
+
+1. Run the test with `--persist-env`. The log prints `S3 GW Config path` or `REST GW Config path`. That generated file has the listen address, wallet, TLS certificate and key (S3), FS-chain endpoint, and storage-node peers.
+2. Stop that gateway process.
+3. Copy those values into your config and keep the same listen address. `--load-env` keeps calling the original address.
+4. Start your binary with that config. Do not export `S3_GW_*` or `REST_GW_*` in this shell: the gateway treats them as config overrides.
+
+```shell
+/path/to/neofs-s3-gw --config /path/to/custom-s3.yaml
+/path/to/neofs-rest-gw --config /path/to/custom-rest.yaml
+```
+
+5. Rerun with `--load-env`. This run does not start the gateway; it uses the process from the previous step.
+
+```shell
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --load-env env_files/persisted_env_awxyrbxdwu
+pytest -s pytest_tests/tests/services/rest_gate/test_rest_options.py --load-env env_files/persisted_env_awxyrbxdwu
+```
 
 ## pytest marks
 
