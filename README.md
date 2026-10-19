@@ -75,12 +75,28 @@ List of all required binaries with corresponding URLs can be found here - `neofs
 To use a patched binary for tests just place it to the repo root directory. 
 Config files for binaries are located here - `neofs-testlib/neofs_testlib/env/templates`.
 
+Live logs are printed while the tests run. The default level is `INFO`. Pass `--log-cli-level` to change it:
+
+| Level | What is printed |
+| --- | --- |
+| `DEBUG` | Every command and its output, config generation, waits, plus everything below |
+| `INFO` | Test progress and environment summaries (the default) |
+| `ENV` | Environment summaries, warnings and errors |
+| `WARNING` | Warnings and errors |
+
+Environment summaries are printed in green: endpoints, config paths, stdout and stderr files, the local CA, and the persisted env directory. A full summary is printed once the environment is up, and again when you reload it with `--load-env`.
+
+```shell
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --log-cli-level=ENV
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --log-cli-level=DEBUG
+```
+
 If you are going to run tests several times in the same dev environment, 
 you can use the `--persist-env` key to initiate keeping the test environment. 
 As a result, you'll find something like `Persist env at: env_files/*` in the report. 
 For example:
 ```shell
-[MainThread] 2024-04-27 18:31:55 [INFO] Persist env at: env_files/persisted_env_awxyrbxdwu
+[MainThread] 2024-04-27 18:31:55 [ ENV] Persist env at: env_files/persisted_env_awxyrbxdwu
 ```
 After that, you can run tests faster by adding the `--load-env` flag along with 
 the received value. This way you won't waste time redeploy the environment.
@@ -108,7 +124,33 @@ IR3_CONFIG_PATH
 IR4_CONFIG_PATH
 MAINCHAIN_CONFIG_PATH
 ```
-Full path to a custom config file should be specified. 
+Full path to a custom config file should be specified. A gateway config is used as-is, so it must already contain this environment's listen address, wallet, storage-node peers and, for S3, the TLS certificate and key.
+
+`NEOFS_S3_GW_BIN` and `NEOFS_REST_GW_BIN` select the gateway binary for a fresh deploy. The defaults are `./neofs-s3-gw` and `./neofs-rest-gw` in the repo root.
+
+```shell
+NEOFS_S3_GW_BIN=/path/to/neofs-s3-gw pytest -s pytest_tests/tests/s3/test_s3_bucket.py --persist-env
+NEOFS_REST_GW_BIN=/path/to/neofs-rest-gw pytest -s pytest_tests/tests/services/rest_gate/test_rest_options.py --persist-env
+```
+
+To retry a failed test against a binary and config of your own, without redeploying the chain and storage nodes:
+
+1. Run the test with `--persist-env`. The log prints `S3 GW Config path` or `REST GW Config path`. That generated file has the listen address, wallet, TLS certificate and key (S3), FS-chain endpoint, and storage-node peers.
+2. Stop that gateway process.
+3. Copy those values into your config and keep the same listen address. `--load-env` keeps calling the original address.
+4. Start your binary with that config. Do not export `S3_GW_*` or `REST_GW_*` in this shell: the gateway treats them as config overrides.
+
+```shell
+/path/to/neofs-s3-gw --config /path/to/custom-s3.yaml
+/path/to/neofs-rest-gw --config /path/to/custom-rest.yaml
+```
+
+5. Rerun with `--load-env`. This run does not start the gateway; it uses the process from the previous step.
+
+```shell
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --load-env env_files/persisted_env_awxyrbxdwu
+pytest -s pytest_tests/tests/services/rest_gate/test_rest_options.py --load-env env_files/persisted_env_awxyrbxdwu
+```
 
 ## pytest marks
 

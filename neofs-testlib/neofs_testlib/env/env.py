@@ -55,6 +55,7 @@ from helpers.utility import parse_version
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
+from neofs_testlib.live_log import ENV
 from neofs_testlib.shell import LocalShell
 from neofs_testlib.utils import wallet as wallet_utils
 from neofs_testlib.utils.log_uploader import NeofsConfig, NeofsUploader, build_logs_neofs_path
@@ -383,7 +384,7 @@ class NeoFSEnv:
             )
         )
         _local_ca_key_path.chmod(0o600)
-        logger.info(f"Created a local CA for node TLS certificates at {_local_ca_cert_path}")
+        logger.log(ENV, f"Created a local CA for node TLS certificates at {_local_ca_cert_path}")
         return ca_cert, ca_key
 
     def init_tls_ca_bundle(self):
@@ -562,7 +563,7 @@ class NeoFSEnv:
             deploy_threads.append(threading.Thread(target=new_storage_node.start))
         for t in deploy_threads:
             t.start()
-        logger.info("Wait until storage nodes are deployed")
+        logger.debug("Wait until storage nodes are deployed")
         try:
             self._wait_until_all_storage_nodes_are_ready()
         except Exception as e:
@@ -753,26 +754,23 @@ class NeoFSEnv:
         persisted_path = self._generate_temp_file(os.path.dirname(self._env_dir), prefix="persisted_env")
         with open(persisted_path, "wb") as fp:
             pickle.dump(self, fp)
-        logger.info(f"Persist env at: {persisted_path}")
+        logger.log(ENV, f"Persist env at: {persisted_path}")
         return persisted_path
 
     def log_env_details_to_file(self):
-        with open(f"{get_assets_dir_path()}/env_details", "w") as fp:
-            env_details = ""
+        env_details = f"{self.main_chain}\n"
+        for ir_node in self.inner_ring_nodes:
+            env_details += f"{ir_node}\n"
+        for sn_node in self.storage_nodes:
+            env_details += f"{sn_node}\n"
+        env_details += f"{self.s3_gw}\n"
+        env_details += f"{self.rest_gw}\n"
 
-            env_details += f"{self.main_chain}\n"
-
-            for ir_node in self.inner_ring_nodes:
-                env_details += f"{ir_node}\n"
-
-            for sn_node in self.storage_nodes:
-                env_details += f"{sn_node}\n"
-
-            env_details += f"{self.s3_gw}\n"
-            env_details += f"{self.rest_gw}\n"
-
-            allure.attach(env_details, "neofs env details", allure.attachment_type.TEXT, ".txt")
-            fp.write(env_details)
+        details_path = Path(get_assets_dir_path()) / "env_details"
+        details_path.parent.mkdir(parents=True, exist_ok=True)
+        details_path.write_text(env_details)
+        allure.attach(env_details, "neofs env details", allure.attachment_type.TEXT, ".txt")
+        logger.log(ENV, env_details)
 
     def log_versions_to_allure(self):
         versions = ""
@@ -862,7 +860,7 @@ class NeoFSEnv:
                         text=True,
                     )
                 except Exception as e:
-                    logger.info(f"Error creating symlink: {e.stderr=}; {e.stdout=}")
+                    logger.warning(f"Error creating symlink: {e.stderr=}; {e.stdout=}")
             else:
                 subprocess.run(["unzip", "-q", archive_path, "-d", tmpdir], check=True)
                 logger.info(f"Installing AWS CLI v{required_version} to {install_dir}")
@@ -875,7 +873,7 @@ class NeoFSEnv:
                         text=True,
                     )
                 except Exception as e:
-                    logger.info(f"Error installing awscli: {e.stderr=}; {e.stdout=}")
+                    logger.warning(f"Error installing awscli: {e.stderr=}; {e.stdout=}")
 
             st = os.stat(aws_binary)
             os.chmod(aws_binary, st.st_mode | stat.S_IEXEC)
@@ -905,7 +903,7 @@ class NeoFSEnv:
 
                     for binary_path, binary_name in binaries:
                         if os.path.isfile(binary_path) or os.path.isdir(binary_path):
-                            logger.info(f"'{binary_path}' already exists, will not be downloaded")
+                            logger.debug(f"'{binary_path}' already exists, will not be downloaded")
                             continue
                         neofs_binary_params = self.neofs_env_config["binaries"][binary_name]
                         allure_step_name = "Downloading "
@@ -945,7 +943,10 @@ class NeoFSEnv:
     @classmethod
     def load(cls, persisted_path: str) -> "NeoFSEnv":
         with open(persisted_path, "rb") as fp:
-            return pickle.load(fp)
+            neofs_env = pickle.load(fp)
+        logger.log(ENV, f"Loaded persisted env from: {persisted_path}")
+        neofs_env.log_env_details_to_file()
+        return neofs_env
 
     @classmethod
     def _generate_default_neofs_env_config(cls) -> dict:
@@ -1175,7 +1176,7 @@ class NeoFSEnv:
                     if len(entries) != 1:
                         raise AssertionError(f"Unexpected contract archive layout in {extract_dir}: {entries}")
                     extracted = os.path.join(extract_dir, entries[0])
-                logger.info(f"rename: {extracted} into {target}")
+                logger.debug(f"rename: {extracted} into {target}")
                 os.replace(extracted, target)
             elif "warp" in file:
                 os.makedirs(extract_dir, exist_ok=True)
@@ -1258,10 +1259,10 @@ class ResurrectableProcess:
             if psutil.pid_exists(self.pid):
                 self.process = psutil.Process(self.pid)
             else:
-                logger.info(f"Process {self.pid} no longer exists.")
+                logger.debug(f"Process {self.pid} no longer exists.")
                 self.process = None
         except Exception as e:
-            logger.info(f"Failed to reattach to process {self.pid}: {e}")
+            logger.warning(f"Failed to reattach to process {self.pid}: {e}")
             self.process = None
 
 
@@ -1328,7 +1329,7 @@ class MainChain(ResurrectableProcess):
         else:
             ir_public_keys = [ir_alphabet_pubkey_from_neogo]
 
-        logger.info(f"Generating main chain config at: {self.main_chain_config_path}")
+        logger.debug(f"Generating main chain config at: {self.main_chain_config_path}")
         main_chain_config_template = "main_chain.yaml"
 
         if not os.getenv("MAINCHAIN_CONFIG_PATH", None):
@@ -1346,17 +1347,16 @@ class MainChain(ResurrectableProcess):
                 pprof_address=self.pprof_address,
                 prometheus_address=self.prometheus_address,
             )
-        logger.info(f"Generating CLI config at: {self.cli_config}")
+        logger.debug(f"Generating CLI config at: {self.cli_config}")
         NeoFSEnv.generate_config_file(config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.wallet)
-        logger.info(f"Generating NEO GO config at: {self.neo_go_config}")
+        logger.debug(f"Generating NEO GO config at: {self.neo_go_config}")
         NeoFSEnv.generate_config_file(
             config_template="neo_go_cfg.yaml", config_path=self.neo_go_config, wallet=self.wallet
         )
-        logger.info(f"Launching Main Chain:{self}")
         self._launch_process()
-        logger.info(f"Launched Main Chain:{self}")
+        logger.log(ENV, f"Launched Main Chain:{self}")
         if wait_until_ready:
-            logger.info("Wait until Main Chain is READY")
+            logger.debug("Wait until Main Chain is READY")
             self._wait_until_ready()
 
     def _launch_process(self):
@@ -1374,9 +1374,9 @@ class MainChain(ResurrectableProcess):
     @retry(wait=wait_fixed(1), stop=stop_after_attempt(500), reraise=True)
     def _wait_until_ready(self):
         result = self.neofs_env.neo_go().query.height(rpc_endpoint=f"http://{self.rpc_address}")
-        logger.info("WAIT UNTIL MAIN CHAIN IS READY:")
-        logger.info(result.stdout)
-        logger.info(result.stderr)
+        logger.debug("WAIT UNTIL MAIN CHAIN IS READY:")
+        logger.debug(result.stdout)
+        logger.debug(result.stderr)
 
 
 class InnerRing(ResurrectableProcess):
@@ -1438,7 +1438,7 @@ class InnerRing(ResurrectableProcess):
         """
 
     def generate_network_config(self):
-        logger.info(f"Generating network config at: {self.network_config}")
+        logger.debug(f"Generating network config at: {self.network_config}")
 
         network_config_template = "network.yaml"
 
@@ -1452,7 +1452,7 @@ class InnerRing(ResurrectableProcess):
         )
 
     def generate_cli_config(self):
-        logger.info(f"Generating CLI config at: {self.cli_config}")
+        logger.debug(f"Generating CLI config at: {self.cli_config}")
         NeoFSEnv.generate_config_file(
             config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.alphabet_wallet
         )
@@ -1468,7 +1468,7 @@ class InnerRing(ResurrectableProcess):
     ):
         if self.process is not None:
             raise RuntimeError("This inner ring node instance has already been started")
-        logger.info(f"Generating IR config at: {self.ir_node_config_path}")
+        logger.debug(f"Generating IR config at: {self.ir_node_config_path}")
         ir_config_template = "ir.yaml"
 
         if not pub_keys_of_existing_ir_nodes:
@@ -1517,11 +1517,10 @@ class InnerRing(ResurrectableProcess):
                 sn_validator_url=self.sn_validator_url,
                 allow_ec=self.allow_ec,
             )
-        logger.info(f"Launching Inner Ring Node:{self}")
         self._launch_process()
-        logger.info(f"Launched Inner Ring Node:{self}")
+        logger.log(ENV, f"Launched Inner Ring Node:{self}")
         if wait_until_ready:
-            logger.info("Wait until IR is READY")
+            logger.debug("Wait until IR is READY")
             self._wait_until_ready()
 
     def _launch_process(self):
@@ -1669,14 +1668,14 @@ class StorageNode(ResurrectableProcess):
         if self.process is not None or self.pid is not None:
             raise RuntimeError(f"This storage node instance has already been started \n{self}")
         if fresh:
-            logger.info("Generating wallet for storage node")
+            logger.debug("Generating wallet for storage node")
             if prepared_wallet:
                 self.wallet = prepared_wallet
             else:
                 self.neofs_env.generate_storage_wallet(self.wallet, label=f"sn{self.sn_number}")
             if self.tls_enabled:
                 self._generate_tls_cert()
-            logger.info(f"Generating config for storage node at {self.storage_node_config_path}")
+            logger.debug(f"Generating config for storage node at {self.storage_node_config_path}")
 
             if not os.getenv(f"SN{self.sn_number}_CONFIG_PATH", None):
                 sn_config_template = self.get_config_template()
@@ -1708,14 +1707,14 @@ class StorageNode(ResurrectableProcess):
                     tls_cert_path=self.tls_cert_path,
                     tls_key_path=self.tls_key_path,
                 )
-            logger.info(f"Generating cli config for storage node at: {self.cli_config}")
+            logger.debug(f"Generating cli config for storage node at: {self.cli_config}")
             NeoFSEnv.generate_config_file(
                 config_template="cli_cfg.yaml", config_path=self.cli_config, wallet=self.wallet
             )
-        logger.info(f"Launching Storage Node:{self}")
         self._launch_process()
+        logger.log(ENV, f"Launched Storage Node:{self}")
         if wait_until_ready:
-            logger.info("Wait until storage node is READY")
+            logger.debug("Wait until storage node is READY")
             self._wait_until_ready()
         allure.attach(str(self), f"sn_{self.sn_number}", allure.attachment_type.TEXT, ".txt")
 
@@ -1921,10 +1920,10 @@ class S3_GW(ResurrectableProcess):
             raise RuntimeError(f"This s3 gw instance has already been started:\n{self}")
         if fresh:
             self.neofs_env.generate_storage_wallet(self.wallet, label="s3")
-        logger.info(f"Generating config for s3 gw at {self.config_path}")
+        logger.debug(f"Generating config for s3 gw at {self.config_path}")
         self._generate_config()
-        logger.info(f"Launching S3 GW: {self}")
         self._launch_process()
+        logger.log(ENV, f"Launched S3 GW:{self}")
         try:
             self._wait_until_ready()
         except Exception as e:
@@ -1935,7 +1934,7 @@ class S3_GW(ResurrectableProcess):
 
     @allure.step("Stop s3 gw")
     def stop(self):
-        logger.info(f"Stopping s3 gw:{self}")
+        logger.log(ENV, f"Stopping s3 gw:{self}")
         self.process.terminate()
         terminate_process(self.process)
         self.process = None
@@ -2042,11 +2041,10 @@ class REST_GW(ResurrectableProcess):
             raise RuntimeError(f"This rest gw instance has already been started:\n{self}")
         if fresh:
             self.neofs_env.generate_storage_wallet(self.wallet, label="rest")
-        logger.info(f"Generating config for rest gw at {self.config_path}")
+        logger.debug(f"Generating config for rest gw at {self.config_path}")
         self._generate_config()
-        logger.info(f"Launching REST GW: {self}")
         self._launch_process()
-        logger.info(f"Launched REST GW: {self}")
+        logger.log(ENV, f"Launched REST GW:{self}")
         try:
             self._wait_until_ready()
         except Exception as e:
@@ -2057,7 +2055,7 @@ class REST_GW(ResurrectableProcess):
 
     @allure.step("Stop rest gw")
     def stop(self):
-        logger.info(f"Stopping rest gw:{self}")
+        logger.log(ENV, f"Stopping rest gw:{self}")
         self.process.terminate()
         terminate_process(self.process)
         self.process = None
