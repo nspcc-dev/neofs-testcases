@@ -57,7 +57,7 @@ class RPCClient:
 
     def _call_endpoint(self, method, params=None) -> Dict[str, Any]:
         payload = _build_payload(method, params)
-        logger.info(payload)
+        logger.debug(payload)
         try:
             response = requests.post(self.endpoint, data=payload, timeout=self.timeout)
             response.raise_for_status()

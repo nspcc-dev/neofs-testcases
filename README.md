@@ -75,12 +75,28 @@ List of all required binaries with corresponding URLs can be found here - `neofs
 To use a patched binary for tests just place it to the repo root directory. 
 Config files for binaries are located here - `neofs-testlib/neofs_testlib/env/templates`.
 
+Live logs are printed while the tests run. The default level is `INFO`. Pass `--log-cli-level` to change it:
+
+| Level | What is printed |
+| --- | --- |
+| `DEBUG` | Every command and its output, config generation, waits, plus everything below |
+| `INFO` | Test progress and environment summaries (the default) |
+| `ENV` | Environment summaries, warnings and errors |
+| `WARNING` | Warnings and errors |
+
+Environment summaries are printed in green: endpoints, config paths, stdout and stderr files, the local CA, and the persisted env directory. A full summary is printed once the environment is up, and again when you reload it with `--load-env`.
+
+```shell
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --log-cli-level=ENV
+pytest -s pytest_tests/tests/s3/test_s3_bucket.py --log-cli-level=DEBUG
+```
+
 If you are going to run tests several times in the same dev environment, 
 you can use the `--persist-env` key to initiate keeping the test environment. 
 As a result, you'll find something like `Persist env at: env_files/*` in the report. 
 For example:
 ```shell
-[MainThread] 2024-04-27 18:31:55 [INFO] Persist env at: env_files/persisted_env_awxyrbxdwu
+[MainThread] 2024-04-27 18:31:55 [ ENV] Persist env at: env_files/persisted_env_awxyrbxdwu
 ```
 After that, you can run tests faster by adding the `--load-env` flag along with 
 the received value. This way you won't waste time redeploy the environment.

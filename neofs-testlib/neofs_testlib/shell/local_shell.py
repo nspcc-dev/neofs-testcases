@@ -8,6 +8,7 @@ from typing import IO, Optional
 import pexpect
 
 from neofs_testlib.defaults import Options
+from neofs_testlib.live_log import log_command_result
 from neofs_testlib.reporter import get_reporter, should_report_command, truncate_command_output
 from neofs_testlib.shell.interfaces import CommandInspector, CommandOptions, CommandResult, Shell
 
@@ -29,7 +30,7 @@ class LocalShell(Shell):
         for inspector in self.command_inspectors:
             command = inspector.inspect(command)
 
-        logger.info(f"Executing command: {command}")
+        logger.debug(f"Executing command: {command}")
         if options.interactive_inputs:
             return self._exec_interactive(command, options)
         return self._exec_non_interactive(command, options)
@@ -148,12 +149,13 @@ class LocalShell(Shell):
         end_time: datetime,
         result: Optional[CommandResult],
     ) -> None:
-        # TODO: increase logging level if return code is non 0, should be warning at least
-        logger.info(
+        log_command_result(
+            logger,
             f"Command: {command}\n"
             f"{'Success:' if result and result.return_code == 0 else 'Error:'}\n"
             f"return code: {result.return_code if result else ''} "
-            f"\nOutput: {result.stdout if result else ''}"
+            f"\nOutput: {result.stdout if result else ''}",
+            result.return_code if result else None,
         )
 
         # Successful commands are not attached to the report to keep it small;

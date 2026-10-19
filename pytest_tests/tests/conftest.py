@@ -18,6 +18,7 @@ from helpers.file_helper import generate_file
 from helpers.node_management import restart_storage_nodes
 from helpers.wallet_helpers import create_wallet
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.live_log import colorize_live_logs
 from neofs_testlib.reporter import AllureHandler, get_reporter
 from neofs_testlib.shell import Shell
 
@@ -33,6 +34,10 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 def pytest_addoption(parser):
     parser.addoption("--persist-env", action="store_true", default=False, help="persist deployed env")
     parser.addoption("--load-env", action="store", help="load persisted env from file")
+
+
+def pytest_sessionstart(session):
+    colorize_live_logs(session.config)
 
 
 def get_or_create_neofs_env(

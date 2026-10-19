@@ -22,7 +22,7 @@ def init_wallet(wallet_path: str, wallet_password: str) -> str:
     wallet.account_add(account)
     with open(wallet_path, "w") as out:
         json.dump(wallet.to_json(wallet_password), out)
-    logger.info(f"Init new wallet: {wallet_path}, address: {account.address}")
+    logger.debug(f"Init new wallet: {wallet_path}, address: {account.address}")
     return account.address
 
 
@@ -47,7 +47,7 @@ def get_last_address_from_wallet(
             wallet_passwords = [wallet_password] * len(wallet_json["accounts"])
         wallet = neo3_wallet.Wallet.from_json(wallet_json, passwords=wallet_passwords)
     address = wallet.accounts[-1].address
-    logger.info(f"got address: {address}")
+    logger.debug(f"got address: {address}")
     return address
 
 
@@ -95,13 +95,13 @@ def get_last_public_key_from_wallet(
             wallet_passwords = [wallet_password] * len(wallet_json["accounts"])
         wallet = neo3_wallet.Wallet.from_json(wallet_json, passwords=wallet_passwords)
     public_key = wallet.accounts[-1].public_key
-    logger.info(f"got public_key: {public_key}")
+    logger.debug(f"got public_key: {public_key}")
     return public_key
 
 
 def get_last_public_key_from_wallet_with_neogo(neo_go: NeoGo, wallet_path: str) -> str:
     public_key = neo_go.wallet.dump_keys(wallet=wallet_path).stdout.split(":")[-1].strip()
-    logger.info(f"got public_key: {public_key}")
+    logger.debug(f"got public_key: {public_key}")
     return public_key
 
 
@@ -114,7 +114,7 @@ def get_private_key_from_wallet(wallet_path: str, address: str, password: str) -
 
     for account in wallet_json["accounts"]:
         if account["address"] == address:
-            logger.info(f"got private key for address {address}")
+            logger.debug(f"got private key for address {address}")
             return neo3_account.Account.private_key_from_nep2(account["key"], password, scrypt_params)
 
     raise ValueError(f"Address {address} is not found in wallet {wallet_path}")
