@@ -37,6 +37,12 @@ class RPCClient:
     def get_transaction_height(self, txid: str):
         return self._call_endpoint("gettransactionheight", params=[txid])
 
+    def get_block_count(self) -> int:
+        return self._call_endpoint("getblockcount")
+
+    def get_block_header(self, index: int) -> Dict[str, Any]:
+        return self._call_endpoint("getblockheader", params=[index, True])
+
     def get_nep17_transfers(self, address, timestamps=None):
         params = [address]
         if timestamps:
