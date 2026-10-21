@@ -196,6 +196,9 @@ class TestContainerRevisions(TestNeofsBase):
         endpoint = self.neofs_env.sn_rpc
         other_endpoint = self._endpoints()[-1]
         file_size = self.neofs_env.get_object_size("simple_object_size")
+        node_version = self.neofs_env.get_binary_version(self.neofs_env.neofs_node_path)
+        eacl_revision_increment = int(parse_version(node_version) > parse_version("0.57.0"))
+        revision = 1
         cors_v1 = _cors_payload(["GET"], "*")
         cors_v2 = _cors_payload(["GET", "PUT"], "https://example.com")
         deny_others_get = [EACLRule(access=EACLAccess.DENY, role=EACLRole.OTHERS, operation=EACLOperation.GET)]
@@ -224,24 +227,27 @@ class TestContainerRevisions(TestNeofsBase):
         with allure.step("Another user can read the public container"):
             self._wait_until_read(other, cid, oid_a, source_a, allowed=True)
 
-        with allure.step("Deny GET for others at revision 1; revision stays 1"):
+        with allure.step(f"Deny GET for others at revision 1; revision is now {revision + eacl_revision_increment}"):
             self._set_eacl(owner, cid, deny_others_get, revision=1, endpoint=endpoint)
-            self._assert_revision_holds(owner, cid, 1)
+            revision += eacl_revision_increment
+            self._wait_for_revision(owner, cid, revision)
+            self._assert_revision_holds(owner, cid, revision)
             self._wait_until_read(other, cid, oid_a, source_a, allowed=False)
 
-        with allure.step("The same revision still accepts new objects after the eACL update"):
+        with allure.step(f"Revision {revision} still accepts new objects after the eACL update"):
             source_c = generate_file(file_size)
-            oid_c = put_object(owner, source_c, cid, self.shell, endpoint, container_revision=1)
-            stored = self._root_object_ids(owner, cid, endpoint, revision=1)
+            oid_c = put_object(owner, source_c, cid, self.shell, endpoint, container_revision=revision)
+            stored = self._root_object_ids(owner, cid, endpoint, revision=revision)
             assert {oid_a, oid_b, oid_c} <= stored
 
-        with allure.step("Publish CORS and wait until every node reports revision 2"):
+        with allure.step("Publish CORS and wait until every node reports the next revision"):
             set_container_attributes(default_wallet, cid, self.neofs_env, attributes={"CORS": cors_v1})
-            self._wait_for_revision(owner, cid, 2)
+            revision += 1
+            self._wait_for_revision(owner, cid, revision)
             self._assert_cors(owner, cid, other_endpoint, cors_v1)
 
-        with allure.step("Stale revision 1 cannot put or search on any node"):
-            self._reject_pinned_ops(owner, cid, source_a, requested=1, server=2)
+        with allure.step(f"Stale revision 1 cannot put or search on any node at revision {revision}"):
+            self._reject_pinned_ops(owner, cid, source_a, requested=1, server=revision)
             assert self._root_object_ids(owner, cid, endpoint) == stored
             self._assert_payload(owner, cid, oid_a, source_a, other_endpoint)
             self._assert_payload(owner, cid, oid_a, source_a, endpoint)
@@ -259,17 +265,17 @@ class TestContainerRevisions(TestNeofsBase):
                 )
             assert self._root_object_ids(owner, cid, endpoint) == stored
 
-        with allure.step("Revision 2 and an unpinned client can extend the container"):
+        with allure.step(f"Revision {revision} and an unpinned client can extend the container"):
             source_d = generate_file(file_size)
-            oid_d = put_object(owner, source_d, cid, self.shell, other_endpoint, container_revision=2)
+            oid_d = put_object(owner, source_d, cid, self.shell, other_endpoint, container_revision=revision)
             source_e = generate_file(file_size)
             oid_e = put_object(owner, source_e, cid, self.shell, endpoint)
-            stored = self._root_object_ids(owner, cid, endpoint, revision=2)
+            stored = self._root_object_ids(owner, cid, endpoint, revision=revision)
             assert {oid_a, oid_b, oid_c, oid_d, oid_e} <= stored
             self._assert_payload(owner, cid, oid_d, source_d, endpoint)
 
-        with allure.step("Stale eACL replacement keeps the deny policy"):
-            with pytest.raises(RuntimeError, match=_revision_mismatch(1, 2)):
+        with allure.step(f"Stale eACL replacement keeps the deny policy at revision {revision}"):
+            with pytest.raises(RuntimeError, match=_revision_mismatch(1, revision)):
                 self._set_eacl(owner, cid, allow_others_get, revision=1, endpoint=other_endpoint)
             for _ in range(3):
                 assert (
@@ -286,36 +292,42 @@ class TestContainerRevisions(TestNeofsBase):
                 )
                 time.sleep(1)
 
-        with allure.step("eACL replacement at revision 2 restores access and does not bump the revision"):
-            self._set_eacl(owner, cid, allow_others_get, revision=2, endpoint=endpoint)
-            self._assert_revision_holds(owner, cid, 2)
+        with allure.step(f"eACL replacement at revision {revision} restores access"):
+            self._set_eacl(owner, cid, allow_others_get, revision=revision, endpoint=endpoint)
+            revision += eacl_revision_increment
+            self._wait_for_revision(owner, cid, revision)
+            self._assert_revision_holds(owner, cid, revision)
             self._wait_until_read(other, cid, oid_a, source_a, allowed=True)
-            put_object(owner, generate_file(file_size), cid, self.shell, endpoint, container_revision=2)
+            put_object(owner, generate_file(file_size), cid, self.shell, endpoint, container_revision=revision)
 
-        with allure.step("Replacing CORS moves the revision to 3 and invalidates revision 2"):
+        with allure.step(f"Replacing CORS moves the revision to {revision + 1}"):
             set_container_attributes(default_wallet, cid, self.neofs_env, attributes={"CORS": cors_v2})
-            self._wait_for_revision(owner, cid, 3)
+            revision += 1
+            self._wait_for_revision(owner, cid, revision)
             self._assert_cors(owner, cid, endpoint, cors_v2)
-            self._reject_pinned_ops(owner, cid, source_d, requested=2, server=3)
+            self._reject_pinned_ops(owner, cid, source_d, requested=revision - 1, server=revision)
             source_f = generate_file(file_size)
-            oid_f = put_object(owner, source_f, cid, self.shell, endpoint, container_revision=3)
+            oid_f = put_object(owner, source_f, cid, self.shell, endpoint, container_revision=revision)
             self._assert_payload(owner, cid, oid_f, source_f, other_endpoint)
             self._assert_payload(owner, cid, oid_a, source_a, endpoint)
 
-        with allure.step("Removing CORS moves the revision to 4; current pin deletes, stale pin does not"):
+        with allure.step(
+            f"Removing CORS moves the revision to {revision + 1}; current pin deletes, stale pin does not"
+        ):
             # object delete has no --container-revision flag, so these pins never reach the node.
             set_container_attributes(default_wallet, cid, self.neofs_env, remove_attributes=["CORS"])
-            self._wait_for_revision(owner, cid, 4)
+            revision += 1
+            self._wait_for_revision(owner, cid, revision)
             self._assert_cors(owner, cid, other_endpoint, None)
-            with pytest.raises(RuntimeError, match=_revision_mismatch(3, 4)):
-                delete_object(owner, cid, oid_a, self.shell, endpoint, container_revision=3)
+            with pytest.raises(RuntimeError, match=_revision_mismatch(revision - 1, revision)):
+                delete_object(owner, cid, oid_a, self.shell, endpoint, container_revision=revision - 1)
             self._assert_payload(owner, cid, oid_a, source_a, endpoint)
 
-            delete_object(owner, cid, oid_d, self.shell, other_endpoint, container_revision=4)
+            delete_object(owner, cid, oid_d, self.shell, other_endpoint, container_revision=revision)
             self._wait_until_removed(owner, cid, oid_d, endpoint)
-            assert oid_d not in self._root_object_ids(owner, cid, endpoint, revision=4)
+            assert oid_d not in self._root_object_ids(owner, cid, endpoint, revision=revision)
             self._assert_payload(owner, cid, oid_a, source_a, other_endpoint)
-            put_object(owner, generate_file(file_size), cid, self.shell, endpoint, container_revision=4)
+            put_object(owner, generate_file(file_size), cid, self.shell, endpoint, container_revision=revision)
 
     def test_ownership_transfer_bumps_revision(self):
         """Transferring a container increments its revision and changes who may use the new value.
