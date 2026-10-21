@@ -4,17 +4,20 @@ from collections import defaultdict
 
 import allure
 import pytest
-from helpers.file_helper import generate_file, get_file_hash, split_file
+from helpers.file_helper import concat_files, generate_file, get_file_hash, split_file
 from helpers.s3_helper import (
     check_objects_in_bucket,
     object_key_from_file_path,
     parametrize_clients,
     set_bucket_versioning,
 )
+from helpers.utility import parse_version
 from s3 import s3_bucket, s3_object
 from s3.s3_base import TestNeofsS3Base
 
 PART_SIZE = 5 * 1024 * 1024
+INVALID_PART_ORDER_ERROR = r".*The list of parts was not in ascending order.*"
+INVALID_PART_ERROR = r".*One or more of the specified parts could not be found.*"
 
 
 def pytest_generate_tests(metafunc):
@@ -22,6 +25,11 @@ def pytest_generate_tests(metafunc):
 
 
 class TestS3Multipart(TestNeofsS3Base):
+    def _skip_if_arbitrary_parts_not_supported(self):
+        s3_gw_version = self.neofs_env.get_binary_version(self.neofs_env.neofs_s3_gw_path)
+        if parse_version(s3_gw_version) <= parse_version("0.47.0"):
+            pytest.skip(f"Arbitrary multipart parts are not supported by neofs-s3-gw {s3_gw_version} (<= 0.47.0)")
+
     @allure.title("Test S3 Object Multipart API")
     def test_s3_object_multipart(self):
         bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
@@ -87,6 +95,106 @@ class TestS3Multipart(TestNeofsS3Base):
             assert not uploads, f"Expected there is no uploads in bucket {bucket}"
 
         with allure.step("Check we can get whole object from bucket"):
+            got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
+            assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
+    @allure.title("Test S3 Multipart with gaps in part numbers")
+    def test_s3_object_multipart_with_gaps(self):
+        self._skip_if_arbitrary_parts_not_supported()
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        part_numbers = [1, 5, 14]
+        file_name_large = generate_file(PART_SIZE * len(part_numbers))
+        object_key = object_key_from_file_path(file_name_large)
+        part_files = split_file(file_name_large, len(part_numbers))
+        parts = []
+
+        with allure.step(f"Upload parts with numbers {part_numbers}"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_num, file_path in zip(part_numbers, part_files):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_num, file_path)
+                parts.append((part_num, etag))
+
+            got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
+            got_part_numbers = [part["PartNumber"] for part in got_parts]
+            assert got_part_numbers == part_numbers, f"Expected parts {part_numbers}, got {got_part_numbers}"
+
+        with allure.step("Complete multipart upload"):
+            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
+            uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
+            assert not uploads, f"Expected there is no uploads in bucket {bucket}"
+
+        with allure.step("Check we can get whole object from bucket"):
+            got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
+            assert get_file_hash(got_object) == get_file_hash(file_name_large)
+
+    @allure.title("Test S3 Multipart completion with a subset of uploaded parts")
+    def test_s3_object_multipart_complete_subset_of_parts(self):
+        self._skip_if_arbitrary_parts_not_supported()
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        parts_count = 5
+        completed_part_numbers = [1, 3, 5]
+        file_name_large = generate_file(PART_SIZE * parts_count)
+        object_key = object_key_from_file_path(file_name_large)
+        part_files = split_file(file_name_large, parts_count)
+        parts = {}
+
+        with allure.step(f"Upload {parts_count} parts"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_num, file_path in enumerate(part_files, start=1):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_num, file_path)
+                parts[part_num] = etag
+
+        with allure.step(f"Complete multipart upload with parts {completed_part_numbers}"):
+            s3_object.complete_multipart_upload_s3(
+                self.s3_client,
+                bucket,
+                object_key,
+                upload_id,
+                [(part_num, parts[part_num]) for part_num in completed_part_numbers],
+            )
+            uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
+            assert not uploads, f"Expected there is no uploads in bucket {bucket}"
+
+        with allure.step("Check object consists only of completed parts"):
+            expected_file = concat_files([part_files[part_num - 1] for part_num in completed_part_numbers])
+            got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
+            assert os.path.getsize(got_object) == os.path.getsize(expected_file)
+            assert get_file_hash(got_object) == get_file_hash(expected_file)
+
+    @allure.title("Test S3 Multipart completion with invalid parts list")
+    def test_s3_object_multipart_complete_invalid_parts(self):
+        bucket = s3_bucket.create_bucket_s3(self.s3_client, bucket_configuration="rep-1")
+        parts_count = 3
+        file_name_large = generate_file(PART_SIZE * parts_count)
+        object_key = object_key_from_file_path(file_name_large)
+        part_files = split_file(file_name_large, parts_count)
+        parts = []
+
+        with allure.step(f"Upload {parts_count} parts"):
+            upload_id = s3_object.create_multipart_upload_s3(self.s3_client, bucket, object_key)
+            for part_num, file_path in enumerate(part_files, start=1):
+                etag = s3_object.upload_part_s3(self.s3_client, bucket, object_key, upload_id, part_num, file_path)
+                parts.append((part_num, etag))
+
+        invalid_parts_lists = {
+            "descending order": (INVALID_PART_ORDER_ERROR, [parts[1], parts[0], parts[2]]),
+            "duplicated part": (INVALID_PART_ORDER_ERROR, [parts[0], parts[0], parts[1], parts[2]]),
+            "missing part": (INVALID_PART_ERROR, [parts[0], parts[1], (parts_count + 1, parts[2][1])]),
+            "wrong ETag": (INVALID_PART_ERROR, [parts[0], (parts[1][0], parts[0][1]), parts[2]]),
+        }
+        for case, (error, invalid_parts) in invalid_parts_lists.items():
+            with allure.step(f"Complete multipart upload with {case}"):
+                with pytest.raises(Exception, match=error):
+                    s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, invalid_parts)
+
+        with allure.step("Check upload is still in progress"):
+            uploads = s3_object.list_multipart_uploads_s3(self.s3_client, bucket)
+            assert uploads, f"Expected there are uploads in bucket {bucket}"
+            got_parts = s3_object.list_parts_s3(self.s3_client, bucket, object_key, upload_id)
+            assert len(got_parts) == parts_count, f"Expected {parts_count} parts, got\n{got_parts}"
+
+        with allure.step("Complete multipart upload with valid parts list"):
+            s3_object.complete_multipart_upload_s3(self.s3_client, bucket, object_key, upload_id, parts)
             got_object = s3_object.get_object_s3(self.s3_client, bucket, object_key)
             assert get_file_hash(got_object) == get_file_hash(file_name_large)
 
