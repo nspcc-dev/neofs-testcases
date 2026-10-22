@@ -301,6 +301,13 @@ def get_nodes_with_object(
     return nodes_list
 
 
+def get_object_holder_endpoint(neofs_env: NeoFSEnv, shell: Shell, cid: str, oid: str) -> str:
+    """Return the endpoint of a storage node that stores the object."""
+    nodes = get_nodes_with_object(cid, oid, shell, neofs_env.storage_nodes, neofs_env)
+    assert nodes, f"Object {oid} is not stored on any storage node"
+    return nodes[0].endpoint
+
+
 @allure.step("Get Nodes Without Object")
 def get_nodes_without_object(
     wallet: str, cid: str, oid: str, shell: Shell, nodes: list[StorageNode]

@@ -205,6 +205,7 @@ class NeofsCliObject(CliCommand):
         disable_timestamp: bool = False,
         lifetime: Optional[int] = None,
         expire_at: Optional[int] = None,
+        expire_at_time: Optional[str] = None,
         no_progress: bool = False,
         notify: Optional[str] = None,
         session: Optional[str] = None,
@@ -226,6 +227,8 @@ class NeofsCliObject(CliCommand):
             disable_timestamp: Do not set well-known timestamp attribute.
             lifetime: Lock lifetime - relative to the current epoch.
             expire_at: Last epoch in the life of the object - absolute value.
+            expire_at_time: Expiration time in RFC3339. Mutually exclusive with
+                ``lifetime`` and ``expire_at``.
             file: File with object payload.
             no_progress: Do not show progress bar.
             notify: Object notification in the form of *epoch*:*topic*; '-'

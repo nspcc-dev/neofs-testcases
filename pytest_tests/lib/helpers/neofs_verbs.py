@@ -333,6 +333,7 @@ def put_object_to_random_node(
     wallet_config: Optional[str] = None,
     lifetime: Optional[int] = None,
     expire_at: Optional[int] = None,
+    expire_at_time: Optional[str] = None,
     no_progress: bool = True,
     session: Optional[str] = None,
 ):
@@ -351,6 +352,8 @@ def put_object_to_random_node(
         no_progress: do not show progress bar
         lifetime: Lock lifetime - relative to the current epoch.
         expire_at: Last epoch in the life of the object - absolute value.
+        expire_at_time: Expiration time in RFC3339. Mutually exclusive with
+            ``lifetime`` and ``expire_at``.
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
     Returns:
@@ -373,6 +376,7 @@ def put_object_to_random_node(
         no_progress,
         session,
         lifetime,
+        expire_at_time=expire_at_time,
     )
 
 
@@ -393,6 +397,7 @@ def put_object(
     lifetime: Optional[int] = None,
     timeout: Optional[str] = "180s",
     container_revision: Optional[int] = None,
+    expire_at_time: Optional[str] = None,
 ):
     """
     PUT of given file.
@@ -411,6 +416,8 @@ def put_object(
         xhdr: Request X-Headers in form of Key=Value
         session: path to a JSON-encoded container session token
         lifetime: Lock lifetime - relative to the current epoch.
+        expire_at_time: Expiration time in RFC3339. Mutually exclusive with
+            ``lifetime`` and ``expire_at``.
     Returns:
         (str): ID of uploaded Object
     """
@@ -425,6 +432,7 @@ def put_object(
         bearer=bearer,
         lifetime=lifetime,
         expire_at=expire_at,
+        expire_at_time=expire_at_time,
         no_progress=no_progress,
         xhdr=xhdr,
         session=session,
