@@ -1,14 +1,16 @@
 import base64
+import http.client
 import json
 import logging
 import os
 import random
 import shutil
+import socket
 import uuid
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Union
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import allure
 import requests
@@ -322,6 +324,7 @@ def upload_via_rest_gate(
     file_content_type: str = None,
     error_pattern: Optional[str] = None,
     session_token: str = None,
+    content_length: Optional[int] = None,
 ) -> str:
     """
     This function upload given object through REST gate
@@ -331,6 +334,7 @@ def upload_via_rest_gate(
     headers:  Object header
     file_content_type: Content-Type header
     session_token: (optional) session token; adds Authorization: Bearer header automatically
+    content_length: (optional) Content-Length sent independently of the file size
     """
     request = f"{endpoint}/objects/{cid}"
 
@@ -347,6 +351,48 @@ def upload_via_rest_gate(
         headers["Content-Type"] = file_content_type
 
     verify_options_request(request)
+    if content_length is not None:
+        parsed = urlparse(endpoint)
+        request_path = f"{parsed.path.rstrip('/')}/objects/{cid}"
+        send_headers = dict(headers)
+        if cookies:
+            send_headers["Cookie"] = "; ".join(f"{key}={value}" for key, value in cookies.items())
+        send_headers.setdefault("Content-Type", "application/octet-stream")
+        send_headers["Content-Length"] = str(content_length)
+
+        conn = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT)
+        try:
+            conn.putrequest("POST", request_path)
+            for key, value in send_headers.items():
+                conn.putheader(key, value)
+            conn.endheaders()
+            conn.send(file_content)
+            if len(file_content) < content_length:
+                conn.sock.shutdown(socket.SHUT_WR)
+            response = conn.getresponse()
+            body = response.read().decode(errors="replace")
+            status = response.status
+        finally:
+            conn.close()
+
+        logger.info(f"Request: POST {request_path} content-length={content_length} payload={len(file_content)}")
+        if status >= 400:
+            if error_pattern:
+                match = error_pattern.casefold() in body.casefold()
+                assert match, f"Expected {body} to match {error_pattern}"
+                return ""
+            raise Exception(
+                f"""Failed to upload object via REST gate:
+                    request: {request_path},
+                    response: {body},
+                    status code: {status}"""
+            )
+
+        parsed_body = json.loads(body)
+        _attach_allure_step(request, parsed_body, req_type="POST")
+        assert parsed_body.get("object_id"), f"OID found in response {body}"
+        return parsed_body.get("object_id")
+
     resp = requests.post(
         request, data=file_content, headers=headers, cookies=cookies, timeout=DEFAULT_OBJECT_OPERATION_TIMEOUT
     )

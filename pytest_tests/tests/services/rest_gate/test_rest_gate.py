@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import time
 
 import allure
@@ -26,6 +27,9 @@ from rest_gw.rest_utils import get_object_and_verify_hashes
 
 logger = logging.getLogger("NeoLogger")
 OBJECT_NOT_FOUND_ERROR = "404"
+PAYLOAD_LENGTH_MISMATCH = re.compile(
+    r"unexpected EOF|wrong payload size|payload size exceeded|context canceled", re.IGNORECASE
+)
 
 PLACEMENT_RULE_PARAMS = [
     pytest.param("REP 2 IN X CBF 2 SELECT 2 FROM * AS X", id="rep-2"),
@@ -352,6 +356,54 @@ class TestRestGate(TestNeofsRestBase):
                 nodes=self.neofs_env.storage_nodes,
                 endpoint=gw_params["endpoint"],
             )
+
+    @allure.title("REST upload rejects a shortened or extended payload")
+    @pytest.mark.simple
+    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
+    @pytest.mark.parametrize(
+        ("declared_length", "payload_length"),
+        [
+            pytest.param(64, 32, id="shortened"),
+            pytest.param(32, 64, id="extended"),
+        ],
+    )
+    def test_put_rest_payload_length_mismatch(
+        self, gw_params, placement_rule, declared_length: int, payload_length: int
+    ):
+        cid = create_container(
+            self.wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=placement_rule,
+            basic_acl=PUBLIC_ACL,
+        )
+        if payload_length > declared_length:
+            payload = b"A" * declared_length + b"B" * (payload_length - declared_length)
+        else:
+            payload = b"A" * payload_length
+        file_path = generate_file(payload_length)
+        with open(file_path, "wb") as file:
+            file.write(payload)
+
+        with allure.step(f"Upload {payload_length} bytes with Content-Length {declared_length}"):
+            try:
+                stored_id = upload_via_rest_gate(
+                    cid=cid,
+                    path=file_path,
+                    endpoint=gw_params["endpoint"],
+                    content_length=declared_length,
+                )
+            except Exception as err:
+                assert PAYLOAD_LENGTH_MISMATCH.search(str(err)), str(err)
+                return
+
+        assert payload_length > declared_length, stored_id
+        got_file = get_via_rest_gate(cid=cid, oid=stored_id, endpoint=gw_params["endpoint"])
+        with open(got_file, "rb") as got:
+            stored = got.read()
+        assert stored == payload[:declared_length], (
+            f"Stored payload length {len(stored)} differs from declared Content-Length {declared_length}"
+        )
 
     @allure.link("https://github.com/nspcc-dev/neofs-rest-gw#docs", name="docs")
     @allure.title("Test Put over REST, Get over REST with headers")
