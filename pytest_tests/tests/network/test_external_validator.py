@@ -115,10 +115,6 @@ def start_new_sn_with_validator(neofs_env: NeoFSEnv, expect_success: bool = True
         neofs_env.storage_nodes.append(new_storage_node)
         new_storage_node.start(wait_until_ready=False)
         neofs_env._wait_until_all_storage_nodes_are_ready()
-        neofs_env.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env.fschain_rpc}",
-            alphabet_wallets=neofs_env.alphabet_wallets_dir,
-        )
         if expect_success:
             _wait_until_ready(neofs_env, new_storage_node)
         else:

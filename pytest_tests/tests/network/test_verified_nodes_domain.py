@@ -44,10 +44,6 @@ def test_verified_nodes_domain(neofs_env_ir_only: NeoFSEnv):
     with allure.step("Start new storage node and ensure it is registered in the network"):
         new_storage_node.start(prepared_wallet=new_storage_node.wallet, wait_until_ready=False)
         neofs_env_ir_only._wait_until_all_storage_nodes_are_ready()
-        neofs_env_ir_only.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env_ir_only.fschain_rpc}",
-            alphabet_wallets=neofs_env_ir_only.alphabet_wallets_dir,
-        )
         _wait_until_ready(neofs_env_ir_only, new_storage_node)
 
     with allure.step("Deploy another SN and ensure it won't be accepted by the network"):
@@ -59,9 +55,5 @@ def test_verified_nodes_domain(neofs_env_ir_only: NeoFSEnv):
         neofs_env_ir_only.storage_nodes.append(another_storage_node)
         another_storage_node.start(wait_until_ready=False)
         neofs_env_ir_only._wait_until_all_storage_nodes_are_ready()
-        neofs_env_ir_only.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env_ir_only.fschain_rpc}",
-            alphabet_wallets=neofs_env_ir_only.alphabet_wallets_dir,
-        )
         with pytest.raises(Exception):
             _wait_until_ready(neofs_env_ir_only, another_storage_node)

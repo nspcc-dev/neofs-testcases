@@ -576,13 +576,29 @@ class NeoFSEnv:
             zip_path = shutil.make_archive(os.path.join(self._env_dir, "storage_nodes_logs"), "zip", temp_logs_dir)
             self._attach_logs_archive(zip_path, name="storage nodes logs")
             raise e
-        # tick epoch to speed up storage nodes bootstrap
-        self.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{self.fschain_rpc}",
-            alphabet_wallets=self.alphabet_wallets_dir,
-        )
+        if self._network_has_containers():
+            self.neofs_adm().fschain.force_new_epoch(
+                rpc_endpoint=f"http://{self.fschain_rpc}",
+                alphabet_wallets=self.alphabet_wallets_dir,
+            )
         for t in deploy_threads:
             t.join()
+
+    def _network_has_containers(self) -> bool:
+        try:
+            hashes = self.neofs_adm().fschain.parse_dump_hashes(
+                self.neofs_adm().fschain.dump_hashes(rpc_endpoint=f"http://{self.fschain_rpc}").stdout
+            )
+            result = self.neo_go().contract.testinvokefunction(
+                scripthash=hashes["container"],
+                method="totalSupply",
+                rpc_endpoint=f"http://{self.fschain_rpc}",
+            )
+            invoked = json.loads(result.stdout)
+            return int(invoked["stack"][0]["value"]) > 0
+        except Exception:
+            logger.warning("Could not read container totalSupply; ticking epoch", exc_info=True)
+            return True
 
     @retry(wait=wait_fixed(1), stop=stop_after_attempt(120), reraise=True)
     def _wait_until_all_storage_nodes_are_ready(self):

@@ -263,10 +263,4 @@ def test_sn_deployment_with_inactive_fschain_endpoint(neofs_env_ir_only: NeoFSEn
         neofs_env_ir_only.storage_nodes.append(new_storage_node)
 
     with allure.step("Start new storage node and ensure it is registered in the network"):
-        new_storage_node.start(wait_until_ready=False)
-        neofs_env_ir_only._wait_until_all_storage_nodes_are_ready()
-        neofs_env_ir_only.neofs_adm().fschain.force_new_epoch(
-            rpc_endpoint=f"http://{neofs_env_ir_only.fschain_rpc}",
-            alphabet_wallets=neofs_env_ir_only.alphabet_wallets_dir,
-        )
-        new_storage_node._wait_until_ready()
+        new_storage_node.start()
