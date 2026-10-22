@@ -191,6 +191,7 @@ def get_put_object_request_header(
     homo_hash: bool = True,
     creation_epoch=1,
     expiration_epoch="1000",
+    payload_length: int | None = None,
 ) -> object_types_pb2.Header:
     payload_checksum = refs_types_pb2.Checksum()
     payload_checksum.type = refs_types_pb2.ChecksumType.SHA256
@@ -201,7 +202,7 @@ def get_put_object_request_header(
     header.container_id.CopyFrom(container_id)
     header.owner_id.CopyFrom(owner_id)
     header.creation_epoch = creation_epoch
-    header.payload_length = len(test_payload)
+    header.payload_length = len(test_payload) if payload_length is None else payload_length
     header.payload_hash.CopyFrom(payload_checksum)
     header.object_type = object_type
 
@@ -258,6 +259,7 @@ def put_object(
     oid: str = None,
     homo_hash: bool = True,
     object_context_verb: session_types_pb2.ObjectSessionContext = session_types_pb2.ObjectSessionContext.PUT,
+    payload_length: int | None = None,
 ) -> object_service_pb2.PutResponse:
     with allure.step("Create put request for an object"):
         owner_id = refs_types_pb2.OwnerID()
@@ -273,7 +275,14 @@ def put_object(
         session_id, session_key = get_session_token(wallet, sn_endpoint)
 
         header = get_put_object_request_header(
-            owner_id, version, container_id, object_type, payload, oid, homo_hash=homo_hash
+            owner_id,
+            version,
+            container_id,
+            object_type,
+            payload,
+            oid,
+            homo_hash=homo_hash,
+            payload_length=payload_length,
         )
 
         object_id = refs_types_pb2.ObjectID()
