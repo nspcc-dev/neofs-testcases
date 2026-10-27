@@ -1895,9 +1895,16 @@ class StorageNode(ResurrectableProcess):
 
 
 class S3_GW(ResurrectableProcess):
-    def __init__(self, neofs_env: NeoFSEnv, internal_slicer=False, peer_addresses: Optional[list[str]] = None):
+    def __init__(
+        self,
+        neofs_env: NeoFSEnv,
+        internal_slicer=False,
+        peer_addresses: Optional[list[str]] = None,
+        peers_from_netmap: bool = False,
+    ):
         self.neofs_env = neofs_env
         self.peer_addresses = peer_addresses
+        self.peers_from_netmap = peers_from_netmap
         self.s3_gw_dir = self.neofs_env._generate_temp_dir("s3-gw")
         self.config_path = os.getenv(
             "S3_GW_CONFIG_PATH",
@@ -2000,6 +2007,7 @@ class S3_GW(ResurrectableProcess):
             pprof_address=self.pprof_address,
             prometheus_address=self.prometheus_address,
             internal_slicer=self.internal_slicer,
+            peers_from_netmap=str(self.peers_from_netmap).lower(),
         )
 
     def _launch_process(self):

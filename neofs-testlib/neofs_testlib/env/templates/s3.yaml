@@ -42,6 +42,9 @@ peers:
     weight: {{ peer.weight }}
   {%- endfor %}
 
+# Take NeoFS node addresses from the network map instead of the peers list.
+peers_from_netmap: {{ peers_from_netmap }}
+
 listen_domains:
   - {{ listen_domain }}
 
