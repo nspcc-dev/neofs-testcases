@@ -7,6 +7,7 @@ from random import choices, sample
 
 import allure
 import pytest
+from botocore.exceptions import ClientError
 from helpers.common import WALLET_PASS, get_assets_dir_path
 from helpers.data_formatters import get_wallet_public_key
 from helpers.file_helper import (
@@ -703,6 +704,44 @@ class TestS3Object(TestNeofsS3Base):
             got_tags_3 = s3_object.get_object_tagging(self.s3_client, bucket, file_name_3, version_id_1)
             assert got_tags_3, f"Expected tags, got {got_tags_3}"
             assert got_tags_3 == [{"Key": tag_key_3, "Value": str(tag_value_3)}], "Tags must be the same"
+
+    @allure.title("S3 put rejects a shortened or extended payload")
+    @pytest.mark.simple
+    @pytest.mark.boto3_only
+    @pytest.mark.parametrize(
+        ("declared_length", "payload_length"),
+        [
+            pytest.param(64, 32, id="shortened"),
+            pytest.param(32, 64, id="extended"),
+        ],
+    )
+    def test_s3_put_object_payload_length_mismatch(self, bucket, declared_length: int, payload_length: int):
+        if payload_length > declared_length:
+            payload = b"A" * declared_length + b"B" * (payload_length - declared_length)
+        else:
+            payload = b"A" * payload_length
+        object_key = f"payload-length-{uuid.uuid4()}"
+
+        def _set_declared_length(request, **kwargs):
+            request.headers["Content-Length"] = str(len(payload))
+            request.headers["X-Amz-Decoded-Content-Length"] = str(declared_length)
+
+        self.s3_client.meta.events.register("before-sign.s3.PutObject", _set_declared_length)
+        try:
+            with allure.step(f"Put {payload_length} bytes with declared length {declared_length}"):
+                with pytest.raises(ClientError) as exc_info:
+                    self.s3_client.put_object(Bucket=bucket, Key=object_key, Body=payload)
+        finally:
+            self.s3_client.meta.events.unregister("before-sign.s3.PutObject", _set_declared_length)
+
+        error = exc_info.value.response["Error"]
+        status = exc_info.value.response["ResponseMetadata"]["HTTPStatusCode"]
+        assert 400 <= status < 500, error
+        assert error["Code"] != "InternalError", error
+
+        with allure.step("Object was not stored"):
+            with pytest.raises(Exception, match="404"):
+                s3_object.head_object_s3(self.s3_client, bucket, object_key)
 
     @pytest.fixture
     def prepare_two_wallets(self, default_wallet):
