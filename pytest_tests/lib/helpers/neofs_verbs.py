@@ -130,6 +130,7 @@ def get_object(
     session: Optional[str] = None,
     is_raw: bool = False,
     complex_object: bool = False,
+    timeout: Optional[str] = None,
 ) -> str:
     """
     GET from NeoFS.
@@ -146,6 +147,7 @@ def get_object(
         no_progress(optional, bool): do not show progress bar
         xhdr (optional, dict): Request X-Headers in form of Key=Value
         session (optional, dict): path to a JSON-encoded container session token
+        timeout (optional, str): CLI operation timeout, e.g. "60s" (CLI default is 15s)
     Returns:
         (str): path to downloaded file
     """
@@ -166,6 +168,7 @@ def get_object(
         xhdr=xhdr,
         session=session,
         raw=is_raw,
+        timeout=timeout,
     ).stdout
 
     if complex_object:
