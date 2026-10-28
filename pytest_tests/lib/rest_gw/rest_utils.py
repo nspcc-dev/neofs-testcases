@@ -10,6 +10,7 @@ from helpers.rest_gate import (
     assert_hashes_are_equal,
     complete_bearer_token,
     complete_session_token,
+    get_rest_gateway_address,
     get_unsigned_bearer_token,
     get_unsigned_session_token,
     get_via_rest_gate,
@@ -218,7 +219,7 @@ def generate_session_token_v2(
                   Example: [{"containerID": "cid", "verbs": ["OBJECT_GET", "OBJECT_HEAD"]}]
                   or [{"verbs": ["CONTAINER_PUT"]}] for container operations.
         lifetime: Token lifetime in seconds (default: 1000)
-        targets: List of target addresses (if None, uses wallet address)
+        targets: List of target addresses (if None, uses REST gateway address)
         wallet_connect: Use WalletConnect signature scheme (WALLETCONNECT),
                        otherwise use deterministic ECDSA with SHA256 (DETERMINISTIC_SHA256)
         origin: Origin bearer token for delegation (base64 encoded bearer token).
@@ -232,7 +233,7 @@ def generate_session_token_v2(
     acc = neo3_wallet.accounts[0]
 
     if targets is None:
-        targets = [acc.address]
+        targets = [get_rest_gateway_address(gw_endpoint)]
 
     extracted_origin = extract_session_token_from_bearer(origin) if origin else None
 
