@@ -11,14 +11,13 @@ from helpers.file_helper import generate_file, generate_file_with_content, get_f
 from helpers.neofs_verbs import put_object_to_random_node
 from helpers.rest_gate import (
     attr_into_header,
-    get_epoch_duration_via_rest_gate,
     get_object_by_attr_and_verify_hashes,
     get_via_rest_gate,
     head_object_by_attr_and_verify,
     try_to_get_object_and_expect_error,
     upload_via_rest_gate,
 )
-from helpers.utility import wait_for_gc_pass_on_storage_nodes
+from helpers.utility import parse_version, wait_for_gc_pass_on_storage_nodes
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import REST_GW, NeoFSEnv, NodeWallet
 from rest_gw.rest_base import TestNeofsRestBase
@@ -427,10 +426,14 @@ class TestRestGate(TestNeofsRestBase):
             endpoint=gw_params["endpoint"],
         )
 
-    @allure.title("Test Expiration-Epoch in HTTP header")
+    @allure.title("Test expiration settings in HTTP headers")
     @pytest.mark.simple
     @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
-    def test_expiration_epoch_in_rest(self, gw_params, fresh_epoch, placement_rule):
+    def test_expiration_headers_in_rest(self, gw_params, placement_rule):
+        rest_gw_version = self.neofs_env.get_binary_version(self.neofs_env.neofs_rest_gw_path)
+        if parse_version(rest_gw_version) <= parse_version("0.19.1"):
+            pytest.skip(f"Expiration headers are not supported by neofs-rest-gw {rest_gw_version}")
+
         endpoint = self.neofs_env.sn_rpc
 
         cid = create_container(
@@ -443,65 +446,14 @@ class TestRestGate(TestNeofsRestBase):
         file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
         oids = []
 
-        curr_epoch = neofs_epoch.get_epoch(self.neofs_env)
-        epochs = (curr_epoch, curr_epoch + 1, curr_epoch + 2, curr_epoch + 100)
-
-        for epoch in epochs:
-            headers = {"X-Attributes": '{"__NEOFS__EXPIRATION_EPOCH": "' + str(epoch) + '"}'}
-
-            with allure.step("Put objects using REST with attribute Expiration-Epoch"):
-                oids.append(
-                    upload_via_rest_gate(cid=cid, path=file_path, headers=headers, endpoint=gw_params["endpoint"])
-                )
-
-        assert len(oids) == len(epochs), "Expected all objects have been put successfully"
-
-        with allure.step("All objects can be get"):
-            for oid in oids:
-                get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
-
-        for expired_objects, not_expired_objects in [(oids[:1], oids[1:]), (oids[:2], oids[2:])]:
-            self.tick_epochs_and_wait(1)
-
-            # Wait for GC, because object with expiration is counted as alive until GC removes it
-            wait_for_gc_pass_on_storage_nodes()
-
-            for oid in expired_objects:
-                try_to_get_object_and_expect_error(
-                    cid=cid,
-                    oid=oid,
-                    error_pattern=OBJECT_NOT_FOUND_ERROR,
-                    endpoint=gw_params["endpoint"],
-                )
-
-            with allure.step("Other objects can be get"):
-                for oid in not_expired_objects:
-                    get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
-
-    @allure.title("Test other Expiration-Epoch settings in HTTP header")
-    @pytest.mark.simple
-    @pytest.mark.parametrize("placement_rule", PLACEMENT_RULE_PARAMS)
-    def test_expiration_headers_in_rest(self, gw_params, fresh_epoch, placement_rule):
-        endpoint = self.neofs_env.sn_rpc
-
-        cid = create_container(
-            self.wallet.path,
-            shell=self.shell,
-            endpoint=endpoint,
-            rule=placement_rule,
-            basic_acl=PUBLIC_ACL,
-        )
-        file_path = generate_file(self.neofs_env.get_object_size("simple_object_size"))
-        oids = []
-
-        epoch_duration = get_epoch_duration_via_rest_gate(endpoint=gw_params["endpoint"])
+        expiration_duration = 15
         current_ts = int(time.time())
-        expiration_ts = current_ts + epoch_duration
+        expiration_ts = current_ts + expiration_duration
         expiration_rfc3339 = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(expiration_ts))
 
         headers = (
             {"X-Neofs-Expiration-Timestamp": str(expiration_ts)},
-            {"X-Neofs-Expiration-Duration": str(epoch_duration) + "s"},
+            {"X-Neofs-Expiration-Duration": str(expiration_duration) + "s"},
             {"X-Neofs-Expiration-RFC3339": expiration_rfc3339},
         )
 
@@ -518,8 +470,7 @@ class TestRestGate(TestNeofsRestBase):
             for oid in oids:
                 get_via_rest_gate(cid=cid, oid=oid, endpoint=gw_params["endpoint"])
 
-        # Wait 2 epochs because REST gate rounds time to the next epoch.
-        self.tick_epochs_and_wait(2)
+        time.sleep(expiration_duration + 5)
         wait_for_gc_pass_on_storage_nodes()
 
         for oid in oids:
