@@ -46,8 +46,8 @@ binaries:
 
     neofs_contract:
         repo: 'nspcc-dev/neofs-contract'
-        version: 'v0.27.0'
-        file: 'neofs-contract-v0.27.0.tar.gz'
+        version: 'v0.28.0'
+        file: 'neofs-contract-v0.28.0.tar.gz'
 
     warp:
         repo: 'minio/warp'
