@@ -7,6 +7,11 @@ CONTAINER_REVISION_MISMATCH = "code = 3076.*container revision does not match"
 
 # Regex patterns of status codes of Object service (https://github.com/nspcc-dev/neofs-spec/blob/98b154848116223e486ce8b43eaa35fec08b4a99/20-api-v2/object.md)
 MALFORMED_REQUEST = "code = 1028.*message =.*malformed request"
+MISSING_REQUEST_API_VERSION = "missing request API version"
+OUTDATED_REQUEST_API_VERSION = (
+    "request API version v{major}.{minor} is outdated and no longer supported, minimum allowed is v2.22"
+)
+OUTDATED_STRUCTURE_API_VERSION = "API version is v{major}.{minor} while v2.22 is minimum supported"
 WRONG_CONTAINER = "code = 1024.*message = wrong container"
 SESSION_NOT_ISSUED_BY_OWNER = "code = 1024.*message = session was not issued by the container owner"
 INVALID_SESSION_TOKEN_OWNER = ".*issuer mismatches signature.*"
