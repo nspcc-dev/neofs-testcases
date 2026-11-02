@@ -14,9 +14,9 @@ from helpers.neofs_verbs import get_netmap_netinfo, get_object, put_object_to_ra
 from helpers.node_management import storage_node_healthcheck
 from helpers.wellknown_acl import PUBLIC_ACL
 from neofs_testlib.env.env import NeoFSEnv, StorageNode
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger("NeoLogger")
-blocked_nodes: list[StorageNode] = []
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="not supported on macos runners")
@@ -25,12 +25,18 @@ class TestFailoverNetwork:
     def restore_network(self, neofs_env_function_scope: NeoFSEnv):
         self.neofs_env = neofs_env_function_scope
         self.shell = self.neofs_env.shell
+        self.blocked_nodes: list[StorageNode] = []
 
         yield
 
-        for node in list(blocked_nodes):
+        for node in self.blocked_nodes:
             with allure.step(f"Restore network at host for {node}"):
                 IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
+        self.blocked_nodes.clear()
+
+    @retry(wait=wait_fixed(5), stop=stop_after_attempt(3), reraise=True)
+    def _get_object(self, wallet_path: str, cid: str, oid: str, endpoint: str) -> str:
+        return get_object(wallet_path, cid, oid, shell=self.shell, endpoint=endpoint, timeout="60s")
 
     @allure.title("Block Storage node traffic")
     @pytest.mark.simple
@@ -66,7 +72,7 @@ class TestFailoverNetwork:
         excluded_nodes = []
         for node in nodes_to_block:
             with allure.step(f"Block incoming traffic at node {node} on port {[node.endpoint.split(':')[1]]}"):
-                blocked_nodes.append(node)
+                self.blocked_nodes.append(node)
                 excluded_nodes.append(node)
                 IpTablesHelper.drop_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
                 sleep(wakeup_node_timeout)
@@ -83,13 +89,13 @@ class TestFailoverNetwork:
                 assert node not in new_nodes
 
             with allure.step("Check object data is not corrupted"):
-                got_file_path = get_object(wallet.path, cid, oid, endpoint=new_nodes[0].endpoint, shell=self.shell)
+                got_file_path = self._get_object(wallet.path, cid, oid, endpoint=new_nodes[0].endpoint)
                 assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
         for node in nodes_to_block:
             with allure.step(f"Unblock incoming traffic at host {node} on port {[node.endpoint.split(':')[1]]}"):
                 IpTablesHelper.restore_input_traffic_to_port(self.shell, [node.endpoint.split(":")[1]])
-                blocked_nodes.remove(node)
+                self.blocked_nodes.remove(node)
                 sleep(wakeup_node_timeout)
 
         with allure.step("Check object data is not corrupted"):
@@ -97,7 +103,7 @@ class TestFailoverNetwork:
                 cid, oid, 2, shell=self.shell, nodes=self.neofs_env.storage_nodes, neofs_env=self.neofs_env
             )
 
-            got_file_path = get_object(wallet.path, cid, oid, shell=self.shell, endpoint=new_nodes[0].endpoint)
+            got_file_path = self._get_object(wallet.path, cid, oid, endpoint=new_nodes[0].endpoint)
             assert get_file_hash(source_file_path) == get_file_hash(got_file_path)
 
     @pytest.mark.sanity
