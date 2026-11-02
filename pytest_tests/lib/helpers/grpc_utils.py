@@ -58,7 +58,7 @@ def create_verification_header(
 
 
 def create_put_request(
-    object_id: refs_types_pb2.ObjectID,
+    object_id: refs_types_pb2.ObjectID | None,
     header: object_types_pb2.Header,
     version: refs_types_pb2.Version,
     test_payload: bytes,
@@ -68,20 +68,26 @@ def create_put_request(
     is_init=True,
     epoch=1,
     ttl=1,
+    sign_header=True,
 ):
     public_key, private_key = get_wallet_keys(wallet)
 
     request = object_service_pb2.PutRequest()
 
     if is_init:
-        request.body.init.object_id.CopyFrom(object_id)
+        if object_id is not None and object_id.value:
+            request.body.init.object_id.CopyFrom(object_id)
         request.body.init.header.CopyFrom(header)
+        if (
+            sign_header
+            and object_type != object_types_pb2.ObjectType.TOMBSTONE
+            and object_id is not None
+            and object_id.value
+        ):
+            signature = create_ecdsa_signature(object_id.SerializeToString(deterministic=True), public_key, private_key)
+            request.body.init.signature.CopyFrom(signature)
     else:
         request.body.chunk = test_payload
-
-    if object_type != object_types_pb2.ObjectType.TOMBSTONE and object_id:
-        signature = create_ecdsa_signature(object_id.SerializeToString(deterministic=True), public_key, private_key)
-        request.body.init.signature.CopyFrom(signature)
 
     meta_header = session_types_pb2.RequestMetaHeader()
     meta_header.version.CopyFrom(version)
@@ -107,7 +113,7 @@ def init_session_token_for_object_put(
     wallet: NodeWallet,
     owner_id: refs_types_pb2.OwnerID,
     cid: refs_types_pb2.ContainerID,
-    oid: refs_types_pb2.ObjectID,
+    oid: refs_types_pb2.ObjectID | None,
     object_context_verb: session_types_pb2.ObjectSessionContext,
     lifetime_exp=1000,
     lifetime_nbf=1,
@@ -127,7 +133,8 @@ def init_session_token_for_object_put(
     object_context.verb = object_context_verb
     target = session_types_pb2.ObjectSessionContext.Target()
     target.container.CopyFrom(cid)
-    target.objects.append(oid)
+    if oid is not None and oid.value:
+        target.objects.append(oid)
     object_context.target.CopyFrom(target)
 
     session_token.body.object.CopyFrom(object_context)
@@ -191,6 +198,7 @@ def get_put_object_request_header(
     homo_hash: bool = True,
     creation_epoch=1,
     expiration_epoch="1000",
+    payload_length: int | None = None,
 ) -> object_types_pb2.Header:
     payload_checksum = refs_types_pb2.Checksum()
     payload_checksum.type = refs_types_pb2.ChecksumType.SHA256
@@ -201,7 +209,7 @@ def get_put_object_request_header(
     header.container_id.CopyFrom(container_id)
     header.owner_id.CopyFrom(owner_id)
     header.creation_epoch = creation_epoch
-    header.payload_length = len(test_payload)
+    header.payload_length = len(test_payload) if payload_length is None else payload_length
     header.payload_hash.CopyFrom(payload_checksum)
     header.object_type = object_type
 
@@ -258,6 +266,8 @@ def put_object(
     oid: str = None,
     homo_hash: bool = True,
     object_context_verb: session_types_pb2.ObjectSessionContext = session_types_pb2.ObjectSessionContext.PUT,
+    payload_length: int | None = None,
+    sign_header: bool = True,
 ) -> object_service_pb2.PutResponse:
     with allure.step("Create put request for an object"):
         owner_id = refs_types_pb2.OwnerID()
@@ -273,18 +283,35 @@ def put_object(
         session_id, session_key = get_session_token(wallet, sn_endpoint)
 
         header = get_put_object_request_header(
-            owner_id, version, container_id, object_type, payload, oid, homo_hash=homo_hash
+            owner_id,
+            version,
+            container_id,
+            object_type,
+            payload,
+            oid,
+            homo_hash=homo_hash,
+            payload_length=payload_length,
         )
 
-        object_id = refs_types_pb2.ObjectID()
-        object_id.value = hashlib.sha256(header.SerializeToString(deterministic=True)).digest()
+        object_id = None
+        if sign_header:
+            object_id = refs_types_pb2.ObjectID()
+            object_id.value = hashlib.sha256(header.SerializeToString(deterministic=True)).digest()
 
         session_token = init_session_token_for_object_put(
             session_id, session_key, wallet, owner_id, container_id, object_id, object_context_verb
         )
 
         init_request = create_put_request(
-            object_id, header, version, payload, wallet, session_token, object_type, is_init=True
+            object_id,
+            header,
+            version,
+            payload,
+            wallet,
+            session_token,
+            object_type,
+            is_init=True,
+            sign_header=sign_header,
         )
         allure.attach(str(init_request), "Init Request", allure.attachment_type.TEXT)
 
