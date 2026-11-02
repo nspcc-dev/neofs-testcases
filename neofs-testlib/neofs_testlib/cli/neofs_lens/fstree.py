@@ -46,3 +46,32 @@ class NeofsLensFstree(CliCommand):
                 if param not in ["self"] and value is not None and value is not False
             },
         )
+
+    def remove(self, path: str, addresses: str) -> CommandResult:
+        """
+        Remove objects from an fstree.
+
+        Args:
+                path: Path to storage engine component
+                addresses: Object addresses to remove, separated by comma
+        Returns:
+                Command's result.
+        """
+        return self._execute(
+            "fstree remove",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
+
+    def cleanup_tmp(self, path: str) -> CommandResult:
+        """
+        Remove temporary files left in an fstree by interrupted writes.
+
+        Args:
+                path: Path to storage engine component
+        Returns:
+                Command's result.
+        """
+        return self._execute(
+            "fstree cleanup-tmp",
+            **{param: value for param, value in locals().items() if param not in ["self"]},
+        )
