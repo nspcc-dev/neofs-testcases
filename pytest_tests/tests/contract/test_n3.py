@@ -78,7 +78,7 @@ def get_container_marshalled_bytes(datadir: str, template_file_name: str, owner_
     return container.SerializeToString(deterministic=True)
 
 
-def calculate_verification_script(username: str, method: str) -> str:
+def calculate_verification_script(username: str, method: str) -> tuple[str, bytearray]:
     verification_script = bytearray()
     verification_script += bytes([0x0C, len(username)]) + username.encode()
     verification_script += bytes([0x10 + 0x02])
@@ -95,7 +95,14 @@ def calculate_verification_script(username: str, method: str) -> str:
     syscall_hash = hashlib.sha256(syscall_name.encode()).digest()
     verification_script += bytes([0x41]) + syscall_hash[:4]
 
-    return base64.b64encode(verification_script).decode()
+    return base64.b64encode(verification_script).decode(), verification_script
+
+
+def hash160(data: bytes) -> bytes:
+    sha256_hash = hashlib.sha256(data).digest()
+    ripemd160 = hashlib.new('ripemd160')
+    ripemd160.update(sha256_hash)
+    return ripemd160.digest()
 
 
 def calculate_invocation_script(datadir: str, container: bytes) -> str:
@@ -140,8 +147,6 @@ class TestN3(TestNeofsBase):
     def test_n3_contract_witnesses_in_container_ops(self, datadir, neofs_env: NeoFSEnv):
         neogo = NeoGo(neofs_env.shell, neo_go_exec_path=neofs_env.neo_go_path)
 
-        owner_address = wallet_utils.get_last_address_from_wallet(os.path.join(datadir, "user_wallet.json"), "user")
-
         neofsadm = neofs_env.neofs_adm()
 
         neofsadm.fschain.refill_gas(
@@ -163,14 +168,15 @@ class TestN3(TestNeofsBase):
             )
             assert CONTRACT_ADDR in result.stdout, "Expected contract address not found in deployment output"
 
+        with allure.step("Calculate verification script"):
+            verification_script_b64, verification_script = calculate_verification_script("Bob", "verifySignature")
+
+        owner_address = base64.b64encode(hash160(verification_script)).decode()
         with allure.step("Calculate invocation script"):
             container_marshalled_bytes = get_container_marshalled_bytes(
                 datadir, CONTAINER_REQUEST_TEMPLATE_JSON_FILE_NAME, owner_address
             )
             invocation_script_b64 = calculate_invocation_script(datadir, container_marshalled_bytes)
-
-        with allure.step("Calculate verification script"):
-            verification_script_b64 = calculate_verification_script("Bob", "verifySignature")
 
         with allure.step("Create container"):
             render_create_container_json(
@@ -194,7 +200,7 @@ class TestN3(TestNeofsBase):
             invalid_container_invocation_script_b64 = calculate_invocation_script(
                 datadir, invalid_container_marshalled_bytes
             )
-            verification_script_wrong_user_b64 = calculate_verification_script("Alice", "verifySignature")
+            verification_script_wrong_user_b64, verification_script_wrong_user = calculate_verification_script("Alice", "verifySignature")
             render_create_container_json(
                 datadir,
                 CONTAINER_INVALID_REQUEST_TEMPLATE_JSON_FILE_NAME,
@@ -209,7 +215,7 @@ class TestN3(TestNeofsBase):
                 )
 
         with allure.step("Create container with wrong contract method"):
-            verification_script_wrong_method_b64 = calculate_verification_script("Bob", "validateSignature")
+            verification_script_wrong_method_b64, verification_script_wrong_method = calculate_verification_script("Bob", "validateSignature")
             render_create_container_json(
                 datadir,
                 CONTAINER_INVALID_REQUEST_TEMPLATE_JSON_FILE_NAME,
