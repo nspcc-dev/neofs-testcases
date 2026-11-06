@@ -163,6 +163,30 @@ def parse_load_summary(output: str) -> list[Tuple[str, int, int]]:
     return results
 
 
+def parse_container_payment_status(output: str) -> int | None:
+    """Parse `neofs-adm fschain balance container-status` output for one container.
+
+    Args:
+        output: Command stdout. A paid container prints ``<cid>: container is paid``.
+            An unpaid container prints ``<cid>: container is unpaid since <epoch> epoch``.
+
+    Returns:
+        Epoch since which the container is unpaid, or None when it is paid.
+
+    Example:
+        >>> parse_container_payment_status("H5abc: container is paid") is None
+        True
+        >>> parse_container_payment_status("H5abc: container is unpaid since 12 epoch")
+        12
+    """
+    if "container is paid" in output and "unpaid since" not in output:
+        return None
+    match = re.search(r"unpaid since (\d+) epoch", output)
+    if not match:
+        raise ValueError(f"String format does not match expected pattern: {output=}")
+    return int(match.group(1))
+
+
 def parse_load_report(output: str) -> list[Tuple[str, int, int]]:
     """Parse fschain load_report output.
 
