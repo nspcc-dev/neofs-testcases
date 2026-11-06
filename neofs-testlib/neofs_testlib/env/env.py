@@ -7,6 +7,7 @@ import os
 import pickle
 import platform
 import random
+import secrets
 import shutil
 import socket
 import ssl
@@ -50,8 +51,8 @@ from helpers.common import (
     STORAGE_GC_TIME,
     get_assets_dir_path,
 )
-from helpers.neofs_verbs import get_netmap_netinfo
-from helpers.utility import parse_version
+from helpers.neofs_verbs import CONFIG_KEYS_MAPPING, get_netmap_netinfo
+from helpers.utility import parse_container_payment_status, parse_version
 from tenacity import retry, stop_after_attempt, wait_exponential, wait_fixed
 
 from neofs_testlib.cli import NeofsAdm, NeofsCli, NeofsLens, NeoGo
@@ -260,6 +261,51 @@ class NeoFSEnv:
         )
         NeoFSEnv.generate_config_file(config_template="neo_go_cfg.yaml", config_path=neo_go_config_path, wallet=wallet)
         return neo_go_config_path
+
+    def netmap_netinfo(self) -> dict:
+        node = self.storage_nodes[0]
+        return get_netmap_netinfo(
+            wallet=node.wallet.path,
+            wallet_config=node.cli_config,
+            endpoint=node.rpc_endpoint,
+            shell=self.shell,
+        )
+
+    def set_config(self, post_data: str):
+        return self.neofs_adm().fschain.set_config(
+            rpc_endpoint=f"http://{self.fschain_rpc}",
+            alphabet_wallets=self.alphabet_wallets_dir,
+            post_data=post_data,
+        )
+
+    @allure.step("Set network config and wait until storage nodes observe it")
+    def set_network_config(self, **config: int) -> None:
+        import neofs_env.neofs_epoch as neofs_epoch
+
+        unknown = [key for key in config if key not in CONFIG_KEYS_MAPPING]
+        assert not unknown, f"no netinfo field for {unknown}"
+        self.set_config(" ".join(f"{key}={value}" for key, value in config.items()))
+        neofs_epoch.tick_epoch_and_wait(self)
+        net_info = self.netmap_netinfo()
+        for key, value in config.items():
+            observed = net_info[CONFIG_KEYS_MAPPING[key]]
+            assert observed == value, f"{key} is {observed}, expected {value}"
+
+    def mint_balance(self, wallet_address: str, amount: str, deposit_tx: Optional[str] = None):
+        return self.neofs_adm().fschain.mint_balance(
+            alphabet_wallets=self.alphabet_wallets_dir,
+            amount=amount,
+            deposit_tx=deposit_tx or secrets.token_hex(32),
+            rpc_endpoint=f"http://{self.fschain_rpc}",
+            wallet_address=wallet_address,
+        )
+
+    def container_unpaid_since(self, cid: str) -> Optional[int]:
+        result = self.neofs_adm().fschain.container_status(
+            rpc_endpoint=f"http://{self.fschain_rpc}",
+            cid=cid,
+        )
+        return parse_container_payment_status(result.stdout)
 
     @allure.step("Provision node-key TLS certificate")
     def generate_node_tls_cert(self, wallet: "NodeWallet", cert_path: str, key_path: Optional[str] = None):

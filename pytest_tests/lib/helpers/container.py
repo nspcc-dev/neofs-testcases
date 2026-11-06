@@ -15,7 +15,9 @@ from typing import Optional, Union
 import allure
 import base58
 from helpers.common import NEOFS_CLI_EXEC, WALLET_CONFIG, get_assets_dir_path
+from helpers.file_helper import generate_file
 from helpers.json_transformers import json_reencode
+from helpers.neofs_verbs import put_object
 from neo3.wallet import account as neo3_account
 from neo3.wallet import wallet as neo3_wallet
 from neofs_testlib.cli import NeofsCli
@@ -480,6 +482,33 @@ def validate_nep11_attributes(
     )
     all_tokens = all_tokens_str.split("\n")
     assert matching_token_id in all_tokens, f"Token {matching_token_id} not in {all_tokens}"
+
+
+@allure.step("Create a container and store objects")
+def store_objects(
+    neofs_env: NeoFSEnv,
+    wallet: NodeWallet,
+    rule: str,
+    count: int,
+    size: int,
+    timeout: Optional[str] = None,
+) -> tuple[str, list[tuple[str, str]]]:
+    cid = create_container(wallet.path, rule=rule, shell=neofs_env.shell, endpoint=neofs_env.sn_rpc)
+    stored = []
+    put_args = {"timeout": timeout} if timeout is not None else {}
+    for _ in range(count):
+        path = generate_file(size)
+        oid = put_object(
+            wallet.path,
+            path,
+            cid,
+            neofs_env.shell,
+            neofs_env.sn_rpc,
+            wallet_config=wallet.cli_config,
+            **put_args,
+        )
+        stored.append((oid, path))
+    return cid, stored
 
 
 def generate_ranges_for_ec_object(source_file_size: int) -> list[tuple[int, int]]:

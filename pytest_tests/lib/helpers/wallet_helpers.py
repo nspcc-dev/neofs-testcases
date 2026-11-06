@@ -5,6 +5,7 @@ import uuid
 from typing import Optional
 
 import allure
+import pytest
 import yaml
 from helpers.common import get_assets_dir_path
 from helpers.test_control import wait_for_success
@@ -77,6 +78,21 @@ def get_neofs_balance_by_owner(neofs_env: NeoFSEnv, neofs_cli: NeofsCli, wallet:
             owner=get_last_address_from_wallet(wallet.path, wallet.password),
         ).stdout.strip()
     )
+
+
+@allure.step("Mint NeoFS balance and wait until it is observed")
+def mint_neofs_balance(neofs_env: NeoFSEnv, wallet: NodeWallet, amount: str) -> float:
+    cli = neofs_env.neofs_cli(wallet.cli_config)
+    before = get_neofs_balance(neofs_env, cli, wallet)
+    neofs_env.mint_balance(wallet.address, amount)
+    expected = before + float(amount)
+    wait_for_correct_neofs_balance(
+        neofs_env,
+        wallet,
+        wallet.cli_config,
+        lambda balance: balance == pytest.approx(expected),
+    )
+    return get_neofs_balance(neofs_env, cli, wallet)
 
 
 @allure.step("Wait for correct neofs balance")
