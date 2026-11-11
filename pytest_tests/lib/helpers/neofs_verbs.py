@@ -15,6 +15,7 @@ from helpers.common import (
     WALLET_CONFIG,
     get_assets_dir_path,
 )
+from helpers.file_helper import generate_file
 from neofs_testlib.cli import NeofsCli
 from neofs_testlib.shell import Shell
 
@@ -447,6 +448,31 @@ def put_object(
     id_str = result.stdout.strip().split("\n")[-2]
     oid = id_str.split(":")[1]
     return oid.strip()
+
+
+@allure.step("Generate a file of size {size} and put it into container {cid}")
+def generate_and_put_object(
+    wallet: str,
+    cid: str,
+    shell: Shell,
+    endpoint: str,
+    size: int,
+) -> tuple[str, str]:
+    """
+    Generate a random file and PUT it.
+
+    Args:
+        wallet: wallet on whose behalf PUT is done
+        cid: ID of the container to put the object into
+        shell: executor for cli command
+        endpoint: NeoFS endpoint to send request to
+        size: size of the generated file in bytes
+
+    Returns:
+        Object ID and the path of the generated file.
+    """
+    file_path = generate_file(size)
+    return put_object(wallet, file_path, cid, shell, endpoint), file_path
 
 
 @allure.step("Delete object {cid}/{oid} from {endpoint}")
