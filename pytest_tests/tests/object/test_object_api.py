@@ -354,13 +354,19 @@ class TestObjectApi(TestNeofsBase):
             parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
 
         with allure.step("Tick two epochs"):
-            self.tick_epochs_and_wait(2)
+            self.tick_epochs_and_wait(1)
+            self.tick_epochs_and_wait(1)
 
         wait_for_gc_pass_on_storage_nodes()
 
         with allure.step("Check big object is deleted"):
             with pytest.raises(Exception, match=OBJECT_NOT_FOUND):
                 get_object_from_random_node(default_wallet.path, container, oid, self.shell, neofs_env=self.neofs_env)
+
+        with allure.step("Tick one epoch to pass the split-object expiration grace period"):
+            self.tick_epochs_and_wait(1)
+
+        wait_for_gc_pass_on_storage_nodes()
 
         with allure.step("Try to get object parts"):
             for part in parts:
