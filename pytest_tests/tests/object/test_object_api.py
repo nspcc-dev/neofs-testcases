@@ -353,8 +353,8 @@ class TestObjectApi(TestNeofsBase):
         with allure.step("Get object parts"):
             parts = get_object_chunks(default_wallet.path, container, oid, self.shell, self.neofs_env)
 
-        with allure.step("Tick two epochs"):
-            self.tick_epochs_and_wait(2)
+        with allure.step("Tick three epochs"):
+            self.tick_epochs_and_wait(3)
 
         wait_for_gc_pass_on_storage_nodes()
 
