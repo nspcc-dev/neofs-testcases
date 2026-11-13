@@ -104,8 +104,8 @@ def hash160(data: bytes) -> bytes:
     return ripemd160.digest()
 
 
-def n3_address(verif_hash: bytes) -> str:
-    user_payload = bytes([0x35]) + hash160(verif_hash)
+def neofs_n3_user(verif_script: bytes) -> str:
+    user_payload = bytes([0x35]) + hash160(verif_script)
     checksum = hashlib.sha256(hashlib.sha256(user_payload).digest()).digest()[:4]
     owner_bytes = user_payload + checksum
 
@@ -178,7 +178,7 @@ class TestN3(TestNeofsBase):
         with allure.step("Calculate verification script"):
             verification_script_b64, verification_script = calculate_verification_script("Bob", "verifySignature")
 
-        owner_address = n3_address(hash160(verification_script))
+        owner_address = neofs_n3_user(verification_script)
         with allure.step("Calculate invocation script"):
             container_marshalled_bytes = get_container_marshalled_bytes(
                 datadir, CONTAINER_REQUEST_TEMPLATE_JSON_FILE_NAME, owner_address
