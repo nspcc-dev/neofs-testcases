@@ -11,7 +11,6 @@ logger = logging.getLogger("NeoLogger")
 @allure.step("Ensure fresh epoch")
 def ensure_fresh_epoch(neofs_env: NeoFSEnv, alive_node: Optional[StorageNode] = None) -> int:
     # ensure new fresh epoch to avoid epoch switch during test session
-    alive_node = alive_node if alive_node else neofs_env.storage_nodes[0]
     current_epoch = get_epoch(neofs_env, alive_node)
     tick_epoch_and_wait(neofs_env, current_epoch, alive_node)
     epoch = get_epoch(neofs_env, alive_node)
@@ -60,7 +59,10 @@ def wait_until_new_epoch(
 
 @allure.step("Get Epoch")
 def get_epoch(neofs_env: NeoFSEnv, alive_node: Optional[StorageNode] = None):
-    alive_node = alive_node if alive_node else neofs_env.storage_nodes[0]
+    if not alive_node:
+        nodes = running_storage_nodes(neofs_env)
+        assert nodes, "No running storage nodes to get epoch from"
+        alive_node = nodes[0]
     cli = neofs_env.neofs_cli(alive_node.cli_config)
     epoch = cli.netmap.epoch(alive_node.rpc_endpoint, alive_node.wallet.path)
     return int(epoch.stdout)
