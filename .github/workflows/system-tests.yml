@@ -597,7 +597,7 @@ jobs:
         - name: Publish to NeoFS
           if: steps.shard_status.outputs.no_shards == 'false'
           id: put_report
-          uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.1
+          uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.2
           with:
             NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
             NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
