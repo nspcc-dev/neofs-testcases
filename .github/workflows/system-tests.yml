@@ -464,7 +464,7 @@ jobs:
           - name: Publish to NeoFS
             id: put_report
             if: always() && steps.prepare_venv.outcome == 'success' && !contains(toJson(matrix), 'shard')
-            uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.1
+            uses: nspcc-dev/gh-push-allure-report-to-neofs@v0.3.2
             with:
               NEOFS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
               NEOFS_WALLET_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
