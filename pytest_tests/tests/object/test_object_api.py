@@ -27,7 +27,11 @@ from helpers.grpc_responses import (
     OBJECT_ALREADY_REMOVED,
     OBJECT_HEADER_LENGTH_LIMIT,
     OBJECT_NOT_FOUND,
+    PAYLOAD_SIZE_EXCEEDED,
+    UNEXPECTED_EOF,
+    WRONG_PAYLOAD_SIZE,
 )
+from helpers.grpc_utils import put_object as put_object_grpc
 from helpers.neofs_verbs import (
     NEOFS_API_HEADER_LIMIT,
     delete_object,
@@ -43,6 +47,7 @@ from helpers.storage_object_info import StorageObjectInfo
 from helpers.utility import wait_for_gc_pass_on_storage_nodes
 from neofs_env.neofs_env_test_base import TestNeofsBase
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet
+from neofs_testlib.protobuf.generated.object import types_pb2 as object_types_pb2
 from neofs_testlib.shell import Shell
 from pytest import FixtureRequest
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -254,6 +259,54 @@ class TestObjectApi(TestNeofsBase):
                 neofs_env=self.neofs_env,
                 attributes={attr_key: attr_val},
             )
+
+    @allure.title("Object put rejects a shortened or extended payload")
+    @pytest.mark.simple
+    @pytest.mark.parametrize("sign_header", [pytest.param(True, id="signed"), pytest.param(False, id="slicer")])
+    @pytest.mark.parametrize(
+        ("declared_length", "payload_length"),
+        [
+            pytest.param(64, 32, id="shortened"),
+            pytest.param(32, 64, id="extended"),
+        ],
+    )
+    def test_put_object_with_mismatched_payload_length(
+        self,
+        default_wallet: NodeWallet,
+        declared_length: int,
+        payload_length: int,
+        sign_header: bool,
+    ):
+        cid = create_container(
+            default_wallet.path,
+            shell=self.shell,
+            endpoint=self.neofs_env.sn_rpc,
+            rule=DEFAULT_PLACEMENT_RULE,
+        )
+        try:
+            if payload_length > declared_length:
+                payload = b"A" * declared_length + b"B" * (payload_length - declared_length)
+            else:
+                payload = b"A" * payload_length
+
+            with allure.step(f"Put {payload_length} payload bytes with declared length {declared_length}"):
+                response = put_object_grpc(
+                    object_types_pb2.ObjectType.REGULAR,
+                    default_wallet,
+                    self.neofs_env.storage_nodes[0].endpoint,
+                    payload,
+                    cid,
+                    payload_length=declared_length,
+                    sign_header=sign_header,
+                )
+
+            status = response.meta_header.status
+            assert any(
+                message in status.message for message in (WRONG_PAYLOAD_SIZE, PAYLOAD_SIZE_EXCEEDED, UNEXPECTED_EOF)
+            ), f"Put status: code={status.code} message={status.message}"
+            assert not response.body.object_id.value, f"Mismatched put stored an object: {response}"
+        finally:
+            delete_container(default_wallet.path, cid, shell=self.shell, endpoint=self.neofs_env.sn_rpc)
 
     @allure.title("Finished objects (with link object found) cannot be deleted")
     @pytest.mark.complex
