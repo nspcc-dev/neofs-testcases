@@ -155,6 +155,19 @@ def neofs_env_single_sn_custom_gc(temp_directory, artifacts_directory, request):
     neofs_env.finalize(request)
 
 
+@pytest.fixture(scope="module")
+def lens_env(temp_directory, artifacts_directory, request):
+    neofs_env = get_or_create_neofs_env(
+        request,
+        storage_nodes_count=1,
+        with_s3_gw=False,
+        with_rest_gw=False,
+        shards_count=1,
+    )
+    yield neofs_env
+    neofs_env.finalize(request)
+
+
 @pytest.fixture()
 def neofs_env_ir_only_with_sn_validator(temp_directory, artifacts_directory, request):
     neofs_env = get_or_create_neofs_env(

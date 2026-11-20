@@ -8,7 +8,6 @@ from contextlib import contextmanager
 import allure
 import base58
 import pytest
-from conftest import get_or_create_neofs_env
 from helpers.common import SIMPLE_OBJECT_SIZE
 from helpers.container import create_container
 from helpers.file_helper import get_file_hash
@@ -19,19 +18,6 @@ from neofs_testlib.cli.neofs_lens.cli import NeofsLens
 from neofs_testlib.env.env import NeoFSEnv, NodeWallet, StorageNode
 
 META_LIST_LIMIT = 10000
-
-
-@pytest.fixture(scope="module")
-def lens_env(temp_directory, request):
-    neofs_env = get_or_create_neofs_env(
-        request,
-        storage_nodes_count=1,
-        with_s3_gw=False,
-        with_rest_gw=False,
-        shards_count=1,
-    )
-    yield neofs_env
-    neofs_env.finalize(request)
 
 
 @pytest.fixture(scope="module")
