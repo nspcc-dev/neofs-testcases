@@ -434,6 +434,21 @@ class NeofsAdmFSChain(CliCommand):
             **{param: param_value for param, param_value in locals().items() if param not in ["self"]},
         )
 
+    def container_status(self, rpc_endpoint: str, cid: Optional[str] = None) -> CommandResult:
+        """Check container billing status.
+
+        Args:
+            rpc_endpoint: N3 RPC node endpoint.
+            cid: Container to check. If omitted, every container is listed.
+
+        Returns:
+            Command's result.
+        """
+        params = {"rpc_endpoint": rpc_endpoint}
+        if cid:
+            params["post_data"] = cid
+        return self._execute("fschain balance container-status", **params)
+
     def verified_nodes_domain_access_list(self, rpc_endpoint: str, domain: str) -> CommandResult:
         """List Neo addresses of the storage nodes that have access to use the specified verified domain.
 

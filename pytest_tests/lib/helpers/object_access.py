@@ -5,12 +5,13 @@ from helpers.file_helper import get_file_hash
 from helpers.grpc_responses import OBJECT_ACCESS_DENIED, error_matches_status
 from helpers.neofs_verbs import (
     delete_object,
+    get_object,
     get_object_from_random_node,
     head_object,
     put_object_to_random_node,
     search_object,
 )
-from neofs_testlib.env.env import NeoFSEnv
+from neofs_testlib.env.env import NeoFSEnv, NodeWallet
 from neofs_testlib.shell import Shell
 
 OPERATION_ERROR_TYPE = RuntimeError
@@ -166,3 +167,23 @@ def can_search_object(
         if oid:
             return oid in [found_object["id"] for found_object in found_objects]
     return True
+
+
+def read_object(neofs_env: NeoFSEnv, wallet: NodeWallet, cid: str, oid: str, source: str) -> None:
+    head_object(
+        wallet.path,
+        cid,
+        oid,
+        neofs_env.shell,
+        neofs_env.sn_rpc,
+        wallet_config=wallet.cli_config,
+    )
+    downloaded = get_object(
+        wallet.path,
+        cid,
+        oid,
+        neofs_env.shell,
+        neofs_env.sn_rpc,
+        wallet_config=wallet.cli_config,
+    )
+    assert get_file_hash(downloaded) == get_file_hash(source), f"{cid}/{oid} payload changed"
