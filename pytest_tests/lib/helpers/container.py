@@ -317,26 +317,48 @@ def search_container_by_name(wallet: str, name: str, shell: Shell, endpoint: str
     return None
 
 
-def parse_container_nodes_output(output: str) -> list[dict]:
-    nodes = []
+_DESCRIPTOR_HEADER_RE = re.compile(r"^(?:Descriptor #\d+, (REP \d+)|EC descriptor #\d+, (EC \d+/\d+)):$")
+_NODE_HEADER_RE = re.compile(r"^Node (\d+): ([a-f0-9]+) (ONLINE|OFFLINE|MAINTENANCE) (.+)$")
+
+
+def parse_container_nodes_by_descriptor(output: str) -> list[dict]:
+    descriptors: list[dict] = []
+    current: Optional[dict] = None
     lines = output.strip().split("\n")
 
     i = 0
     while i < len(lines):
         line = lines[i].strip()
 
-        node_match = re.match(r"Node (\d+): ([a-f0-9]+) (ONLINE|OFFLINE) (.+)", line)
+        desc_match = _DESCRIPTOR_HEADER_RE.match(line)
+        if desc_match:
+            if desc_match.group(1):
+                kind, rule = "REP", desc_match.group(1)
+            else:
+                kind, rule = "EC", desc_match.group(2)
+            current = {"kind": kind, "rule": rule, "nodes": []}
+            descriptors.append(current)
+            i += 1
+            continue
+
+        node_match = _NODE_HEADER_RE.match(line)
         if node_match:
+            if current is None:
+                current = {"kind": "", "rule": "", "nodes": []}
+                descriptors.append(current)
+
             node_num = int(node_match.group(1))
             node_id = node_match.group(2)
             status = node_match.group(3)
             endpoint = node_match.group(4).strip()
 
-            node_data = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
+            node_data: dict = {"node_number": node_num, "node_id": node_id, "status": status, "endpoint": endpoint}
 
             i += 1
-            while i < len(lines) and lines[i].strip() and not re.match(r"^Node \d+:", lines[i].strip()):
+            while i < len(lines):
                 prop_line = lines[i].strip()
+                if not prop_line or _NODE_HEADER_RE.match(prop_line) or _DESCRIPTOR_HEADER_RE.match(prop_line):
+                    break
                 if ":" in prop_line:
                     key, value = prop_line.split(":", 1)
                     key = key.strip()
@@ -352,11 +374,15 @@ def parse_container_nodes_output(output: str) -> list[dict]:
 
                 i += 1
 
-            nodes.append(node_data)
+            current["nodes"].append(node_data)
         else:
             i += 1
 
-    return nodes
+    return descriptors
+
+
+def parse_container_nodes_output(output: str) -> list[dict]:
+    return [node for descriptor in parse_container_nodes_by_descriptor(output) for node in descriptor["nodes"]]
 
 
 def create_multi_account_wallet(neofs_env: NeoFSEnv, accounts: list[neo3_account.Account], prefix: str) -> str:
