@@ -21,7 +21,9 @@ on:
         required: false
         default: ''
 
-permissions: write-all
+permissions:
+  contents: read
+  statuses: write
 
 jobs:
   run_pr_tests:
@@ -37,7 +39,9 @@ jobs:
       tests_parallel_level: 4
       os: >
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"}]
-    secrets: inherit
+    secrets:
+      TEST_RESULTS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
+      TEST_RESULTS_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
 
   run_system_tests:
     if: ${{ github.event_name != 'pull_request' }}
@@ -54,4 +58,6 @@ jobs:
         [{"runner": "ubuntu-latest", "binary": "linux-amd64"},
         {"runner": "macos-latest", "binary": "darwin-arm64", "shard": 0},
         {"runner": "macos-latest", "binary": "darwin-arm64", "shard": 1}]
-    secrets: inherit
+    secrets:
+      TEST_RESULTS_WALLET: ${{ secrets.TEST_RESULTS_WALLET }}
+      TEST_RESULTS_PASSWORD: ${{ secrets.TEST_RESULTS_PASSWORD }}
