@@ -1,5 +1,7 @@
 import hashlib
 import logging
+import time
+from typing import Any, TypeVar
 
 import allure
 import base58
@@ -9,6 +11,7 @@ from helpers.tzhash import TZHash
 from helpers.utility import get_signature_slice, sign_ecdsa
 from neo3.wallet.wallet import Wallet
 from neofs_testlib.env.env import NodeWallet
+from neofs_testlib.protobuf.generated.container import service_pb2 as container_service_pb2
 from neofs_testlib.protobuf.generated.object import service_pb2 as object_service_pb2
 from neofs_testlib.protobuf.generated.object import types_pb2 as object_types_pb2
 from neofs_testlib.protobuf.generated.refs import types_pb2 as refs_types_pb2
@@ -17,6 +20,33 @@ from neofs_testlib.protobuf.generated.session import types_pb2 as session_types_
 from neofs_testlib.utils.converters import load_wallet
 
 logger = logging.getLogger("NeoLogger")
+
+STATUS_OK = 0
+STATUS_SIGNATURE_VERIFICATION_FAIL = 1026
+STATUS_CONTAINER_NOT_FOUND = 3072
+STATUS_CONTAINER_AWAIT_TIMEOUT = 3075
+REQUEST_LIFETIME_SEC = 300
+
+_ResponseT = TypeVar("_ResponseT")
+
+
+def call_unary_rpc(
+    endpoint: str,
+    method: str,
+    request: Any,
+    request_cls: type[Any],
+    response_cls: type[_ResponseT],
+    timeout: float | None = 30,
+) -> _ResponseT:
+    channel = grpc.insecure_channel(endpoint)
+    try:
+        return channel.unary_unary(
+            method,
+            request_serializer=request_cls.SerializeToString,
+            response_deserializer=response_cls.FromString,
+        )(request, timeout=timeout)
+    finally:
+        channel.close()
 
 
 def create_ecdsa_signature(data: bytes, public_key: bytes, private_key: bytes) -> refs_types_pb2.Signature:
@@ -55,6 +85,68 @@ def create_verification_header(
     verify_header.origin_signature.CopyFrom(origin_signature)
 
     return verify_header
+
+
+def create_request_verification_header(
+    signature: refs_types_pb2.Signature,
+) -> session_types_pb2.RequestVerificationHeader:
+    """Build a single-signature verification header for API >= 2.26 requests."""
+    verify_header = session_types_pb2.RequestVerificationHeader()
+    verify_header.request_signature.CopyFrom(signature)
+    return verify_header
+
+
+def get_container_via_grpc(
+    endpoint: str,
+    container_id: bytes,
+    public_key: bytes,
+    private_key: bytes,
+    timeout: float = 10,
+) -> container_service_pb2.GetResponse:
+    request = container_service_pb2.GetRequest()
+    request.body.container_id.value = container_id
+    request.meta_header.version.major = 2
+    request.meta_header.version.minor = 28
+    request.meta_header.valid_until_time = int(time.time()) + REQUEST_LIFETIME_SEC
+
+    signature = create_ecdsa_signature(request.SerializeToString(deterministic=True), public_key, private_key)
+    request.verify_header.CopyFrom(create_request_verification_header(signature))
+
+    return call_unary_rpc(
+        endpoint,
+        "/neo.fs.v2.container.ContainerService/Get",
+        request,
+        container_service_pb2.GetRequest,
+        container_service_pb2.GetResponse,
+        timeout=timeout,
+    )
+
+
+def wait_for_container_via_grpc(
+    endpoint: str,
+    container_id: bytes,
+    public_key: bytes,
+    private_key: bytes,
+    attempts: int = 15,
+    sleep_interval: int = 1,
+) -> container_service_pb2.GetResponse:
+    last_status = None
+    for _ in range(attempts):
+        response = get_container_via_grpc(endpoint, container_id, public_key, private_key)
+        last_status = response.meta_header.status
+        if last_status.code == STATUS_OK:
+            return response
+        if last_status.code != STATUS_CONTAINER_NOT_FOUND:
+            raise AssertionError(
+                f"Unexpected ContainerService/Get status while waiting for container: "
+                f"code={last_status.code} message={last_status.message!r}"
+            )
+        time.sleep(sleep_interval)
+
+    last_status_info = (
+        f" (last status: code={last_status.code} message={last_status.message!r})" if last_status is not None else ""
+    )
+    raise RuntimeError(f"After {attempts * sleep_interval} seconds container has not been persisted{last_status_info}")
 
 
 def create_put_request(
@@ -163,13 +255,15 @@ def get_session_token(wallet: NodeWallet, endpoint: str, epoch=1, expiration=100
     )
     session_create_request.verify_header.CopyFrom(verify_header)
 
-    channel = grpc.insecure_channel(endpoint)
     try:
-        session_response = channel.unary_unary(
+        session_response = call_unary_rpc(
+            endpoint,
             "/neo.fs.v2.session.SessionService/Create",
-            request_serializer=session_service_pb2.CreateRequest.SerializeToString,
-            response_deserializer=session_service_pb2.CreateResponse.FromString,
-        )(session_create_request)
+            session_create_request,
+            session_service_pb2.CreateRequest,
+            session_service_pb2.CreateResponse,
+            timeout=None,
+        )
         allure.attach(str(session_response), "SessionService Create Response", allure.attachment_type.TEXT)
         logger.info(f"SessionService Create response: {session_response}")
 
@@ -177,8 +271,6 @@ def get_session_token(wallet: NodeWallet, endpoint: str, epoch=1, expiration=100
 
     except grpc.RpcError as e:
         raise AssertionError(f"SessionService Create gRPC error: {e}")
-    finally:
-        channel.close()
 
 
 def get_put_object_request_header(
